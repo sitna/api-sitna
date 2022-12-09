@@ -55,11 +55,16 @@
   * </script>
   */
 
-TC.control = TC.control || {};
+import TC from '../../TC';
+import Consts from '../Consts';
+import ProjectionSelector from './ProjectionSelector';
+import autocomplete from '../ui/autocomplete';
 
-if (!TC.control.ProjectionSelector) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/ProjectionSelector');
-}
+TC.control = TC.control || {};
+TC.UI = TC.UI || {};
+TC.UI.autocomplete = autocomplete;
+TC.Consts = Consts;
+TC.control.ProjectionSelector = ProjectionSelector;
 
 (function () {
 
@@ -104,7 +109,7 @@ if (!TC.control.ProjectionSelector) {
         ctl.showProjectionChangeDialog({
             layer: layer,
             closeCallback: function () {
-                ctl.getLayerNodes(layer).forEach(function (node) {
+                ctl.getLayerNodes(ctl._layerToAdd).forEach(function (node) {
                     node.classList.remove(TC.Consts.classes.LOADING);
                     node.querySelector('span').dataset.tooltip = ctl.getLocaleString('clickToAddToMap');
                 });
@@ -119,7 +124,7 @@ if (!TC.control.ProjectionSelector) {
 
         const result = TC.control.ProjectionSelector.prototype.register.call(self, map);
 
-        const load = function (resolve, reject) {
+        const load = function (resolve, _reject) {
             if (Array.isArray(self.options.layers)) {
                 for (var i = 0; i < self.options.layers.length; i++) {
                     var layer = self.options.layers[i];
@@ -255,7 +260,7 @@ if (!TC.control.ProjectionSelector) {
             })
             .on(TC.Consts.event.LAYERERROR, function (e) {
                 const reason = e.reason;
-                if (self.layers.some((f) => { return f == e.layer })) {
+                if (self.layers.some(f => f === e.layer)) {
                     if (reason) {
                         TC.alert(self.getLocaleString(reason, { url: e.layer.url }));
                     }
@@ -288,7 +293,7 @@ if (!TC.control.ProjectionSelector) {
                     self.div.classList.remove(TC.Consts.classes.COLLAPSED);
                 }
             })
-            .on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+            .on(TC.Consts.event.PROJECTIONCHANGE, function (_e) {
                 self.update();
             });
 
@@ -299,31 +304,21 @@ if (!TC.control.ProjectionSelector) {
         e.target.blur();
         e.stopPropagation();
         const li = e.target.parentElement;
-        if (li.tagName === 'LI' && !li.classList.contains(self.CLASS + '-leaf')) {
+        if (li.tagName === 'LI' && !li.classList.contains(ctlProto.CLASS + '-leaf')) {
             li.classList.toggle(TC.Consts.classes.COLLAPSED);
             const ul = li.querySelector('ul');
             ul.classList.toggle(TC.Consts.classes.COLLAPSED);
         }
     };
 
-    const onSpanClick = function (e, ctl) {
+    const onSpanClick = function (e, ctl, getLayerObject) {
         const li = e.target.parentNode;
         if (!li.classList.contains(TC.Consts.classes.LOADING) && !li.classList.contains(TC.Consts.classes.CHECKED)) {
             e.preventDefault;
 
             var layerName = li.dataset.layerName;
-            layerName = (layerName !== undefined) ? layerName.toString() : '';
-            var layer;
-            for (var i = 0, len = ctl._roots.length; i < len; i++) {
-                const root = ctl._roots[i];
-                if (root.contains(li)) {
-                    layer = ctl.getLayer(root.dataset.layerId);
-                    break;
-                }
-            }
-            if (!layer) {
-                layer = ctl.getLayer(li.dataset.layerId);
-            }
+            layerName = layerName !== undefined ? layerName.toString() : '';
+            var layer = getLayerObject.call(ctl,li);            
             if (layer && layerName) {
                 var redrawTime = 1;
 
@@ -337,13 +332,13 @@ if (!TC.control.ProjectionSelector) {
                 }
 
                 li.classList.add(TC.Consts.classes.LOADING);
-                li.querySelector('span').dataset.tooltip = '';
+                li.querySelector('span,h5').dataset.tooltip = '';
 
                 const reDraw = function (element) {
-                    return new Promise(function (resolve, reject) {
+                    return new Promise(function (resolve, _reject) {
                         setTimeout(function () {
-                            element.offsetHeight = element.offsetHeight;
-                            element.offsetWidth = element.offsetWidth;
+                            element.setAttribute('offsetHeight', element.offsetHeight);
+                            element.setAttribute('offsetWidth', element.offsetWidth);
 
                             resolve();
                         }, redrawTime);
@@ -364,7 +359,7 @@ if (!TC.control.ProjectionSelector) {
         self.textInput = self.div.querySelector("." + self.CLASS + "-input");
         self.list = self.div.querySelector("." + self.CLASS + "-search ul");
         // Clear results list when x button is pressed in the search input
-        self.textInput.addEventListener('mouseup', function (e) {
+        self.textInput.addEventListener('mouseup', function (_e) {
             var oldValue = self.textInput.value;
 
             if (oldValue === '') {
@@ -387,105 +382,112 @@ if (!TC.control.ProjectionSelector) {
         TC._search = TC._search || {};
         TC._search.retryTimeout = null;
 
-                    TC.loadJS(
-                        !TC.UI || !TC.UI.autocomplete,
-                        [TC.apiLocation + 'TC/ui/autocomplete.js'],
-                        function () {
-                            TC.UI.autocomplete.call(self.textInput, {
-                                link: '#',
-                                target: self.list,
-                                minLength: 0,
-                                source: function (text, callback) {
-                                    //lista de capas marcadas
-                                    layerCheckedList = [];
-                                    self._roots.forEach(function (root) {
-                                        root.querySelectorAll("li." + TC.Consts.classes.CHECKED).forEach(function (item) {
-                                            layerCheckedList.push(item.dataset.layerName);
-                                        });
-                                    });
+        TC.UI.autocomplete.call(self.textInput, {
+            link: '#',
+            target: self.list,
+            minLength: 0,
+            source: function (text, callback) {
+                //lista de capas marcadas
+                layerCheckedList = [];
+                self._roots.forEach(function (root) {
+                    root.querySelectorAll("li." + TC.Consts.classes.CHECKED).forEach(function (item) {
+                        layerCheckedList.push(item.dataset.layerName);
+                    });
+                });
 
-                        //con texto vacío, limpiar  y ocultar la lista de resultados
-                        text = text.trim();
-                        if (text.length < SEARCH_MIN_LENGTH) {
-                            self.list.innerHTML = '';
-                        }
-                        else if (text.length >= SEARCH_MIN_LENGTH) {
-                            if (TC._search.retryTimeout)
-                                clearTimeout(TC._search.retryTimeout);
-                            TC._search.retryTimeout = setTimeout(function () {
-                                var results = [];
-                                for (var i = 0, ii = self.sourceLayers.length; i < ii; i++) {
-                                    const sourceLayer = self.sourceLayers[i];
-                                    var _founds = sourceLayer.searchSubLayers(text);
-                                    if (_founds.length) {
-                                        results.push({
-                                            service: {
-                                                id: sourceLayer.id,
-                                                title: sourceLayer.title || sourceLayer.id
-                                            },
-                                            founds: _founds
-                                        });
-                                    }
-                                }
-                                callback({ servicesFound: results, servicesLooked: self.sourceLayers.length });
-                            }, TC._search.interval);
-                        }
-                    },
-                    callback: function (e) {
-                        self.textInput.value = e.target.text || e.target.innerText;
-                        TC._search.lastPattern = self.textInput.value;
-                        self.goToResult(unescape(e.target.hash).substring(1));
-                        TC.UI.autocomplete.call(self.textInput, 'clear');
-                    },
-                    buildHTML: function (data) {
-                        var container = this.target;
-                        //si hay resultados, mostramos la lista
-                        if (data.results && data.results.servicesFound.length > 0) {
-                            var workLayers = self.map.getLayerTree().workLayers;
-                            for (var k = 0; k < data.results.servicesFound.length; k++) {
-                                var founds = data.results.servicesFound[k].founds;
-                                for (var j = 0; j < founds.length; j++) {
-                                    delete founds[j].alreadyAdded;
-                                    for (var i = 0; i < workLayers.length; i++) {
-                                        //if (workLayers[i].title == data.results[j].Title ) {
-                                        if (layerCheckedList.indexOf(founds[j].Name) >= 0) {
-                                            founds[j].alreadyAdded = true;
-                                            break;
-                                        }
-                                    }
-                                    //Si la capa no tiene Name, no se puede añadir al TOC
-                                    if (!founds[j].Name) {
-                                        founds.splice(j, 1);
-                                        j--;
-                                    }
-                                }
-                                if (!data.results.servicesFound[k].founds.length) {
-                                    data.results.servicesFound.splice(k, 1);
-                                    continue;
-                                }
-                                //si estaba collapsado mantenemos el estado
-                                if (self.div.querySelectorAll(".tc-ctl-lcat-search-group")[k]) {
-                                    data.results.servicesFound[k].service.isCollapsed = self.div.querySelectorAll(".tc-ctl-lcat-search-group")[k].classList.contains(TC.Consts.classes.COLLAPSED);
-                                }
+                //con texto vacío, limpiar  y ocultar la lista de resultados
+                text = text.trim();
+                if (text.length < SEARCH_MIN_LENGTH) {
+                    self.list.innerHTML = '';
+                }
+                else if (text.length >= SEARCH_MIN_LENGTH) {
+                    if (TC._search.retryTimeout)
+                        clearTimeout(TC._search.retryTimeout);
+                    TC._search.retryTimeout = setTimeout(function () {
+                        var results = [];
+                        for (var i = 0, ii = self.sourceLayers.length; i < ii; i++) {
+                            const sourceLayer = self.sourceLayers[i];
+                            var _founds = sourceLayer.searchSubLayers(text);
+                            if (_founds.length) {
+                                results.push({
+                                    service: {
+                                        id: sourceLayer.id,
+                                        title: sourceLayer.title || sourceLayer.id
+                                    },
+                                    founds: _founds
+                                });
                             }
                         }
-                        var ret = ''
-                        self.getRenderedHtml(self.CLASS + '-results', data.results).then(function (out) {
-                            container.innerHTML = ret = out;
-                        });
-                        return ret;
+                        callback({ servicesFound: results, servicesLooked: self.sourceLayers.length });
+                    }, TC._search.interval);
+                }
+            },
+            callback: function (e) {
+                self.textInput.value = e.target.text || e.target.innerText;
+                TC._search.lastPattern = self.textInput.value;
+                self.goToResult(unescape(e.target.hash).substring(1));
+                TC.UI.autocomplete.call(self.textInput, 'clear');
+            },
+            buildHTML: function (data) {
+                var container = this.target;
+                //si hay resultados, mostramos la lista
+                if (data.results && data.results.servicesFound.length > 0) {
+                    var workLayers = self.map.getLayerTree().workLayers;
+                    for (var k = 0; k < data.results.servicesFound.length; k++) {
+                        var founds = data.results.servicesFound[k].founds;
+                        for (var j = 0; j < founds.length; j++) {
+                            delete founds[j].alreadyAdded;
+                            for (var i = 0; i < workLayers.length; i++) {
+                                //if (workLayers[i].title == data.results[j].Title ) {
+                                if (layerCheckedList.indexOf(founds[j].Name) >= 0) {
+                                    founds[j].alreadyAdded = true;
+                                    break;
+                                }
+                            }
+                            //Si la capa no tiene Name, no se puede añadir al TOC
+                            if (!founds[j].Name) {
+                                founds.splice(j, 1);
+                                j--;
+                            }
+                        }
+                        if (!data.results.servicesFound[k].founds.length) {
+                            data.results.servicesFound.splice(k, 1);
+                            continue;
+                        }
+                        //si estaba collapsado mantenemos el estado
+                        if (self.div.querySelectorAll(".tc-ctl-lcat-search-group")[k]) {
+                            data.results.servicesFound[k].service.isCollapsed = self.div.querySelectorAll(".tc-ctl-lcat-search-group")[k].classList.contains(TC.Consts.classes.COLLAPSED);
+                        }
+                    }
+                }
+                var ret = '';
+                self.getRenderedHtml(self.CLASS + '-results', data.results).then(function (out) {
+                    container.innerHTML = ret = out;
+                    // Marcamos el botón "i" correspondiente si el panel de info está abierto
+                    const visibleInfoPane = self.div.querySelector(`.${self.CLASS}-info`);
+                    if (visibleInfoPane) {
+                        const serviceId = visibleInfoPane.dataset.serviceId;
+                        const layerName = visibleInfoPane.dataset.layerName;
+                        let selector = `li[data-layer-name="${layerName}"] input[type="checkbox"].${self.CLASS}-search-btn-info`;
+                        if (self.sourceLayers.length > 1) {
+                            selector = `li[data-service-id="${serviceId}"] ${selector}`;
+                        }
+                        const infoCheckbox = container.querySelector(selector);
+                        if (infoCheckbox) {
+                            infoCheckbox.checked = true;
+                        }
                     }
                 });
-            });
+                return ret;
+            }
+        });
 
 
         if (!self.searchInit) {
             //botón de la lupa para alternar entre búsqueda y árbol
             self.div.querySelector('h2 button').addEventListener(TC.Consts.event.CLICK, function (e) {
                 e.target.blur();
-                self.div.classList.remove(TC.Consts.classes.COLLAPSED);
-                e.stopPropagation();
-
+                
                 const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
                 const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
                 const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
@@ -498,18 +500,12 @@ if (!TC.control.ProjectionSelector) {
                 if (searchPaneMustShow) {
                     self.textInput.focus();
                     e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
-
-                    //Si no hay resultados resaltados en el buscador, ocultamos el panel de info
-                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-search li button.tc-checked').length;
-                    if (selectedCount === 0) {
-                        infoPane.classList.add(TC.Consts.classes.HIDDEN);
-                    }
                 }
                 else {
                     e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
 
                     //Si hay resaltados en el árbol, mostramos el panel de info
-                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li button.tc-checked').length;
+                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li input[type=checkbox]:checked').length;
                     if (selectedCount > 0) {
                         infoPane.classList.remove(TC.Consts.classes.HIDDEN);
                     }
@@ -519,10 +515,10 @@ if (!TC.control.ProjectionSelector) {
 
             //evento de expandir nodo de info
             //self._$div.off("click", ".tc-ctl-lcat-search button");                        
-            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search button." + self.CLASS + "-search-btn-info", function (evt) {
+            self.div.addEventListener("change", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search input[type=checkbox]." + self.CLASS + "-search-btn-info", function (evt) {
                 evt.stopPropagation();
                 const target = evt.target;
-                if (!target.classList.contains(TC.Consts.classes.CHECKED)) {
+                if (target.checked) {
                     const li = target.parentElement;
                     var parent = li;
                     do {
@@ -530,15 +526,17 @@ if (!TC.control.ProjectionSelector) {
                     }
                     while (parent && parent.tagName !== 'LI');
                     self.showLayerInfo(self.layers.length > 1 ? self.layers.filter(l => l.id === parent.dataset.serviceId)[0] : self.layers[0], li.dataset.layerName);
-                    target.classList.add(TC.Consts.classes.CHECKED);
 
                 } else {
-                    target.classList.remove(TC.Consts.classes.CHECKED);
                     self.hideLayerInfo();
                 }
             }));
 
-                        //click en un resultado - añadir capa
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search input[type=checkbox]." + self.CLASS + "-search-btn-info", function (evt) {
+                evt.stopPropagation();
+            }));
+
+            //click en un resultado - añadir capa
             const searchListElementSelector = '.' + self.CLASS + '-search li';
             self.div.addEventListener('click', TC.EventTarget.listenerBySelector(searchListElementSelector, function (evt) {
                 evt.stopPropagation();
@@ -553,56 +551,13 @@ if (!TC.control.ProjectionSelector) {
                     li.classList.toggle(TC.Consts.classes.COLLAPSED);
                     return;
                 }
-                var layerName = li.dataset.layerName;
-                if (!layerName) {
-                    return;
-                }
-                layerName = layerName.toString();
-
-                if (layerName.trim().length === 0) {
-                    return;
-                }
-
-                //si la capa ya ha sido anteriormente, no la añadimos y mostramos un mensaje
-                if (li.classList.contains(TC.Consts.classes.CHECKED)) {
-                    return;
-                } else {
-                    var liParent = li;
-                    do {
-                        liParent = liParent.parentElement;
+                onSpanClick(evt, self, function () {
+                    if (this.layers.length === 1) {
+                        return this.layers[0];
                     }
-                    while (liParent && !liParent.matches('li.' + self.CLASS + '-search-group'));
-
-                    const ctlLayer = !liParent ? self.layers[0] : self.layers.filter(l => l.id === liParent.dataset.serviceId)[0];
-                    const url = ctlLayer.options.url;
-                    const title = ctlLayer.title;
-
-                    const layer = new TC.layer.Raster({
-                        id: self.getUID(),
-                        url: url,
-                        title: title,
-                        hideTitle: ctlLayer.hideTitle || ctlLayer.options.hideTitle,
-                        hideTree: false,
-                        layerNames: [layerName]
-                    });
-                    if (layer.isCompatible(self.map.crs)) {
-                        self.map.addLayer(layer, function (layer) {
-                            li.dataset.layerId = layer.id;
-                            layer.wrap.$events.on(TC.Consts.event.TILELOADERROR, function (event) {
-                                var layer = this.parent;
-                                if (event.error.code === 401 || event.error.code === 403)
-                                    layer.map.toast(event.error.text, { type: TC.Consts.msgType.ERROR });
-                                layer.map.removeLayer(layer);
-                            });
-                        });
-                        //marcamos el resultado como añadido
-                        li.classList.add(TC.Consts.classes.CHECKED);
-                        li.querySelector('h5').dataset.tooltip = self.getLocaleString('layerAlreadyAdded');
-                    }
-                    else {
-                        showProjectionChangeDialog(self, layer);
-                    }
-                }
+                    return this.getLayer(li.closest(".tc-ctl-lcat-search-group") && li.closest(".tc-ctl-lcat-search-group").dataset.serviceId);
+                });               
+               
             }));
 
             self.searchInit = true;
@@ -618,8 +573,8 @@ if (!TC.control.ProjectionSelector) {
                     childrenVisible = true;
                 }
             }
-            if (node.hasOwnProperty('isVisible')) {
-                node.isVisible = (!layer.names || !layer.names.length) || childrenVisible || node.isVisible;
+            if (Object.prototype.hasOwnProperty.call(node, 'isVisible')) {
+                node.isVisible = !layer.names || !layer.names.length || childrenVisible || node.isVisible;
             }
             return node.isVisible;
         };
@@ -630,7 +585,7 @@ if (!TC.control.ProjectionSelector) {
                     expandNode(node.children[i], level + 1);
                 }
             }
-        }
+        };
         makeNodeVisible(result);
         expandNode(result, 0);
         return result;
@@ -656,10 +611,20 @@ if (!TC.control.ProjectionSelector) {
     const updateControl = function (layer) {
         const self = this;
 
-        self.getLayerNodes(layer).forEach(function (node) {
+        const lisToCheck = self.map.workLayers
+            .filter(l => l.type === layer.type && l.url === layer.url) // Capas del mismo servicio
+            .map(l => self.getLayerNodes(l)) // Elementos li de esas capas
+            .flat();
+        lisToCheck.forEach(function (node) {
             node.classList.remove(TC.Consts.classes.LOADING);
             node.classList.add(TC.Consts.classes.CHECKED);
             node.querySelector('span').dataset.tooltip = self.getLocaleString('layerAlreadyAdded');
+        });
+        self.getLayerRootNode(layer).querySelectorAll("li.tc-ctl-lcat-node.tc-ctl-lcat-leaf.tc-checked").forEach(function (node) {
+            if (!lisToCheck.find(n => n === node)) {
+                node.classList.remove(TC.Consts.classes.CHECKED);
+                node.querySelector('span').dataset.tooltip=self.getLocaleString('clickToAddToMap');
+            }
         });
         _refreshResultList.call(self);
     };
@@ -687,7 +652,15 @@ if (!TC.control.ProjectionSelector) {
 
         node.querySelectorAll('span').forEach(function (span) {
             span.addEventListener('click', function (e) {
-                onSpanClick(e, self);
+                onSpanClick(e, self, function (li) {
+                    for (var i = 0, len = this._roots.length; i < len; i++) {
+                        const root = this._roots[i];
+                        if (root.contains(li)) {
+                            return this.getLayer(root.dataset.layerId);
+                        }
+                    }
+                    return self.getLayer(li.dataset.layerId);
+                });
             });
         });
 
@@ -701,18 +674,23 @@ if (!TC.control.ProjectionSelector) {
             if (name) {
                 span.classList.add(TC.Consts.classes.SELECTABLE);
                 var info = layer.getInfo(name);
-                if (!info.hasOwnProperty('abstract') && !info.hasOwnProperty('legend') && !info.hasOwnProperty('metadata')) {
+                if (!Object.prototype.hasOwnProperty.call(info, 'abstract') &&
+                    !Object.prototype.hasOwnProperty.call(info, 'legend') &&
+                    !Object.prototype.hasOwnProperty.call(info, 'metadata')) {
                     a.parentElement.removeChild(a);
                 }
                 else {                    
-                    a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    a.addEventListener('change', function (e) {
                         e.stopPropagation();
                         const elm = this;
-                        if (elm.classList.toggle(TC.Consts.classes.CHECKED)) {
+                        if (elm.checked) {
                             self.showLayerInfo(layer, name);
                         } else {
                             self.hideLayerInfo();
                         }
+                    }, { passive: true });
+                    a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                        e.stopPropagation();
                     }, { passive: true });
                 }
                 if (layer.compatibleLayers && layer.compatibleLayers.indexOf(name) < 0) {
@@ -731,14 +709,18 @@ if (!TC.control.ProjectionSelector) {
                 }
             }
             else {
-                a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                a.addEventListener('change', function (e) {
                     e.stopPropagation();
                     const elm = this;
-                    if (elm.classList.toggle(TC.Consts.classes.CHECKED)) {
+                    if (elm.checked) {
                         self.showLayerInfo(layer, name, span.innerText);
                     } else {
                         self.hideLayerInfo();
                     }
+                }, { passive: true });
+
+                a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    e.stopPropagation();
                 }, { passive: true });
             }
         });        
@@ -755,7 +737,7 @@ if (!TC.control.ProjectionSelector) {
 
         self.sourceLayers.unshift(layer);
         layer.getCapabilitiesPromise()
-            .then(function (result) {
+            .then(function (_result) {
 
                 self.getRenderedHtml(self.CLASS + '-branch', getLayerTree(this), function (html) {
                     var template = document.createElement('template');
@@ -779,14 +761,14 @@ if (!TC.control.ProjectionSelector) {
 
                     if (TC.Util.isFunction(callback)) {
                         // pasamos el callback el item 
-                        callback(self.sourceLayers[self.sourceLayers.map(function (l) { return l && l.id }).indexOf(this.id)]);
+                        callback(self.sourceLayers[self.sourceLayers.map(l => l && l.id).indexOf(this.id)]);
                     }
 
                 }.bind(this));
 
             }.bind(layer))
-            .catch(function (error) {
-                var index = self.layers.map(function (l) { return l.id }).indexOf(this.id);
+            .catch(function (_error) {
+                var index = self.layers.map(l => l.id).indexOf(this.id);
                 self.layers.splice(index, 1);
 
                 var errorMessage = self.getLocaleString("lyrCtlg.errorLoadingNode", { serviceName: this.title });
@@ -804,7 +786,7 @@ if (!TC.control.ProjectionSelector) {
 
         self.sourceLayers = [];
 
-        return self._set1stRenderPromise(new Promise(function (resolve, reject) {
+        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
             if (self.layers.length === 0) {
                 self.renderData({ layerTrees: [], enableSearch: false }, function () {
 
@@ -878,6 +860,7 @@ if (!TC.control.ProjectionSelector) {
             //else {
             if (infoObj) {
                 result = true;
+                info.dataset.serviceId = layer.id;
                 info.dataset.layerName = layerName;
                 info.classList.remove(TC.Consts.classes.HIDDEN);
                 self.getRenderedHtml(self.CLASS + '-info', infoObj)
@@ -885,7 +868,7 @@ if (!TC.control.ProjectionSelector) {
                         info.innerHTML = out;
                         info.querySelector('.' + self.CLASS + '-info-close').addEventListener(TC.Consts.event.CLICK, function () {
                             self.hideLayerInfo();
-                        }, { passive: true })
+                        }, { passive: true });
                     })
                     .catch(function (err) {
                         TC.error(err);
@@ -896,53 +879,60 @@ if (!TC.control.ProjectionSelector) {
         };
 
         self.div.querySelectorAll('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').forEach(function (btn) {
-            btn.classList.remove(TC.Consts.classes.CHECKED);
+            btn.checked = false;
         });        
 
-        var fncRecursiva_ = function (layer, title) {
+        const getInfoByTitle = function (layer, title) {
             if (layer.Title === title) {
                 return {
-                    title:title,
-                    abstract: layer.Abstract, metadata: (!layer.MetadataURL ? null : layer.MetadataURL.reduce(function (vi, va) {
+                    title: title,
+                    abstract: layer.Abstract,
+                    metadata: !layer.MetadataURL ? null : layer.MetadataURL.reduce(function (vi, va) {
                         vi.push({
                             format: va.Format,
                             formatDescription: TC.Util.getLocaleString(self.map.options.locale, TC.Util.getSimpleMimeType(va.Format)) ||
-                            TC.Util.getLocaleString(self.map.options.locale, 'viewMetadata'),
+                                TC.Util.getLocaleString(self.map.options.locale, 'viewMetadata'),
                             type: va.type,
                             url: va.OnlineResource
                         });
                         return vi;
-                    }, []))
+                    }, [])
+                };
+            }
+            if (layer.Layer) {
+                for (var i = 0; i < layer.Layer.length; i++) {
+                    const res = getInfoByTitle(layer.Layer[i], title);
+                    if (res) {
+                        return res;
+                    }
                 }
             }
-            else if (layer.Layer)
-                for (var i = 0; i < layer.Layer.length; i++) {
-                    const res = fncRecursiva_(layer.Layer[i], title);
-                    if (res) return res;
-                }
         };
 
-        const formatDescriptions = {};
         for (var i = 0, ii = self._roots.length; i < ii; i++) {
             const root = self._roots[i];
             if (root.dataset.layerId === layer.id) {
-                const as = root.querySelectorAll('.' + self.CLASS + '-btn-info');
-                for (var j = 0, jj = as.length; j < jj; j++) {
-                    const a = as[j];
-                    var n = a.parentElement.dataset.layerName;
+                const infoToggles = root.querySelectorAll('.' + self.CLASS + '-btn-info');
+                for (var j = 0, jj = infoToggles.length; j < jj; j++) {
+                    const infoToggle = infoToggles[j];
+                    var n = infoToggle.parentElement.dataset.layerName;
                     if (name && n === name) {
                         const info = layer.getInfo(name);
-                        const infoBtn = self.div.querySelector('li [data-layer-name="' + n + '"] > button.' + self.CLASS + '-btn-info');
-                        infoBtn.classList.toggle(TC.Consts.classes.CHECKED, toggleInfo(n, info));
+                        const infoBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > input[type="checkbox"].' + self.CLASS + '-btn-info');
+                        infoBtn.checked = toggleInfo(n, info);
+                        const infoSearchBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > input[type="checkbox"].' + self.CLASS + '-search-btn-info');
+                        if (infoSearchBtn) {
+                            infoSearchBtn.checked = infoBtn.checked;
+                        }
                         result = info;
                         break;
                     }
-                    const t = a.parentElement.querySelector('span').innerText;
+                    const t = infoToggle.parentElement.querySelector('span').innerText;
                     if (!name && title && t === title){
                         //buscar en el capapabilities por nombre de capa;
-                        const info = fncRecursiva_(layer.capabilities.Capability.Layer, title);
+                        const info = getInfoByTitle(layer.capabilities.Capability.Layer, title);
                         //const infoBtn = self.div.querySelector('li [data-layer-name="' + n + '"] > button.' + self.CLASS + '-btn-info');
-                        a.classList.toggle(TC.Consts.classes.CHECKED, toggleInfo(t, info));
+                        infoToggle.checked = toggleInfo(t, info);
                         result = info;
                         break;
                     }
@@ -972,7 +962,7 @@ if (!TC.control.ProjectionSelector) {
                                 span.setAttribute('title', self.getLocaleString('reprojectionNeeded'));
                             }
                             else {
-                                span.classList.remove(TC.Consts.classes.INCOMPATIBLE)
+                                span.classList.remove(TC.Consts.classes.INCOMPATIBLE);
                                 span.removeAttribute('title');
                             }
                         });
@@ -984,29 +974,32 @@ if (!TC.control.ProjectionSelector) {
     ctlProto.hideLayerInfo = function () {
         var self = this;
         self.div.querySelectorAll('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').forEach(function (btn) {
-            btn.classList.remove(TC.Consts.classes.CHECKED);
+            btn.checked = false;
         });
-        self.div.querySelector('.' + self.CLASS + '-info').classList.add(TC.Consts.classes.HIDDEN);
+        const infoPanel = self.div.querySelector('.' + self.CLASS + '-info');
+        delete infoPanel.dataset.serviceId;
+        delete infoPanel.dataset.layerName;
+        infoPanel.classList.add(TC.Consts.classes.HIDDEN);
     };
 
     ctlProto.addLayer = function (layer) {
         const self = this;
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             var fromLayerCatalog = [];
 
             if (self.options.layers && self.options.layers.length) {
                 fromLayerCatalog = self.options.layers.filter(function (l) {
                     var getMap = TC.Util.reqGetMapOnCapabilities(l.url);
-                    return getMap && getMap.replace(TC.Util.regex.PROTOCOL) == layer.url.replace(TC.Util.regex.PROTOCOL);
+                    return getMap && getMap.replace(TC.Util.regex.PROTOCOL) === layer.url.replace(TC.Util.regex.PROTOCOL);
                 });
             }
 
-            if (fromLayerCatalog.length == 0)
+            if (fromLayerCatalog.length === 0)
                 fromLayerCatalog = self.layers.filter(function (l) {
-                    return l.url.replace(TC.Util.regex.PROTOCOL) == layer.url.replace(TC.Util.regex.PROTOCOL);
+                    return l.url.replace(TC.Util.regex.PROTOCOL) === layer.url.replace(TC.Util.regex.PROTOCOL);
                 });
 
-            if (fromLayerCatalog.length == 0) {
+            if (fromLayerCatalog.length === 0) {
                 self.layers.unshift(layer);
                 layer.getCapabilitiesPromise().then(function () {
                     layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
@@ -1093,3 +1086,6 @@ if (!TC.control.ProjectionSelector) {
     };
 
 })();
+
+const LayerCatalog = TC.control.LayerCatalog;
+export default LayerCatalog;
