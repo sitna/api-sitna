@@ -9,7 +9,7 @@ Version: 1.4
 Modificado por Fernando Lacunza
 */
 
-var TC = TC || {};
+import TC from '../../TC';
 TC.UI = TC.UI || {};
 
 (function() {    
@@ -19,7 +19,7 @@ TC.UI = TC.UI || {};
     };
 
     var isFunction = function(fn) {
-        return typeof fn == 'function';
+        return typeof fn === 'function';
     };
 
     var extend = function() {
@@ -192,46 +192,49 @@ TC.UI = TC.UI || {};
                             buildItems(inputText, data, settings);
                         });
 
-                    } else {
-
-                        const beforeSend = function(jqXHR) {
-                            if (settings.cancelRequests) {
-                                if (openXHR[id]) {
-                                    // If we have an open XML HTTP Request for this autoComplete ID, abort it
-                                    openXHR[id].abort();
-                                } else {
-                                    // Set a loading indicator as a temporary stop-gap to the response time issue
-                                    settings.target.innerHTML = '<li><a href="#">Searching...</a></li>';
-
-                                    /* pendiente */
-                                    //settings.target.closest("fieldset").addClass("ui-search-active");
-                                }
-                                // Set this request to the open XML HTTP Request list for this ID
-                                openXHR[id] = jqXHR;
-                            }
-                        };
-
-                        const complete = function() {
-                            // Clear this ID's open XML HTTP Request from the list
-                            if (settings.cancelRequests) {
-                                openXHR[id] = null;
-                            }
-                        };
-
-                        var xhr = new XMLHttpRequest();
-                        xhr.overrideMimeType("application/json");
-                        xhr.open('GET', url, true);
-                        xhr.onload = function() {
-                            complete();
-                            var jsonResponse = JSON.parse(req.responseText);
-                            buildItems(inputText, jsonResponse, settings);
-                        };
-                        xhr.onerror = function(error) {
-                            complete();
-                        };
-                        beforeSend(xhr);
-                        xhr.send(null);                        
                     }
+                    // flacunza: No creo que se llegue nunca aquí, de hecho hay errores de variables no definidas
+                    // así que comento el código
+                    //else {
+
+                    //    const beforeSend = function(jqXHR) {
+                    //        if (settings.cancelRequests) {
+                    //            if (openXHR[id]) {
+                    //                // If we have an open XML HTTP Request for this autoComplete ID, abort it
+                    //                openXHR[id].abort();
+                    //            } else {
+                    //                // Set a loading indicator as a temporary stop-gap to the response time issue
+                    //                settings.target.innerHTML = '<li><a href="#">Searching...</a></li>';
+
+                    //                /* pendiente */
+                    //                //settings.target.closest("fieldset").addClass("ui-search-active");
+                    //            }
+                    //            // Set this request to the open XML HTTP Request list for this ID
+                    //            openXHR[id] = jqXHR;
+                    //        }
+                    //    };
+
+                    //    const complete = function() {
+                    //        // Clear this ID's open XML HTTP Request from the list
+                    //        if (settings.cancelRequests) {
+                    //            openXHR[id] = null;
+                    //        }
+                    //    };
+
+                    //    var xhr = new XMLHttpRequest();
+                    //    xhr.overrideMimeType("application/json");
+                    //    xhr.open('GET', url, true);
+                    //    xhr.onload = function() {
+                    //        complete();
+                    //        var jsonResponse = JSON.parse(req.responseText);
+                    //        buildItems(inputText, jsonResponse, settings);
+                    //    };
+                    //    xhr.onerror = function(error) {
+                    //        complete();
+                    //    };
+                    //    beforeSend(xhr);
+                    //    xhr.send(null);                        
+                    //}
                 }
             }
         },
@@ -295,3 +298,6 @@ TC.UI = TC.UI || {};
     };
 
 })(TC);
+
+const autocomplete = TC.UI.autocomplete;
+export default autocomplete;
