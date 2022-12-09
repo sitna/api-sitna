@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 /*
  * Polygon
@@ -60,3 +59,6 @@ TC.feature.Polygon.prototype.getLength = function (options) {
 TC.feature.Polygon.prototype.getArea = function (options) {
     return this.wrap.getArea(options);
 };
+
+const Polygon = TC.feature.Polygon;
+export default Polygon;

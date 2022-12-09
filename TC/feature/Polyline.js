@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 /*
  * Polyline
@@ -35,3 +34,6 @@ TC.feature.Polyline.prototype.setCoords = function (coords) {
 TC.feature.Polyline.prototype.getLength = function (options) {
     return this.wrap.getLength(options);
 };
+
+const Polyline = TC.feature.Polyline;
+export default Polyline;

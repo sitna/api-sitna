@@ -1,8 +1,11 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.feature.Point) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+import Point from './Point';
+import i18n from '../i18n';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
+TC.feature.Point = Point;
+TC.i18n = TC.i18n || i18n;
 
 /**
  * <p>Opciones de estilo de marcador (punto de mapa con icono). Esta clase no tiene constructor.</p>
@@ -76,3 +79,6 @@ TC.inherit(TC.feature.Marker, TC.feature.Point);
 TC.feature.Marker.prototype.STYLETYPE = 'marker';
 
 TC.feature.Marker.prototype.CLASSNAME = 'TC.feature.Marker';
+
+const Marker = TC.feature.Marker;
+export default Marker;

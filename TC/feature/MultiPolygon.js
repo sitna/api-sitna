@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 /*
  * MultiPolygon
@@ -61,3 +60,6 @@ TC.feature.MultiPolygon.prototype.setCoords = function (coords) {
 TC.feature.MultiPolygon.prototype.getLength = function (options) {
     return this.wrap.getLength(options);
 };
+
+const MultiPolygon = TC.feature.MultiPolygon;
+export default MultiPolygon;

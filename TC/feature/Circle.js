@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 TC.feature.Circle = function (coords, options) {
     const self = this;
@@ -31,9 +30,9 @@ TC.inherit(TC.feature.Circle, TC.Feature);
     featProto.setCoords = function (coords) {
         const self = this;
         if (Array.isArray(coords) &&
-            Array.isArray(coords[0])
-            && !Array.isArray(coords[0][0]) && !Array.isArray(coords[0][1])
-            && !Array.isArray(coords[1])) {
+            Array.isArray(coords[0]) && 
+            !Array.isArray(coords[0][0]) && !Array.isArray(coords[0][1]) && 
+            !Array.isArray(coords[1])) {
             return TC.Feature.prototype.setCoords.call(self, coords);
         }
         else {
@@ -42,3 +41,6 @@ TC.inherit(TC.feature.Circle, TC.Feature);
     };
 
 })();
+
+const Circle = TC.feature.Circle;
+export default Circle;

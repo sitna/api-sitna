@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 TC.feature.MultiPoint = function (coords, options) {
     var self = this;
@@ -39,3 +38,6 @@ TC.feature.MultiPoint.prototype.getCoords = function (options) {
     const coords = TC.Feature.prototype.getCoords.call(this, options);
     return coords;
 };
+
+const MultiPoint = TC.feature.MultiPoint;
+export default MultiPoint;

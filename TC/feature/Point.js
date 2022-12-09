@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 /**
  * <p>Opciones de estilo de punto. Esta clase no tiene constructor.</p>
@@ -74,3 +73,6 @@ TC.feature.Point.prototype.getCoords = function (options) {
     }
     return coords;
 };
+
+const Point = TC.feature.Point;
+export default Point;
