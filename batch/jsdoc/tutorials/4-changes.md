@@ -4,7 +4,7 @@
 - Añadido control `drawMeasureModify` de [dibujo y medición]{@linkplain DrawMeasureModifyOptions}.
 - Añadido control `WFSEdit` de [edición por medio de servicios WFS]{@linkplain WFSEditOptions}.
 - Añadido control `share` para compartir mapa.
-- Añadido control `gelocation` para [geoposicionamiento]{@linkplain GeolocationOptions}.
+- Añadido control `geolocation` para [geoposicionamiento]{@linkplain GeolocationOptions}.
 - Añadido control `offlineMapMaker` que permite [crear mapas que son utilizables sin conexión a Internet]{@linkplain OfflineMapMakerOptions}.
 - Añadido control `fullScreen` para la visualización a pantalla completa.
 - Añadido control `threed` para la visualización en 3D sobre un globo terráqueo.
