@@ -60,6 +60,7 @@ Mejoras planeadas a día de 13/12/2022:
 56. Ampliación de la lista de formatos de descarga de imágenes. ⚡
 57. Disponibilidad de las constricciones de acceso al servicio junto a la acreditación. ✨
 58. Enlace al texto descriptivo de los servicios WMS en la lista de capas disponibles. ✨
+59. Migración a OpenLayers 7. :arrow_up:
 
 :one: Mejora añadida en la [versión 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
 
