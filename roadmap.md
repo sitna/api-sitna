@@ -60,6 +60,7 @@ Planned upgrades as on 12/13/2022:
 56. Image download format list expansion. ⚡
 57. Service access constraints availability with attributions. ✨
 58. Links to WMS service abstracts at available layer catalog. ✨
+59. Migration to OpenLayers 7. :arrow_up:
 
 :one: Upgrade fulfilled with [version 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
 
