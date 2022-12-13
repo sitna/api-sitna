@@ -50,11 +50,11 @@ Planned upgrades as on 12/13/2022:
 46. Capability of accepting geographic coordinates when adding markers. ✨
 47. Example compilation page. 📚
 48. Sandboxes for examples. 📚
-49. Programmatic access to geographic file contents. ✨
+49. Feature reading from geographic documents loaded in memory. ✨
 50. Simple geolocation control. ✨
 51. Controls from the [map comparator of Navarre](https://comparamapas.navarra.es/?lang=en-US). ✨
 52. Programmatic access to drawn features. ✨
-53. Programmatic feature download to a geographic document file. ✨
+53. Feature writing to geographic documents loaded in memory. ✨
 54. Vector tiles support. ✨
 55. Georeferenced image loading. ✨
 56. Image download format list expansion. ⚡
