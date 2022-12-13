@@ -50,11 +50,11 @@ Mejoras planeadas a día de 13/12/2022:
 46. Capacidad de admitir coordenadas geográficas al añadir marcadores. ✨
 47. Página recopiladora de ejemplos. 📚
 48. Sandbox para los ejemplos. 📚
-49. Acceso programático al contenido de un archivo geográfico. ✨
+49. Lectura de entidades geográficas desde documentos geográficos cargados en memoria. ✨
 50. Control simple de geoposicionamiento. ✨
 51. Controles del [comparador de mapas de Navarra](https://comparamapas.navarra.es/). ✨
 52. Acceso programático a las entidades dibujadas. ✨
-53. Descarga programática de entidades geográficas en un archivo geográfico. ✨
+53. Escritura de entidades geográficas a documentos geográficos cargados en memoria. ✨
 54. Soporte a Vector Tiles. ✨
 55. Carga de imágenes georreferenciadas. ✨
 56. Ampliación de la lista de formatos de descarga de imágenes. ⚡
