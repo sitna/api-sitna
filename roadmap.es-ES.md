@@ -1,7 +1,7 @@
 # Hoja de ruta
 *Read this in [English](./roadmap.md).*
 
-Mejoras planeadas a día de 12/12/2022:
+Mejoras planeadas a día de 14/12/2022:
 1.	~~Eliminación de la dependencia de jQuery.~~ :heavy_minus_sign: :one:
 2.	~~Eliminación de la dependencia de Modernizr.~~ :heavy_minus_sign: :one:
 3.	~~Migración a OpenLayers 5.~~ :arrow_up: :one:
@@ -50,11 +50,12 @@ Mejoras planeadas a día de 12/12/2022:
 46. Capacidad de admitir coordenadas geográficas al añadir marcadores. ✨
 47. Página recopiladora de ejemplos. 📚
 48. Sandbox para los ejemplos. 📚
-49. Acceso programático al contenido de un archivo geográfico. ✨
+49. Lectura de entidades geográficas desde documentos geográficos cargados en memoria. ✨
 50. Control simple de geoposicionamiento. ✨
 51. Controles del [comparador de mapas de Navarra](https://comparamapas.navarra.es/). ✨
 52. Acceso programático a las entidades dibujadas. ✨
-53. Soporte a Vector Tiles. ✨
+53. Escritura de entidades geográficas a documentos geográficos cargados en memoria. ✨
+54. Soporte a Vector Tiles. ✨
 55. Carga de imágenes georreferenciadas. ✨
 56. Ampliación de la lista de formatos de descarga de imágenes. ⚡
 57. Disponibilidad de las constricciones de acceso al servicio junto a la acreditación. ✨

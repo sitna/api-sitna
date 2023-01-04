@@ -1,7 +1,7 @@
 # Roadmap
 *Leer esto en [español](./roadmap.es-ES.md).*
 
-Planned upgrades as on 12/12/2022:
+Planned upgrades as on 12/14/2022:
 1.	~~Removal of jQuery dependency.~~ :heavy_minus_sign: :one:
 2.	~~Removal of Modernizr dependency.~~ :heavy_minus_sign: :one:
 3.	~~Migration to OpenLayers 5.~~ :arrow_up: :one:
@@ -50,11 +50,12 @@ Planned upgrades as on 12/12/2022:
 46. Capability of accepting geographic coordinates when adding markers. ✨
 47. Example compilation page. 📚
 48. Sandboxes for examples. 📚
-49. Programmatic access to geographic file contents. ✨
+49. Feature reading from geographic documents loaded in memory. ✨
 50. Simple geolocation control. ✨
 51. Controls from the [map comparator of Navarre](https://comparamapas.navarra.es/?lang=en-US). ✨
 52. Programmatic access to drawn features. ✨
-53. Vector tiles support. ✨
+53. Feature writing to geographic documents loaded in memory. ✨
+54. Vector tiles support. ✨
 55. Georeferenced image loading. ✨
 56. Image download format list expansion. ⚡
 57. Service access constraints availability with attributions. ✨
