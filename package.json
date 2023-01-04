@@ -1,15 +1,15 @@
 {
   "name": "sitna",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "API de creación de mapas JavaScript",
   "main": "gulpfile.js",
   "directories": {
     "doc": "doc"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "gulp unitTests",
     "docs": "jsdoc -c ./batch/jsdoc/conf.json",
-    "build": "gulp",
+    "build": "gulp noTests --openssl-legacy-provider",
     "start": "webpack serve --open --config ./webpack/webpack.config.debug.js",
     "wp_pro": "webpack --config ./webpack/webpack.config.js",
     "wp_dbg": "webpack --config ./webpack/webpack.config.debug.js"
@@ -44,9 +44,8 @@
     "string-replace-loader": "^3.1.0",
     "strip-pragma-loader": "^1.0.0",
     "style-loader": "^2.0.0",
-    "uglifyjs-webpack-plugin": "^2.2.0",
     "url-loader": "^4.1.1",
-    "webpack": "^5.68.0",
+    "webpack": "^5.75.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4",
     "webpack-stream": "^5.2.1"
@@ -55,9 +54,7 @@
     "@aleffabricio/shp-write": "^1.0.3",
     "@sitna/parsedbf": "^1.0.2",
     "@sitna/shpjs": "^3.4.9",
-    "acorn": "^7.1.1",
-    "acorn-dynamic-import": "^4.0.0",
-    "cesium": "^1.63.1",
+    "cesium": "1.63.1",
     "draggabilly": "^2.2.0",
     "handlebars": "^4.7.7",
     "interactjs": "^1.10.11",
@@ -65,7 +62,7 @@
     "jszip": "^3.7.1",
     "loadjs": "^4.2.0",
     "localforage": "^1.7.3",
-    "ol": "^6.12.0",
+    "ol": "6.12.0",
     "pdfmake": "^0.2.4",
     "proj4": "^2.7.5",
     "sortablejs": "^1.10.1",
