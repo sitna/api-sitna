@@ -1,3 +1,7 @@
+### [3.0.1](https://github.com/sitna/api-sitna/releases/tag/v3.0.1)
+- Corrección de dependencias de proyecto.
+- Corrección de error en el generador de documentación.
+
 ### [3.0.0](https://github.com/sitna/api-sitna/releases/tag/v3.0.0)
 - Añadida clase {@link SITNA.feature.Marker} para representar marcadores en un mapa.
 - Añadido control `download` para descarga de mapas.
