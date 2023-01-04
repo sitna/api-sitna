@@ -642,6 +642,7 @@
     <Content Include="lib\color-picker\README.md" />
     <Content Include=".eslintrc" />
     <Content Include="libman.json" />
+    <Content Include=".npmrc" />
     <None Include="Properties\PublishProfiles\local.pubxml" />
     <Content Include="TC\layout\pamplona\config.json" />
     <Content Include="TC\layout\pamplona\resources\es-ES.json" />
