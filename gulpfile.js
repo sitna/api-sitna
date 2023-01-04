@@ -85,10 +85,6 @@ var sitnaBuild = {
 
 };
 
-function timestamp(cb) {
-    fs.writeFile(sitnaBuild.targetPath + 'timestamp.txt', (new Date()).toLocaleString() + os.EOL + os.userInfo().username, cb);
-};
-
 function buildCsprojFilter(cb) {
     fs.readFile('./API.csproj', 'utf8', (err, data) => {
         if (err) throw err;
@@ -671,7 +667,6 @@ const parallelTasks = gulp.parallel(
 
 const noTests = gulp.series(
     clean,
-    timestamp,
     buildCsprojFilter,
     //compileTemplates,    
     //bundleOLDebug,
