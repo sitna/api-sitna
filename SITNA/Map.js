@@ -1,15 +1,11 @@
 var SITNA = window.SITNA || {};
 import TC from '../TC';
-import Consts from '../TC/Consts';
 import { Cfg } from '../TC/Cfg';
-import Util from '../TC/Util';
 import BasicMap from '../TC/Map';
 import Search from '../TC/control/Search';
 import filter from '../TC/filter';
 TC.Map = BasicMap;
-SITNA.Consts = Consts;
 SITNA.Cfg = TC.Cfg = Cfg;
-TC.Util = Util;
 TC.filter = filter;
 TC.control = TC.control || {};
 TC.control.Search = Search;
