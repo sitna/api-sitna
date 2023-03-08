@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.getMunicipalities</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .divSelect {
+            top: 135px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getMunicipalities">SITNA.Map.getMunicipalities</a>.</p>
+        <p>Opciones del método.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions divSelect">
+        <div>
+            Municipios
+            <select id="municipality" onchange="applyFilter()">
+                <option value="-1">Seleccione...</option>
+            </select>
+
+        </div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
+
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getMunicipalities(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#municipality").appendChild(fragment);
+        });
+    });
+
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#municipality").querySelector("option:checked").value;
+        if (id == -1)
+            map.removeSearch();
+        else {
+            map.searchMunicipality(id, function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados");
+                }
+            });
+        }
+    };
+    </script>
+
+</body>
+</html>

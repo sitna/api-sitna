@@ -1,0 +1,63 @@
+{{#if singleFeature}}
+    {{#each attributes}}
+        {{#if (getHeader name)}}
+<{{getHeader name}}>{{value}}</{{getHeader name}}>
+        {{/if}}
+    {{/each}}
+{{/if}}
+<table class="tc-attr">
+    <tbody>
+{{#each attributes}}
+    {{#unless (getHeader name)}}
+        {{#if (isVideoAttribute name value)}}
+        <tr>
+            <th class="tc-ctl-finfo-attr" colspan="2">{{removeSpecialAttributeTag name}}</th>
+        </tr>
+        <tr>
+            <td class="tc-ctl-finfo-val tc-video-attr" colspan="2">
+                {{> tc-ctl-finfo-attr-video name=name value=value }}
+            </td>
+        </tr>                                                            
+        {{else}}
+            {{#if (isImageAttribute name value)}}
+        <tr>
+            <th class="tc-ctl-finfo-attr" colspan="2">{{removeSpecialAttributeTag name}}</th>
+        </tr>
+        <tr>
+            <td class="tc-ctl-finfo-val tc-img-attr" colspan="2">
+                {{> tc-ctl-finfo-attr-image name=name value=value }}
+            </td>
+        </tr>                                                            
+            {{else}}
+                {{#if (isAudioAttribute name value)}}
+        <tr>
+            <th class="tc-ctl-finfo-attr" colspan="2">{{removeSpecialAttributeTag name}}</th>
+        </tr>
+        <tr>
+            <td class="tc-ctl-finfo-val tc-audio-attr" colspan="2">
+                    {{> tc-ctl-finfo-attr-audio name=name value=value }}
+            </td>
+        </tr>                                                            
+                {{else}}
+                    {{#if (isEmbedAttribute name value)}}
+        <tr>
+            <th class="tc-ctl-finfo-attr" colspan="2">{{removeSpecialAttributeTag name}}</th>
+        </tr>
+        <tr>
+            <td class="tc-ctl-finfo-val tc-embed-attr" colspan="2">
+                        {{> tc-ctl-finfo-attr-embed name=name value=value }}
+            </td>
+        </tr>                                                            
+                    {{else}}
+        <tr>
+            <th class="tc-ctl-finfo-attr">{{name}}</th>
+            <td class="tc-ctl-finfo-val">{{#unless (eq value null)}}{{> tc-ctl-finfo-object value }}{{/unless}}</td>                                                               
+        </tr>
+                    {{/if}}
+                {{/if}}
+            {{/if}}
+        {{/if}}
+    {{/unless}}
+{{/each}}
+    </tbody>
+</table>

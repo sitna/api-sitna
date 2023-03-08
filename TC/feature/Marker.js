@@ -1,8 +1,11 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.feature.Point) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/feature/Point');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+import Point from './Point';
+import i18n from '../i18n';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
+TC.feature.Point = Point;
+TC.i18n = TC.i18n || i18n;
 
 /**
  * <p>Opciones de estilo de marcador (punto de mapa con icono). Esta clase no tiene constructor.</p>
@@ -60,19 +63,14 @@ if (!TC.feature.Point) {
  * available options: url, cssClass, group, width, height, anchor
  */
 TC.feature.Marker = function (coords, options) {
-    var self = this;
+    const self = this;
 
     TC.Feature.apply(self, arguments);
 
-    if (self.wrap.isNative(coords)) {
-        coords._wrap = self.wrap;
-        self.wrap.feature = coords;
-    }
-    else {
-        var opts = self.options = $.extend(true, self.options, TC.Cfg.styles.marker, options);
+    if (!self.wrap.isNative(coords)) {
         var locale = self.layer && self.layer.map ? self.layer.map.options.locale: TC.Cfg.locale;
-        self.title = opts.title || TC.i18n[locale][TC.Consts.MARKER];
-        self.wrap.createMarker(coords, opts);
+        self.title = self.options.title || TC.i18n[locale][TC.Consts.MARKER];
+        self.wrap.createMarker(coords, options);
     }
 };
 
@@ -81,3 +79,6 @@ TC.inherit(TC.feature.Marker, TC.feature.Point);
 TC.feature.Marker.prototype.STYLETYPE = 'marker';
 
 TC.feature.Marker.prototype.CLASSNAME = 'TC.feature.Marker';
+
+const Marker = TC.feature.Marker;
+export default Marker;

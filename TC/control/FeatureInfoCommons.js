@@ -1,72 +1,123 @@
-﻿TC.control = TC.control || {};
+﻿
+import TC from '../../TC';
+import Consts from '../Consts';
+import Click from './Click';
+import Print from './Print';
+import infoShare from './infoShare';
 
-if (!TC.control.Click) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/Click');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.Click = Click;
+TC.control.Print = Print;
+TC.control.infoShare = infoShare;
 
 TC.Consts.event.POPUP = TC.Consts.event.POPUP || 'popup.tc';
 TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
 TC.Consts.event.DRAWCHART = TC.Consts.event.DRAWCHART || 'drawchart.tc';
 TC.Consts.event.DRAWTABLE = TC.Consts.event.DRAWTABLE || 'drawtable.tc';
 TC.Consts.event.RESULTSPANELCLOSE = TC.Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
+TC.Consts.event.FEATUREHIGHLIGHT = 'featurehighlight.tc';
+TC.Consts.event.FEATUREDOWNPLAY = 'featuredownplay.tc';
 
 TC.control.FeatureInfoCommons = function () {
     const self = this;
     TC.control.Click.apply(self, arguments);
 
-    const cs = self._classSelector = '.' + self.CLASS;
     self._selectors = {
-        LIST_ITEM: 'ul' + cs + '-features li'
+        LIST_ITEM: `ul.${self.CLASS}-features li`,
+        SHOW_ALL_CHECKBOX: `.${self.CLASS}-btn input[type="checkbox"].${self.CLASS}-btn-show-all`,
+        ZOOM_ALL_BUTTON: `.${self.CLASS}-btn .${self.CLASS}-btn-zoom-all`,
+        DEL_ALL_BUTTON: `.${self.CLASS}-btn .${self.CLASS}-btn-del-all`
     };
 
     self.resultsLayer = null;
     self.filterLayer = null;
-    self._layersDeferred = $.Deferred();
+    self._layersPromise = null;
     self.filterFeature = null;
     self.info = null;
+    self._infoHistory = {};
     self.popup = null;
     self.resultsPanel = null;
     self.lastFeatureCount = null;
     self.exportsState = true;
-};
 
-TC.control.FeatureInfoCommons.displayMode = {
-    POPUP: 'popup',
-    RESULTS_PANEL: 'resultsPanel'
+    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
+    if (!self.options.dialogDiv) {
+        document.body.appendChild(self._dialogDiv);
+    }
 };
 
 (function () {
 
     var layerCount = function (ctl) {
-        return ctl.info.services ?
+        return ctl.info && ctl.info.services ?
             ctl.info.services.reduce(function (sCount, service) {
-                return sCount + service.layers.reduce(function (lCount, layer) {
+                return sCount + service.layers.reduce(function (lCount, _layer) {
                     return lCount + 1;
                 }, 0);
             }, 0) : 0;
     };
 
     TC.inherit(TC.control.FeatureInfoCommons, TC.control.Click);
+    TC.mix(TC.control.FeatureInfoCommons, TC.control.infoShare);
 
     var ctlProto = TC.control.FeatureInfoCommons.prototype;
 
     ctlProto.CLASS = 'tc-ctl-finfo';
 
-    ctlProto.TITLE_SEPARATOR = ' • ';
+    ctlProto.CURRENT_CLASS = 'tc-current';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/FeatureInfo.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.x(ctx.get(["elevation"], false), ctx, { "block": body_1 }, {}).w("<ul class=\"tc-ctl-finfo-services\">").s(ctx.get(["services"], false), ctx, { "else": body_4, "block": body_6 }, {}).w("</ul>").x(ctx.get(["featureCount"], false), ctx, { "block": body_30 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-coords\"><span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs\">CRS: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["crs"], false), ctx, "h").w("</span></span> ").x(ctx.get(["isGeo"], false), ctx, { "else": body_2, "block": body_3 }, {}).w(" <span class=\"tc-ctl-finfo-coords-pair\">").h("i18n", ctx, {}, { "$key": "ele" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.get(["elevation"], false), ctx, "h").w(" m</span></span></div>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">x: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x\">y: <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> "); } body_2.__dustBody = !0; function body_3(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat\">").h("i18n", ctx, {}, { "$key": "lat" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "1"]), ctx, "h").w("</span></span> <span class=\"tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon\">").h("i18n", ctx, {}, { "$key": "lon" }).w(": <span class=\"tc-ctl-finfo-coords-val\">").f(ctx.getPath(false, ["coords", "0"]), ctx, "h").w("</span></span> "); } body_3.__dustBody = !0; function body_4(chk, ctx) { return chk.nx(ctx.get(["elevation"], false), ctx, { "block": body_5 }, {}); } body_4.__dustBody = !0; function body_5(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noData" }).w("</li>"); } body_5.__dustBody = !0; function body_6(chk, ctx) { return chk.w("<li><h3>").x(ctx.get(["title"], false), ctx, { "else": body_7, "block": body_10 }, {}).w("</h3><div class=\"tc-ctl-finfo-service-content\">").s(ctx.get(["hasLimits"], false), ctx, { "else": body_11, "block": body_29 }, {}).w("</div></li>"); } body_6.__dustBody = !0; function body_7(chk, ctx) { return chk.x(ctx.getPath(false, ["layers", "0", "title"]), ctx, { "else": body_8, "block": body_9 }, {}); } body_7.__dustBody = !0; function body_8(chk, ctx) { return chk.f(ctx.getPath(false, ["layer", "name"]), ctx, "h"); } body_8.__dustBody = !0; function body_9(chk, ctx) { return chk.f(ctx.getPath(false, ["layers", "0", "title"]), ctx, "h"); } body_9.__dustBody = !0; function body_10(chk, ctx) { return chk.f(ctx.get(["title"], false), ctx, "h"); } body_10.__dustBody = !0; function body_11(chk, ctx) { return chk.w("<ul class=\"tc-ctl-finfo-layers\">").s(ctx.get(["layers"], false), ctx, { "else": body_12, "block": body_13 }, {}).w("</ul>"); } body_11.__dustBody = !0; function body_12(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataAtThisService" }).w("</li>"); } body_12.__dustBody = !0; function body_13(chk, ctx) { return chk.w("<li><h4><span class=\"tc-ctl-finfo-layer-n\">").f(ctx.getPath(false, ["features", "length"]), ctx, "h").w("</span> ").s(ctx.get(["path"], false), ctx, { "block": body_14 }, {}).w("</h4> <div class=\"tc-ctl-finfo-layer-content\"><ul class=\"tc-ctl-finfo-features\">").s(ctx.get(["features"], false), ctx, { "else": body_16, "block": body_17 }, {}).w("</ul></div></li>"); } body_13.__dustBody = !0; function body_14(chk, ctx) { return chk.f(ctx.getPath(true, []), ctx, "h").h("sep", ctx, { "block": body_15 }, {}); } body_14.__dustBody = !0; function body_15(chk, ctx) { return chk.w(" &bull; "); } body_15.__dustBody = !0; function body_16(chk, ctx) { return chk.w("<li class=\"tc-ctl-finfo-empty\">").h("i18n", ctx, {}, { "$key": "noDataInThisLayer" }).w("</li>"); } body_16.__dustBody = !0; function body_17(chk, ctx) { return chk.w("<li>").x(ctx.get(["rawContent"], false), ctx, { "else": body_18, "block": body_23 }, {}).w("</li>"); } body_17.__dustBody = !0; function body_18(chk, ctx) { return chk.x(ctx.get(["error"], false), ctx, { "else": body_19, "block": body_22 }, {}); } body_18.__dustBody = !0; function body_19(chk, ctx) { return chk.w("<h5>").f(ctx.get(["id"], false), ctx, "h").w("</h5><table").x(ctx.get(["geometry"], false), ctx, { "block": body_20 }, {}).w("><tbody>").s(ctx.get(["attributes"], false), ctx, { "block": body_21 }, {}).w("</tbody></table>"); } body_19.__dustBody = !0; function body_20(chk, ctx) { return chk.w(" title=\"").h("i18n", ctx, {}, { "$key": "clickToShowOnMap" }).w("\""); } body_20.__dustBody = !0; function body_21(chk, ctx) { return chk.w("<tr><th class=\"tc-ctl-finfo-attr\">").f(ctx.get(["name"], false), ctx, "h").w("</th><td class=\"tc-ctl-finfo-val\">").f(ctx.get(["value"], false), ctx, "h").w("</td></tr>"); } body_21.__dustBody = !0; function body_22(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").h("i18n", ctx, {}, { "$key": "fi.error" }).w("<span class=\"tc-ctl-finfo-error-text\">").f(ctx.get(["error"], false), ctx, "h").w("</span></span>"); } body_22.__dustBody = !0; function body_23(chk, ctx) { return chk.w("<h5>").h("i18n", ctx, {}, { "$key": "feature" }).w("</h5>").h("eq", ctx, { "else": body_24, "block": body_25 }, { "key": ctx.get(["rawFormat"], false), "value": "text/html" }); } body_23.__dustBody = !0; function body_24(chk, ctx) { return chk.w("<pre>").f(ctx.get(["rawContent"], false), ctx, "h").w("</pre>"); } body_24.__dustBody = !0; function body_25(chk, ctx) { return chk.w(" ").x(ctx.get(["expandUrl"], false), ctx, { "block": body_26 }, {}); } body_25.__dustBody = !0; function body_26(chk, ctx) { return chk.h("ne", ctx, { "else": body_27, "block": body_28 }, { "key": ctx.get(["expandUrl"], false), "value": "" }); } body_26.__dustBody = !0; function body_27(chk, ctx) { return chk.w("<iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" />"); } body_27.__dustBody = !0; function body_28(chk, ctx) { return chk.w("<div class=\"tc-ctl-finfo-features-iframe-cnt\"><iframe src=\"").f(ctx.get(["rawUrl"], false), ctx, "h").w("\" /><a class=\"tc-ctl-finfo-open\" onclick=\"window.open('").f(ctx.get(["expandUrl"], false), ctx, "h").w("', '_blank')\" title=\"").h("i18n", ctx, {}, { "$key": "expand" }).w("\"></a></div>"); } body_28.__dustBody = !0; function body_29(chk, ctx) { return chk.w("<span class=\"tc-ctl-finfo-errors\">").f(ctx.get(["hasLimits"], false), ctx, "h").w("</span>"); } body_29.__dustBody = !0; function body_30(chk, ctx) { return chk.h("gt", ctx, { "block": body_31 }, { "key": ctx.get(["featureCount"], false), "value": "1", "type": "number" }); } body_30.__dustBody = !0; function body_31(chk, ctx) { return chk.w("<a class=\"tc-ctl-btn tc-ctl-finfo-btn-prev\">").h("i18n", ctx, {}, { "$key": "previous" }).w("</a><div class=\"tc-ctl-finfo-counter\"><span class=\"tc-ctl-finfo-counter-current\"></span>/").f(ctx.get(["featureCount"], false), ctx, "h").w("</div><a class=\"tc-ctl-btn tc-ctl-finfo-btn-next\">").h("i18n", ctx, {}, { "$key": "next" }).w("</a>"); } body_31.__dustBody = !0; return body_0 };
-    }
+    ctlProto.TITLE_SEPARATOR = ' › ';
+    ctlProto.DEFAULT_STROKE_COLOR = '#0000ff';
+    
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-finfo.hbs";
+    ctlProto.template[ctlProto.CLASS + "-attr"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr.hbs";
+    ctlProto.template[ctlProto.CLASS + "-object"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-object.hbs";
+    ctlProto.template[ctlProto.CLASS + "-buttons"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-buttons.hbs";
+    ctlProto.template[ctlProto.CLASS + "-dialog"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-dialog.hbs";
+    ctlProto.template[ctlProto.CLASS + "-attr-val"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-val.hbs";
+    ctlProto.template[ctlProto.CLASS + "-attr-video"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-video.hbs";
+    ctlProto.template[ctlProto.CLASS + "-attr-image"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-image.hbs";
+    ctlProto.template[ctlProto.CLASS + "-attr-audio"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-audio.hbs";
+    ctlProto.template[ctlProto.CLASS + "-attr-embed"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-embed.hbs";
 
-    ctlProto.register = function (map) {
+
+    const setShowAllUI = function () {
         const self = this;
-        const deferred = $.Deferred();
+        const menu = self.getMenuTarget();
+        const showAllCb = menu.querySelector(self._selectors.SHOW_ALL_CHECKBOX);
+        if (showAllCb) {
+            showAllCb.checked = true;
+            const text = self.getLocaleString('doNotShowOnMapAllResults');
+            showAllCb.innerHTML = text;
+            showAllCb.setAttribute('title', text);
+        }
+        menu.querySelector(self._selectors.ZOOM_ALL_BUTTON).classList.remove(TC.Consts.classes.HIDDEN);
+        menu.querySelector(self._selectors.DEL_ALL_BUTTON).classList.remove(TC.Consts.classes.HIDDEN);
+    };
 
-        const result = TC.control.Click.prototype.register.call(self, map);
+    const setNotShowAllUI = function () {
+        const self = this;
+        const menu = self.getMenuTarget();
+        const showAllCb = menu.querySelector(self._selectors.SHOW_ALL_CHECKBOX);
+        if (showAllCb) {
+            showAllCb.checked = false;
+            const text = self.getLocaleString('showOnMapAllResults');
+            showAllCb.innerHTML = text;
+            showAllCb.setAttribute('title', text);
+            menu.querySelector(self._selectors.ZOOM_ALL_BUTTON).classList.add(TC.Consts.classes.HIDDEN);
+            menu.querySelector(self._selectors.DEL_ALL_BUTTON).classList.add(TC.Consts.classes.HIDDEN);
+        }
+    };
 
+    ctlProto.register = async function (map) {
+        const self = this;
+
+        const clickRegisterPromise = TC.control.Click.prototype.register.call(self, map);
         self._createLayers();
 
         map.loaded(function () {
@@ -74,39 +125,43 @@ TC.control.FeatureInfoCommons.displayMode = {
             if (shareCtl) {
                 self.loadSharedFeature(shareCtl.loadParamFeature());
             }
+            self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || TC.Consts.infoContainer.POPUP);
         });
-
-        self.displayMode = self.options.displayMode || TC.control.FeatureInfoCommons.displayMode.POPUP;
-        self.setDisplayMode(self.displayMode);
 
         map
             .on(TC.Consts.event.POPUPHIDE + ' ' + TC.Consts.event.RESULTSPANELCLOSE, function (e) {
                 if (e.control === self.getDisplayControl() && self.resultsLayer) {
-                    if (self.highlightedFeature) {
-                        self.resultsLayer.removeFeature(self.highlightedFeature);
+                    if (self.highlightedFeature && !self.options.persistentHighlights) {
+                        self.downplayFeature(self.highlightedFeature);
                         self.highlightedFeature = null;
                     }
-                    if (!self.querying) {
-                        self.filterLayer.clearFeatures();
+                    if (!self.querying && e.feature) {
+                        self.filterLayer.removeFeature(e.feature);
                     }
                 }
             })
-            .on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
-                self.highlightedFeature = null;
-            })
+            //.on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+            //    self.highlightedFeature = null;
+            //})
             .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function (e) {
-                if (e.control.currentFeature !== self.filterFeature) {
-                    self.highlightedFeature = e.control.currentFeature;
+                const control = e.control;
+                if (control.currentFeature !== self.filterFeature) {
+                    self.highlightedFeature = control.currentFeature;
                 }
-                self._decorateDisplay(e.control);
+
+                // GLS: si la feature es resultado de GFI decoramos
+                if (e.control.caller === self) {
+                    self._decorateDisplay(control);
+                }
+
             })
             .on(TC.Consts.event.DRAWCHART, function (e) {
                 setTimeout(function () {
                     self.highlightedFeature = e.control.currentFeature;
                 }, 50);
             })
-            .on(TC.Consts.event.LAYERREMOVE, function (e) {
-                if (self.info && self.info.services) {
+            .on(TC.Consts.event.LAYERREMOVE, function () {
+                if (Object.keys(self._infoHistory).length) {
                     const services = {};
                     self.map.workLayers
                         .filter(function (layer) {
@@ -114,39 +169,74 @@ TC.control.FeatureInfoCommons.displayMode = {
                         })
                         .forEach(function (layer) {
                             const names = services[layer.url] || [];
-                            services[layer.url] = names.concat(layer.getDisgregatedLayerNames())
+                            services[layer.url] = names.concat(layer.getDisgregatedLayerNames());
                         });
-                    for (var i = 0, len = self.info.services.length; i < len; i++) {
-                        const service = self.info.services[i];
-                        const mapNames = services[service.mapLayers[0].url] || [];
-                        const infoNames = service.layers.reduce(function (arr, layer) {
-                            return arr.concat(layer.name);
-                        }, []);
-                        if (!infoNames.every(function (name) {
-                            return mapNames.indexOf(name) >= 0;
-                        })) {
-                            // En el objeto info hay capas que no están ya en el mapa: borramos resultados.
-                            self.downplayFeatures();
-                            self.info = null;
-                            self.closeResults();
-                            break;
+                    let featuresDeleted = false;
+                    for (let url in self._infoHistory) {
+                        const historyService = self._infoHistory[url];
+                        if (Object.prototype.hasOwnProperty.call(services, url)) {
+                            const service = services[url];
+                            for (let name in historyService) {
+                                const historyLayer = historyService[name];
+                                if (service.indexOf(name) < 0) {
+                                    historyLayer.slice().forEach(f => self.downplayFeature(f));
+                                    historyLayer.length = 0;
+                                    featuresDeleted = true;
+                                }
+                            }
+                        }
+                        else {
+                            for (let name in historyService) {
+                                const historyLayer = historyService[name];
+                                historyLayer.slice().forEach(f => self.downplayFeature(f));
+                                featuresDeleted = true;
+                            }
+                            delete self._infoHistory[url];
+                        }
+                    }
+                    if (featuresDeleted) {
+                        self.closeResults();
+                    }
+                }
+            })
+            .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                // Quitamos del historial de resaltes las entidades que se borran
+                if (e.layer === self.resultsLayer) {
+                    for (let url in self._infoHistory) {
+                        const historyService = self._infoHistory[url];
+                        for (let name in historyService) {
+                            const historyLayer = historyService[name];
+                            historyService[name] = historyLayer.filter(f => f !== e.feature);
                         }
                     }
                 }
             })
-            .on(TC.Consts.event.VIEWCHANGE, function () {
-                if (map.view === TC.Consts.view.PRINTING) {
-                    self.closeResults();
+            .on(TC.Consts.event.FEATURESCLEAR, function (e) {
+                if (e.layer === self.resultsLayer) {
+                    self._infoHistory = {};
                 }
+            })
+            .on(TC.Consts.event.VIEWCHANGE, function (_e) {
+                self.closeResults();
             });
 
-        return result;
+        await clickRegisterPromise;
+        if (self.options.share) {
+            await self.getShareDialog();
+        }
+        return self;
     };
 
-    ctlProto.render = function (callback) {
+    ctlProto.render = function () {
         const self = this;
         // Este div se usa como buffer, así que no debe ser visible.
-        self._$div.addClass(TC.Consts.classes.HIDDEN);
+        self.div.classList.add(TC.Consts.classes.HIDDEN);
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', {
+            checkboxId: self.getUID(),
+            elevation: self.options.displayElevation
+        }, function (html) {
+            self._dialogDiv.innerHTML = html;
+        }));
     };
 
     ctlProto.responseCallback = function (options) {
@@ -155,17 +245,38 @@ TC.control.FeatureInfoCommons.displayMode = {
 
         if (self.filterFeature) {
             self.info = { services: options.services };
+            if (self.options.persistentHighlights) {
+                // Eliminamos de la respuesta las entidades que ya están resaltadas
+                for (let url in self._infoHistory) {
+                    const infoService = (self.info.services || []).find(s => s.url === url);
+                    if (infoService) {
+                        const historyService = self._infoHistory[url];
+                        for (let name in historyService) {
+                            const infoLayer = infoService.layers.filter(l => l.name === name)[0];
+                            if (infoLayer) {
+                                const historyLayer = historyService[name];
+                                historyLayer.forEach(function (feature) {
+                                    const id = feature.wrap.getId();
+                                    const idx = infoLayer.features.findIndex(f => f.wrap.getId() === id);
+                                    if (idx !== -1) {
+                                        infoLayer.features.splice(idx, 1);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if (!options.featureCount) {
             self.lastFeatureCount = 0;
-            self.map.$events.trigger($.Event(TC.Consts.event.NOFEATUREINFO, { control: self }));
-            self.closeResults();
+            self.map.trigger(TC.Consts.event.NOFEATUREINFO, { control: self });
         }
         else {
             self._addSourceAttributes();
             self.lastFeatureCount = options.featureCount;
-            self.map.$events.trigger($.Event(TC.Consts.event.FEATUREINFO, $.extend({ control: self }, options)));
+            self.map.trigger(TC.Consts.event.FEATUREINFO, TC.Util.extend({ control: self }, options));
         }
     };
 
@@ -185,59 +296,68 @@ TC.control.FeatureInfoCommons.displayMode = {
         noPrint: true
     };
 
-    ctlProto.setDisplayMode = function (mode) {
-        var self = this;
+    ctlProto.setDisplayMode = async function (mode) {
+        const self = this;
         self.displayMode = mode;
-        var map = self.map;
         switch (mode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
-                if (!self.resultsPanel) {
-                    var rp = map.getControlsByClass('TC.control.ResultsPanel').filter(function (ctrl) { return ctrl.options.content === "table" })[0];
-                    if (rp) {
-                        self.resultsPanel = rp;
-                        rp.caller = self;
-                    }
-                    else {
-                        var setResultsPanel = function setResultsPanel(e) {
-                            if (TC.control.ResultsPanel && e.control instanceof TC.control.ResultsPanel) {
-                                self.resultsPanel = e.control;
-                                e.control.caller = self;
-                                map.off(TC.Consts.event.CONTROLADD, setResultsPanel);
-                            }
-                        };
-                        map.on(TC.Consts.event.CONTROLADD, setResultsPanel);
-                    }
-                }
+            case TC.Consts.infoContainer.RESULTS_PANEL:
+                await self.getResultsPanel();
                 break;
             default:
-                self.displayMode = TC.control.FeatureInfoCommons.displayMode.POPUP;
-                if (!self.popup) {
-                    $.when(map.addControl('popup', {
-                        closeButton: true,
-                        draggable: self.options.draggable
-                    })).then(function (popup) {
-                        self.popup = popup;
-                        popup.caller = self;
-                        map.on(TC.Consts.event.POPUP, function (e) {
-                            self.onShowPopup(e);
-                        });
-
-                        map.on(TC.Consts.event.POPUPHIDE, function (e) {
-                            if (e.control === popup) {
-                                //restaurar el ancho automático
-                                self._resetSize();
-                            }
-                        });
-                    });
-                }
+                self.displayMode = TC.Consts.infoContainer.POPUP;
+                await self.getPopup();
                 break;
         }
+    };
+
+    ctlProto.getPopup = async function () {
+        const self = this;
+        if (!self.popup) {
+            self.popup = await self.map.addControl('popup', {
+                closeButton: true,
+                draggable: self.options.draggable,
+                share: self.options.share
+            });
+            self.popup.caller = self;
+            self.map.on(TC.Consts.event.POPUP, function (e) {
+                self.onShowPopup(e);
+            });
+        }
+        return self.popup;
+    };
+
+    ctlProto.getResultsPanel = async function () {
+        const self = this;
+        if (!self.resultsPanel) {
+            let ctlPromise;
+            const resultsPanelOptions = {
+                content: "table",
+                titles: {
+                    main: self.getLocaleString("threed.rs.panel.gfi"),
+                    max: self.getLocaleString("threed.rs.panel.gfi")
+                },
+                share: self.options.share
+            };
+            const container = self.map.getControlsByClass('TC.control.ControlContainer')[0];
+            if (container) {
+                resultsPanelOptions.position = container.POSITION.RIGHT;
+                ctlPromise = container.addControl('resultsPanel', resultsPanelOptions);
+            }
+            else {
+                resultsPanelOptions.div = document.createElement('div');
+                self.map.div.appendChild(resultsPanelOptions.div);
+                ctlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
+            }
+            self.resultsPanel = await ctlPromise;
+            self.resultsPanel.caller = self;
+        }
+        return self.resultsPanel;
     };
 
     ctlProto.getDisplayControl = function () {
         var self = this;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 return self.resultsPanel;
             default:
                 return self.popup;
@@ -252,14 +372,14 @@ TC.control.FeatureInfoCommons.displayMode = {
                 case TC.control.Popup && options.control instanceof TC.control.Popup:
                     return options.control.getContainerElement();
                 case TC.control.ResultsPanel && options.control instanceof TC.control.ResultsPanel:
-                    return options.control.getTableContainer();
+                    return options.control.getInfoContainer();
                 default:
                     return null;
             }
         }
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
-                return self.resultsPanel.getTableContainer();
+            case TC.Consts.infoContainer.RESULTS_PANEL:
+                return self.resultsPanel.getInfoContainer();
             default:
                 return self.popup.getContainerElement();
         }
@@ -268,7 +388,7 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.getMenuTarget = function () {
         var self = this;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 return self.resultsPanel.getMenuElement();
             default:
                 return self.popup.getMenuElement();
@@ -277,57 +397,90 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.displayResults = function () {
         var self = this;
-        self.filterFeature.data = $('<div>').append(self._$div.clone().removeClass(TC.Consts.classes.HIDDEN)).html();
+        const clone = self.div.cloneNode(true);
+        clone.classList.remove(TC.Consts.classes.HIDDEN);
+        self.filterFeature.data = clone.outerHTML;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
-                if (self.resultsPanel) {                    
+            case TC.Consts.infoContainer.RESULTS_PANEL:
+                if (self.resultsPanel) {
+                    // GLS: si contamos con el control de controles no es necesario cerrar los paneles visibles ya que no habría solape
+                    if (self.map.getControlsByClass(TC.control.ControlContainer).length === 0) {
+                        self.map.getControlsByClass(TC.control.ResultsPanel).forEach(function (p) {
+                            if (p.isVisible()) {
+                                p.close();
+                            }
+                        });
+                    }
 
-                    self.map.getControlsByClass(TC.control.ResultsPanel).forEach(function (p) {
-                        if (p.isVisible()) {
+                    // cerramos los paneles con feature asociada
+                    const panels = self.map.getControlsByClass('TC.control.ResultsPanel');
+                    panels.forEach(function (p) {
+                        if (p !== self.resultsPanel && p.currentFeature && !p.chart) {
                             p.close();
                         }
                     });
 
                     self.resultsPanel.currentFeature = self.filterFeature;
                     self.resultsPanel.open(self.filterFeature.data, self.resultsPanel.getInfoContainer());
-
-                    // GLS: lanzo el evento drawTable para que el control featureTools guarde referencia a highlightedFeature, si no lo lanzo, el orden de los eventos hace que no obtenga la referencia y al cerrar el panel borra la feature resaltada
-                    self.map.$events.trigger($.Event(TC.Consts.event.DRAWTABLE, { control: self.resultsPanel }));
-
-                    self.displayResultsCallback();                
+                    
+                    self.getMenuTarget().innerHTML = "";
+                    self.displayResultsCallback();
+                   
                 }
-                
+
                 break;
             default:
-                if (self.popup) {
-                    self.filterFeature.showPopup(self.popup);
-                }
+                self.getPopup().then(popup => self.filterFeature.showPopup(popup));
                 break;
         }
     };
 
+    const getElementIndex = function (elm) {
+        return Array.from(elm.parentElement.children).indexOf(elm);
+    };
+
+    const getParentElement = function (elm, tagName) {
+        var result = elm;
+        do {
+            result = result.parentElement;
+        }
+        while (result && result.tagName !== tagName);
+        return result;
+    };
+
+    const getFeatureFromListItem = function (ctl, li) {
+        const currentFeatureLi = li;
+        const currentLayerLi = getParentElement(li, 'LI');
+        const currentServiceLi = getParentElement(currentLayerLi, 'LI');
+        return ctl.getFeature(getElementIndex(currentServiceLi), getElementIndex(currentLayerLi), getElementIndex(currentFeatureLi));
+    };
+
     ctlProto.getFeatureElement = function (feature) {
-        var self = this;
-        var $featureLi;
-        $(self.getDisplayTarget()).find(self._selectors.LIST_ITEM).each(function (idx, li) {
-            var $currentFeatureLi = $(li);
-            var $currentLayerLi = $currentFeatureLi.parents('li').first();
-            var $currentServiceLi = $currentLayerLi.parents('li').first();
-            var feat = self.getFeature($currentServiceLi.index(), $currentLayerLi.index(), $currentFeatureLi.index());
+        const self = this;
+        let result;
+
+        const lis = self.getDisplayTarget().querySelectorAll(self._selectors.LIST_ITEM);
+        for (var i = 0, ii = lis.length; i < ii; i++) {
+            const li = lis[i];
+            const feat = getFeatureFromListItem(self, li);
             if (feat === feature) {
-                $featureLi = $currentFeatureLi;
+                result = li;
+                break;
             }
-        });
-        return $featureLi && $featureLi.get(0);
+        }
+        return result;
     };
 
     ctlProto.getNextFeatureElement = function (delta) {
-        var self = this;
-        var $lis = $(self.getDisplayTarget()).find('ul.' + self.CLASS + '-features > li');
-        var length = $lis.length;
-        var $checkedLi = $lis.filter('.' + TC.Consts.classes.CHECKED);
-        var checkedIdx = $lis.index($checkedLi.get(0));
-        return $lis.get((checkedIdx + delta + length) % length);
+        const self = this;
+        const lis = self.getDisplayTarget().querySelectorAll('ul.' + self.CLASS + '-features > li');
+        const length = lis.length;
+        for (var i = 0; i < length; i++) {
+            if (lis[i].matches('.' + self.CURRENT_CLASS)) {
+                return lis[(i + delta + length) % length];
+            }
+        }
+        return null;
     };
 
     ctlProto.getFeaturePath = function (feature) {
@@ -356,7 +509,7 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.closeResults = function () {
         var self = this;
         switch (self.displayMode) {
-            case TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL:
+            case TC.Consts.infoContainer.RESULTS_PANEL:
                 if (self.resultsPanel && self.resultsPanel.isVisible()) {
                     self.resultsPanel.close();
                 }
@@ -371,112 +524,173 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.displayResultsCallback = function () {
         var self = this;
-        var $content = $(self.getDisplayTarget()).find('.' + self.CLASS).first();
+        const content = self.getDisplayTarget().querySelector('.' + self.CLASS);
 
-        var selector;
-        // Evento para resaltar una feature
-        var events = 'click'; // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
-        $content.on(events, self._selectors.LIST_ITEM, function (e) {
-            self.highlightFeature(this);
-        });
+        //// Evento para resaltar una feature
+        //const onListItemClick = function (e) {
+        //    self.highlightFeature(e.target);
+        //};
+        //// En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
+        //content.querySelectorAll(self._selectors.LIST_ITEM).forEach(li => li.addEventListener('click', onListItemClick));
 
         // Evento para ir a la siguiente feature
-        events = TC.Consts.event.CLICK;
-        selector = '.' + self.CLASS + '-btn-next';
-        $content.on(events, selector, function (e) {
-            self.highlightFeature(self.getNextFeatureElement(1), 1);
-            return false;
-        });
+        const nextBtn = content.querySelector(`.${self.CLASS}-btn-next`);
+        if (nextBtn) {
+            nextBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
+                self.highlightFeature(self.getNextFeatureElement(1), 1);
+                return false;
+            }, { passive: true });
+        }
 
         // Evento para ir a la feature anterior
-        selector = '.' + self.CLASS + '-btn-prev';
-        $content.on(events, selector, function (e) {
-            self.highlightFeature(self.getNextFeatureElement(-1), -1);
-            return false;
-        });
+        const prevBtn = content.querySelector(`.${self.CLASS}-btn-prev`);
+        if (prevBtn) {
+            prevBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
+                self.highlightFeature(self.getNextFeatureElement(-1), -1);
+                return false;
+            }, { passive: true });
+        }
 
         // Evento para desplegar/replegar features de capa
-        selector = 'ul.' + self.CLASS + '-layers h4';
-
-        $content.on(events, selector, function (e) {
-            var $li = $(e.target).parents('li').first();
-            if ($li.hasClass(TC.Consts.classes.CHECKED)) {
+        const onTitleClick = function (e) {
+            const li = getParentElement(e.target, 'LI');
+            if (li.classList.contains(TC.Consts.classes.CHECKED)) {
                 // Si no está en modo móvil ocultamos la capa (si hay más de una)
-                if ($content.find('.tc-ctl-finfo-btn-next').css('display') === 'none') {
-                    if (layerCount(self) > 1) {
-                        self.downplayFeatures();
-                    }
+                const anotherLayer = content.querySelector(`.${self.CLASS}-layers li:not(.tc-checked)`);
+                if (anotherLayer && getComputedStyle(anotherLayer).display !== 'none') {
+                    self.downplayFeatures();
                 }
             }
             else {
-                self.highlightFeature($li.find(self._selectors.LIST_ITEM).first()[0]);
-                if (self.displayMode === TC.control.FeatureInfoCommons.displayMode.POPUP) {
+                self.highlightFeature(li.querySelector(self._selectors.LIST_ITEM));
+                if (self.displayMode === TC.Consts.infoContainer.POPUP) {
                     self.popup.fitToView(true);
                 }
             }
-        });
+        };
+        content.querySelectorAll(`ul.${self.CLASS}-layers h4`).forEach(h => h.addEventListener(TC.Consts.event.CLICK, onTitleClick, { passive: true }));
+        if (self.displayMode === TC.Consts.infoContainer.POPUP) {
+            content.querySelectorAll('img').forEach(img => img.addEventListener('load', () => self.popup.fitToView()));
+        }
 
         // Evento para borrar la feature resaltada
-        selector = '.' + self.CLASS + '-del-btn';
-        $content.on(events, selector, function (e) {
-            self.downplayFeatures();
-            self.closeResults();
-        });
+        //selector = '.' + self.CLASS + '-del-btn';
+        //content.addEventListener(eventType, TC.EventTarget.listenerBySelector(selector, function (e) {
+        //    self.downplayFeatures();
+        //    self.closeResults();
+        //}));
 
         if (self.info) {
-            if (self.info.defaultFeature) {
-                $(self.getFeatureElement(self.info.defaultFeature)).addClass(TC.Consts.classes.DEFAULT);
-                self.highlightFeature(self.info.defaultFeature);
+            const features = self.getFeatures();
+            const menu = self.getMenuTarget();
+            if (features.length > 1) {
+                // Hay más de una feature
+                self.getRenderedHtml(`${self.CLASS}-buttons`, { id: self.id }).then(function (html) {
+                    if (!menu.querySelector(`.${self.CLASS}-btn-dl`)) {
+                        menu.insertAdjacentHTML('beforeend', html);
+                        menu.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (_e) {
+                            const downloadDialog = await self.getDownloadDialog();
+                            let options = {
+                                title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
+                                fileName: self._getFileName()
+                            };
+
+                            if (self.map.elevation || self.options.displayElevation) {
+                                options = Object.assign({}, options, {
+                                    elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
+                                });
+                            }
+                            downloadDialog.open(features, options);
+                        }, { passive: true });
+
+                        menu.querySelector(self._selectors.SHOW_ALL_CHECKBOX).addEventListener('change', function (e) {
+                            if (e.target.checked) {
+                                self.showAllFeatures();
+                            }
+                            else {
+                                self.hideAllFeatures();
+                            }
+                        }, { passive: true });
+
+                        menu.querySelector(self._selectors.ZOOM_ALL_BUTTON).addEventListener(TC.Consts.event.CLICK, function (_e) {
+                            self.map.zoomToFeatures(features);
+                        }, { passive: true });
+
+                        menu.querySelector(self._selectors.DEL_ALL_BUTTON).addEventListener(TC.Consts.event.CLICK, function (_e) {
+                            self.downplayFeatures();
+                            self.filterLayer.removeFeature(self.filterFeature);
+                        }, { passive: true });
+                    }
+                });
             }
             else {
-                self.highlightFeature($content.find(self._selectors.LIST_ITEM).first()[0]);
+                const button = menu.querySelector(`.${self.CLASS}-btn`);
+                if (button) {
+                    button.remove();
+                }
+            }
+            if (self.info.defaultFeature && self.getFeatureElement(self.info.defaultFeature)) {
+                self.getFeatureElement(self.info.defaultFeature).classList.add(TC.Consts.classes.DEFAULT);
+                self.highlightFeature(self.info.defaultFeature);
+            }
+            else if (content.querySelector(self._selectors.LIST_ITEM)) {
+                self.highlightFeature(content.querySelector(self._selectors.LIST_ITEM));
             }
         }
 
-        $content.find('table').on(TC.Consts.event.CLICK, function (e) {
-            const $li = $(this).parent();
-            if ($li.hasClass(TC.Consts.classes.DISABLED)) {
-                return;
+        content.querySelectorAll('table:not(.complexAttr)').forEach(function (table) {
+            if (!table.parentElement.classList.contains(TC.Consts.classes.CHECKED)) {
+                table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
             }
-            if ($li.hasClass(TC.Consts.classes.CHECKED)) {
-                // Si ya está seleccionada hacemos zoom
-                if (self.resultsLayer.features[0]) {
-                    // Proceso para desactivar highlightFeature mientras hacemos zoom
-                    var zoomHandler = function zoomHandler() {
-                        self._zooming = false;
-                        self.map.off(TC.Consts.event.ZOOM, zoomHandler);
-                    }
-                    self.map.on(TC.Consts.event.ZOOM, zoomHandler);
-                    self._zooming = true;
-                    ///////
-                    self.map.zoomToFeatures([self.resultsLayer.features[0]], { animate: true });
+            // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
+            table.addEventListener('click', function (e) {
+                const li = this.parentElement;
+                if (li.classList.contains(TC.Consts.classes.DISABLED)) {
+                    return;
                 }
-            }
-            else {
-                // Si no está seleccionada la seleccionamos
-                self.highlightFeature($li);
-            }
-            e.stopPropagation();
+                if (li.classList.contains(TC.Consts.classes.CHECKED)) {
+                    // Si ya está seleccionada hacemos zoom
+                    const feature = getFeatureFromListItem(self, li);
+                    if (feature && window.getSelection() && window.getSelection().toString().trim().length === 0) {
+                        // Proceso para desactivar highlightFeature mientras hacemos zoom
+                        var zoomHandler = function zoomHandler() {
+                            self._zooming = false;
+                            self.map.off(TC.Consts.event.ZOOM, zoomHandler);
+                        };
+                        self.map.on(TC.Consts.event.ZOOM, zoomHandler);
+                        self._zooming = true;
+                        ///////
+
+                        self.map.zoomToFeatures([feature], { animate: true });
+                    }
+                }
+                else {
+                    // Si no está seleccionada la seleccionamos
+                    self.highlightFeature(li);
+                }
+                e.stopPropagation();
+            }, { passive: true });
         });
-        $content.find('table a').on("click", function (e) {
-            e.stopPropagation();
+        content.querySelectorAll('table a, table label, table input').forEach(function (a) {
+            a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                e.stopPropagation();
+            }, { passive: true });
         });
 
-        if (Modernizr.touch && self.displayMode === TC.control.FeatureInfoCommons.displayMode.RESULTS_PANEL) {
-            if ($content.find('.' + self.CLASS + '-btn-prev').css('display') !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
+        if (TC.browserFeatures.touch() && self.displayMode === TC.Consts.infoContainer.RESULTS_PANEL) {
+            const prevBtn = content.querySelector('.' + self.CLASS + '-btn-prev');
+            if (!prevBtn || prevBtn.style.display !== 'none') { // Si los botones de anterior/siguiente están visibles, montamos el swipe
                 if (self.resultsPanel) {
-                    self.resultsPanel._$div.swipe('disable');
+                    TC.Util.swipe(self.resultsPanel.div, 'disable');
                 }
 
                 if (layerCount(self) > 1) {
-                    $content.swipe({
-                        swipeLeft: function (e) {
+                    TC.Util.swipe(content, {
+                        left: function () {
                             self.highlightFeature(self.getNextFeatureElement(1), 1);
-                            e.stopPropagation();
                         },
-                        swipeRight: function (e) {
+                        right: function () {
                             self.highlightFeature(self.getNextFeatureElement(-1), -1);
-                            e.stopPropagation();
                         }
                     });
                 }
@@ -485,19 +699,13 @@ TC.control.FeatureInfoCommons.displayMode = {
     };
 
     ctlProto.onShowPopup = function (e) {
-        var self = this;
-        var map = self.map;
-        var transitionEnd = 'transitionend.tc';
+        const self = this;
         if (e.control === self.popup) {
-
             self.displayResultsCallback();
-
-            //ajustar el ancho para que no sobre a la derecha
-            self._fitSize();
         }
     };
 
-    ctlProto.loadSharedFeature = function (featureObj) {
+    ctlProto.loadSharedFeature = function (_featureObj) {
 
     };
 
@@ -505,11 +713,10 @@ TC.control.FeatureInfoCommons.displayMode = {
         var self = this;
         const linkText = self.getLocaleString('open');
         const titleText = self.getLocaleString('linkInNewWindow');
-        self._$div.find('td.' + self.CLASS + '-val').each(function (idx, elm) {
-            const $td = $(elm);
-            const text = $td.text();
+        self.div.querySelectorAll('td.' + self.CLASS + '-val').forEach(function (td) {
+            const text = td.textContent;
             if (TC.Util.isURL(text)) {
-                $td.html('<a href="' + text + '" target="_blank" title="' + titleText + '">' + linkText + '</a>');
+                td.innerHTML = '<a href="' + text + '" target="_blank" title="' + titleText + '">' + linkText + '</a>';
             }
         });
     };
@@ -518,126 +725,214 @@ TC.control.FeatureInfoCommons.displayMode = {
         const self = this;
         var feature;
         if (!self._zooming) {
-            var $featureLi;
-            var $layerLi;
-            var $serviceLi;
+            var featureLi;
             // this puede ser o el elemento HTML de la lista correspondiente a la feature o la feature en sí
             if (featureOrElement instanceof TC.Feature) {
                 feature = featureOrElement;
-                var li = self.getFeatureElement(feature);
-                if (li) {
-                    $featureLi = $(li);
-                }
+                featureLi = self.getFeatureElement(feature);
             }
             else {
-                $featureLi = $(featureOrElement);
+                featureLi = featureOrElement;
+                while (featureLi && featureLi.tagName !== 'LI') {
+                    featureLi = featureLi.parentElement;
+                }
             }
-            $layerLi = $featureLi.parents('li').first();
-            $serviceLi = $layerLi.parents('li').first();
+            const layerLi = getParentElement(featureLi, 'LI');
+            const serviceLi = getParentElement(layerLi, 'LI');
 
-            const serviceIdx = $serviceLi.index();
-            const layerIdx = $layerLi.index();
-            const featureIdx = $featureLi.index();
+            const serviceIdx = getElementIndex(serviceLi);
+            const layerIdx = getElementIndex(layerLi);
+            const featureIdx = getElementIndex(featureLi);
             feature = feature || self.getFeature(serviceIdx, layerIdx, featureIdx);
 
             self.downplayFeatures({ exception: feature });
-            $featureLi.addClass(TC.Consts.classes.CHECKED);
-            $layerLi.addClass(TC.Consts.classes.CHECKED);
-            $serviceLi.addClass(TC.Consts.classes.CHECKED);
+
+            // Añadimos feature al historial de features resaltadas
+            const service = self.info.services[serviceIdx];
+            if (!Object.prototype.hasOwnProperty.call(self._infoHistory, service.url)) {
+                self._infoHistory[service.url] = {};
+            }
+            const historyService = self._infoHistory[service.url];
+            const layer = service.layers[layerIdx];
+            const historyLayer = historyService[layer.name] || [];
+            if (!historyLayer.includes(feature)) {
+                historyService[layer.name] = historyLayer.concat(feature);
+            }
+
+            const displayTarget = self.getDisplayTarget();
+            displayTarget.querySelectorAll('li').forEach(elm => elm.classList.remove(self.CURRENT_CLASS));
+            featureLi.classList.add(TC.Consts.classes.CHECKED, self.CURRENT_CLASS);
+            layerLi.classList.add(TC.Consts.classes.CHECKED, self.CURRENT_CLASS);
+            serviceLi.classList.add(TC.Consts.classes.CHECKED, self.CURRENT_CLASS);
             if (delta > 0) {
-                $featureLi.addClass(TC.Consts.classes.FROMLEFT);
-                $layerLi.addClass(TC.Consts.classes.FROMLEFT);
-                $serviceLi.addClass(TC.Consts.classes.FROMLEFT);
+                featureLi.classList.add(TC.Consts.classes.FROMLEFT);
+                layerLi.classList.add(TC.Consts.classes.FROMLEFT);
+                serviceLi.classList.add(TC.Consts.classes.FROMLEFT);
             }
             else if (delta < 0) {
-                $featureLi.addClass(TC.Consts.classes.FROMRIGHT);
-                $layerLi.addClass(TC.Consts.classes.FROMRIGHT);
-                $serviceLi.addClass(TC.Consts.classes.FROMRIGHT);
+                featureLi.classList.add(TC.Consts.classes.FROMRIGHT);
+                layerLi.classList.add(TC.Consts.classes.FROMRIGHT);
+                serviceLi.classList.add(TC.Consts.classes.FROMRIGHT);
             }
-            $featureLi
-                .find('table')
-                .attr('title', self.getLocaleString('clickToCenter'));
 
-            self.highlightedFeature = feature;
+            if (featureLi.querySelector('table')) {
+                featureLi.querySelector('table').setAttribute('title', self.getLocaleString('clickToCenter'));
+            }
 
-            $(self.getDisplayTarget())
-                .find('.' + self.CLASS + '-counter-current')
-                .html(self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1);
-
-
-
-            var features = self.resultsLayer.features.slice();
-            var featureAlreadyHighlighted = features.filter(function (item) {
-                return feature && feature.id === item.id;
-            });
+            // Añadida esta condición porque si el servicio no devuelve datos parseables como feature se devuelve una pseudofeature sin geometría
+            if (!(feature instanceof TC.Feature)) {
+                feature = null;
+            }
 
             //Si la feature a resaltar ya está resaltada, no hacemos nada. Así evitamos parpadeo
-            if (featureAlreadyHighlighted.length > 0) {
+            if (feature && feature === self.highlightedFeature) {
                 return;
             }
 
-            for (var i = 0; i < features.length; i++) {
-                var f = features[i];
-                if (f !== self.filterFeature) {
-                    self.resultsLayer.removeFeature(f);
+            self.highlightedFeature = feature;
+
+            const counter = displayTarget.querySelector('.' + self.CLASS + '-counter-current');
+            if (counter) {
+                counter.innerHTML = self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1;
+            }
+
+
+            if (!self.options.persistentHighlights) {
+                self.resultsLayer.features.slice().forEach(f => {
+                    if (f !== feature) {
+                        self.downplayFeature(f);
+                    }
+                });
+            }
+            if (feature) {
+                const triggerEvent = f => self.map.trigger(TC.Consts.event.FEATUREHIGHLIGHT, { feature: f, control: self });
+                if (feature.geometry) {
+                    feature.showsPopup = self.options.persistentHighlights;
+                    // Si persistentHighlights == true, es posible que la entidad que queremos añadir ya está en la capa de una consulta anterior
+                    // En ese caso, no añadimos entidad nueva
+                    let prevFeat;
+                    if (self.options.persistentHighlights) {
+                        prevFeat = self.resultsLayer.getFeatureById(feature.wrap.getId());
+                        if (prevFeat) {
+                            triggerEvent(prevFeat);
+                        }
+                    }
+                    if (!prevFeat) {
+                        self.resultsLayer.addFeature(feature).then(function (_f) {
+                            triggerEvent(feature);
+                        });
+                    }
+                }
+                else {
+                    featureLi.classList.add(TC.Consts.classes.DISABLED);
+                    triggerEvent(feature);
                 }
             }
-            if (feature && feature.geometry) {
-                self.resultsLayer.addFeature(feature);
-            }
-            else {
-                $featureLi.addClass(TC.Consts.classes.DISABLED);
+        }
+    };
+
+    ctlProto.downplayFeature = function (feature) {
+        const self = this;
+        const li = self.getFeatureElement(feature);
+        if (li) {
+            li.classList.remove(TC.Consts.classes.CHECKED);
+        }
+        // Si persistentHighlights = true, puede que la entidad a borrar sea una persistida de una petición anterior
+        let prevFeat;
+        if (self.options.persistentHighlights) {
+            prevFeat = self.resultsLayer.getFeatureById(feature.wrap.getId());
+        }
+        self.resultsLayer.removeFeature(prevFeat || feature);
+        for (var url in self._infoHistory) {
+            const service = self._infoHistory[url];
+            for (var name in service) {
+                let layer = service[name];
+                layer = service[name] = layer.filter(f => f !== feature);
+                if (!layer.length) {
+                    delete service[name];
+                }
             }
         }
+        if (self.highlightedFeature === feature) {
+            self.highlightedFeature = null;
+        }
+        self.map.trigger(TC.Consts.event.FEATUREDOWNPLAY, { feature: feature, control: self });
     };
 
     ctlProto.downplayFeatures = function (options) {
         const self = this;
         options = options || {};
-        if (self.highlightedFeature !== options.exception) {
+        const prevHlFeature = self.highlightedFeature;
+        if (prevHlFeature && prevHlFeature !== options.exception) {
+            self.downplayFeature(prevHlFeature);
             self.highlightedFeature = null;
         }
-        const $exceptionFLi = $(options.exception ? self.getFeatureElement(options.exception) : undefined);
-        const $exceptionLLi = $exceptionFLi.parents('li').first();
-        const $exceptionSLi = $exceptionLLi.parents('li').first();
+        self.getFeatures()
+            .filter(f => f !== prevHlFeature)
+            .forEach(f => self.resultsLayer.removeFeature(f));
 
-        self.resultsLayer.clearFeatures();
-        $target = $(self.getDisplayTarget());
-        $target
-            .find('ul.' + self.CLASS + '-services li')
-            .not($exceptionFLi)
-            .not($exceptionLLi)
-            .not($exceptionSLi)
-            .removeClass(TC.Consts.classes.CHECKED)
-            .removeClass(TC.Consts.classes.DISABLED)
-            .removeClass(TC.Consts.classes.FROMLEFT)
-            .removeClass(TC.Consts.classes.FROMRIGHT);
-        $target
-            .find('.' + self.CLASS + '-features table')
-            .attr('title', self.getLocaleString('clickToShowOnMap'));
-        $(self.getMenuTarget())
-            .find('.' + self.CLASS + '-tools')
-            .removeClass(TC.Consts.classes.ACTIVE);
-    };
+        const exceptionFLi = options.exception ? self.getFeatureElement(options.exception) : undefined;
+        var exceptionLLi, exceptionSLi;
+        if (exceptionFLi) {
+            exceptionLLi = getParentElement(exceptionFLi, 'LI');
+            exceptionSLi = getParentElement(exceptionLLi, 'LI');
+        }
 
-    ctlProto._fitSize = function () {
-        const self = this;
-        const $div = $(self.getDisplayTarget());
-        var max = 0;
-        //medir la máxima anchura de <ul>
-        $div.find(".tc-ctl-finfo-features li").each(function (ix, elto) {
-            var x = self;
-            max = Math.max(max, $(elto).position().left + $(elto).width());
+        const target = self.getDisplayTarget();
+        Array.from(target.querySelectorAll('ul.' + self.CLASS + '-services li'))
+            .filter(function (li) {
+                return li !== exceptionFLi && li !== exceptionLLi && li !== exceptionSLi;
+            })
+            .forEach(function (li) {
+                li.classList.remove(
+                    TC.Consts.classes.CHECKED,
+                    TC.Consts.classes.DISABLED,
+                    TC.Consts.classes.FROMLEFT,
+                    TC.Consts.classes.FROMRIGHT);
+            });
+        target.querySelectorAll('.' + self.CLASS + '-features table:not(.complexAttr)').forEach(function (table) {
+            table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
         });
 
-        //alert("max=" + max);
-        if (max) $div.css('width', max + 50);
+        setNotShowAllUI.call(self);
     };
 
-    ctlProto._resetSize = function () {
+    ctlProto.showAllFeatures = function () {
         const self = this;
-        const $div = $(self.getDisplayTarget());
-        $div.css('width', '');
+        if (self.highlightedFeature) {
+            self.downplayFeature(self.highlightedFeature);
+        }
+
+        for (var i = 0, ii = self.info.services.length; i < ii; i++) {
+            const currentService = self.info.services[i];
+            const historyService = self._infoHistory[currentService.url] = self._infoHistory[currentService.url] || {};
+            for (var j = 0, jj = currentService.layers.length; j < jj; j++) {
+                const currentLayer = currentService.layers[j];
+                let historyLayer = historyService[currentLayer.name] || [];
+                for (var k = 0, kk = currentLayer.features.length; k < kk; k++) {
+                    const currentFeature = currentLayer.features[k];
+                    currentFeature.showsPopup = self.options.persistentHighlights;
+                    if (!historyLayer.includes(currentFeature)) {
+                        historyService[currentLayer.name] = historyLayer = historyLayer.concat(currentFeature);
+                    }
+                    if (!self.resultsLayer.features.includes(currentFeature)) {
+                        self.resultsLayer.addFeature(currentFeature);
+                    }
+                }
+            }
+        }
+
+        setShowAllUI.call(self);
+    };
+
+    ctlProto.hideAllFeatures = function () {
+        const self = this;
+        const checkedLayer = self.getDisplayTarget().querySelector(`ul.${self.CLASS}-layers > li.${TC.Consts.classes.CHECKED}`);
+        self.downplayFeatures();
+        if (checkedLayer) {
+            checkedLayer.classList.add(TC.Consts.classes.CHECKED);
+        }
+        //setNotShowAllUI.call(self);
     };
 
     ctlProto.getFeature = function (serviceIdx, layerIdx, featureIdx) {
@@ -656,6 +951,20 @@ TC.control.FeatureInfoCommons.displayMode = {
         return result;
     };
 
+    ctlProto.getFeatures = function () {
+        const self = this;
+        let result = [];
+        const info = self.info;
+        if (info && info.services) {
+            result = info.services.reduce((prev, cur) => {
+                return prev.concat(cur.layers.reduce((p, c) => {
+                    return p.concat(c.features);
+                }, []));
+            }, result);
+        }
+        return result;
+    };
+
     ctlProto.getFeatureIndex = function (serviceIdx, layerIdx, featureIdx) {
         const self = this;
         var result = -1;
@@ -666,7 +975,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 var maxj = i === serviceIdx ? layerIdx : service.layers.length - 1;
                 for (var j = 0; j <= maxj; j++) {
                     var layer = service.layers[j];
-                    var maxk = j === layerIdx ? featureIdx : layer.features.length - 1;
+                    var maxk = j === layerIdx && i === serviceIdx ? featureIdx : layer.features.length - 1;
                     for (var k = 0; k <= maxk; k++) {
                         result = result + 1;
                     }
@@ -679,17 +988,17 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.beforeRequest = function (options) {
         var self = this;
         self.querying = true;
-        self.map.$events.trigger($.Event(TC.Consts.event.BEFOREFEATUREINFO, {
+        self.map.trigger(TC.Consts.event.BEFOREFEATUREINFO, {
             xy: options.xy,
             control: self
-        }));
+        });
         self.closeResults();
         if (self.map && self.resultsLayer) {
             self.lastFeatureCount = null;
 
-            self.resultsLayer.features.forEach(function (feature) {
-                self.resultsLayer.removeFeature(feature);
-            });
+            if (!self.options.persistentHighlights) {
+                self.resultsLayer.features.slice().forEach(f => self.downplayFeature(f));
+            }
             self.info = null;
         }
     };
@@ -704,11 +1013,16 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.deactivate = function (stopChain) {
         var self = this;
-        if (self.popup) {
+        if (self.popup && self.popup.isVisible()) {
             self.popup.hide();
         }
-        self.resultsLayer.clearFeatures();
-        self.filterLayer.clearFeatures();
+        if (!self.options.persistentHighlights) {
+            self.resultsLayer.features.slice().forEach(f => self.downplayFeature(f));
+            self.info = null;
+            self._infoHistory = {};
+        }
+        self.filterLayer && self.filterLayer.clearFeatures();
+        self.filterFeature = null;
         if (self.wrap) {
             self.wrap.deactivate();
         }
@@ -718,9 +1032,15 @@ TC.control.FeatureInfoCommons.displayMode = {
     ctlProto.exportState = function () {
         const self = this;
         if (self.exportsState && self.resultsLayer) {
+            const exportStateOptions = {};
+            // Si exportamos una consulta, tenemos que quitar las entidades resaltadas para evitar exportarlas dos veces
+            if (self.toShare) {
+                exportStateOptions.features = [];
+            }
             return {
                 id: self.id,
-                layer: self.resultsLayer.exportState()
+                layer: self.resultsLayer.exportState(exportStateOptions),
+                query: self.toShare
             };
         }
         return null;
@@ -728,8 +1048,11 @@ TC.control.FeatureInfoCommons.displayMode = {
 
     ctlProto.importState = function (state) {
         const self = this;
-        self._layersDeferred.then(function () {
+        self._layersPromise.then(function () {
             self.resultsLayer.importState(state.layer);
+            if (state.query) {
+                self.importQuery(state.query);
+            }
         });
     };
 
@@ -744,6 +1067,7 @@ TC.control.FeatureInfoCommons.displayMode = {
                 id: self.getUID(),
                 title: self.CLASS + ': Results layer',
                 type: TC.Consts.layerType.VECTOR,
+                owner: self,
                 stealth: true
             };
         }
@@ -752,72 +1076,86 @@ TC.control.FeatureInfoCommons.displayMode = {
             filterLayer = self.options.filterLayer;
         }
         else {
+            const styles = {};
+            if (self.geometryType === TC.Consts.geom.POLYLINE) {
+                styles.line = self.style;
+            }
+            if (self.geometryType === TC.Consts.geom.POLYGON) {
+                styles.polygon = self.style;
+            }
+
             filterLayer = {
                 id: self.getUID(),
                 title: self.CLASS + ': Filter layer',
+                owner: self,
                 stealth: true,
-                type: TC.Consts.layerType.VECTOR
-                , styles: {
-                    line: { strokeColor: self.lineColor, strokeWidth: 2 },
-                    polygon: { strokeColor: self.lineColor, strokeWidth: 2, fillColor: "#000", fillOpacity: 0.3 }
-                }
+                type: TC.Consts.layerType.VECTOR,
+                styles: styles
             };
         }
 
         const map = self.map;
-        map.loaded(function () {
-            $.when(map.addLayer(resultsLayer), map.addLayer(filterLayer)).then(function (rl, fl) {
-                self.resultsLayer = rl;
-                self.filterLayer = fl;
-                self._layersDeferred.resolve();
+        self._layersPromise = new Promise(function (resolve, _reject) {
+            map.loaded(function () {
+                const rlPromise = map.layers.indexOf(resultsLayer) >= 0 ?
+                    Promise.resolve(resultsLayer) : map.addLayer(resultsLayer);
+                const flPromise = map.layers.indexOf(filterLayer) >= 0 ?
+                    Promise.resolve(filterLayer) : map.addLayer(filterLayer);
+                Promise.all([rlPromise, flPromise]).then(function (layers) {
+                    self.resultsLayer = layers[0];
+                    self.filterLayer = layers[1];
+                    resolve();
+                });
             });
         });
 
-        return self._layersDeferred.promise();
+        return self._layersPromise;
     };
 
-    ctlProto._decorateDisplay = function (ctl) {
+    ctlProto._decorateDisplay = function (displayControl) {
         const self = this;
-        const $resultsContainer = $(self.getDisplayTarget({ control: ctl }));
 
-        // Añadimos un zoom a la feature al pulsar en la tabla
-        $resultsContainer.find('table.tc-attr').on(TC.Consts.event.CLICK, function (e) {
-            self.map.zoomToFeatures([self.highlightedFeature]);
-        });
+        const resultsContainer = self.getMenuTarget({ control: displayControl });
 
         // Añadimos botón de imprimir
-        TC.loadJS(
-            !TC.control.Print,
-            [TC.apiLocation + 'TC/control/Print'],
-            function () {
-                if (!$resultsContainer.find('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
-                    var printTitle = self.getLocaleString("feature");
-                    if (ctl === self.getDisplayControl()) {
-                        if (TC.feature.Point && self.filterFeature instanceof TC.feature.Point) {
-                            const geom = self.filterFeature.geometry;
-                            printTitle = self.getLocaleString('featuresAt', {
-                                crs: self.map.crs,
-                                x: TC.Util.formatNumber(geom[0], self.map.locale),
-                                y: TC.Util.formatNumber(geom[1], self.map.locale)
-                            });
-                        }
-                        else {
-                            printTitle = self.getLocaleString('spatialQueryResults');
-                        }
-                    }
-                    else if (ctl.currentFeature) {
-                        printTitle = ctl.currentFeature.id;
-                    }
-                    // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
-                    if (self.lastFeatureCount || (ctl.currentFeature && ctl.currentFeature.showsPopup === true)) {
-                        new TC.control.Print({
-                            target: $resultsContainer,
-                            title: printTitle
-                        });
-                    }
+        const printBtn = resultsContainer.querySelector('.' + TC.control.Print.prototype.CLASS + '-btn');
+        if (printBtn) {
+            // Si no hay datos porque el popup es de un GFI sin éxito y no es de una feature resaltada borramos impresora
+            if (!self.lastFeatureCount && (!displayControl.currentFeature || displayControl.currentFeature.showsPopup !== true)) {
+                printBtn.remove();
+            }
+        }
+        else {
+            var printTitle = self.getLocaleString("feature");
+            if (displayControl === self.getDisplayControl()) {
+                if (TC.feature.Point && self.filterFeature instanceof TC.feature.Point) {
+                    const geom = self.filterFeature.geometry;
+                    printTitle = self.getLocaleString('featuresAt', {
+                        crs: self.map.crs,
+                        x: TC.Util.formatCoord(geom[0], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION),
+                        y: TC.Util.formatCoord(geom[1], self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION)
+                    });
+                }
+                else {
+                    printTitle = self.getLocaleString('spatialQueryResults');
                 }
             }
-        );
+            else if (displayControl.currentFeature) {
+                printTitle = displayControl.currentFeature.id;
+            }
+
+            // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
+            if (self.lastFeatureCount || displayControl.currentFeature && displayControl.currentFeature.showsPopup === true) {
+                new TC.control.Print({
+                    target: resultsContainer,
+                    printableElement: self.getDisplayTarget({ control: displayControl }),
+                    title: printTitle
+                });
+            }
+        }
+
+        TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(displayControl.getContainerElement());
+
     };
 
     ctlProto._addSourceAttributes = function () {
@@ -829,14 +1167,18 @@ TC.control.FeatureInfoCommons.displayMode = {
             self.info.services.forEach(function (service) {
                 service.layers.forEach(function (layer) {
                     layer.features.forEach(function (feature) {
-                        const path = self.getFeaturePath(feature);
-                        if (path) {
-                            const newData = {};
-                            newData[serviceAttrName] = path.service;
-                            newData[layerAttrName] = path.layer.join(self.TITLE_SEPARATOR);
-                            const allData = $.extend(newData, feature.getData());
-                            feature.clearData();
-                            feature.setData(allData);
+                        if (feature instanceof TC.Feature) {
+                            const path = self.getFeaturePath(feature);
+                            if (path) {
+                                const newData = {};
+                                newData[serviceAttrName] = path.service;
+                                if (path.layer) {
+                                    newData[layerAttrName] = path.layer.join(self.TITLE_SEPARATOR);
+                                }
+                                const allData = TC.Util.extend(newData, feature.getData());
+                                feature.clearData();
+                                feature.setData(allData);
+                            }
                         }
                     });
                 });
@@ -844,4 +1186,107 @@ TC.control.FeatureInfoCommons.displayMode = {
         }
     };
 
+    ctlProto._getFileName = function () {
+        const self = this;
+        return self.getLocaleString('featureInfo').toLowerCase().replace(/\s/gi, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
+    };
+
+    ctlProto.showShareDialog = function (dialogDiv) {
+        const self = this;
+        self.toShare = self.exportQuery();
+        return TC.control.infoShare.showShareDialog.call(self, dialogDiv);
+    };
+
+    ctlProto.exportQuery = function () {
+        const self = this;
+        const result = {};
+        if (self.filterFeature) {
+            const filterLayerState = self.filterLayer.exportState();
+            filterLayerState.features.forEach(f => delete f.data);
+            result.filter = filterLayerState;
+            if (self.highlightedFeature) {
+                result.hlf = self.highlightedFeature.getId();
+            }
+        }
+        return result;
+    };
+
+    ctlProto.importQuery = function (query) {
+        const self = this;
+        if (query.filter) {
+            self.activate();
+            self.filterLayer.importState(query.filter)
+                .then(function () {
+                    self.filterFeature = self.filterLayer.features[0];
+                    self.sendRequest(self.filterFeature);
+                    const onFeatureHighlight = function (e) {
+                        if (e.control === self) {
+                            const feature = self.getFeatures().find(f => f.getId() === query.hlf);
+                            if (feature) {
+                                self.highlightFeature(feature);
+                            }
+                            else {
+                                if (!Object.prototype.hasOwnProperty.call(query, "hlf")) {
+                                    // timeout porque se está generando asíncronamente el botón de mostrar todas
+                                    setTimeout(() => self.showAllFeatures(), 100);
+                                }
+                            }
+                            self.map.off(TC.Consts.event.FEATUREHIGHLIGHT, onFeatureHighlight);
+                        }
+                    };
+                    self.map.on(TC.Consts.event.FEATUREHIGHLIGHT, onFeatureHighlight);
+                });
+        }
+    };
+
+    const staticMethodMock = {};
+
+    TC.control.FeatureInfoCommons.renderFeatureAttributeTable = function (options) {
+        if (!staticMethodMock.template) {
+            staticMethodMock.template = TC.Util.extend({}, ctlProto.template);
+        }
+        return ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-attr', options);
+    };
+
+    TC.control.FeatureInfoCommons.renderFeatureAttribute = function (options) {
+        if (!staticMethodMock.template) {
+            staticMethodMock.template = TC.Util.extend({}, ctlProto.template);
+        }
+        return ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-attr-val', options);
+    };
+
+    TC.control.FeatureInfoCommons.showImageDialog = function (img) {
+        if (!staticMethodMock.template) {
+            staticMethodMock.template = TC.Util.extend({}, ctlProto.template);
+        }
+        return new Promise(function (resolve, _reject) {
+            ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-dialog', {
+                src: img.getAttribute('src')
+            }).then(function (html) {
+                const container = document.createElement('div');
+                document.body.appendChild(container);
+                container.innerHTML = html;
+                TC.Util.showModal(container.querySelector(`.${ctlProto.CLASS}-img-dialog`), {
+                    closeCallback: () => container.remove()
+                });
+                container.querySelector('.tc-modal-img img').addEventListener(TC.Consts.event.CLICK, function (_e) {
+                    TC.Util.closeModal();
+                }, { passive: true });
+                resolve(container);
+            });
+        });
+    };
+
+    TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners = function (container) {
+        container.querySelectorAll('img.tc-img-attr').forEach(function (img) {
+            img.addEventListener(TC.Consts.event.CLICK, function (e) {
+                setTimeout(() => TC.control.FeatureInfoCommons.showImageDialog(e.target), 50);
+                e.stopPropagation(); // No queremos zoom si pulsamos en una imagen
+            }, { passive: true });
+        });
+    };
+
 })();
+
+const FeatureInfoCommons = TC.control.FeatureInfoCommons;
+export default FeatureInfoCommons;

@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_getCommonwealths">SITNA.Map.getCommonwealths</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getCommonwealths">SITNA.Map.getCommonwealths</a>.</p>
         <p>Opciones del método.</p>
     </div>
     <script src="../"></script>
@@ -25,37 +25,40 @@
             <select id="commonwealths" onchange="applyFilter()">
                 <option value="-1">Seleccione...</option>
             </select>
-
         </div>
     </div>
     <div id="mapa"></div>
     <script>
-        // Crear mapa.
-        var map = new SITNA.Map("mapa");
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
 
-        map.loaded(function () {
-            // completamos el desplegable
-            map.getCommonwealths(function (data) {
-                $.each(data, function (key, value) {
-                    $('#commonwealths').append($("<option></option>")
-                                   .attr("value", value.id)
-                                   .text(value.label));
-                });
+    map.loaded(function () {
+        // completamos el desplegable
+        map.getCommonwealths(function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
             });
+            document.querySelector("#commonwealths").appendChild(fragment);
         });
+    });
 
-        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-        function applyFilter() {
-            var id = $('#commonwealths').find('option:selected').val();
-            if (id == -1)
-                map.removeSearch();
-            else {
-                map.searchCommonwealth(id, function (idQuery) {
-                    if (idQuery == null)
-                        alert('No se han encontrado resultados');
-                });
-            }
-        };
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter() {
+        var id = document.querySelector("#commonwealths").querySelector("option:checked").value;
+        if (id == -1)
+            map.removeSearch();
+        else {
+            map.searchCommonwealth(id, function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados");
+                }
+            });
+        }
+    };
     </script>
 
 </body>

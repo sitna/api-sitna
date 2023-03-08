@@ -1,0 +1,91 @@
+﻿sitna-language-select.tc-ctl {
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+    sitna-language-select.tc-ctl.tc-disabled {
+        display: none;
+    }
+
+    sitna-language-select button.tc-ctl-lang-select-toggle {
+        text-indent: -1000vw;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    sitna-language-select[static] button.tc-ctl-lang-select-toggle {
+        display: none;
+    }
+
+    sitna-language-select.tc-ctl a,
+    sitna-language-select.tc-ctl button {
+        display: inline-block;
+        margin: 0;
+        width: 2em;
+        height: 2em;
+        font-size: 1em;
+        border: 0;
+        outline: 0;
+        border-radius: calc(var(--border-radius) * 0.67);
+        color: var(--map-btn-color);
+        text-decoration: none;
+        font-weight: bold;
+        background-color: var(--map-btn-bg-color);
+        text-align: center;
+        line-height: 2em;
+        transition: all linear 0.1s;
+    }
+
+    sitna-language-select.tc-ctl a {
+        margin-left: 0.5em;
+    }
+
+    sitna-language-select.tc-ctl a:visited {
+        color: var(--map-btn-color);
+    }
+
+    sitna-language-select.tc-ctl a.tc-active {
+        color: var(--btn-hl-bg-color);
+    }
+
+    sitna-language-select .tc-ctl-lang-select-links {
+        position: absolute;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+sitna-language-select[static] .tc-ctl-lang-select-links {
+    position: static;
+    white-space: normal;
+}
+
+    sitna-language-select[collapsed] .tc-ctl-lang-select-links {
+        opacity: 1;
+        visibility: visible;
+    }
+
+        sitna-language-select[collapsed] .tc-ctl-lang-select-links a {
+            width: 0;
+            margin: 0;
+            text-indent: -1000vw;
+        }
+
+        sitna-language-select button.tc-ctl-lang-select-toggle {
+            position: relative;
+            text-indent: -1000vw;
+        }
+
+
+            sitna-language-select button.tc-ctl-lang-select-toggle::before {
+                font-weight: normal;
+                position: absolute;
+                top: 0;
+                left: 0;
+                text-indent: 0;
+                width: 100%;
+                height: 100%;
+                font-family: var(--icon-font-family);
+                content: var(--icon-language);
+            }

@@ -1,94 +1,91 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 TC.Consts.event.BEFOREFEATUREMODIFY = "beforefeaturemodify.tc";
 TC.Consts.event.FEATUREMODIFY = "featuremodify.tc";
 TC.Consts.event.FEATURESSELECT = "featuresselect.tc";
 TC.Consts.event.FEATURESUNSELECT = "featuresunselect.tc";
-TC.Consts.event.CHANGE = 'change.tc';
+TC.Consts.event.CHANGE = 'change';
 
-(function () {
+TC.control.Modify = function () {
+    const self = this;
 
-    TC.control.Modify = function () {
-        var self = this;
+    TC.Control.apply(self, arguments);
 
-        TC.Control.apply(self, arguments);
+    if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
+        TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
+        TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
+    }
 
-        if (!Modernizr.inputtypes.color && !$.fn.spectrum) {
-            TC.syncLoadJS(TC.apiLocation + 'lib/spectrum/spectrum.min.js');
-            TC.loadCSS(TC.apiLocation + 'lib/spectrum/spectrum.css');
-        }
-
-        self.__firstRender = $.Deferred();
-
-        self.styles = $.extend(true, TC.Cfg.styles.selection, self.options.styles);
-        self.styles.text = self.styles.text || {
-            fontSize: self.styles.line.fontSize,
-            fontColor: self.styles.line.fontColor,
-            labelOutlineColor: self.styles.line.labelOutlineColor,
-            labelOutlineWidth: self.styles.line.labelOutlineWidth
-        };
-
-        self._classSelector = '.' + self.CLASS;
-
-        self.wrap = new TC.wrap.control.Modify(self);
-
-        self._layerPromise = $.Deferred();
+    self.styles = TC.Util.extend(true, TC.Cfg.styles.selection, self.options.styles);
+    self.styles.text = self.styles.text || {
+        fontSize: self.styles.line.fontSize,
+        fontColor: self.styles.line.fontColor,
+        labelOutlineColor: self.styles.line.labelOutlineColor,
+        labelOutlineWidth: self.styles.line.labelOutlineWidth
     };
 
-    TC.inherit(TC.control.Modify, TC.Control);
+    self._classSelector = '.' + self.CLASS;
+
+    self.wrap = new TC.wrap.control.Modify(self);
+    self.snapping = (typeof self.options.snapping === 'boolean') ? self.options.snapping : true;
+};
+
+TC.inherit(TC.control.Modify, TC.Control);
+
+(function () {
 
     var ctlProto = TC.control.Modify.prototype;
 
     ctlProto.CLASS = 'tc-ctl-mod';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Modify.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-btn tc-ctl-mod-btn-select\" disabled title=\"").h("i18n", ctx, {}, { "$key": "select" }).w("\">").h("i18n", ctx, {}, { "$key": "select" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-delete\" disabled title=\"").h("i18n", ctx, {}, { "$key": "deleteSelection" }).w("\">").h("i18n", ctx, {}, { "$key": "deleteSelection" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-join\" disabled title=\"").h("i18n", ctx, {}, { "$key": "joinGeometries.tooltip" }).w("\">").h("i18n", ctx, {}, { "$key": "joinGeometries" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-split\" disabled title=\"").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("\">").h("i18n", ctx, {}, { "$key": "splitGeometry" }).w("</button><button class=\"tc-ctl-btn tc-ctl-mod-btn-text\" contenteditable=\"true\" disabled title=\"").h("i18n", ctx, {}, { "$key": "addText" }).w("\">").h("i18n", ctx, {}, { "$key": "addText" }).w("</button><div class=\"tc-ctl-mod-style tc-hidden\"><input type=\"text\" class=\"tc-ctl-mod-txt tc-textbox\" placeholder=\"").h("i18n", ctx, {}, { "$key": "writeTextForSketch" }).w("\" style=\"font-size:").f(ctx.get(["fontSize"], false), ctx, "h").w("pt;font-color:").f(ctx.get(["fontColor"], false), ctx, "h").w(";text-shadow: 0 0 ").f(ctx.get(["labelOutlineWidth"], false), ctx, "h").w("px ").f(ctx.get(["labelOutlineColor"], false), ctx, "h").w(";\" />").h("i18n", ctx, {}, { "$key": "textColor" }).w("<input type=\"color\" class=\"tc-ctl-mod-fnt-c\" value=\"").f(ctx.get(["fontColor"], false), ctx, "h").w("\" />").h("i18n", ctx, {}, { "$key": "fontSize" }).w("<input type=\"number\" class=\"tc-ctl-mod-fnt-s tc-textbox\" value=\"").f(ctx.get(["fontSize"], false), ctx, "h").w("\" min=\"7\" max=\"20\" /></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-mod.hbs";
+    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-mod-attr.hbs";
 
     const setFeatureSelectedState = function (ctl, features) {
-        ctl._$deleteBtn.prop('disabled', features.length === 0);
-        ctl._$joinBtn.prop('disabled', features.length < 2);
-        ctl._$splitBtn.prop('disabled', features.filter(complexGeometryFilter).length === 0);
+        ctl._deleteBtn.disabled = features.length === 0;
+        ctl._editAttrBtn.disabled = features.length !== 1;
+        ctl._joinBtn.disabled = features.length < 2;
+        ctl._splitBtn.disabled = features.filter(complexGeometryFilter).length === 0;
         ctl.displayLabelText();
-    }
-
-    const styleFunction = function (feature, mapStyles) {
-        var result;
-        switch (true) {
-            case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-            case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                result = $.extend({}, mapStyles.polygon);
-                break;
-            case TC.feature.Point && feature instanceof TC.feature.Point:
-            case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
-                result = $.extend({}, mapStyles.point);
-                break;
-            default:
-                result = $.extend({}, mapStyles.line);
-                break;
-        }
-        const style = feature.getStyle();
-        if (style.label) {
-            result.label = style.label;
-            result.fontSize = style.fontSize;
-            result.fontColor = style.fontColor;
-            result.labelOutlineColor = style.labelOutlineColor;
-            result.labelOutlineWidth = style.labelOutlineWidth;
-        }
-        return result;
     };
+
+    //const styleFunction = function (feature, mapStyles) {
+    //    var result;
+    //    switch (true) {
+    //        case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
+    //        case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
+    //            result = TC.Util.extend({}, mapStyles.polygon);
+    //            break;
+    //        case TC.feature.Point && feature instanceof TC.feature.Point:
+    //        case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
+    //            result = TC.Util.extend({}, mapStyles.point);
+    //            break;
+    //        default:
+    //            result = TC.Util.extend({}, mapStyles.line);
+    //            break;
+    //    }
+    //    const style = feature.getStyle();
+    //    if (style.label) {
+    //        result.label = style.label;
+    //        result.fontSize = style.fontSize;
+    //        result.fontColor = style.fontColor;
+    //        result.labelOutlineColor = style.labelOutlineColor;
+    //        result.labelOutlineWidth = style.labelOutlineWidth;
+    //    }
+    //    return result;
+    //};
 
     //const setFeatureSelectedStyle = function (ctl, features) {
     //    const mapStyles = ctl.map.options.styles.selection;
     //    features.forEach(function (feature) {
-    //        feature._originalStyle = $.extend({}, feature.getStyle());
+    //        feature._originalStyle = TC.Util.extend({}, feature.getStyle());
     //        feature.setStyle(ctl.styleFunction(feature));
     //    });
     //};
@@ -126,54 +123,66 @@ TC.Consts.event.CHANGE = 'change.tc';
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
         if (self.options.layer) {
-
             self.setLayer(self.options.layer);
-
-            map
-                .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
-                    $.when(self.getLayer(), self.renderPromise()).then(function (layer) {
-                        if (e.layer === layer) {
-                            self._$selectBtn.prop('disabled', false);
-                            self._$textBtn.prop('disabled', false);
-                        }
-                    });
-                })
-                .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
-                    $.when(self.getLayer(), self.renderPromise()).then(function (layer) {
-                        if (e.layer === layer) {
-                            if (e.feature) {
-                                self.unselectFeatures([e.feature]);
-                            }
-                            else {
-                                self.unselectFeatures();
-                            }
-                            setFeatureSelectedState(self, self.getSelectedFeatures());
-                            if (self.layer.features.length === 0) {
-                                self._$selectBtn.prop('disabled', true);
-                                self.setTextMode(false);
-                                self._$textBtn.prop('disabled', true);
-                            }
-                        }
-                    });
-                });
-
-            const featureSelectUpdater = function () {
-                const selectedFeatures = self.getSelectedFeatures();
-                setFeatureSelectedState(self, selectedFeatures);
-                const unselectedFeatures = self.layer.features.filter(function (feature) {
-                    return selectedFeatures.indexOf(feature) < 0;
-                });
-                unselectedFeatures.forEach(function (feature) {
-                    feature.toggleSelectedStyle(false);
-                });
-                selectedFeatures.forEach(function (feature) {
-                    feature.toggleSelectedStyle(true);
-                });
-            };
-            self
-                .on(TC.Consts.event.FEATURESSELECT, featureSelectUpdater)
-                .on(TC.Consts.event.FEATURESUNSELECT, featureSelectUpdater);
         }
+
+        map
+            .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                    const layer = objects[0];
+                    if (e.layer === layer) {
+                        self.setSelectableState(true);
+                    }
+                });
+            })
+            .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
+                const layer = e.layer;
+                const feature = e.feature;
+                Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                    if (layer === objects[0]) {
+                        if (feature) {
+                            self.unselectFeatures([feature]);
+                        }
+                        else {
+                            self.unselectFeatures();
+                        }
+                        setFeatureSelectedState(self, self.getSelectedFeatures());
+                        if (layer.features.length === 0) {
+                            self.setSelectableState(false);
+                            self.setTextMode(false);
+                        }
+                    }
+                });
+            })
+            .on(TC.Consts.event.LAYERUPDATE, function (e) {
+                const layer = e.layer;
+                Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
+                    if (layer === objects[0]) {
+                        setFeatureSelectedState(self, self.getSelectedFeatures());
+                    }
+                });
+            });
+
+        self.on(TC.Consts.event.FEATURESSELECT + ' ' + TC.Consts.event.FEATURESUNSELECT, function () {
+            const selectedFeatures = self.getSelectedFeatures();
+            setFeatureSelectedState(self, selectedFeatures);
+            const unselectedFeatures = self.layer.features.filter(function (feature) {
+                return selectedFeatures.indexOf(feature) < 0;
+            });
+            unselectedFeatures.forEach(function (feature) {
+                feature.toggleSelectedStyle(false);
+            });
+            selectedFeatures.forEach(function (feature) {
+                feature.toggleSelectedStyle(true);
+            });
+
+            if (!self.getAttributeDisplayTarget().classList.contains(TC.Consts.classes.HIDDEN)) {
+                self.displayAttributes();
+            }
+            if (!selectedFeatures.length) {
+                self.closeAttributes();
+            }
+        });
 
         return result;
     };
@@ -182,7 +191,8 @@ TC.Consts.event.CHANGE = 'change.tc';
         const self = this;
 
         const renderCallback = function () {
-            self._$selectBtn = self._$div.find('.' + self.CLASS + '-btn-select').on(TC.Consts.event.CLICK, function (e) {
+            self._selectBtn = self.div.querySelector('.' + self.CLASS + '-btn-select');
+            self._selectBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
                 if (!e.target.disabled) {
                     if (self.isActive) {
                         self.deactivate();
@@ -191,34 +201,40 @@ TC.Consts.event.CHANGE = 'change.tc';
                         self.activate();
                     }
                 }
-            });
-            self._$deleteBtn = self._$div.find('.' + self.CLASS + '-btn-delete').on(TC.Consts.event.CLICK, function () {
+            }, { passive: true });
+            self._deleteBtn = self.div.querySelector('.' + self.CLASS + '-btn-delete');
+            self._deleteBtn.addEventListener(TC.Consts.event.CLICK, function () {
                 self.deleteSelectedFeatures();
+            }, { passive: true });
+            self._textBtn = self.div.querySelector('.' + self.CLASS + '-btn-text');
+            self._textBtn.addEventListener(TC.Consts.event.CLICK, function () {
+                self.setTextMode(!self.textActive);
+            }, { passive: true });
+            self._joinBtn = self.div.querySelector('.' + self.CLASS + '-btn-join');
+            self._splitBtn = self.div.querySelector('.' + self.CLASS + '-btn-split');
+            self._editAttrBtn = self.div.querySelector('.' + self.CLASS + '-btn-attr');
+            self._editAttrBtn.addEventListener(TC.Consts.event.CLICK, function () {
+                self.toggleAttributes();
+            }, { passive: true });
+            self._textInput = self.div.querySelector('input.' + self.CLASS + '-txt');
+            self._textInput.addEventListener('input', function (e) {
+                self.labelFeatures(e.target.value);
             });
-            self._$textBtn = self._$div.find('.' + self.CLASS + '-btn-text')
-                .on(TC.Consts.event.CLICK, function () {
-                    self.setTextMode(!self.textActive);
-                });
-            self._$joinBtn = self._$div.find('.' + self.CLASS + '-btn-join');
-            self._$splitBtn = self._$div.find('.' + self.CLASS + '-btn-split');
-            self._$text = self._$div.find('input.' + self.CLASS + '-txt')
-                .on('input.tc', function (e) {
-                    self.labelFeatures(e.target.value);
-                });
-            self._$styleSection = self._$div.find('.' + self.CLASS + '-style');
+            self._styleSection = self.div.querySelector('.' + self.CLASS + '-style');
 
-            self._$fontColorPicker = self._$div.find(self._classSelector + '-fnt-c').on(TC.Consts.event.CHANGE, function (e) {
+            self._fontColorPicker = self.div.querySelector(self._classSelector + '-fnt-c');
+            self._fontColorPicker.addEventListener(TC.Consts.event.CHANGE, function (e) {
                 self.setFontColor(e.target.value);
             });
 
-            self._$fontSizeSelector = self._$div.find('.' + self.CLASS + '-fnt-s')
-                .on(TC.Consts.event.CHANGE, function (e) {
-                    self.setFontSize(e.target.value);
-                });
+            self._fontSizeSelector = self.div.querySelector('.' + self.CLASS + '-fnt-s');
+            self._fontSizeSelector.addEventListener(TC.Consts.event.CHANGE, function (e) {
+                self.setFontSize(e.target.value);
+            });
 
-            self.__firstRender.resolve();
+            self._attributesSection = self.div.querySelector('.' + self.CLASS + '-attr');
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
         };
@@ -230,34 +246,45 @@ TC.Consts.event.CHANGE = 'change.tc';
             labelOutlineWidth: self.styles.text.labelOutlineWidth
         };
 
-        if (Modernizr.inputtypes.color) {
-            self.renderData(renderObject, renderCallback);
+        var promise;
+        if (TC.browserFeatures.inputTypeColor()) {
+            promise = self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
         }
         else {
             // El navegador no soporta input[type=color], usamos polyfill
-            self.renderData(renderObject, function () {
-                self._$div.find('input[type=color]').spectrum({
-                    preferredFormat: 'hex',
-                    showPalette: true,
-                    palette: [],
-                    selectionPalette: [],
-                    cancelText: self.getLocaleString('cancel'),
-                    chooseText: self.getLocaleString('ok'),
-                    replacerClassName: self.CLASS + '-str-c'
+            promise = self._set1stRenderPromise(self.renderData(renderObject, function () {
+                const input = self.div.querySelector('input[type=color]');
+                input.style.backgroundColor = input.value;
+                input.style.color = 'transparent';
+                const picker = new CP(input, 'click', document.body);
+
+                input.onclick = function (e) {
+                    e.preventDefault();
+                };
+
+                // Evitamos que salga el teclado virtual en iOS
+                input.onfocus = function (_e) {
+                    this.blur();
+                };
+
+                input.onchange = function (_e) {
+                    this.style.backgroundColor = this.value;
+                };
+                self.map.loaded(function () {
+                    picker.on("change", function (color) {
+                        self.setFontColor('#' + color);
+                    });
                 });
 
                 renderCallback();
-            });
+            }));
         }
-    };
-
-    ctlProto.renderPromise = function () {
-        return this.__firstRender.promise();
+        return promise;
     };
 
     ctlProto.activate = function () {
         const self = this;
-        self._$selectBtn.addClass(TC.Consts.classes.ACTIVE);
+        self._selectBtn.classList.add(TC.Consts.classes.ACTIVE);
         TC.Control.prototype.activate.call(self);
         self.wrap.activate(self.mode);
     };
@@ -265,19 +292,17 @@ TC.Consts.event.CHANGE = 'change.tc';
     ctlProto.deactivate = function () {
         const self = this;
         TC.Control.prototype.deactivate.call(self);
-        if (self._$selectBtn) {
+        if (self._selectBtn) {
             setFeatureSelectedState(self, []);
         }
         if (self.wrap) {
             self.wrap.deactivate();
         }
-        //self.$events.trigger($.Event(TC.Consts.event.DRAWCANCEL, { ctrl: self }));
-        if (self._$selectBtn) {
-            self._$selectBtn.removeClass(TC.Consts.classes.ACTIVE);
-            self.layer.features.forEach(function (feature) {
-                feature.toggleSelectedStyle(false);
-            });
-            //setFeatureUnselectedStyle(self, self.getSelectedFeatures());
+        if (self._selectBtn) {
+            self._selectBtn.classList.remove(TC.Consts.classes.ACTIVE);
+            if (self.layer) {
+                self.unselectFeatures(self.getSelectedFeatures());
+            }
         }
     };
 
@@ -321,25 +346,41 @@ TC.Consts.event.CHANGE = 'change.tc';
         var self = this;
         // Se ha instanciado un control sin capa asociada
         if (self.options && typeof self.options.layer === 'boolean' && !self.options.layer) {
-            return null;
+            return Promise.resolve(null);
         }
-        return self.layer ? self.layer : self._layerPromise;
+        if (self.layer) {
+            return Promise.resolve(self.layer);
+        }
+        return self._layerPromise;
     };
 
     ctlProto.setLayer = function (layer) {
-        var self = this;
+        const self = this;
         if (self.map) {
-            if (typeof (layer) === "string") {
-                self.map.loaded(function () {
-                    self.layer = self.map.getLayer(layer);
-                    self._layerPromise.resolve(self.layer);
-                });
-            }
-            else {
-                self.layer = layer;
-                self._layerPromise.resolve(self.layer);
-            }
+            self.setSelectedFeatures([]);
+            self._layerPromise = new Promise(function (resolve, _reject) {
+                if (typeof (layer) === "string") {
+                    self.map.loaded(function () {
+                        self.layer = self.map.getLayer(layer);
+                        resolve(self.layer);
+                    });
+                }
+                else {
+                    self.layer = layer;
+                    resolve(self.layer);
+                }
+            });
+            Promise.all([self._layerPromise, self.renderPromise()]).then(function (objs) {
+                const layer = objs[0];
+                self.setSelectableState(layer && layer.features.length > 0);
+            });
         }
+    };
+
+    ctlProto.setSelectableState = function (active) {
+        const self = this;
+        self._selectBtn.disabled = !active;
+        self._textBtn.disabled = !active;
     };
 
     ctlProto.getSelectedFeatures = function () {
@@ -376,25 +417,26 @@ TC.Consts.event.CHANGE = 'change.tc';
         self.wrap.unselectFeatures(features);
         features.forEach(function (feature) {
             self.layer.removeFeature(feature);
+            self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
         });
         return self;
     };
 
-    ctlProto.styleFunction = function (feature, resolution) {
+    ctlProto.styleFunction = function (feature, _resolution) {
         const self = this;
         var result;
         const mapStyles = self.map.options.styles.selection;
         switch (true) {
             case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
             case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                result = $.extend({}, mapStyles.polygon);
+                result = TC.Util.extend({}, mapStyles.polygon);
                 break;
             case TC.feature.Point && feature instanceof TC.feature.Point:
             case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
-                result = $.extend({}, mapStyles.point);
+                result = TC.Util.extend({}, mapStyles.point);
                 break;
             default:
-                result = $.extend({}, mapStyles.line);
+                result = TC.Util.extend({}, mapStyles.line);
                 break;
         }
         const style = feature.getStyle();
@@ -411,8 +453,14 @@ TC.Consts.event.CHANGE = 'change.tc';
     ctlProto.setTextMode = function (active) {
         const self = this;
         self.textActive = active;
-        self._$textBtn.toggleClass(TC.Consts.classes.ACTIVE, active);
-        self._$styleSection.toggleClass(TC.Consts.classes.HIDDEN, !active);
+        if (active) {
+            self._textBtn.classList.add(TC.Consts.classes.ACTIVE, active);
+            self._styleSection.classList.remove(TC.Consts.classes.HIDDEN);
+        }
+        else {
+            self._textBtn.classList.remove(TC.Consts.classes.ACTIVE, active);
+            self._styleSection.classList.add(TC.Consts.classes.HIDDEN);
+        }
         self.displayLabelText();
         return self;
     };
@@ -425,12 +473,13 @@ TC.Consts.event.CHANGE = 'change.tc';
         color = TC.Util.colorArrayToString(color);
         outlineColor = outlineColor || self.getLabelOutlineColor(color);
         self.renderPromise().then(function () {
-            self._$fontColorPicker.val(color);
-            if (!Modernizr.inputtypes.color) {
-                self._$fontColorPicker.spectrum('set', color);
+            self._fontColorPicker.value = color;
+            self._textInput.style.color = color;
+            self._textInput.style.textShadow = '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor;
+            if (!TC.browserFeatures.inputTypeColor()) {
+                self._fontColorPicker.style.backgroundColor = color;
+                self._fontColorPicker.blur();
             }
-            self._$text.css('color', color);
-            self._$text.css('text-shadow', '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor);
         });
         return self;
     };
@@ -458,8 +507,8 @@ TC.Consts.event.CHANGE = 'change.tc';
         const sizeValue = parseInt(size);
         if (sizeValue !== Number.NaN) {
             self.renderPromise().then(function () {
-                self._$fontSizeSelector.val(sizeValue);
-                self._$text.css('font-size', sizeValue + 'pt');
+                self._fontSizeSelector.value = sizeValue;
+                self._textInput.style.fontSize = sizeValue + 'pt';
             });
         }
         return self;
@@ -493,10 +542,10 @@ TC.Consts.event.CHANGE = 'change.tc';
                 const r = parseInt(matchForLong[1], 16);
                 const g = parseInt(matchForLong[2], 16);
                 const b = parseInt(matchForLong[3], 16);
-                return (r + g + b) / 3 < 128 ? '#fff' : '#000';
+                return (r + g + b) / 3 < 128 ? '#ffffff' : '#000000';
             }
         }
-        return '#fff';
+        return '#ffffff';
     };
 
     ctlProto.displayLabelText = function () {
@@ -521,7 +570,7 @@ TC.Consts.event.CHANGE = 'change.tc';
             self
                 .setFontSizeWatch(size)
                 .setFontColorWatch(color)
-                ._$text.val(text);
+                ._textInput.value = text || '';
         });
         return self;
     };
@@ -532,7 +581,7 @@ TC.Consts.event.CHANGE = 'change.tc';
         if (features.length) {
             const style = features[0].getStyle();
             features.forEach(function (feature) {
-                const textStyle = $.extend({}, self.styles.text, style);
+                const textStyle = TC.Util.extend({}, self.styles.text, style);
                 style.label = text;
                 style.labelOffset = textStyle.labelOffset;
                 style.fontColor = textStyle.fontColor;
@@ -545,4 +594,94 @@ TC.Consts.event.CHANGE = 'change.tc';
         return self;
     };
 
+    ctlProto.getAttributeDisplayTarget = function () {
+        return this._attributesSection;
+    };
+
+    ctlProto.displayAttributes = function () {
+        const self = this;
+        const selectedFeatures = self.getSelectedFeatures();
+        const feature = selectedFeatures[selectedFeatures.length - 1];
+        if (feature) {
+            self.getRenderedHtml(self.CLASS + '-attr', { data: feature.getData() }, function (html) {
+                const attributesSection = self.getAttributeDisplayTarget();
+                attributesSection.innerHTML = html;
+                attributesSection.classList.remove(TC.Consts.classes.HIDDEN);
+                self._editAttrBtn.classList.add(TC.Consts.classes.ACTIVE);
+
+                attributesSection.querySelector(`${self.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                    self._onAttrOK();
+                }, { passive: true });
+
+                attributesSection.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function () {
+                    self.closeAttributes();
+                }, { passive: true });
+            });
+        }
+    };
+
+    ctlProto.closeAttributes = function () {
+        const self = this;
+        self._attributesSection.classList.add(TC.Consts.classes.HIDDEN);
+        self._editAttrBtn.classList.remove(TC.Consts.classes.ACTIVE);
+    };
+
+    ctlProto.toggleAttributes = function () {
+        const self = this;
+        if (self._editAttrBtn.classList.toggle(TC.Consts.classes.ACTIVE)) {
+            self.displayAttributes();
+        }
+        else {
+            self.closeAttributes();
+        }
+    };
+
+    ctlProto._onAttrOK = function () {
+        const self = this;
+        const feature = self.getSelectedFeatures()[0];
+        if (feature) {
+            const data = {};
+            self.getAttributeDisplayTarget().querySelectorAll('input').forEach(function (input) {
+                data[input.getAttribute('name')] = input.value;
+            });
+            feature.setData(data);
+            self.trigger(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
+            self.closeAttributes();
+        }
+    };
+
+    ctlProto.joinFeatures = function (features) {
+        const self = this;
+        if (self.geometryType === TC.Consts.geom.MULTIPOLYLINE ||
+            self.geometryType === TC.Consts.geom.MULTIPOLYGON ||
+            self.geometryType === TC.Consts.geom.MULTIPOINT) {
+            self._joinedFeatureAttributes = [];
+            let newFeature;
+            if (features.length > 1) {
+                var geometries = features.map(function (elm) {
+                    self._joinedFeatureAttributes.push(elm.getData());
+                    return elm.geometry;
+                });
+                var newGeometry = geometries.reduce(function (a, b) {
+                    return a.concat(b);
+                });
+                newFeature = new features[0].constructor(newGeometry);
+                for (var i = 0, len = features.length; i < len; i++) {
+                    var feature = features[i];
+                    self.layer.removeFeature(feature);
+                    self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
+                }
+                self.layer.addFeature(newFeature).then(function (feat) {
+                    self.setSelectedFeatures([newFeature]);
+                    self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
+                    feat.showPopup(self.attributeEditor);
+                });
+            }
+            setFeatureSelectedState(self, [newFeature]);
+        }
+    };
+
 })();
+
+const Modify = TC.control.Modify;
+export default Modify;

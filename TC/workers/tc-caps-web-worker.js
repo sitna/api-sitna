@@ -1,8 +1,4 @@
-﻿// ==ClosureCompiler==
-// @output_file_name default.js
-// @compilation_level SIMPLE_OPTIMIZATIONS
-// ==/ClosureCompiler==
-
+﻿
 /**
  * @author: Tobias Nickel
  * @created: 06.04.2015
@@ -17,6 +13,7 @@
  * filter {function} filter method, as you know it from Array.filter. but is goes throw the DOM.
  * simplify {bool} to use tXml.simplify.
  */
+
 
 function tXml(S, options) {
     "use strict";
@@ -141,11 +138,12 @@ function tXml(S, options) {
 
         // parsing attributes
         var attrFound = false;
+        let name;
         while (S.charCodeAt(pos) !== closeBracketCC) {
             var c = S.charCodeAt(pos);
             if ((c > 64 && c < 91) || (c > 96 && c < 123)) {
                 //if('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(S[pos])!==-1 ){
-                var name = parseName();
+                name = parseName();
                 // search beginning of the string
                 var code = S.charCodeAt(pos);
                 while (code !== singleQuoteCC && code !== doubleQuoteCC && !((code > 64 && code < 91) || (code > 96 && code < 123)) && code !== closeBracketCC) {
@@ -156,8 +154,9 @@ function tXml(S, options) {
                     node.attributes = {};
                     attrFound = true;
                 }
+                let value;
                 if (code === singleQuoteCC || code === doubleQuoteCC) {
-                    var value = parseString();
+                    value = parseString();
                 } else {
                     value = null;
                     pos--;
@@ -170,12 +169,12 @@ function tXml(S, options) {
         // optional parsing of children
         if (S.charCodeAt(pos - 1) !== slashCC) {
             if (node.tagName == "script") {
-                var start = pos + 1;
+                const start = pos + 1;
                 pos = S.indexOf('</script>', pos);
                 node.children = [S.slice(start, pos - 1)];
                 pos += 8;
             } else if (node.tagName == "style") {
-                var start = pos + 1;
+                const start = pos + 1;
                 pos = S.indexOf('</style>', pos);
                 node.children = [S.slice(start, pos - 1)];
                 pos += 7;
@@ -214,7 +213,7 @@ function tXml(S, options) {
     var out = null;
     if (options.attrValue !== undefined) {
         options.attrName = options.attrName || 'id';
-        var out = [];
+        out = [];
 
         while ((pos = findElements()) !== -1) {
             pos = S.lastIndexOf('<', pos);
@@ -379,6 +378,7 @@ tXml.getElementsByClassName = function (S, classname, simplified) {
 if ('object' === typeof module) {
     module.exports = tXml;
 }
+
 //console.clear();
 //console.log('here:',tXml.getElementById('<some><xml id="test">dada</xml><that id="test">value</that></some>','test'));
 //console.log('here:',tXml.getElementsByClassName('<some><xml id="test" class="sdf test jsalf">dada</xml><that id="test">value</that></some>','test'));
@@ -446,11 +446,11 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var flattenOnlineResource = function (olr) {
-        return olr['href'];
+        return olr.href;
     };
 
     var flattenLayerUrls = function (layer, tag) {
-        if (layer.hasOwnProperty(tag)) {
+        if (Object.prototype.hasOwnProperty.call(layer, tag)) {
             var tagObj = layer[tag];
             var urls = tagObj.length ? tagObj : [tagObj];
             for (var i = 0, len = urls.length; i < len; i++) {
@@ -481,12 +481,12 @@ console.log("MILLISECONDS",end2-start2);
     var booleanValues = [false, true];
     var processWMSLayer = function processWMSLayer(layer, crsList) {
         // Transformamos booleanos
-        if (layer.hasOwnProperty('queryable')) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'queryable')) {
             layer.queryable = booleanValues[layer.queryable];
         }
         var bbox;
         // Convertimos EX_GeographicBoundingBox a array
-        if (layer.hasOwnProperty('EX_GeographicBoundingBox')) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'EX_GeographicBoundingBox')) {
             bbox = layer.EX_GeographicBoundingBox;
             layer.EX_GeographicBoundingBox = [
                 parseFloat(bbox.westBoundLongitude),
@@ -496,12 +496,12 @@ console.log("MILLISECONDS",end2-start2);
             ]
         }
         // Convertimos BoundingBox a array
-        if (layer.hasOwnProperty('BoundingBox')) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'BoundingBox')) {
             bbox = layer.BoundingBox;
             bbox = layer.BoundingBox.length ? layer.BoundingBox : [layer.BoundingBox];
             layer.BoundingBox = bbox.map(function (elm) {
                 return {
-                    crs: elm.CRS,
+                    crs: elm.CRS || elm.SRS,
                     extent: [
                         parseFloat(elm.minx),
                         parseFloat(elm.miny),
@@ -513,7 +513,7 @@ console.log("MILLISECONDS",end2-start2);
             });
         }
         // Convertimos OnlineResource a string
-        if (layer.hasOwnProperty('Attribution') && layer.Attribution.OnlineResource) {
+        if (Object.prototype.hasOwnProperty.call(layer, 'Attribution') && layer.Attribution.OnlineResource) {
             layer.Attribution.OnlineResource = flattenOnlineResource(layer.Attribution.OnlineResource);
         }
         flattenLayerUrls(layer, 'AuthorityURL');
@@ -539,6 +539,7 @@ console.log("MILLISECONDS",end2-start2);
             var children = layer.Layer[1] ? layer.Layer : [layer.Layer];
             layer.Layer = children;
             for (var i = 0, len = children.length; i < len; i++) {
+                children[i].parent = layer;
                 processWMSLayer(children[i], newCrsList);
             }
         }
@@ -564,7 +565,7 @@ console.log("MILLISECONDS",end2-start2);
             if (layer.ResourceURL && !layer.ResourceURL.length) {
                 layer.ResourceURL = [layer.ResourceURL];
             }
-            if (!layer.Style.length) {
+            if (layer.Style && !Array.isArray(layer.Style)) {
                 layer.Style = [layer.Style];
             }
             if (!layer.TileMatrixSetLink.length) {
@@ -581,9 +582,6 @@ console.log("MILLISECONDS",end2-start2);
                         tmslm.MinTileCol = parseInt(tmslm.MinTileCol);
                         tmslm.MinTileRow = parseInt(tmslm.MinTileRow);
                     }
-                }
-                else {
-                    tmsl.TileMatrixSetLimits = [];
                 }
             }
             if (layer.WGS84BoundingBox) {
@@ -604,18 +602,27 @@ console.log("MILLISECONDS",end2-start2);
             contents.TileMatrixSet = [contents.TileMatrixSet];
         }
         var tileMatrixSets = contents.TileMatrixSet;
-        for (var i = 0, len = tileMatrixSets.length; i < len; i++) {
-            var tms = tileMatrixSets[i];
-            for (var j = 0, lenj = tms.TileMatrix.length; j < lenj; j++) {
-                var tm = tms.TileMatrix[j];
-                tm.MatrixHeight = parseInt(tm.MatrixHeight);
-                tm.MatrixWidth = parseInt(tm.MatrixWidth);
-                tm.TileHeight = parseInt(tm.TileHeight);
-                tm.TileWidth = parseInt(tm.TileWidth);
-                tm.ScaleDenominator = parseFloat(tm.ScaleDenominator);
-                tm.TopLeftCorner = parseCorner(tm.TopLeftCorner);
+        tileMatrixSets.forEach(function (tileMatrixSet) {
+            tileMatrixSet.SupportedCRS = tileMatrixSet.SupportedCRS.trim();
+            if (tileMatrixSet.BoundingBox) {
+                var lowerCorner = parseCorner(tileMatrixSet.BoundingBox.LowerCorner);
+                var upperCorner = parseCorner(tileMatrixSet.BoundingBox.UpperCorner);
+                tileMatrixSet.BoundingBox = [
+                    lowerCorner[0],
+                    lowerCorner[1],
+                    upperCorner[0],
+                    upperCorner[1]
+                ];
             }
-        }
+            tileMatrixSet.TileMatrix.forEach(function (tileMatrix) {
+                tileMatrix.MatrixHeight = parseInt(tileMatrix.MatrixHeight);
+                tileMatrix.MatrixWidth = parseInt(tileMatrix.MatrixWidth);
+                tileMatrix.TileHeight = parseInt(tileMatrix.TileHeight);
+                tileMatrix.TileWidth = parseInt(tileMatrix.TileWidth);
+                tileMatrix.ScaleDenominator = parseFloat(tileMatrix.ScaleDenominator);
+                tileMatrix.TopLeftCorner = parseCorner(tileMatrix.TopLeftCorner);
+            });
+        });
     };
 
     var processDCPVerb = function (dcpVerb) {
@@ -634,7 +641,7 @@ console.log("MILLISECONDS",end2-start2);
             }
             result[i] = {
                 Constraint: verb.Constraint,
-                href: verb['href']
+                href: verb.href
             };
         }
         return result;
@@ -657,8 +664,158 @@ console.log("MILLISECONDS",end2-start2);
         delete om.Operation;
     };
 
+    var wfsParser = function () {
+        var keys = ["name", "Name"],
+            parameters = ["Parameter", "Constraint"],
+            a2o = function (a) {
+                return a.reduce(function (result, item, index) {
+                    if (keys.some(k => { return Object.prototype.hasOwnProperty.call(item, k); })) {
+                        var key = keys.find(k => { return Object.prototype.hasOwnProperty.call(item, k); });
+                        var objName = (item[key].substring(item[key].indexOf(":") + 1));
+                        delete item[key];
+                        result[objName] = Object.prototype.hasOwnProperty.call(item, "AllowedValues") && item.AllowedValues.Value || item
+                        return result;
+                    }
+                    else {
+                        return (index === 0 ? [] : result).concat(item);
+                    }
+                }, {});
+            },
+            pp = function (p) {
+                var o = {};
+                if (p instanceof Array) {
+                    o = a2o(p);
+                }
+                else {
+                    o = Object.prototype.hasOwnProperty.call(p, "AllowedValues") &&
+                        p.AllowedValues.Value && keys.find(k => { return Object.prototype.hasOwnProperty.call(p, k) }) &&
+                        (o[p[keys.find(k => { return Object.prototype.hasOwnProperty.call(p, k) })]] = p.AllowedValues.Value) && o || p
+                }
+                return o;
+
+            },
+            e = {
+                V1_0_0: "1.0.0",
+                V1_1_0: "1.1.0",
+                V2_0_0: "2.0.0"
+            },
+            r = function () {
+                var r, n = [],
+                    u = [],
+                    p = [],
+                    capabilites = arguments[0];
+                switch (capabilites.version) {
+                    case e.V1_0_0:
+                        r = e.V1_0_0;
+                        break;
+                    case e.V1_1_0:
+                        r = e.V1_1_0;
+                        break;
+                    case e.V2_0_0:
+                        r = e.V2_0_0
+                }
+                n = t(capabilites, r), u = a(capabilites, r), p = i(capabilites, r);
+                var o = s(capabilites, r),
+                    l = {
+                        Operations: n,
+                        FeatureTypes: u,
+                        Filters: p
+                    };
+                return Object.assign(l, o), l
+            },
+            t = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        var a = r.Capability.Request;
+                        if (a.GetFeature) {
+                            var i = [];
+                            for (var s in a.GetFeature.ResultFormat) i.push(s.toLowerCase());
+                            a.GetFeature.outputFormat = i, delete a.GetFeature.ResultFormat, a.GetFeature.Operations = r.FeatureTypeList.Operations
+                        }
+                        return a;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        var n = {};
+                        for (var s in r.OperationsMetadata) {
+                            var u = {};
+                            if (!(r.OperationsMetadata[s] instanceof Array)) continue;
+                            u[s] = a2o(r.OperationsMetadata[s]);
+                            for (var p in u[s]) {
+                                u[s][p] = ((o) => {
+                                    var r = {};
+                                    if (o instanceof Array)
+                                        return a2o(o);
+                                    for (var k in o) {
+                                        if (parameters.find((i) => { return k === i })) {
+                                            r = Object.assign(r, pp(o[parameters.find((i) => { return k === i })]));
+                                        }
+                                        else
+                                            r[k] = o[k];
+                                    } return r;
+                                })(u[s][p]);
+                            }
+                            n = Object.assign(n, u[s]);
+                        }
+                        return n
+                }
+                return null
+            },
+            a = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        r.FeatureTypeList.FeatureType = (r.FeatureTypeList.FeatureType instanceof Array) ? r.FeatureTypeList.FeatureType : [r.FeatureTypeList.FeatureType];
+                        for (var a = {}, i = 0; i < r.FeatureTypeList.FeatureType.length; i++) {
+                            var s = r.FeatureTypeList.FeatureType[i].Name;
+                            a[s.substring(s.indexOf(":") + 1)] = r.FeatureTypeList.FeatureType[i]
+                        }
+                        return a;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        r.FeatureTypeList.FeatureType = (r.FeatureTypeList.FeatureType instanceof Array) ? r.FeatureTypeList.FeatureType : [r.FeatureTypeList.FeatureType];
+                        for (var a = {}, i = 0; i < r.FeatureTypeList.FeatureType.length; i++) {
+                            var s = r.FeatureTypeList.FeatureType[i].Name;
+                            a[s.substring(s.indexOf(":") + 1)] = r.FeatureTypeList.FeatureType[i]
+                        }
+                        return a
+                }
+                return null
+            },
+            i = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        return r.Filter_Capabilities;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        var a = r.Filter_Capabilities;
+                        return a
+                }
+                return null
+            },
+            s = function (r, t) {
+                switch (t) {
+                    case e.V1_0_0:
+                        var a = {};
+                        for (var i in r) "string" == typeof r[i] && (a[i] = r[i]);
+                        return a;
+                    case e.V1_1_0:
+                        return {};
+                    case e.V2_0_0:
+                        var a = {};
+                        for (var i in r) "string" == typeof r[i] && (a[i] = r[i]);
+                        return a
+                }
+                return {}
+            }
+        return {
+            Parse: r
+        }
+    }();
+
     var postprocessWMS = function (xml) {
-        var capabilities = xml['WMS_Capabilities'] || (xml['?xml'] && (xml['?xml']['WMS_Capabilities'] || xml['?xml']['WMT_MS_Capabilities']));
+        var capabilities = xml.WMS_Capabilities || (xml['?xml'] && (xml['?xml'].WMS_Capabilities || xml['?xml'].WMT_MS_Capabilities));
         if (capabilities) {
             processWMSLayer(capabilities.Capability.Layer);
             var request = capabilities.Capability.Request;
@@ -671,7 +828,7 @@ console.log("MILLISECONDS",end2-start2);
     };
 
     var postprocessWMTS = function (xml) {
-        var capabilities = xml['?xml'] && xml['?xml']['Capabilities'];
+        var capabilities = xml['?xml'] && xml['?xml'].Capabilities;
         if (capabilities) {
             processWMTSLayers(capabilities.Contents);
             processTMS(capabilities.Contents);
@@ -679,10 +836,41 @@ console.log("MILLISECONDS",end2-start2);
         }
         return capabilities;
     };
+    var postprocessWFS = function (xml) {
+        var capabilities = xml.WFS_Capabilities || (xml['?xml'] && (xml['?xml'].WFS_Capabilities));
+        if (capabilities) {
+            capabilities = wfsParser.Parse(capabilities);
+            //añadir prefijo a los atributos simples y pue empiecen por http
+            for (var attr in capabilities) {
+                if (typeof (capabilities[attr]) === "string" && capabilities[attr].indexOf("http") === 0) {
+                    capabilities["xmlns:" + attr] = capabilities[attr];
+                    delete capabilities[attr];
+                }
+            }
+            delete capabilities.updateSequence;
+        }
+        return capabilities;
+    };
 
     onmessage = function (e) {
+
+        //if (e.data.url)
+        //    this.importScripts(e.data.url + 'TC/workers/tXml.js');
+        //else
+        //    this.importScripts('tXml.js');
         var xml = simplify(tXml(e.data.text));
-        var capabilities = e.data.type === 'WMTS' ? postprocessWMTS(xml) : postprocessWMS(xml);
+        var capabilities;
+        switch (e.data.type) {
+            case "WMS":
+                capabilities = postprocessWMS(xml);
+                break;
+            case "WMTS":
+                capabilities = postprocessWMTS(xml);
+                break;
+            case "WFS":
+                capabilities = postprocessWFS(xml);
+                break;
+        }
         postMessage({
             state: capabilities ? 'success' : 'error',
             capabilities: capabilities

@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.addMarker</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#addMarker">SITNA.Map.addMarker</a>.</p>
+        <p>Añadir marcador a un grupo de marcadores y a una capa concreta del mapa.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+	
+    <div id="mapa"></div>
+    <script>
+        // Crear un mapa con una capa vectorial, centrado en la Ciudadela de Pamplona.
+        var map = new SITNA.Map("mapa", {
+            initialExtent: [
+                609627,
+                4740225,
+                611191,
+                4741395
+            ],
+            workLayers: [{
+                id: "markers",
+                title: "Marcadores geográficos",
+                type: SITNA.Consts.layerType.VECTOR
+            }]
+        });
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Añadir un marcador en la capa "markers", 
+            // asignarle un grupo para que salga en tabla de contenidos y leyenda.
+            map.addMarker([610431, 4740837], {
+                layer: "markers",
+                group: "Ciudadela"
+            });
+        });
+    </script>
+	
+</body>
+</html>

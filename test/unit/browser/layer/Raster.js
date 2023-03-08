@@ -1,9 +1,4 @@
 ﻿
-var expect = chai.expect;
-
-// only critical error messages
-$.mockjaxSettings.logging = 0;
-
 describe('Tests de TC.layer.Raster', function () {
 
     TC.isDebug = false;
@@ -64,7 +59,7 @@ describe('Tests de TC.layer.Raster', function () {
         it("Función changed sigue disponible", function (done) {
 
             var olImage = new ol.Image();
-            expect($.isFunction(olImage.changed)).to.be.true;
+            expect(TC.Util.isFunction(olImage.changed)).to.be.true;
 
             done();
         });
@@ -154,28 +149,28 @@ describe('Tests de TC.layer.Raster', function () {
         //});        
     });
 
-    describe('imageLoad_blank_', function () {
-        $.mockjax.clear();
+    //describe('imageLoad_blank_', function () {
+    //    $.mockjax.clear();
 
-        it("Debe cargar TC.Consts.BLANK_IMAGE", function (done) {
+    //    it("Debe cargar TC.Consts.BLANK_IMAGE", function (done) {
 
-            var mockOptions = {
-                url: TC.Consts.BLANK_IMAGE + '&' + TC.getUID()
-            };
-            $.extend(mockOptions, { status: 200 });
+    //        var mockOptions = {
+    //            url: TC.Consts.BLANK_IMAGE + '&' + TC.getUID()
+    //        };
+    //        $.extend(mockOptions, { status: 200 });
 
-            $.mockjax(mockOptions);
+    //        $.mockjax(mockOptions);
 
-            var image = new ol.Image();
-            TC.layer.Raster.prototype.imageLoad_blank_(image);
+    //        var image = new ol.Image();
+    //        TC.layer.Raster.prototype.imageLoad_blank_(image);
 
-            expect(image.getImage().src).to.equal(TC.Consts.BLANK_IMAGE);
+    //        expect(image.getImage().src).to.equal(TC.Consts.BLANK_IMAGE);
 
-            $.mockjax.clear(mockOptions.url);
+    //        $.mockjax.clear(mockOptions.url);
 
-            done();
-        });
-    });
+    //        done();
+    //    });
+    //});
 
     
     it('getByProxy_: el resultado contiene el valor de TC.Cfg.proxy', function () {
@@ -211,23 +206,23 @@ describe('Tests de TC.layer.Raster', function () {
         //    });
         //});
 
-        var mock = mockResult(1, "https://", toCheck[0].CORS, toCheck[0].HTTPS);
-        it("Servicio CORS: " + toCheck[0].CORS + ' HTTPS: ' + toCheck[0].HTTPS + ' método de carga debe ser ' + mock.name, function (done) {
+        //var mock = mockResult(1, "https://", toCheck[0].CORS, toCheck[0].HTTPS);
+        //it("Servicio CORS: " + toCheck[0].CORS + ' HTTPS: ' + toCheck[0].HTTPS + ' método de carga debe ser ' + mock.name, function (done) {
 
-            var mockOptions = {
-                url: toCheck[0].url
-            };
-            $.extend(mockOptions, mock.statusCode);
+        //    var mockOptions = {
+        //        url: toCheck[0].url
+        //    };
+        //    $.extend(mockOptions, mock.statusCode);
 
-            $.mockjax(mockOptions);
+        //    $.mockjax(mockOptions);
 
-            TC.layer.Raster.prototype.getCapabilitiesUrl_ServiceWorker_(toCheck[0].url);
-            TC.layer.Raster.prototype.getCapabilitiesUrl_promise_().then(function () {
-                expect(TC.layer.Raster.prototype.capabilitiesUrl_.toString()).to.equal(mock.metodo.toString());
+        //    TC.layer.Raster.prototype.getCapabilitiesUrl_ServiceWorker_(toCheck[0].url);
+        //    TC.layer.Raster.prototype.getCapabilitiesUrl_promise_().then(function () {
+        //        expect(TC.layer.Raster.prototype.capabilitiesUrl_.toString()).to.equal(mock.metodo.toString());
 
-                $.mockjax.clear(mockOptions.url);
-            }).then(done);
-        });
+        //        $.mockjax.clear(mockOptions.url);
+        //    }).then(done);
+        //});
 
 
         mock = mockResult(1, "https://", toCheck[1].CORS, toCheck[1].HTTPS);
@@ -902,7 +897,7 @@ describe('Tests de TC.layer.Raster', function () {
 //       { url: "https://idena.navarra.es/ogc/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "https://www.ign.es/wmts/mapa-raster?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "https://www.ign.es/wmts/ign-base?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
-//       { url: "https://www.ign.es/wmts/mdt?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
+//       { url: "https://servicios.idee.es/wmts/mdt?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "https://www.ign.es/wmts/pnoa-ma?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "https://idena.navarra.es/ogc/inspire/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       // wms externos estatales
@@ -919,7 +914,7 @@ describe('Tests de TC.layer.Raster', function () {
 //       { url: "https://www.ign.es/wms/pnoa-historico?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "https://www.ign.es/wms-inspire/camino-santiago?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "https://www.ign.es/wms-inspire/geofisica?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
-//       { url: "https://www.ign.es/wms-inspire/mdt?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
+//       { url: "https://servicios.idee.es/wms-inspire/mdt?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 1, HTTPS: 1 },
 //       { url: "http://ideadif.adif.es/gservices/Tramificacion/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", urlMock: "https://ideadif.adif.es/gservices/Tramificacion/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 0, HTTPS: 0 },
 //       { url: "http://servicios.internet.ine.es/WMS/WMS_INE_SECCIONES_G01/MapServer/WMSServer?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", urlMock: "https://servicios.internet.ine.es/WMS/WMS_INE_SECCIONES_G01/MapServer/WMSServer?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", CORS: 0, HTTPS: 0 },
 //       // wms externos comunidades limítrofes

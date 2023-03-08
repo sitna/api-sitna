@@ -1,0 +1,91 @@
+{
+  "opts": {
+    "template": "./node_modules/@sitna/jsdoc-template/template",
+    "tutorials": "./batch/jsdoc/tutorials",
+    "destination": "./dist/doc/"
+  },
+  "plugins": [ "plugins/markdown" ],
+  "recurseDepth": 10,
+  "source": {
+    "include": [
+      "./batch/jsdoc/README.md",
+      "sitna.js",
+      "./TC/Consts.js",
+      "./TC/Cfg.js",
+      "./SITNA/Map.js",
+      "./SITNA/feature/Marker.js",
+      "./TC/Control.js",
+      "./TC/control/",
+      "./TC/tool/",
+      "./TC/view/"
+    ]
+  },
+  "sourceType": "module",
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": [ "jsdoc", "closure" ]
+  },
+  "templates": {
+    "includeDate": true,
+    "dateFormat": "DD/MM/YYYY",
+    "systemName": "API SITNA",
+    "systemVersion": "v3.0.1",
+    "systemSummary": "API JavaScript para la visualización de datos georreferenciados en aplicaciones web",
+    "systemLogo": "./tc/css/img/sitna-logo.png",
+    "systemColor": "#cc0000",
+    "copyright": "© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.",
+    "linenums": true,
+    "cleverLinks": true,
+    "collapseSymbols": false,
+    "inverseNav": false,
+    "inlineNav": false,
+    "navMembers": [
+      {
+        "kind": "class",
+        "title": "Clases"
+      },
+      {
+        "kind": "external",
+        "title": "Externals",
+        "summary": "All documented external members."
+      },
+      {
+        "kind": "global",
+        "title": "Tipos globales"
+      },
+      {
+        "kind": "mixin",
+        "title": "Mixins",
+        "summary": "All documented mixins."
+      },
+      {
+        "kind": "interface",
+        "title": "Interfaces",
+        "summary": "All documented interfaces."
+      },
+      {
+        "kind": "module",
+        "title": "Modules",
+        "summary": "All documented modules."
+      },
+      {
+        "kind": "namespace",
+        "title": "Espacios de nombres"
+      },
+      {
+        "kind": "tutorial",
+        "title": "Documentación"
+      }
+    ],
+    "outputSourceFiles": false,
+    "outputSourcePath": false,
+    "disablePackagePath": true,
+    "methodHeadingReturns": true,
+    "showTableOfContents": true,
+    "showAccessFilter": false,
+    "sort": "longname, version, since",
+    "search": true,
+    "stylesheets": ["css/sitnaCSS.css"],
+    "scripts": []
+  }
+}

@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.getQueryableData</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .divSelect {
+            top: 135px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getQueryableData">SITNA.Map.getQueryableData</a>.</p>
+        <p>Opciones del método.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions divSelect">
+        <div>            
+            Municipios
+            <select id="municipality" onchange="applyFilter(this)">
+                <option value="-1">Seleccione...</option>
+            </select>
+            <br />
+            <br />
+            Concejos
+            <select id="council" onchange="applyFilter(this)">
+                <option value="-1">Seleccione...</option>
+            </select>
+            <br />
+            <br />
+            Casco Urbano
+            <select id="urban" onchange="applyFilter(this)">
+                <option value="-1">Seleccione...</option>
+            </select>
+            <br />
+            <br />
+            Manconmunidad
+            <select id="commonwealth" onchange="applyFilter(this)">
+                <option value="-1">Seleccione...</option>
+            </select>
+        </div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
+
+    map.loaded(function () {
+        // completamos el desplegable de municipios
+        map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#municipality").appendChild(fragment);
+        });
+
+        // completamos el desplegable de concejos
+        map.getQueryableData(SITNA.Consts.mapSearchType.COUNCIL, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#council").appendChild(fragment);
+        });
+
+        // completamos el desplegable de cascos urbanos
+        map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#urban").appendChild(fragment);
+        });
+
+        // completamos el desplegable de mancomunidades de residuos
+        map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#commonwealth").appendChild(fragment);
+        });
+    });
+
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter(target) {
+        if (target) {
+            var municipalitySelect = document.querySelector("#municipality");
+            var councilSelect = document.querySelector("#council");
+            var urbanSelect = document.querySelector("#urban");
+            var commonwealthSelect = document.querySelector("#commonwealth");
+            var id = target.querySelector('option:checked').value;
+            var searchType;
+            switch (true) {
+                case target.id == SITNA.Consts.mapSearchType.MUNICIPALITY:
+                    searchType = SITNA.Consts.mapSearchType.MUNICIPALITY;
+
+                    councilSelect.value = -1;
+                    urbanSelect.value = -1;
+                    commonwealthSelect.value = -1;
+                    break;
+                case target.id == SITNA.Consts.mapSearchType.COUNCIL:
+                    searchType = SITNA.Consts.mapSearchType.COUNCIL;
+
+                    municipalitySelect.value = -1;
+                    urbanSelect.value = -1;
+                    commonwealthSelect.value = -1;
+                    break;
+                case target.id == SITNA.Consts.mapSearchType.URBAN:
+                    searchType = SITNA.Consts.mapSearchType.URBAN;
+
+                    municipalitySelect.value = -1;
+                    councilSelect.value = -1;
+                    commonwealthSelect.value = -1;
+                    break;
+                case target.id == SITNA.Consts.mapSearchType.COMMONWEALTH:
+                    searchType = SITNA.Consts.mapSearchType.COMMONWEALTH;
+
+                    municipalitySelect.value = -1;
+                    councilSelect.value = -1;
+                    urbanSelect.value = -1;
+                    break;                    
+            }                
+
+            if (id == -1)
+                map.removeSearch();
+            else {
+                map.searchTyped(searchType, id, function (idQuery) {
+                    if (idQuery == null) {
+                        alert('No se han encontrado resultados');
+                    }
+                });
+            }
+        }
+    };
+    </script>
+
+</body>
+</html>

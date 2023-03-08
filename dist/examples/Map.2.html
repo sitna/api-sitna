@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html">SITNA.Map</a>.</p>
+        <p>Mapa con sistema de referencia WGS 84 y el mapa base de IDENA como mapa de fondo.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    
+	<div id="mapa"></div>
+    <script>
+        // Crear un mapa en el sistema de referencia WGS 84 con el  de mapa de fondo.
+        var map = new SITNA.Map("mapa", {
+            crs: "EPSG:4326",
+            initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+                -2.84820556640625,
+                41.78912492257675,
+                -0.32135009765625,
+                43.55789822064767
+            ],
+            maxExtent: [
+                -2.84820556640625,
+                41.78912492257675,
+                -0.32135009765625,
+                43.55789822064767
+            ],
+            baseLayers: [
+				SITNA.Consts.layer.IDENA_DYNBASEMAP
+            ],
+            defaultBaseLayer: SITNA.Consts.layer.IDENA_DYNBASEMAP,
+            // Establecemos el mapa de situación con una capa compatible con WGS 84
+            controls: {
+                overviewMap: {
+                    layer: SITNA.Consts.layer.IDENA_DYNBASEMAP
+                }
+            }
+        });
+    </script>
+	
+</body>
+</html>

@@ -1,6 +1,6 @@
 ﻿{
   "notifyApplicationErrors": true,
-  "i18n": true,
+  "i18n": false,
   "maxExtent": false,
   "stateful": true,
   "proxy": "../proxy/proxy.ashx?",

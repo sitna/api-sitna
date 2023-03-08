@@ -1,0 +1,9 @@
+<h2>{@i18n $key="worklayers"/}</h2>
+<div class="tc-ctl-toc-tree">
+    <div class="tc-ctl-toc-empty">{@i18n $key="noData"/}</div>
+    <ul class="tc-ctl-toc-branch tc-ctl-toc-wl">
+        {#workLayers}
+        {>tc-ctl-toc-wlbranch:./}
+        {/workLayers}
+    </ul>
+</div>

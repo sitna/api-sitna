@@ -1,10 +1,12 @@
-﻿TC.control = TC.control || {};
-TC.Consts = TC.Consts || {};
-TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
+
+TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
 TC.control.Scale = function () {
     TC.Control.apply(this, arguments);
@@ -17,27 +19,23 @@ TC.inherit(TC.control.Scale, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-scl';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/Scale.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<div class=\"ol-scale-line ol-unselectable\"><span>1:").h("math", ctx, {}, { "key": body_1, "method": "round" }).w("</span> <input type=\"button\" value=\"").f(ctx.get(["screenSize"], false), ctx, "h").w("''\" title=\"").h("i18n", ctx, {}, { "$key": "estimatedMapSize" }).w("\" /></div>"); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.f(ctx.get(["scale"], false), ctx, "h"); } body_1.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-scl.hbs";
 
     ctlProto.render = function (callback) {
-        var self = this;
-        $('input[type=button]', self._$div).off();
-        self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize }, function () {
+        const self = this;
+        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize }, function () {
 
-            var $span = self._$div.find('span')
-            $span.text('1:' + self.format($span.text().substr(2)));
+            const span = self.div.querySelector('span');
+            span.textContent = '1:' + self.format(span.textContent.substr(2));
 
-            self._$div.find('input[type="button"]').on(TC.Consts.event.CLICK, function () { self.setScreenSize.call(self); });
+            self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () {
+                self.setScreenSize();
+            }, { passive: true });
 
-            if ($.isFunction(callback)) {
+            if (TC.Util.isFunction(callback)) {
                 callback();
             }
-        });
+        }));
     };
 
     ctlProto.register = function (map) {
@@ -83,7 +81,7 @@ TC.inherit(TC.control.Scale, TC.Control);
     ctlProto.getScale = function (resolution) {
         var self = this;
         var result = 0;
-        var res = (!resolution && self.map) ? self.map.wrap.getResolution() : resolution;
+        var res = !resolution && self.map ? self.map.wrap.getResolution() : resolution;
         if (res) {
             result = res * self.getDpi(TC.Cfg.screenSize) / .0254;
             if (window.devicePixelRatio) {
@@ -130,3 +128,6 @@ TC.inherit(TC.control.Scale, TC.Control);
     };
 
 })();
+
+const Scale = TC.control.Scale;
+export default Scale;

@@ -1,8 +1,10 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.control.MapContents) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.Control = Control;
 
 (function () {
 
@@ -21,25 +23,27 @@ if (!TC.control.MapContents) {
             NO_CHANGE: self.CLASS + '-no-change'
         };
 
-        self._$dialogDiv = $(TC.Util.getDiv(self.options.dialogDiv));
+        self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+        if (window.$) {
+            self._$dialogDiv = $(self._dialogDiv);
+        }
         if (!self.options.dialogDiv) {
-            self._$dialogDiv.appendTo('body');
+            document.body.appendChild(self._dialogDiv);
         }
 
-        self._$dialogDiv
-            .on(TC.Consts.event.CLICK, 'button', function (e) {
-                const $btn = $(e.target);
-                const crs = $btn.data(_dataKeys.PROJCODE);
-                if (crs) {
-                    self.setProjection({
-                        crs: crs,
-                        allowFallbackLayer: true
-                    });
-                }
-            })
-            .on(TC.Consts.event.CLICK, 'button.' + self._cssClasses.LOAD_CRS_BUTTON, function (e) {
-                self.loadFallbackProjections();
-            });
+        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self._cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
+            const crs = e.target.dataset.crsCode;
+            if (crs) {
+                self.setProjection({
+                    crs: crs,
+                    allowFallbackLayer: true
+                });
+            }
+        }), { passive: true });
+
+        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
+            self.loadFallbackProjections();
+        }), { passive: true });
     };
 
     TC.inherit(TC.control.ProjectionSelector, TC.Control);
@@ -48,82 +52,123 @@ if (!TC.control.MapContents) {
 
     ctlProto.CLASS = 'tc-ctl-projs';
 
-    const _dataKeys = {
-        LAYER: 'tcLayer',
-        FALLBACK_LAYER: 'tcFallbackLayer',
-        PROJCODE: 'tcProjCode'
-    };
-
     ctlProto.render = function (callback) {
         const self = this;
-        TC.Control.prototype.render.call(self, callback);
+        const result = TC.Control.prototype.render.call(self, callback);
 
         self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self._$dialogDiv.html(html);
+            self._dialogDiv.innerHTML = html;
         });
+        return result;
     };
 
     ctlProto.getAvailableCRS = function (options) {
-        return this.map.getCompatibleCRS({ includeFallbacks: true })
+        return this.map.getCompatibleCRS(TC.Util.extend(options || {}, { includeFallbacks: true }));
     };
 
     ctlProto.showProjectionChangeDialog = function (options) {
         const self = this;
 
-        const $dialog = self._$dialogDiv.find('.' + self._cssClasses.CRS_DIALOG);
-        const $body = $dialog.find('.tc-modal-body').addClass(TC.Consts.classes.LOADING);
-        const $ul = $body
-            .find('ul.' + self._cssClasses.CRS_LIST)
-            .empty();
+        const dialog = self._dialogDiv.querySelector('.' + self._cssClasses.CRS_DIALOG);
+        const body = dialog.querySelector('.tc-modal-body');
+        body.classList.add(TC.Consts.classes.LOADING);
+        const ul = body.querySelector('ul.' + self._cssClasses.CRS_LIST);
+        ul.innerHTML = '';
         const blFirstOption = self.map.baseLayer.firstOption || self.map.baseLayer;
-        const blFallback = blFirstOption.getFallbackLayer();
-        const blCRSList = blFirstOption.getCompatibleCRS();
+        const blFallback = blFirstOption.isRaster() ? blFirstOption.getFallbackLayer() : null;
 
         const loadProjs = function () {
+            var crsList = [];
+            var blCRSList = [];
+
+            options = options || {};
+            
+            if (blFirstOption.isRaster()) {
+                blCRSList = blFirstOption.getCompatibleCRS();
+                crsList = self.getAvailableCRS(TC.Util.extend(options, {}));
+            } else {
+                blCRSList = self.map.baseLayers
+                    .filter((layer) => {
+                        return layer.isRaster();
+                    })
+                    .map((layer) => {
+                        return layer.getCompatibleCRS({ normalized: true, includeFallback: true });
+                    })
+                    .reduce((prev, current) => {
+                        return prev.concat(current.filter(l => prev.indexOf(l) < 0));
+                    });
+
+                const crsLists = (options.layer ? self.map.workLayers.concat(options.layer) : self.map.workLayers)
+                    .filter(function (layer) {
+                        return layer.isRaster();
+                    })
+                    .map(function (layer) {
+                        return layer.getCompatibleCRS({ normalized: true, includeFallback: true });
+                    });
+
+                crsList = blCRSList.filter((crs) => {
+                    return crsLists.every((elm) => {
+                        return elm.indexOf(crs) > -1;
+                    });
+                });
+            }
+
             self.map.loadProjections({
-                crsList: self.getAvailableCRS(options),
+                crsList: crsList,
                 orderBy: 'name'
             }).then(function (projList) {
                 var hasFallbackCRS = false;
+                var currentCRSName = dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_NAME);
+                var currentCRSCode = dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_CODE);
                 projList
                     .forEach(function (projObj) {
-                        if (TC.Util.CRSCodesEqual(self.map.crs, projObj.code)) {
-                            $dialog.find('.' + self._cssClasses.CURRENT_CRS_NAME).html(projObj.name);
-                            $dialog.find('.' + self._cssClasses.CURRENT_CRS_CODE).html(projObj.code);
+                        if (currentCRSName && currentCRSCode && TC.Util.CRSCodesEqual(self.map.crs, projObj.code)) {
+                            currentCRSName.textContent = projObj.name;
+                            currentCRSCode.textContent = projObj.code;
                         }
                         else {
-                            const $button = $('<button>')
-                                .html(projObj.name + ' (' + projObj.code + ')')
-                                .data(_dataKeys.PROJCODE, projObj.code);
-                            const $li = $('<li>').append($button);
+                            const button = document.createElement('button');
+                            button.setAttribute('type', 'button');
+                            button.textContent = projObj.name + ' (' + projObj.code + ')';
+                            button.dataset.crsCode = projObj.code;
+                            const li = document.createElement('li');
+                            li.appendChild(button);
                             if (blCRSList.filter(function (crs) {
-                                return TC.Util.CRSCodesEqual(crs, projObj.code)
+                                return TC.Util.CRSCodesEqual(crs, projObj.code);
                             }).length === 0) {
                                 // Es un CRS del fallback
                                 hasFallbackCRS = true;
-                                $li.addClass(TC.Consts.classes.HIDDEN);
-                                $button.addClass(TC.Consts.classes.WARNING);
+                                li.classList.add(TC.Consts.classes.HIDDEN);
+                                button.classList.add(TC.Consts.classes.WARNING);
                             }
-                            $ul.append($li);
+                            ul.appendChild(li);
                         }
                     });
                 if (hasFallbackCRS) {
-                    $ul
-                        .append($('<li>')
-                            .append($('<button>')
-                                .addClass(self._cssClasses.LOAD_CRS_BUTTON)
-                                .html(self.getLocaleString('showOnTheFlyProjections'))));
+                    const li = document.createElement('li');
+                    const button = document.createElement('button');
+                    button.setAttribute('type', 'button');
+                    button.classList.add(self._cssClasses.LOAD_CRS_BUTTON);
+                    button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
+                    li.appendChild(button);
+                    ul.appendChild(li);
                 }
 
                 // Mostramos un aviso si no hay CRS compatibles
-                if ($ul.find('li').length === 0) {
-                    $ul.append($('<li>').append(self.getLocaleString('thereAreNoCompatibleCRS')));
+                if (ul.querySelectorAll('li').length === 0) {
+                    const li = document.createElement('li');
+                    li.innerHTML = self.getLocaleString('thereAreNoCompatibleCRS');
+                    ul.appendChild(li);
                 }
-                const $visibleLi = $ul.find('li').not('.' + TC.Consts.classes.HIDDEN);
-                $dialog.find('.' + self._cssClasses.CHANGE).css('display', $visibleLi.length > 1 ? '' : 'none');
-                $dialog.find('.' + self._cssClasses.NO_CHANGE).css('display', $visibleLi.length > 1 ? 'none' : '');
-                $dialog.find('ul.' + self._cssClasses.CRS_LIST).css('display', $visibleLi.length > 0 || hasFallbackCRS ? '' : 'none');
-                $body.removeClass(TC.Consts.classes.LOADING);
+                const visibleLi = ul.querySelectorAll('li:not(.' + TC.Consts.classes.HIDDEN + ')');
+                dialog.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
+                    elm.style.display = visibleLi.length > 1 ? '' : 'none';
+                });
+                dialog.querySelectorAll('.' + self._cssClasses.NO_CHANGE).forEach(function (elm) {
+                    elm.style.display = visibleLi.length > 1 ? 'none' : '';
+                });
+                dialog.querySelector('ul.' + self._cssClasses.CRS_LIST).style.display = visibleLi.length > 0 || hasFallbackCRS ? '' : 'none';
+                body.classList.remove(TC.Consts.classes.LOADING);
             });
         };
 
@@ -133,7 +178,7 @@ if (!TC.control.MapContents) {
         else {
             loadProjs();
         }
-        TC.Util.showModal($dialog, options);
+        TC.Util.showModal(dialog, options);
     };
 
     ctlProto.setProjection = function (options) {
@@ -150,18 +195,27 @@ if (!TC.control.MapContents) {
 
     ctlProto.loadFallbackProjections = function () {
         const self = this;
-        const $li = self._$dialogDiv
-            .find('.' + self._cssClasses.CRS_DIALOG)
-            .find('ul.' + self._cssClasses.CRS_LIST + ' li')
-            .removeClass(TC.Consts.classes.HIDDEN);
-        $li
-            .has('button.' + self._cssClasses.LOAD_CRS_BUTTON)
-            .addClass(TC.Consts.classes.HIDDEN);
-        self._$dialogDiv
-            .find('p.' + TC.Consts.classes.WARNING)
-            .removeClass(TC.Consts.classes.HIDDEN);
-        self._$dialogDiv.find('.' + self._cssClasses.CHANGE).css('display', $li.length > 1 ? '' : 'none');
-        self._$dialogDiv.find('.' + self._cssClasses.NO_CHANGE).css('display', $li.length > 1 ? 'none' : '');
+        const lis = self._dialogDiv
+            .querySelector('.' + self._cssClasses.CRS_DIALOG)
+            .querySelectorAll('ul.' + self._cssClasses.CRS_LIST + ' li');
+        lis.forEach(function (li) {
+            li.classList.remove(TC.Consts.classes.HIDDEN);
+            if (li.querySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON)) {
+                li.classList.add(TC.Consts.classes.HIDDEN);
+            }
+        });
+        self._dialogDiv.querySelectorAll('p.' + TC.Consts.classes.WARNING).forEach(function (p) {
+            p.classList.remove(TC.Consts.classes.HIDDEN);
+        });
+        self._dialogDiv.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
+            elm.style.display = lis.length > 1 ? '' : 'none';
+        });
+        self._dialogDiv.querySelectorAll('.' + self._cssClasses.NO_CHANGE).forEach(function (elm) {
+            elm.style.display = lis.length > 1 ? 'none' : '';
+        });
     };
 
 })();
+
+const ProjectionSelector = TC.control.ProjectionSelector;
+export default ProjectionSelector;

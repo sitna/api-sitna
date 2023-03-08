@@ -1,15 +1,15 @@
-﻿TC.control = TC.control || {};
+﻿import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+TC.control = TC.control || {};
+TC.Control = Control;
+TC.Consts = Consts;
 
 TC.control.FullScreen = function () {
     var self = this;
 
     TC.Control.apply(self, arguments);
-
-    self.fullScreenElement = document.documentElement;
 };
 
 TC.inherit(TC.control.FullScreen, TC.Control);
@@ -19,66 +19,160 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-fscreen';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/FullScreen.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-fscreen-btn\" title=\"").h("i18n", ctx, {}, { "$key": "fscreen.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-fscreen.hbs";
+
+    const key = {
+        fullscreenEnabled: 0,
+        fullscreenElement: 1,
+        requestFullscreen: 2,
+        exitFullscreen: 3,
+        fullscreenchange: 4,
+        fullscreenerror: 5
+    };
+
+    const webkit = [
+        'webkitFullscreenEnabled',
+        'webkitFullscreenElement',
+        'webkitRequestFullscreen',
+        'webkitExitFullscreen',
+        'webkitfullscreenchange',
+        'webkitfullscreenerror'
+    ];
+
+    const moz = [
+        'mozFullScreenEnabled',
+        'mozFullScreenElement',
+        'mozRequestFullScreen',
+        'mozCancelFullScreen',
+        'mozfullscreenchange',
+        'mozfullscreenerror'
+    ];
+
+    const ms = [
+        'msFullscreenEnabled',
+        'msFullscreenElement',
+        'msRequestFullscreen',
+        'msExitFullscreen',
+        'MSFullscreenChange',
+        'MSFullscreenError'
+    ];
+
+    const document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
+
+    const vendor = 'fullscreenEnabled' in document && Object.keys(key) ||
+        webkit[0] in document && webkit ||
+        moz[0] in document && moz ||
+        ms[0] in document && ms ||
+        [];
+
+    ctlProto.fscreen = {
+        inFullscreen: false,
+        requestFullscreen: element => element[vendor[key.requestFullscreen]](),
+        requestFullscreenFunction: element => element[vendor[key.requestFullscreen]],
+        get exitFullscreen() { return document[vendor[key.exitFullscreen]].bind(document); },
+        addEventListener: (type, handler, options) => document.addEventListener(vendor[key[type]], handler, options),
+        removeEventListener: (type, handler, options) => document.removeEventListener(vendor[key[type]], handler, options),
+        get fullscreenEnabled() { return Boolean(document[vendor[key.fullscreenEnabled]]); },
+        set fullscreenEnabled(val) { },
+        get fullscreenElement() { return document[vendor[key.fullscreenElement]]; },
+        set fullscreenElement(val) { },
+        get onfullscreenchange() { return document[("on" + vendor[key.fullscreenchange]).toLowerCase()]; },
+        set onfullscreenchange(handler) { return document[("on" + vendor[key.fullscreenchange]).toLowerCase()] = handler; },
+        get onfullscreenerror() { return document["on" + vendor[key.fullscreenerror].toLowerCase()]; },
+        set onfullscreenerror(handler) { return document["on" + vendor[key.fullscreenerror].toLowerCase()] = handler; }
+    };
 
     ctlProto.register = function (map) {
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
 
-        self.renderPromise().then(function () {
-            var $btn = self._$div.find('.' + self.CLASS + '-btn');
+        result.then(function () {
+            const btn = self.div.querySelector('.' + self.CLASS + '-btn');
 
-            if (self.enabledFullScreen()) {
-                $btn.on('click', function () {
-                    self.toggleFullScreen();                    
-                });
+            if (self.fscreen.fullscreenEnabled) {
 
-                $(document).on('fullscreenchange mozfullscreenchange webkitfullscreenchange MSFullscreenChange', function () {
-                    $btn.toggleClass(TC.Consts.classes.ACTIVE, self.isFullScreen());
-                    $btn.attr('title', self.isFullScreen() ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
-            });
-            } else { $btn.addClass(TC.Consts.classes.HIDDEN); }
+                const doFullscreenChange = () => {
+                    btn.classList.toggle(TC.Consts.classes.ACTIVE, self.fscreen.inFullscreen);
+                    btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
+                };
+
+                self.fscreen.addEventListener('fullscreenchange', () => {
+                    self.fscreen.inFullscreen = self.fscreen.fullscreenElement !== null;
+                    doFullscreenChange();
+                }, false);
+
+                btn.addEventListener('click', function () {
+                    self.byBtn = true;
+                    if (!self.fscreen.inFullscreen) {
+                        self.fscreen.requestFullscreen(document.body);
+                    } else {
+                        self.fscreen.exitFullscreen();
+                    }
+                }, false);
+
+                if (!TC.Util.detectMobile()) {
+                    window.addEventListener('resize', () => {
+                        if (self.byBtn) {
+                            self.byBtn = false;
+                            return;
+                        }
+
+                        const windowWidth = window.innerWidth * window.devicePixelRatio;
+                        const windowHeight = window.innerHeight * window.devicePixelRatio;
+                        const screenWidth = window.screen.width;
+                        const screenHeight = window.screen.height;
+
+                        if (windowWidth / screenWidth >= 0.95 && windowHeight / screenHeight >= 0.95) {
+                            self.fscreen.inFullscreen = true;
+                        } else {
+                            self.fscreen.inFullscreen = false;
+                        }
+
+                        doFullscreenChange();
+
+                        let header = document.body.getElementsByTagName('header');
+                        if (self.fscreen.inFullscreen) {
+                            btn.setAttribute('disabled', 'disabled');
+
+                            if (header.length > 0) {
+                                header[0].classList.add("tc-ctl-fscreenToHeader");
+                            }
+
+                            self.map.div.classList.add("tc-ctl-fscreenToMap");
+                            if (self.map.view3D) {
+                                self.map.view3D.container.classList.add("tc-ctl-fscreenToMap");
+                            }
+
+                        } else {
+                            btn.removeAttribute('disabled');
+
+                            if (header.length > 0) {
+                                header[0].classList.remove("tc-ctl-fscreenToHeader");
+                            }
+
+                            self.map.div.classList.remove("tc-ctl-fscreenToMap");
+                            if (self.map.view3D) {
+                                self.map.view3D.container.classList.remove("tc-ctl-fscreenToMap");
+                            }
+                        }
+
+                        btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString('fscreen.tip.keyboard') : self.getLocaleString("fscreen.tip"));
+
+                        const resizeEvent = document.createEvent('HTMLEvents');
+                        resizeEvent.initEvent('resize', false, false);
+                        self.map.div.dispatchEvent(resizeEvent); // Para evitar que el mapa quede estirado o achatado después de gestionar la cabecera.
+                    });
+                }
+            } else {
+                // GLS: 19/02/2019 en lugar de ocultar el botón, deshabilitamos el control para que no quede espacio de más entre los botones
+                self.disable();
+            }
         });
 
         return result;
     };
 
-    ctlProto.requestFullScreen = function () {
-        var self = this;
-        var elm = self.fullScreenElement;
-        document.documentElement.requestFullScreen ? elm.requestFullScreen() :
-            elm.mozRequestFullScreen ? elm.mozRequestFullScreen() :
-            elm.webkitRequestFullScreen ? elm.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT) :
-            elm.msRequestFullscreen && elm.msRequestFullscreen();
-    };
-
-    ctlProto.cancelFullScreen = function () {
-        var self = this;
-        document.cancelFullScreen ? document.cancelFullScreen() :
-            document.mozCancelFullScreen ? document.mozCancelFullScreen() :
-            document.webkitCancelFullScreen ? document.webkitCancelFullScreen() :
-            document.msExitFullscreen && document.msExitFullscreen();
-    };
-
-    ctlProto.isFullScreen = function () {
-        return document.fullScreenElement || document.mozFullScreen || document.webkitIsFullScreen || document.msFullscreenElement;
-    };
-
-    ctlProto.toggleFullScreen = function () {
-        var self = this;
-        self.isFullScreen() ? self.cancelFullScreen() : self.requestFullScreen();
-    };
-
-    ctlProto.enabledFullScreen = function () {
-        var self = this;        
-        var elm = self.fullScreenElement;
-        var enabled = document.documentElement.requestFullScreen || elm.mozRequestFullScreen || elm.webkitRequestFullScreen || elm.msRequestFullscreen;        
-        return enabled && typeof (enabled) == "function";
-    };
-
 })();
+
+const FullScreen = TC.control.FullScreen;
+export default FullScreen;

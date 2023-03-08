@@ -1,0 +1,19 @@
+<a class="tc-ctl-lcat-info-close"></a>
+<h2>{{i18n "layerInfo"}}</h2>
+<h3 class="tc-ctl-lcat-title">{{title}}</h3>
+{{#if abstract}}
+<div class="tc-ctl-lcat-abstract">
+    <h4>{{i18n "abstract"}}</h4>
+    <div><pre>{{{abstract}}}</pre></div>
+</div>
+{{/if}}
+{{#if metadata}}
+<div class="tc-ctl-lcat-metadata">
+    <h4>{{i18n "metadata"}}</h4>
+    <ul>
+        {{#each metadata}}
+        <li><a href="{{{url}}}" type="{{format}}" title="{{formatDescription}}" target="_blank">{{{formatDescription}}}</a></li>
+        {{/each}}
+    </ul>
+</div>
+{{/if}}

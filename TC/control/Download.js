@@ -1,12 +1,13 @@
-﻿TC.control = TC.control || {};
+﻿
+import TC from '../../TC';
+import Consts from '../Consts';
+import MapInfo from './MapInfo';
+import filter from '../filter';
 
-if (!TC.control.MapInfo) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/MapInfo');
-}
-
-if (!TC.filter) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Filter');
-}
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.MapInfo = MapInfo;
+TC.filter = filter;
 
 TC.control.Download = function (options) {
     var self = this;
@@ -14,10 +15,15 @@ TC.control.Download = function (options) {
 
     TC.Control.apply(self, arguments);
 
+    self._hiddenElms = [];
+
     var opts = options || {};
-    self._$dialogDiv = $(TC.Util.getDiv(opts.dialogDiv));
+    self._dialogDiv = TC.Util.getDiv(opts.dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
     if (!opts.dialogDiv) {
-        self._$dialogDiv.appendTo('body');
+        document.body.appendChild(self._dialogDiv);
     }    
 };
 
@@ -29,59 +35,80 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
     ctlProto.CLASS = 'tc-ctl-download';
 
     ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/Download.html";
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/DownloadDialog.html";
-    } else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").h("i18n", ctx, {}, { "$key": "download" }).w(" </h2><div class=\"tc-ctl-tctr tc-ctl-tctr-select\"><form><label class=\"tc-ctl-tctr-tab tc-ctl-download-image\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"image\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.map" }).w("</span></label><label class=\"tc-ctl-tctr-tab tc-ctl-download-data\" style=\"width:calc(100%/2 - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"data\" /><span>").h("i18n", ctx, {}, { "$key": "dl.export.vector" }).w("</span></label></form></div><div class=\"tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image tc-collapsed\"><div><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format-image\" class=\"tc-combo\"><option value=\"image/png\">PNG</option><option value=\"image/jpeg\">JPEG</option></select><div class=\"tc-ctl-download-div\"><input id=\"tc-ctl-download-image-qr\" class=\"tc-hidden\" type=\"checkbox\" checked style=\"display:none;\" /><label for=\"tc-ctl-download-image-qr\" class=\"tc-ctl-download-image-qr-label\" title=\"").h("i18n", ctx, {}, { "$key": "createQrCodeToImage" }).w("\">").h("i18n", ctx, {}, { "$key": "appendQRCode" }).w("</label></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadImageFromCurrentMap" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-ctl-download-alert tc-alert alert-warning tc-hidden\"><p>").h("i18n", ctx, {}, { "$key": "qrAdvice|s" }).w("</p></div></div></div><div class=\"tc-ctl tc-ctl-tctr-elm tc-ctl-tctr-elm-data tc-group tc-ctl-download-cnt tc-collapsed\"><div><label>").h("i18n", ctx, {}, { "$key": "format" }).w(":</label><select id=\"download-format\" class=\"tc-combo\"><option value=\"GML32\">GML</option><option value=\"application/json\">GeoJSON</option><option value=\"application/vnd.google-earth.kml+xml\">KML (Google Earth)</option><option value=\"shape-zip\">Shape (ESRI)</option></select><div class=\"tc-ctl-download-div\"><i class=\"tc-ctl-download-help icon-question-sign\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"").h("i18n", ctx, {}, { "$key": "showDownloadHelp" }).w("\"></i></div><div class=\"tc-group tc-group tc-ctl-download-cnt\" style=\"text-align:right;\"><button type=\"button\" class=\"tc-ctl-download-btn tc-button tc-icon-button\" title=\"").h("i18n", ctx, {}, { "$key": "downloadLayersFromCurrentExtent" }).w("\" name=\"descargar\">").h("i18n", ctx, {}, { "$key": "download" }).w("</button></div><div class=\"tc-alert alert-warning tc-hidden\"><p id=\"zoom-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManyFeatures.instructions" }).w("</p><p id=\"layers-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noLayersLoaded.instructions" }).w("</p><p id=\"url-msg\"><strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "tooManySelectedLayers.instructions" }).w("</p><p id=\"noFeatures-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noData" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noData.instructions" }).w("</p><p id=\"novalid-msg\"><strong>").h("i18n", ctx, {}, { "$key": "noValidService" }).w(": </strong>").h("i18n", ctx, {}, { "$key": "noValidService.instructions" }).w("</p></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-        ctlProto.template[ctlProto.CLASS + '-dialog'] = function () { dust.register(ctlProto.CLASS + '-dialog', body_0); function body_0(chk, ctx) { return chk.w("<div class=\"tc-ctl-download-help-dialog tc-modal\"><div class=\"tc-modal-background tc-modal-close\"></div><div class=\"tc-modal-window\"><div class=\"tc-modal-header\"><h3>").h("i18n", ctx, {}, { "$key": "downloadData" }).w("</h3><div class=\"tc-modal-close\"></div></div><div class=\"tc-modal-body\"><p>").h("i18n", ctx, {}, { "$key": "dl.instructions.1|s" }).w("</p><ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.2|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.3|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.4|s" }).w("<ul><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.5|s" }).w("</li><li>").h("i18n", ctx, {}, { "$key": "dl.instructions.6|s" }).w("</li></ul></li></ul></div><div class=\"tc-modal-footer\"><button type=\"button\" class=\"tc-button tc-modal-close\">").h("i18n", ctx, {}, { "$key": "close" }).w("</button></div></div></div>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-download.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-download-dialog.hbs";
 
     ctlProto.render = function (callback) {
-        var self = this;
-        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self._$dialogDiv.html(html);
+        const self = this;
+        return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+            self._dialogDiv.innerHTML = html;
         }).then(function () {
-            TC.Control.prototype.render.call(self, function () {
-                var selDisabledCLASS = self.CLASS + '-seldisabled';
+            return TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
 
-                var cs = '.tc-ctl-tctr';
+                const cs = '.tc-ctl-tctr';
                 self._selectors = {
                     TAB: cs + '-tab',
-                    RADIOBUTTON: 'input[type=radio][name=sctnr-sel]',
+                    RADIOBUTTON: `input[type=radio][name="${self.id}-sel"]`,
                     ELEMENT: cs + '-elm'
                 };
 
-                var clickHandler = function (e) {
-                    var $cb = $(this).closest(self._selectors.TAB).find(self._selectors.RADIOBUTTON);
-                    var newValue = $cb.val();
-                    var $elms = self._$div.find(self._selectors.ELEMENT);
-                    if (self._oldValue === newValue && self.options.deselectable) {
-                        setTimeout(function () {
-                            $cb.prop("checked", false);
-                        }, 0);
-                        self._oldValue = null;
-                        $active = $();
-                        $hidden = $elms;
+                const clickHandler = function (_e) {
+                    var tab = this;
+                    while (tab && !tab.matches(self._selectors.TAB)) {
+                        tab = tab.parentElement;
                     }
-                    else {
-                        $active = $elms.filter(self._selectors.ELEMENT + '-' + newValue);
-                        $hidden = $elms.not($active);
-                        self._oldValue = newValue;
-                    }
+                    if (tab) {
+                        const checkbox = tab.querySelector(self._selectors.RADIOBUTTON);
+                        const newValue = checkbox.value;
+                        const elms = self.div.querySelectorAll(self._selectors.ELEMENT);
+                        if (self._oldValue === newValue && self.options.deselectableTabs) {
+                            setTimeout(function () {
+                                checkbox.checked = false;
+                            }, 0);
+                            self._oldValue = null;
+                            self._activeElm = null;
+                            elms.forEach(function (elm) {
+                                self._hiddenElms.push(elm);
+                            });
+                        }
+                        else {
+                            elms.forEach(function (elm) {
+                                if (elm.matches(self._selectors.ELEMENT + '-' + newValue)) {
+                                    self._activeElm = elm;
+                                }
+                                else {
+                                    self._hiddenElms.push(elm);
+                                }
+                            });
+                            self._oldValue = newValue;
+                        }
 
-                    $active.removeClass(TC.Consts.classes.COLLAPSED);
-                    $hidden.addClass(TC.Consts.classes.COLLAPSED);
-                    $cb.prop("checked", true);
+                        self._hiddenElms.forEach(function (elm) {
+                            elm.classList.add(TC.Consts.classes.COLLAPSED);
+                        });
+                        if (self._activeElm) {
+                            self._activeElm.classList.remove(TC.Consts.classes.COLLAPSED);
+                        }
+                        checkbox.checked = true;
+                    }
                 };
 
-                self._$div.find('span').on(TC.Consts.event.CLICK, clickHandler);
-
-                if (callback)
+                self.div.querySelectorAll('span').forEach(function (span) {
+                    span.addEventListener(TC.Consts.event.CLICK, clickHandler, { passive: true });
+                });
+                if (callback) {
                     callback();
+                }
             });
-        });
+        }));
+    };
+
+    const toFixed = function (number) {
+        let result = number.toFixed(20);
+        if (result.indexOf('.') >= 0) {
+            result = result.replace(/0+$/, '').replace(/\.$/, '');
+        }
+        return result;
     };
 
     ctlProto.register = function (map) {
@@ -89,159 +116,196 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         const result = TC.control.MapInfo.prototype.register.call(self, map);
 
         // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
-        self.map.mustBeExportable = true;
+        self.map.crossOrigin = 'anonymous';
 
-        /**
-         * Descarga las features de las capas de trabajo actualmente seleccionadas. Comprueba que el número de features a descargar
-         * no excede el límite impuesto por el servidor.
-         */       
-
-        var _download = function () {
-            var wait = self.map.getLoadingIndicator().addWait();
-
-            var format = $active.find('select').val();
-            if ($active.find('select').val().indexOf('image') > -1) {
-                var doneQR = $.Deferred();
-                var canvas = self.map.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
-                var newCanvas = TC.Util.cloneCanvas(canvas);
-                var result;
+        const downLoadImage = function (format) {
+            const li = self.map.getLoadingIndicator();
+            const wait = li && li.addWait();
+            const extent = self.map.getExtent();
+            const doneQR = new Promise(function (resolve, _reject) {
+                var canvases = self.map.wrap.getCanvas();
+                var newCanvas = TC.Util.mergeCanvases(canvases);
 
                 var sb = self.map.getControlsByClass(TC.control.ScaleBar);
                 if (sb) {
                     self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
                 }
 
-                if ($active.find('#' + self.CLASS + '-image-qr:checked').length > 0) {
-                    var $codeContainer = $('#qrcode');
-                    if ($codeContainer.length === 0) {
-                        $('body').append('<div id="qrcode"></div>');
-                        $codeContainer = $('#qrcode');                        
-                    } else {
-                        $codeContainer.empty();
+                if (!self._activeElm.querySelector(`#${self.CLASS}-image-qr-${self.id}:disabled`) && self._activeElm.querySelector(`#${self.CLASS}-image-qr-${self.id}:checked`)) {
+                    const codeContainerId = 'qrcode';
+                    var codeContainer = document.getElementById(codeContainerId);
+                    if (codeContainer) {
+                        codeContainer.innerHTML = '';
+                    }
+                    else {
+                        codeContainer = document.createElement('div');
+                        codeContainer.setAttribute('id', codeContainerId);
+                        document.body.appendChild(codeContainer);
                     }
 
-                    $codeContainer.css({ top: -200, left: -200, position: 'absolute' });
+                    codeContainer.style.top = '-200px';
+                    codeContainer.style.left = '-200px';
+                    codeContainer.style.position = 'absolute';
 
-                    self.makeQRCode($codeContainer, 87, 87).then(function (qrCodeBase64) {                        
+                    self.makeQRCode(codeContainer, 87, 87).then(function (qrCodeBase64) {
                         if (qrCodeBase64) {
                             var ctx = newCanvas.getContext("2d");
                             ctx.fillStyle = "#ffffff";
                             ctx.fillRect(newCanvas.width - 91, newCanvas.height - 91, 91, 91);
 
-                            $.when(TC.Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 })).then(function (mapCanvas) {
-                                doneQR.resolve(mapCanvas);
+                            TC.Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 }).then(function (mapCanvas) {
+                                resolve(mapCanvas);
                             });
-                        } else {
-                            TC.error(self.getLocaleString('dl.export.map.error') + ': ' + 'QR');
-                            self.map.getLoadingIndicator().removeWait(wait);
+                        } else {                            
+                            li && li.removeWait(wait);
                         }
-                    });                    
+                    });
                 } else {
-                    doneQR.resolve(newCanvas);
+                    resolve(newCanvas);
                 }
+            });
 
-                $.when(doneQR).then(function (_canvas) {
+            doneQR.then(function (_canvas) {
+                const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
+                const fileExtension = '.' + format.split('/')[1];
+                const worldFileExtension = format === TC.Consts.mimeType.JPEG ? '.jgw' : '.pgw';
+                if (self._activeElm.querySelector(`#${self.CLASS}-image-wld-${self.id}:checked`)) {
+                    TC.loadJS(!window.JSZip, TC.apiLocation + 'lib/jszip/jszip', function () {
+                        const xScale = (extent[2] - extent[0]) / _canvas.width;
+                        const ySkew = 0;
+                        const xSkew = 0;
+                        const yScale = (extent[1] - extent[3]) / _canvas.height;
+                        const xOrigin = extent[0];
+                        const yOrigin = extent[3];
+                        const zip = new JSZip();
+                        _canvas.toBlob(function (blob) {
+                            zip.file(fileName + fileExtension, blob);
+                            zip.file(fileName + worldFileExtension, `${toFixed(xScale)}
+${ySkew.toFixed(1)}
+${xSkew.toFixed(1)}
+${toFixed(yScale)}
+${toFixed(xOrigin)}
+${toFixed(yOrigin)}`);
+                            zip.generateAsync({ type: "blob" }).then(function (blob) {
+                                TC.Util.downloadBlob(fileName + ".zip", blob);
+                                li && li.removeWait(wait);
+                            }, function (err) {
+                                TC.error(self.getLocaleString('dl.export.map.error') + ': ' + err.message);
+                                li && li.removeWait(wait);
+                            });
+                        }, format);
+                    });
+                }
+                else {
                     try {
-                        result = _canvas.toDataURL(format);
-                        TC.Util.downloadDataURI(window.location.hostname + '_' + TC.Util.getFormattedDate(new Date().toString(), true) + '.' + format.split('/')[1], format, result);
+                        const res = _canvas.toDataURL(format);
+                        TC.Util.downloadDataURI(fileName + fileExtension, format, res);
                     } catch (e) {
                         TC.error(self.getLocaleString('dl.export.map.error') + ': ' + e.message);
                     }
-
-                    self.map.getLoadingIndicator().removeWait(wait);
-                });
-            }
-            else {
-                var visibleLayers = _getVisibleLayers();
-
-                var extent = self.map.getExtent();
-                var coordsXY = TC.Util.reproject(extent.slice(0, 2), self.map.crs, TC.Defaults.crs);
-                var coordsXY2 = TC.Util.reproject(extent.slice(2), self.map.crs, TC.Defaults.crs);
-
-                var arrPromises = TC.WFSGetFeatureBuilder(self.map, new TC.filter.bbox([coordsXY[0], coordsXY[1], coordsXY2[0], coordsXY2[1]]), format, true);
-                $.when.apply($, arrPromises).then(function () {
-
-                    var responses = $.grep(arguments, function (item) { return item != null });
-                    if (responses.length === 0) {
-                        _showAlertMsg({ key: TC.Consts.WFSErrors.NoLayers }, wait);
-                        return;
-                    }
-                    var arrDownloads = [];
-                    for (var i = 0; i < responses.length; i++) {
-                        //errores del WFS
-                        if (responses[i].errors && responses[i].errors.length) {
-                            for (var j = 0; j < responses[i].errors.length; j++) {
-                                var error = responses[i].errors[j];
-                                _showAlertMsg(error, wait);
-                            }
-                            continue;
-                        }
-                        var data = responses[i].data;
-                        var url = responses[i].url;
-                        if (data && url)
-                            arrDownloads.push({ url: url + "?download=zip", data: data });
-                    }
-
-                    TC.Util.downloadFileForm(arrDownloads);
-                    self.map.getLoadingIndicator().removeWait(wait);
-                });
-            }
+                    li && li.removeWait(wait);
+                }
+            });
         };
 
-        /**
-         * Comprueba si hay capas visibles en el panel de capas cargadas.
+
+        /*
+         * Descarga las features de las capas de trabajo actualmente seleccionadas. Comprueba que el número de features a descargar
+         * no excede el límite impuesto por el servidor.
          */
-        var _getVisibleLayers = function () {
-            var visibleLayers = [];
-            for (var i = 0; i < self.map.workLayers.length; i++) {
-                var layer = self.map.workLayers[i];
-                if (layer.type === TC.Consts.layerType.WMS) {
-                    if (layer.getVisibility() && layer.names.length > 0) {
-                        visibleLayers.push(layer);
+
+        const downloadFeatures = function (format) {
+            const li = self.map.getLoadingIndicator();
+            const wait = li && li.addWait();
+
+            const arrPromises = self.map.extractFeatures({
+                filter: TC.filter.bbox(self.map.getExtent(), self.map.getCRS()),
+                outputFormat: format,
+                download: true
+            });
+            Promise.all(arrPromises).then(async function (responseArray) {
+
+                var responses = responseArray.filter(item => !!item);
+                if (responses.length === 0) {
+                    _showAlertMsg({ key: TC.Consts.WFSErrors.NO_LAYERS }, wait);
+                    return;
+                }
+                var arrDownloads = [];
+                for (var i = 0; i < responses.length; i++) {
+                    //errores del WFS
+                    if (responses[i].errors && responses[i].errors.length) {
+                        for (var j = 0; j < responses[i].errors.length; j++) {
+                            var error = responses[i].errors[j];
+                            _showAlertMsg(error, wait);
+                        }
+                        continue;
+                    }
+                    var data = responses[i].data;
+                    var url = responses[i].url;
+                    if (data && url)
+                        arrDownloads.push({ url: url + "?download=zip", data: data });
+                }
+                try {
+                    await TC.Util.downloadFileForm(arrDownloads);
+                }
+                catch (err) {
+                    if (err.key === TC.Consts.DownloadError.MIMETYPE_NOT_SUPORTED) {
+                        const service = responseArray.find(response => response.data === err.data).service;
+                        const params = {
+                            plural: service.layers.length > 1 ? self.getLocaleString("dl.format.notSupported.plural") : "",
+                            layerNames: service.layers.reduce(function (vi, va, i, array) {
+                                return (vi instanceof Array ? vi : [vi]).concat([va.title]).join(i < array.length - 1 ? ", " : " " + self.getLocaleString("dl.format.notSupported.conjunction") + " ");
+                            }, []),
+                            serviceTitle: service.mapLayers[0].title,
+                            format: format
+                        };
+                        self.map.toast(self.getLocaleString("dl.format.notSupported").format(params), { type: TC.Consts.msgType.ERROR });
                     }
                 }
+
+                li && li.removeWait(wait);
+            });
+        };
+
+        var _download = function () {
+            var format = '';
+            if (self._activeElm) {
+                format = self._activeElm.querySelector('select').value;
             }
-            return visibleLayers;
+            if (format.indexOf('image') > -1) {
+                downLoadImage(format);
+            }
+            else {
+                downloadFeatures(format);
+            }
         };
 
         var _showAlertMsg = function (error, wait) {
-            var alert = self._$div.find(".alert-warning");
+            const alert = self.div.querySelector('.alert-warning:not(.' + self.CLASS + '-alert)');
             var errorMsg;
             switch (error.key) {
-                case TC.Consts.WFSErrors.NumMaxFeatures:
-                    errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.params.serviceTitle });
+                case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
+                    errorMsg = alert.querySelector("#zoom-msg-" + self.id).innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
-                case TC.Consts.WFSErrors.NoLayers:
+                case TC.Consts.WFSErrors.NO_LAYERS:
                     errorMsg = self.getLocaleString('noLayersLoaded');
                     break;
-                case TC.Consts.WFSErrors.GetCapabilities:
-                    errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.params.serviceTitle });
+                case TC.Consts.WFSErrors.GETCAPABILITIES:
+                    errorMsg = alert.querySelector("#novalid-msg-" + self.id).innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
-                case TC.Consts.WFSErrors.NoFeatures:
-                    errorMsg = alert.find("#noFeatures-msg").html();
+                case TC.Consts.WFSErrors.NO_FEATURES:
+                    errorMsg = alert.querySelector("#noFeatures-msg-" + self.id).innerHTML;
                     break;
-                case TC.Consts.WFSErrors.Indeterminate:
+                case TC.Consts.WFSErrors.INDETERMINATE:
                     errorMsg = self.getLocaleString("wfs.IndeterminateError");
                     self.map.toast(errorMsg, { type: TC.Consts.msgType.ERROR });
                     TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
                     self.map.getLoadingIndicator().removeWait(wait);
-                    return
-                    break;
+                    return;
                 default:
                     errorMsg = self.getLocaleString("wfs." + error.key, error.params);
                     break;
             }
-            /*if (error.zoom) {
-                errorMsg = alert.find("#zoom-msg").html().format({ serviceName: error.serviceName });
-            } else if (error.layers) {
-                errorMsg = self.getLocaleString('noLayersLoaded');
-            } else if (error.url) {
-                errorMsg = self.getLocaleString('tooManySelectedLayers');
-            } else if (error.noFeatures) {
-                errorMsg = alert.find("#noFeatures-msg").html();
-            } else if (error.noValid) {
-                errorMsg = alert.find("#novalid-msg").html().format({ serviceName: error.serviceName });
-            }*/
             self.map.toast(errorMsg, { type: TC.Consts.msgType.WARNING });
 
             self.map.getLoadingIndicator().removeWait(wait);
@@ -249,40 +313,56 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
 
         var _showHelp = function (evt) {
             evt.stopPropagation();
-            TC.Util.showModal(self._$dialogDiv.find(self._classSelector + '-help-dialog'));
+            TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-help-dialog'));
         };
 
-        self._$div.on(TC.Consts.event.CLICK, '.tc-ctl-download-btn', _download);
-        self._$div.on(TC.Consts.event.CLICK, '.tc-ctl-download-help', _showHelp);        
+        self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', _download), { passive: true });
+        self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', _showHelp), { passive: true });
 
-        self._$div.on("click", "#" + self.CLASS + "-image-qr", function (evt) {
-            if ($(this).prop('checked')) {
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (e) {
+            if (e.target.checked) {
                 self.generateLink();
             } else {
-                self._$div.find('.' + self.CLASS + '-alert').addClass(TC.Consts.classes.HIDDEN);
+                self.div.querySelector('.' + self.CLASS + '-alert').classList.add(TC.Consts.classes.HIDDEN);
             }
-        });
+        }));
 
-        self._$div.on("click", "h2", function (evt) {            
-            self.generateLink();
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {            
+            if (!self.registeredListeners) {
+                self.generateLink();
+            }
             self.registerListeners();
-        });
+        }));
 
         return result;
     };
 
     ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
         const self = this;
+        const alert = self.div.querySelector('.' + self.CLASS + '-alert');
+        const checkboxQR = document.getElementById(`${self.CLASS}-image-qr-${self.id}`);
 
-        if ($("#" + self.CLASS + "-image-qr").prop('checked')) {
-            if (maxLengthExceed.qr) {
-                self._$div.find('.' + self.CLASS + '-alert').removeClass(TC.Consts.classes.HIDDEN);
-            } else if (!maxLengthExceed.qr) {
-                self._$div.find('.' + self.CLASS + '-alert').addClass(TC.Consts.classes.HIDDEN);
-            }
+        checkboxQR.disabled = maxLengthExceed.qr;
+
+        if (checkboxQR.checked) {
+            alert.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
-            self._$div.find('.' + self.CLASS + '-alert').addClass(TC.Consts.classes.HIDDEN);
+            alert.classList.add(TC.Consts.classes.HIDDEN);
         }
     };
 
+    ctlProto.generateLink = async function () {
+        const self = this;
+        const checkbox = self.div.querySelector(`.${self.CLASS}-div input[id|="${self.CLASS}-image-qr-download"]`);
+        const label = self.div.querySelector(`label[for="${checkbox.id}"]`);
+        checkbox.disabled = true;
+        label.classList.add(TC.Consts.classes.LOADING);
+        const result = await TC.control.MapInfo.prototype.generateLink.call(self);
+        label.classList.remove(TC.Consts.classes.LOADING);
+        return result;
+    };
+
 })();
+
+const Download = TC.control.Download;
+export default Download;

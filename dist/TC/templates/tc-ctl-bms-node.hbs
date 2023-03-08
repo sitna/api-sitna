@@ -1,0 +1,24 @@
+{{#if layer}}
+<li class="tc-ctl-bms-node" data-layer-name="{{layer.name}}" data-layer-id="{{layer.id}}" data-layer-uid="{{layer.uid}}"><label{{#if layer.legend}} style="background-image: url({{layer.legend.src}})"{{/if~}}{{#if layer.thumbnail}} style="background-image: url({{layer.thumbnail}})"{{/if~}}>
+<input type="radio" name="{{controlId}}-bm" value="{{layer.name}}"{{#if layer.mustReproject}} class="tc-disabled"{{/if~}}>
+<span>{{layer.title}}</span></label>
+<div class="tc-ctl-bms-info">
+    <h3>{{layer.title}}</h3>
+    {{#if info}}
+        <p>{{info.abstract}}</p>
+        {{#if info.metadata}}
+        <div class="tc-ctl-bms-metadata">
+            <h4>{{i18n "metadata"}}</h4>
+            <ul>
+            {{#each info.metadata}}
+                <li><a href="{{{url}}}" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+            {{/each}}
+        </ul>
+        </div>
+        {{/if}}
+    {{/if}}
+</div>
+</li>
+{{else}}
+<li class="tc-ctl-bms-node"><label class="tc-loading"></label></li>
+{{/if}}

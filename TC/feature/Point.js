@@ -1,8 +1,7 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 /**
  * <p>Opciones de estilo de punto. Esta clase no tiene constructor.</p>
@@ -54,14 +53,9 @@ TC.feature.Point = function (coords, options) {
 
     TC.Feature.apply(self, arguments);
 
-    var opts;
-    if (self.wrap.isNative(coords)) {
-        coords._wrap = self.wrap;
+    if (!self.wrap.isNative(coords)) {
         self.wrap.feature = coords;
-    }
-    else {
-        opts = self.options = $.extend(true, self.options, TC.Cfg.styles.point, options);
-        self.wrap.createPoint(coords, opts);
+        self.wrap.createPoint(coords, options);
     }
 };
 
@@ -79,3 +73,6 @@ TC.feature.Point.prototype.getCoords = function (options) {
     }
     return coords;
 };
+
+const Point = TC.feature.Point;
+export default Point;

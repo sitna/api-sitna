@@ -1,0 +1,63 @@
+{{#if (isObject this)}}
+<table class="complexAttr">
+    <tbody>
+    {{#each this}}
+        {{#unless (isObject this)}}
+        <tr class="keyValue">
+            <th class="key">{{@key}}</th>
+            <td class="value">{{#unless (isEmpty this)}}{{> tc-ctl-wfsquery-table-object }}{{/unless}}</td>
+        </tr>
+        {{else}}
+        <tr>
+            <th style="display:none">{{@key}}</th>
+            <td>
+                {{#if (isObject this)}}
+                <!--object-->
+                <input type="checkbox" id="complexAttr_{{getId this}}">
+                <div>
+                    <label for="complexAttr_{{getId this}}" title="" class="plus"></label>
+                    <label for="complexAttr_{{getId this}}" title="" class="title">{{@key}}</label><br />
+                {{else}}
+                    {{#if (isArray this)}}
+                <!--array-->
+                <div>
+                    <label for="complexAttr_{{getId this}}" class="title">{{@key}}</label><br />
+                    {{else}}
+                <div>
+                    {{/if}}
+                    <!--native-->
+                {{/if}}
+                    {{> tc-ctl-wfsquery-table-object }}
+                </div>
+            </td>
+        </tr>
+        {{/unless}}
+    {{/each}}
+    </tbody>
+</table>
+{{else}}
+    {{#if (isArray this)}}
+<div class="complexAttr">
+    <input type="checkbox" id="complexAttr_{{getId this}}">
+    <div>
+        <label for="complexAttr_{{getId this}}" title="" class="plus"></label>
+        <label for="complexAttr_{{getId this}}" title="" class="title">{{length}} {{i18n "featureInfo.complexData.array"}}</label>
+        <table class="complexAttr">
+            <tbody>
+                {{#each this}}
+                <tr>
+                    <td class="arrayNode">{{> tc-ctl-wfsquery-table-object }}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+    {{else}}
+	    {{#if (startsWith this "http")}}
+        <a href="{{this}}" target="_blank" title="{{i18n "linkInNewWindow" }}">{{i18n "open" }}</a>
+        {{else}}
+        <div>{{formatDateOrNumber this}}</div>
+        {{/if}}
+    {{/if}}
+{{/if}}

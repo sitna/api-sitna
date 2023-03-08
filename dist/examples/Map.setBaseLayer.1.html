@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.setBaseLayer</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#setBaseLayer">SITNA.Map.setBaseLayer</a>.</p>
+        <p>Establecer una capa base por su identificador.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+	
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa con opciones por defecto. Esto incluye la capa del catastro de Navarra entre los mapas de fondo.
+        var map = new SITNA.Map("mapa");
+        // Cuando esté todo cargado establecer como mapa de fondo visible el catastro de Navarra.
+        map.loaded(function () {
+            map.setBaseLayer(SITNA.Consts.layer.IDENA_CADASTER);
+        });
+    </script>
+	
+</body>
+</html>

@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.html~ClickCallback</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#~ClickCallback">SITNA.Map~ClickCallback</a>.</p>
+        <p>Visor con el control de gestión de clics añadido.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Creamos un mapa con el control de gestión de clics, con una función de callback personalizada
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                click: {
+                    active: true,
+                    callback: function (coord) {
+                        alert("Has pulsado en la posición " + coord[0] + ", " + coord[1]);
+                    }
+                }
+            }
+        });
+    </script>
+	
+</body>
+</html>

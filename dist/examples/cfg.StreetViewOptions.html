@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de StreetViewOptions</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#StreetViewOptions">StreetViewOptions</a>.</p>
+        <p>Visor con el control de Google StreetView añadido.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <div id="sv"></div>
+    <script>
+        // Creamos un mapa con el control de StreetView.
+        // La vista de StreetView se debe dibujar en el elemento con identificador "sv".
+        // Se utilizará la clave de Google Maps para el SITNA.
+        // (Solamente es válida en el sitio web del SITNA, está aquí a título de ejemplo).
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                streetView: {
+                    viewDiv: "sv",
+                    googleMapsKey: "AIzaSyDyXgqllcajbMjx8yQxEX28VgA9nQOhtCM"
+                }
+            }
+        });
+    </script>
+	
+</body>
+</html>

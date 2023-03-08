@@ -91,7 +91,7 @@ h2#title {
     right: 6px;
 }
 
-span.tc-ctl-printMap-btn {
+span.tc-ctl-prnmap-btn {
     background-color: rgb(90, 117, 134);
     padding: 0.2em 1.5em;
     border-radius: 0.3em;
@@ -102,11 +102,11 @@ span.tc-ctl-printMap-btn {
     z-index: 1010;
 }
 
-    span.tc-ctl-printMap-btn:hover {
+    span.tc-ctl-prnmap-btn:hover {
         cursor: pointer;
     }
 
-    span.tc-ctl-printMap-btn:before {
+    span.tc-ctl-prnmap-btn:before {
         color: #fff;
         font-family: 'FontAwesome';
         font-size: 1.4em;
@@ -161,7 +161,7 @@ div.ol-viewport {
 
 @media print {
 
-    .tc-ctl-printMap-btn {
+    .tc-ctl-prnmap-btn {
         display: none;
     }
 

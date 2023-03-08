@@ -1,0 +1,101 @@
+﻿
+.tc-map div.tc-ctl-cctr {
+    top: calc(1em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior, btn fullScreen, el margen inferior, btn 3D, el margen inferior */
+    position: absolute;
+    left: 0.7em;
+}
+
+.tc-map div.tc-ctl-cctr {
+    position: absolute;
+    top: 1.5em;
+    left: 0.7em;
+    padding: 0;
+    display: -webkit-inline-box;
+    display: -moz-inline-box;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    pointer-events: none;
+    /* para que el contenedor sea transparente */
+    opacity: 0.99;
+}
+
+    .tc-map div.tc-ctl-cctr > ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+        .tc-map div.tc-ctl-cctr > ul:first-child {
+            left: 0;            
+        }
+
+        .tc-map div.tc-ctl-cctr > ul:last-child {
+            left: calc(2em + 0.5em);
+        }
+
+    .tc-map div.tc-ctl-cctr li > div.tc-ctl,
+    .tc-map div.tc-ctl-cctr li > div > .tc-ctl {
+        position: initial;
+        margin-bottom: 0.25em;
+        top: auto;
+        left: auto;
+        pointer-events: initial;
+    }
+
+        .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-hidden,
+        .tc-ctl-cctr li > div.tc-ctl.tc-disabled,
+        .tc-map div.tc-ctl-cctr li > div > .tc-ctl.tc-hidden,
+        .tc-ctl-cctr li > div > .tc-ctl.tc-disabled {
+            margin: 0;
+            padding: 0;
+        }
+
+    .tc-map div.tc-ctl-cctr > .tc-ctl-cctr-elm {
+        padding: 0;
+    }
+
+    .tc-map div.tc-ctl-cctr div.tc-ctl-cctr-elm:last-child {
+        margin-bottom: 0em;
+    }
+
+.tc-map.tc-ctl-sv-active.tc-collapsed .tc-ctl-cctr {
+    display: none;
+}
+
+.tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results {
+    min-width: 0;
+    min-width: -moz-fit-content;
+    min-width: -webkit-fit-content;
+    min-width: fit-content;
+    max-width: none;
+    max-width: -moz-fit-content;
+    max-width: -webkit-fit-content;
+    max-width: fit-content;
+    display: table;
+    overflow: hidden;
+    pointer-events: none;
+    /*para edge*/
+    max-width: none;
+    min-width: auto;
+}
+
+    .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results * {
+        pointer-events: all;
+    }
+
+    .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .tc-ctl-p-results-chart * {
+        pointer-events: unset;
+    }
+
+    .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results .prsidebar-body {
+        display: inline-block;
+    }
+    
+    .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-p-results div.prcollapsed {
+        top: auto;
+        left: auto;
+        position: static;
+    }

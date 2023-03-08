@@ -1,0 +1,900 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9E2CA816-D0DE-4CD2-B276-DF55EFCF8693}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MapJS</RootNamespace>
+    <AssemblyName>MapJS</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPor />
+    <IISExpressAnonymousAuthentication>enabled</IISExpressAnonymousAuthentication>
+    <IISExpressWindowsAuthentication>disabled</IISExpressWindowsAuthentication>
+    <IISExpressUseClassicPipelineMode>false</IISExpressUseClassicPipelineMode>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+    <JSLintSkip>\js\lib\dust\</JSLintSkip>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\..\IDENA\_Main\IDENA\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <UseGlobalApplicationHostFile />
+    <IISExpressSSLPort>44300</IISExpressSSLPort>
+    <Use64BitIISExpress />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Net" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="TCGlobal, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\TCGlobal.1.0.4\lib\net451\TCGlobal.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="batch\cesium-webpack\main.js" />
+    <Content Include="batch\cesium-webpack\webpack.config.js" />
+    <Content Include="batch\cesium-webpack\webpack.release.config.js" />
+    <Content Include="batch\jsdoc\img\audio_name_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\audio_name_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\audio_value_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\audio_value_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\embed_name_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\embed_name_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\embed_value_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\embed_value_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\image_name_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\image_name_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\image_value_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\image_value_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\video_name_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\video_name_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\img\video_value_prefix_regex.svg" />
+    <Content Include="batch\jsdoc\img\video_value_suffix_regex.svg" />
+    <Content Include="batch\jsdoc\css\sitnaCSS.css" />
+    <Content Include="batch\ol-webpack\main.js" />
+    <Content Include="batch\ol-webpack\webpack.config.js" />
+    <Content Include="css\ui\sitna-toggle.css" />
+    <Content Include="css\ui\sitna-button.css" />
+    <Content Include="lib\geopackagejs\dist\geopackage-browser.js" />
+    <Content Include="lib\ol\format\GMLBase.js" />
+    <Content Include="SITNA\ui\Toggle.js" />
+    <Content Include="SITNA\ui\Button.js" />
+    <Content Include="SITNA\ui\Component.js" />
+    <Content Include="TC\control\FileEdit.js" />
+    <Content Include="TC\control\itemToolContainer.js" />
+    <Content Include="TC\control\LanguageSelector.js" />
+    <Content Include="TC\control\layerOwner.js" />
+    <Content Include="TC\css\control\FileEdit.css" />
+    <Content Include="TC\css\control\FileImport.css" />
+    <Content Include="TC\css\control\LanguageSelector.css" />
+    <Content Include="TC\css\img\thumb-bta.png" />
+    <Content Include="TC\EventTarget.js" />
+    <Content Include="TC\i18n.js" />
+    <Content Include="TC\control\WebComponentControl.js" />
+    <Content Include="test\unit\browser\control\FileEdit.js" />
+    <Content Include="test\unit\browser\control\LanguageSelector.js" />
+    <Content Include="webpack\precompiledTemplates.js" />
+    <Content Include="errors\rollbar.js" />
+    <Content Include="examples\attribute.embed.value.html" />
+    <Content Include="examples\attribute.embed.name.html" />
+    <Content Include="examples\attribute.image.value.html" />
+    <Content Include="examples\attribute.audio.name.html" />
+    <Content Include="examples\attribute.audio.value.html" />
+    <Content Include="examples\attribute.video.file.value.html" />
+    <Content Include="examples\attribute.video.youtube.value.html" />
+    <Content Include="examples\attribute.video.youtube.name.html" />
+    <Content Include="examples\attribute.video.file.name.html" />
+    <Content Include="examples\cfg.LayoutOptions.html" />
+    <Content Include="examples\cfg.WFSEditOptions.html" />
+    <Content Include="examples\cfg.ThreeDOptions.html" />
+    <Content Include="examples\cfg.GeolocationOptions.html" />
+    <Content Include="examples\cfg.MultiFeatureInfoOptions.html" />
+    <Content Include="examples\cfg.HeatmapStyleOptions.html" />
+    <Content Include="examples\cfg.ClusterStyleOptions.point.html" />
+    <Content Include="examples\cfg.LayerOptions.cluster.html" />
+    <Content Include="examples\cfg.DataLoaderOptions.html" />
+    <Content Include="examples\cfg.FeatureInfoOptions.persistentHighlights.html" />
+    <Content Include="examples\cfg.LayerOptions.filter.html" />
+    <Content Include="examples\cfg.DrawMeasureModifyOptions.html" />
+    <Content Include="examples\cfg.LayerOptions.overviewMapLayer.html" />
+    <Content Include="examples\cfg.MapControlOptions.fullScreen.html" />
+    <Content Include="examples\cfg.MapControlOptions.share.html" />
+    <Content Include="examples\cfg.OfflineMapMakerOptions.html" />
+    <Content Include="examples\Cfg.SearchPlaceNameMunicipalitySource.html" />
+    <Content Include="examples\Cfg.SearchRoadMilestoneSource.html" />
+    <Content Include="examples\Cfg.SearchPlaceNameSource.html" />
+    <Content Include="examples\Cfg.SearchRoadSource.html" />
+    <Content Include="examples\cfg.TabContainerOptions.html" />
+    <Content Include="examples\cfg.WFSEditOptions.mock.js" />
+    <Content Include="examples\cfg.WFSQueryOptions.html" />
+    <Content Include="examples\cfg.MapControlOptions.printMap.html" />
+    <Content Include="examples\cfg.LayerOptions.url.html" />
+    <Content Include="examples\cfg.MapControlOptions.layerCatalog_workLayerManager.html" />
+    <Content Include="examples\cfg.MapControlOptions.workLayerManager.html" />
+    <Content Include="examples\Cfg.SearchCadastralSource.html" />
+    <Content Include="examples\Cfg.SearchMunicipalitySource.html" />
+    <Content Include="examples\cfg.SearchOptions.html" />
+    <Content Include="examples\Cfg.SearchPostalAddressSource.html" />
+    <Content Include="examples\Cfg.SearchStreetSource.html" />
+    <Content Include="examples\Cfg.SearchTownSource.html" />
+    <Content Include="examples\Cfg.workLayers.html" />
+    <Content Include="examples\CSS.html" />
+    <Content Include="examples\data\aplausos.mp3" />
+    <Content Include="examples\data\icono-kiosko.png" />
+    <Content Include="examples\data\Slowmotion_River_Water.mp4" />
+    <Content Include="examples\getting-started.html" />
+    <Content Include="examples\layout\css-guide\markup.html" />
+    <Content Include="examples\layout\css-guide\script.js" />
+    <Content Include="examples\layout\css-guide\style.css" />
+    <Content Include="examples\layout\ctl-container\fonts\fontawesome-webfont.svg" />
+    <Content Include="examples\layout\ctl-container\img\loading.gif" />
+    <Content Include="examples\layout\ctl-container\img\pegman.cur" />
+    <Content Include="examples\layout\ctl-container\img\zoomin.cur" />
+    <Content Include="examples\layout\ctl-container\markup.html" />
+    <Content Include="examples\layout\ctl-container\script.js" />
+    <Content Include="examples\layout\ctl-container\style.css" />
+    <Content Include="examples\cfg.MarkerOptions.html" />
+    <Content Include="examples\attribute.image.name.html" />
+    <Content Include="examples\Map.removeFeatures.html" />
+    <Content Include="examples\Map.exportImage.html" />
+    <Content Include="examples\Map.getCommonwealths.html" />
+    <Content Include="examples\Map.getExtent-setExtent.html" />
+    <Content Include="examples\Map.getCrs-setCrs.html" />
+    <Content Include="examples\Map.getUrbanAreas.html" />
+    <Content Include="examples\Map.getCouncils.html" />
+    <Content Include="examples\Map.getMunicipalities.html" />
+    <Content Include="examples\Map.removeSearch.html" />
+    <Content Include="examples\Map.searchMunicipality.html" />
+    <Content Include="examples\Map.searchUrbanArea.html" />
+    <Content Include="examples\Map.searchCouncil.html" />
+    <Content Include="examples\Map.searchFeature.html" />
+    <Content Include="examples\Map.searchCommonwealth.html" />
+    <Content Include="examples\Map.getQueryableData.html" />
+    <Content Include="examples\cfg.WFSEditOptions.mock-sw.js" />
+    <Content Include="examples\tc-cb-service-worker.js" />
+    <Content Include="lib\color-picker\color-picker.css" />
+    <Content Include="lib\color-picker\color-picker.js" />
+    <Content Include="lib\color-picker\color-picker.min.css" />
+    <Content Include="lib\color-picker\color-picker.min.js" />
+    <Content Include="lib\handlebars\helpers.js" />
+    <Content Include="lib\ol\interaction\DragAndDrop.js" />
+    <Content Include="lib\ol\format\GeoJSON.js" />
+    <Content Include="lib\ol\format\GPX.js" />
+    <Content Include="lib\ol\format\KML.js" />
+    <Content Include="lib\polyfill\imask.js" />
+    <Content Include="lib\polyfill\imask.min.js" />
+    <Content Include="lib\polyfill\promise\polyfill.js" />
+    <Content Include="lib\polyfill\promise\polyfill.min.js" />
+    <Content Include="lib\shp-write\index.js" />
+    <Content Include="lib\shp-write\src\download.js" />
+    <Content Include="lib\shp-write\src\extent.js" />
+    <Content Include="lib\shp-write\src\fields.js" />
+    <Content Include="lib\shp-write\src\geojson.js" />
+    <Content Include="lib\shp-write\src\points.js" />
+    <Content Include="lib\shp-write\src\poly.js" />
+    <Content Include="lib\shp-write\src\prj.js" />
+    <Content Include="lib\shp-write\src\types.js" />
+    <Content Include="lib\shp-write\src\write.js" />
+    <Content Include="lib\shp-write\src\zip.js" />
+    <Content Include="SITNA\feature\Marker.js" />
+    <Content Include="SITNA\Map.js" />
+    <Content Include="TC.js" />
+    <Content Include="TC\cesium\cesium.js" />
+    <Content Include="TC\cesium\mergeTerrainProvider\MergeTerrainProvider.js" />
+    <Content Include="lib\d3c3\d3c3.min.js" />
+    <Content Include="examples\cfg.ClickOptions.html" />
+    <Content Include="examples\cfg.StreetViewOptions.html" />
+    <Content Include="examples\cfg.CoordinatesOptions.html" />
+    <Content Include="examples\Map.zoomToMarkers.html" />
+    <Content Include="lib\polyfill\url.js" />
+    <Content Include="TC\Cfg.js" />
+    <Content Include="TC\Consts.js" />
+    <Content Include="TC\control\ControlContainer.js" />
+    <Content Include="TC\control\Elevation.js" />
+    <Content Include="TC\control\FeatureTools.js" />
+    <Content Include="TC\control\infoShare.js" />
+    <Content Include="TC\control\CacheBuilder.js" />
+    <Content Include="TC\control\NavBarHome.js" />
+    <Content Include="TC\control\OverviewMap.js" />
+    <Content Include="TC\control\FeatureDownloadDialog.js" />
+    <Content Include="TC\control\SelectContainer.js" />
+    <Content Include="TC\control\ListTOC.js" />
+    <Content Include="TC\control\Measure.js" />
+    <Content Include="TC\control\Geolocation.js" />
+    <Content Include="TC\control\Modify.js" />
+    <Content Include="TC\control\DataLoader.js" />
+    <Content Include="TC\control\MapInfo.js" />
+    <Content Include="TC\control\Container.js" />
+    <Content Include="TC\control\WFSEdit.js" />
+    <Content Include="TC\control\WFSQuery.js" />
+    <Content Include="TC\css\control\Attribution.css" />
+    <Content Include="TC\css\control\BasemapSelector.css" />
+    <Content Include="TC\css\control\OfflineMapMaker.css" />
+    <Content Include="TC\css\control\ControlContainer.css" />
+    <Content Include="TC\css\control\Coordinates.css" />
+    <Content Include="TC\css\control\DataLoader.css" />
+    <Content Include="TC\css\control\Download.css" />
+    <Content Include="TC\css\control\Elevation.css" />
+    <Content Include="TC\css\control\FeatureDownloadDialog.css" />
+    <Content Include="TC\css\control\Draw.css" />
+    <Content Include="TC\css\control\DrawMeasureModify.css" />
+    <Content Include="TC\css\control\Edit.css" />
+    <Content Include="TC\css\control\ExternalWMS.css" />
+    <Content Include="TC\css\control\FeatureInfo.css" />
+    <Content Include="TC\css\control\FeatureTools.css" />
+    <Content Include="TC\css\control\FullScreen.css" />
+    <Content Include="TC\css\control\Geolocation.css" />
+    <Content Include="TC\css\control\LayerCatalog.css" />
+    <Content Include="TC\css\control\Legend.css" />
+    <Content Include="TC\css\control\LoadingIndicator.css" />
+    <Content Include="TC\css\control\Measure.css" />
+    <Content Include="TC\css\control\Modify.css" />
+    <Content Include="TC\css\control\MultiFeatureInfo.css" />
+    <Content Include="TC\css\control\NavBar.css" />
+    <Content Include="TC\css\control\NavBarHome.css" />
+    <Content Include="TC\css\control\OverviewMap.css" />
+    <Content Include="TC\css\control\Popup.css" />
+    <Content Include="TC\css\control\Print.css" />
+    <Content Include="TC\css\control\PrintMap.css" />
+    <Content Include="TC\css\control\ResultsPanel.css" />
+    <Content Include="TC\css\control\Scale.css" />
+    <Content Include="TC\css\control\Search.css" />
+    <Content Include="TC\css\control\Share.css" />
+    <Content Include="TC\css\control\StreetView.css" />
+    <Content Include="TC\css\control\TabContainer.css" />
+    <Content Include="TC\css\control\ThreeD.css" />
+    <Content Include="TC\css\control\TOC.css" />
+    <Content Include="TC\css\control\WFSEdit.css" />
+    <Content Include="TC\css\control\WFSQuery.css" />
+    <Content Include="TC\css\control\WorkLayerManager.css" />
+    <Content Include="TC\css\fonts\sitna.svg" />
+    <Content Include="TC\css\img\crosshair.svg" />
+    <Content Include="TC\css\img\ip-features.svg" />
+    <Content Include="TC\css\img\lastleaf.svg" />
+    <Content Include="TC\css\img\lastnode-collapsed.svg" />
+    <Content Include="TC\css\img\lastnode.svg" />
+    <Content Include="TC\css\img\leaf.svg" />
+    <Content Include="TC\css\img\node-collapsed.svg" />
+    <Content Include="TC\css\img\node.svg" />
+    <Content Include="TC\css\img\point.svg" />
+    <Content Include="TC\css\img\thumb-base-fr-ign.png" />
+    <Content Include="TC\css\img\thumb-basemap_grey_ign.png" />
+    <Content Include="TC\css\img\thumb-bta2017.png" />
+    <Content Include="TC\css\img\thumb-basemap_ign.png" />
+    <Content Include="TC\css\img\thumb-carto-fr-ign.png" />
+    <Content Include="TC\css\img\thumb-carto_ign.png" />
+    <Content Include="TC\css\img\thumb-estom-fr-ign.jpg" />
+    <Content Include="TC\css\img\thumb-lidar_ign.jpg" />
+    <Content Include="TC\css\img\thumb-mapbox-satellite.jpg" />
+    <Content Include="TC\css\img\thumb-mapbox-streets.png" />
+    <Content Include="TC\css\img\thumb-ortho-fr-ign.jpg" />
+    <Content Include="TC\css\img\thumb-ortho-pamplona2020.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2017.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2018.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2019.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2020.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2021.jpg" />
+    <Content Include="TC\css\img\thumb-orthophoto.jpg" />
+    <Content Include="TC\css\img\thumb-orthophoto_pnoa.jpg" />
+    <Content Include="TC\css\img\thumb-base_ortho.png" />
+    <Content Include="TC\control\ProjectionSelector.js" />
+    <Content Include="TC\css\img\thumb-carto-dark.png" />
+    <Content Include="TC\css\img\thumb-carto-light.png" />
+    <Content Include="TC\css\img\thumb-carto-voyager.png" />
+    <Content Include="TC\css\img\thumb-osm.png" />
+    <Content Include="TC\css\img\thumb-relief_ign.jpg" />
+    <Content Include="TC\css\img\uip-features.svg" />
+    <Content Include="TC\css\view\ThreeD.css" />
+    <Content Include="TC\feature\MultiMarker.js" />
+    <Content Include="TC\feature\MultiPoint.js" />
+    <Content Include="TC\layout\pamplona\img\logoAyto.png" />
+    <Content Include="TC\layout\pamplona\init.js" />
+    <Content Include="TC\layout\pamplona\markup.html" />
+    <Content Include="TC\layout\pamplona\print.css" />
+    <Content Include="TC\layout\pamplona\script.js" />
+    <Content Include="TC\layout\pamplona\style.css" />
+    <Content Include="TC\layout\responsive\img\legend-icon.svg" />
+    <Content Include="TC\ol\ol.js" />
+    <Content Include="TC\resources\en-US.json" />
+    <Content Include="TC\resources\es-ES.json" />
+    <Content Include="TC\resources\eu-ES.json" />
+    <Content Include="errors\rollbar.ashx" />
+    <Content Include="TC\templates\tc-ctl-finfo-buttons.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-object.hbs" />
+    <Content Include="TC\templates\tc-ctl-geolocation-ext-dldlog.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-table-object.hbs" />
+    <Content Include="TC\tool\ElevationServiceGoogle.js" />
+    <Content Include="TC\tool\ElevationServiceIGNEs.js" />
+    <Content Include="TC\tool\ElevationServiceIGNFr.js" />
+    <Content Include="TC\tool\ElevationServiceIDENA.js" />
+    <Content Include="TC\tool\ElevationService.js" />
+    <Content Include="TC\ui\autocomplete.js" />
+    <Content Include="TC\view\ThreeD.js" />
+    <Content Include="TC\workers\tc-dft-web-worker.js" />
+    <Content Include="TC\workers\tc-jsonpack-web-worker.js" />
+    <Content Include="TC\wrap.js" />
+    <Content Include="test\unit\browser\control\LayerCatalog.js" />
+    <Content Include="test\unit\browser\control\Legend.js" />
+    <Content Include="test\unit\browser\control\LineFeatureInfo.js" />
+    <Content Include="test\unit\browser\control\LoadingIndicator.js" />
+    <Content Include="test\unit\browser\control\Measure.js" />
+    <Content Include="test\unit\browser\control\Modify.js" />
+    <Content Include="test\unit\browser\control\PolygonFeatureInfo.js" />
+    <Content Include="test\unit\browser\control\Popup.js" />
+    <Content Include="test\unit\browser\control\PrintMap.js" />
+    <Content Include="test\unit\browser\control\ResultsPanel.js" />
+    <Content Include="test\unit\browser\control\ScaleBar.js" />
+    <Content Include="test\unit\browser\control\ScaleSelector.js" />
+    <Content Include="test\unit\browser\control\Search.js" />
+    <Content Include="test\unit\browser\control\Share.js" />
+    <Content Include="test\unit\browser\control\StreetView.js" />
+    <Content Include="test\unit\browser\control\TabContainer.js" />
+    <Content Include="test\unit\browser\control\TOC.js" />
+    <Content Include="test\unit\browser\control\WFSQuery.js" />
+    <Content Include="test\unit\browser\control\WorkLayerManager.js" />
+    <Content Include="test\unit\browser\control\ThreeD.js" />
+    <Content Include="test\unit\browser\control\Scale.js" />
+    <Content Include="test\unit\browser\control\NavBar.js" />
+    <Content Include="test\unit\browser\control\OverviewMap.js" />
+    <Content Include="test\unit\browser\control\Geolocation.js" />
+    <Content Include="test\unit\browser\control\FullScreen.js" />
+    <Content Include="test\unit\browser\control\FileImport.js" />
+    <Content Include="test\unit\browser\control\FeatureTools.js" />
+    <Content Include="test\unit\browser\control\FeatureInfo.js" />
+    <Content Include="test\unit\browser\control\ExternalWMS.js" />
+    <Content Include="test\unit\browser\control\Edit.js" />
+    <Content Include="test\unit\browser\control\DrawMeasureModify.js" />
+    <Content Include="test\unit\browser\control\Draw.js" />
+    <Content Include="test\unit\browser\control\Download.js" />
+    <Content Include="test\unit\browser\control\Coordinates.js" />
+    <Content Include="test\unit\browser\control\OfflineMapMaker.js" />
+    <Content Include="test\unit\browser\control\BasemapSelector.js" />
+    <Content Include="test\unit\browser\control\Attribution.js" />
+    <Content Include="test\unit\browser\service-worker-tool-proxification-mocking.js" />
+    <Content Include="test\unit\browser\tool\Proxification.js" />
+    <Content Include="test\unit\browser\tool\WFSOperations.js" />
+    <Content Include="webpack\webpack.config.debug.js" />
+    <Content Include="webpack\webpack.config.js" />
+    <Content Include="wmts\mapbox\1.0.0\WMTSCapabilities.xml" />
+    <Content Include="TC\tool\Proxification.js" />
+    <Content Include="wmts\carto\1.0.0\WMTSCapabilities.xml" />
+    <Content Include="wmts\osm\1.0.0\WMTSCapabilities.xml" />
+    <Content Include="TC\tool\Elevation.js" />
+    <Content Include="TC\format\WPS.js" />
+    <Content Include="TC\tool\ExcelExport.js" />
+    <Content Include="lib\jshash\md5-min.js" />
+    <Content Include="lib\jshash\md5.js" />
+    <Content Include="lib\jshash\ripemd160-min.js" />
+    <Content Include="lib\jshash\ripemd160.js" />
+    <Content Include="lib\jshash\sha1-min.js" />
+    <Content Include="lib\jshash\sha1.js" />
+    <Content Include="lib\jshash\sha256-min.js" />
+    <Content Include="lib\jshash\sha256.js" />
+    <Content Include="lib\jshash\sha512-min.js" />
+    <Content Include="lib\jshash\sha512.js" />
+    <Content Include="lib\jsnlog\jsnlog.js" />
+    <Content Include="lib\jsnlog\jsnlog.min.js" />
+    <Content Include="lib\jsnlog\LICENSE.txt" />
+    <Content Include="lib\jsonpack\jsonpack.debug.js" />
+    <Content Include="lib\jsonpack\jsonpack.min.js" />
+    <Content Include="lib\ol\css\ol.css" />
+    <Content Include="lib\qrcode\LICENSE.txt" />
+    <Content Include="sitna.js" />
+    <Content Include="TC\control\GeometryFeatureInfo.js" />
+    <Content Include="TC\control\LineFeatureInfo.js" />
+    <Content Include="TC\control\TabContainer.js" />
+    <Content Include="TC\control\FileImport.js" />
+    <Content Include="TC\control\SWCacheClient.js" />
+    <Content Include="TC\control\FullScreen.js" />
+    <Content Include="TC\control\OfflineMapMaker.js" />
+    <Content Include="TC\control\Draw.js" />
+    <Content Include="TC\control\FeatureInfoCommons.js" />
+    <Content Include="TC\control\PolygonFeatureInfo.js" />
+    <Content Include="TC\control\MultiFeatureInfo.js" />
+    <Content Include="TC\control\ResultsPanel.js" />
+    <Content Include="TC\control\Edit.js" />
+    <Content Include="TC\control\ThreeD.js" />
+    <Content Include="TC\css\fonts\mapskin.svg" />
+    <Content Include="TC\css\fonts\OFL.txt" />
+    <Content Include="TC\css\img\area.png" />
+    <Content Include="TC\css\img\geo-track.png" />
+    <Content Include="TC\css\img\lastleaf.png" />
+    <Content Include="TC\css\img\lastnode-collapsed.png" />
+    <Content Include="TC\css\img\lastnode.png" />
+    <Content Include="TC\css\img\leaf.png" />
+    <Content Include="TC\css\img\marker_i32-shadow.png" />
+    <Content Include="TC\css\img\marker_i32.png" />
+    <Content Include="TC\css\img\right-arrow.svg" />
+    <Content Include="TC\css\img\length.png" />
+    <Content Include="TC\css\img\loading.gif" />
+    <Content Include="TC\css\img\marker-tracking.png" />
+    <Content Include="TC\css\img\marker.png" />
+    <Content Include="TC\css\img\marker.svg" />
+    <Content Include="TC\css\img\marker180.png" />
+    <Content Include="TC\css\img\marker2.png" />
+    <Content Include="TC\css\img\marker2.svg" />
+    <Content Include="TC\css\img\marker2_32.png" />
+    <Content Include="TC\css\img\marker3.png" />
+    <Content Include="TC\css\img\marker3.svg" />
+    <Content Include="TC\css\img\marker3_32.png" />
+    <Content Include="TC\css\img\marker4.png" />
+    <Content Include="TC\css\img\marker4.svg" />
+    <Content Include="TC\css\img\marker4_32.png" />
+    <Content Include="TC\css\img\marker5.png" />
+    <Content Include="TC\css\img\marker5.svg" />
+    <Content Include="TC\css\img\marker5_32.png" />
+    <Content Include="TC\css\img\marker_32.png" />
+    <Content Include="TC\css\img\mylocation.png" />
+    <Content Include="TC\css\img\node-collapsed.png" />
+    <Content Include="TC\css\img\node.png" />
+    <Content Include="TC\css\img\north_white.svg" />
+    <Content Include="TC\css\img\ovmap.png" />
+    <Content Include="TC\css\img\pegman-silouette.png" />
+    <Content Include="TC\css\img\pegman.cur" />
+    <Content Include="TC\css\img\pegman.png" />
+    <Content Include="TC\css\img\pegman0.png" />
+    <Content Include="TC\css\img\pegman113.png" />
+    <Content Include="TC\css\img\pegman135.png" />
+    <Content Include="TC\css\img\pegman158.png" />
+    <Content Include="TC\css\img\pegman180.png" />
+    <Content Include="TC\css\img\pegman203.png" />
+    <Content Include="TC\css\img\pegman225.png" />
+    <Content Include="TC\css\img\pegman23.png" />
+    <Content Include="TC\css\img\pegman248.png" />
+    <Content Include="TC\css\img\pegman270.png" />
+    <Content Include="TC\css\img\pegman293.png" />
+    <Content Include="TC\css\img\pegman315.png" />
+    <Content Include="TC\css\img\pegman338.png" />
+    <Content Include="TC\css\img\pegman45.png" />
+    <Content Include="TC\css\img\pegman68.png" />
+    <Content Include="TC\css\img\pegman90.png" />
+    <Content Include="TC\css\img\sitna-logo.png" />
+    <Content Include="TC\css\img\threedControls.svg" />
+    <Content Include="TC\css\img\thumb-basemap.png" />
+    <Content Include="TC\css\img\thumb-cadaster.png" />
+    <Content Include="TC\css\img\thumb-carto.png" />
+    <Content Include="TC\css\img\thumb-ortho2012.jpg" />
+    <Content Include="TC\css\img\thumb-ortho2014.jpg" />
+    <Content Include="TC\css\img\thumb-relief_bw.jpg" />
+    <Content Include="TC\css\img\track-marker-icon-end.png" />
+    <Content Include="TC\css\img\track-marker-icon.png" />
+    <Content Include="TC\css\img\transparent.gif" />
+    <Content Include="TC\css\img\vline.png" />
+    <Content Include="TC\feature\Circle.js" />
+    <Content Include="TC\feature\MultiPolyline.js" />
+    <Content Include="TC\filter.js" />
+    <Content Include="TC\Geometry.js" />
+    <Content Include="TC\layout\printHTML\fonts\fontawesome-webfont.svg" />
+    <Content Include="TC\layout\printHTML\markup.html" />
+    <Content Include="TC\layout\printHTML\script.js" />
+    <Content Include="TC\layout\printHTML\style.css" />
+    <Content Include="TC\layout\print\fonts\fontawesome-webfont.svg" />
+    <Content Include="TC\layout\print\markup.html" />
+    <Content Include="TC\layout\print\script.js" />
+    <Content Include="TC\layout\print\style.css" />
+    <Content Include="TC\layout\responsive\img\zoomin.cur" />
+    <Content Include="TC\css\print.css" />
+    <Content Include="TC\workers\tc-caps-web-worker.js" />
+    <Content Include="TC\workers\tc-cb-service-worker.js" />
+    <Content Include="batch\thumbnails.txt" />
+    <Content Include="batch\ol3\ol-custom.json" />
+    <Content Include="batch\ol3\ol-web-worker.json" />
+    <Content Include="examples\layout\example\resources\es-ES.json" />
+    <Content Include="examples\layout\example\resources\eu-ES.json" />
+    <Content Include="examples\layout\example\resources\en-US.json" />
+    <Content Include="examples\data\PromocionesViviendas.kml" />
+    <Content Include="examples\layout\ctl-container\config.json" />
+    <Content Include="examples\layout\ctl-container\fonts\fontawesome-webfont.eot" />
+    <Content Include="examples\layout\ctl-container\fonts\fontawesome-webfont.ttf" />
+    <Content Include="examples\layout\ctl-container\fonts\fontawesome-webfont.woff" />
+    <Content Include="examples\layout\ctl-container\fonts\fontawesome-webfont.woff2" />
+    <Content Include="examples\layout\ctl-container\fonts\FontAwesome.otf" />
+    <Content Include="examples\layout\ctl-container\resources\en-US.json" />
+    <Content Include="examples\layout\ctl-container\resources\es-ES.json" />
+    <Content Include="examples\layout\ctl-container\resources\eu-ES.json" />
+    <Content Include="examples\data\CAMINOFRANCES.gpx" />
+    <Content Include="examples\data\ESTACIONESTREN.gml" />
+    <Content Include="examples\data\PARQUESNATURALES.json" />
+    <Content Include="examples\data\UNANUBERIAIN.gpx" />
+    <Content Include="dataSource\contornoNavarra.json" />
+    <Content Include="examples\layout\css-guide\config.json" />
+    <Content Include="batch\ol-webpack\package.json" />
+    <Content Include="batch\ol-webpack\readme.md" />
+    <Content Include="batch\jsdoc\conf.json" />
+    <Content Include="batch\jsdoc\README.md" />
+    <Content Include="batch\jsdoc\tutorials\1-configuration.md" />
+    <Content Include="batch\jsdoc\tutorials\2-css.md" />
+    <Content Include="batch\jsdoc\tutorials\4-changes.md" />
+    <Content Include="batch\jsdoc\tutorials\global_cfg.md" />
+    <Content Include="batch\jsdoc\tutorials\layercatalog_css.md" />
+    <Content Include="batch\jsdoc\tutorials\layout_cfg.md" />
+    <Content Include="batch\jsdoc\tutorials\menu.json" />
+    <Content Include="batch\jsdoc\tutorials\parameters_cfg.md" />
+    <Content Include="batch\jsdoc\tutorials\search_cfg.md" />
+    <Content Include="batch\cesium-webpack\package.json" />
+    <Content Include="batch\jsdoc\tutorials\3-embedding.md" />
+    <Content Include="examples\proxy\proxy.ashx" />
+    <Content Include="examples\proxy\proxy.config" />
+    <Content Include="examples\manifest.appcache" />
+    <Content Include="gulpfile.js" />
+    <Content Include="examples\cfg.MapControlOptions.featureInfo.html" />
+    <Content Include="lib\qrcode\qrcode.min.js" />
+    <Content Include="TC\control\FeatureInfo.js" />
+    <Content Include="TC\control\LayerCatalog.js" />
+    <Content Include="TC\control\WorkLayerManager.js" />
+    <Content Include="TC\control\ExternalWMS.js" />
+    <Content Include="TC\control\Share.js" />
+    <Content Include="TC\control\Print.js" />
+    <Content Include="TC\control\PrintMap.js" />
+    <Content Include="TC\control\Download.js" />
+    <Content Include="TC\css\bootstrap-adapter.css" />
+    <Content Include="TC\feature\MultiPolygon.js" />
+    <Content Include="TC\feature\Point.js" />
+    <Content Include="TC\layout\responsive\img\loading.gif" />
+    <Content Include="TC\layout\responsive\img\pegman.cur" />
+    <Content Include="TC\control\StreetView.js" />
+    <Content Include="kml\css\embed.css" />
+    <Content Include="kml\css\img\logo.navarra.es.gif" />
+    <Content Include="batch\closure.txt" />
+    <Content Include="kml\default.html" />
+    <Content Include="examples\examples.css" />
+    <Content Include="examples\examples.js" />
+    <Content Include="examples\data\colgante.png" />
+    <Content Include="examples\layout\example\img\leaf.png" />
+    <Content Include="examples\layout\example\img\loading.gif" />
+    <Content Include="examples\layout\example\img\node-collapsed.png" />
+    <Content Include="examples\layout\example\img\node.png" />
+    <Content Include="examples\Map.addMarker.3.html" />
+    <Content Include="examples\Map.addMarker.4.html" />
+    <Content Include="examples\Map.addMarker.2.html" />
+    <Content Include="examples\Map.addMarker.1.html" />
+    <Content Include="examples\Map.setBaseLayer.2.html" />
+    <Content Include="examples\Map.setBaseLayer.1.html" />
+    <Content Include="examples\Map.addLayer.2.html" />
+    <Content Include="examples\Map.addLayer.1.html" />
+    <Content Include="examples\Map.3.html" />
+    <Content Include="examples\Map.2.html" />
+    <Content Include="examples\Map.1.html" />
+    <Content Include="examples\Cfg.layout.html" />
+    <Content Include="examples\Cfg.crs.html" />
+    <Content Include="examples\Cfg.baseLayers.html" />
+    <Content Include="examples\layout\example\markup.html" />
+    <Content Include="examples\layout\example\style.css" />
+    <Content Include="TC\control\Attribution.js" />
+    <Content Include="TC\control\Click.js" />
+    <Content Include="TC\layout\minimal\config.json" />
+    <Content Include="examples\layout\example\config.json" />
+    <Content Include="examples\data\MUSEOSNAVARRA.kml" />
+    <Content Include="errors\logger.ashx" />
+    <Content Include="lib\ol\LICENSE.md" />
+    <Content Include="TC\layout\print\config.json" />
+    <Content Include="TC\layout\print\resources\en-US.json" />
+    <Content Include="TC\layout\print\resources\es-ES.json" />
+    <Content Include="TC\layout\print\resources\eu-ES.json" />
+    <Content Include="TC\layout\print\fonts\fontawesome-webfont.eot" />
+    <Content Include="TC\layout\print\fonts\fontawesome-webfont.ttf" />
+    <Content Include="TC\layout\print\fonts\fontawesome-webfont.woff" />
+    <Content Include="TC\layout\print\fonts\fontawesome-webfont.woff2" />
+    <Content Include="TC\layout\print\fonts\FontAwesome.otf" />
+    <Content Include="TC\css\fonts\mapskin.eot" />
+    <Content Include="TC\css\fonts\mapskin.ttf" />
+    <Content Include="TC\css\fonts\mapskin.woff" />
+    <Content Include="TC\layout\printHTML\config.json" />
+    <Content Include="TC\layout\printHTML\fonts\fontawesome-webfont.eot" />
+    <Content Include="TC\layout\printHTML\fonts\fontawesome-webfont.ttf" />
+    <Content Include="TC\layout\printHTML\fonts\fontawesome-webfont.woff" />
+    <Content Include="TC\layout\printHTML\fonts\FontAwesome.otf" />
+    <Content Include="TC\layout\printHTML\resources\en-US.json" />
+    <Content Include="TC\layout\printHTML\resources\es-ES.json" />
+    <Content Include="TC\layout\printHTML\resources\eu-ES.json" />
+    <Content Include="lib\color-picker\CHANGELOG" />
+    <Content Include="lib\color-picker\LICENSE" />
+    <Content Include="lib\color-picker\README.md" />
+    <Content Include=".eslintrc" />
+    <Content Include="libman.json" />
+    <Content Include=".npmrc" />
+    <None Include="Properties\PublishProfiles\local.pubxml" />
+    <Content Include="TC\layout\pamplona\config.json" />
+    <Content Include="TC\layout\pamplona\resources\es-ES.json" />
+    <Content Include="TC\layout\pamplona\resources\eu-ES.json" />
+    <Content Include="TC\config\browser-versions.js" />
+    <Content Include="TC\layout\pamplona\resources\en-US.json" />
+    <Content Include="TC\css\fonts\sitna.eot" />
+    <Content Include="TC\css\fonts\sitna.ttf" />
+    <Content Include="TC\css\fonts\sitna.woff" />
+    <Content Include="TC\layout\responsive\config.json" />
+    <Content Include="TC\layout\responsive\fonts\fontawesome-webfont.svg" />
+    <Content Include="TC\css\tcmap.css" />
+    <Content Include="TC\layout\responsive\style.css" />
+    <Content Include="TC\Control.js" />
+    <Content Include="TC\control\Legend.js" />
+    <Content Include="TC\control\MapContents.js" />
+    <Content Include="TC\control\Coordinates.js" />
+    <Content Include="TC\control\DrawMeasureModify.js" />
+    <Content Include="TC\control\Popup.js" />
+    <Content Include="TC\control\Scale.js" />
+    <Content Include="TC\control\LoadingIndicator.js" />
+    <Content Include="TC\control\NavBar.js" />
+    <Content Include="TC\control\ScaleBar.js" />
+    <Content Include="TC\control\ScaleSelector.js" />
+    <Content Include="TC\control\Search.js" />
+    <Content Include="TC\control\BasemapSelector.js" />
+    <Content Include="TC\control\TOC.js" />
+    <Content Include="TC\Feature.js" />
+    <Content Include="TC\feature\Polygon.js" />
+    <Content Include="TC\feature\Polyline.js" />
+    <Content Include="TC\feature\Marker.js" />
+    <Content Include="TC\Layer.js" />
+    <Content Include="TC\layer\Raster.js" />
+    <Content Include="TC\layer\Vector.js" />
+    <Content Include="TC\layout\responsive\markup.html" />
+    <Content Include="TC\layout\responsive\script.js" />
+    <Content Include="TC\Map.js" />
+    <Content Include="kml\js\embed.js" />
+    <Content Include="TC\Util.js" />
+    <Content Include="TC\templates\tc-ctl-attrib.hbs" />
+    <Content Include="TC\templates\tc-ctl-bms.hbs" />
+    <Content Include="TC\templates\tc-ctl-bms-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-bms-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-omm.hbs" />
+    <Content Include="TC\templates\tc-ctl-omm-bl-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-omm-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-omm-map-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-omm-off-panel.hbs" />
+    <Content Include="TC\templates\tc-ctl-cctr.hbs" />
+    <Content Include="TC\templates\tc-ctl-cctr-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-coords.hbs" />
+    <Content Include="TC\templates\tc-ctl-coords-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-download.hbs" />
+    <Content Include="TC\templates\tc-ctl-download-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-draw.hbs" />
+    <Content Include="TC\templates\tc-ctl-dmm.hbs" />
+    <Content Include="TC\templates\tc-ctl-edit.hbs" />
+    <Content Include="TC\templates\tc-ctl-edit-attr.hbs" />
+    <Content Include="TC\templates\tc-ctl-edit-import.hbs" />
+    <Content Include="TC\templates\tc-ctl-xwms.hbs" />
+    <Content Include="TC\templates\tc-ctl-dldlog.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo.hbs" />
+    <Content Include="TC\templates\tc-ctl-ftools.hbs" />
+    <Content Include="TC\templates\tc-ctl-ftools-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-file.hbs" />
+    <Content Include="TC\templates\tc-ctl-fscreen.hbs" />
+    <Content Include="TC\templates\tc-ctl-geolocation.hbs" />
+    <Content Include="TC\templates\tc-ctl-geolocation-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-geolocation-tracking-toast.hbs" />
+    <Content Include="TC\templates\tc-ctl-geolocation-track-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-geolocation-track-snapping-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcat.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcat-branch.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcat-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcat-info.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcat-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcat-results.hbs" />
+    <Content Include="TC\templates\tc-ctl-legend.hbs" />
+    <Content Include="TC\templates\tc-ctl-legend-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-load.hbs" />
+    <Content Include="TC\templates\tc-ctl-meas.hbs" />
+    <Content Include="TC\templates\tc-ctl-mod.hbs" />
+    <Content Include="TC\templates\tc-ctl-mod-attr.hbs" />
+    <Content Include="TC\templates\tc-ctl-m-finfo.hbs" />
+    <Content Include="TC\templates\tc-ctl-ovmap.hbs" />
+    <Content Include="TC\templates\tc-ctl-print.hbs" />
+    <Content Include="TC\templates\tc-ctl-prnmap.hbs" />
+    <Content Include="TC\templates\tc-ctl-prnmap-tools.hbs" />
+    <Content Include="TC\templates\tc-ctl-prnmap-view.hbs" />
+    <Content Include="TC\templates\tc-ctl-print-page.hbs" />
+    <Content Include="TC\templates\tc-ctl-p-results.hbs" />
+    <Content Include="TC\templates\tc-ctl-p-results-chart.hbs" />
+    <Content Include="TC\templates\tc-ctl-p-results-table.hbs" />
+    <Content Include="TC\templates\tc-ctl-scl.hbs" />
+    <Content Include="TC\templates\tc-ctl-ss.hbs" />
+    <Content Include="TC\templates\tc-ctl-search.hbs" />
+    <Content Include="TC\templates\tc-ctl-share.hbs" />
+    <Content Include="TC\templates\tc-ctl-share-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-sv.hbs" />
+    <Content Include="TC\templates\tc-ctl-sv-view.hbs" />
+    <Content Include="TC\templates\tc-ctl-tctr.hbs" />
+    <Content Include="TC\templates\tc-ctl-3d.hbs" />
+    <Content Include="TC\templates\tc-view-3d-cm-ctls.hbs" />
+    <Content Include="TC\templates\tc-view-3d-overlay.hbs" />
+    <Content Include="TC\templates\tc-ctl-toc.hbs" />
+    <Content Include="TC\templates\tc-ctl-toc-branch.hbs" />
+    <Content Include="TC\templates\tc-ctl-toc-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsedit.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-filter.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-form.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-table.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm-elm.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm-type-grp.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm-type-grp-node.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm-type-sgl.hbs" />
+    <Content Include="TC\templates\tc-ctl-edit-import-layer.hbs" />
+    <Content Include="TC\templates\tc-ctl-edit-import-feature.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-geom.hbs" />
+    <Content Include="TC\templates\tc-ctl-elev-val.hbs" />
+    <Content Include="TC\templates\tc-ctl-search-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-attr.hbs" />
+    <Content Include="TC\templates\tc-ctl-wfsquery-share-dialog.hbs" />
+    <Content Include="TC\cesium\layer.json" />
+    <Content Include="TC\templates\tc-ctl-geolocation-share-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-attr-video.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-attr-image.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-attr-audio.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-attr-embed.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-attr-val.hbs" />
+    <Content Include="TC\templates\tc-ctl-finfo-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-popup.hbs" />
+    <Content Include="TC\templates\tc-ctl-fedit-panel.hbs" />
+    <Content Include="TC\templates\tc-ctl-file-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-lang-select.hbs" />
+    <None Include="test\endToEnd\config\env\pro.json" />
+    <None Include="test\endToEnd\config\env\vinet18.json" />
+    <None Include="test\endToEnd\config\env\local.json" />
+    <Content Include="test\endToEnd\consts.js" />
+    <Content Include="test\endToEnd\test.js" />
+    <Content Include="test\endToEnd\tests\tools\layerCatalog.js" />
+    <Content Include="test\endToEnd\tests\legend\legend.js" />
+    <Content Include="test\endToEnd\tests\tools\share.js" />
+    <Content Include="test\endToEnd\utils.js" />
+    <Content Include="test\unit\browser\runner.html" />
+    <Content Include="test\unit\browser\ol.js" />
+    <Content Include="test\unit\browser\layer\Raster.js" />
+    <Content Include="test\unit\browser\tool\Elevation.js" />
+    <Content Include="test\unit\browser\TC\Util.js" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="errors\JSNLogDataObject.cs" />
+    <Compile Include="errors\JSNLogEntryObject.cs" />
+    <Compile Include="errors\JSNLogRequestObject.cs" />
+    <Compile Include="errors\JSNLogMessageObject.cs" />
+    <Compile Include="errors\logger.ashx.cs">
+      <DependentUpon>logger.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="errors\rollbar.ashx.cs">
+      <DependentUpon>rollbar.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TC\layout\responsive\fonts\fontawesome-webfont.eot" />
+    <Content Include="TC\layout\responsive\fonts\fontawesome-webfont.ttf" />
+    <Content Include="TC\layout\responsive\fonts\fontawesome-webfont.woff" />
+    <Content Include="TC\layout\responsive\fonts\FontAwesome.otf" />
+    <Content Include="kml\proxy.ashx" />
+    <Content Include="TC\layout\responsive\fonts\fontawesome-webfont.woff2" />
+    <Content Include="package.json" />
+    <Content Include="packages.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="TC\layout\responsive\resources\en-US.json" />
+    <Content Include="TC\layout\responsive\resources\es-ES.json" />
+    <Content Include="TC\layout\responsive\resources\eu-ES.json" />
+    <Content Include="proxy.ashx" />
+    <Content Include="proxy.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <None Include="Properties\PublishProfiles\PRE_API.pubxml" />
+    <None Include="Properties\PublishProfiles\tracking.pubxml" />
+    <None Include="Properties\PublishProfiles\vinet18 - IDENA.pubxml" />
+    <Content Include="tsconfig.json" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Start\" />
+    <Folder Include="build\" />
+    <Folder Include="lib\cesium\" />
+    <Folder Include="lib\geopackage\" />
+    <Folder Include="test\endToEnd\images\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:56187/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+          <servers defaultServer="SelfHostServer">
+            <server name="SelfHostServer" exePath="" cmdArgs="" url="http://localhost:56187/" workingDir="" />
+          </servers>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <UserProperties package_1json__JSONSchema="v-lite" />
+    </VisualStudio>
+  </ProjectExtensions>
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

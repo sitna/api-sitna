@@ -1,0 +1,24 @@
+{{#if customLegend}}
+    {{{customLegend}}}
+{{else}}
+    <li {{#if children}}class="tc-ctl-legend-node" {{else}}class="tc-ctl-legend-node tc-ctl-legend-leaf" {{/if}} data-layer-name="{{name}}" data-layer-uid="{{uid}}">
+        <div class="tc-ctl-legend-title">{{title}}</div>
+        {{#if legend}}
+        <div class="tc-ctl-legend-watch">
+            {{#if legend.src}}
+            <img src="" data-img="{{legend.src}}" style="{{#if legend.width}}width:{{legend.width}}px;height:{{legend.height}}px;{{/if}}{{#if legend.scale}}transform:scale({{legend.scale}});transform-origin:0 50% 0;{{/if}}" />
+            {{else}}
+                {{#if legend.strokeColor}}
+                    <div class="tc-ctl-legend-img" style="border:solid {{legend.strokeWidth}}px {{legend.strokeColor}};background-color:{{legend.fillColor}}{{#if legend.width}};width:{{legend.width}}px;height:{{legend.height}}px;border-radius:50%{{/if}}"></div>
+                {{/if}}
+            {{/if}}
+        </div>
+        <div class="tc-ctl-legend-nvr">{{i18n "notVisibleAtCurrentResolution"}}</div>
+        {{/if}}
+        <ul class="tc-ctl-legend-branch">
+            {{#each children}}
+                {{> tc-ctl-legend-node}}
+            {{/each}}
+        </ul>
+    </li>
+{{/if}}

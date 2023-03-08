@@ -1,12 +1,86 @@
-﻿TC.control = TC.control || {};
+﻿
+/**
+  * Opciones de control de obtención de información de entidades de mapa en el que el método de selección es dibujar una 
+  * geometría en el mapa. El control ofrece como resultados todas las entidades que se intersecan con esa geometría.
+  * Las geometrías de selección pueden ser puntos, líneas o polígonos.
+  * 
+  * Este control utiliza las funcionalidades de los servicios OGC para realizar su cometido. En concreto, la selección por punto 
+  * hace uso de la petición `GetFeatureInfo` de los servicios WMS. Por otro lado, las selecciones por línea y polígono emplean la petición
+  * `GetFeature` de los servicios WFS. Esto implica que en este caso debe existir un servicio WFS asociado al servicio WMS que ofrezca 
+  * los mismos datos que este. Servidores de mapas como GeoServer tienen este comportamiento por defecto. 
+  * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
+  * @typedef MultiFeatureInfoOptions
+  * @extends FeatureInfoOptions
+  * @see MapControlOptions
+  * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a las pulsaciones hechas en el mapa desde el que se carga.
+  * Como máximo puede haber solamente un control activo en el mapa en cada momento.
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
+  * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
+  * de las entidades geográficas de la respuesta. Si el valor de esta propiedad es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
+  * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
+  * @example <caption>[Ver en vivo](../examples/cfg.MultiFeatureInfoOptions.html)</caption> {@lang html} 
+  * <div id="mapa"></div>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control multiFeatureInfo.
+  *     SITNA.Cfg.controls.multiFeatureInfo = {
+  *         div: "slot1",
+  *         modes: {
+  *             point: true,
+  *             polyline: {
+  *                 filterStyle: {
+  *                     strokeColor: "#00cccc",
+  *                     strokeWidth: 4
+  *                 }
+  *             },
+  *             polygon: {
+  *                 filterStyle: {
+  *                     strokeColor: "#6633cc",
+  *                     strokeWidth: 3,
+  *                     fillColor: "#6633cc",
+  *                     fillOpacity: 0.5
+  *                 }
+  *             }
+  *         },
+  *         persistentHighlights: true
+  *     };
+  *     // Añadimos una capa WMS sobre la que hacer las consultas.
+  *     // El servicio WMS de IDENA tiene un servicio WFS asociado (imprescindible para consultas por línea o recinto).
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "cp",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://idena.navarra.es/ogc/wms",
+  *             layerNames: ["IDENA:DIRECC_Pol_CodPostal"]
+  *         }
+  *     ];
+  *     var map = new SITNA.Map("mapa");
+  * </script> 
+  */
 
-if (!TC.control.FeatureInfoCommons) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/FeatureInfoCommons');
-}
+/**
+  * Opciones de los distintos modos de consulta espacial (por click, por línea o por recinto)
+  * del [control de obtención de información de entidades de mapa por geometría]{@linkplain MultiFeatureInfoOptions}.
+  * @typedef MultiFeatureInfoModeOptions
+  * @see MultiFeatureInfoOptions
+  * @property {boolean|FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
+  * @property {boolean|GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
+  * @property {boolean|GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
+  */
+
+import TC from '../../TC';
+import Consts from '../Consts';
+import FeatureInfoCommons from './FeatureInfoCommons';
+
+TC.control = TC.control || {};
+TC.Consts = Consts;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
+
 (function () {
     TC.control.MultiFeatureInfo = function () {
         var self = this;
-        self.lineColor = null;
         TC.Control.apply(self, arguments);
         self.modes = self.options.modes || {};
         if (typeof self.modes[TC.Consts.geom.POINT] === 'undefined') {
@@ -15,9 +89,10 @@ if (!TC.control.FeatureInfoCommons) {
         if (typeof self.modes[TC.Consts.geom.POLYGON] === 'undefined') {
             self.modes[TC.Consts.geom.POLYGON] = true;
         }
-        self.fInfoCtrl = null;
-        self.lineFInfoCtrl = null;
-        self.polygonFInfoCtrl = null;
+        self.featureInfoControl = null;
+        self.lineFeatureInfoControl = null;
+        self.polygonFeatureInfoControl = null;
+        self.featureInfoControls = [];
         self.lastCtrlActive = null;
         self.popup = null;
         self.exportsState = false; // Los controles que exportan estado son los hijos
@@ -29,69 +104,101 @@ if (!TC.control.FeatureInfoCommons) {
 
     ctlProto.CLASS = 'tc-ctl-m-finfo';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/MultiFeatureInfo.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS,body_0);function body_0(chk,ctx){return chk.w("<div class=\"tc-ctl-m-finfo-select\"><form><span>").h("i18n",ctx,{},{"$key":"selection"}).w("</span>").x(ctx.get(["pointSelectValue"], false),ctx,{"block":body_1},{}).x(ctx.get(["lineSelectValue"], false),ctx,{"block":body_2},{}).x(ctx.get(["polygonSelectValue"], false),ctx,{"block":body_3},{}).w("</form></div>");}body_0.__dustBody=!0;function body_1(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-point\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPoint"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["pointSelectValue"], false),ctx,"h").w("\" checked /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPoint"}).w("</span></label>");}body_1.__dustBody=!0;function body_2(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-line\" title=\"").h("i18n",ctx,{},{"$key":"selectionByLine"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["lineSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byLine"}).w("</span></label>");}body_2.__dustBody=!0;function body_3(chk,ctx){return chk.w("<label class=\"tc-ctl-m-finfo-btn-polygon\" title=\"").h("i18n",ctx,{},{"$key":"selectionByPrecinct"}).w("\"><input type=\"radio\" name=\"selectmode\" value=\"").f(ctx.get(["polygonSelectValue"], false),ctx,"h").w("\" /><span class=\"tc-ctl-btn\">").h("i18n",ctx,{},{"$key":"byPrecinct"}).w("</span></label>");}body_3.__dustBody=!0;return body_0};
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-m-finfo.hbs";
 
     const mergeOptions = function (opt1, opt2) {
-        if (opt1 === true) {
-            opt1 = {};
-            return $.extend(opt1, opt2);
+        if (opt1) {
+            if (opt1 === true) {
+                opt1 = {};
+            }
+            return TC.Util.extend(true, opt1, opt2);
         }
         return opt1;
     };
 
     ctlProto.register = function (map) {
         const self = this;
-        const ctlPromise = TC.Control.prototype.register.call(self, map);
-        const deferred = $.Deferred();
 
-        const ctlDeferreds = [ctlPromise];
-        if (self.modes[TC.Consts.geom.POINT]) {
-            var finfoDeferred = $.Deferred();
-            ctlDeferreds.push(finfoDeferred);
-            $.when(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
-                { displayMode: self.options.displayMode }))).then(function (control) {
-                self.fInfoCtrl = control;
-                finfoDeferred.resolve();
-            });
-        }
-        if (self.modes[TC.Consts.geom.POLYLINE]) {
-            var lfinfoDeferred = $.Deferred();
-            ctlDeferreds.push(lfinfoDeferred);
-            $.when(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
-                { displayMode: self.options.displayMode, lineColor: self.lineColor }))).then(function (control) {
-                self.lineFInfoCtrl = control;
-                lfinfoDeferred.resolve();
-            });
-        }
-        if (self.modes[TC.Consts.geom.POLYGON]) {
-            var pfinfoDeferred = $.Deferred();
-            ctlDeferreds.push(pfinfoDeferred);
-            $.when(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
-                { displayMode: self.options.displayMode, lineColor: self.lineColor }))).then(function (control) {
-                self.polygonFInfoCtrl = control;
-                pfinfoDeferred.resolve();
-            });
-        }
-        $.when.apply(this, ctlDeferreds).then(function () {
-            if (self.fInfoCtrl) {
-                self.fInfoCtrl.activate();
-                self.lastCtrlActive = self.fInfoCtrl;
-                deferred.resolve(self);
-            }
+        self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
+            input.checked = false;
         });
 
-        return deferred.promise();
+
+        return new Promise(function (resolve, _reject) {
+            const ctlPromises = [TC.Control.prototype.register.call(self, map)];
+            const styles = self.options.styles || {};
+            const pointMode = self.modes[TC.Consts.geom.POINT];
+            const polylineMode = self.modes[TC.Consts.geom.POLYLINE];
+            const polygonMode = self.modes[TC.Consts.geom.POLYGON];
+            if (pointMode) {
+                ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
+                    {
+                        id: self.getUID(),
+                        displayMode: self.options.displayMode,
+                        persistentHighlights: self.options.persistentHighlights,
+                        share: self.options.share
+                    })).then(function (control) {
+                        self.featureInfoControl = control;
+                        self.featureInfoControls.push(control);
+                        return control;
+                    }));
+            }
+            if (self.modes[TC.Consts.geom.POLYLINE]) {
+                ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
+                    {
+                        id: self.getUID(),
+                        active: polylineMode.active,
+                        displayMode: self.options.displayMode,
+                        persistentHighlights: self.options.persistentHighlights,
+                        share: self.options.share,
+                        style: polylineMode.filterStyle || styles.line
+                    })).then(function (control) {
+                        self.lineFeatureInfoControl = control;
+                        self.featureInfoControls.push(control);
+                        return control;
+                    }));
+            }
+            if (self.modes[TC.Consts.geom.POLYGON]) {
+                ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
+                    {
+                        id: self.getUID(),
+                        active: polygonMode.active,
+                        displayMode: self.options.displayMode,
+                        persistentHighlights: self.options.persistentHighlights,
+                        share: self.options.share,
+                        style: polygonMode.filterStyle || styles.polygon
+                    })).then(function (control) {
+                        self.polygonFeatureInfoControl = control;
+                        self.featureInfoControls.push(control);
+                        return control;
+                    }));
+            }
+
+            map.on(`${TC.Consts.event.LAYERADD} ${TC.Consts.event.LAYERREMOVE} ${TC.Consts.event.LAYERVISIBILITY}`, function (_e) {
+                self.updateUI();
+            });
+
+            map.on(`${TC.Consts.event.CONTROLACTIVATE} ${TC.Consts.event.CONTROLDEACTIVATE}`, function (e) {
+                if (e.control === self.featureInfoControl || e.control === self.lineFeatureInfoControl || e.control === self.polygonFeatureInfoControl) {
+                    self.updateUI();
+                }
+            });
+
+            Promise.all(ctlPromises).then(function () {
+                if (self.featureInfoControl) {
+                    self.featureInfoControl.activate();
+                    self.lastCtrlActive = self.featureInfoControl;
+                }
+                self.updateUI();
+                resolve(self);
+            });
+        });
+
     };
 
     ctlProto.render = function (callback) {
-        var self = this;
-        self.lineColor = !self.options.lineColor ? "#c00" : self.options.lineColor;
-        var renderData = {};
+        const self = this;
+        var renderData = { controlId: self.id };
         if (self.modes[TC.Consts.geom.POINT]) {
             renderData.pointSelectValue = TC.Consts.geom.POINT;
         }
@@ -101,62 +208,141 @@ if (!TC.control.FeatureInfoCommons) {
         if (self.modes[TC.Consts.geom.POLYGON]) {
             renderData.polygonSelectValue = TC.Consts.geom.POLYGON;
         }
-        TC.Control.prototype.renderData.call(self, renderData,
+        return self._set1stRenderPromise(self.renderData(renderData,
             function () {
                 var changeEvent = function () {
                     switch (this.value) {
                         case TC.Consts.geom.POLYLINE:
                             //modo línea
-                            console.log("seleccion por línea");
-                            if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.polygonFInfoCtrl)
-                                self.lineFInfoCtrl.activate();
-                            self.lastCtrlActive = self.lineFInfoCtrl;
+                            self.lineFeatureInfoControl.activate();
+                            self.lastCtrlActive = self.lineFeatureInfoControl;
                             break;
                         case TC.Consts.geom.POLYGON:
                             //modo poligono
-                            console.log("seleccion por polígono");
-                            if (self.map.activeControl === self.fInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
-                                self.polygonFInfoCtrl.activate();
-                            self.lastCtrlActive = self.polygonFInfoCtrl;
+                            self.polygonFeatureInfoControl.activate();
+                            self.lastCtrlActive = self.polygonFeatureInfoControl;
                             break;
                         default:
                             //modo point
-                            console.log("seleccion por punto");
-                            if (self.map.activeControl === self.polygonFInfoCtrl || self.map.activeControl === self.lineFInfoCtrl)
-                                self.fInfoCtrl.activate();
-                            self.lastCtrlActive = self.fInfoCtrl;
+                            self.featureInfoControl.activate();
+                            self.lastCtrlActive = self.featureInfoControl;
                             break;
                     }
                 };
-                self._$div.find('input[type=radio]').on('change', changeEvent);
+                self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
+                    input.addEventListener('change', changeEvent);
+                });
 
-                if ($.isFunction(callback)) {
+                //URI bind del click del boton de borrar seleccionadas
+                const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
+                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
+                    self.featureInfoControls.forEach(ctl => {
+                        ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
+                        ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
+                    });
+                }, { passive: true });
+
+                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (_e) {
+                    const downloadDialog = await self.getDownloadDialog();
+                    let options = {
+                        title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
+                        fileName: self._getFileName()
+                    };
+
+                    if (self.map.elevation || self.options.displayElevation) {
+                        options = Object.assign({}, options, {
+                            elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
+                        });
+                    }
+                    downloadDialog.open(Array.prototype.concat.apply([], self.featureInfoControls.map(ctl => ctl.resultsLayer.features)), options);
+                }, { passive: true });
+
+                self.map
+                    //.on(TC.Consts.event.FEATUREINFO, function () {
+                    //    delFeaturesBtn.disabled = false;
+                    //})
+                    //.on(TC.Consts.event.NOFEATUREINFO, function (e) {
+                    //    if (e.control && e.control.filterFeature) {
+                    //        delFeaturesBtn.disabled = false;
+                    //    }
+                    //})
+                    .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                        if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
+                            self.updateUI();
+                        }
+                    })
+                    .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                        if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
+                            self.updateUI();
+                        }
+                    });
+
+                if (TC.Util.isFunction(callback)) {
                     callback();
                 }
-            });
+            }));
     };
+
     ctlProto.activate = function () {
         var self = this;
         if (self.lastCtrlActive)
             self.lastCtrlActive.activate();
-    }
+    };
+
     ctlProto.deactivate = function () {
         var self = this;
         self.lastCtrlActive.deactivate(false);
-    }
+    };
 
+    ctlProto.updateUI = function () {
+        const self = this;
+        self.renderPromise().then(function () {
+            const enabled = self.map.workLayers.some(l => l.type === TC.Consts.layerType.WMS && l.getVisibility());
+            self.div.querySelectorAll('input').forEach(function (input) {
+                input.disabled = !enabled;
+            });
+            if (self.featureInfoControl) {
+                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POINT}]`);
+                if (input) {
+                    input.checked = self.featureInfoControl.isActive;
+                }
+            }
+            if (self.lineFeatureInfoControl) {
+                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYLINE}]`);
+                if (input) {
+                    input.checked = self.lineFeatureInfoControl.isActive;
+                }
+            }
+            if (self.polygonFeatureInfoControl) {
+                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYGON}]`);
+                if (input) {
+                    input.checked = self.polygonFeatureInfoControl.isActive;
+                }
+            }
 
-    TC.Map.prototype.getDefaultControl = function () {
-        var candidate = this.getControlsByClass("TC.control.MultiFeatureInfo");
-        if (candidate && candidate.length)
-            return candidate[0].lastCtrlActive;
-        else {
-            candidate = this.getControlsByClass("TC.control.FeatureInfo");
-            if (candidate && candidate.length)
-                return candidate[0];
-            else
-                return null;
-        }
+            const persistentHighlights = self.featureInfoControls.some(c => c.options.persistentHighlights);
+            const featuresUnavailable = self.featureInfoControls.every(ctl => (!ctl.resultsLayer || ctl.resultsLayer.features.length === 0) &&
+                (!ctl.filterLayer || ctl.filterLayer.features.length === 0));
+            const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
+            delFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
+            delFeaturesBtn.disabled = featuresUnavailable;
+            const dlFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-dl`);
+            dlFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
+            dlFeaturesBtn.disabled = featuresUnavailable;
+
+            // Hack para compensar bug de Edge: no se actualiza el estilo al cambiar el estado del radio.
+            const displayValue = self.div.style.display;
+            self.div.style.display = 'none';
+            if (displayValue) {
+                self.div.style.display = displayValue;
+            }
+            else {
+                self.div.style.removeProperty('display');
+            }
+        });
     };
 
 })();
+
+const MultiFeatureInfo = TC.control.MultiFeatureInfo;
+export default MultiFeatureInfo;

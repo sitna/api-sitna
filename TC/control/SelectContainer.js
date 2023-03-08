@@ -1,7 +1,6 @@
-﻿TC.control = TC.control || {};
-
-if (!TC.control.TabContainer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/control/TabContainer');
-}
-
-TC.control.SelectContainer = TC.control.TabContainer;
+﻿import TC from '../../TC';
+import TabContainer from './TabContainer';
+TC.control = TC.control || {};
+TC.control.SelectContainer = TabContainer;
+const SelectContainer = TC.control.SelectContainer;
+export default SelectContainer;

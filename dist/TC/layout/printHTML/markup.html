@@ -1,0 +1,23 @@
+<div class="tc-alert alert-info">
+    <button type="button" class="close" onclick="TC.Util.closeAlert(this)"><span aria-hidden="true" title="{@i18n $key="hide"/}">&times;</span></button>
+    <strong>{@i18n $key="print.advice.title"/}:</strong> {@i18n $key="print.advice.desc"/}
+</div>
+<div id="print-preview-controls">
+    <h2 id="title">{Name}</h2>
+    <span class="tc-ctl-prnmap-btn" title="{@i18n $key="printMap"/}" onclick="doPrint();"></span>
+</div>
+<div class="tc-modal" id="printMessage">
+    <div class="tc-modal-background tc-modal-close"></div>
+    <div class="tc-modal-window">
+        <div class="tc-modal-header">
+            <h3>{@i18n $key="print.config"/}</h3>
+            <div class="tc-modal-close"></div>
+        </div>
+        <div class="tc-modal-body">
+            <p>{@i18n $key="print.config.desc"/}</p>
+        </div>
+        <div class="tc-modal-footer">
+            <button type="button" class="tc-button tc-modal-close">{@i18n $key="ok"/}</button>
+        </div>
+    </div>
+</div><!-- /.modal -->

@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de MapControlOptions.fullScreen</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#MapControlOptions">MapControlOptions</a>.fullScreen.</p>
+        <p>Botón para la visualización en pantalla completa.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Añadimos el control fullScreen.
+        SITNA.Cfg.controls.fullScreen = true;
+        var map = new SITNA.Map("mapa");
+    </script>
+
+</body>
+</html>

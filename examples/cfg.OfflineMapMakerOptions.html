@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de MapControlOptions.offlineMapMaker</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#MapControlOptions">MapControlOptions</a>.offlineMapMaker.</p>
+        <p>Control de creación de mapas utilizables sin conexión a Internet. Permite al usuario seleccionar el área geográfica que cubre el mapa, 
+        las capas de fondo disponibles, y el nivel de resolución alcanzado. Con estos parámetros hace una estimación de lo que va a ocupar 
+        el mapa en almacenamiento local.</p>
+        <p>Se pueden crear tantos mapas como permita la cantidad de almacenamiento disponible en el dispositivo. Estos 
+        están accesibles a través de una lista de enlaces en el control.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de selección de capas de fondo en el primer contenedor.
+        SITNA.Cfg.controls.basemapSelector = {
+            div: "slot1"
+        };
+        // Añadimos el control de creación de mapas sin conexión en el segundo contenedor.
+        SITNA.Cfg.controls.offlineMapMaker = {
+            div: "slot2"
+        };
+        var map = new SITNA.Map("mapa");
+    </script>
+	
+</body>
+</html>

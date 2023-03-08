@@ -1,0 +1,25 @@
+{?title}<h2>{@i18n $key="addMaps"/}</h2>{/title}
+<div>
+    <div class="tc-group tc-ctl-xwms-cnt">        
+        <select class="tc-combo" title="WMS (Web Map Service)">
+            <option value="">WMS</option>
+            {#suggestions}
+			{?group}
+            <optgroup label="{group}">
+			{/group}
+                {#items}
+                <option value="{url}">{name}</option>
+                {/items}
+			{?group}	
+            </optgroup>
+			{/group}
+            {/suggestions}
+        </select>
+        <input type="url" class="tc-textbox" placeholder="{@i18n $key="writeAddressOrSelect"/}" />
+    </div>
+
+
+    <div class="tc-group tc-group tc-ctl-xwms-cnt" style="text-align:right;">
+        <button type="button" class="tc-button tc-icon-button" title="{@i18n $key="addService.title"/}" name="agregar">{@i18n $key="addService"/}</button>
+    </div>
+</div>

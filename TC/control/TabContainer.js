@@ -1,142 +1,231 @@
-﻿TC.control = TC.control || {};
+﻿
+/**
+  * Opciones de un control que contiene pestañas de selección.
+  * @typedef TabContainerOptions
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {boolean} [deselectableTabs=false] - Si se establece a `true`, las pestañas se pueden deseleccionar pulsando sobre ellas 
+  * cuando ya estaban seleccionadas previamente.
+  * @example <caption>[Ver en vivo](../examples/cfg.TabContainerOptions.html)</caption> {@lang html}
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos una capa WMS que tenga un WFS asociado del que poder descargar datos.
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "cp",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "https://idena.navarra.es/ogc/wms",
+  *             layerNames: ["IDENA:DIRECC_Pol_CodPostal"]
+  *         }
+  *     ];
+  *     // Creamos un mapa con el control de descargas en el que se pueden deseleccionar las pestañas.
+  *     var map = new SITNA.Map("mapa", {
+  *         controls: {
+  *             download: {
+  *                 div: "slot1",
+  *                 deselectableTabs: true
+  *             }
+  *         }
+  *     });
+  * </script>
+  */
 
-if (!TC.Control) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Control');
-}
+import TC from '../../TC';
+import Consts from '../Consts';
+import Container from './Container';
+
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.control.Container = Container;
 
 TC.control.TabContainer = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    TC.control.Container.apply(self, arguments);
 
     var cs = self._classSelector = '.' + self.CLASS;
     self._selectors = {
         TAB: cs + '-tab',
-        RADIOBUTTON: 'input[type=radio][name=sctnr-sel]',
+        RADIOBUTTON: `input[type=radio][name="${self.id}-sel"]`,
         ELEMENT: cs + '-elm'
-    };
-
-    self.controlOptions = self.options.controls || [];
-    var ctlCount = self.controlOptions.length;
-    self._ctlDeferreds = new Array(ctlCount);
-    for (var i = 0; i < ctlCount; i++) {
-        self._ctlDeferreds[i] = $.Deferred();
-    }
-    self.defaultSelection = self.options.defaultSelection;
+    };    
 };
 
-TC.inherit(TC.control.TabContainer, TC.Control);
+TC.inherit(TC.control.TabContainer, TC.control.Container);
 
 (function () {
     var ctlProto = TC.control.TabContainer.prototype;
 
     ctlProto.CLASS = 'tc-ctl-tctr';
 
-    if (TC.isDebug) {
-        ctlProto.template = TC.apiLocation + "TC/templates/TabContainer.html";
-    }
-    else {
-        ctlProto.template = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<h2>").f(ctx.get(["title"], false), ctx, "h").w("</h2><div class=\"tc-ctl-tctr-select\"><form>").s(ctx.get(["controls"], false), ctx, { "block": body_1 }, {}).w("</form></div>").s(ctx.get(["controls"], false), ctx, { "block": body_2 }, {}); } body_0.__dustBody = !0; function body_1(chk, ctx) { return chk.w("<label class=\"tc-ctl-tctr-tab tc-ctl-tctr-tab-").f(ctx.get(["$idx"], false), ctx, "h").w("\" style=\"width:calc(100%/").f(ctx.get(["$len"], false), ctx, "h").w(" - 1px)\"><input type=\"radio\" name=\"sctnr-sel\" value=\"").f(ctx.get(["$idx"], false), ctx, "h").w("\" /><span>").f(ctx.get(["title"], false), ctx, "h").w("</span></label>"); } body_1.__dustBody = !0; function body_2(chk, ctx) { return chk.w("<div class=\"tc-ctl-tctr-elm tc-ctl-tctr-elm-").f(ctx.get(["$idx"], false), ctx, "h").w(" tc-hidden\"></div>"); } body_2.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-tctr.hbs";
 
-    ctlProto.register = function (map) {
+    ctlProto.onRender = function () {
         const self = this;
-        const ctlPromise = TC.Control.prototype.register.call(self, map);
-        const deferred = $.Deferred();
 
-        const uids = new Array(self.controlOptions.length);
-        uids.forEach(function (elm, idx, arr) {
-            arr[idx] = self.getUID();
-        });
-
-        self.renderPromise().then(function () {
+        return new Promise(function (resolve, _reject) {
             self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
-            self._$div.find('h2').first().html(self.title);
+            self.div.querySelector('h2').innerHTML = self.title;
 
             for (var i = 0, len = self.controlOptions.length; i < len; i++) {
-                const idx = i;
-                var ctl = self.controlOptions[idx];
-                map
-                    .addControl(ctl.name, $.extend({
-                        id: uids[idx],
-                        div: self._$div.find('.' + self.CLASS + '-elm-' + i)
-                    }, ctl.options))
-                    .then(function (c) {
-                        self._ctlDeferreds[idx].resolve(c);
-                    });
+                var ctl = self.controlOptions[i];
+                var ctlName = "";
+                var ctlOptions = {};
+
+                // GLS: 20/01/2020 código compatibilidad hacia atrás
+                if (ctl.name !== undefined && ctl.options !== undefined) {
+                    console.log('Gestionamos config de tabContainer antiguo');
+
+                    ctlName = ctl.name;
+                    ctlOptions = ctl.options;
+                } else {
+                    ctlName = Object.keys(ctl).filter((key) => {
+                        return key !== "title";
+                    })[0];
+                    ctlOptions = ctl[ctlName];
+                }
+
+                self._ctlPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
+                    id: self.uids[i],
+                    div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
+                }, ctlOptions));
             }
             var writeTitle = function (ctl, idx) {
                 ctl.renderPromise().then(function () {
-                    var title = self.getLocaleString(self.controlOptions[idx].title) || ctl._$div.find('h2').first().html();
-                    ctl._$div
-                        .parents(self._classSelector)
-                        .first()
-                        .find(self._selectors.TAB + '-' + idx + ' span')
-                        .html(title);
+                    const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
+                    var parent = ctl.div;
+                    do {
+                        parent = parent.parentElement;
+                    }
+                    while (parent && !parent.matches(self._classSelector));
+                    parent.querySelector(self._selectors.TAB + '-' + idx + ' span').innerHTML = title;
                 });
             };
-            $.when.apply(self, self._ctlDeferreds).then(function () {
-                for (var i = 0, len = arguments.length; i < len; i++) {
-                    var ctl = arguments[i];
+            Promise.all(self._ctlPromises).then(function (controls) {
+                for (var i = 0, len = controls.length; i < len; i++) {
+                    var ctl = controls[i];
                     ctl.containerControl = self;
                     writeTitle(ctl, i);
                 }
-                deferred.resolve(self);
+                resolve(self);
             });
         });
-
-        return deferred.promise();
     };
 
     ctlProto.render = function (callback) {
-        var self = this;
-        self.renderData({ title: self.title, controls: self.controlOptions }, function () {
+        const self = this;
+        return self._set1stRenderPromise(self.renderData({
+            controlId: self.id,
+            title: self.title,
+            controls: self.controlOptions
+        }, function () {
 
-            var clickHandler = function (e) {
-                var $cb = $(this).closest(self._selectors.TAB).find(self._selectors.RADIOBUTTON);
-                var newValue = $cb.val();
-                var $elms = self._$div.find(self._selectors.ELEMENT);
-                if (self._oldValue === newValue && self.options.deselectable) {
+            var clickHandler = function (_e) {
+                var closest = this;
+                while (closest && !closest.matches(self._selectors.TAB)) {
+                    closest = closest.parentElement;
+                }
+                var active, hidden = [];
+                const checkbox = closest.querySelector(self._selectors.RADIOBUTTON);
+                const newValue = checkbox.value;
+                const elms = self.div.querySelectorAll(self._selectors.ELEMENT);
+                if (self._oldValue === newValue && self.options.deselectableTabs) {
                     setTimeout(function () {
-                        $cb.prop("checked", false);
+                        checkbox.checked = false;
                     }, 0);
                     self._oldValue = null;
-                    $active = $();
-                    $hidden = $elms;
+                    active = null;
+                    hidden = elms;
                 }
                 else {
-                    $active = $elms.filter(self._selectors.ELEMENT + '-' + newValue);
-                    $hidden = $elms.not($active);
+                    elms.forEach(function (elm) {
+                        if (elm.matches(self._selectors.ELEMENT + '-' + newValue)) {
+                            active = elm;
+                        }
+                        else {
+                            hidden.push(elm);
+                        }
+                    });
                     self._oldValue = newValue;
                 }
 
-                $active.removeClass(TC.Consts.classes.HIDDEN);
-                $hidden.addClass(TC.Consts.classes.HIDDEN);
-                $cb.prop("checked", true);
+                if (active && active.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                    active.classList.remove(TC.Consts.classes.COLLAPSED);
+
+                    // GLS 24/01/2020 necesitamos un mutation observer para poder quitar el tc.collapsed cuando volvamos de  
+                    // otro control ya que no hay click porque la pestaña ya está activa.
+                    var observerTabElementAddCollapsedClass = new MutationObserver(function (mutations) {                        
+                        mutations.forEach(function (mutation) {
+                            if (mutation.target.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                                mutation.target.classList.remove(TC.Consts.classes.COLLAPSED);
+                            }
+                        });
+                    });
+                    
+                    observerTabElementAddCollapsedClass.observe(active, { attributes: true });                    
+                }
+
+                if (active) {
+                    active.classList.remove(TC.Consts.classes.HIDDEN);
+                }
+                hidden.forEach(function (elm) {
+                    elm.classList.add(TC.Consts.classes.HIDDEN);
+                });
+                checkbox.checked = true;
             };
 
-            self._$div.find('span').on(TC.Consts.event.CLICK, clickHandler);
+            self.div.querySelectorAll('span').forEach(function (span) {
+                span.addEventListener(TC.Consts.event.CLICK, clickHandler, { passive: true });
+            });
 
             // GLS: Si en el register de control se llama a render, ¿por qué volvemos a llamarlo aquí?
-            //for (var i = 0, len = self._ctlDeferreds.length; i < len; i++) {
+            //for (var i = 0, len = self._ctlPromises.length; i < len; i++) {
             //    self.getControl(i).then(function (ctl) {
             //        ctl.render();
             //    });
             //}
 
             if (typeof self.defaultSelection === 'number') {
-                clickHandler.call(self._$div.find(self._selectors.RADIOBUTTON).get(self.defaultSelection));
+                clickHandler.call(self.div.querySelectorAll(self._selectors.RADIOBUTTON)[self.defaultSelection]);
+            }
+
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }));
+    };
+
+    ctlProto.selectTab = function (index) {
+        const self = this;
+        const radioButton = self.div.querySelectorAll(self._selectors.RADIOBUTTON)[index];
+        if (radioButton) {
+            radioButton.checked = true;
+            const elements = self.div.querySelectorAll(self._selectors.ELEMENT);
+            elements.forEach((element, idx) => element.classList.toggle(TC.Consts.classes.HIDDEN, index !== idx));
+        }
+    };
+
+    ctlProto.onControlDisable = function (control) {
+        const self = this;
+        self.getControls().then(controls => {
+            const controlIndex = controls.indexOf(control);
+            if (controlIndex >= 0) {
+                let nextControlIndex = controlIndex;
+                let nextControl = control;
+                do {
+                    nextControlIndex = (nextControlIndex + 1) % controls.length;
+                    nextControl = controls[nextControlIndex];
+                }
+                while (nextControl.isDisabled && nextControl !== control);
+                if (nextControlIndex !== controlIndex) {
+                    self.selectTab(nextControlIndex);
+                }
             }
         });
     };
-
-    ctlProto.getControl = function (idx) {
-        var deferred = this._ctlDeferreds[idx];
-        if (!deferred) {
-            deferred = $.Deferred();
-            deferred.reject();
-        }
-        return deferred.promise();
-    };
-
 })();
+
+const TabContainer = TC.control.TabContainer;
+export default TabContainer;

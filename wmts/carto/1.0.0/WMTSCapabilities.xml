@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Capabilities xmlns="http://www.opengis.net/wmts/1.0"
-           xmlns:ows="http://www.opengis.net/ows/1.1"
-           xmlns:xlink="http://www.w3.org/1999/xlink"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://www.opengis.net/wmts/1.0
-                          http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd" version="1.0.0">
+              xmlns:ows="http://www.opengis.net/ows/1.1"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd"
+              version="1.0.0">
 	<ows:ServiceIdentification>
 		<ows:Title>CARTO Basemaps</ows:Title>
 		<ows:Keywords>
@@ -27,7 +27,7 @@
 		<ows:Operation name="GetCapabilities">
 			<ows:DCP>
 				<ows:HTTP>
-					<ows:Get xlink:href="https://basemaps.cartocdn.com">
+					<ows:Get xlink:href="https://sitna.tracasa.es/api/wmts/carto/">
 						<ows:Constraint name="GetEncoding">
 							<ows:AllowedValues>
 								<ows:Value>RESTful</ows:Value>
@@ -54,6 +54,7 @@
 	<Contents>
     <Layer>
       <ows:Title>Voyager</ows:Title>
+      <ows:Abstract>Mapa base ofrecido por la empresa CARTO con el estilo llamado Voyager.</ows:Abstract>
       <ows:WGS84BoundingBox>
         <ows:LowerCorner>-180 -85</ows:LowerCorner>
         <ows:UpperCorner>180 85</ows:UpperCorner>
@@ -76,7 +77,8 @@
     </Layer>
     <Layer>
 			<ows:Title>Light</ows:Title>
-			<ows:WGS84BoundingBox>
+      <ows:Abstract>Mapa base ofrecido por la empresa CARTO con un estilo claro.</ows:Abstract>
+      <ows:WGS84BoundingBox>
 				<ows:LowerCorner>-180 -85</ows:LowerCorner>
 				<ows:UpperCorner>180 85</ows:UpperCorner>
 			</ows:WGS84BoundingBox>
@@ -98,6 +100,7 @@
 		</Layer>
     <Layer>
       <ows:Title>Dark</ows:Title>
+      <ows:Abstract>Mapa base ofrecido por la empresa CARTO con un estilo oscuro.</ows:Abstract>
       <ows:WGS84BoundingBox>
         <ows:LowerCorner>-180 -85</ows:LowerCorner>
         <ows:UpperCorner>180 85</ows:UpperCorner>
@@ -125,9 +128,7 @@
 				<ows:LowerCorner>-20037508.3427892 -20037508.3427892</ows:LowerCorner>
 				<ows:UpperCorner>20037508.3427892 20037508.3427892</ows:UpperCorner>
 			</ows:BoundingBox>
-			<ows:SupportedCRS>
-             urn:ogc:def:crs:EPSG::3857
-			</ows:SupportedCRS>
+			<ows:SupportedCRS>urn:ogc:def:crs:EPSG::3857</ows:SupportedCRS>
 			<WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible
 			</WellKnownScaleSet>
       <TileMatrix>

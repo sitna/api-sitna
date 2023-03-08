@@ -1,4 +1,74 @@
-﻿TC.control = TC.control || {};
+﻿/**
+  * Opciones básicas de vista.  
+  * @_typedef ViewOptions  
+  * @_see ThreeDViewOptions  
+  * @_property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.   
+  */
+
+/**
+  * Configuración adicional necesaria del control 3D en el mapa. Se define el elemento del DOM en el cual se renderizará la vista 3D.
+  * @typedef ThreeDViewOptions
+  * @_extends ViewOptions
+  * @see MapViewOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.  
+  *
+  * @example <caption>Definición objeto ThreeDViewOptions</caption> {@lang javascript}
+  *     {  
+  *         div: "IDElementoDOM"
+  *     }
+  * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
+  * <div id="mapa"/>
+  * <div id="vista3d"/>
+  * <script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Configuramos en la propiedad `views` del mapa, la vista `threeD` que requiere el control threeD para el correcto funcionamiento.
+  *     SITNA.Cfg.views = {
+  *         threeD: {
+  *             div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
+  *         }
+  *     };
+  *     // Añadimos el control 3D.
+  *     SITNA.Cfg.controls.threeD = true;  
+  *     // Añadimos el control de selector de mapas de fondo en el primer DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
+  *     SITNA.Cfg.controls.basemapSelector = {
+  *         div: "slot1"
+  *     };
+  *     // Añadimos el control de tabla de contenidos en el segundo DIV del marcado markup.html contenido en el layout configurado en la propiedad SITNA.Cfg.layout.
+  *     SITNA.Cfg.controls.TOC = {
+  *         div: "slot2"
+  *     };
+  *     // Añadimos una capa raster desde un servicio WMS y una capa vectorial
+  *     // a partir de un archivo geográfico en formato GML.
+  *     SITNA.Cfg.workLayers = [
+  *         {
+  *             id: "wms",
+  *             title: "Camino de Santiago",
+  *             type: SITNA.Consts.layerType.WMS,
+  *             url: "//idena.navarra.es/ogc/wms",
+  *             layerNames: "IDENA:PATRIM_Lin_CaminoSantR",
+  *             format: SITNA.Consts.mimeType.PNG
+  *         },
+  *         {
+  *             id: "gml",
+  *             type: SITNA.Consts.layerType.VECTOR,
+  *             url: "data/ESTACIONESTREN.gml"
+  *         }
+  *     ];  
+  *     var map = new SITNA.Map("mapa");
+  * </script>
+  */
+
+import TC from '../../TC';
+import Consts from '../Consts';
+import Control from '../Control';
+import ThreeD from '../view/ThreeD';
+
+TC.Consts = Consts;
+TC.control = TC.control || {};
+TC.view = TC.view || {};
+TC.view.ThreeD = ThreeD;
+TC.Control = Control;
 
 (function () {
 
@@ -12,20 +82,13 @@
 
     var ctlProto = TC.control.ThreeD.prototype;
 
-    ctlProto.CLASS = 'tc-ctl-threed';
+    ctlProto.CLASS = 'tc-ctl-3d';
     ctlProto.classes = {
         BETA: 'tc-beta-button',
         BTNACTIVE: 'active'
     };
 
-    ctlProto.template = {};
-
-    if (TC.isDebug) {
-        ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/ThreeD.html";
-    }
-    else {
-        ctlProto.template[ctlProto.CLASS] = function () { dust.register(ctlProto.CLASS, body_0); function body_0(chk, ctx) { return chk.w("<button class=\"tc-ctl-threed-btn tc-beta-button\" title=\"").h("i18n", ctx, {}, { "$key": "threed.tip" }).w("\"></button>"); } body_0.__dustBody = !0; return body_0 };
-    }
+    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-3d.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
@@ -33,7 +96,7 @@
         const result = TC.Control.prototype.register.call(self, map);
 
         map.on(TC.Consts.event.VIEWCHANGE, function (e) {
-            if (e.view == TC.Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
+            if (e.view === TC.Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
                 self.activate();
             }
         });
@@ -42,59 +105,62 @@
     };
 
     ctlProto.renderData = function (data, callback) {
-        var self = this;
+        const self = this;
 
-        TC.Control.prototype.renderData.call(self, data, function () {
+        return TC.Control.prototype.renderData.call(self, data, function () {
+            self.button = self.div.querySelector('.' + self.CLASS + '-btn');
 
-            self.$button = self._$div.find('.' + self.CLASS + '-btn');
+            self.button.addEventListener(TC.Consts.event.CLICK, function () {
 
-            self.$button.on(TC.Consts.event.CLICK, function () {
+                if (self.button.disabled) {
+                    return;
+                }
+
                 if (!self.map.on3DView) {
                     self.activate();
                 } else {
-                    self.$button.attr('disabled', 'disabled');
+                    self.button.disabled = true;
 
-                    TC.view.ThreeD.unapply();
+                    TC.view.ThreeD.unapply({
+                        callback: function () {
+                            self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
-                    self.$button.attr('title', self.getLocaleString("threed.tip"));
+                            self.button.classList.remove(self.classes.BTNACTIVE);
 
-                    self.$button.removeClass(self.classes.BTNACTIVE);
-
-                    self.$button.removeAttr('disabled');
+                            self.button.disabled = false;
+                        }
+                    });
                 }
-            });
-        });
+            }, { passive: true });
 
-        if ($.isFunction(callback)) {
-            callback();
-        }
+            if (TC.Util.isFunction(callback)) {
+                callback();
+            }
+        });
     };
 
     ctlProto.activate = function () {
         var self = this;
 
-        self.$button.attr('disabled', 'disabled');
+        if (!self.map.on3DView) {
+            self.button.disabled = true;
+        }
 
         self.browserSupportWebGL.call(self);
 
         const manageButton = function () {
-            self.$button.attr('title', self.getLocaleString("threed.two.tip"));
-            self.$button.removeClass(self.classes.BETA);
+            self.button.setAttribute('title', self.getLocaleString('threed.two.tip'));
+            self.button.classList.remove(self.classes.BETA);
 
-            self.$button.addClass(self.classes.BTNACTIVE);
-
-            self.$button.removeAttr('disabled');
+            self.button.classList.add(self.classes.BTNACTIVE);
         };
 
-        if (!self.map.view3D) {
-            TC.loadJS(
-                !TC.view || !TC.view.ThreeD,
-                TC.apiLocation + 'TC/view/ThreeD',
-                function () {                                                           /* provisional */
-                    TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml });
-                });
-        } else if (!self.map.on3DView) {                                               /* provisional */
-            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml });
+        const removeDisabled = function () {
+            self.button.disabled = false;
+        };
+
+        if (!self.map.view3D || !self.map.on3DView) {
+            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled });
         }
 
         manageButton();
@@ -152,7 +218,7 @@
                     result = true;
                 }
             } catch (e) {
-                console.log(E);
+                console.log(e);
             }
 
             if (result === "slow" || !result) {
@@ -168,3 +234,6 @@
     };
 
 })();
+
+const ThreeDControl = TC.control.ThreeD;
+export default ThreeDControl;

@@ -1,0 +1,1307 @@
+<!-- start:source.tmpl.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+		<title>TC/control/LayerCatalog.js</title>
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
+		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+			<link type="text/css" rel="stylesheet" href="css/sitnaCSS.css">
+			<style>
+				.page-header,
+				pre.code-toolbar > .toolbar:hover {
+					background-color: #cc0000;
+				}
+				.callout-primary,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus,
+				pre.code-toolbar > .toolbar:hover {
+					border-left-color: #cc0000;
+				}
+				pre.code-toolbar > .toolbar:hover {
+					border-bottom-color: #cc0000;
+				}
+				.callout-primary h5,
+				.symbol-title.collapsible-symbol .toggle-icon,
+				.breadcrumb li a,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus {
+					color: #cc0000;
+				}
+			</style>
+		<script type="text/javascript">
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos globales"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":["css/sitnaCSS.css"],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v3.0.0"};
+			window.DOCLET_TOC_ENABLED = false;
+			window.DOCLET_AFILTER_ENABLED = false;
+		</script>
+</head>
+<body>
+	<!-- start:navbar.hbs -->
+	<header class="navbar navbar-default navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand branding-logo" href="index.html" style="background-image: url(img/sitna-logo.png);">
+					API SITNA
+				</a>
+	            <a href="tutorial-4-changes.html" class="navbar-version">v3.0.0</a>
+				<!-- displayed on small devices -->
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="topNavigation">
+				<ul class="nav navbar-nav">
+								<li class="dropdown">
+									<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Tipos globales<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+											<li><a href="global.html#CadastralSearchOptionsExt">CadastralSearchOptionsExt</a></li>
+											<li><a href="global.html#ClickOptions">ClickOptions</a></li>
+											<li><a href="global.html#ClusterOptions">ClusterOptions</a></li>
+											<li><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></li>
+											<li><a href="global.html#ControlOptions">ControlOptions</a></li>
+											<li><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></li>
+											<li><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></li>
+											<li><a href="global.html#DrawMeasureModifyOptions">DrawMeasureModifyOptions</a></li>
+											<li><a href="global.html#ElevationOptions">ElevationOptions</a></li>
+											<li><a href="global.html#ElevationServiceOptions">ElevationServiceOptions</a></li>
+											<li><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></li>
+											<li><a href="global.html#GeolocationOptions">GeolocationOptions</a></li>
+											<li><a href="global.html#GeometryFeatureInfoOptions">GeometryFeatureInfoOptions</a></li>
+											<li><a href="global.html#HeatmapStyleOptions">HeatmapStyleOptions</a></li>
+											<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
+											<li><a href="global.html#LayerOptions">LayerOptions</a></li>
+											<li><a href="global.html#LayoutOptions">LayoutOptions</a></li>
+											<li><a href="global.html#LineStyleOptions">LineStyleOptions</a></li>
+											<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
+											<li><a href="global.html#MapOptions">MapOptions</a></li>
+											<li><a href="global.html#MapViewOptions">MapViewOptions</a></li>
+											<li><a href="global.html#MarkerOptions">MarkerOptions</a></li>
+											<li><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></li>
+											<li><a href="global.html#MultiFeatureInfoModeOptions">MultiFeatureInfoModeOptions</a></li>
+											<li><a href="global.html#MultiFeatureInfoOptions">MultiFeatureInfoOptions</a></li>
+											<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+											<li><a href="global.html#OfflineMapMakerOptions">OfflineMapMakerOptions</a></li>
+											<li><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></li>
+											<li><a href="global.html#PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a></li>
+											<li><a href="global.html#PlaceNameSearchOptions">PlaceNameSearchOptions</a></li>
+											<li><a href="global.html#PointStyleOptions">PointStyleOptions</a></li>
+											<li><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></li>
+											<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+											<li><a href="global.html#PrintMapLegendOptions">PrintMapLegendOptions</a></li>
+											<li><a href="global.html#PrintMapOptions">PrintMapOptions</a></li>
+											<li><a href="global.html#RoadMilestoneSearchOptions">RoadMilestoneSearchOptions</a></li>
+											<li><a href="global.html#RoadSearchOptions">RoadSearchOptions</a></li>
+											<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+											<li><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></li>
+											<li><a href="global.html#SearchResultColor">SearchResultColor</a></li>
+											<li><a href="global.html#SearchResultColorDictionary">SearchResultColorDictionary</a></li>
+											<li><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></li>
+											<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+											<li><a href="global.html#StreetViewOptions">StreetViewOptions</a></li>
+											<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+											<li><a href="global.html#TabContainerOptions">TabContainerOptions</a></li>
+											<li><a href="global.html#ThreeDViewOptions">ThreeDViewOptions</a></li>
+											<li><a href="global.html#UrbanAreaSearchOptions">UrbanAreaSearchOptions</a></li>
+											<li><a href="global.html#WFSEditOptions">WFSEditOptions</a></li>
+											<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
+											<li><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></li>
+											<li><a href="global.html#WMSOptions">WMSOptions</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_class.html" class="dropdown-toggle" data-toggle="dropdown">Clases<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.feature.Marker.html">SITNA.feature.Marker</a></li>
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_namespace.html" class="dropdown-toggle" data-toggle="dropdown">Espacios de nombres<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.Consts.html">SITNA.Consts</a></li>
+											<li><a href="SITNA.Consts.elevationService.html">SITNA.Consts.elevationService</a></li>
+											<li><a href="SITNA.Consts.format.html">SITNA.Consts.format</a></li>
+											<li><a href="SITNA.Consts.geom.html">SITNA.Consts.geom</a></li>
+											<li><a href="SITNA.Consts.layer.html">SITNA.Consts.layer</a></li>
+											<li><a href="SITNA.Consts.layerType.html">SITNA.Consts.layerType</a></li>
+											<li><a href="SITNA.Consts.mimeType.html">SITNA.Consts.mimeType</a></li>
+											<li><a href="SITNA.feature.html">SITNA.feature</a></li>
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_tutorial.html" class="dropdown-toggle" data-toggle="dropdown">Documentación<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="tutorial-1-configuration.html">Cómo configurar un mapa</a></li>
+											<li><a href="tutorial-2-css.html">Clases CSS para identificar elementos de la API</a></li>
+											<li><a href="tutorial-3-embedding.html">Cómo añadir multimedia y páginas web incrustadas</a></li>
+											<li><a href="tutorial-4-changes.html">Historial de cambios</a></li>
+									</ul>
+								</li>
+	                <li><a href="https://github.com/sitna/api-sitna">Ver en Github</a></li>
+				</ul>
+					<!-- start:lunr-search-navbar.hbs -->
+					<form class="navbar-form navbar-right" role="search">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Buscar" id="lunr-search-input">
+							<div class="input-group-btn">
+								<button class="btn btn-default" id="lunr-search-submit">
+									<i class="glyphicon glyphicon-search"></i>
+								</button>
+							</div>
+						</div>
+					</form>
+					<!-- start:lunr-search-navbar.hbs -->		</div>
+		</div>
+	</header>
+	<!-- end:navbar.hbs -->		<div class="page-header">
+			<div class="container">
+				<span class="kind">source</span>
+				<h1><span class="name">TC/control/LayerCatalog.js</span></h1>
+			</div>
+		</div>
+	<div class="container content">
+		<div class="row">
+			<div class="col-md-12 main-content">
+		<section class="source-section">
+			<article></article>
+			<pre class="prettyprint source language-javascript line-numbers"><code class="language-javascript">﻿
+/**
+  * Opciones de control de catálogo de capas disponibles. 
+  * 
+  * Con este control se dispone de las siguientes funcionalidades:
+  *
+  *    - Consultar las capas disponibles en uno o varios WMS.
+  *    - Buscar capas mediante texto libre. Se busca el texto en los títulos y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
+  *    - Añadir capas al mapa como capas de trabajo.
+  * @typedef LayerCatalogOptions
+  * @extends ControlOptions
+  * @see MapControlOptions
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {boolean} [enableSearch] - Propiedad que establece si se puede buscar capas por texto. La búsqueda del texto se realiza en los títulos 
+  * y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
+  * @property {LayerOptions[]} layers - Lista de objetos de definición de las con capas de servicios WMS que queremos añadir al catálogo.
+  * 
+  * En estos objetos, si se asigna un valor a la propiedad `layerNames`, solo las capas especificadas y sus hijas estarán disponibles para ser añadidas al mapa. 
+  * Sin embargo, si esta propiedad se deja sin asignar, todas las capas publicadas en el servicio WMS estarán disponibles para ser añadidas.
+  * @example &lt;caption>[Ver en vivo](../examples/cfg.MapControlOptions.layerCatalog_workLayerManager.html)&lt;/caption> {@lang html}
+  * &lt;div id="mapa">&lt;/div>
+  * &lt;script>
+  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+  *     SITNA.Cfg.layout = "layout/ctl-container";
+  *     // Añadimos el control de capas cargadas en la primera posición.
+  *     SITNA.Cfg.controls.workLayerManager = {
+  *         div: "slot1"
+  *     };
+  *     // Establecemos un proxy porque se hacen peticiones a otro dominio.
+  *     SITNA.Cfg.proxy = "proxy/proxy.ashx?";
+  *     // Añadimos en la segunda posición el catálogo de capas con dos servicios.
+  *     SITNA.Cfg.controls.layerCatalog = {
+  *         div: "slot2",
+  *         enableSearch: true,
+  *         layers: [
+  *             {
+  *                 id: "idena",
+  *                 title: "IDENA",
+  *                 hideTitle: true,
+  *                 type: SITNA.Consts.layerType.WMS,
+  *                 url: "//idena.navarra.es/ogc/wms",
+  *                 hideTree: false
+  *             },
+  *             {
+  *                 id: "sismica",
+  *                 title: "Información sísmica y volcánica",
+  *                 type: SITNA.Consts.layerType.WMS,
+  *                 url: "//www.ign.es/wms-inspire/geofisica",
+  *                 layerNames: ["Ultimos10dias", "Ultimos30dias", "Ultimos365dias"],
+  *                 hideTree: false
+  *             }
+  *         ]
+  *     };
+  *     var map = new SITNA.Map("mapa");
+  * &lt;/script>
+  */
+
+import TC from '../../TC';
+import Consts from '../Consts';
+import ProjectionSelector from './ProjectionSelector';
+import autocomplete from '../ui/autocomplete';
+
+TC.control = TC.control || {};
+TC.UI = TC.UI || {};
+TC.UI.autocomplete = autocomplete;
+TC.Consts = Consts;
+TC.control.ProjectionSelector = ProjectionSelector;
+
+(function () {
+
+    TC.control.LayerCatalog = function () {
+        var self = this;
+
+        self.layers = [];
+        self.searchInit = false;
+
+        TC.control.ProjectionSelector.apply(self, arguments);
+
+        self._selectors = {
+            LAYER_ROOT: 'div.' + self.CLASS + '-tree > ul.' + self.CLASS + '-branch > li.' + self.CLASS + '-node'
+        };
+
+        if (!TC.Consts.classes.SELECTABLE) {
+            TC.Consts.classes.SELECTABLE = 'tc-selectable';
+        }
+        if (!TC.Consts.classes.INCOMPATIBLE) {
+            TC.Consts.classes.INCOMPATIBLE = 'tc-incompatible';
+        }
+        if (!TC.Consts.classes.ACTIVE) {
+            TC.Consts.classes.ACTIVE = 'tc-active';
+        }
+    };
+
+    TC.inherit(TC.control.LayerCatalog, TC.control.ProjectionSelector);
+
+    var ctlProto = TC.control.LayerCatalog.prototype;
+
+    ctlProto.CLASS = 'tc-ctl-lcat';
+
+    ctlProto.template = {};
+    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-lcat.hbs";
+    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-branch.hbs";
+    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-node.hbs";
+    ctlProto.template[ctlProto.CLASS + '-info'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-info.hbs";
+    ctlProto.template[ctlProto.CLASS + '-results'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-results.hbs";
+    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-dialog.hbs";
+
+    const showProjectionChangeDialog = function (ctl, layer) {
+        ctl.showProjectionChangeDialog({
+            layer: layer,
+            closeCallback: function () {
+                ctl.getLayerNodes(ctl._layerToAdd).forEach(function (node) {
+                    node.classList.remove(TC.Consts.classes.LOADING);
+                    node.querySelector('span').dataset.tooltip = ctl.getLocaleString('clickToAddToMap');
+                });
+            }
+        });
+    };
+
+    var SEARCH_MIN_LENGTH = 3;
+
+    ctlProto.register = function (map) {
+        const self = this;
+
+        const result = TC.control.ProjectionSelector.prototype.register.call(self, map);
+
+        const load = function (resolve, _reject) {
+            if (Array.isArray(self.options.layers)) {
+                for (var i = 0; i &lt; self.options.layers.length; i++) {
+                    var layer = self.options.layers[i];
+                    if (!layer.type || layer.type === TC.Consts.layerType.WMS) {
+                        if (!layer.id) {
+                            layer.id = TC.getUID();
+                        }                        
+                        if (TC.Util.isPlainObject(layer)) {
+                            layer = new TC.layer.Raster(layer);
+                        }                        
+                        self.layers.push(layer);
+                    }
+                }
+                self.render(function () {
+                    resolve();
+                });
+            }
+            else {
+                resolve();
+            }
+        };
+
+        self._readyPromise = new Promise(function (resolve, reject) {
+            const waitLoad = function (e) {
+                if (e.layer === map.baseLayer) {
+                    load(resolve, reject);
+                    map.off(TC.Consts.event.LAYERUPDATE, waitLoad);
+                }
+            };
+
+            map.loaded(function () {
+                if (!map.baseLayer.state || map.baseLayer.state === TC.Layer.state.IDLE) {
+                    load(resolve, reject);
+                }
+                else {
+                    map.on(TC.Consts.event.LAYERUPDATE, waitLoad);
+                }
+            });
+        });
+
+        const findResultNodes = function (layer) {
+            const result = [];
+            if (!layer.isBase) {
+                var url = layer.options.url;
+                if (self.list) {
+                    self.list.querySelectorAll('li').forEach(function (li) {
+                        const lyr = self.getLayer(li.dataset.layerId);
+                        if (lyr &amp;&amp; lyr.type === layer.type &amp;&amp; lyr.options.url === url) {
+                            for (var i = 0; i &lt; layer.names.length; i++) {
+                                if (li.dataset.layerName === layer.names[i]) {
+                                    result.push(li);
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            return result;
+        };
+
+        /*
+         * Marca todas las capas del TOC como añadidas excepto la que se está borrando que se recibe como parámetro.
+         */
+        const _markWorkLayersAsAdded = function (layerRemoved) {
+            var wlCtrl = self.map.getControlsByClass(TC.control.WorkLayerManager)[0];
+            if (wlCtrl) {
+                var layers = wlCtrl.layers;
+
+                for (var i = 0; i &lt; layers.length; i++) {
+                    var layer = layers[i];
+
+                    if (layer !== layerRemoved) {
+                        self.getLayerNodes(layer).forEach(function (node) {
+                            node.classList.add(TC.Consts.classes.CHECKED);
+                            node.querySelector('span').dataset.tooltip = self.getLocaleString('layerAlreadyAdded');
+                        });
+                    }
+                }
+            }
+        };
+
+        var clickToAddText = self.getLocaleString('clickToAddToMap');
+
+        map
+            .on(TC.Consts.event.BEFORELAYERADD + ' ' + TC.Consts.event.BEFOREUPDATEPARAMS, function (e) {
+                self.getLayerNodes(e.layer).forEach(function (node) {
+                    node.classList.add(TC.Consts.classes.LOADING);
+                    delete node.querySelector('span').dataset.tooltip;
+                });
+            })
+            .on(TC.Consts.event.LAYERADD + ' ' + TC.Consts.event.UPDATEPARAMS, function (e) {
+                const layer = e.layer;
+                if (!layer.isBase &amp;&amp; layer.type === TC.Consts.layerType.WMS) {
+                    self.loaded().then(function () { // Esperamos a que cargue primero las capas de la configuración
+
+                        if (self.getLayerRootNode(layer)) {
+                            updateControl.call(self, layer);
+                        }
+                        else {
+                            // la capa no está renderizada, pero podría estar en proceso, comprobamos que no está en la lista de capas del control
+                            var layerAlreadyAdded = false;
+                            for (var i = 0, len = self.layers.length; i &lt; len; i++) {
+                                var lyr = self.layers[i];
+                                if (lyr.type === layer.type &amp;&amp; lyr.options.url === layer.options.url) {
+                                    layerAlreadyAdded = true;
+                                    break;
+                                }
+                            }
+
+                            // 12/03/2019 GLS la capa forma parte de los servicios configurados pero el nodo aún no se ha cargado, la guardamos
+                            if (layerAlreadyAdded) {
+                                if (!self.layersToSetChecked) {
+                                    self.layersToSetChecked = [];
+                                }
+
+                                self.layersToSetChecked.push(layer);
+                            } else {
+                                self.addLayer(new TC.layer.Raster({
+                                    url: layer.options.url,
+                                    type: layer.type,
+                                    layerNames: [],
+                                    title: layer.title || layer.wrap.getServiceTitle(),
+                                    hideTitle: true,
+                                    hideTree: false
+                                })).then(function () {
+                                    updateControl.call(self, layer);
+                                });
+                            }
+                        }
+                    });
+                }
+            })
+            .on(TC.Consts.event.LAYERERROR, function (e) {
+                const reason = e.reason;
+                if (self.layers.some(f => f === e.layer)) {
+                    if (reason) {
+                        TC.alert(self.getLocaleString(reason, { url: e.layer.url }));
+                    }
+                    self.getLayerNodes(e.layer).forEach(function (node) {
+                        node.classList.remove(TC.Consts.classes.LOADING);
+                    });
+                }                
+            })
+            .on(TC.Consts.event.LAYERREMOVE, function (e) {
+                const layer = e.layer;
+                self.getLayerNodes(layer).forEach(function (node) {
+                    node.classList.remove(TC.Consts.classes.CHECKED);
+                    node.querySelector('span').dataset.tooltip = clickToAddText;
+                });
+                findResultNodes(layer).forEach(function (node) {
+                    node.classList.remove(TC.Consts.classes.CHECKED);
+                    node.querySelector('h5').dataset.tooltip = clickToAddText;
+                });
+
+                //Marcamos como añadidas aquellas capas que estén en el control de capas cargadas. Esto previene que si borramos una capa padre, todas
+                //sus hijas aparezcan como no añadidas, a pesar que que alguna de ellas haya sido añadida previamente de manera individual
+                _markWorkLayersAsAdded(layer);
+
+                //refresh del searchList            
+                _refreshResultList.call(self);
+            })
+            .on(TC.Consts.event.EXTERNALSERVICEADDED, function (e) {
+                if (e &amp;&amp; e.layer) {
+                    self.addLayer(e.layer);
+                    self.div.classList.remove(TC.Consts.classes.COLLAPSED);
+                }
+            })
+            .on(TC.Consts.event.PROJECTIONCHANGE, function (_e) {
+                self.update();
+            });
+
+        return result;
+    };
+
+    const onCollapseButtonClick = function (e) {
+        e.target.blur();
+        e.stopPropagation();
+        const li = e.target.parentElement;
+        if (li.tagName === 'LI' &amp;&amp; !li.classList.contains(ctlProto.CLASS + '-leaf')) {
+            li.classList.toggle(TC.Consts.classes.COLLAPSED);
+            const ul = li.querySelector('ul');
+            ul.classList.toggle(TC.Consts.classes.COLLAPSED);
+        }
+    };
+
+    const onSpanClick = function (e, ctl, getLayerObject) {
+        const li = e.target.parentNode;
+        if (!li.classList.contains(TC.Consts.classes.LOADING) &amp;&amp; !li.classList.contains(TC.Consts.classes.CHECKED)) {
+            e.preventDefault;
+
+            var layerName = li.dataset.layerName;
+            layerName = layerName !== undefined ? layerName.toString() : '';
+            var layer = getLayerObject.call(ctl,li);            
+            if (layer &amp;&amp; layerName) {
+                var redrawTime = 1;
+
+                if (/iPad/i.test(navigator.userAgent))
+                    redrawTime = 10;
+                else if (TC.Util.detectFirefox())
+                    redrawTime = 250;
+
+                if (!layer.title) {
+                    layer.title = layer.getTree().title;
+                }
+
+                li.classList.add(TC.Consts.classes.LOADING);
+                li.querySelector('span,h5').dataset.tooltip = '';
+
+                const reDraw = function (element) {
+                    return new Promise(function (resolve, _reject) {
+                        setTimeout(function () {
+                            element.setAttribute('offsetHeight', element.offsetHeight);
+                            element.setAttribute('offsetWidth', element.offsetWidth);
+
+                            resolve();
+                        }, redrawTime);
+                    });
+                };
+
+                reDraw(li).then(function () {
+                    ctl.addLayerToMap(layer, layerName);
+                });
+                e.stopPropagation();
+            }
+        }
+    };
+
+    const createSearchAutocomplete = function () {
+        const self = this;
+
+        self.textInput = self.div.querySelector("." + self.CLASS + "-input");
+        self.list = self.div.querySelector("." + self.CLASS + "-search ul");
+        // Clear results list when x button is pressed in the search input
+        self.textInput.addEventListener('mouseup', function (_e) {
+            var oldValue = self.textInput.value;
+
+            if (oldValue === '') {
+                return;
+            }
+
+            // When this event is fired after clicking on the clear button
+            // the value is not cleared yet. We have to wait for it.
+            setTimeout(function () {
+                var newValue = self.textInput.value;
+
+                if (newValue === '') {
+                    self.list.innerHTML = '';
+                }
+            }, 1);
+        });
+
+        var layerCheckedList = [];
+        //Definir el autocomplete del buscador de capas por texto
+        TC._search = TC._search || {};
+        TC._search.retryTimeout = null;
+
+        TC.UI.autocomplete.call(self.textInput, {
+            link: '#',
+            target: self.list,
+            minLength: 0,
+            source: function (text, callback) {
+                //lista de capas marcadas
+                layerCheckedList = [];
+                self._roots.forEach(function (root) {
+                    root.querySelectorAll("li." + TC.Consts.classes.CHECKED).forEach(function (item) {
+                        layerCheckedList.push(item.dataset.layerName);
+                    });
+                });
+
+                //con texto vacío, limpiar  y ocultar la lista de resultados
+                text = text.trim();
+                if (text.length &lt; SEARCH_MIN_LENGTH) {
+                    self.list.innerHTML = '';
+                }
+                else if (text.length >= SEARCH_MIN_LENGTH) {
+                    if (TC._search.retryTimeout)
+                        clearTimeout(TC._search.retryTimeout);
+                    TC._search.retryTimeout = setTimeout(function () {
+                        var results = [];
+                        for (var i = 0, ii = self.sourceLayers.length; i &lt; ii; i++) {
+                            const sourceLayer = self.sourceLayers[i];
+                            var _founds = sourceLayer.searchSubLayers(text);
+                            if (_founds.length) {
+                                results.push({
+                                    service: {
+                                        id: sourceLayer.id,
+                                        title: sourceLayer.title || sourceLayer.id
+                                    },
+                                    founds: _founds
+                                });
+                            }
+                        }
+                        callback({ servicesFound: results, servicesLooked: self.sourceLayers.length });
+                    }, TC._search.interval);
+                }
+            },
+            callback: function (e) {
+                self.textInput.value = e.target.text || e.target.innerText;
+                TC._search.lastPattern = self.textInput.value;
+                self.goToResult(unescape(e.target.hash).substring(1));
+                TC.UI.autocomplete.call(self.textInput, 'clear');
+            },
+            buildHTML: function (data) {
+                var container = this.target;
+                //si hay resultados, mostramos la lista
+                if (data.results &amp;&amp; data.results.servicesFound.length > 0) {
+                    var workLayers = self.map.getLayerTree().workLayers;
+                    for (var k = 0; k &lt; data.results.servicesFound.length; k++) {
+                        var founds = data.results.servicesFound[k].founds;
+                        for (var j = 0; j &lt; founds.length; j++) {
+                            delete founds[j].alreadyAdded;
+                            for (var i = 0; i &lt; workLayers.length; i++) {
+                                //if (workLayers[i].title == data.results[j].Title ) {
+                                if (layerCheckedList.indexOf(founds[j].Name) >= 0) {
+                                    founds[j].alreadyAdded = true;
+                                    break;
+                                }
+                            }
+                            //Si la capa no tiene Name, no se puede añadir al TOC
+                            if (!founds[j].Name) {
+                                founds.splice(j, 1);
+                                j--;
+                            }
+                        }
+                        if (!data.results.servicesFound[k].founds.length) {
+                            data.results.servicesFound.splice(k, 1);
+                            continue;
+                        }
+                        //si estaba collapsado mantenemos el estado
+                        if (self.div.querySelectorAll(".tc-ctl-lcat-search-group")[k]) {
+                            data.results.servicesFound[k].service.isCollapsed = self.div.querySelectorAll(".tc-ctl-lcat-search-group")[k].classList.contains(TC.Consts.classes.COLLAPSED);
+                        }
+                    }
+                }
+                var ret = '';
+                self.getRenderedHtml(self.CLASS + '-results', data.results).then(function (out) {
+                    container.innerHTML = ret = out;
+                    // Marcamos el botón "i" correspondiente si el panel de info está abierto
+                    const visibleInfoPane = self.div.querySelector(`.${self.CLASS}-info`);
+                    if (visibleInfoPane) {
+                        const serviceId = visibleInfoPane.dataset.serviceId;
+                        const layerName = visibleInfoPane.dataset.layerName;
+                        let selector = `li[data-layer-name="${layerName}"] input[type="checkbox"].${self.CLASS}-search-btn-info`;
+                        if (self.sourceLayers.length > 1) {
+                            selector = `li[data-service-id="${serviceId}"] ${selector}`;
+                        }
+                        const infoCheckbox = container.querySelector(selector);
+                        if (infoCheckbox) {
+                            infoCheckbox.checked = true;
+                        }
+                    }
+                });
+                return ret;
+            }
+        });
+
+
+        if (!self.searchInit) {
+            //botón de la lupa para alternar entre búsqueda y árbol
+            self.div.querySelector('h2 button').addEventListener(TC.Consts.event.CLICK, function (e) {
+                e.target.blur();
+                
+                const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
+                const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
+                const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
+
+                const searchPaneMustShow = searchPane.classList.contains(TC.Consts.classes.HIDDEN);
+                searchPane.classList.toggle(TC.Consts.classes.HIDDEN, !searchPaneMustShow);
+                treePane.classList.toggle(TC.Consts.classes.HIDDEN, searchPaneMustShow);
+                e.target.classList.toggle(self.CLASS + '-btn-tree', searchPaneMustShow);
+                e.target.classList.toggle(self.CLASS + '-btn-search', !searchPaneMustShow);
+                if (searchPaneMustShow) {
+                    self.textInput.focus();
+                    e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
+                }
+                else {
+                    e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
+
+                    //Si hay resaltados en el árbol, mostramos el panel de info
+                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li input[type=checkbox]:checked').length;
+                    if (selectedCount > 0) {
+                        infoPane.classList.remove(TC.Consts.classes.HIDDEN);
+                    }
+                }
+            }, { passive: true });
+
+
+            //evento de expandir nodo de info
+            //self._$div.off("click", ".tc-ctl-lcat-search button");                        
+            self.div.addEventListener("change", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search input[type=checkbox]." + self.CLASS + "-search-btn-info", function (evt) {
+                evt.stopPropagation();
+                const target = evt.target;
+                if (target.checked) {
+                    const li = target.parentElement;
+                    var parent = li;
+                    do {
+                        parent = parent.parentElement;
+                    }
+                    while (parent &amp;&amp; parent.tagName !== 'LI');
+                    self.showLayerInfo(self.layers.length > 1 ? self.layers.filter(l => l.id === parent.dataset.serviceId)[0] : self.layers[0], li.dataset.layerName);
+
+                } else {
+                    self.hideLayerInfo();
+                }
+            }));
+
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search input[type=checkbox]." + self.CLASS + "-search-btn-info", function (evt) {
+                evt.stopPropagation();
+            }));
+
+            //click en un resultado - añadir capa
+            const searchListElementSelector = '.' + self.CLASS + '-search li';
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector(searchListElementSelector, function (evt) {
+                evt.stopPropagation();
+                var li = evt.target;
+                while (li &amp;&amp; !li.matches(searchListElementSelector)) {
+                    li = li.parentElement;
+                }
+                if (li.classList.contains(self.CLASS + '-no-results')) {
+                    return; //si clicko en el li de "no hay resultados" rompo el ciclo de ejecución
+                }
+                if (li.classList.contains(self.CLASS + '-search-group')) {
+                    li.classList.toggle(TC.Consts.classes.COLLAPSED);
+                    return;
+                }
+                onSpanClick(evt, self, function () {
+                    if (this.layers.length === 1) {
+                        return this.layers[0];
+                    }
+                    return this.getLayer(li.closest(".tc-ctl-lcat-search-group") &amp;&amp; li.closest(".tc-ctl-lcat-search-group").dataset.serviceId);
+                });               
+               
+            }));
+
+            self.searchInit = true;
+        }
+    };
+
+    const getLayerTree = function (layer) {
+        var result = layer.getTree();
+        const makeNodeVisible = function makeNodeVisible(node) {
+            var childrenVisible = false;
+            for (var i = 0; i &lt; node.children.length; i++) {
+                if (makeNodeVisible(node.children[i])) {
+                    childrenVisible = true;
+                }
+            }
+            if (Object.prototype.hasOwnProperty.call(node, 'isVisible')) {
+                node.isVisible = !layer.names || !layer.names.length || childrenVisible || node.isVisible;
+            }
+            return node.isVisible;
+        };
+        const expandNode = function (node, level) {
+            if (layer.options.expandedNodeLevel > level) {
+                node.expanded = true;
+                for (var i = 0; i &lt; node.children.length; i++) {
+                    expandNode(node.children[i], level + 1);
+                }
+            }
+        };
+        makeNodeVisible(result);
+        expandNode(result, 0);
+        return result;
+    };
+
+    const _refreshResultList = function () {
+        const self = this;
+
+        if ("createEvent" in document) {
+            var evt = document.createEvent("HTMLEvents");
+            evt.initEvent("keyup", false, true);
+            if (self.textInput) {
+                self.textInput.dispatchEvent(evt);
+            }
+        }
+        else {
+            if (self.textInput) {
+                self.textInput.fireEvent("keyup");
+            }
+        }
+    };
+
+    const updateControl = function (layer) {
+        const self = this;
+
+        const lisToCheck = self.map.workLayers
+            .filter(l => l.type === layer.type &amp;&amp; l.url === layer.url) // Capas del mismo servicio
+            .map(l => self.getLayerNodes(l)) // Elementos li de esas capas
+            .flat();
+        lisToCheck.forEach(function (node) {
+            node.classList.remove(TC.Consts.classes.LOADING);
+            node.classList.add(TC.Consts.classes.CHECKED);
+            node.querySelector('span').dataset.tooltip = self.getLocaleString('layerAlreadyAdded');
+        });
+        self.getLayerRootNode(layer).querySelectorAll("li.tc-ctl-lcat-node.tc-ctl-lcat-leaf.tc-checked").forEach(function (node) {
+            if (!lisToCheck.find(n => n === node)) {
+                node.classList.remove(TC.Consts.classes.CHECKED);
+                node.querySelector('span').dataset.tooltip=self.getLocaleString('clickToAddToMap');
+            }
+        });
+        _refreshResultList.call(self);
+    };
+
+    const setCheckedLayersOnNode = function () {
+        const self = this;
+
+        if (self.layersToSetChecked &amp;&amp; self.layersToSetChecked.length > 0) {
+            self.layersToSetChecked.forEach(function (layer, index, array) {
+                if (self.getLayerRootNode(layer)) {
+                    updateControl.call(self, layer);
+
+                    array.splice(index, 1);
+                }
+            });
+        }
+    };
+
+    const addLogicToNode = function (node, layer) {
+        const self = this;
+
+        node.querySelectorAll('li > button.' + self.CLASS + '-collapse-btn').forEach(function (btn) {
+            btn.addEventListener('click', onCollapseButtonClick);
+        });
+
+        node.querySelectorAll('span').forEach(function (span) {
+            span.addEventListener('click', function (e) {
+                onSpanClick(e, self, function (li) {
+                    for (var i = 0, len = this._roots.length; i &lt; len; i++) {
+                        const root = this._roots[i];
+                        if (root.contains(li)) {
+                            return this.getLayer(root.dataset.layerId);
+                        }
+                    }
+                    return self.getLayer(li.dataset.layerId);
+                });
+            });
+        });
+
+        self._roots = self.div.querySelectorAll(self._selectors.LAYER_ROOT);                
+        
+        node.dataset.layerId = layer.id;
+
+        node.querySelectorAll('.' + self.CLASS + '-btn-info').forEach(function (a) {
+            const span = a.parentElement.querySelector('span');
+            const name = a.parentElement.dataset.layerName;
+            if (name) {
+                span.classList.add(TC.Consts.classes.SELECTABLE);
+                var info = layer.getInfo(name);
+                if (!Object.prototype.hasOwnProperty.call(info, 'abstract') &amp;&amp;
+                    !Object.prototype.hasOwnProperty.call(info, 'legend') &amp;&amp;
+                    !Object.prototype.hasOwnProperty.call(info, 'metadata')) {
+                    a.parentElement.removeChild(a);
+                }
+                else {                    
+                    a.addEventListener('change', function (e) {
+                        e.stopPropagation();
+                        const elm = this;
+                        if (elm.checked) {
+                            self.showLayerInfo(layer, name);
+                        } else {
+                            self.hideLayerInfo();
+                        }
+                    }, { passive: true });
+                    a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                        e.stopPropagation();
+                    }, { passive: true });
+                }
+                if (layer.compatibleLayers &amp;&amp; layer.compatibleLayers.indexOf(name) &lt; 0) {
+                    span.classList.add(TC.Consts.classes.INCOMPATIBLE);
+                    span.setAttribute('title', self.getLocaleString('reprojectionNeeded'));
+                    //console.log("capa " + name + " incompatible");
+                }
+                if (self.map) {
+                    for (var j = 0, len = self.map.workLayers.length; j &lt; len; j++) {
+                        var wl = self.map.workLayers[j];
+                        if (wl.type === TC.Consts.layerType.WMS &amp;&amp; wl.url === layer.url &amp;&amp; wl.names.length === 1 &amp;&amp; wl.names[0] === name) {
+                            span.parentElement.classList.add(TC.Consts.classes.CHECKED);
+                            span.dataset.tooltip = self.getLocaleString('layerAlreadyAdded');
+                        }
+                    }
+                }
+            }
+            else {
+                a.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                    const elm = this;
+                    if (elm.checked) {
+                        self.showLayerInfo(layer, name, span.innerText);
+                    } else {
+                        self.hideLayerInfo();
+                    }
+                }, { passive: true });
+
+                a.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    e.stopPropagation();
+                }, { passive: true });
+            }
+        });        
+
+        setCheckedLayersOnNode.call(self);
+
+        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
+            self._dialogDiv.innerHTML = html;
+        });
+    };
+
+    ctlProto.renderBranch = function (layer, callback, promiseRenderResolve) {
+        const self = this;
+
+        self.sourceLayers.unshift(layer);
+        layer.getCapabilitiesPromise()
+            .then(function (_result) {
+
+                self.getRenderedHtml(self.CLASS + '-branch', getLayerTree(this), function (html) {
+                    var template = document.createElement('template');
+                    template.innerHTML = html;
+
+                    const branch = self.div.querySelector('.' + self.CLASS + '-branch');
+                    var newChild = template.content ? template.content.firstChild : template.firstChild;
+                    var oldChild = branch.querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + this.id + '"]');
+
+                    if (oldChild) {
+                        branch.replaceChild(newChild, oldChild);
+                    } else {
+                        branch.insertAdjacentElement('afterbegin', newChild);
+                    }
+
+                    addLogicToNode.call(self, newChild, this);
+
+                    if (branch.childElementCount === 1) {
+                        promiseRenderResolve();
+                    }
+
+                    if (TC.Util.isFunction(callback)) {
+                        // pasamos el callback el item 
+                        callback(self.sourceLayers[self.sourceLayers.map(l => l &amp;&amp; l.id).indexOf(this.id)]);
+                    }
+
+                }.bind(this));
+
+            }.bind(layer))
+            .catch(function (_error) {
+                var index = self.layers.map(l => l.id).indexOf(this.id);
+                self.layers.splice(index, 1);
+
+                var errorMessage = self.getLocaleString("lyrCtlg.errorLoadingNode", { serviceName: this.title });
+                var liError = self.div.querySelector('.' + self.CLASS + '-branch').querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + this.id + '"]');
+                liError.classList.add('error');
+                liError.setAttribute('title', errorMessage);
+
+                self.map.toast(errorMessage, { type: TC.Consts.msgType.ERROR });
+
+            }.bind(layer));
+    };
+
+    ctlProto.render = function (callback) {
+        const self = this;
+
+        self.sourceLayers = [];
+
+        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
+            if (self.layers.length === 0) {
+                self.renderData({ layerTrees: [], enableSearch: false }, function () {
+
+                    if (TC.Util.isFunction(callback)) {
+                        callback();
+                    }
+
+                    resolve();
+                });
+            } else {
+                self.renderData({ layers: self.layers, enableSearch: true }, function () {
+
+                    createSearchAutocomplete.call(self);
+
+                    self.layers.forEach(function (layer) {
+                        self.renderBranch(layer, callback, resolve);
+                    });
+                });
+            }
+        }));
+    };
+
+    ctlProto.getLayerRootNode = function (layer) {
+        const self = this;
+        var result = null;
+        if (!layer.isBase) {
+            var url = layer.options.url;
+            if (self._roots) {
+                self._roots.forEach(function (li) {
+                    const lyr = self.getLayer(li.dataset.layerId);
+                    if (lyr &amp;&amp; lyr.type === layer.type &amp;&amp; lyr.options.url.toLowerCase() === url.toLowerCase()) {
+                        result = li;
+                    }
+                });
+            }
+        }
+        return result;
+    };
+
+    ctlProto.getLayerNodes = function (layer) {
+        const self = this;
+        const result = [];
+        const rootNode = self.getLayerRootNode(layer);
+        if (rootNode) {
+            for (var i = 0; i &lt; layer.names.length; i++) {
+                const liLayer = rootNode.querySelector('li[data-layer-name="' + layer.names[i] + '"]');
+                if (!liLayer) {
+                    continue;
+                }
+                result.push(liLayer);
+                liLayer.querySelectorAll('li').forEach(function (li) {
+                    result.push(li);
+                });
+            }
+        }
+        return result;
+    };
+
+    ctlProto.showLayerInfo = function (layer, name, title) {
+        const self = this;
+        var result = null;
+
+        var info = self.div.querySelector('.' + self.CLASS + '-info');
+
+        const toggleInfo = function (layerName, infoObj) {
+            var result = false;
+            //if (lName !== undefined &amp;&amp; lName.toString() === layerName) {
+            //    info.dataset.layerName = '';
+            //    $info.removeClass(TC.Consts.classes.HIDDEN);
+            //}
+            //else {
+            if (infoObj) {
+                result = true;
+                info.dataset.serviceId = layer.id;
+                info.dataset.layerName = layerName;
+                info.classList.remove(TC.Consts.classes.HIDDEN);
+                self.getRenderedHtml(self.CLASS + '-info', infoObj)
+                    .then(function (out) {
+                        info.innerHTML = out;
+                        info.querySelector('.' + self.CLASS + '-info-close').addEventListener(TC.Consts.event.CLICK, function () {
+                            self.hideLayerInfo();
+                        }, { passive: true });
+                    })
+                    .catch(function (err) {
+                        TC.error(err);
+                    });
+            }
+            //}
+            return result;
+        };
+
+        self.div.querySelectorAll('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').forEach(function (btn) {
+            btn.checked = false;
+        });        
+
+        const getInfoByTitle = function (layer, title) {
+            if (layer.Title === title) {
+                return {
+                    title: title,
+                    abstract: layer.Abstract,
+                    metadata: !layer.MetadataURL ? null : layer.MetadataURL.reduce(function (vi, va) {
+                        vi.push({
+                            format: va.Format,
+                            formatDescription: TC.Util.getLocaleString(self.map.options.locale, TC.Util.getSimpleMimeType(va.Format)) ||
+                                TC.Util.getLocaleString(self.map.options.locale, 'viewMetadata'),
+                            type: va.type,
+                            url: va.OnlineResource
+                        });
+                        return vi;
+                    }, [])
+                };
+            }
+            if (layer.Layer) {
+                for (var i = 0; i &lt; layer.Layer.length; i++) {
+                    const res = getInfoByTitle(layer.Layer[i], title);
+                    if (res) {
+                        return res;
+                    }
+                }
+            }
+        };
+
+        for (var i = 0, ii = self._roots.length; i &lt; ii; i++) {
+            const root = self._roots[i];
+            if (root.dataset.layerId === layer.id) {
+                const infoToggles = root.querySelectorAll('.' + self.CLASS + '-btn-info');
+                for (var j = 0, jj = infoToggles.length; j &lt; jj; j++) {
+                    const infoToggle = infoToggles[j];
+                    var n = infoToggle.parentElement.dataset.layerName;
+                    if (name &amp;&amp; n === name) {
+                        const info = layer.getInfo(name);
+                        const infoBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > input[type="checkbox"].' + self.CLASS + '-btn-info');
+                        infoBtn.checked = toggleInfo(n, info);
+                        const infoSearchBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > input[type="checkbox"].' + self.CLASS + '-search-btn-info');
+                        if (infoSearchBtn) {
+                            infoSearchBtn.checked = infoBtn.checked;
+                        }
+                        result = info;
+                        break;
+                    }
+                    const t = infoToggle.parentElement.querySelector('span').innerText;
+                    if (!name &amp;&amp; title &amp;&amp; t === title){
+                        //buscar en el capapabilities por nombre de capa;
+                        const info = getInfoByTitle(layer.capabilities.Capability.Layer, title);
+                        //const infoBtn = self.div.querySelector('li [data-layer-name="' + n + '"] > button.' + self.CLASS + '-btn-info');
+                        infoToggle.checked = toggleInfo(t, info);
+                        result = info;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+
+        return result;
+    };
+
+    ctlProto.update = function () {
+        const self = this;
+        self.sourceLayers.forEach(function (layer) {
+            layer.getCapabilitiesPromise().then(function () {
+                layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
+
+                const rootNode = self.getLayerRootNode(layer);
+                if (rootNode) {
+                    rootNode
+                        .querySelectorAll('li[data-layer-name]')
+                        .forEach(function (li) {
+                            const name = li.dataset.layerName;
+                            const span = li.querySelector('span.' + TC.Consts.classes.SELECTABLE);
+                            if (layer.compatibleLayers.indexOf(name) &lt; 0) {
+                                span.classList.add(TC.Consts.classes.INCOMPATIBLE);
+                                span.setAttribute('title', self.getLocaleString('reprojectionNeeded'));
+                            }
+                            else {
+                                span.classList.remove(TC.Consts.classes.INCOMPATIBLE);
+                                span.removeAttribute('title');
+                            }
+                        });
+                }
+            });
+        });
+    };
+
+    ctlProto.hideLayerInfo = function () {
+        var self = this;
+        self.div.querySelectorAll('.' + self.CLASS + '-btn-info, .' + self.CLASS + '-search-btn-info').forEach(function (btn) {
+            btn.checked = false;
+        });
+        const infoPanel = self.div.querySelector('.' + self.CLASS + '-info');
+        delete infoPanel.dataset.serviceId;
+        delete infoPanel.dataset.layerName;
+        infoPanel.classList.add(TC.Consts.classes.HIDDEN);
+    };
+
+    ctlProto.addLayer = function (layer) {
+        const self = this;
+        return new Promise(function (resolve, _reject) {
+            var fromLayerCatalog = [];
+
+            if (self.options.layers &amp;&amp; self.options.layers.length) {
+                fromLayerCatalog = self.options.layers.filter(function (l) {
+                    var getMap = TC.Util.reqGetMapOnCapabilities(l.url);
+                    return getMap &amp;&amp; getMap.replace(TC.Util.regex.PROTOCOL) === layer.url.replace(TC.Util.regex.PROTOCOL);
+                });
+            }
+
+            if (fromLayerCatalog.length === 0)
+                fromLayerCatalog = self.layers.filter(function (l) {
+                    return l.url.replace(TC.Util.regex.PROTOCOL) === layer.url.replace(TC.Util.regex.PROTOCOL);
+                });
+
+            if (fromLayerCatalog.length === 0) {
+                self.layers.unshift(layer);
+                layer.getCapabilitiesPromise().then(function () {
+                    layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
+                    layer.title = layer.title || layer.wrap.getServiceTitle();
+                    self.renderBranch(layer, function () {
+                        resolve(); //ver linea 55 y por ahí
+                    });
+                });
+            } else { resolve(); }
+        });
+    };
+
+    ctlProto.getLayer = function (id) {
+        const self = this;
+        for (var i = 0, len = self.layers.length; i &lt; len; i++) {
+            const layer = self.layers[i];
+            if (layer.id === id) {
+                // 10/04/2019 GLS: validamos si es una capa que viene de configuración o es un WMS externo o por estado 
+                // para decidir si mostramos el título del servicio o no
+                var configLayer = self.options.layers.filter(l => l.id === id);
+
+                if (configLayer.length > 0) {
+                    layer.hideTitle = layer.options.hideTitle = configLayer[0].hideTitle;
+                } else {
+                    layer.hideTitle = layer.options.hideTitle = false;
+                }                
+                
+                return layer;
+            }
+        }
+        return null;
+    };
+
+    ctlProto.addLayerToMap = function (layer, layerName) {
+        const self = this;
+        const layerOptions = TC.Util.extend({}, layer.options);
+        layerOptions.id = self.getUID();
+        layerOptions.layerNames = [layerName];
+        layerOptions.title = layer.title;
+        layerOptions.hideTree = true;
+        const newLayer = new TC.layer.Raster(layerOptions);
+        if (newLayer.isCompatible(self.map.crs)) {
+            self.map.addLayer(layerOptions);
+        }
+        else {
+            showProjectionChangeDialog(self, newLayer);
+        }
+    };
+
+    ctlProto.loaded = function () {
+        return this._readyPromise;
+    };
+
+    ctlProto.getAvailableCRS = function (options) {
+        const self = this;
+        options = options || {};
+        return self.map.getCompatibleCRS({
+            layers: self.map.workLayers.concat(self.map.baseLayer, options.layer),
+            includeFallbacks: true
+        });
+    };
+
+    ctlProto.setProjection = function (options) {
+        const self = this;
+        options = options || {};
+
+        TC.loadProjDef({
+            crs: options.crs,
+            callback: function () {
+                self.map.setProjection(options).then(function () {
+                    if (self._layerToAdd) {
+                        self.map.addLayer(self._layerToAdd);
+                    }
+                    TC.Util.closeModal();
+                });
+            }
+        });
+    };
+
+    ctlProto.showProjectionChangeDialog = function (options) {
+        const self = this;
+        self._layerToAdd = options.layer;
+        TC.control.ProjectionSelector.prototype.showProjectionChangeDialog.call(self, options);
+    };
+
+})();
+
+const LayerCatalog = TC.control.LayerCatalog;
+export default LayerCatalog;</code></pre>
+		</section>
+			</div>
+		</div>
+	</div>
+	<footer>
+				<div class="copyright">© 2019 Gobierno de Navarra. <a href="https://github.com/sitna/api-sitna/blob/master/LICENSE.md">Licencia BSD-2-Clause</a>.</div>
+			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.3</a> a 07/12/2022 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
+	</footer>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/prism.min.js"></script>
+	<script src="js/template.min.js"></script>
+		<!-- start:lunr-search-modal.hbs -->
+		<div class="modal fade" id="lunr-search-modal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Resultados de la búsqueda</h4>
+					</div>
+					<div class="modal-body" id="lunr-search-body">
+					</div>
+					<div class="modal-footer" id="lunr-search-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
+	
+</body>
+</html>
+<!-- end:source.tmpl.hbs -->

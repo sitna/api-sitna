@@ -27,8 +27,8 @@
     background-color: #fff;
     border: 1px solid #ccc;
     border-bottom: none;
-    border-top-left-radius: 0.3em;
-    border-top-right-radius: 0.3em;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
     padding: 0.1em;
 }
 

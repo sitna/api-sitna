@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de TabContainerOptions</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#TabContainerOptions">TabContainerOptions</a>.</p>
+        <p>Visor con el control de descargas añadido.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos una capa WMS que tenga un WFS asociado del que poder descargar datos.
+        SITNA.Cfg.workLayers = [
+            {
+                id: "cp",
+                type: SITNA.Consts.layerType.WMS,
+                url: "https://idena.navarra.es/ogc/wms",
+                layerNames: ["IDENA:DIRECC_Pol_CodPostal"]
+            }
+        ];
+        // Creamos un mapa con el control de descargas en el que se pueden deseleccionar las pestañas.
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                download: {
+                    div: "slot1",
+                    deselectableTabs: true
+                }
+            }
+        });
+    </script>
+	
+</body>
+</html>

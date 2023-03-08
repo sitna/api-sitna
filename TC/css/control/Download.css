@@ -4,11 +4,6 @@
     margin-top: 0;
 }
 
-.tc-ctl-download-seldisabled {
-    background-color: #e0e0e0;
-    color: #666666;
-}
-
 .tc-ctl-download-cnt span {
     width: 100%;
     display: block;
@@ -29,10 +24,15 @@ div.tc-ctl-download-cnt label {
     box-sizing: border-box;
 }
 
-.tc-ctl-download-div label.tc-ctl-download-image-qr-label {
-    float: left;
+.tc-ctl-download-div input[type=checkbox] {
+    display: none;
+}
+
+.tc-ctl-download-div label.tc-ctl-download-image-qr-label,
+.tc-ctl-download-div label.tc-ctl-download-image-wld-label {
+    display: inline-block;
     line-height: 3em;
-    width: 50%;
+    width: calc(50% - 2px);
     font-weight: normal;
 }
 
@@ -47,8 +47,17 @@ div.tc-ctl-download-cnt label {
     width: 18px;
 }
 
+.tc-ctl-download-image input[type=checkbox] + label.tc-loading:after {
+    font-family: var(--icon-font-family);
+    content: var(--icon-spinner);
+    display: inline-block;
+    margin-left: 0.5em;
+    animation: spin 2s infinite linear;
+    -webkit-animation: spin 2s infinite linear;
+}
+
 .tc-ctl-download-help {
-    color: #AAA;
+    color: var(--glyph-sec-color);
     cursor: help;
     float: left;
     position: absolute;
@@ -136,10 +145,10 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
 /*div.tc-ctl-download-div i {
     color: #666;
 }*/
-@media screen and (min-width: 22cm) and (min-height: 22cm) {
+@media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
     .tc-ctl-share-qr-dialog .tc-modal-body {
         max-width: 256px; /* tamaño del QR */
-    }        
+    }
 
     .tc-ctl-download-div i.icon-question-sign {
         font-size: 17px;

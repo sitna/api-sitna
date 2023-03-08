@@ -1,301 +1,39 @@
-﻿
+import TC from '../../TC';
+import Layer from '../Layer';
+import Vector from './Vector';
+import Proxification from '../tool/Proxification';
+TC.Layer = Layer;
 TC.layer = TC.layer || {};
-
-if (!TC.Layer) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Layer');
-}
+TC.layer.Vector = Vector;
+TC.tool = TC.tool || {};
+TC.tool.Proxification = Proxification;
 
 TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
 
+const _urlWFS = {};
+
 (function () {
 
-    var capabilitiesPromises = {};
+    const capabilitiesPromises = new Map();
 
-    var isWebWorkerEnabled = !TC.isLegacy && window.hasOwnProperty('Worker');
-    var wwDeferred = $.Deferred();
-    if (isWebWorkerEnabled) {
-        // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
-        var wwLocation = TC.apiLocation + 'TC/workers/tc-caps-web-worker.js';
-        if (TC.Util.isSameOrigin(TC.apiLocation)) {
-            wwDeferred.resolve(wwLocation);
-        }
-        else {
-            $.ajax({
-                url: wwLocation,
-                type: 'GET',
-                dataType: 'text'
-            }).then(
-                function (data) {
-                    var blob = new Blob([data], { type: "text/javascript" });
-                    var url = window.URL.createObjectURL(blob);
-                    wwDeferred.resolve(url);
-                },
-                function (e) {
-                    wwDeferred.reject();
-                }
-                );
-        }
-    }
+    var wfsLayer = null;//capa WFS de respaldo
 
-    var getRequest = function (url, retry) {
-        TC._capabilitiesRequests = TC._capabilitiesRequests || [];
-
-        var result = TC._capabilitiesRequests[url] = (!retry && TC._capabilitiesRequests[url]) || $.ajax({
-            url: retry ? TC.proxify(url) : url,
-            type: 'GET',
-            dataType: isWebWorkerEnabled ? 'text' : 'xml'
-        });
-        return result;
-    };
-
-    /*
-     *  getCapabilities: Obtiene el capabilities de la capa layer, y llama a los callback correspondientes
-     */
-    var getCapabilities = function (layer, success, error) {
-        var serviceUrl = layer.url;
-
-        var processingCapabilities = false;
-
-        // GLS: se resuelve cuando terminemos de procesar el capabilities
-        layer._capabilitiesPromise = $.Deferred();
-
-        var capabilitiesFromUrl = capabilitiesPromises[serviceUrl];
-        if (capabilitiesFromUrl) {
-            processingCapabilities = true;
-        }
-        else {
-            capabilitiesFromUrl = capabilitiesPromises[serviceUrl] = $.Deferred();
-        }
-
-        var processedCapabilities = function (capabilities) {
-            if (capabilities.error) {
-                capabilitiesError(layer, capabilities.error);
-                //layer.wrap.layerDeferred.reject();
-                layer._capabilitiesPromise.reject();
-                return;
-            }
-            // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
-            // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
-            layer.capabilities = layer.capabilities || capabilities;
-
-            var actualUrl = layer.getGetMapUrl();
-            TC.capabilities[layer.options.url] = TC.capabilities[layer.options.url] || capabilities;
-            TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
-
-            _createLayer(layer);
-
-            layer._capabilitiesPromise.resolve(capabilities);
-        };
-
-        var url;
-        var params = {};
-        if (layer.type === TC.Consts.layerType.WMTS) {
-            if (layer.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
-                var suffix = '/1.0.0/WMTSCapabilities.xml';
-                const suffixIdx = serviceUrl.indexOf(suffix);
-                if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
-                    if (serviceUrl[serviceUrl.length - 1] === '/') {
-                        suffix = suffix.substr(1);
-                    }
-                    url = serviceUrl + suffix;
-                }
-                else {
-                    url = serviceUrl;
-                }
-            }
-            else {
-                url = serviceUrl;
-                params.SERVICE = 'WMTS';
-                params.VERSION = '1.0.0';
-                params.REQUEST = 'GetCapabilities';
-            }
-        }
-        else {
-            url = serviceUrl;
-            params.SERVICE = 'WMS';
-            params.VERSION = '1.3.0';
-            params.REQUEST = 'GetCapabilities';
-        }
-        url = url + '?' + $.param($.extend(params, layer.queryParams));
-        TC._capabilitiesRequests = TC._capabilitiesRequests || {};
-
-        if (!processingCapabilities) {
-            layer.toolProxification.fetch(url, { retryAttempts: 2 }).then(function (data) {
-                success(layer, data.responseText);
-            }).catch(function (dataError) {
-                layer._capabilitiesPromise.reject();
-                error(layer, dataError);
-            });
-        }
-
-        // Obtenemos el capabilities almacenado en caché
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-            localforage.getItem(layer.CAPABILITIES_STORE_KEY_PREFIX + serviceUrl)
-                .then(function (value) {
-                    if (value) {
-                        capabilitiesPromises[layer.url].then(processedCapabilities);
-                    }
+    const getWFSLayer = function (url) {
+        return new Promise(function (resolve, _reject) {
+            if (!wfsLayer || wfsLayer.options.url !== url) {
+                wfsLayer = new TC.layer.Vector({
+                    type: TC.Consts.layerType.WFS,
+                    url: url,
+                    stealth: true
                 });
-        });
-
-        capabilitiesFromUrl.then(function (capabilities) {
-            processedCapabilities(capabilities);
+            }
+            resolve(wfsLayer);
         });
     };
+    
+    const _createWMSLayer = function (layer) {
 
-    var capabilitiesError = function (layer, reason) {
-        var msg = 'No se pudo obtener el documento de capacidades de servicio ' + layer.url + ': [' + reason + ']';
-        layer._capabilitiesPromise.reject(msg);
-        TC.error(msg);
-        if (layer.map) {
-            layer.map.$events.trigger($.Event(TC.Consts.event.LAYERERROR, { layer: layer, reason: 'couldNotGetCapabilities' }));
-        }
-        layer.wrap.setLayer(null);
-    };
-
-    var storeCapabilities = function (layer, capabilities) {
-        TC.loadJS(!window.localforage, [TC.Consts.url.LOCALFORAGE], function () {
-
-            // Esperamos a que el mapa se cargue y entonces guardamos el capabilities.
-            // Así evitamos que la operación, que es bastante pesada, ocupe tiempo de carga 
-            // (con el efecto secundario de que LoadingIndicator esté un tiempo largo apagado durante la carga)
-            var capKey = layer.CAPABILITIES_STORE_KEY_PREFIX + layer.options.url;
-            var setItem = function () {
-                // GLS: antes de guardar, validamos que es un capabilities sin error
-                if (capabilities.hasOwnProperty("error")) {
-                    return;
-                } else {
-
-                    $.when(layer._capabilitiesPromise).then(function () {
-                        localforage.setItem(capKey, capabilities).then(function () { }).catch(function (err) {
-                            console.log(err);
-                        });
-                    });
-                }
-            };
-            if (layer.map) {
-                layer.map.loaded(setItem);
-            }
-            else {
-                setItem();
-            }
-        });
-    };
-
-    var parseCapabilities = function (layer, data) {
-        var capabilities;
-
-        if (data.documentElement) {
-
-            if ($(data).find("ServiceException").length > 0) {
-                capabilities = { error: $(data).find("ServiceException").text() };
-            }
-            else {
-                var format = (layer.type === TC.Consts.layerType.WMTS) ? new layer.wrap.WmtsParser() : new layer.wrap.WmsParser();
-                capabilities = format.read(data);
-
-                //parsear a manija los tileMatrixSetLimits, que openLayers no lo hace (de momento)
-                if (layer.type === TC.Consts.layerType.WMTS) {
-                    if (capabilities.Contents && capabilities.Contents.Layer) {
-                        $("Layer", data).each(function (ix, curXmlLy) {
-                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
-                            var id = nd.firstChild.data;
-                            var xmlLy = $(curXmlLy);
-
-                            var capLy = capabilities.Contents.Layer.filter(function (ly) {
-                                return ly.Identifier == id;
-                            });
-
-                            if (capLy.length) {
-                                capLy = capLy[0];
-                                for (var i = 0; i < capLy.TileMatrixSetLink.length; i++) {
-                                    var capLink = capLy.TileMatrixSetLink[i];
-                                    matrixId = capLink.TileMatrixSet;
-
-                                    xmlLink = xmlLy.find("TileMatrixSetLink").each(function (ix, curLink) {
-                                        return $(curLink).find("TileMatrixSet:first").text() == matrixId;
-                                    });
-
-                                    if (xmlLink.length) {
-                                        xmlLink = xmlLink[0];
-                                        capLink.TileMatrixSetLimits = [];
-                                        $(xmlLink).find("TileMatrixLimits").each(function (ix, curLim) {
-                                            var lim = $(curLim);
-                                            capLink.TileMatrixSetLimits.push({
-                                                TileMatrix: lim.find("TileMatrix").text(),
-                                                MinTileRow: parseInt(lim.find("MinTileRow").text()),
-                                                MinTileCol: parseInt(lim.find("MinTileCol").text()),
-                                                MaxTileRow: parseInt(lim.find("MaxTileRow").text()),
-                                                MaxTileCol: parseInt(lim.find("MaxTileCol").text())
-                                            });
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-
-            capabilitiesPromises[layer.url].resolve(capabilities);
-            storeCapabilities(layer, capabilities);
-        }
-        else {
-            if (isWebWorkerEnabled && typeof data === 'string') {
-                wwDeferred.then(function (wwUrl) {
-                    var worker = new Worker(wwUrl);
-                    worker.onmessage = function (e) {
-                        if (e.data.state === 'success') {
-                            capabilities = e.data.capabilities;
-
-                            // GLS: Sólo almacenamos si el capabilities es correcto
-                            storeCapabilities(layer, capabilities);
-                        }
-                        else {
-                            capabilities = {
-                                error: 'Web worker error'
-                            }
-                        }
-
-                        capabilitiesPromises[layer.url].resolve(capabilities);
-                        worker.terminate();
-                    };
-                    worker.postMessage({
-                        type: layer.type,
-                        text: data
-                    });
-                })
-            }
-            else {
-                capabilities = data;
-                capabilitiesPromises[layer.url].resolve(capabilities);
-            }
-        }
-    };
-
-    /*
-     *  _createLayer: Crea la capa nativa correspondiente según el tipo
-     */
-    var _createLayer = function (layer) {
-        var ollyr;
-        if (!layer.wrap.layer) {
-            switch (layer.type) {
-                case TC.Consts.layerType.GROUP:
-                    break;
-                case TC.Consts.layerType.WMTS:
-                    ollyr = _createWMTSLayer(layer);
-                    break;
-                default:
-                    ollyr = _createWMSLayer(layer);
-                    break;
-            }
-            layer.wrap.setLayer(ollyr);
-        }
-    };
-
-    var _createWMSLayer = function (layer) {
-
-        var layerNames = $.isArray(layer.names) ? layer.names.join(',') : layer.names;
+        var layerNames = Array.isArray(layer.names) ? layer.names.join(',') : layer.names;
         var format = layer.options.format;
         var options = layer.options;
 
@@ -307,29 +45,43 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         };
 
         if (layer.params) {
-            $.extend(params, layer.params);
+            TC.Util.extend(params, layer.params);
         }
 
         if (layer.queryParams) {
-            $.extend(params, layer.queryParams);
+            TC.Util.extend(params, layer.queryParams);
         }
 
         var infoFormat = layer.getPreferredInfoFormat();
         if (infoFormat !== null) {
             params.INFO_FORMAT = infoFormat;
         }
+        //filtro GML o CQL
+        if (options.filter) {
+            //primero miramos si es un objeto TC.filter
+            if (options.filter instanceof TC.filter.Filter) {
+                params.filter = options.filter.getText();
+            }
+            //se puede parsear a XML, asumimos que es GML
+            else if (!new DOMParser().parseFromString(options.filter, 'text/xml').querySelector("parsererror")) {
+                params.filter = options.filter;
+            }
+            //Si no, asumimos que es CQL
+            else {
+                params.cql_filter = options.filter;
+            }
+        }
 
         return layer.wrap.createWMSLayer(layer.getGetMapUrl(), params, options);
     };
 
-    var _createWMTSLayer = function (layer) {
+    const _createWMTSLayer = function (layer) {
         return layer.wrap.createWMTSLayer(layer.options);
     };
 
+    const _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
 
-    var _getLayerNodeIndex = function _getLayerNodeIndex(layer, treeNode) {
-
-        var result = $.inArray(treeNode.name, layer.availableNames);
+        var result = layer.availableNames.indexOf(treeNode.name);
         if (result === -1) {
             for (var i = 0, len = treeNode.children.length; i < len; i++) {
                 result = _getLayerNodeIndex(layer, treeNode.children[i]);
@@ -339,19 +91,19 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             }
         }
         return result;
-    }
+    };
 
-    var _sortTree = function _sortTree(layer, treeNode) {
+    const _sortTree = function _sortTree(layer, treeNode) {
         var _sortFunction = function (n1, n2) {
             return _getLayerNodeIndex(layer, n2) - _getLayerNodeIndex(layer, n1);
-        }
+        };
         treeNode.children.sort(_sortFunction);
         for (var i = 0, len = treeNode.children.length; i < len; i++) {
             _sortTree(layer, treeNode.children[i]);
         }
     };
 
-    var _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
+    const _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
         var result = false;
         counter.count = counter.count + 1;
         if (treeNode.name === name) {
@@ -367,7 +119,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             }
         }
         return result;
-    }
+    };
 
     /**
      * Opciones de nombre de capa.
@@ -428,13 +180,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      * @property matrixSet
      * @type string|undefined
      */
+    /**
+     * Filtro GML o CQL de la capa. Funciona unicamente con capas WMS. Se intenta parsear a GML y si no sepuede se asume que es CQL
+     * @property filter
+     * @type string|undefined
+     */
 
     /**
      * Capa de tipo raster, como la de un WMS o un WMTS.
      * @class TC.layer.Raster
      * @extends TC.Layer
      * @constructor
-     * @async
      * @param {TC.cfg.LayerOptions} [options] Objeto de opciones de configuración de la capa.
      */
     TC.layer.Raster = function () {
@@ -461,7 +217,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
          * @type boolean
          * @default true
          */
-        self.transparent = (self.options.transparent === false) ? false : true;
+        self.transparent = self.options.transparent === false ? false : true;
 
         /**
          * URL del servicio al que pertenenece la capa.
@@ -469,6 +225,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
          * @type string
          */
         self.url = self.options.url;
+        self.capabilities = TC.capabilities[self.url];
 
         self.params = self.options.params;
         /**
@@ -489,15 +246,15 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         else {
             self.names = [];
             self.availableNames = [];
-            if ($.isArray(self.options.layerNames)) {
+            if (Array.isArray(self.options.layerNames)) {
                 for (var i = 0; i < self.options.layerNames.length; i++) {
-                    var name = self.options.layerNames[i];
+                    const name = self.options.layerNames[i];
                     if (typeof name === 'string') {
                         self.names.push(name);
                         self.availableNames.push(name);
 
                     }
-                    else if (name.hasOwnProperty('name')) {
+                    else if (Object.prototype.hasOwnProperty.call(name, 'name')) {
                         self.availableNames.push(name.name);
                         if (name.isVisible === undefined || name.isVisible) {
                             self.names.push(name.name);
@@ -510,15 +267,25 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 var sldBody = self.options.params ? self.options.params.sld_body : null;
 
                 if (sldBody) {
-                    var sldBodyToXml = $.parseXML(sldBody);
-                    var namedLayerElm = TC.Util.getElementByNodeName(sldBodyToXml, 'sld:NamedLayer');
-                    if (namedLayerElm && namedLayerElm.length > 0) {
-                        var names = TC.Util.getElementByNodeName(namedLayerElm[0], 'sld:Name');
+                    const parser = new DOMParser();
+                    var sldBodyToXml;
+                    try {
+                        sldBodyToXml = parser.parseFromString(sldBody, 'text/xml');
+                    }
+                    catch (e) {
+                        TC.error(e.message);
+                        sldBodyToXml = null;
+                    }
+                    if (sldBodyToXml) {
+                        var namedLayerElm = TC.Util.getElementByNodeName(sldBodyToXml, 'sld:NamedLayer');
+                        if (namedLayerElm && namedLayerElm.length > 0) {
+                            var names = TC.Util.getElementByNodeName(namedLayerElm[0], 'sld:Name');
 
-                        if (names && names.length > 0) {
-                            var name = $(names[0]).text();
-                            self.names.push(name);
-                            self.availableNames.push(name);
+                            if (names && names.length > 0) {
+                                const name = names[0].textContent;
+                                self.names.push(name);
+                                self.availableNames.push(name);
+                            }
                         }
                     }
                 }
@@ -527,19 +294,120 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
         self.ignorePrefixes = self.options.ignorePrefixes === undefined ? true : self.options.ignorePrefixes;
 
-        self._capabilitiesNodes = {};
-
+        self._capabilitiesNodes = new Map();
 
         /**
       * Árbol del documento de capabilities del servicio.
       * @property capabilities
       * @type object
       */
-        getCapabilities(self, parseCapabilities, capabilitiesError);
+        self.wrap._promise = new Promise(function (resolve, reject) {
+            const endCreateLayerFn = function (ollyr) {
+                self.wrap.setLayer(ollyr);
+                if (ollyr) {
+                    resolve(ollyr);
+                }
+                else {
+                    reject(Error('Could not create native layer for "' + self.id + '"'));
+                }
+            };
+            /*
+             *  _createOLLayer: Crea la capa nativa correspondiente según el tipo
+             */
+            const _createOLLayer = function () {
+                let ollyr;
+                if (!self.wrap.layer) {
+                    switch (self.type) {
+                        case TC.Consts.layerType.GROUP:
+                            endCreateLayerFn(ollyr);
+                            break;
+                        case TC.Consts.layerType.WMTS:
+                            try {
+                                ollyr = _createWMTSLayer(self);
+                                endCreateLayerFn(ollyr);
+                            }
+                            catch (_e) {
+                                // Ha fallado la creación. Puede que sea por capabilities cacheado obsoleto, 
+                                // así que reintentamos online.
+                                self.getCapabilitiesOnline().then(function (onlineCapabilities) {
+                                    self.capabilities = onlineCapabilities;
+                                    try {
+                                        ollyr = _createWMTSLayer(self);
+                                        endCreateLayerFn(ollyr);
+                                    }
+                                    catch (e) {
+                                        reject(e);
+                                    }
+                                });
+                            }
+                            break;
+                        default:
+                            ollyr = _createWMSLayer(self);
+                            endCreateLayerFn(ollyr);
+                            break;
+                    }
+                }
+            };
+
+            const processedCapabilities = function (capabilities) {
+                // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
+                // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
+                self.capabilities = self.capabilities || capabilities;
+
+                var actualUrl = self.getGetMapUrl();
+                TC.capabilities[self.options.url] = TC.capabilities[self.options.url] || capabilities;
+                TC.capabilities[actualUrl] = TC.capabilities[actualUrl] || capabilities;
+
+                _createOLLayer();
+            };
+
+            if (self.capabilities) {
+                processedCapabilities(self.capabilities);
+                self._capabilitiesPromise = Promise.resolve(self.capabilities);
+                return;
+            }
+
+            self._capabilitiesPromise = capabilitiesPromises.get(self.url) || new Promise(function (res, rej) {
+                const onlinePromise = self.getCapabilitiesOnline();
+                const storagePromise = self.getCapabilitiesFromStorage();
+
+                onlinePromise
+                    .then(function (capabilities) {
+                        res(capabilities);
+                    })
+                    .catch(function (error) {
+                        storagePromise.catch(function () {
+                            rej(error);
+                        });
+                    });
+
+                storagePromise
+                    .then(function (capabilities) {
+                        res(capabilities);
+                    })
+                    .catch(function () {
+                        onlinePromise.catch(function (error) {
+                            rej(error);
+                        });
+                    });
+            });
+            capabilitiesPromises.set(self.url, self._capabilitiesPromise);
+
+            self.getCapabilitiesPromise()
+                .then(function (capabilities) {
+                    processedCapabilities(capabilities);
+                })
+                .catch(function (error) {
+                    if (self.map) {
+                        self.map.trigger(TC.Consts.event.LAYERERROR, { layer: self, reason: 'couldNotGetCapabilities' });
+                    }
+                    reject(error);
+                });
+        });
 
         self._disgregatedLayerNames = null;
 
-        if (TC.Consts.layerType.WMTS == self.type) {
+        if (TC.Consts.layerType.WMTS === self.type) {
             self.wrap.setWMTSUrl();
         }
     };
@@ -547,24 +415,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     TC.inherit(TC.layer.Raster, TC.Layer);
 
     var layerProto = TC.layer.Raster.prototype;
-
-    layerProto.PROTOCOL_REGEX = /^(f|ht)tp?:\/\//i;
+        
     layerProto.capabilitiesState_ = {
         PENDING: 0,
         DONE: 1
     };
 
-    layerProto.CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
-
     layerProto.getByProxy_ = function (url) {
         return TC.proxify(url);
     };
-
-    layerProto.getBySSL_ = function (url) {
-        var self = this;
-
-        return url.replace(self.PROTOCOL_REGEX, "https://");
-    };
+    
 
     layerProto.getByUrl_ = function (url) {
         return url;
@@ -572,50 +432,9 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
 
 
     layerProto.setVisibility = function (visible) {
-        var layer = this;
-        layer.tree = null;
-        layer._cache.visibilityStates = {
-        };
-        TC.Layer.prototype.setVisibility.call(layer, visible);
-    };
-
-    /*
-     *  _getLimitedMatrixSet: devuelve un array de tileMatrixSets limitados por su correspondiente TileMatrixSetLimits (si es que lo tiene)
-     */
-    var _getLimitedMatrixSet = function (layer) {
-        var layerId = layer.layerNames;
-        var matrixId = layer.matrixSet;
-        var cap = layer.capabilities;
-
-        var ret = [];
-
-        var tset = cap.Contents.TileMatrixSet.filter(function (elto) {
-            return elto.Identifier == matrixId;
-        });
-        if (tset.length) {
-            tset = tset[0];
-            var ly = cap.Contents.Layer.filter(function (elto) { return elto.Identifier == layerId; })[0];
-            if (ly.TileMatrixSetLink && ly.TileMatrixSetLink.length && ly.TileMatrixSetLink[0].TileMatrixSetLimits) {
-                var limit, limits = ly.TileMatrixSetLink[0].TileMatrixSetLimits;
-                for (var i = 0; i < limits.length; i++) {
-                    limit = limits[i];
-                    var matrix = tset.TileMatrix.filter(function (elto) {
-                        return elto.Identifier == limit.TileMatrix
-                    });
-                    if (matrix.length) {
-                        var combi = $.extend({ matrixIndex: tset.TileMatrix.indexOf(matrix[0]) }, matrix[0], limit);
-                        ret.push(combi);
-                    }
-                }
-
-                return ret;
-            }
-            else {
-                return tset.TileMatrix;
-            }
-        }
-        else
-            return null;
+        const self = this;
+        self.tree = null;
+        TC.Layer.prototype.setVisibility.call(self, visible);
     };
 
 
@@ -641,19 +460,19 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         var result = false;
         var children = layer.wrap.getLayerNodes(layerNode);
         if (children.length) {
-            for (var i = 0, len = children.length; i < len; i++) {
-                if (_aggregateLayerNodeNames(layer, names, children[i])) {
+            children.forEach(child => {
+                if (_aggregateLayerNodeNames(layer, names, child)) {
                     result = true;
                 }
-            }
+            });
 
-            var nodeNames = $.map(children, function (elm) {
+            var nodeNames = children.map(function (elm) {
                 return layer.wrap.getName(elm);
             }).reverse();
             var idx, firstIdx;
             var fail = false;
 
-            firstIdx = idx = $.inArray(nodeNames[0], names);
+            firstIdx = idx = names.indexOf(nodeNames[0]);
             if (idx < 0) {
                 fail = true;
             }
@@ -714,7 +533,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     var _extendLayerNameOptions = function (options) {
-        return $.extend({ aggregate: true, lazy: false }, options);
+        return TC.Util.extend({ aggregate: true, lazy: false }, options);
     };
 
     var _combineArray = function (source, add, rem) {
@@ -725,15 +544,15 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         r = rem ? rem : [];
         var sa = s.concat(a);
         for (var i = 0; i < sa.length; i++) {
-            if ($.inArray(sa[i], sa) === i && $.inArray(sa[i], r) === -1) {
-                result[result.length] = sa[i];
+            if (sa.indexOf(sa[i]) === i && r.indexOf(sa[i]) === -1) {
+                result.push(sa[i]);
             }
         }
         return result;
     };
 
     var _sortLayerNames = function (layer, layerNames) {
-        var ln = (typeof layerNames === 'string') ? layerNames.split(',') : layerNames;
+        var ln = typeof layerNames === 'string' ? layerNames.split(',') : layerNames;
         if (layer.capabilities) {
             var tree = layer.getTree();
             ln.sort(function (a, b) {
@@ -752,14 +571,51 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     var _isNameInArray = function (layer, name, names, looseComparison) {
-        return $.grep(names, function (elm) {
+        return names.some(function (elm) {
             return layer.compareNames(name, elm, looseComparison);
-        }).length > 0;
+        });
     };
 
+    var _isNameInPath = function (node) {
+        const self = this;
+        //return self.getDisgregatedLayerNames().some(name => self.getBranch(name).some(step => step === node));
+        return self.getDisgregatedLayerNames().some(name => self.getNodePath(name).some(step => step.Name === node || (!step.Name & step.Title === node)));
+    };
 
+    /*
+     *  getLimitedMatrixSet: devuelve un array de tileMatrixSets limitados por su correspondiente TileMatrixSetLimits (si es que lo tiene)
+     */
     layerProto.getLimitedMatrixSet = function () {
-        return _getLimitedMatrixSet(this);
+        const self = this;
+        const layerId = self.layerNames;
+        const matrixSetId = self.matrixSet;
+        var capabilities = self.capabilities;
+
+        const tileMatrixSet = capabilities.Contents.TileMatrixSet.find(elm => elm.Identifier === matrixSetId);
+
+        if (tileMatrixSet) {
+            const layerNode = capabilities.Contents.Layer.find(elm => elm.Identifier === layerId);
+            if (layerNode.TileMatrixSetLink) {
+                const tileMatrixSetLink = layerNode.TileMatrixSetLink.find(elm => elm.TileMatrixSet === matrixSetId);
+                if (tileMatrixSetLink && tileMatrixSetLink.TileMatrixSetLimits && tileMatrixSetLink.TileMatrixSetLimits.length) {
+                    const ret = [];
+                    tileMatrixSetLink.TileMatrixSetLimits.forEach(function (tileMatrixSetLimit) {
+                        const matrix = tileMatrixSet.TileMatrix.find(elm => elm.Identifier === tileMatrixSetLimit.TileMatrix);
+                        if (matrix) {
+                            ret.push(TC.Util.extend({ matrixIndex: tileMatrixSet.TileMatrix.indexOf(matrix) }, matrix, tileMatrixSetLimit));
+                        }
+                    });
+                    return ret;
+                }
+                else {
+                    return tileMatrixSet.TileMatrix;
+                }
+            }
+            else {
+                return tileMatrixSet.TileMatrix;
+            }
+        }
+        return null;
     };
 
     /**
@@ -776,47 +632,83 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      */
     layerProto.setLayerNames = function (layerNames, options) {
         var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var ln = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            layer.names = ln;
-            var opts = _extendLayerNameOptions(options);
-            if (opts.aggregate) {
-                ln = _aggregateLayerNames(layer, ln);
-            }
-            layer._disgregatedLayerNames = null;
-            var newParams = {
-                LAYERS: ln.join(','), TRANSPARENT: true
-            };
-            // Si no hay capas ocultamos la capa de servicio
-            if (!ln.length) {
-                layer.setVisibility(false);
-            }
-            if (opts.lazy) {
-                var params = layer._newParams || layer.wrap.getParams();
-                layer._newParams = $.extend(params, newParams);
-            }
-            else {
-                if (layer.map) {
-                    layer.map.$events.trigger($.Event(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer }));
+        return new Promise(function (resolve, _reject) {
+            layer.wrap.getLayer().then(function () {
+                var ln = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
+                layer.names = ln;
+                var opts = _extendLayerNameOptions(options);
+                if (opts.aggregate) {
+                    ln = _aggregateLayerNames(layer, ln);
                 }
-                layer.tree = null;
-                layer._cache.visibilityStates = {
+                layer._disgregatedLayerNames = null;
+                var newParams = {
+                    LAYERS: ln.join(','), TRANSPARENT: true
                 };
-                layer.wrap.setParams(newParams);
-                if (opts.reset || !layer.map) {
-                    // layerNames se fija cuando se añade al mapa o cuando reset = true.
-                    layer.availableNames = layer.names;
+                if (opts.lazy) {
+                    var params = layer._newParams || layer.wrap.getParams();
+                    layer._newParams = TC.Util.extend(params, newParams);
                 }
-                if (layer.map) {
-                    layer.map.$events.trigger($.Event(TC.Consts.event.UPDATEPARAMS, { layer: layer }));
+                else {
+                    if (layer.map) {
+                        layer.map.trigger(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer });
+                    }
+                    layer.tree = null;
+                    layer.wrap.setParams(newParams);
+                    if (opts.reset || !layer.map) {
+                        // layerNames se fija cuando se añade al mapa o cuando reset = true.
+                        layer.availableNames = layer.names;
+                    }
+                    if (layer.map) {
+                        layer.map.trigger(TC.Consts.event.UPDATEPARAMS, { layer: layer });
+                    }
                 }
-            }
-            result.resolve(layer.names);
+                resolve(layer.names);
+            });
         });
+    };
 
-        return result;
+    /**
+     * Establece el atributo filter o CQL_filter de una capa WMS.
+     * @method setFilter
+     * @param {TC.filter.Filter|string} filter Objeto de tipo TC.filter.Filter, un filtro GML como cadena de texto o filtro CQL como cadena de texto
+     */
+    /*
+     *  setFilter: sets the filter or CQL_filter attribute on WMS layer
+     *  Parameters: object instance of  TC.filter.Filter or a GML filter string
+     */
+    layerProto.setFilter = function (filter) {
+        var layer = this;
+        return new Promise(function (resolve, _reject) {
+            layer.wrap.getLayer().then(function () {
+                var oldParams = layer.wrap.getParams();
+                delete oldParams.filter;
+                delete oldParams.cql_filter;
+
+                //if (layer.map) {
+                //    layer.map.trigger(TC.Consts.event.BEFOREUPDATEPARAMS, { layer: layer });
+                //}
+
+                //primero miramos si es un objeto TC.filter
+                if (filter instanceof TC.filter.Filter) {
+                    layer.filter=oldParams.filter = filter.getText();
+                }
+                //se puede parsear a XML, asumimos que es GML
+                else if (!new DOMParser().parseFromString(filter, 'text/xml').querySelector("parsererror")) {
+                    layer.filter =oldParams.filter = filter;
+                }
+                //Si no, asumimos que es CQL
+                else {
+                    layer.filter = oldParams.cql_filter = filter;
+                }
+                layer.wrap.setParams(oldParams);
+
+                //if (layer.map) {
+                //    layer.map.trigger(TC.Consts.event.UPDATEPARAMS, { layer: layer });
+                //}
+                
+                resolve(filter);
+            });
+        });
     };
 
     /**
@@ -832,23 +724,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.addLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2a = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var ln = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2a = _disgregateLayerNames(layer, ln2a);
-                ln = layer.getDisgregatedLayerNames();
-            }
-            $.when(layer.setLayerNames(_sortLayerNames(layer, _combineArray(ln, ln2a, null)), options)).then(function (names) {
-                result.resolve(names);
+        const self = this;
+        return new Promise(function (resolve, _reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2a = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2a = _disgregateLayerNames(self, ln2a);
+                    ln = self.getDisgregatedLayerNames();
+                }
+                self.setLayerNames(_sortLayerNames(self, _combineArray(ln, ln2a, null)), options).then(function (names) {
+                    resolve(names);
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -864,23 +754,21 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.removeLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2r = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var ln = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2r = _disgregateLayerNames(layer, ln2r);
-                ln = layer.getDisgregatedLayerNames();
-            }
-            $.when(layer.setLayerNames(_sortLayerNames(layer, _combineArray(ln, null, ln2r)), options)).then(function (names) {
-                result.resolve(names);
+        const self = this;
+        return new Promise(function (resolve, _reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2r = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var ln = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2r = _disgregateLayerNames(self, ln2r);
+                    ln = self.getDisgregatedLayerNames();
+                }
+                self.setLayerNames(_sortLayerNames(self, _combineArray(ln, null, ln2r)), options).then(function (names) {
+                    resolve(names);
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -896,51 +784,51 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  lazy option does not update OpenLayers layer
      */
     layerProto.toggleLayerNames = function (layerNames, options) {
-        var layer = this;
-        var result = new $.Deferred();
-
-        $.when(layer.wrap.getLayer()).then(function () {
-            var opts = _extendLayerNameOptions(options);
-            var ln2t = $.isArray(layerNames) ? layerNames : layerNames.split(',');
-            var currentLayerNames = layer.wrap.getParams().LAYERS;
-            if (opts.aggregate) {
-                ln2t = _disgregateLayerNames(layer, ln2t);
-                currentLayerNames = layer.getDisgregatedLayerNames();
-            }
-            var ln2a = [];
-            var ln2r = [];
-            for (var i = 0; i < ln2t.length; i++) {
-                var l = ln2t[i];
-                if ($.inArray(l, currentLayerNames) < 0) {
-                    ln2a[ln2a.length] = l;
+        const self = this;
+        return new Promise(function (resolve, _reject) {
+            self.wrap.getLayer().then(function () {
+                var opts = _extendLayerNameOptions(options);
+                var ln2t = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
+                var currentLayerNames = self.wrap.getParams().LAYERS;
+                if (opts.aggregate) {
+                    ln2t = _disgregateLayerNames(self, ln2t);
+                    currentLayerNames = self.getDisgregatedLayerNames();
                 }
-                else {
-                    ln2r[ln2r.length] = l;
-                }
-            }
-            var deferreds = [];
-            if (ln2a.length > 0) {
-                deferreds.push(layer.addLayerNames(ln2a, opts));
-            }
-            if (ln2r.length > 0) {
-                deferreds.push(layer.removeLayerNames(ln2r, opts));
-            }
-            $.when.apply(this, deferreds).then(function (a1, a2) {
-                if (a1) {
-                    if (a2) {
-                        result.resolve(a1.concat(a2));
+                var ln2a = [];
+                var ln2r = [];
+                for (var i = 0; i < ln2t.length; i++) {
+                    var l = ln2t[i];
+                    if (currentLayerNames.indexOf(l) < 0) {
+                        ln2a.push(l);
                     }
                     else {
-                        result.resolve(a1);
+                        ln2r.push(l);
                     }
                 }
-                else {
-                    result.resolve([]);
+                var promises = [];
+                if (ln2a.length > 0) {
+                    promises.push(self.addLayerNames(ln2a, opts));
                 }
+                if (ln2r.length > 0) {
+                    promises.push(self.removeLayerNames(ln2r, opts));
+                }
+                Promise.all(promises).then(function (arrays) {
+                    const a1 = arrays[0];
+                    const a2 = arrays[1];
+                    if (a1) {
+                        if (a2) {
+                            resolve(a1.concat(a2));
+                        }
+                        else {
+                            resolve(a1);
+                        }
+                    }
+                    else {
+                        resolve([]);
+                    }
+                });
             });
         });
-
-        return result;
     };
 
     /**
@@ -957,11 +845,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         ///</summary>
         ///<returns type="array" elementType="string"></returns>
         var self = this;
-        var olLayer = self.wrap.getLayer();
+        var olLayer = self.wrap.layer;
         if (self.wrap.isNative(olLayer) && self.type === TC.Consts.layerType.WMS) {
             if (!self._disgregatedLayerNames) {
                 var layerNames = self.wrap.getParams().LAYERS;
-                layerNames = $.isArray(layerNames) ? layerNames : layerNames.split(',');
+                layerNames = Array.isArray(layerNames) ? layerNames : layerNames.split(',');
                 self._disgregatedLayerNames = _disgregateLayerNames(self, layerNames);
             }
         }
@@ -1019,7 +907,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 })
                 .reduce(function (prev, cur) {
                     if (prev.indexOf(cur) < 0) {
-                        prev[prev.length] = cur;
+                        prev.push(cur);
                     }
                     return prev;
                 }, []) // códigos numéricos sin duplicados
@@ -1086,7 +974,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 if (tileMatrix) {
                     currentScale = _getOgcScale();
                     for (i = 0; i < tileMatrix.length; i++) {
-                        var scaleDenominators = self.wrap.getScaleDenominators(tileMatrix[i]);
+                        const scaleDenominators = self.wrap.getScaleDenominators(tileMatrix[i]);
                         if (scaleDenominators[0] === currentScale) {
                             result = true;
                             break;
@@ -1100,21 +988,25 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 if (layers.length > 0) {
                     currentScale = _getOgcScale();
                     var node;
-                    if (typeof nameOrUid === 'number') {
-                        node = self._capabilitiesNodes[nameOrUid];
+                    if (parseInt(nameOrUid).toString() === nameOrUid) { // Es numérico, asumimos que es un UID
+                        node = self._capabilitiesNodes.get(nameOrUid);
                     }
-                    else {
-                        for (i = 0; i < layers.length; i++) {
-                            var layer = layers[i];
-                            if (self.compareNames(self.wrap.getName(layer), nameOrUid, looseComparison)) {
-                                node = layer;
-                                break;
+                    if (!node) {
+                        node = layers.find(layer => self.compareNames(self.wrap.getName(layer), nameOrUid, looseComparison));
+                    }
+                    const isNodeVisibleByScale = function (node) {
+                        const scaleDenominators = self.wrap.getScaleDenominators(node);
+                        return !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale);
+                    };
+                    if (node) {
+                        result = isNodeVisibleByScale(node);
+
+                        // GLS: si no es visible miramos si tiene capas hijas y si tiene comprobamos si alguna de ellas es visible a la escala actual.
+                        if (!result) {
+                            if (node.Layer && node.Layer.length > 0) {
+                                return node.Layer.some(isNodeVisibleByScale);
                             }
                         }
-                    }
-                    if (node) {
-                        var scaleDenominators = self.wrap.getScaleDenominators(node);
-                        result = !(parseFloat(scaleDenominators[1]) > currentScale || parseFloat(scaleDenominators[0]) < currentScale);
                     }
                 }
                 break;
@@ -1130,8 +1022,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
      *  Parameter: WMS layer name
      */
     layerProto.isVisibleByName = function (name, looseComparison) {
-        var self = this;
-        var result = false;
+        const self = this;
+        let result = false;
         switch (self.type) {
             case TC.Consts.layerType.WMTS:
                 if (self.wrap.getWMTSLayer()) {
@@ -1139,42 +1031,37 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     break;
                 }
                 break;
-            case TC.Consts.layerType.WMS:
-                var _getLayerPath = function _getLayerPath(name) {
-                    return __getLayerPath(name, self.wrap.getRootLayerNode());
+            case TC.Consts.layerType.WMS: {
+                const getPathLayerNames = function getPathLayerNames(name) {
+                    return getPathLayerNamesForNode(name, self.wrap.getRootLayerNode());
                 };
 
-                var __getLayerPath = function __getLayerPath(name, capabilitiesNode) {
-                    var result = null;
-                    var n = self.wrap.getName(capabilitiesNode);
+                const getPathLayerNamesForNode = function getPathLayerNamesForNode(name, capabilitiesNode) {
+                    let result = [];
+                    const n = self.wrap.getName(capabilitiesNode);
                     if (self.compareNames(n, name, looseComparison)) {
-                        result = [n];
+                        result.push(n);
                     }
                     else {
-                        var layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
-                        for (var i = 0; i < layerNodes.length; i++) {
-                            var item = layerNodes[i];
-                            var r = __getLayerPath(name, item);
-                            if (r) {
-                                TC.Util.fastUnshift(r, n);
-                                result = r;
-                                break;
+                        const layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
+                        let mustPushName = false;
+                        layerNodes.forEach(item => {
+                            const r = getPathLayerNamesForNode(name, item);
+                            if (r.length) {
+                                mustPushName = true;
+                                result = result.concat(r);
                             }
+                        });
+                        if (mustPushName) {
+                            result.push(n);
                         }
                     }
                     return result;
                 };
 
-                var path = _getLayerPath(name);
-                if (path) {
-                    for (var i = 0; i < path.length; i++) {
-                        if (_isNameInArray(self, path[i], self.names)) {
-                            result = true;
-                            break;
-                        }
-                    }
-                }
+                result = getPathLayerNames(name).some(n => _isNameInArray(self, n, self.names));
                 break;
+            }
             default:
                 result = true;
                 break;
@@ -1182,81 +1069,143 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return result;
     };
 
-    layerProto.getTree = function () {
+    layerProto.isVisibleByNode = function (node) {
+        const self = this;
+        let result = false;
+        switch (self.type) {
+            case TC.Consts.layerType.WMTS:
+                if (self.wrap.getWMTSLayer()) {
+                    result = true;
+                    break;
+                }
+                break;
+            case TC.Consts.layerType.WMS: {
+                const isChildOrItself = function (potentialParent, potentialChild) {
+                    if (potentialParent === potentialChild) {
+                        return true;
+                    }
+                    return potentialParent.Layer && potentialParent.Layer.some(child => isChildOrItself(child, potentialChild));
+                };
+                for (var i = 0, ii = self.names.length; i < ii; i++) {
+                    const nodes = self.getLayerNodesByName(self.names[i]);
+                    if (nodes.some(n => isChildOrItself(n, node))) {
+                        result = true;
+                        break;
+                    }
+                }
+                break;
+            }
+            default:
+                result = true;
+                break;
+        }
+        return result;
+    };
+    //17/02/2022 URI Se Obtiene la ramas ramas 
+    layerProto.getNestedTree = function () {
         var self = this;
-        var result = self.tree;
+        return self.getTree(false, true);
+    };
+
+    //29/10/2021 URI Obtiene el arbol completo del capabilities de una capa sin modificar el hideTree de la capa ni modificar la propiedad tree del arbol
+    layerProto.getFullTree = function () {
+        var self = this;
+        return self.getTree(true);
+    };
+    //29/10/2021 URI Relaccionado con la función anterior (getFullTree), añado un parametro mas para que no haga caso a la opción hideTree del arbol y que no guarde el
+    //resultado en un variable del objeto capa
+    layerProto.getTree = function (fullTree, nested = false) {
+        const self = this;
+        if (fullTree === undefined) {
+            fullTree = !self.options.hideTree;
+        }
+        var result = fullTree || nested ? false : self.tree;
 
         var addChild = function (node, child) {
+            child.parent = node;
             if (self.options.inverseTree) {
                 // Versión rápida de unshift
                 TC.Util.fastUnshift(node.children, child);
             }
             else {
-                node.children[node.children.length] = child;
+                node.children.push(child);
             }
-        }
+        };
 
         if (!result) {
-            var rootNode;
-            var getTreeNode = function getTreeNode(capabilitiesNode, forceAddition, isRootNode) {
-                var uid;
-                for (var key in self._capabilitiesNodes) {
-                    if (self._capabilitiesNodes[key] === capabilitiesNode) {
+            let rootNode;
+            const getTreeNode = function getTreeNode(capabilitiesNode, forceAddition, isRootNode, nested) {
+                let uid;
+                for (var key of self._capabilitiesNodes.keys()) {
+                    if (self._capabilitiesNodes.get(key) === capabilitiesNode) {
                         uid = key;
                         break;
                     }
                 }
                 if (!uid) {
                     uid = TC.getUID();
-                    self._capabilitiesNodes[uid] = capabilitiesNode;
+                    self._capabilitiesNodes.set(uid, capabilitiesNode);
                 }
-                var r = {
-                    name: self.wrap.getName(capabilitiesNode), title: capabilitiesNode.title || capabilitiesNode.Title, uid: uid, children: []
+                let rslt = {
+                    name: self.wrap.getName(capabilitiesNode),
+                    title: capabilitiesNode.title || capabilitiesNode.Title,
+                    uid: uid,
+                    children: [],
+                    abstract: !!capabilitiesNode.Abstract,
+                    metadata: !!capabilitiesNode.MetadataURL
                 };
                 if (isRootNode) {
-                    rootNode = r;
+                    rootNode = rslt;
                 }
 
-                if (_isNameInArray(self, r.name, self.availableNames)) {
+                if (_isNameInArray(self, rslt.name, self.availableNames))
                     forceAddition = true;
+                if (nested) {
+                    if (isRootNode || (_isNameInPath.apply(self, [rslt.name || rslt.title]))) {
+                        forceAddition = true;
+                    }
+                    else {
+                        return null;
+                    }
                 }
 
                 if (!self.options.isBase) {
-                    if (r === rootNode) {
-                        r.isVisible = self.getVisibility();
+                    if (rslt === rootNode) {
+                        rslt.isVisible = self.getVisibility();
                     }
                     else {
-                        r.isVisible = self.isVisibleByName(r.name);
+                        rslt.isVisible = self.isVisibleByName(rslt.name);
+                        //rslt.isVisible = self.isVisibleByNode(capabilitiesNode);
                     }
                     var i;
                     var layerNodes = self.wrap.getLayerNodes(capabilitiesNode);
                     for (i = 0; i < layerNodes.length; i++) {
-                        var treeNode = getTreeNode(layerNodes[i], forceAddition);
+                        const treeNode = getTreeNode(layerNodes[i], forceAddition, undefined, nested);
                         if (treeNode) {
-                            addChild(r, treeNode);
+                            addChild(rslt, treeNode);
                         }
                     }
 
-                    r.legend = self.wrap.getLegend(capabilitiesNode);
+                    rslt.legend = self.wrap.getLegend(capabilitiesNode);
 
                     // No muestra ramas irrelevantes si hideTree = true
                     if (!forceAddition && !isRootNode) {
                         // Eliminamos la rama hasta el nodo de interés
-                        rootNode.children = rootNode.children.concat(r.children);
-                        r = null;
+                        rootNode.children = rootNode.children.concat(rslt.children);
+                        rslt = null;
                     }
                 }
                 else {
-                    r.name = self.names.join(',');
-                    r.title = self.title || r.title;
-                    r.isBase = self.isDefault;
+                    rslt.name = self.names.join(',');
+                    rslt.title = self.title || rslt.title;
+                    rslt.isBase = self.isDefault;
                     if (self.options.thumbnail) {
-                        r.legend = {
+                        rslt.legend = {
                             src: self.options.thumbnail
                         };
                     }
                 }
-                return r;
+                return rslt;
             };
 
             switch (self.type) {
@@ -1265,54 +1214,28 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                     break;
                 case TC.Consts.layerType.WMS:
                     if (self.capabilities) {
-                        result = getTreeNode(self.wrap.getRootLayerNode(), !self.options.hideTree, true);
-
-                        var cache = self._cache.visibilityStates;
+                        result = getTreeNode(self.wrap.getRootLayerNode(),
+                            !fullTree ? !self.options.hideTree : fullTree, true, nested);
 
                         var _setNodeState = function _setNodeState(node) {
-                            var _result = TC.Consts.visibility.NOT_VISIBLE;
+                            let rslt = TC.Consts.visibility.NOT_VISIBLE;
                             if (node) {
-                                if (cache[node.uid] !== undefined) {
-                                    _result = cache[node.uid];
-                                }
-                                else {
-                                    if (node.children) {
-                                        var hasVisible = false;
-                                        var hasNotVisible = false;
-                                        for (var i = 0, len = node.children.length; i < len; i++) {
-                                            var r = _setNodeState(node.children[i]);
-                                            switch (r) {
-                                                case TC.Consts.visibility.VISIBLE:
-                                                    hasVisible = true;
-                                                    break;
-                                                case TC.Consts.visibility.NOT_VISIBLE:
-                                                    hasNotVisible = true;
-                                                    break;
-                                                case TC.Consts.visibility.HAS_VISIBLE:
-                                                    hasVisible = true;
-                                                    hasNotVisible = true;
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-                                            if (hasVisible) {
-                                                if (hasNotVisible) {
-                                                    _result = TC.Consts.visibility.HAS_VISIBLE;
-                                                }
-                                                else {
-                                                    _result = TC.Consts.visibility.VISIBLE;
-                                                }
-                                            }
+                                if (node.children) {
+                                    for (var i = 0, len = node.children.length; i < len; i++) {
+                                        var nState = _setNodeState(node.children[i]);
+                                        if (nState === TC.Consts.visibility.VISIBLE ||
+                                            nState === TC.Consts.visibility.HAS_VISIBLE) {
+                                            rslt = TC.Consts.visibility.HAS_VISIBLE;
+                                            break;
                                         }
                                     }
-                                    if (node.isVisible) {
-                                        _result = TC.Consts.visibility.VISIBLE;
-                                    }
-                                    cache[node.uid] = _result;
                                 }
-                                node.visibilityState = _result;
+                                if (node.isVisible) {
+                                    rslt = TC.Consts.visibility.VISIBLE;
+                                }
+                                node.visibilityState = rslt;
                             }
-                            return _result;
+                            return rslt;
                         };
                         _setNodeState(result);
 
@@ -1331,16 +1254,16 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             }
             result.title = self.title || result.title;
             result.customLegend = self.customLegend || result.customLegend;
-            self.tree = result;
+            if (!fullTree) {
+                self.tree = result;
+            }
         }
         return result;
     };
 
     layerProto.setNodeVisibility = function (id, visible) {
-        var self = this;
-        if (!self.tree) {
-            self.tree = self.getTree();
-        }
+        const self = this;
+        const node = TC.Layer.prototype.setNodeVisibility.call(self, id, visible);
 
         var _getNames = function _getNames(node) {
             var result = [];
@@ -1355,8 +1278,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             return result;
         };
 
-        var node = self.findNode(id, self.tree);
-        if (node === self.tree) {
+        if (self.isRoot(node)) {
             if (visible && self.names.length === 0) {
                 // Prevent pink error tile
                 self.addLayerNames(self.availableNames).then(function () {
@@ -1376,14 +1298,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 self.removeLayerNames(names);
             }
         }
-    };
-
-    layerProto.getNodeVisibility = function (id) {
-        var self = this;
-        if (!self.tree) {
-            self.tree = self.getTree();
-        }
-        return self._cache.visibilityStates[id];
+        return node;
     };
 
     layerProto.getNodePath = function (layerName, ignorePrefix) {
@@ -1417,44 +1332,51 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     };
 
     layerProto.getPath = function (layerName, ignorePrefix) {
-        return $.map(this.getNodePath(layerName, ignorePrefix), function (node) {
+        return this.getNodePath(layerName, ignorePrefix).map(function (node) {
             return node.title || node.Title;
         });
     };
 
-    layerProto.getLayerNodeByName = function (name) {
-        var result = null;
-        var self = this;
-        var getName = self.wrap.getServiceType() === TC.Consts.layerType.WMTS ? self.wrap.getIdentifier : self.wrap.getName
-        var nodes = self.wrap.getAllLayerNodes();
+    layerProto.getLayerNodesByName = function (name) {
+        const result = [];
+        const self = this;
+        const getName = self.wrap.getServiceType() === TC.Consts.layerType.WMTS ? self.wrap.getIdentifier : self.wrap.getName;
+        const nodes = self.wrap.getAllLayerNodes();
         for (var i = 0, len = nodes.length; i < len; i++) {
             if (self.compareNames(getName(nodes[i]), name)) {
-                result = nodes[i];
-                break;
+                result.push(nodes[i]);
             }
         }
         return result;
     };
 
+    layerProto.getLayerNodeByName = function (name) {
+        const self = this;
+        const nodes = self.getLayerNodesByName(name);
+        if (nodes.length) {
+            return nodes[0];
+        }
+        return null;
+    };
+
     layerProto.getChildrenLayers = function (layer) {
-        var self = this;
         var result = [];
-        var _fnRecursiva = function (lyr, arr) {
+        var _recursiveFn = function (lyr, arr) {
             if (lyr && lyr.Layer && lyr.Layer.length) {
                 for (var i = 0; i < lyr.Layer.length; i++) {
-                    arr[arr.length] = lyr.Layer[i];
-                    _fnRecursiva(lyr.Layer[i], arr)
+                    arr.push(lyr.Layer[i]);
+                    _recursiveFn(lyr.Layer[i], arr);
                 }
             }
         };
-        _fnRecursiva(layer, result);
+        _recursiveFn(layer, result);
         return result;
     };
 
     layerProto.compareNames = function (n1, n2, looseComparison) {
         var result = n1 === n2;
         var self = this;
-        var lc = looseComparison !== undefined ? looseComparison : self.ignorePrefixes
+        var lc = looseComparison !== undefined ? looseComparison : self.ignorePrefixes;
         if (!result && lc && n1 && n2) {
             // Revisamos si tienen prefijo. Si lo tiene solo una de las dos lo obviamos para la comparación
             var idx1 = n1.indexOf(':');
@@ -1477,6 +1399,173 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         return this.wrap.getResolutions();
     };
 
+    layerProto.setResolutions = function (resolutions) {
+        this.wrap.setResolutions(resolutions);
+    };
+
+    const reprojectExtent = function (extent, sourceCrs, targetCrs) {
+        const topLeft = TC.Util.reproject([extent[0], extent[3]], sourceCrs, targetCrs);
+        const bottomLeft = TC.Util.reproject([extent[0], extent[1]], sourceCrs, targetCrs);
+        const topRight = TC.Util.reproject([extent[2], extent[3]], sourceCrs, targetCrs);
+        const bottomRight = TC.Util.reproject([extent[2], extent[1]], sourceCrs, targetCrs);
+        const result = new Array(4);
+        result[0] = Math.min(topLeft[0], bottomLeft[0]);
+        result[1] = Math.min(bottomLeft[1], bottomRight[1]);
+        result[2] = Math.max(topRight[0], bottomRight[0]);
+        result[3] = Math.max(topLeft[1], topRight[1]);
+        return result;
+    };
+
+    layerProto.getExtent = function (options) {
+        const self = this;
+        options = options || {};
+        let extent = null;
+
+        if (self.type === TC.Consts.layerType.WMS) {
+            const getNodeBoundingBoxes = function (node) {
+                let bboxes = null;
+                if (node.BoundingBox) {
+                    bboxes = Array.isArray(node.BoundingBox) ? node.BoundingBox : [node.BoundingBox];
+                }
+                if (node.EX_GeographicBoundingBox) {
+                    bboxes = bboxes || [];
+                    bboxes.unshift({
+                        crs: 'EPSG:4326',
+                        extent: node.EX_GeographicBoundingBox
+                    });
+                }
+                if (!bboxes && node.parent) {
+                    return getNodeBoundingBoxes(node.parent);
+                }
+                return bboxes;
+            };
+
+            const boundingBoxes = new Array(self.names.length);
+            for (var i = 0, ii = boundingBoxes.length; i < ii; i++) {
+                const node = self.getLayerNodeByName(self.names[i]);
+                const bboxes = getNodeBoundingBoxes(node);
+                if (!bboxes) {
+                    return null;
+                }
+                boundingBoxes[i] = bboxes;
+            }
+
+            const mapCrs = options.crs || self.map && self.map.getCRS() || 'EPSG:4326';
+            const mapCrsCode = TC.Util.getCRSCode(mapCrs);
+            extent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
+            boundingBoxes
+                .map(function getBestBbox(bboxes) {
+                    let firstBbox, crsBbox;
+                    bboxes.forEach(function (bbox, idx) {
+                        if (idx === 0) {
+                            firstBbox = bbox;
+                        }
+                        if (TC.Util.getCRSCode(bbox.crs) === mapCrsCode) {
+                            crsBbox = bbox;
+                        }
+                    });
+                    if (crsBbox) {
+                        return {
+                            crs: mapCrs,
+                            extent: crsBbox.extent
+                        };
+                    }
+                    let bboxCrs = firstBbox.crs;
+                    if (bboxCrs === 'CRS:84') {
+                        bboxCrs = 'EPSG:4326';
+                    }
+                    return {
+                        crs: bboxCrs,
+                        extent: firstBbox.extent
+                    };
+                })
+                .reduce(function combineBoundingBoxesByCrs(acc, bboxObj) {
+                    let accExtent = acc.get(bboxObj.crs);
+                    const curExtent = bboxObj.extent;
+                    if (accExtent) {
+                        accExtent[0] = Math.min(accExtent[0], curExtent[0]);
+                        accExtent[1] = Math.min(accExtent[1], curExtent[1]);
+                        accExtent[2] = Math.max(accExtent[2], curExtent[2]);
+                        accExtent[3] = Math.max(accExtent[3], curExtent[3]);
+                    }
+                    else {
+                        accExtent = curExtent;
+                    }
+                    acc.set(bboxObj.crs, accExtent);
+                    return acc;
+                }, new Map())
+                .forEach(function combineExtent(ext, crs) {
+                    if (TC.Util.getCRSCode(crs) === mapCrsCode) {
+                        extent[0] = Math.min(ext[0], extent[0]);
+                        extent[1] = Math.min(ext[1], extent[1]);
+                        extent[2] = Math.max(ext[2], extent[2]);
+                        extent[3] = Math.max(ext[3], extent[3]);
+                    }
+                    else {
+                        const mapCrsExtent = reprojectExtent(ext, crs, mapCrs);
+                        extent[0] = Math.min(mapCrsExtent[0], extent[0]);
+                        extent[1] = Math.min(mapCrsExtent[1], extent[1]);
+                        extent[2] = Math.max(mapCrsExtent[2], extent[2]);
+                        extent[3] = Math.max(mapCrsExtent[3], extent[3]);
+                    }
+                });
+        }
+        else if (self.type === TC.Consts.layerType.WMTS) {
+            const layerName = self.names[0];
+            const layerNode = self
+                .capabilities
+                .Contents
+                .Layer
+                .find(l => l.Identifier === layerName);
+            if (layerNode) {
+                const matrixSetNode = self
+                    .capabilities
+                    .Contents
+                    .TileMatrixSet
+                    .find(tms => tms.Identifier === self.matrixSet);
+                if (matrixSetNode) {
+                    if (layerNode.BoundingBox || layerNode.WGS84BoundingBox) {
+                        if (Array.isArray(layerNode.BoundingBox)) {
+                            const boundingBox = layerNode.BoundingBox.find(bbox => TC.Util.CRSCodesEqual(bbox.crs, matrixSetNode.SupportedCRS));
+                            if (boundingBox) {
+                                const stringToNumberArray = str => {
+                                    return str.split(' ').map(v => parseFloat(v));
+                                };
+                                const bottomLeft = stringToNumberArray(boundingBox.LowerCorner);
+                                const topRight = stringToNumberArray(boundingBox.UpperCorner);
+                                extent = [bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]];
+                            }
+                        }
+                        if (!extent && layerNode.WGS84BoundingBox) {
+                            extent = reprojectExtent(layerNode.WGS84BoundingBox, 'EPSG:4326', matrixSetNode.SupportedCRS);
+                        }
+                    }
+                }
+            }
+        }
+        return extent;
+    };
+
+    const formatDescriptions = {};
+    layerProto.getInfo = function (name) {
+        const self = this;
+        const info = self.wrap.getInfo(name);
+        if (info.metadata) {
+            info.metadata.forEach(function (md) {
+                if (self.map) {
+                    md.formatDescription = formatDescriptions[md.format] =
+                        formatDescriptions[md.format] ||
+                        TC.Util.getLocaleString(self.map.options.locale, TC.Util.getSimpleMimeType(md.format)) ||
+                        TC.Util.getLocaleString(self.map.options.locale, 'viewMetadata');
+                }
+                else {
+                    md.formatDescription = formatDescriptions[md.format];
+                }
+            });
+        }
+        return info;
+    };
+
     //Devuelve un array de subLayers cuyo nombre o descripción contenga el texto indicado
     //case insensitive
     layerProto.searchSubLayers = function (text) {
@@ -1490,7 +1579,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 t = t.replace(/(u|ú|ü)/gi, "(u|ú|ü)");
                 t = t.replace(/n/gi, "(n|ñ)");
                 return t;
-            }
+            };
         }
         if (text && text.length && text.length >= 3) {
             var self = this;
@@ -1498,17 +1587,17 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
             /*URI:Si la cadena a buscar contiene a la busqueda anterior, por ejemplo, antes he buscado "cat" y ahora busco "cata" porque esto escribiendo "catastro" ...
             en vez de buscar en todas las capas del servicio busco en los resultados encotrados en la búsqueda anterior */
             if (this.lastPattern && text.indexOf(this.lastPattern) >= 0) {
-                layers = this.lastMatches
+                layers = this.lastMatches;
             }
             else {
                 /*si se ha definido el parametro layers de esta capa en configuraci\u00f3n filtro las capas del capability para que busque solo en las capas que est\u00e9n en 
                 configuraci\u00f3n y sus hijas*/
                 if (self.availableNames && self.availableNames.length > 0) {
-                    layers = []
+                    layers = [];
                     for (var i = 0; i < self.availableNames.length; i++) {
                         var layer = self.getLayerNodeByName(self.availableNames[i]);
                         if (layer) {
-                            layers[layers.length] = layer;
+                            layers.push(layer);
                             layers = layers.concat(self.getChildrenLayers(layer));
                         }
                     }
@@ -1560,8 +1649,8 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 .sort(function (a, b) {
                     if (b.tcScore === a.tcScore) {
                         //si la puntuación es la misma reordenamos por título
-                        var titleA = TC.Util.replaceAccent(a.Title);
-                        var titleB = TC.Util.replaceAccent(b.Title);
+                        var titleA = TC.Util.replaceSpecialCharacters(a.Title);
+                        var titleB = TC.Util.replaceSpecialCharacters(b.Title);
                         if (titleA < titleB) return -1;
                         if (titleA > titleB) return 1;
                         return 0;
@@ -1580,101 +1669,121 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
 
     };
+        
 
-    var cleanOgcUrl = function (url) {
-        var result = url;
-        if (url) {
-            var match = url.match(/\??SERVICE=\w+&/i);
-            if (match) {
-                result = result.replace(match[0], '');
+    layerProto.getGetCapabilitiesUrl = function () {
+        const self = this;
+        var url;
+        const serviceUrl = self.url;
+        const params = {};
+        if (self.type === TC.Consts.layerType.WMTS) {
+            if (self.options.encoding === TC.Consts.WMTSEncoding.RESTFUL) {
+                var suffix = '/1.0.0/WMTSCapabilities.xml';
+                const suffixIdx = serviceUrl.indexOf(suffix);
+                if (suffixIdx < 0 || suffixIdx < serviceUrl.length - suffix.length) {
+                    if (serviceUrl[serviceUrl.length - 1] === '/') {
+                        suffix = suffix.substr(1);
+                    }
+                    url = serviceUrl + suffix;
+                }
+                else {
+                    url = serviceUrl;
+                }
+            }
+            else {
+                url = serviceUrl;
+                params.SERVICE = 'WMTS';
+                params.VERSION = '1.0.0';
+                params.REQUEST = 'GetCapabilities';
             }
         }
-        return result;
-    };
-
-    layerProto.getGetMapUrl = function () {
-        return cleanOgcUrl(this.wrap.getGetMapUrl());
+        else {
+            url = serviceUrl;
+            params.SERVICE = 'WMS';
+            params.VERSION = '1.3.0';
+            params.REQUEST = 'GetCapabilities';
+        }
+        url = url + '?' + TC.Util.getParamString(TC.Util.extend(params, self.queryParams));
+        return url;
     };
 
     layerProto.getPreferredInfoFormat = function () {
-        var layer = this;
+        const layer = this;
         var result = null;
 
-        var infoFormats = layer.wrap.getInfoFormats();
-        for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
-            var format = TC.wrap.layer.Raster.infoFormatPreference[i];
-            if ($.inArray(format, infoFormats) >= 0) {
-                result = format;
-                break;
+        const infoFormats = layer.wrap.getInfoFormats();
+        if (infoFormats) {
+            for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
+                var format = TC.wrap.layer.Raster.infoFormatPreference[i];
+                if (infoFormats.indexOf(format) >= 0) {
+                    result = format;
+                    break;
+                }
             }
         }
         return result;
     };
 
-    /**
+    /*
      * Carga la imagen de leyenda de una capa por POST.
      */
     layerProto.getLegendGraphicImage = function () {
-        var self = this;
-        var deferred = $.Deferred();
-
-
-        //Si ya hemos hecho esta consulta previamente, retornamos la respuesta
-        if (self.options.params.base64LegendSrc) {
-            return deferred.resolve(self.options.params.base64LegendSrc);
-        }
-
-        if (typeof window.btoa === 'function') {
-            var name = self.names[0];
-            var info = self.wrap.getInfo(name);
-            var xhr = new XMLHttpRequest();
-            var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
-            var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
-            var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
-
-            for (var i = 0; i < dataEntries.length; i++) {
-                var chunks = dataEntries[i].split('=');
-
-                if (chunks && chunks.length > 1 && chunks[1]) {
-                    params += "&" + dataEntries[i];
-                }
-            }
-            if (self.options.params.env) {
-                params += "&" + self.options.params.env;
+        const self = this;
+        return new Promise(function (resolve, reject) {
+            //Si ya hemos hecho esta consulta previamente, retornamos la respuesta
+            if (self.options.params.base64LegendSrc) {
+                return resolve(self.options.params.base64LegendSrc);
             }
 
-            xhr.open('POST', url[0], true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            if (typeof window.btoa === 'function') {
+                var name = self.names[0];
+                var info = self.wrap.getInfo(name);
+                var xhr = new XMLHttpRequest();
+                var url = info.legend[0].src.split('?'); // Separamos los parámetros de la raíz de la URL
+                var dataEntries = url[1].split("&"); // Separamos clave/valor de cada parámetro
+                var params = self.options.params.sld_body ? "sld_body=" + self.options.params.sld_body : '';
 
-            xhr.responseType = 'arraybuffer';
-            xhr.onload = function (e) {
-                if (this.status === 200) {
-                    var uInt8Array = new Uint8Array(this.response);
-                    var i = uInt8Array.length;
-                    var binaryString = new Array(i);
-                    while (i--) {
-                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                    }
-                    var data = binaryString.join('');
-                    var type = xhr.getResponseHeader('content-type');
-                    if (type.indexOf('image') === 0) {
-                        var imageSrc;
-                        imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
-                        self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
-                        deferred.resolve(imageSrc);
+                for (var i = 0; i < dataEntries.length; i++) {
+                    var chunks = dataEntries[i].split('=');
+
+                    if (chunks && chunks.length > 1 && chunks[1]) {
+                        params += "&" + dataEntries[i];
                     }
                 }
-            };
-            xhr.send(params);
-        } else {
-            deferred.reject("Función window.btoa no soportada por el navegador");
-        }
-        return deferred.promise();
+                if (self.options.params.env) {
+                    params += "&" + self.options.params.env;
+                }
+
+                xhr.open('POST', url[0], true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function (_e) {
+                    if (this.status === 200) {
+                        var uInt8Array = new Uint8Array(this.response);
+                        var i = uInt8Array.length;
+                        var binaryString = new Array(i);
+                        while (i--) {
+                            binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                        }
+                        var data = binaryString.join('');
+                        var type = xhr.getResponseHeader('content-type');
+                        if (type.indexOf('image') === 0) {
+                            var imageSrc;
+                            imageSrc = 'data:' + type + ';base64,' + window.btoa(data);
+                            self.options.params.base64LegendSrc = imageSrc; //Cacheamos la respuesta
+                            resolve(imageSrc);
+                        }
+                    }
+                };
+                xhr.send(params);
+            } else {
+                reject(Error("Función window.btoa no soportada por el navegador"));
+            }
+        });
     };
 
     layerProto.getUrl = function (src) {
-        var self = this;
-
         return src;
     };
 
@@ -1683,47 +1792,59 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
     //          Es decir, sólo puede cargar texturas de sitios para los que su contenido tiene aprobación de CORS.
 
     // Usamos el mismo método que para el capabilities ya que la carga de texturas es igual de restrictiva.
-    layerProto.getWebGLUrl = function (src, location) {
-        var self = this;
-        var done = new $.Deferred();
+    layerProto.getWebGLUrl = function (src, _location) {
+        const self = this;
+        return new Promise(function (resolve, reject) {
 
-        var _src = !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src;
+            var _src = !TC.Util.isSecureURL(src) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(src) : src;
 
-        if (self.ignoreProxification) {
-            done.resolve(_src);
-        } else {
-            const options = {
-                exportable: true,
-                ignoreProxification: self.ignoreProxification
-            };
+            if (self.ignoreProxification) {
+                resolve(_src);
+            } else {
+                const options = {
+                    exportable: true,
+                    ignoreProxification: self.ignoreProxification
+                };
 
-            self.toolProxification.fetchImage(_src, options).then(function () {
-                self.toolProxification.cacheHost.getAction(_src, options).then(function (cache) {
-                    if (cache && cache.action) {
-                        done.resolve(cache.action.call(self.toolProxification, _src));
+                self.toolProxification.fetchImage(_src, options).then(function () {
+                    let action = self.toolProxification.cacheHost.getAction(_src, options);
+                    if (action) {
+                        action.then(function (cache) {
+                            if (cache && cache.action) {
+                                resolve(cache.action.call(self.toolProxification, _src));
+                            }
+                        });
+                    } else {
+                        reject('No action to ' + _src);
                     }
+                }).catch(function (e) {
+                    reject(e);
                 });
-            }).catch(function (e) {
-                done.reject(e);
-            }); 
-        }        
+            }
 
-        //// IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
-        //if (self.ignoreProxification) {
-        //    setSRC({ src: TC.Consts.BLANK_IMAGE });
-        //    return;
-        //}
+            //// IGN francés tiene cabeceras CORS menos en las excepciones que las devuelve en XML así que si da error cargamos imagen en blanco sin hacer más
+            //if (self.ignoreProxification) {
+            //    setSRC({ src: TC.Consts.BLANK_IMAGE });
+            //    return;
+            //}
 
-        //return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);        
-
-        return done;
+            //return self.capabilitiesUrl_.call(self, !TC.Util.isSecureURL(url) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);        
+        });
     };
 
     layerProto.getFeatureUrl = function (url) {
         var self = this;
 
-        return self.toolProxification.cacheHost.getAction(url).then(function (cache) {
-            return cache.action.call(self.toolProxification, url);
+        return self.toolProxification.fetch(url).then(function () {
+            return self.toolProxification.cacheHost.getAction(url)
+                .then(function (cache) {
+                    return cache.action.call(self.toolProxification, url);
+                })
+                .catch(function (error) {
+                    return Promise.reject(error);
+                });
+        }).catch(function (error) {
+            return Promise.reject(error);
         });
     };
 
@@ -1742,49 +1863,58 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 return (elem.type === TC.Consts.layerType.WMS ||
                     elem.type === TC.Consts.layerType.WMTS) &&
                     (elem.capabilities === self.capabilities || elem.url === self.url) &&
-                    (dynamicStatement && $.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
+                    (TC.Util.isFunction(dynamicStatement) ? dynamicStatement(elem) : true);
             })[0];
 
             return matchingLayer || null;
         }
     };
 
-    layerProto.getImageLoad = function (image, src, location) {
-        var self = this;
+    layerProto.getImageLoad = function (image, src, _location) {
+        const self = this;
+
+        const setSRC = function (data) {
+            const img = image.getImage();
+
+            if (!TC.Util.isSameOrigin(data.src)) {
+                if (!self.map || self.map.crossOrigin) {
+                    img.crossOrigin = data.crossOrigin !== null ?
+                        data.crossOrigin :
+                        self.map ? self.map.crossOrigin : "anonymous";
+                }
+            }
+
+            // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
+            img.setAttribute("src", data.src);
+            img.onload = function () {
+                _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
+            };
+            img.onerror = function (error) {
+                img.setAttribute("src", TC.Consts.BLANK_IMAGE);
+                _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
+            };
+        };
 
         // Viene sin nombre desde el control TOC, si es así lo ignoramos.
         if (self.names && self.names.length > 0) {
 
-            const setSRC = function (data) {
-                var olImg = image.getImage();
-
-                if (!self.map || (self.map && self.map.mustBeExportable)) {
-                    olImg.crossOrigin = data.crossOrigin ? data.crossOrigin : "anonymous";
-                }
-
-                // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
-                olImg.setAttribute("src", data.src);
-
-                _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
-            };
-
-            const error = function (error) {
-                _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } }));
+            const errorFn = function (error) {
+                _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
                 setSRC({ src: TC.Consts.BLANK_IMAGE });
             };
 
             // comprobamos z/x/y contra el matrixset del capabilities para evitar peticiones 404
             if (self.type === TC.Consts.layerType.WMTS) {
                 var z, x, y;
-                if (self.encoding != "KVP") {
+                if (self.encoding !== "KVP") {
                     var _src = src.replace('.' + self.format.split('/')[1], '');
-                    var parts = _src.split('/').slice(_src.split('/').length - 3).map(function (elm) { return parseInt(elm); });
+                    const parts = _src.split('/').slice(_src.split('/').length - 3).map(function (elm) { return parseInt(elm); });
                     z = parts[0];
                     x = parts[1];
                     y = parts[2];
                 } else {
-                    var parts = /.*TileMatrix=(\d*)&TileCol=(\d*)&TileRow=(\d*)/i.exec(src);
-                    if (parts && parts.length == 4) {
+                    let parts = /.*TileMatrix=(\d*)&TileCol=(\d*)&TileRow=(\d*)/i.exec(src);
+                    if (parts && parts.length === 4) {
                         parts = parts.slice(1).map(function (elm) { return parseInt(elm); });
                         z = parts[0];
                         x = parts[2];
@@ -1795,11 +1925,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 if (z && x && y) {
                     var wmtsOptions = self.wrap.getWMTSLayer();
                     if (wmtsOptions) {
-                        var matrixSet = wmtsOptions.TileMatrixSetLink.filter(function (elm) { return elm.TileMatrixSet === self.matrixSet; });
-                        if (matrixSet.length > 0) {
+                        const matrixSet = wmtsOptions.TileMatrixSetLink.find(elm => elm.TileMatrixSet === self.matrixSet);
+                        if (matrixSet) {
 
-                            if (matrixSet[0].TileMatrixSetLimits.length > 0) {
-                                var matrixSetLimits = matrixSet[0].TileMatrixSetLimits.sort(function (a, b) {
+                            if (matrixSet.TileMatrixSetLimits && matrixSet.TileMatrixSetLimits.length > 0) {
+                                var matrixSetLimits = matrixSet.TileMatrixSetLimits.sort(function (a, b) {
                                     if (parseInt(a.TileMatrix) > parseInt(b.TileMatrix))
                                         return 1;
                                     else if (parseInt(a.TileMatrix) < parseInt(b.TileMatrix))
@@ -1821,7 +1951,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 }
             }
 
-            _get$events.call(self).trigger($.Event(TC.Consts.event.BEFORETILELOAD, { tile: image }));
+            _get$events.call(self).trigger(TC.Consts.event.BEFORETILELOAD, { tile: image });
 
             var params = "";
             var isPOST = self.options.method === "POST";
@@ -1840,106 +1970,119 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 }).then(function (blob) {
                     const imageUrl = URL.createObjectURL(blob);
                     const img = image.getImage();
-                    img.onload = function (evt) {
+                    img.onload = function (_e) {
                         URL.revokeObjectURL(imageUrl);
                     };
                     setSRC({ src: imageUrl });
-                }).catch(error);
+                }).catch(errorFn);
 
             } else {
                 if (!self.ignoreProxification) {
-                    self.toolProxification.fetchImage(src, { exportable: !self.map || (self.map && self.map.mustBeExportable) }).then(function (img) {
+                    self.toolProxification.fetchImage(src, { exportable: !self.map || self.map.crossOrigin }).then(function (img) {
                         setSRC(img);
-                    }).catch(error);
+                    }).catch(errorFn);
                 } else {
                     setSRC({ src: src });
                     var img = image.getImage();
 
-                    if (!self.map || (self.map && self.map.mustBeExportable)) {
-                        img.crossOrigin = "anonymous";
+                    if (!TC.Util.isSameOrigin(src)) {
+                        if (!self.map || self.map.crossOrigin) {
+                            img.crossOrigin = self.map ? self.map.crossOrigin : "anonymous";
+                        }
                     }
 
                     img.onload = function () {
-                        _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
+                        _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
                     };
-                    img.onerror = function (error) {                        
+                    img.onerror = function (error) {
                         img.src = TC.Consts.BLANK_IMAGE;
-                        _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } }));
+                        _get$events.call(self).trigger(TC.Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
                     };
 
                     img.src = self.names.length ? src : TC.Consts.BLANK_IMAGE;
                 }
             }
         } else {
+            setSRC({ src: TC.Consts.BLANK_IMAGE });
             // lanzamos el evento para gestionar el loading
-            _get$events.call(self).trigger($.Event(TC.Consts.event.TILELOAD, { tile: image }));
+            _get$events.call(self).trigger(TC.Consts.event.TILELOAD, { tile: image });
         }
     };
 
     var _get$events = function () {
-        var self = this;
-
-        return self.wrap && self.wrap.$events ? self.wrap.$events : $(self);
+        const self = this;
+        if (self.wrap && self.wrap.$events) {
+            return self.wrap.$events;
+        }
+        return null;
     };
-
-    layerProto.getWFSCapabilitiesPromise = function () {
-        var self = this;
-        if (typeof (WFSCapabilities) === "undefined") {
-            TC.syncLoadJS(TC.apiLocation + 'TC/layer/WFSCapabilitiesParser');
-        }
-        var url = this.options.url.replace(/service=wms/i, "service=wfs").replace(/\/wms(\/|\?|\b)/i, "$'/wfs/")
-        var defer = $.Deferred();
-        var basicUrl = url.substring(url.indexOf("://") < 0 ? 0 : url.indexOf("://") + 3);
-        if (TC.WFScapabilities[basicUrl]) {
-            setTimeout(function () {
-                defer.resolve(TC.WFScapabilities[basicUrl]);
-            }, 100);
-            return defer;
-        }
-        var params = {
-        }
-        params.SERVICE = 'WFS';
-        params.VERSION = '2.0.0';
-        params.REQUEST = 'GetCapabilities';
-        $.ajax({
-            url: this.getUrl(url + '?' + $.param(params)),
-            type: 'GET'
-        }).then(function () {
-            var capabilities
-            var xmlDoc;
-            if (jQuery.isXMLDoc(arguments[0]))
-                xmlDoc = arguments[0];
-            else
-                xmlDoc = (new DOMParser()).parseFromString(arguments[0], 'text/xml');
-            //comprueba si el servidor ha devuelto una excepcion
-
-            var errorNode = $(xmlDoc).find("ServiceException");
-            if (errorNode.length === 0)
-                errorNode = $(xmlDoc).find("ExceptionText");
-            if (errorNode.length > 0) {
-                defer.reject(null, "error", errorNode.html());
-                return;
-            }
+    layerProto.getWFSURL = async function () {
+        const self = this;
+        if (_urlWFS[self.options.url]) return await _urlWFS[self.options.url];
+        var url = new URL(self.url, document.location.href);
+        url.search = new URLSearchParams({ request: 'DescribeLayer', service: "WMS", version: "1.1.1", Layers: self.layerNames instanceof Array ? self.layerNames[0] : self.layerNames, outputFormat: "application/json" });
+        return _urlWFS[self.options.url] = new Promise(async function (resolve, _reject) {
             try {
-                capabilities = WFSCapabilities.Parse(xmlDoc);
+                var response = await self.toolProxification.fetch(url.toString(), {
+                    method: "GET"
+
+                });
+                if (response.contentType.startsWith("application/json")) {
+                    var data = JSON.parse(response.responseText).layerDescriptions[0];
+                    if (data.owsType !== "WFS") {
+                        resolve(self.options.url.replace(/wms/gi, "wfs"));
+                        return;
+                    }
+                    var _url = data.owsURL.substr(0, data.owsURL.length + (data.owsURL.endsWith('?') ? -1 : 0));
+                    self.toolProxification.fetch(_url, {
+                        method: "HEAD"
+
+                    }).then(function () {
+                        resolve(_url);
+                    }).catch(function () {
+                        resolve(self.options.url.replace(/wms/gi, "wfs"));
+                    });
+                }
+                else  {
+                    let xmlDoc = new DOMParser().parseFromString(response.responseText, "text/xml");
+                    let error = xmlDoc.querySelector("Exception ExceptionText") || xmlDoc.querySelector("ServiceException");
+                    if (error) {
+                        resolve(self.options.url.replace(/wms/gi, "wfs"));
+                    } else {
+                        const layerDescription = xmlDoc.querySelector("LayerDescription");                        
+                        resolve(layerDescription ? layerDescription.getAttribute("wfs") ||
+                            layerDescription.getAttribute("owsURL") ||
+                            self.options.url.replace(/wms/gi, "wfs") :
+                            self.options.url.replace(/wms/gi, "wfs"));
+                    }
+                }
             }
             catch (err) {
-                defer.reject(err);
-                return;
+                resolve(self.options.url.replace(/wms/gi, "wfs"));
             }
-
-            if (!capabilities.Operations) {
-                defer.reject(null);
-                return;
-            }
-            var _url = (capabilities.Operations.GetCapabilities.DCP && capabilities.Operations.GetCapabilities.DCP.HTTP.Get["xlink:href"]) || capabilities.Operations.GetCapabilities.DCPType[0].HTTP.Get.onlineResource
-            TC.WFScapabilities[_url] = capabilities;
-            TC.WFScapabilities[basicUrl] = capabilities;
-            defer.resolve(capabilities);
-        }, function (jqXHR, textStatus, errorThrown) {
-            defer.reject(jqXHR, textStatus, errorThrown);
         });
-        return defer;
+    };
+
+
+    layerProto.getWFSCapabilities = async function () {
+        const self = this;        
+        return getWFSLayer(await self.getWFSURL()).then(function (layer) {
+            return layer.getCapabilitiesPromise();
+        });
+    };
+
+    layerProto.getDescribeFeatureTypeUrl = async function () {
+        const self = this;
+        const newUrl = await self.getWFSURL();
+
+        if (!wfsLayer || wfsLayer.options.url !== newUrl) {
+            wfsLayer = new TC.layer.Vector({
+                type: TC.Consts.layerType.WFS,
+                url: newUrl,
+                stealth: true
+            });
+        }
+        return wfsLayer.getDescribeFeatureTypeUrl(self.options.featureType);
     };
 
     layerProto.getFallbackLayer = function () {
@@ -1953,7 +2096,7 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 const ablCollection = self.map ? self.map.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
                 ablCollection.forEach(function (baseLayer) {
                     if (self.options.fallbackLayer === baseLayer.id) {
-                        self.fallbackLayer = new TC.layer.Raster($.extend({}, baseLayer, { isBase: true, stealth: true, map: self.map }));
+                        self.fallbackLayer = new TC.layer.Raster(TC.Util.extend({}, baseLayer, { isBase: true, stealth: true, map: self.map }));
                         self.fallbackLayer.firstOption = self;
                     }
                 });
@@ -1963,11 +2106,11 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
                 self.fallbackLayer.firstOption = self;
             }
             else {
-                self.fallbackLayer = new TC.layer.Raster($.extend({}, fbLayer, {
+                self.fallbackLayer = new TC.layer.Raster(TC.Util.extend({}, fbLayer, {
                     id: TC.getUID(),
                     isBase: true,
                     stealth: true,
-                    title: layer.title,
+                    title: self.title,
                     map: self.map
                 }));
                 self.fallbackLayer.firstOption = self;
@@ -1976,30 +2119,47 @@ TC.Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAA
         }
         return null;
     };
+    layerProto.describeFeatureType = async function (layerName) {
+        const self = this;
+        const newUrl = await self.getWFSURL();
+
+        return getWFSLayer(newUrl).then(function (layer) {
+            return layer.describeFeatureType(layerName || self.layerNames[0]);
+        });
+    };
+
+    layerProto.refresh = function () {
+        return this.wrap.reloadSource();
+    };
+
 })();
-var esriParser = {
-    parse: function (text) {
-        var result = [];
-        var dom = (new DOMParser()).parseFromString(text, 'text/xml');
-        if (dom.documentElement.tagName === 'FeatureInfoResponse') {
-            var fiCollections = dom.documentElement.getElementsByTagName('FeatureInfoCollection');
-            for (var i = 0, len = fiCollections.length; i < len; i++) {
-                var fic = fiCollections[i];
-                var layerName = fic.getAttribute('layername');
-                var fInfos = fic.getElementsByTagName('FeatureInfo');
-                for (var j = 0, lenj = fInfos.length; j < lenj; j++) {
-                    var fields = fInfos[j].getElementsByTagName('Field');
-                    var attributes = {};
-                    for (var k = 0, lenk = fields.length; k < lenk; k++) {
-                        var field = fields[k];
-                        attributes[getElementText(field.getElementsByTagName('FieldName')[0])] = getElementText(field.getElementsByTagName('FieldValue')[0]);
-                    }
-                    var feature = new ol.Feature(attributes);
-                    feature.setId(layerName + '.' + TC.getUID());
-                    result[result.length] = feature;
-                }
-            }
-        }
-        return result;
-    }
-};
+
+//var esriParser = {
+//    parse: function (text) {
+//        var result = [];
+//        var dom = (new DOMParser()).parseFromString(text, 'text/xml');
+//        if (dom.documentElement.tagName === 'FeatureInfoResponse') {
+//            var fiCollections = dom.documentElement.getElementsByTagName('FeatureInfoCollection');
+//            for (var i = 0, len = fiCollections.length; i < len; i++) {
+//                var fic = fiCollections[i];
+//                var layerName = fic.getAttribute('layername');
+//                var fInfos = fic.getElementsByTagName('FeatureInfo');
+//                for (var j = 0, lenj = fInfos.length; j < lenj; j++) {
+//                    var fields = fInfos[j].getElementsByTagName('Field');
+//                    var attributes = {};
+//                    for (var k = 0, lenk = fields.length; k < lenk; k++) {
+//                        var field = fields[k];
+//                        attributes[getElementText(field.getElementsByTagName('FieldName')[0])] = getElementText(field.getElementsByTagName('FieldValue')[0]);
+//                    }
+//                    var feature = new ol.Feature(attributes);
+//                    feature.setId(layerName + '.' + TC.getUID());
+//                    result.push(feature);
+//                }
+//            }
+//        }
+//        return result;
+//    }
+//};
+
+const Raster = TC.layer.Raster;
+export default Raster;

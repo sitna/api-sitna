@@ -1,26 +1,19 @@
-﻿TC.feature = TC.feature || {};
-
-if (!TC.Feature) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/Feature');
-}
+﻿import TC from '../../TC';
+import Feature from '../Feature';
+TC.Feature = Feature;
+TC.feature = TC.feature || {};
 
 /*
  * Polyline
  * Parameters: coords, array of 2 element arrays of numbers; options, object
  */
 TC.feature.MultiPolyline = function (coords, options) {
-    var self = this;
+    const self = this;
 
     TC.Feature.apply(self, arguments);
 
-    var opts;
-    if (self.wrap.isNative(coords)) {
-        coords._wrap = self.wrap;
-        self.wrap.feature = coords;
-    }
-    else {
-        opts = self.options = $.extend(true, self.options, TC.Cfg.styles.line, options);
-        self.wrap.createMultiPolyline(coords, opts);
+    if (!self.wrap.isNative(coords)) {
+        self.wrap.createMultiPolyline(coords, options);
     }
 };
 
@@ -39,6 +32,17 @@ TC.feature.MultiPolyline.prototype.getCoords = function (options) {
     return coords;
 };
 
+TC.feature.MultiPolyline.prototype.setCoords = function (coords) {
+    const self = this;
+    if (Array.isArray(coords) && Array.isArray(coords[0]) && !Array.isArray(coords[0][0])) {
+        coords = [coords];
+    }
+    return TC.Feature.prototype.setCoords.call(self, coords);
+};
+
 TC.feature.MultiPolyline.prototype.getLength = function (options) {
     return this.wrap.getLength(options);
 };
+
+const MultiPolyline = TC.feature.MultiPolyline;
+export default MultiPolyline;

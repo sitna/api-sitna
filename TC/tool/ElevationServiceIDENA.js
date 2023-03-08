@@ -4,11 +4,12 @@ if (!TC.tool.ElevationService) {
     TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
 }
 
-TC.tool.ElevationServiceIDENA = function (options) {
+TC.tool.ElevationServiceIDENA = function (_options) {
     const self = this;
     TC.tool.ElevationService.apply(self, arguments);
     self.url = self.options.url || '//idena.navarra.es/ogc/wps';
     self.process = self.options.process || 'gs:ExtractRasterPoints';
+    self.coverageClass = self.options.coverageClass || 'MDT_maxima_actualidad,Alturas_maxima_actualidad',
     self.minimumElevation = self.options.minimumElevation || -9998;
 };
 
@@ -21,27 +22,20 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
         const self = this;
         options = options || {};
         const geometryOptions = {
-            coordinates: options.coordinates
+            coordinates: options.coordinates,
+            type: TC.Consts.geom.POLYLINE
         };
-        var coordinateListArray;
-        switch (true) {
-            case TC.Geometry.isPoint(options.coordinates):
-                geometryOptions.type = TC.Consts.geom.POINT;
-                coordinateListArray = [[options.coordinates]];
-                break;
-            case TC.Geometry.isRing(options.coordinates):
-                geometryOptions.type = TC.Consts.geom.POLYLINE;
-                coordinateListArray = [options.coordinates];
-                break;
-            case TC.Geometry.isRingCollection(options.coordinates):
-                geometryOptions.type = TC.Consts.geom.POLYGON;
-                coordinateListArray = options.coordinates;
-                break;
-            default:
-                break;
+        if (options.coordinates.length === 1) {
+            geometryOptions.coordinates = options.coordinates[0];
+            geometryOptions.type = TC.Consts.geom.POINT;
+        }
+        let coverageClass = options.coverageClass || self.coverageClass;
+        const sepIdx = coverageClass.indexOf(',');
+        if (coverageClass && sepIdx >= 0 && !options.includeHeights) {
+            coverageClass = coverageClass.substr(0, sepIdx);
         }
         const dataInputs = {
-            coverageClass: options.coverageClass,
+            coverageClass: coverageClass,
             geometry: {
                 mimeType: TC.Consts.mimeType.JSON,
                 value: TC.wrap.Geometry.toGeoJSON(geometryOptions)
@@ -54,37 +48,36 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
             }
             dataInputs.srid = options.crs.substr(idx + 1);
         }
-        if (options.sampleNumber) {
-            const getDistance = function (p1, p2) {
-                const dx = p2[0] - p1[0];
-                const dy = p2[1] - p1[1];
-                return Math.sqrt(dx * dx + dy * dy);
-            };
-            var totalDistance = 0;
-            coordinateListArray.forEach(function (coordList) {
-                totalDistance += coordList
-                    .map(function (coord, i, arr) {
-                        const prev = arr[i - 1];
-                        if (prev) {
-                            return getDistance(prev, coord);
-                        }
-                        return 0;
-                    })
-                    .reduce(function (prev, curr) {
-                        return prev + curr;
-                    }, 0);
-                if (geometryOptions.type === TC.Consts.geom.POLYGON) {
-                    totalDistance += getDistance(coordList[coordList.length - 1], coordList[0]);
-                }
-            });
-
-            // Calculamos la distancia entre muestras dividiendo entre el número de muestras menos uno,
-            // porque las muestras están entre segmentos y por tanto hay una más que segmentos.
-            dataInputs.splitDistance = totalDistance / (options.sampleNumber - 1);
-        }
-        else if (options.resolution) {
-            dataInputs.splitDistance = options.resolution;
-        }
         return TC.tool.ElevationService.prototype.request.call(self, { dataInputs: dataInputs }, options);
+    };
+
+    toolProto.parseResponse = function (response, options) {
+        const self = this;
+        const coverageClass = options.coverageClass || self.coverageClass;
+        const coverageClassCount = options.includeHeights && coverageClass ? coverageClass.split(',').length : 1;
+        if (coverageClassCount <= 1) {
+            return TC.tool.ElevationService.prototype.parseResponse.call(self, response, options);
+        }
+        if (response.coordinates) {
+            const coords = response.coordinates;
+            const coordinateCount = coords.length / coverageClassCount;
+            const result = coords.slice(0, coordinateCount);
+            var i;
+            for (i = 0; i < coordinateCount; i++) {
+                const point = result[i];
+                if (point[2] < self.minimumElevation) {
+                    point[2] = null;
+                }
+            }
+            for (i = 1; i < coverageClassCount; i++) {
+                const offset = i * coordinateCount;
+                for (var j = 0; j < coordinateCount; j++) {
+                    const elevation = coords[j + offset][2];
+                    result[j].push(elevation < self.minimumElevation ? null : elevation);
+                }
+            }
+            return result;
+        }
+        return [];
     };
 })();

@@ -1,4 +1,9 @@
-﻿TC.tool = TC.tool || {};
+import Consts from '../Consts';
+
+var TC = TC || {};
+TC.Consts = Consts;
+
+TC.tool = TC.tool || {};
 
 TC.tool.Proxification = function (proxy, options) {
     var self = this;
@@ -13,12 +18,12 @@ TC.tool.Proxification = function (proxy, options) {
         throw new TypeError('"proxy" parameter is undefined', "TC.tool.Proxification.js");
     }
 
-    if (typeof proxy == "function") {
+    if (typeof proxy === "function") {
         self.proxy = proxy;
     } else {
         self.proxy = function (url) {
             var result = proxy;
-            if (url.substr(0, 4) != "http") {
+            if (url.substr(0, 4) !== "http") {
                 result += window.location.protocol;
             }
             result += encodeURIComponent(url);
@@ -34,11 +39,6 @@ TC.tool.Proxification = function (proxy, options) {
 };
 
 (function () {
-    if (typeof Promise === 'undefined') {
-        // polyfill https://github.com/stefanpenner/es6-promise#readme
-        !function (t, e) { "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : t.Promise = e() }(this, function () { "use strict"; function t(t) { var e = typeof t; return null !== t && ("object" === e || "function" === e) } function e(t) { return "function" == typeof t } function n(t) { G = t } function r(t) { H = t } function o() { return function () { return process.nextTick(a) } } function i() { return "undefined" != typeof B ? function () { B(a) } : c() } function s() { var t = 0, e = new Q(a), n = document.createTextNode(""); return e.observe(n, { characterData: !0 }), function () { n.data = t = ++t % 2 } } function u() { var t = new MessageChannel; return t.port1.onmessage = a, function () { return t.port2.postMessage(0) } } function c() { var t = setTimeout; return function () { return t(a, 1) } } function a() { for (var t = 0; t < z; t += 2) { var e = X[t], n = X[t + 1]; e(n), X[t] = void 0, X[t + 1] = void 0 } z = 0 } function f() { try { var t = require, e = t("vertx"); return B = e.runOnLoop || e.runOnContext, i() } catch (n) { return c() } } function l(t, e) { var n = this, r = new this.constructor(p); void 0 === r[$] && k(r); var o = n._state; if (o) { var i = arguments[o - 1]; H(function () { return x(o, r, i, n._result) }) } else E(n, r, t, e); return r } function h(t) { var e = this; if (t && "object" == typeof t && t.constructor === e) return t; var n = new e(p); return g(n, t), n } function p() { } function v() { return new TypeError("You cannot resolve a promise with itself") } function d() { return new TypeError("A promises callback cannot return that same promise.") } function _(t) { try { return t.then } catch (e) { return rt.error = e, rt } } function y(t, e, n, r) { try { t.call(e, n, r) } catch (o) { return o } } function m(t, e, n) { H(function (t) { var r = !1, o = y(n, e, function (n) { r || (r = !0, e !== n ? g(t, n) : S(t, n)) }, function (e) { r || (r = !0, j(t, e)) }, "Settle: " + (t._label || " unknown promise")); !r && o && (r = !0, j(t, o)) }, t) } function b(t, e) { e._state === et ? S(t, e._result) : e._state === nt ? j(t, e._result) : E(e, void 0, function (e) { return g(t, e) }, function (e) { return j(t, e) }) } function w(t, n, r) { n.constructor === t.constructor && r === l && n.constructor.resolve === h ? b(t, n) : r === rt ? (j(t, rt.error), rt.error = null) : void 0 === r ? S(t, n) : e(r) ? m(t, n, r) : S(t, n) } function g(e, n) { e === n ? j(e, v()) : t(n) ? w(e, n, _(n)) : S(e, n) } function A(t) { t._onerror && t._onerror(t._result), M(t) } function S(t, e) { t._state === tt && (t._result = e, t._state = et, 0 !== t._subscribers.length && H(M, t)) } function j(t, e) { t._state === tt && (t._state = nt, t._result = e, H(A, t)) } function E(t, e, n, r) { var o = t._subscribers, i = o.length; t._onerror = null, o[i] = e, o[i + et] = n, o[i + nt] = r, 0 === i && t._state && H(M, t) } function M(t) { var e = t._subscribers, n = t._state; if (0 !== e.length) { for (var r = void 0, o = void 0, i = t._result, s = 0; s < e.length; s += 3) r = e[s], o = e[s + n], r ? x(n, r, o, i) : o(i); t._subscribers.length = 0 } } function T() { this.error = null } function P(t, e) { try { return t(e) } catch (n) { return ot.error = n, ot } } function x(t, n, r, o) { var i = e(r), s = void 0, u = void 0, c = void 0, a = void 0; if (i) { if (s = P(r, o), s === ot ? (a = !0, u = s.error, s.error = null) : c = !0, n === s) return void j(n, d()) } else s = o, c = !0; n._state !== tt || (i && c ? g(n, s) : a ? j(n, u) : t === et ? S(n, s) : t === nt && j(n, s)) } function C(t, e) { try { e(function (e) { g(t, e) }, function (e) { j(t, e) }) } catch (n) { j(t, n) } } function O() { return it++ } function k(t) { t[$] = it++ , t._state = void 0, t._result = void 0, t._subscribers = [] } function Y() { return new Error("Array Methods must be provided an Array") } function Y() { return new Error("Array Methods must be provided an Array") } function q(t) { return new st(this, t).promise } function F(t) { var e = this; return new e(W(t) ? function (n, r) { for (var o = t.length, i = 0; i < o; i++) e.resolve(t[i]).then(n, r) } : function (t, e) { return e(new TypeError("You must pass an array to race.")) }) } function D(t) { var e = this, n = new e(p); return j(n, t), n } function K() { throw new TypeError("You must pass a resolver function as the first argument to the promise constructor") } function L() { throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.") } function N() { var t = void 0; if ("undefined" != typeof global) t = global; else if ("undefined" != typeof self) t = self; else try { t = Function("return this")() } catch (e) { throw new Error("polyfill failed because global object is unavailable in this environment") } var n = t.Promise; if (n) { var r = null; try { r = Object.prototype.toString.call(n.resolve()) } catch (e) { } if ("[object Promise]" === r && !n.cast) return } t.Promise = ut } var U = void 0; U = Array.isArray ? Array.isArray : function (t) { return "[object Array]" === Object.prototype.toString.call(t) }; var W = U, z = 0, B = void 0, G = void 0, H = function (t, e) { X[z] = t, X[z + 1] = e, z += 2, 2 === z && (G ? G(a) : Z()) }, I = "undefined" != typeof window ? window : void 0, J = I || {}, Q = J.MutationObserver || J.WebKitMutationObserver, R = "undefined" == typeof self && "undefined" != typeof process && "[object process]" === {}.toString.call(process), V = "undefined" != typeof Uint8ClampedArray && "undefined" != typeof importScripts && "undefined" != typeof MessageChannel, X = new Array(1e3), Z = void 0; Z = R ? o() : Q ? s() : V ? u() : void 0 === I && "function" == typeof require ? f() : c(); var $ = Math.random().toString(36).substring(16), tt = void 0, et = 1, nt = 2, rt = new T, ot = new T, it = 0, st = function () { function t(t, e) { this._instanceConstructor = t, this.promise = new t(p), this.promise[$] || k(this.promise), W(e) ? (this.length = e.length, this._remaining = e.length, this._result = new Array(this.length), 0 === this.length ? S(this.promise, this._result) : (this.length = this.length || 0, this._enumerate(e), 0 === this._remaining && S(this.promise, this._result))) : j(this.promise, Y()) } return t.prototype._enumerate = function (t) { for (var e = 0; this._state === tt && e < t.length; e++) this._eachEntry(t[e], e) }, t.prototype._eachEntry = function (t, e) { var n = this._instanceConstructor, r = n.resolve; if (r === h) { var o = _(t); if (o === l && t._state !== tt) this._settledAt(t._state, e, t._result); else if ("function" != typeof o) this._remaining-- , this._result[e] = t; else if (n === ut) { var i = new n(p); w(i, t, o), this._willSettleAt(i, e) } else this._willSettleAt(new n(function (e) { return e(t) }), e) } else this._willSettleAt(r(t), e) }, t.prototype._settledAt = function (t, e, n) { var r = this.promise; r._state === tt && (this._remaining-- , t === nt ? j(r, n) : this._result[e] = n), 0 === this._remaining && S(r, this._result) }, t.prototype._willSettleAt = function (t, e) { var n = this; E(t, void 0, function (t) { return n._settledAt(et, e, t) }, function (t) { return n._settledAt(nt, e, t) }) }, t }(), ut = function () { function t(e) { this[$] = O(), this._result = this._state = void 0, this._subscribers = [], p !== e && ("function" != typeof e && K(), this instanceof t ? C(this, e) : L()) } return t.prototype["catch"] = function (t) { return this.then(null, t) }, t.prototype["finally"] = function (t) { var e = this, n = e.constructor; return e.then(function (e) { return n.resolve(t()).then(function () { return e }) }, function (e) { return n.resolve(t()).then(function () { throw e }) }) }, t }(); return ut.prototype.then = l, ut.all = q, ut.race = F, ut.resolve = h, ut.reject = D, ut._setScheduler = n, ut._setAsap = r, ut._asap = H, ut.polyfill = N, ut.Promise = ut, ut });
-    }
-
     if (!window.fetch) {
         (function (self) {
             // polyfill https://github.com/github/fetch/
@@ -257,10 +257,14 @@ TC.tool.Proxification = function (proxy, options) {
                     init = init || {};
                     var xhr = new XMLHttpRequest();
                     xhr.onload = function () {
-                        var options = { status: xhr.status, statusText: xhr.statusText, headers: parseHeaders(xhr.getAllResponseHeaders() || '') }
-                        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
-                        var body = 'response' in xhr ? xhr.response : xhr.responseText
-                        resolve(new Response(body, options))
+                        if (xhr.status === 0) {
+                            return new Response(null, { status: xhr.status });
+                        } else {
+                            var options = { status: xhr.status, statusText: xhr.statusText, headers: parseHeaders(xhr.getAllResponseHeaders() || '') }
+                            options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+                            var body = 'response' in xhr ? xhr.response : xhr.responseText
+                            resolve(new Response(body, options))
+                        }
                     }
                     xhr.onerror = function () { reject(new TypeError('Network request failed')) }
                     xhr.ontimeout = function () { reject(new TypeError('Network request failed')) }
@@ -272,27 +276,43 @@ TC.tool.Proxification = function (proxy, options) {
                 })
             }
             self.fetch.polyfill = !0
-        })(typeof self !== 'undefined' ? self : this);
+        })(this);
     }
 
     var srcToURL = function (src) {
-        if (window.URL && !(src.indexOf('//') == 0)) {
-            try {
-                var url = new URL(src);
-                if (url.origin) {
-                    return url;
-                }
-            }
-            catch (error) {
-                // no hacemos nada y seguimos adelante
-            }
-        }
+        // GLS: 30/01/2019 Se carga un polyfill que no implementa correctamente el origin
+        //if (window.URL && !(src.indexOf('//') == 0)) {
+        //    try {
+        //        var url = new URL(src);
+        //        if (url.origin && url.origin.length > 0) {
+        //            return url;
+        //        }
+        //    }
+        //    catch (error) {
+        //        // no hacemos nada y seguimos adelante
+        //    }
+        //}
 
         var anchor = document.createElement('a');
         anchor.href = src;
 
         if (!anchor.origin) {
-            anchor.origin = (anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol) + "//" + anchor.hostname + (anchor.port && (src.indexOf(anchor.port) > -1) ? ':' + anchor.port : '');
+
+            if (!(anchor.protocol && anchor.hostname)) {
+                var urlParts = /^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/.exec(anchor.href);
+
+                anchor.protocol = urlParts[1];
+
+                if (urlParts[4].indexOf(':') > -1) {
+                    var hostname = urlParts[4].split(':');
+                    anchor.hostname = hostname[0];
+                    anchor.port = hostname[1];
+                } else {
+                    anchor.hostname = urlParts[4];
+                }
+            }
+
+            anchor.origin = (anchor.protocol.length === 0 ? window.location.protocol : anchor.protocol) + "//" + anchor.hostname + (anchor.port && src.indexOf(anchor.port) > -1 ? ':' + anchor.port : '');
         }
 
         return anchor;
@@ -373,30 +393,6 @@ TC.tool.Proxification = function (proxy, options) {
                     };
                 }
             });
-        },
-        addHost: function (host, action) {
-
-            if (this.database) {
-                var transaction = this.database.transaction(this.objectStoreName, "readwrite");
-                try {
-                    // the transaction could abort because of a QuotaExceededError error
-                    var guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0, v = c == 'x' ? r : r & 0x3 | 0x8; return v.toString(16); });
-                    transaction.objectStore(this.objectStoreName).add({ id: guid, host: host, action: action });
-                }
-                catch (ex) {
-                    console.log(ex);
-                }
-
-            }
-            else {
-                console.log("addHost no database");
-            }
-        },
-        removeHost: function (host) {
-            this.getHost(host).then(function (host) {
-                var transaction = this.database.transaction(this.objectStoreName, "readwrite");
-                transaction.objectStore(this.objectStoreName).delete(host.data.id);
-            });
         }
     };
 
@@ -461,7 +457,7 @@ TC.tool.Proxification = function (proxy, options) {
             var host = toHost(src);
 
             for (var i = 0; i < this.getList(options).length; i++) {
-                if (this.getList(options)[i].key && options.exportable == this.getList(options)[i].exportable) {
+                if (this.getList(options)[i].key === host && options.exportable == this.getList(options)[i].exportable) {
                     this.getList(options).splice(i, 1);
                     break;
                 }
@@ -473,6 +469,9 @@ TC.tool.Proxification = function (proxy, options) {
 
             var host = toHost(src);
             var cache = this.get(host, options);
+            if (!cache) {
+                return Promise.reject(new Error('Cache null'));
+            }
             return cache._actionPromise;
         };
     };
@@ -486,6 +485,18 @@ TC.tool.Proxification = function (proxy, options) {
             if (navigator.serviceWorker.controller && navigator.serviceWorker.controller.state === "activated") {
                 return true;
             } else {
+                navigator.serviceWorker.ready
+                    .then(function (registration) {
+                        if (registration.active) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })
+                    .catch(() => {
+                        console.log('Capturamos error que se produce en FF por configuración del navegador.');
+                    });
+
                 return false;
             }
         } else {
@@ -510,6 +521,7 @@ TC.tool.Proxification = function (proxy, options) {
     };
 
     toolProto._isSameProtocol = function (uri) {
+        const self = this;
         var protocolRegex = /^(https?:\/\/)/i;
         var uriProtocol = uri.match(protocolRegex);
         if (uriProtocol && uriProtocol.length > 1) {
@@ -523,10 +535,17 @@ TC.tool.Proxification = function (proxy, options) {
     };
 
     toolProto._isSecureURL = function (url) {
-        //sino empieza por http ni por https la consideramos segura
-        if (!/^(f|ht)tps?:\/\//i.test(url))
+        //si no empieza por http ni por https la consideramos segura
+        if (!/^(f|ht)tps?:\/\//i.test(url)) {
             return true;
-        return (/^(f|ht)tps:\/\//i.test(url));
+        }
+        return /^(f|ht)tps:\/\//i.test(url);
+    };
+
+    const ResponseError = function (status, text, url) {
+        this.status = status;
+        this.text = text;
+        this.url = url;
     };
 
     var changeProtocol = function (src, newProtocol) {
@@ -575,6 +594,8 @@ TC.tool.Proxification = function (proxy, options) {
     var _byProxy = function (src, options, resolve, reject) {
         var self = this;
 
+        options.sameOrigin = self._isSameOrigin(self._actionProxy.call(self, src));
+
         self._image.getImgTagByAction(src, options, self._actionProxy.bind(self)).then(function (img) {
             resolve(img, self._actionProxy);
         }, function (error) {
@@ -605,16 +626,21 @@ TC.tool.Proxification = function (proxy, options) {
             CORS: 'cors',
             PROTOCOL: 'protocol',
             NOTFOUNDED: 'notfounded',
-            UNEXPECTED: 'unexpected'
+            UNEXPECTED: 'unexpected',
+            OFFLINE: 'offline'
         },
         checkHttpStatus: function (src) {
             const self = this;
+            if (!navigator.onLine) {
+                return Promise.reject({ statusText: self.ErrorType.OFFLINE });
+            }
+
             return fetch(src, { credentials: 'omit' })
                 .then(function (response) {
                     return { status: response.status, statusText: response.statusText };
                 })
                 .catch(function (error) {
-                    return self.ErrorType.UNEXPECTED;
+                    return { statusText: self.ErrorType.UNEXPECTED };
                 });
         },
         getImgTag: function (src, options) {
@@ -623,9 +649,9 @@ TC.tool.Proxification = function (proxy, options) {
 
                 var img = document.createElement("img");
 
-                if (options.exportable) {
+                if (options.exportable && !options.sameOrigin) {
                     img.dataset.checkCORSHeaders = true;
-                    img.crossOrigin = "anonymous";
+                    img.crossOrigin = typeof options.exportable === 'string' ? options.exportable : 'anonymous';
                 }
 
                 img.onload = function () {
@@ -634,7 +660,7 @@ TC.tool.Proxification = function (proxy, options) {
 
                     img.onload = img.onerror = undefined;
 
-                    if (options.exportable) {
+                    if (options.exportable && !options.sameOrigin) {
                         var createCanvas = function (img) {
                             var canvas = document.createElement('CANVAS');
                             var ctx = canvas.getContext('2d');
@@ -647,7 +673,7 @@ TC.tool.Proxification = function (proxy, options) {
 
                         try {
                             var canvas = createCanvas(img);
-                            result = canvas.toDataURL("image/png");
+                            const result = canvas.toDataURL("image/png");
                             resolve(img);
                         } catch (e) {
                             if (e.code === 18) { // GLS: 18 - SECURITY_ERR
@@ -719,9 +745,13 @@ TC.tool.Proxification = function (proxy, options) {
                 var self = this;
 
                 var img = document.createElement("img");
-                if (options.exportable) {
-                    img.crossOrigin = "anonymous";
+
+                if (!options.sameOrigin) {
+                    if (options.exportable) {
+                        img.crossOrigin = "anonymous";
+                    }
                 }
+
                 img.onload = function () {
                     img.onload = img.onerror = undefined;
                     resolve(img);
@@ -749,17 +779,19 @@ TC.tool.Proxification = function (proxy, options) {
 
     toolProto._fetch = {
         Headers: {
-            CONTENTTYPE: "content-type"
+            CONTENTTYPE: "content-type",
+            CONTENTDISPOSITION:"content-disposition"
         },
         ErrorType: {
             CORS: 'cors',
+            PROTOCOL: 'protocol',
             NOTFOUNDED: 'Not_Founded',
             UNEXPECTED: 'Un_Expected',
             UNEXPECTEDCONTENTTYPE: 'Un_Expected_ContentType'
         },
         validateResponse: function (response) {
             if (!response.ok) { // status no está en el rango 200-299
-                throw Error(response.statusText);
+                throw new ResponseError(response.status, response.statusText, response.url);
             }
             return response;
         },
@@ -790,12 +822,13 @@ TC.tool.Proxification = function (proxy, options) {
 
             if (self.cacheHost.is(src, options)) {
                 self.cacheHost.getAction(src, options).then(function (cache) {
+                    options.sameOrigin = self._isSameOrigin(cache.action(src));
                     self._image.getImgTagByAction(src, options, cache.action).then(function (img) {
                         resolve(img);
                     }, function (error) {
                         reject(error);
                     });
-                });
+                }).catch(error => reject(error));
             } else {
                 var cache = self.cacheHost.addKey(src, options);
                 cache._actionPromise = new Promise(function (resolveActionPromise, rejectActionPromise) {
@@ -810,6 +843,8 @@ TC.tool.Proxification = function (proxy, options) {
                     };
 
                     const _reject = function (error) {
+                        rejectActionPromise(error);
+
                         if (error.status == 200) {
                             //options.useCredentials = true;
 
@@ -826,12 +861,13 @@ TC.tool.Proxification = function (proxy, options) {
 
                     const makeRequest = function (options) {
                         if (self._isSameOrigin(src)) {
+                            options.sameOrigin = true;
                             self._image.getImgTag(src, options).then(function (img) {
                                 _caching(img, self._actionDirect);
                             }, _reject);
                         } else {
                             if (!self._isSecureURL(src)) {
-                                if (self._isServiceWorker() || (self._isSecureURL(self._location) && self.preventMixedContent)) {
+                                if (self._isServiceWorker() || self._isSecureURL(self._location) && self.preventMixedContent) {
                                     // HTTP (sin intento) -> HTTPS -> (HTTP)Proxy
                                     _currentHTTP.call(self, src, options, _caching, _reject);
                                 } else {
@@ -839,13 +875,13 @@ TC.tool.Proxification = function (proxy, options) {
                                     self._image.getImgTag(src, options).then(function (img) {
                                         _caching(img, self._actionDirect);
                                     }, function (error) {
-                                        if ((options.exportable && error === self._image.ErrorType.CORS) || !self._isSecureURL(self._location)) {
+                                        if (options.exportable && error === self._image.ErrorType.CORS || !self._isSecureURL(self._location)) {
                                             // Si la imagen debe ser exportable y en la solicitud por HTTP tenemos error de CORS, deducimos que por HTTPS pasará lo mismo
                                             if (error === self._image.ErrorType.PROTOCOL && options.ignoreProxification) {
                                                 _reject(error);
                                             } else {
                                                 _byProxy.call(self, src, options, _caching, _reject);
-                                            }                                            
+                                            }
                                         } else {
                                             _currentHTTP.call(self, src, options, _caching, _reject);
                                         }
@@ -857,13 +893,13 @@ TC.tool.Proxification = function (proxy, options) {
                                 self._image.getImgTag(src, options).then(function (img) {
                                     _caching(img, self._actionDirect);
                                 }, function (error) {
-                                    if ((options.exportable && error === self._image.ErrorType.CORS) || self._isServiceWorker() || (self._isSecureURL(self._location) && self.preventMixedContent)) {
+                                    if (options.exportable && error === self._image.ErrorType.CORS || self._isServiceWorker() || self._isSecureURL(self._location) && self.preventMixedContent) {
                                         // Si la imagen debe ser exportable y en la solicitud por HTTPS tenemos error de CORS, deducimos que por HTTP pasará lo mismo
                                         if (error === self._image.ErrorType.PROTOCOL && options.ignoreProxification) {
                                             _reject(error);
                                         } else {
                                             _byProxy.call(self, src, options, _caching, _reject);
-                                        }                                        
+                                        }
                                     } else {
                                         _currentHTTPS.call(self, src, options, _caching, _reject);
                                     }
@@ -875,7 +911,7 @@ TC.tool.Proxification = function (proxy, options) {
                     makeRequest(options);
                 });
             }
-        });
+        });        
     };
 
     toolProto.fetchRetry = function (url, options, n) {
@@ -906,12 +942,6 @@ TC.tool.Proxification = function (proxy, options) {
                 })(), formData: 'FormData' in self, arrayBuffer: 'ArrayBuffer' in self
             }
 
-            if (support.arrayBuffer) {
-                var viewClasses = ['[object Int8Array]', '[object Uint8Array]', '[object Uint8ClampedArray]', '[object Int16Array]', '[object Uint16Array]', '[object Int32Array]', '[object Uint32Array]', '[object Float32Array]', '[object Float64Array]']
-                var isDataView = function (obj) { return obj && DataView.prototype.isPrototypeOf(obj) }
-                var isArrayBufferView = ArrayBuffer.isView || function (obj) { return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1 }
-            }
-
             function parseHeaders(rawHeaders) {
                 var headers = new Headers()
                 var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ')
@@ -938,8 +968,12 @@ TC.tool.Proxification = function (proxy, options) {
             xhr.onerror = function () { reject(new TypeError('Network request failed')) };
             xhr.ontimeout = function () { reject(new TypeError('Network request failed')) };
             xhr.open(request.method, request.url, false);
-            if (request.credentials === 'include') { xhr.withCredentials = !options.sync } else if (request.credentials === 'omit') { xhr.withCredentials = !1 };
-            if (!options.sync && ('responseType' in xhr && support.blob)) { xhr.responseType = 'blob' };
+            if (request.credentials === 'include') {
+                xhr.withCredentials = !options.sync
+            } else if (request.credentials === 'omit') {
+                xhr.withCredentials = !1
+            }
+            if (!options.sync && ('responseType' in xhr && support.blob)) { xhr.responseType = 'blob' }
             request.headers.forEach(function (value, name) { xhr.setRequestHeader(name, value) });
             xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
         })
@@ -1033,7 +1067,8 @@ TC.tool.Proxification = function (proxy, options) {
                     }
 
                     const contentType = response.headers.get(self._fetch.Headers.CONTENTTYPE);
-
+                    if (options.nomanage)
+                        return Promise.resolve(response);
                     //if (!options.responseType) {
                     //    if (contentType) {
                     //        options.responseType = contentType;
@@ -1054,46 +1089,53 @@ TC.tool.Proxification = function (proxy, options) {
                                 The response is always decoded using UTF-8.
                             */
 
-                        return response.blob().then(function (blob) {
-                            const reader = new FileReader();
+                        return response.blob()
+                            .then(function (blob) {
+                                const reader = new FileReader();
 
-                            return new Promise(function (resolve, reject) {
+                                return new Promise(function (resolve, reject) {
 
-                                reader.addEventListener("error", function () {
-                                    reader.abort();
-                                    reject(new DOMException("Problem decoding"));
+                                    reader.addEventListener("error", function () {
+                                        reader.abort();
+                                        reject(new DOMException("Problem decoding"));
+                                    });
+
+                                    reader.addEventListener("loadend", function () {
+                                        resolve(reader.result);
+                                    });
+
+                                    reader.readAsText(blob, charset);
                                 });
-
-                                reader.addEventListener("loadend", function () {
-                                    resolve(reader.result);
-                                });
-
-                                reader.readAsText(blob, charset);
-                            });
-                        });
+                            }).catch(function (error) { throw error; });
                     };
 
+                    let hasCharset;
                     switch (true) {
                         case options.responseType.indexOf('xml') > -1:
                         case options.responseType.indexOf('text/xml') > -1:
                         case options.responseType.indexOf(TC.Consts.mimeType.XML) > -1:
-                            var hasCharset = /charset=([^;]*)/i.exec(contentType);
+                            hasCharset = /charset=([^;]*)/i.exec(contentType);
                             if (hasCharset && hasCharset.length === 2 && hasCharset[1] !== "UTF-8") {
                                 return responseWithCharsetToDecodedString(hasCharset[1]).then(function (text) {
                                     return (new window.DOMParser()).parseFromString(text, "text/xml");
-                                });
+                                }).catch(function (error) { throw error; });
                             } else {
                                 return response.text().then(function (data) {
                                     return (new window.DOMParser()).parseFromString(data, "text/xml");
-                                });
+                                }).catch(function (error) { throw error; });
                             }
-                        case options.responseType.indexOf('arraybuffer') > -1:
+                        case options.responseType.indexOf('arraybuffer') > -1:                        
                             return response.arrayBuffer();
                         case options.responseType.indexOf('image') > -1:
-                        case options.responseType.indexOf('blob') > -1:
+                        case options.responseType.indexOf('blob') > -1:                        
+                        case options.responseType.indexOf('application/zip') > -1:
+                        case options.responseType.indexOf('application/x-zip-compressed') > -1:
+                        case options.responseType.indexOf('application/vnd.google-earth.kmz') > -1:
+                        case options.responseType.indexOf('application/octet-stream') > -1:
+                        case options.responseType.indexOf('application/geopackage+sqlite3') > -1:
                             return response.blob().then(function (blob) {
                                 return new Blob([blob], { type: contentType });
-                            });
+                            }).catch(function (error) { throw error; });
                         case options.responseType.indexOf('document') > -1:
                             throw new DeveloperError('Unhandled responseType: ' + options.responseType);
                         case options.responseType.indexOf(TC.Consts.mimeType.JSON) > -1:
@@ -1101,7 +1143,7 @@ TC.tool.Proxification = function (proxy, options) {
                         case options.responseType == '':
                         case options.responseType.indexOf('text') > -1:
                         default:
-                            var hasCharset = /charset=([^;]*)/i.exec(contentType);
+                            hasCharset = /charset=([^;]*)/i.exec(contentType);
                             if (hasCharset && hasCharset.length === 2 && hasCharset[1] !== "UTF-8") {
                                 return responseWithCharsetToDecodedString(hasCharset[1]).then(function (text) {
                                     if (options.responseType == '') {
@@ -1109,7 +1151,7 @@ TC.tool.Proxification = function (proxy, options) {
                                     } else {
                                         return text;
                                     }
-                                });
+                                }).catch(function (error) { throw error; });
                             } else {
                                 return response.text().then(function (text) {
                                     if (options.responseType == '') {
@@ -1117,14 +1159,15 @@ TC.tool.Proxification = function (proxy, options) {
                                     } else {
                                         return text;
                                     }
-                                });
+                                }).catch(function (error) { throw error; });
                             }
                     }
                 })
                 .catch(function (error) {
-                    if (actions.length === 1) {
+                    //URI:Si es error 500 es inutil hacer mas llamadas o proxificar si no lo estaba ya.
+                    if (actions.length === 1 || (error.status && error.status===500)) {
                         console.log('request failed', error);
-                        return Promise.reject(new Error(error));
+                        return Promise.reject(error);
                     }
 
                     actions.shift();
@@ -1133,10 +1176,16 @@ TC.tool.Proxification = function (proxy, options) {
         };
 
         if (self.cacheHost.is(url, options)) {
-            return self.cacheHost.getAction(url, options).then(function (cache) {
-                return _makeRequest(url, options, [cache.action]);
-            }).catch(function (error) {
-                return Promise.reject(new Error(error));
+            return new Promise(function (resolve, reject) {
+                self.cacheHost.getAction(url, options).then(function (cache) {
+                    resolve(_makeRequest(url, options, [cache.action]));
+                }).catch(function (error) {
+                    if (!error.status || error.status >= 400) {
+                        reject(error);
+                    } else {
+                        resolve(self.fetch(url, options));
+                    }
+                });
             });
         } else {
             var cache = self.cacheHost.addKey(url, options);
@@ -1145,14 +1194,12 @@ TC.tool.Proxification = function (proxy, options) {
 
                     url = srcToURL(url).href;
 
-                    const fnResolve = function (data) {
-                        //self.cacheHost.hostCacheService.addHost(cache.key, cache.action);
+                    const fnResolve = function (data) {                        
                         resolveActionPromise({ action: cache.action });
                         resolve(data);
                     };
 
-                    const fnReject = function (error) {
-                        //self.cacheHost.hostCacheService.removeHost(cache.key);
+                    const fnReject = function (error) {                        
                         self.cacheHost.removeKey(url, options);
 
                         rejectActionPromise(error);
@@ -1167,21 +1214,57 @@ TC.tool.Proxification = function (proxy, options) {
                                 // HTTP (sin intento) -> HTTPS -> (HTTP)Proxy
                                 _makeRequest(url, options, [self._actionHTTPS, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             } else {
-                                // HTTP -> HTTPS (si el visor no es HTTP) -> (HTTP)Proxy
-                                _makeRequest(url, options, self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTPS, self._actionProxy] : [self._actionDirect, self._actionProxy], cache).then(fnResolve).catch(fnReject);
+                                // HTTP (si el visor no es HTTPS) -> HTTPS -> (HTTP)Proxy
+                                _makeRequest(url, options, !self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTPS, self._actionProxy] : [self._actionHTTPS, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             }
                         } else {
                             if (self._isServiceWorker()) {
                                 // HTTPS -> (HTTPS)Proxy
                                 _makeRequest(url, options, [self._actionDirect, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             } else {
-                                // HTTPS -> HTTP -> (HTTPS)Proxy
-                                _makeRequest(url, options, [self._actionDirect, self._actionHTTP, self._actionProxy], cache).then(fnResolve).catch(fnReject);
+                                // HTTPS -> HTTP (si el visor no es HTTPS) -> (HTTPS)Proxy
+                                _makeRequest(url, options, !self._isSecureURL(self._location) ? [self._actionDirect, self._actionHTTP, self._actionProxy] : [self._actionDirect, self._actionProxy], cache).then(fnResolve).catch(fnReject);
                             }
                         }
+                    }
+                });
+                cache._actionPromise.catch(function (error) {
+                    if (!error.status || error.status >= 400) {
+                        reject(error);
+                    } else {
+                        resolve(self.fetch(url, options));
                     }
                 });
             });
         }
     };
+
+    toolProto.fetchFile = function (url, options) {
+        const self = this;
+
+        options = options || {};
+        options.nomanage = true;
+        return new Promise(function (resolve, reject) {
+            self.fetch(url, options).then(function (response) {
+                const contentDisposition = response.headers.get(self._fetch.Headers.CONTENTDISPOSITION);
+                var filename = new RegExp(/[\w|\-|\.]+.\w{1,}$/gi).exec(url)[0];
+                if (contentDisposition && /(attachment);([^;]*)/gi.test(contentDisposition)) {
+                    try {
+                        filename = /filename\*?=\"?([\w|\-|\.]*\'\')?(.*\.\w*)\"?/gi.exec(contentDisposition)[2];
+                    } catch (ex) {
+                        try {
+                            filename = contentDisposition.substring((contentDisposition.lastIndexOf("'") || contentDisposition.indexOf("=")) + 1);
+                        } catch (ex2) { }
+                    }
+                }
+                response.blob().then(function (blob) {
+                    resolve(new File([blob], filename, { type: response.headers.get(self._fetch.Headers.CONTENTTYPE) }));
+                });
+
+            }).catch(reject);
+        });
+    };
 })();
+
+var Proxification = TC.tool.Proxification;
+export default Proxification;

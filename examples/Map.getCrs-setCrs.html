@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.getCrs y SITNA.Map.setCrs</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .div-select {
+            top: 135px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getCrs">SITNA.Map.getCrs</a> y 
+        <a href="../doc/SITNA.Map.html#setCrs">SITNA.Map.setCrs</a>.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions div-select">
+        <p>CRS actual: <span id="crs-display"></span></p>
+        <p>            
+            <select id="crs-selector" onchange="applyCrs()">
+                <option value="">Seleccione CRS...</option>
+                <option value="EPSG:3857">EPSG:3857</option>
+                <option value="EPSG:4326">EPSG:4326</option>
+                <option value="EPSG:25829">EPSG:25829</option>
+                <option value="EPSG:25830">EPSG:25830</option>
+                <option value="EPSG:25831">EPSG:25831</option>
+            </select>
+        </p>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        map.loaded(function () {
+            displayCrs();
+        });
+
+        // Obtiene el CRS del mapa, lo muestra y restablece el selector
+        function displayCrs() {
+            document.getElementById("crs-display").innerHTML = map.getCrs();
+            document.getElementById("crs-selector").value = "";
+        };
+
+        // Establece CRS del mapa
+        function applyCrs() {
+            const crs = document.getElementById("crs-selector").value;
+            map.setCrs(crs, displayCrs);
+        };
+    </script>
+
+</body>
+</html>

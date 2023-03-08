@@ -1,0 +1,25 @@
+{{#if title}}<h2>{{i18n "addMaps"}}</h2>{{/if}}
+<div>
+    <div class="tc-group tc-ctl-xwms-cnt">        
+        <select class="tc-combo" title="WMS (Web Map Service)">
+            <option value="">WMS</option>
+            {{#each suggestions}}
+			    {{#if group}}
+                <optgroup label="{{group}}">
+			    {{/if}}
+                {{#each items}}
+                    <option value="{{url}}">{{name}}</option>
+                {{/each}}
+			    {{#if group}}	
+                </optgroup>
+			    {{/if}}
+            {{/each}}
+        </select>
+        <input type="url" class="tc-textbox" placeholder="{{i18n "writeAddressOrSelect"}}" />
+    </div>
+
+
+    <div class="tc-group tc-group tc-ctl-xwms-cnt" style="text-align:right;">
+        <button type="button" class="tc-button tc-icon-button" title="{{i18n "addService.title"}}" name="agregar">{{i18n "addService"}}</button>
+    </div>
+</div>

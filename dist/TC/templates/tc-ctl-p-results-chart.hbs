@@ -1,0 +1,41 @@
+<div class="tc-track-chart">
+    {{#if msg}}
+    {{msg}}
+    {{else}}
+    {{#if secondChart}}
+    <div class="tc-track-chart-elevation-minmax">
+        <div class="tc-track-chart-minmax">
+            <span>
+                Min,Max:&nbsp;
+            </span>
+            <div>
+                <span>
+                    {{min}}, {{max}}
+                </span>
+                <span>
+                    {{secondChart.min}}, {{secondChart.max}}&nbsp;
+                </span>
+            </div>
+        </div>
+        <div class="tc-track-chart-elevationGain">
+            <span>
+                {{i18n "geo.trk.chart.elevationGain"}}:&nbsp;
+            </span>
+            <div>
+                <span>
+                    +{{upHill}} m, -{{downHill}} m
+                </span>
+                <span>
+                    +{{secondChart.upHill}} m, -{{secondChart.downHill}} m
+                </span>
+            </div>
+        </div>
+    </div>
+        {{else}}
+        <span class="tc-track-chart-elevationGain">
+            {{i18n "geo.trk.chart.elevationGain"}}: +{{upHill}} m, -{{downHill}} m
+        </span>
+        {{/if}}
+        <div class="tc-chart"></div>
+        {{/if}}
+    </div>

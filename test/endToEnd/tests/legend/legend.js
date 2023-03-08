@@ -42,7 +42,7 @@ exports.testLegend = function (test) {
         });
 
     // Pinchamos en "Catastro"
-    const cadasterNodeSelector = '.tc-ctl-lcat-node[data-tc-layer-name="IDENA:catastro"] > span';
+    const cadasterNodeSelector = '.tc-ctl-lcat-node[data-layer-name="IDENA:catastro"] > span';
     casper.waitForSelector(cadasterNodeSelector,
         function success() {
             //test.assertExists(cadasterNodeSelector);
@@ -53,7 +53,7 @@ exports.testLegend = function (test) {
         });
 
     // Pinchamos en "Catastro Minero"
-    const mineryCadasterNodeSelector = '.tc-ctl-lcat-node[data-tc-layer-name="IDENA:catastroMinero"] > span';
+    const mineryCadasterNodeSelector = '.tc-ctl-lcat-node[data-layer-name="IDENA:catastroMinero"] > span';
     casper.waitForSelector(mineryCadasterNodeSelector,
         function success() {
             //test.assertExists(mineryCadasterNodeSelector);
@@ -80,7 +80,7 @@ exports.testLegend = function (test) {
     casper.waitForSelector(legendNodesSelector,
         function success() {
             //test.assertExists(legendNodesSelector);
-            layerIdsBefore = this.getElementsAttribute(legendNodesSelector, 'data-tc-layer-uid');
+            layerIdsBefore = this.getElementsAttribute(legendNodesSelector, 'data-layer-uid');
         },
         function fail() {
             test.assertExists(legendNodesSelector);
@@ -98,12 +98,12 @@ exports.testLegend = function (test) {
             this.wait(10000, function () {
                 this.captureSelector('images/toc2.png', '#tools-panel');
                 // Esperamos a que la leyenda cambie
-                const firstLegendNodeSelector = legendNodesSelector + '[data-tc-layer-uid=' + layerIdsBefore[1] + ']:first-child';
+                const firstLegendNodeSelector = legendNodesSelector + '[data-layer-uid=' + layerIdsBefore[1] + ']:first-child';
                 casper.waitForSelector(firstLegendNodeSelector,
                     function success() {
                         console.log("before: ", layerIdsBefore)
                         //test.assertExists(firstLegendNodeSelector);
-                        layerIdsAfter = this.getElementsAttribute(legendNodesSelector, 'data-tc-layer-uid');
+                        layerIdsAfter = this.getElementsAttribute(legendNodesSelector, 'data-layer-uid');
                         console.log("after: ", layerIdsAfter)
                         test.assert(layerIdsBefore[0] === layerIdsAfter[1] && layerIdsBefore[1] === layerIdsAfter[0],
                             'Los ID de capa de los elementos de la leyenda han cambiado de orden');

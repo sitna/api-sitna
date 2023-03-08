@@ -1,0 +1,13 @@
+<h2>{@i18n $key="measure"/}</h2>
+<div class="tc-ctl-meas-select">
+    <label class="tc-ctl-meas-btn-len"><input type="radio" name="{controlId}-mode" value="polyline" /><span>{@i18n $key="length"/}</span></label>
+    <label class="tc-ctl-meas-btn-area"><input type="radio" name="{controlId}-mode" value="polygon" /><span>{@i18n $key="areaAndPerimeter"/}</span></label>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
+    <div class="tc-ctl-meas-line"></div>
+    <div class="tc-ctl-meas-txt">{@i18n $key="length"/}: <span class="tc-ctl-meas-val-len"></span></div>
+</div>
+<div class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
+    <div class="tc-ctl-meas-polygon"></div>
+    <div class="tc-ctl-meas-txt">{@i18n $key="area"/}: <span class="tc-ctl-meas-val-area"></span>, {@i18n $key="perimeter"/}: <span class="tc-ctl-meas-val-peri"></span></div>
+</div>

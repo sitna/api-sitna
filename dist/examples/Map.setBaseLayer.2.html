@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <title>SITNA - Ejemplo de SITNA.Map.setBaseLayer</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#setBaseLayer">SITNA.Map.setBaseLayer</a>.</p>
+        <p>Añadir una capa nueva y establecerla como mapa de fondo.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+	
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa con opciones por defecto.
+        var map = new SITNA.Map("mapa");
+        // Cuando el mapa esté cargado, añadir la ortofoto de 1956/1957 como mapa de fondo y establecerla como mapa de fondo visible.
+        map.loaded(function () {
+            map.addLayer({
+                id: "orto_56_57",
+                title: "Ortofoto de 1956/1957",
+                url: "http://idena.navarra.es/ogc/wms",
+                layerNames: "IDENA:ortofoto_10000_1957",
+                isBase: true
+            }, function () {
+                map.setBaseLayer("orto_56_57");
+            });
+        });
+    </script>
+	
+</body>
+</html>

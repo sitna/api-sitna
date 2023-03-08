@@ -1,0 +1,1008 @@
+<!-- start:readme.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+		<title>Cómo añadir multimedia y páginas web incrustadas</title>
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
+		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+			<link type="text/css" rel="stylesheet" href="css/sitnaCSS.css">
+			<style>
+				.page-header,
+				pre.code-toolbar > .toolbar:hover {
+					background-color: #cc0000;
+				}
+				.callout-primary,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus,
+				pre.code-toolbar > .toolbar:hover {
+					border-left-color: #cc0000;
+				}
+				pre.code-toolbar > .toolbar:hover {
+					border-bottom-color: #cc0000;
+				}
+				.callout-primary h5,
+				.symbol-title.collapsible-symbol .toggle-icon,
+				.breadcrumb li a,
+				.toc .nav > li > a:hover,
+				.toc .nav > li > a:focus,
+				.toc .nav > li.active > a,
+				.toc .nav > li.active > a:hover,
+				.toc .nav > li.active > a:focus {
+					color: #cc0000;
+				}
+			</style>
+		<script type="text/javascript">
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"DD/MM/YYYY","systemName":"API SITNA","systemSummary":"API JavaScript para la visualización de datos georreferenciados en aplicaciones web","systemLogo":"img/sitna-logo.png","systemColor":"#cc0000","navMembers":[{"kind":"class","title":"Clases"},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Tipos globales"},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Espacios de nombres"},{"kind":"tutorial","title":"Documentación"}],"footer":"","copyright":"© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.","linenums":true,"collapseSymbols":false,"inverseNav":false,"inlineNav":false,"outputSourceFiles":false,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":null,"methodHeadingReturns":true,"sort":"longname, version, since","search":true,"favicon":null,"stylesheets":["css/sitnaCSS.css"],"scripts":[],"monospaceLinks":false,"cleverLinks":true,"systemVersion":"v3.0.0"};
+			window.DOCLET_TOC_ENABLED = true;
+			window.DOCLET_AFILTER_ENABLED = false;
+		</script>
+</head>
+<body>
+	<!-- start:navbar.hbs -->
+	<header class="navbar navbar-default navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand branding-logo" href="index.html" style="background-image: url(img/sitna-logo.png);">
+					API SITNA
+				</a>
+	            <a href="tutorial-4-changes.html" class="navbar-version">v3.0.0</a>
+				<!-- displayed on small devices -->
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="topNavigation">
+				<ul class="nav navbar-nav">
+								<li class="dropdown">
+									<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Tipos globales<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="global.html#CadastralSearchOptions">CadastralSearchOptions</a></li>
+											<li><a href="global.html#CadastralSearchOptionsExt">CadastralSearchOptionsExt</a></li>
+											<li><a href="global.html#ClickOptions">ClickOptions</a></li>
+											<li><a href="global.html#ClusterOptions">ClusterOptions</a></li>
+											<li><a href="global.html#ClusterStyleOptions">ClusterStyleOptions</a></li>
+											<li><a href="global.html#ControlOptions">ControlOptions</a></li>
+											<li><a href="global.html#CoordinatesOptions">CoordinatesOptions</a></li>
+											<li><a href="global.html#DataLoaderOptions">DataLoaderOptions</a></li>
+											<li><a href="global.html#DrawMeasureModifyOptions">DrawMeasureModifyOptions</a></li>
+											<li><a href="global.html#ElevationOptions">ElevationOptions</a></li>
+											<li><a href="global.html#ElevationServiceOptions">ElevationServiceOptions</a></li>
+											<li><a href="global.html#FeatureInfoOptions">FeatureInfoOptions</a></li>
+											<li><a href="global.html#GeolocationOptions">GeolocationOptions</a></li>
+											<li><a href="global.html#GeometryFeatureInfoOptions">GeometryFeatureInfoOptions</a></li>
+											<li><a href="global.html#HeatmapStyleOptions">HeatmapStyleOptions</a></li>
+											<li><a href="global.html#LayerCatalogOptions">LayerCatalogOptions</a></li>
+											<li><a href="global.html#LayerOptions">LayerOptions</a></li>
+											<li><a href="global.html#LayoutOptions">LayoutOptions</a></li>
+											<li><a href="global.html#LineStyleOptions">LineStyleOptions</a></li>
+											<li><a href="global.html#MapControlOptions">MapControlOptions</a></li>
+											<li><a href="global.html#MapOptions">MapOptions</a></li>
+											<li><a href="global.html#MapViewOptions">MapViewOptions</a></li>
+											<li><a href="global.html#MarkerOptions">MarkerOptions</a></li>
+											<li><a href="global.html#MarkerStyleOptions">MarkerStyleOptions</a></li>
+											<li><a href="global.html#MultiFeatureInfoModeOptions">MultiFeatureInfoModeOptions</a></li>
+											<li><a href="global.html#MultiFeatureInfoOptions">MultiFeatureInfoOptions</a></li>
+											<li><a href="global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a></li>
+											<li><a href="global.html#OfflineMapMakerOptions">OfflineMapMakerOptions</a></li>
+											<li><a href="global.html#OverviewMapOptions">OverviewMapOptions</a></li>
+											<li><a href="global.html#PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a></li>
+											<li><a href="global.html#PlaceNameSearchOptions">PlaceNameSearchOptions</a></li>
+											<li><a href="global.html#PointStyleOptions">PointStyleOptions</a></li>
+											<li><a href="global.html#PolygonStyleOptions">PolygonStyleOptions</a></li>
+											<li><a href="global.html#PostalAddressSearchOptions">PostalAddressSearchOptions</a></li>
+											<li><a href="global.html#PrintMapLegendOptions">PrintMapLegendOptions</a></li>
+											<li><a href="global.html#PrintMapOptions">PrintMapOptions</a></li>
+											<li><a href="global.html#RoadMilestoneSearchOptions">RoadMilestoneSearchOptions</a></li>
+											<li><a href="global.html#RoadSearchOptions">RoadSearchOptions</a></li>
+											<li><a href="global.html#SearchOptions">SearchOptions</a></li>
+											<li><a href="global.html#SearchQueryPropertyOptions">SearchQueryPropertyOptions</a></li>
+											<li><a href="global.html#SearchResultColor">SearchResultColor</a></li>
+											<li><a href="global.html#SearchResultColorDictionary">SearchResultColorDictionary</a></li>
+											<li><a href="global.html#SearchSuggestionHeaderOptions">SearchSuggestionHeaderOptions</a></li>
+											<li><a href="global.html#StreetSearchOptions">StreetSearchOptions</a></li>
+											<li><a href="global.html#StreetViewOptions">StreetViewOptions</a></li>
+											<li><a href="global.html#StyleOptions">StyleOptions</a></li>
+											<li><a href="global.html#TabContainerOptions">TabContainerOptions</a></li>
+											<li><a href="global.html#ThreeDViewOptions">ThreeDViewOptions</a></li>
+											<li><a href="global.html#UrbanAreaSearchOptions">UrbanAreaSearchOptions</a></li>
+											<li><a href="global.html#WFSEditOptions">WFSEditOptions</a></li>
+											<li><a href="global.html#WFSQueryOptions">WFSQueryOptions</a></li>
+											<li><a href="global.html#WMSGroupOptions">WMSGroupOptions</a></li>
+											<li><a href="global.html#WMSOptions">WMSOptions</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_class.html" class="dropdown-toggle" data-toggle="dropdown">Clases<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.feature.Marker.html">SITNA.feature.Marker</a></li>
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_namespace.html" class="dropdown-toggle" data-toggle="dropdown">Espacios de nombres<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="SITNA.Consts.html">SITNA.Consts</a></li>
+											<li><a href="SITNA.Consts.elevationService.html">SITNA.Consts.elevationService</a></li>
+											<li><a href="SITNA.Consts.format.html">SITNA.Consts.format</a></li>
+											<li><a href="SITNA.Consts.geom.html">SITNA.Consts.geom</a></li>
+											<li><a href="SITNA.Consts.layer.html">SITNA.Consts.layer</a></li>
+											<li><a href="SITNA.Consts.layerType.html">SITNA.Consts.layerType</a></li>
+											<li><a href="SITNA.Consts.mimeType.html">SITNA.Consts.mimeType</a></li>
+											<li><a href="SITNA.feature.html">SITNA.feature</a></li>
+											<li><a href="SITNA.Map.html">SITNA.Map</a></li>
+									</ul>
+								</li>
+								<li class="dropdown">
+									<a href="list_tutorial.html" class="dropdown-toggle" data-toggle="dropdown">Documentación<b class="caret"></b></a>
+									<ul class="dropdown-menu">
+											<li><a href="tutorial-1-configuration.html">Cómo configurar un mapa</a></li>
+											<li><a href="tutorial-2-css.html">Clases CSS para identificar elementos de la API</a></li>
+											<li><a href="tutorial-3-embedding.html">Cómo añadir multimedia y páginas web incrustadas</a></li>
+											<li><a href="tutorial-4-changes.html">Historial de cambios</a></li>
+									</ul>
+								</li>
+	                <li><a href="https://github.com/sitna/api-sitna">Ver en Github</a></li>
+				</ul>
+					<!-- start:lunr-search-navbar.hbs -->
+					<form class="navbar-form navbar-right" role="search">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Buscar" id="lunr-search-input">
+							<div class="input-group-btn">
+								<button class="btn btn-default" id="lunr-search-submit">
+									<i class="glyphicon glyphicon-search"></i>
+								</button>
+							</div>
+						</div>
+					</form>
+					<!-- start:lunr-search-navbar.hbs -->		</div>
+		</div>
+	</header>
+	<!-- end:navbar.hbs -->		<div class="page-header">
+			<div class="container">
+				<span class="kind">tutorial</span>
+				<h1><span class="title">Cómo añadir multimedia y páginas web incrustadas</span></h1>
+			</div>
+		</div>
+	<div class="container content">
+		<div class="row">
+			<div class="col-md-3 side-content">
+				<nav class="toc hidden-print hidden-sm hidden-xs"></nav>
+			</div>
+			<div class="col-md-9 main-content">
+						<ol class="breadcrumb">
+							<li><a href="index.html">Inicio</a></li>
+							<li><a href="list_tutorial.html">Documentación</a></li>
+							<li class="active">Cómo añadir multimedia y páginas web incrustadas</li>
+						</ol>
+		<section class="tutorial-section">
+			<article><p>En la API SITNA, los atributos de una entidad geográfica se muestran en una tabla en dos columnas,
+la primera muestra los nombres de los atributos y la segunda sus valores.</p>
+<p>Pero en el caso de elementos multimedia o direcciones de páginas web, se pueden mostrar de una manera más accesible.
+Para ello se ha definido una convención para marcar los atributos de la entidad geográfica que tienen tipos especiales de dato.
+Estas marcas se pueden añadir al nombre o al valor del atributo.</p>
+<h2>Imágenes</h2>
+<p>Un atributo de entidad geográfica con la marca convenida mostrará en su tabla de atributos la imagen en tamaño reducido.
+Pulsando en la imagen esta se amplía al tamaño original o al máximo disponible en la pantalla si el tamaño original es mayor que
+el tamaño de la pantalla.</p>
+<h3>Alternativa 1: Marca añadida al nombre de atributo</h3>
+<p>A un atributo cuyo valor se desee tratar como la URL de una imagen se le puede asignar un nombre que siga alguno de los siguientes formatos:</p>
+<h4>1.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__image(?:_(\d+|auto)_(\d+|auto))?$/
+</code></pre>
+<img src="img/image_name_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+<th>Anchura de miniatura</th>
+<th>Altura de miniatura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fotografía__image</code></td>
+<td><em>fotografía</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>DSC0001.JPG__image_640_480</code></td>
+<td><em>DSC0001.JPG</em></td>
+<td>640 píxeles</td>
+<td>480 píxeles</td>
+</tr>
+<tr>
+<td><code>Gráfico de barras__image_auto_200</code></td>
+<td><em>Gráfico de barras</em></td>
+<td>no definida</td>
+<td>200 píxeles</td>
+</tr>
+</tbody>
+</table>
+<h4>1.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^image(?:_(\d+|auto)_(\d+|auto))?__(.)+$/
+</code></pre>
+<img src="img/image_name_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+<th>Anchura de miniatura</th>
+<th>Altura de miniatura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image__fotografía</code></td>
+<td><em>fotografía</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>image_640_480__DSC0001.JPG</code></td>
+<td><em>DSC0001.JPG</em></td>
+<td>640 píxeles</td>
+<td>480 píxeles</td>
+</tr>
+<tr>
+<td><code>image_auto_200__Gráfico de barras</code></td>
+<td><em>Gráfico de barras</em></td>
+<td>no definida</td>
+<td>200 píxeles</td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplo</h4>
+<p><a href="../examples/attribute.image.name.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de la imagen.
+        map.addMarker([611061, 4741133], {
+		    showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Imagen adjunta__image_200_auto&quot;: &quot;https://upload.wikimedia.org/wikipedia/commons/9/90/Pamplona_-_Monumento_al_Encierro.jpg&quot;,
+                &quot;Licencia de uso&quot;: &quot;Zarateman, CC0, via Wikimedia Commons&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h3>Alternativa 2: Marca añadida al valor del atributo</h3>
+<p>En un atributo cuyo valor se desee tratar como la URL de una imagen se puede añadir la marca a la URL con alguno de los siguientes formatos:</p>
+<h4>2.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__image(?:_(\d+|auto)_(\d+|auto))?$/
+</code></pre>
+<img src="img/image_value_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de imagen</th>
+<th>Anchura de miniatura</th>
+<th>Altura de miniatura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DSC0001.JPG__image</code></td>
+<td><em>DSC0001.JPG</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>/images/pic01.jpeg__image_200_100</code></td>
+<td><em>/images/pic01.jpeg</em></td>
+<td>200 píxeles</td>
+<td>100 píxeles</td>
+</tr>
+<tr>
+<td><code>https://example.com/logo.png__image_64_auto</code></td>
+<td><em>https://example.com/logo.png</em></td>
+<td>64 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>2.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^image(?:_(\d+|auto)_(\d+|auto))?__(.)+$/
+</code></pre>
+<img src="img/image_value_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de imagen</th>
+<th>Anchura de miniatura</th>
+<th>Altura de miniatura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image__DSC0001.JPG</code></td>
+<td><em>DSC0001.JPG</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>image_200_100__/images/pic01.jpeg</code></td>
+<td><em>/images/pic01.jpeg</em></td>
+<td>200 píxeles</td>
+<td>100 píxeles</td>
+</tr>
+<tr>
+<td><code>image_64_auto__https://example.com/logo.png</code></td>
+<td><em>https://example.com/logo.png</em></td>
+<td>64 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplo</h4>
+<p><a href="../examples/attribute.image.value.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de la imagen.
+        map.addMarker([611061, 4741133], {
+		    showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Imagen adjunta&quot;: &quot;image_200_auto__https://upload.wikimedia.org/wikipedia/commons/9/90/Pamplona_-_Monumento_al_Encierro.jpg&quot;,
+                &quot;Licencia de uso&quot;: &quot;Zarateman, CC0, via Wikimedia Commons&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h2>Vídeos</h2>
+<p>Un atributo de entidad geográfica que tenga la marca convenida mostrará incrustado en su tabla de atributos un reproductor del vídeo.
+El valor del atributo puede ser una URL de un archivo de vídeo o un enlace de Youtube. Se soportan tres tipos de URL de Youtube:</p>
+<ul>
+<li>El que se refiere a un vídeo en una página independiente, con formato <code>https://www.youtube.com/watch?v=XXXXXXXXXXX</code></li>
+<li>El que se utiliza en código HTML de inserción, con formato <code>https://www.youtube.com/embed/XXXXXXXXXXX</code></li>
+<li>El acortado, con formato <code>https://youtu.be/XXXXXXXXXXX</code></li>
+</ul>
+<p>En los tres casos la URL se se transformará al formato de inserción para incrustar el vídeo en la tabla de atributos.</p>
+<h3>Alternativa 1: Marca añadida al nombre de atributo</h3>
+<p>A un atributo cuyo valor se desee tratar como la URL de un vídeo se le puede asignar un nombre con alguno de los siguientes formatos:</p>
+<h4>1.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__video(?:_(\d+|auto)_(\d+|auto))?$/
+</code></pre>
+<img src="img/video_name_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+<th>Anchura de reproductor de vídeo</th>
+<th>Altura de reproductor de vídeo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tutorial__video</code></td>
+<td><em>Tutorial</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>Anuncio publicitario__video_1920_1080</code></td>
+<td><em>Anuncio publicitario</em></td>
+<td>1920 píxeles</td>
+<td>1080 píxeles</td>
+</tr>
+<tr>
+<td><code>Grabación__video_640_auto</code></td>
+<td><em>Grabación</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>1.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^video(?:_(\d+|auto)_(\d+|auto))?__(.)+$/
+</code></pre>
+<img src="img/video_name_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+<th>Anchura de reproductor de vídeo</th>
+<th>Altura de reproductor de vídeo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>video__Tutorial</code></td>
+<td><em>Tutorial</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>video_1920_1080__Anuncio publicitario</code></td>
+<td><em>Anuncio publicitario</em></td>
+<td>1920 píxeles</td>
+<td>1080 píxeles</td>
+</tr>
+<tr>
+<td><code>video_640_auto__Grabación</code></td>
+<td><em>Grabación</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplos</h4>
+<h5>Archivo de vídeo</h5>
+<p><a href="../examples/attribute.video.file.name.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de un archivo de vídeo.
+        map.addMarker([613529, 4747122], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Parque fluvial__video_640_auto&quot;: &quot;data/Slowmotion_River_Water.mp4&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h5>Vídeo de Youtube</h5>
+<p><a href="../examples/attribute.video.youtube.name.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de Youtube.
+        map.addMarker([621107, 4670766], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Sobrevuelo__video&quot;: &quot;https://www.youtube.com/watch?v=Fz32nY6wKv4&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h3>Alternativa 2: Marca añadida al valor del atributo</h3>
+<p>En un atributo cuyo valor se desee tratar como la URL de un vídeo se puede añadir la marca a la URL con alguno de los siguientes formatos:</p>
+<h4>2.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__video(?:_(\d+|auto)_(\d+|auto))?$/
+</code></pre>
+<img src="img/video_value_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de vídeo</th>
+<th>Anchura de reproductor de vídeo</th>
+<th>Altura de reproductor de vídeo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tutorial.mp4__video</code></td>
+<td><em>tutorial.mp4</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>/videos/001.webm__video_1920_1080</code></td>
+<td><em>/videos/001.webm</em></td>
+<td>1920 píxeles</td>
+<td>1080 píxeles</td>
+</tr>
+<tr>
+<td><code>https://www.youtube.com/watch?v=Fz32nY6wKv4__video_640_auto</code></td>
+<td><em>https://www.youtube.com/watch?v=Fz32nY6wKv4</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>https://youtu.be/Fz32nY6wKv4__video_auto_480</code></td>
+<td><em>https://youtu.be/Fz32nY6wKv4</em></td>
+<td>no definida</td>
+<td>480 píxeles</td>
+</tr>
+</tbody>
+</table>
+<h4>2.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^video(?:_(\d+|auto)_(\d+|auto))?__(.)+$/
+</code></pre>
+<img src="img/video_value_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de vídeo</th>
+<th>Anchura de reproductor de vídeo</th>
+<th>Altura de reproductor de vídeo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>video__tutorial.mp4</code></td>
+<td><em>tutorial.mp4</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>video_1920_1080__/videos/001.webm</code></td>
+<td><em>/videos/001.webm</em></td>
+<td>1920 píxeles</td>
+<td>1080 píxeles</td>
+</tr>
+<tr>
+<td><code>video_640_auto__https://www.youtube.com/watch?v=Fz32nY6wKv4</code></td>
+<td><em>https://www.youtube.com/watch?v=Fz32nY6wKv4</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>video_auto_480__https://youtu.be/Fz32nY6wKv4</code></td>
+<td><em>https://youtu.be/Fz32nY6wKv4</em></td>
+<td>no definida</td>
+<td>480 píxeles</td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplos</h4>
+<h5>Archivo de vídeo</h5>
+<p><a href="../examples/attribute.video.file.value.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de un archivo de vídeo.
+        map.addMarker([613529, 4747122], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Parque fluvial&quot;: &quot;video_640_auto__data/Slowmotion_River_Water.mp4&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h5>Vídeo de Youtube</h5>
+<p><a href="../examples/attribute.video.youtube.value.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de Youtube.
+        map.addMarker([621107, 4670766], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Sobrevuelo&quot;: &quot;video__https://www.youtube.com/watch?v=Fz32nY6wKv4&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h2>Audios</h2>
+<p>Un atributo de entidad geográfica con la marca convenida mostrará en su tabla de atributos un reproductor de audio.</p>
+<h3>Alternativa 1: Marca añadida al nombre de atributo</h3>
+<p>A un atributo cuyo valor se desee tratar como la URL de un archivo de audio se le puede asignar un nombre con alguno de los siguientes formatos:</p>
+<h4>1.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__audio$/
+</code></pre>
+<img src="img/audio_name_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Grabación__audio</code></td>
+<td><em>Grabación</em></td>
+</tr>
+<tr>
+<td><code>Cuña de radio__audio</code></td>
+<td><em>Cuña de radio</em></td>
+</tr>
+</tbody>
+</table>
+<h4>1.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^audio__(.)+$/
+</code></pre>
+<img src="img/audio_name_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>audio__Grabación</code></td>
+<td><em>Grabación</em></td>
+</tr>
+<tr>
+<td><code>audio__Cuña de radio</code></td>
+<td><em>Cuña de radio</em></td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplo</h4>
+<p><a href="../examples/attribute.audio.name.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de un archivo de audio.
+        map.addMarker([611036, 4741241], {
+		    showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Teatro Gayarre__audio&quot;: &quot;data/aplausos.mp3&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h3>Alternativa 2: Marca añadida al valor del atributo</h3>
+<p>En un atributo cuyo valor se desee tratar como la URL de un archivo de audio se puede añadir la marca a la URL con alguno de los siguientes formatos:</p>
+<h4>2.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__audio$/
+</code></pre>
+<img src="img/audio_value_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de audio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>entradilla.mp3__audio</code></td>
+<td><em>entradilla.mp3</em></td>
+</tr>
+<tr>
+<td><code>/audio/samples/003.WAV__audio</code></td>
+<td><em>/audio/samples/003.WAV</em></td>
+</tr>
+<tr>
+<td><code>https://example.com/audio/jingle.mp3__audio</code></td>
+<td><em>https://example.com/audio/jingle.mp3</em></td>
+</tr>
+</tbody>
+</table>
+<h4>2.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^audio__(.)+$/
+</code></pre>
+<img src="img/audio_value_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de audio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>audio__entradilla.mp3</code></td>
+<td><em>entradilla.mp3</em></td>
+</tr>
+<tr>
+<td><code>audio__/audio/samples/003.WAV</code></td>
+<td><em>/audio/samples/003.WAV</em></td>
+</tr>
+<tr>
+<td><code>audio__https://example.com/audio/jingle.mp3</code></td>
+<td><em>https://example.com/audio/jingle.mp3</em></td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplo</h4>
+<p><a href="../examples/attribute.audio.value.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con la URL de un archivo de audio.
+        map.addMarker([611036, 4741241], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Teatro Gayarre&quot;: &quot;audio__data/aplausos.mp3&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h2>Recursos incrustados</h2>
+<p>Un atributo de entidad geográfica que tenga la marca convenida mostrará incrustada en su tabla de atributos un
+recurso dentro de un elemento <code>iframe</code>. El valor del atributo es la URL del recurso.</p>
+<h3>Alternativa 1: Marca añadida al nombre de atributo</h3>
+<p>A un atributo cuyo valor sea la URL de un recurso a incrustar se le puede asignar un nombre que encaje con una de las dos siguientes expresiones regulares:</p>
+<h4>1.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__embed(?:_(\d+|auto)_(\d+|auto))?$/
+</code></pre>
+<img src="img/embed_name_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+<th>Anchura de elemento <code>iframe</code></th>
+<th>Altura de elemento <code>iframe</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ficha__embed</code></td>
+<td><em>Ficha</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>Cédula de habitabilidad__embed_768_1024</code></td>
+<td><em>Anuncio publicitario</em></td>
+<td>768 píxeles</td>
+<td>1024 píxeles</td>
+</tr>
+<tr>
+<td><code>Anuncio en prensa__embed_640_auto</code></td>
+<td><em>Anuncio en prensa</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>1.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^embed(?:_(\d+|auto)_(\d+|auto))?__(.)+$/
+</code></pre>
+<img src="img/embed_name_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de nombre de atributo</th>
+<th>Título de atributo</th>
+<th>Anchura de elemento <code>iframe</code></th>
+<th>Altura de elemento <code>iframe</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embed__Ficha</code></td>
+<td><em>Ficha</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>embed_768_1024__Cédula de habitabilidad</code></td>
+<td><em>Anuncio publicitario</em></td>
+<td>768 píxeles</td>
+<td>1024 píxeles</td>
+</tr>
+<tr>
+<td><code>embed_640_auto__Anuncio en prensa</code></td>
+<td><em>Anuncio en prensa</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplo</h4>
+<p><a href="../examples/attribute.embed.name.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con un enlace a GeoPamplona.
+        map.addMarker([610818, 4741558], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Información de edificio__embed_300_200&quot;: &quot;https://tinyurl.com/y3kaaxz7&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre>
+<h3>Alternativa 2: Marca añadida al valor del atributo</h3>
+<p>En un atributo cuyo valor sea la URL de un recurso a incrustar se puede añadir la marca a la URL con alguno de los siguientes formatos:</p>
+<h4>2.a. Marca como sufijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^(.)+__embed(?:_(\d+|auto)_(\d+|auto))?$/
+</code></pre>
+<img src="img/embed_value_suffix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de recurso incrustado</th>
+<th>Anchura de elemento <code>iframe</code></th>
+<th>Altura de elemento <code>iframe</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ficha.html__embed</code></td>
+<td><em>ficha.html</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>/documentos/cedula02.pdf__embed_768_1024</code></td>
+<td><em>/documentos/cedula02.pdf</em></td>
+<td>768 píxeles</td>
+<td>1024 píxeles</td>
+</tr>
+<tr>
+<td><code>https://example.com/docs/doc.aspx?id=001__embed_640_auto</code></td>
+<td><em>https://example.com/docs/doc.aspx?id=001</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>2.b. Marca como prefijo</h4>
+<p>Expresión regular:</p>
+<pre class="prettyprint source lang-regex"><code>/^embed(?:_(\d+|auto)_(\d+|auto))?__(.)+$/
+</code></pre>
+<img src="img/embed_value_prefix_regex.svg" title="CC BY Regexper">
+<table>
+<thead>
+<tr>
+<th>Ejemplo de valor de atributo</th>
+<th>URL de recurso incrustado</th>
+<th>Anchura de elemento <code>iframe</code></th>
+<th>Altura de elemento <code>iframe</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embed__ficha.html</code></td>
+<td><em>ficha.html</em></td>
+<td>no definida</td>
+<td>no definida</td>
+</tr>
+<tr>
+<td><code>embed_768_1024__/documentos/cedula02.pdf</code></td>
+<td><em>/documentos/cedula02.pdf</em></td>
+<td>768 píxeles</td>
+<td>1024 píxeles</td>
+</tr>
+<tr>
+<td><code>embed_640_auto__https://example.com/docs/doc.aspx?id=001</code></td>
+<td><em>https://example.com/docs/doc.aspx?id=001</em></td>
+<td>640 píxeles</td>
+<td>no definida</td>
+</tr>
+</tbody>
+</table>
+<h4>Ejemplo</h4>
+<p><a href="../examples/attribute.embed.value.html">Ver en vivo</a></p>
+<pre class="prettyprint source lang-html"><code>&lt;div id=&quot;mapa&quot;>&lt;/div>
+&lt;script>
+    // Crear mapa.
+    var map = new SITNA.Map(&quot;mapa&quot;);
+
+    // Cuando esté todo cargado proceder a trabajar con el mapa.
+    map.loaded(function () {
+        // Añadir un marcador con un atributo con un enlace a GeoPamplona.
+        map.addMarker([610818, 4741558], {
+            showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
+            data: {
+                &quot;Información de edificio&quot;: &quot;embed_300_200__https://tinyurl.com/y3kaaxz7&quot;
+            }
+        });
+		// Centrar el mapa en el marcador.
+		map.zoomToMarkers();
+    });
+&lt;/script>
+</code></pre></article>
+		</section>
+			</div>
+		</div>
+	</div>
+	<footer>
+				<div class="copyright">© 2019 Gobierno de Navarra. <a href="https://github.com/sitna/api-sitna/blob/master/LICENSE.md">Licencia BSD-2-Clause</a>.</div>
+			<div class="generated-by">Documentación generada por <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.3</a> a 07/12/2022 usando la <a href="https://github.com/steveush/foodoc">plantilla FooDoc</a>.</div>
+	</footer>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/prism.min.js"></script>
+	<script src="js/template.min.js"></script>
+		<!-- start:lunr-search-modal.hbs -->
+		<div class="modal fade" id="lunr-search-modal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Resultados de la búsqueda</h4>
+					</div>
+					<div class="modal-body" id="lunr-search-body">
+					</div>
+					<div class="modal-footer" id="lunr-search-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
+	
+</body>
+</html>
+<!-- end:readme.hbs -->

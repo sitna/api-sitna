@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Cfg.crs</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.html#miembros">SITNA.Cfg</a>.crs.</p>
+        <p>Establecer un CRS con coordenadas geográficas.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+	
+    <div id="mapa"></div>
+    <script>
+        // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.
+        SITNA.Cfg.baseLayers[0] = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+        SITNA.Cfg.defaultBaseLayer = SITNA.Consts.layer.IDENA_DYNBASEMAP;
+
+        // WGS 84
+        SITNA.Cfg.crs = "EPSG:4326";
+        // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+        SITNA.Cfg.initialExtent = [-2.848205, 41.789124, -0.321350, 43.557898];
+        SITNA.Cfg.maxExtent = [-2.848205, 41.789124, -0.321350, 43.557898];
+
+        var map = new SITNA.Map("mapa", {
+            // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, establecer la capa SITNA.Consts.layer.IDENA_DYNBASEMAP en el control de mapa de situación.
+            controls: {
+                overviewMap: {
+                    layer: SITNA.Consts.layer.IDENA_DYNBASEMAP
+                }
+            }
+        });
+    </script>
+	
+</body>
+</html>

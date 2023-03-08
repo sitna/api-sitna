@@ -153,8 +153,6 @@ input[type=range]::-ms-thumb {
     color: #5a7586;
     margin-right: 1em;
     text-indent: 0;
-    font-family: 'FontAwesome';
-    content: '\f02f';
 }
 
 /*.tc-ctl-finfo-layers > li {
@@ -299,7 +297,7 @@ li.tc-ctl-lcat-node > span.tc-selectable {
 /*  estilos imprimir mapa */
 
 
-.tc-ctl-printMap-txt {
+.tc-ctl-prnmap-txt {
     display: inline-block;
     width: 96%;
     margin: 1em 0 0.5em 0;
@@ -309,28 +307,28 @@ li.tc-ctl-lcat-node > span.tc-selectable {
     padding: 0.3em;
 }
 
-.tc-ctl-printMap-val {
+.tc-ctl-prnmap-val {
     border: none;
 }
-div.panel-content > div.tc-ctl-printMap-txt input.tc-ctl-printMap-title, div.tc-ctl-printMap-txt select {
+div.panel-content > div.tc-ctl-prnmap-txt input.tc-ctl-prnmap-title, div.tc-ctl-prnmap-txt select {
     width: auto;
 }
 
-.tc-ctl-printMap-txt-title {
+.tc-ctl-prnmap-txt-title {
     width: 85%;
 }
 
-.tc-ctl-printMap-note {
+.tc-ctl-prnmap-note {
     color: rgba(90, 117, 133, 1);
     padding-top: 0.7em;
     float: right;
 }
 
-.tc-ctl-printMap-note-hidden {
+.tc-ctl-prnmap-note-hidden {
     display: none;
 }
 
-.tc-ctl-printMap h2 {
+.tc-ctl-prnmap h2 {
     clear:both;
 }
 
@@ -494,11 +492,7 @@ div.panel-content > div.tc-ctl-printMap-txt input.tc-ctl-printMap-title, div.tc-
     width: 29.2em;
     height: 30em;
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
-    -webkit-transition: all .2s ease;
-       -moz-transition: all .2s ease;
-        -ie-transition: all .2s ease;
-         -o-transition: all .2s ease;
-            transition: all .2s ease;
+    transition: all .2s ease;
 }
 
 .tc-ctl-help-content.tc-hidden {
@@ -557,12 +551,6 @@ div.panel-content > div.tc-ctl-printMap-txt input.tc-ctl-printMap-title, div.tc-
     color: #000;
     background-color: #D2EA56;
 }
-    /*Hack para IE 9,10 y 11*/
-    @media screen and (min-width:0\0) {
-        .tc-ctl-help-btn:after {
-            margin-left: -.5px;
-        }
-    }
 
     @media screen and (-webkit-min-device-pixel-ratio:0) {
         .tc-ctl-help-btn:after {
@@ -812,12 +800,6 @@ li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-download:hover, li.tc-ctl-lcat-sear
     50% {color: #D2EA56;}
     100% {color: inherit;}    
 }
-/* Safari 4.0 - 8.0 */
-@-moz-keyframes downloading {
-    0%   {color: inherit;}    
-    50% {color: #D2EA56;}
-    100% {color: inherit;}    
-}
 /* Standard syntax */
 @keyframes downloading {
     0%   {color: inherit;}    
@@ -828,9 +810,6 @@ li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-download:hover, li.tc-ctl-lcat-sear
     -webkit-animation-name: downloading; /* Safari 4.0 - 8.0 */
     -webkit-animation-duration: 1.5s; /* Safari 4.0 - 8.0 */
     -webkit-animation-iteration-count:infinite;
-    -moz-animation-name:downloading;
-    -moz-animation-duration: 1.5s;
-    -moz-animation-iteration-count:infinite;
     animation-name: downloading;
     animation-duration: 1.5s;
     animation-iteration-count: infinite;
@@ -878,9 +857,7 @@ li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-download:hover, li.tc-ctl-lcat-sear
 .tc-ctl-wlm .tc-ctl-wlm-btn-query.tc-loading{
     cursor:default;
     animation: pulsation 0.75s infinite;
-    -moz-animation: pulsation 0.75s infinite; /* Firefox */
-    -webkit-animation: pulsation 0.75s infinite; /* Safari and Chrome */
-    -o-animation: pulsation 0.75s infinite;
+    -webkit-animation: pulsation 0.75s infinite;
 }
 .tc-ctl-wlm .tc-ctl-wlm-btn-query.tc-unavailable:after{
     cursor: default;    

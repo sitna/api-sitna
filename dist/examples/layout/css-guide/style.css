@@ -1,0 +1,129 @@
+html, body {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#map-section {
+    width: 50%;
+    height: 50%;
+    box-sizing: border-box;
+}
+
+#mapa {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+#ctl-section {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    width: 50%;
+    height: 50%;
+    box-sizing: border-box;
+}
+
+#selector {
+    width: 100%;
+    background-color: black;
+    padding: 0.2em;
+    box-sizing: border-box;
+    color: white;
+    font-family: Helvetica, sans-serif;
+}
+
+#src-section {
+    width: 50%;
+    height: 50%;
+    overflow: auto;
+    box-sizing: border-box;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+    #src-section pre {
+        box-sizing: border-box;
+        margin: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    #src-section pre.prettyprint {
+        border: none;
+    }
+
+#explanation-section {
+    overflow: auto;
+    width: 50%;
+    height: 50%;
+    font-family: Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+    #explanation-section h1 {
+        margin: 0;
+        font-size: 1.5em;
+    }
+
+    #explanation-section h2 {
+        margin: 0;
+        margin-top: 1em;
+        font-size: 1.3em;
+    }
+
+    #explanation-section code {
+        color: #c00;
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+
+    #explanation-section h2:first-child {
+        margin-top: 0;
+    }
+
+    #explanation-section h3 {
+        margin: 0;
+        font-size: 1.1em;
+    }
+
+    #explanation-section table {
+        border: 0.1em solid #ccc;
+        border-collapse: collapse;
+        margin-top: 0.5em;
+    }
+
+    #explanation-section td.css-class {
+        white-space: nowrap;
+    }
+
+    #explanation-section table td, #explanation-section table th {
+        border: 0.1em solid #ccc;
+        padding: 0.2em;
+    }
+
+    #explanation-section article {
+        padding: 1em;
+        display: none;
+    }
+
+.style-demo-article {
+    display: none;
+    flex-grow: 1;
+}
+
+    .style-demo-article > p {
+        margin: 0.5em;
+        font-family: Helvetica, sans-serif;
+    }
+
+.style-demo-container {
+    position: relative;
+    min-height: 10em;
+}

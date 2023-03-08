@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.removeSearch</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        .query {
+            top: 135px;
+        }
+
+        label {
+            display: inline-block;
+            width: 4em;
+        }
+
+        input[type="text"] {
+            width: 180px;
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#removeSearch">SITNA.Map.removeSearch</a>.</p>
+        <p>Opciones del método.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div class="instructions query">
+        <div><label>Capa</label><input type="text" id="capa" placeholder="Nombre capa de IDENA" value="IDENA:AGROAL_Pol_VinosPago" /> </div>
+        <div><label>Campo</label><input type="text" id="campo" placeholder="Nombre campo" value="DESCRIPCIO" /> </div>
+        <div><label>Valor</label><input type="text" id="valor" placeholder="Valor a encontrar" value="Pago de Otazu" /> </div>
+        <div><button id="searchBtn">Buscar</button></div>
+        <div><button id="removeBtn">Eliminar búsqueda</button></div>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        map.loaded(function () {
+            document.getElementById("searchBtn").addEventListener("click", search);
+            document.getElementById("removeBtn").addEventListener("click", remove);
+        });
+        
+        var search = function () {
+            var capa = document.getElementById("capa").value;
+            capa = capa.trim();
+
+            var campo = document.getElementById("campo").value;
+            campo = campo.trim();
+
+            var valor = document.getElementById("valor").value;
+            valor = valor.trim();
+
+            map.searchFeature(capa, campo, valor, function (idQuery) {
+                if (idQuery == null) {
+                    alert("No se han encontrado resultados en la capa: " + capa + " en el campo: " + campo + " el valor: " + valor + ".");
+                }
+            });
+        };
+
+        // Limpiar el mapa 
+        var remove = function () {
+            map.removeSearch();
+        };
+
+
+    </script>
+
+</body>
+</html>

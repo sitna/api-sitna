@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de LayerOptions.overviewMapLayer</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#LayerOptions">LayerOptions</a>.overviewMapLayer.</p>
+        <p>Carga de distintas capas de fondo y en cada una una capa asociada para ver en el mapa de situación.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Añadimos una capas de fondo con capas asociadas para el mapa de situación
+        SITNA.Cfg.baseLayers = [
+            {
+                id: "hybrid",
+                title: "Mapa base/ortofoto",
+                type: SITNA.Consts.layerType.WMS,
+                url: "//idena.navarra.es/ogc/wms",
+                layerNames: "mapaBase_orto",
+                thumbnail: "//idena.navarra.es/navegar/api/TC/css/img/thumb-base_ortho.png",
+                overviewMapLayer: {
+                    id: "hybrid_ov",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//www.ign.es/wms-inspire/ign-base",
+                    layerNames: "IGNBaseTodo-gris"
+                }
+            },
+            {
+                id: "mapbox",
+                title: "Mapbox Streets",
+                type: SITNA.Consts.layerType.WMTS,
+                encoding: SITNA.Consts.WMTSEncoding.RESTFUL,
+                url: "//idena.navarra.es/navegar/api/wmts/mapbox/",
+                format: SITNA.Consts.mimeType.PNG,
+                layerNames: "streets",
+                matrixSet: "WorldWebMercatorQuad",
+                thumbnail: "//idena.navarra.es/navegar/api/TC/css/img/thumb-mapbox-streets.png",
+                overviewMapLayer: SITNA.Consts.layer.CARTO_DARK
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+    </script>
+	
+</body>
+</html>

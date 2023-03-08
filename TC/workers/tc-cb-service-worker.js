@@ -2,7 +2,7 @@
 
     // Arreglo del bug de actualización de la cache
     self.addEventListener('install', function (event) {
-        var cacheName = 'TC.offline.map.common';
+        const cacheName = 'TC.offline.map.common';
         event.waitUntil(
             caches.has(cacheName).then(function (hasCache) {
                 if (hasCache) {
@@ -10,7 +10,7 @@
                         cache.keys().then(function (keys) {
                             console.log("Revisando cache...");
                             if (keys.length) {
-                                fetch(keys[0]).then(function () {
+                                return fetch(keys[0]).then(function () {
                                     // Estamos online, borramos cache
                                     caches.delete(cacheName).then(function () {
                                         console.log("Cache con bug (" + cacheName + ") borrada");
@@ -19,6 +19,7 @@
                                     console.log(e);
                                 });
                             }
+                            return self.skipWaiting();
                         });
                     });
                 }
@@ -53,34 +54,48 @@
     });
 
     // Diccionario de estados de cacheo de mapas. Necesario para poder cancelar cacheos.
-    var currentMapStates = {};
+    const currentMapStates = {};
+
+    const postMessage = function (msg) {
+        self.clients.matchAll({ includeUncontrolled: true })
+            .then(function (clientList) {
+                clientList.forEach(function (client) {
+                    client.postMessage(msg);
+                });
+            });
+    };
 
     self.addEventListener('message', function (event) {
         // Procesamos las solicitudes de cacheo y borrado
 
-        var postMessage = function (msg) {
-            self.clients.matchAll()
-                .then(function (clientList) {
-                    clientList.forEach(function (client) {
-                        client.postMessage(msg);
-                    });
-                });
-        };
-
-        var action = event.data.action;
+        const action = event.data.action;
+        const name = event.data.name;
+        const requestId = event.data.requestId;
+        const silent = event.data.silent;
+        const urlList = event.data.list;
         switch (action) {
             case 'create':
-                var name = event.data.name;
-                var silent = event.data.silent;
                 currentMapStates[name] = action;
-                var createCache = function () {
+                caches.delete(name).finally(function () {
                     caches.open(name)
-                    .then(function (cache) {
-                        var list = event.data.list;
-                        var listLength = list.length;
-                        var counter = 0;
-                        list.forEach(function (url) {
-                            if (currentMapStates[name]) {
+                        .then(function (cache) {
+                            const addToCache = function (idx) {
+                                if (!currentMapStates[name]) { // Se ha cancelado la creación de la cache
+                                    return;
+                                }
+                                if (idx === urlList.length) {
+                                    if (!silent) {
+                                        postMessage({
+                                            action: action,
+                                            name: name,
+                                            requestId: requestId,
+                                            event: 'cached'
+                                        });
+                                    }
+                                    return;
+                                }
+                                const count = idx + 1;
+                                const url = urlList[idx];
                                 cache.add(url)
                                     .then(
                                         function () {
@@ -88,37 +103,32 @@
                                                 postMessage({
                                                     action: action,
                                                     name: name,
+                                                    requestId: requestId,
                                                     event: 'progress',
-                                                    count: ++counter,
-                                                    total: listLength
+                                                    count: count,
+                                                    total: urlList.length
                                                 });
-                                                if (counter === listLength) {
-                                                    postMessage({
-                                                        action: action,
-                                                        name: name,
-                                                        event: 'cached'
-                                                    });
-                                                }
                                             }
                                         },
                                         function () {
                                             postMessage({
                                                 action: action,
                                                 name: name,
+                                                requestId: requestId,
                                                 event: 'error',
                                                 url: url
                                             });
                                         }
-                                    );
-                            }
+                                    )
+                                    .finally(function () {
+                                        addToCache(count);
+                                    });
+                            };
+                            addToCache(0);
                         });
-                    });
-                };
-                caches.delete(name).then(createCache, createCache);
+                });
                 break;
             case 'delete':
-                var name = event.data.name;
-                var silent = event.data.silent;
                 delete currentMapStates[name];
                 caches.delete(name).then(
                     function () {
@@ -126,6 +136,7 @@
                             postMessage({
                                 action: action,
                                 name: name,
+                                requestId: requestId,
                                 event: 'deleted'
                             });
                         }
@@ -134,6 +145,7 @@
                         postMessage({
                             action: action,
                             name: name,
+                            requestId: requestId,
                             event: 'error'
                         });
                     }
@@ -142,5 +154,25 @@
                 break;
         }
     });
+
+    self.addEventListener('notificationclick', function (event) {
+        var notification = event.notification;
+        var action = event.action;
+        if (action === "back") {
+            notification.close();
+            var promise = Promise.resolve();
+            promise =
+                promise.then(function () { return firstWindowClient(notification.data.url); })
+                    .then(function (client) { return client ? client.focus() : null; });
+            event.waitUntil(promise);
+        }
+    });
+    function firstWindowClient(url) {
+        return self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(function (windowClients) {
+            return windowClients.length ? windowClients.find(function (wc) {
+                return wc.url === url;
+            }) : null;
+        });
+    }
 
 })();

@@ -1,0 +1,152 @@
+﻿{
+  "tilejson": "2.1.0",
+  "name": "MDT_Navarra_2014_5m-epsg25830",
+  "description": "",
+  "version": "1.1.0",
+  "format": "quantized-mesh-1.0",
+  "attribution": "",
+  "schema": "tms",
+  "tiles": [ "{z}/{x}/{y}.terrain?v={version}" ],
+  "minzoom": 0,
+  "maxzoom": 16,
+  "projection": "EPSG:4326",
+  "bounds": [ -180.00, -90.00, 0.00, 90.00 ],
+  "available": [
+    [
+      {
+        "startX": 0,
+        "startY": 0,
+        "endX": 1,
+        "endY": 0
+      }
+    ],
+    [
+      {
+        "startX": 1,
+        "startY": 1,
+        "endX": 1,
+        "endY": 1
+      }
+    ],
+    [
+      {
+        "startX": 3,
+        "startY": 2,
+        "endX": 3,
+        "endY": 2
+      }
+    ],
+    [
+      {
+        "startX": 7,
+        "startY": 5,
+        "endX": 7,
+        "endY": 5
+      }
+    ],
+    [
+      {
+        "startX": 15,
+        "startY": 11,
+        "endX": 15,
+        "endY": 11
+      }
+    ],
+    [
+      {
+        "startX": 31,
+        "startY": 23,
+        "endX": 31,
+        "endY": 23
+      }
+    ],
+    [
+      {
+        "startX": 63,
+        "startY": 46,
+        "endX": 63,
+        "endY": 47
+      }
+    ],
+    [
+      {
+        "startX": 126,
+        "startY": 93,
+        "endX": 127,
+        "endY": 94
+      }
+    ],
+    [
+      {
+        "startX": 252,
+        "startY": 187,
+        "endX": 255,
+        "endY": 189
+      }
+    ],
+    [
+      {
+        "startX": 504,
+        "startY": 375,
+        "endX": 510,
+        "endY": 379
+      }
+    ],
+    [
+      {
+        "startX": 1009,
+        "startY": 750,
+        "endX": 1020,
+        "endY": 758
+      }
+    ],
+    [
+      {
+        "startX": 2019,
+        "startY": 1500,
+        "endX": 2040,
+        "endY": 1517
+      }
+    ],
+    [
+      {
+        "startX": 4038,
+        "startY": 3000,
+        "endX": 4080,
+        "endY": 3034
+      }
+    ],
+    [
+      {
+        "startX": 8076,
+        "startY": 6001,
+        "endX": 8161,
+        "endY": 6068
+      }
+    ],
+    [
+      {
+        "startX": 16153,
+        "startY": 12002,
+        "endX": 16322,
+        "endY": 12137
+      }
+    ],
+    [
+      {
+        "startX": 32307,
+        "startY": 24004,
+        "endX": 32645,
+        "endY": 24274
+      }
+    ],
+    [
+      {
+        "startX": 64615,
+        "startY": 48008,
+        "endX": 65291,
+        "endY": 48549
+      }
+    ]
+  ]
+}

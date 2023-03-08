@@ -3,197 +3,123 @@
     display: none;
 }
 
+.tc-ctl-dmm .tc-ctl-meas-select.tc-hidden {
+    margin-top: 0.5em;
+}
+
 .tc-ctl-dmm .tc-ctl-meas-select label {
     width: calc(33.33% - 1px);
 }
-
-.tc-ctl-dmm-tool button {
-    width: 50%;
-    border-radius: 0;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-    background-color: #666;
+.tc-ctl-dmm .tc-ctl-meas-select label:first-of-type {
+    width: 33.33%
 }
-
-    .tc-ctl-dmm-tool button:disabled {
-        background-color: rgba(234, 234, 227, 1);
+.tc-ctl-dmm .tc-ctl-dmm-tool {
+    display: flex;
+    gap:0.2em;    
+}
+    .tc-ctl-dmm .tc-ctl-dmm-tool button {
+        position: relative;
+        display: inline-block;
+        border-radius: 0;
+        border: 0;
+        height: 2em;
+        vertical-align: top;
+        text-align: center;
+        color: var(--btn-color);
     }
 
-    .tc-ctl-dmm-tool button:first-child {
-        border-top-left-radius: 0.3em;
-        border-bottom-left-radius: 0.3em;
+    .tc-ctl-dmm .tc-ctl-dmm-tool button:disabled {
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
     }
 
-    .tc-ctl-dmm-tool button:last-child {
-        border-top-right-radius: 0.3em;
-        border-bottom-right-radius: 0.3em;
-    }
-
-    .tc-ctl-dmm-tool button:first-child:disabled {
-        border-left-color: rgba(234, 234, 227, 1);
-    }
-
-    .tc-ctl-dmm-tool button:last-child:disabled {
-        border-right-color: rgba(234, 234, 227, 1);
+    .tc-ctl-dmm .tc-ctl-dmm-tool button:last-of-type {
+        border-top-right-radius: var(--border-radius);
+        border-bottom-right-radius: var(--border-radius);
     }
 
 
-.tc-ctl-dmm-mod > button {
-    width: 50%;
+.tc-ctl-dmm .tc-ctl-dmm-mod {
+    display: flex;
+    gap: 0.2em;
+    padding: 0;
+    flex-grow:1;
 }
 
 .tc-ctl-dmm .tc-ctl-mod-btn-delete {
-    border-top-right-radius: 0.3em;
-    border-bottom-right-radius: 0.3em;
-    border-right: 1px solid #c00;
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
 }
 
     .tc-ctl-dmm .tc-ctl-mod-btn-delete:disabled {
-        border-right-color: rgba(234, 234, 227, 1);
+        border-right-color: var(--btn-disabled-border-color);
     }
 
-.tc-ctl-dmm .tc-ctl-mod-btn-join, .tc-ctl-dmm .tc-ctl-mod-btn-split {
+.tc-ctl-dmm button.tc-ctl-mod-btn-join, .tc-ctl-dmm button.tc-ctl-mod-btn-split, .tc-ctl-dmm button.tc-ctl-mod-btn-attr {
     display: none;
+    flex-grow: 0;
 }
 
-.tc-ctl-dmm-dialog-dl button.tc-ctl-dmm-dl-btn-geojson {
-    text-indent: -0.4em;
+.tc-ctl-dmm-cmd {
+    display: flex;
+    gap: 0.2em;
+    flex-grow:1;
 }
 
-
-.tc-ctl-dmm-dialog-elev {
-    height: 2em;
+.tc-ctl-dmm .tc-ctl-dmm-cmd button {
+    flex-grow:1;   
+    text-indent: -1000vw;
+    position: relative;
+    color: var(--btn-color);
+    background-color: var(--btn-bg-color);
+    border-color: var(--btn-border-color);
 }
 
-    .tc-ctl-dmm-dialog-elev input[type=checkbox] {
-        display: none;
-    }
-
-        .tc-ctl-dmm-dialog-elev input[type=checkbox] + label:before {
-            display: inline-block;
-            content: "\2610";
-            margin-right: 0.3em;
-        }
-
-        .tc-ctl-dmm-dialog-elev input[type=checkbox]:checked + label:before {
-            content: "\2611";
-        }
-
-
-.tc-ctl-dmm-dialog-ip {
-    margin-bottom: 0.5em;
-    text-align: center;
-    overflow: hidden;
-    transition: height ease 0.2s;
-}
-
-    .tc-ctl-dmm-dialog-ip.tc-hidden * {
-        display: none;
-    }
-
-    .tc-ctl-dmm-dialog-ip.tc-hidden label span {
-        display: none;
-    }
-
-    .tc-ctl-dmm-dialog-ip.tc-hidden label {
-        display: inline-block;
-    }
-
-    .tc-ctl-dmm-dialog-ip input[type=radio] {
-        display: none;
-    }
-
-    .tc-ctl-dmm-dialog-ip label {
-        display: inline-block;
-        width: 6em;
-        height: 6em;
-        transition: height ease 0.2s;
-    }
-
-    .tc-ctl-dmm-dialog-ip.tc-hidden label {
-        height: 0;
-        opacity: 0;
-    }
-
-    .tc-ctl-dmm-dialog-ip label input[type=radio] ~ span {
-        display: inline-block;
-        width: 100%;
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button:after {
+        position: absolute;
+        font-size: 1em;
         height: 100%;
-        border: 0.3em solid transparent;
-        border-radius: 0.3em;
+        width: 100%;
         text-align: center;
-        box-sizing: border-box;
+        text-indent: 0;
+        line-height: 2em;
+        font-family: var(--icon-font-family);
+        left: 0;
+        top: 0;
     }
 
-    .tc-ctl-dmm-dialog-ip.tc-hidden label input[type=radio] ~ span {
-        display: none;
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button:disabled {
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
     }
 
-    .tc-ctl-dmm-dialog-ip label input[type=radio]:checked ~ span {
-        border-color: #c00;
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:after {
+        content: var(--icon-delete);
+    }
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide.tc-active:after {
+        content: var(--icon-visible);
+    }
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide:after {
+        content: var(--icon-invisible);
+    }
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide.tc-active:not(:disabled) {
+        background-color: var(--btn-hl-bg-color);
+        border-color: var(--btn-hl-border-color);
     }
 
-    .tc-ctl-dmm-dialog-ip label input[type=radio][value="0"] ~ span {
-        background-image: url(../img/uip-features.svg);
-        background-repeat: no-repeat;
-        background-size: contain;
-        background-position-y: bottom;
+    .tc-ctl-dmm .tc-ctl-dmm-cmd button:first-of-type {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
     }
-
-    .tc-ctl-dmm-dialog-ip label input[type=radio][value="1"] ~ span {
-        background-image: url(../img/ip-features.svg);
-        background-repeat: no-repeat;
-        background-size: contain;
-        background-position-y: bottom;
-    }
-
-.tc-ctl-dmm-dialog-ip-m {
-    transition: height ease 0.2s;
-    height: 2.2em;
-    opacity: 1;
-    padding-top: 0.5em;
+.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl:after {
+    content: var(--icon-download-all);
 }
 
-    .tc-ctl-dmm-dialog-ip-m.tc-hidden {
-        visibility: visible;
-        height: 0;
-        opacity: 0;
-        padding-top: 0;
-    }
-
-    .tc-ctl-dmm-dialog-ip-m input[type=number] {
-        width: 3em;
-    }
-
-.tc-ctl-dmm .tc-ctl-mod > button {
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-}
-
-.tc-ctl-dmm .tc-ctl-mod .tc-ctl-btn:last-child {
+.tc-ctl-dmm .tc-ctl-dmm-mod button.tc-ctl-mod-btn-text {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
 
-.tc-ctl-dmm-dialog-dl button {
-    width: 25%;
-    border: 0;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-    border-radius: 0;
-    margin: 0.5em 0 0.5em 0;
-}
 
-.tc-ctl-dmm-tool button {
-    position: relative;
-    flex-grow: 1;
-    display: inline-block;
-    border: 0;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-    height: 2em;
-    margin: 0;
-    vertical-align: top;
-    text-align: center;
-    color: #fff;
-}

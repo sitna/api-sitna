@@ -1,0 +1,87 @@
+<div class="tc-ctl-finfo-coords">
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-crs" title="{{i18n "crs"}}">CRS: <span class="tc-ctl-finfo-coords-val">{{crs}}</span></span>
+    {{#if isGeo}}
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lat">{{i18n "lat"}}: <span class="tc-ctl-finfo-coords-val">{{coords.[1]}}</span></span>
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-lon">{{i18n "lon"}}: <span class="tc-ctl-finfo-coords-val">{{coords.[0]}}</span></span>
+    {{else}}
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">x: <span class="tc-ctl-finfo-coords-val">{{coords.[0]}}</span></span>
+    <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">y: <span class="tc-ctl-finfo-coords-val">{{coords.[1]}}</span></span>
+    {{/if}}
+    {{#if displayElevation}}<span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-elev" title="{{i18n "elevation"}}">{{i18n "ele"}}: <span class="tc-ctl-finfo-coords-val"></span></span><span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-height" title="{{i18n "heightOverTerrain"}}">{{i18n "height"}}: <span class="tc-ctl-finfo-coords-val"></span></span>{{/if}}
+</div>
+<div class="tc-ctl-finfo-result {{#if featureCount}}{{#if (gt featureCount 1)}} tc-ctl-finfo-multilayer{{/if}} {{/if}}">
+    <ul class="tc-ctl-finfo-services">
+        {{#each services}}
+        <li>
+            <h3>
+                <span title="{{#if title}}{{title}}{{else}}{{#if layers.[0].title}}{{layers.[0].title}}{{else}}{{layer.name}}{{/if}}{{/if}}">
+                    {{#if title}}{{title}}{{else}}{{#if layers.[0].title}}{{layers.[0].title}}{{else}}{{layer.name}}{{/if}}{{/if}}
+                </span>
+            </h3>
+            <div class="tc-ctl-finfo-service-content">
+                {{#each hasLimits}}
+                <span class="tc-ctl-finfo-errors">{{hasLimits}}</span>
+                {{else}}
+                    <ul class="tc-ctl-finfo-layers">
+                        {{#each layers}}
+                        <li>
+                            <h4{{#if ../../featureCount}}{{#if (gt ../../featureCount 1)}} class="tc-ctl-finfo-multilayer" {{/if}} {{/if}} title="{{#each path}}{{#unless @first}} &rsaquo; {{/unless}}{{this}}{{/each}}">
+                                <span class="tc-ctl-finfo-layer-n">{{features.length}}</span> {{#each path}}{{#unless @first}} &rsaquo; {{/unless}}{{this}}{{/each}}</h4>
+                                <div class="tc-ctl-finfo-layer-content">
+                                    <ul class="tc-ctl-finfo-features">
+                                        {{#each features}}
+                                        <li>
+                                            {{#if rawContent}}
+                                            <h5>{{i18n "feature"}}</h5>
+                                            {{#if (eq rawFormat "text/html")}}
+                                            {{#if expandUrl}}
+                                            {{#unless (eq expandUrl "")}}
+                                            <div class="tc-ctl-finfo-features-iframe-cnt">
+                                                <iframe src="{{rawUrl}}"></iframe>
+                                                <a class="tc-ctl-finfo-open" onclick="window.open('{{expandUrl}}', '_blank')" title="{{i18n "expand"}}"></a>
+                                            </div>
+                                            {{else}}
+                                            <iframe src="{{rawUrl}}"></iframe>
+                                            {{/unless}}
+                                            {{/if}}
+                                            {{else}}
+                                            <pre>{{rawContent}}</pre>
+                                            {{/if}}
+                                            {{else}}
+                                            {{#if error}}
+                                            <span class="tc-ctl-finfo-errors">{{i18n "fi.error"}}<span class="tc-ctl-finfo-error-text">{{error}}</span></span>
+                                            {{else}}
+                                            <h5>{{id}}</h5>
+                                            {{> tc-ctl-finfo-attr }}
+                                            {{/if}}
+                                            {{/if}}
+                                        </li>
+                                        {{else}}
+                                        <li class="tc-ctl-finfo-empty">{{i18n "noDataInThisLayer"}}</li>
+                                        {{/each}}
+                                    </ul>
+                                </div>
+</li>
+                        {{else}}
+                            <li class="tc-ctl-finfo-empty">{{i18n "noDataAtThisService"}}</li>
+                        {{/each}}
+                    </ul>
+                {{/each}}
+            </div>
+        </li>
+        {{else}}
+        {{#if displayElevation}}
+            {{#unless loading}}
+                {{#unless displayElevation}}<li class="tc-ctl-finfo-empty">{{i18n "noData"}}</li>{{/unless}}
+            {{/unless}}
+        {{/if}}
+        {{/each}}
+    </ul>
+</div>
+{{#if featureCount}}
+    {{#if (gt featureCount 1)}}
+<button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-prev">{{i18n "previous"}}</button>
+<div class="tc-ctl-finfo-counter"><span class="tc-ctl-finfo-counter-current"></span>/{{featureCount}}</div>
+<button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-next">{{i18n "next"}}</button>
+    {{/if}}
+{{/if}}

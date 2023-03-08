@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="utf-8" ?><kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Folder>
+      <name>Créditos</name>
+      <description>Creado por Gobierno de Navarra. Ver más en http://www.gobiernoabierto.navarra.es/es/open-data</description>
+      <open>0</open>
+      <ScreenOverlay>
+        <name>LogoGN</name>
+        <Icon>
+          <href>http://www.navarra.es/es/imgs/GNC_TRANS.png</href>
+        </Icon>
+        <overlayXY x="0" y="1" xunits="fraction" yunits="fraction" />
+        <screenXY x="0" y="1" xunits="fraction" yunits="fraction" />
+        <rotationXY x="0.5" y="0.5" xunits="fraction" yunits="fraction" />
+        <size x="-1" y="-1" xunits="fraction" yunits="fraction" />
+      </ScreenOverlay>
+    </Folder>
+    <Style id="MyBalloonStyle">
+      <BalloonStyle>
+        <text><![CDATA[ <style>h3{ 	background: url(https://www.navarra.es/documents/48192/2572156/logo-es.png/9f45c99d-a77d-5ca8-8aa0-1cfb176d48cb?t=1592225142638) left center no-repeat; 	height:2em; 	line-height:2em; } .tc-map pre{font-family:Arial,helvetica,sans-serif} .tc-ctl-popup-content div{user-select:text;cursor:initial;}</style><h3></h3><div onpointerdown="(()=>{arguments[0].stopPropagation();})();"><p><strong>$[nombre]</strong></p><p> $[descripcion] </p><p><pre>$[exposiciones]</pre></p><p> $[direccion] <br/>$[cp] $[localidad]<br/>$[latitud] $[longitud]</p><p> $[telefono] <br/><a href="mailto:$[mail]">$[mail]</a><br/>$[web]</p><p><pre>HORARIO:<br/>$[horario]</pre></p><p><pre>PRECIO:<br/>$[precio]</pre></p></div> ]]></text>
+      </BalloonStyle>
+      <IconStyle>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/paddle/blu-blank.png</href>
+        </Icon>
+        <hotSpot x="32" y="1" xunits="pixels" yunits="pixels" />
+      </IconStyle>
+    </Style>
+    <Folder>
+      <name>Datos</name>
+      <open>0</open>
+      <Placemark>
+        <name>MUSEO DE NAVARRA</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.644945,42.81863</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO DE NAVARRA</value>
+          </Data>
+          <Data name="localidad">
+            <value>Pamplona</value>
+          </Data>
+          <Data name="direccion">
+            <value>Santo Domingo, 47</value>
+          </Data>
+          <Data name="cp">
+            <value>31001</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 848426492 / +34 848426493</value>
+          </Data>
+          <Data name="mail">
+            <value>museo@navarra.es</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.museodenavarra.navarra.es'&gt;www.museodenavarra.navarra.es&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Martes-sábado: 9:30-14:00 y 17:00-19:00.
+Domingo y festivos: 11:00-14:00.
+Otros horarios: 6 julio: 9:30-11:00. 
+Cerrado: lunes, 1 enero, Viernes  Santo, 7 julio, 25 diciembre.
+Horarios especiales: consultar.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 2 ?. Reducida 1 ? con acreditación carnet joven, carnet estudiantes, grupos. Gratuita sábados tarde y domingos y exposiciones temporales.
+Gratuita con acreditación menores de 18 años, mayores de 65, jubilados, parados, profesorado, peregrinos, amigos del Museo, miembros de ICOM,  personas de la UE con minusvalía, grupo cultural con reserva y grupo escolar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Tiene su sede en un antiguo hospital renacentista rehabilitado en su totalidad, donde pueden visitarse colecciones navarras de Arqueología y Bellas Artes desde la Prehistoria hasta el siglo XX, con piezas de valor internacional.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>- Exposición temporal: ?El XXI en 3D?
+  (12 de septiembre de 2013 - 17 de febrero de 2014).
+
+- Nuevas visitas guiadas a exposición permanente y a exposición temporal.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.81863</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.644945</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO DEL CARLISMO</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-2.027959,42.67002</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO DEL CARLISMO</value>
+          </Data>
+          <Data name="localidad">
+            <value>Estella-Lizarra</value>
+          </Data>
+          <Data name="direccion">
+            <value>La Rúa, 27-29</value>
+          </Data>
+          <Data name="cp">
+            <value>31200</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948552111</value>
+          </Data>
+          <Data name="mail">
+            <value>museo.carlismo@navarra.es</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.museodelcarlismo.navarra.es'&gt;www.museodelcarlismo.navarra.es&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Martes-sábado: 10:00-14:00 y 16:00-19:00.
+Domingos y festivos: 11:00-14:00.
+Cerrado: lunes (excepto festivos), 1 enero, 3 agosto (fiesta local) y 25 diciembre.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 2 ?. Reducida 1 ?. Gratuita sábados tarde y domingos.
+Gratuita con acreditación menores de 18 años, mayores de 65, jubilados, parados, profesorado, peregrinos,  miembros de ICOM y personas de la UE con minusvalía.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Ubicado en un edificio barroco conocido como palacio del Gobernador, refleja la historia del carlismo en Navarra y en España durante los siglos XIX y XX, como proceso político y social de carácter contrarrevolucionario.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Exposición temporal: "Soldados de plomo. La miniatura militar a través de las guerras carlistas"
+(26 de marzo - 8 de diciembre).
+
+-Visitas guiadas a exposición permanente.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.67002</value>
+          </Data>
+          <Data name="longitud">
+            <value>-2.027959</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>FUNDACIÓN MUSEO JORGE OTEIZA-FUNDAZIO MUSEOA</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.565766,42.838764</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>FUNDACIÓN MUSEO JORGE OTEIZA-FUNDAZIO MUSEOA</value>
+          </Data>
+          <Data name="localidad">
+            <value>Alzuza</value>
+          </Data>
+          <Data name="direccion">
+            <value>De la Cuesta, 24</value>
+          </Data>
+          <Data name="cp">
+            <value>31486</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948332074</value>
+          </Data>
+          <Data name="mail">
+            <value>info@museooteiza.org</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.museooteiza.org'&gt;www.museooteiza.org&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>julio-agosto: martes-sábado 11:00-19:00, domingo y festivos 11:00-15:00. 
+septiembre-junio: martes, acceso con visita guiada previa reserva, miércoles-viernes 10:00-15:00, sábado 11:00-19:00, domingo y festivos 11:00-15:00.
+Cerrado: lunes, 1 enero y 25 diciembre. 24 y 31 diciembre, a partir de 13:00.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 4 ?. Reducida 2 ?. Gratuita viernes. Gratuita con acreditación personas de la UE menores de 18 años, mayores de 65, jubiladas y con minusvalía. Grupos consultar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>En un edificio de Francisco Javier Sáenz de Oiza, el museo alberga la colección y el archivo personal del escultor Jorge Oteiza (Orio 1908-San Sebastián 2003), uno de los creadores más significativos de la escultura del siglo XX.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Exposición temporal: " Cuándo habrá arquitectura? Arkitektura Noizko? José Manuel Aizpurua &amp;amp; Joaquín Labayen"
+(13 de junio - 3 de noviembre).
+
+-Exposición temporal: "MusTz 10. Javier Balda"
+(14 de noviembre de 2013 - 23 de febrero de 2014).
+
+-Visitas guiadas a exposición permanente y a temporal.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.838764</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.565766</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO GUSTAVO DE MAEZTU</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-2.029016,42.669523</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO GUSTAVO DE MAEZTU</value>
+          </Data>
+          <Data name="localidad">
+            <value>Estella-Lizarra</value>
+          </Data>
+          <Data name="direccion">
+            <value>San Nicolás, 1</value>
+          </Data>
+          <Data name="cp">
+            <value>31200</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948546037</value>
+          </Data>
+          <Data name="mail">
+            <value>museogmaeztu@estella-lizarra.com</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.museogustavodemaeztu.com'&gt;www.museogustavodemaeztu.com&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Martes-viernes: 9:30-13:00.
+Sábado, domingo y festivos: 11:00-14:00.
+Cerrado: lunes.</value>
+          </Data>
+          <Data name="precio">
+            <value>Gratuito.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Instalado en el palacio románico de los Duques de Granada de Ega, presenta una importante colección de cuadros y dibujos que el artista Gustavo de Maeztu (Vitoria 1887-Estella 1947) legó a la ciudad de Estella.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>- Exposición temporal: "Estrellas y lises del barroco estellés. Colección del siglo XVIII del Ayuntamiento de Estella-Lizarra? 
+  (26 de junio  - 31 de diciembre).
+
+- Exposición temporal: "Serrasanta" (1916-1998)
+  (26 de octubre -  31 de diciembre).
+
+-Visitas guiadas a exposición permanente y a temporales.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.669523</value>
+          </Data>
+          <Data name="longitud">
+            <value>-2.029016</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO MUÑOZ SOLA DE ARTE MODERNO</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.605898,42.06399</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO MUÑOZ SOLA DE ARTE MODERNO</value>
+          </Data>
+          <Data name="localidad">
+            <value>Tudela</value>
+          </Data>
+          <Data name="direccion">
+            <value>Plaza Vieja, 2</value>
+          </Data>
+          <Data name="cp">
+            <value>31500</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948402640</value>
+          </Data>
+          <Data name="mail">
+            <value>museomunozsola@castelruiz.es</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.castelruiz.es'&gt;www.castelruiz.es&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Jueves-viernes: 10:00-13:30 y 17:00-19:00.
+Sábado: 10:00-13:30 y 17:00-19:30. 
+Domingo: 10:00-13:00.
+Cerrado: lunes, martes,  miércoles, 1 y 6 enero, 24-30 julio, 24, 25 y 31 diciembre.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 1 ?. Gratuita con acreditación ciudadanos UE,  menores de 18, mayores de 65, jubilados y profesores.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>En un edificio emplazado en el centro histórico de la ciudad, se expone una colección de pintura francesa de los siglos XIX y XX reunida por César Muñoz Sola (Tudela 1921-Pamplona 2000), junto a una muestra representativa de su propia obra pictórica.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.06399</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.605898</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO DE TUDELA</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.605605,42.063592</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO DE TUDELA</value>
+          </Data>
+          <Data name="localidad">
+            <value>Tudela</value>
+          </Data>
+          <Data name="direccion">
+            <value>Roso, 2</value>
+          </Data>
+          <Data name="cp">
+            <value>31500</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948402161</value>
+          </Data>
+          <Data name="mail">
+            <value>info@museodetudela.com</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.museodetudela.com'&gt;www.museodetudela.com&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Lunes-viernes: 10:00-13:30 y 16:00-19:00.
+Sábado y festivos: 10:00-13:30.
+Otros horarios: 27-30 julio, 27 diciembre-9 enero: 10:00-13:30.
+Cerrado: domingo, 1 y 6 enero, 24-26 julio, 24-26 y 31 diciembre.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 4 ?. Reducida, gratuita y grupos consultar.
+Visitas guiadas concertadas (catedral y/o ciudad) para grupos todo el año.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Emplazado en la antigua sede de los deanes de la Catedral de Tudela, muestra piezas arqueológicas locales y de arte sacro procedentes de la merindad de Tudela, desde la Prehistoria hasta el  Barroco.  Incluye la visita a la Catedral.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente, dependencias catedralicias y otros lugares de interés cultural de la ciudad.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.063592</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.605605</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO-TESORO DE LA REAL COLEGIATA DE RONCESVALLES</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.319647,43.009245</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO-TESORO DE LA REAL COLEGIATA DE RONCESVALLES</value>
+          </Data>
+          <Data name="localidad">
+            <value>Roncesvalles-Orreaga</value>
+          </Data>
+          <Data name="direccion">
+            <value>Nuestra Señora de Roncesvalles</value>
+          </Data>
+          <Data name="cp">
+            <value>31650</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948790480</value>
+          </Data>
+          <Data name="mail">
+            <value>auriaorreaga@gmail.com</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.roncesvalles.es'&gt;www.roncesvalles.es&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Abril-octubre: 10:00-14:00 y 15:30-19:00.
+Noviembre-marzo: 10:00-14:00 y 15:00-18:00.
+Otros horarios:  9 diciembre-13 febrero: 10:30-14:30.
+Cerrado: miércoles (9 diciembre-13 febrero), 1 y 6-30 enero, 8 septiembre, 25 diciembre y días de climatología adversa.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 4,30 ?. Sólo museo 2,70 ?. Reducida, gratuita y grupos consultar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Situado en una pequeña dependencia de la Colegiata, conserva piezas artísticas e históricas singulares, que reflejan la historia de este centro religioso, puerta del Camino de Santiago en España.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente y otras dependencias de la Colegiata.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>43.009245</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.319647</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO DEL CASTILLO DE JAVIER</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.207724,42.588035</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO DEL CASTILLO DE JAVIER</value>
+          </Data>
+          <Data name="localidad">
+            <value>Javier</value>
+          </Data>
+          <Data name="direccion">
+            <value>Castillo de Javier</value>
+          </Data>
+          <Data name="cp">
+            <value>31411</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948884024</value>
+          </Data>
+          <Data name="mail">
+            <value>castillodejavier@jesuitas.es</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.santuariojaviersj.org'&gt;www.santuariojaviersj.org&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>8 diciembre - 28 febrero: 10:00-13:30
+1 marzo- 31octubre: 10:00-13:30 y 15:30-18:30.
+1 noviembre- 7 diciembre: 10:00-13:30 y 15:30-17:30.
+Cerrado: 1 enero, 24, 25 y 31 diciembre.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 2,75 ?. Reducida, gratuita y grupos consultar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Emplazada en el interior del Castillo de Javier, esta exposición ilustra la historia del edificio y el legado religioso y cultural de San Francisco  Javier (Javier, 1506-San Cian, 1552), patrón de Navarra y de las misiones católicas.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente y otras dependencias del Castillo.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.588035</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.207724</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO DEL MONASTERIO DE TULEBRAS</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.676402,41.977175</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO DEL MONASTERIO DE TULEBRAS</value>
+          </Data>
+          <Data name="localidad">
+            <value>Tulebras</value>
+          </Data>
+          <Data name="direccion">
+            <value>Monasterio Cisterciense</value>
+          </Data>
+          <Data name="cp">
+            <value>31522</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948851475 / +34 676186734</value>
+          </Data>
+          <Data name="mail">
+            <value>museo@monasteriodetulebras.com</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.monasteriodetulebras.com'&gt;www.monasteriodetulebras.com&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Mayo-septiembre: martes-sábados 11:00-13:30 y 16:15-18:00, domingos 11:00-12:00 y 16:00-18:00.
+Octubre-abril: sábados y domingos 16:15-18:00. Grupos: consultar.
+Cerrado: lunes.</value>
+          </Data>
+          <Data name="precio">
+            <value>Gratuito.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Destaca por su colección de arte sacro de los siglos XVI al XVIII, que se completa con piezas de épocas romana y medieval relacionadas con la historia del Monasterio. La visita a la colección permanente concluye con un recorrido por otras dependencias monásticas.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente y otras dependencias del Monasterio.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>41.977175</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.676402</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>CASA-MUSEO JULIÁN GAYARRE</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-0.957162,42.806642</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>CASA-MUSEO JULIÁN GAYARRE</value>
+          </Data>
+          <Data name="localidad">
+            <value>Roncal</value>
+          </Data>
+          <Data name="direccion">
+            <value>Arana, 38</value>
+          </Data>
+          <Data name="cp">
+            <value>31415</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948475180</value>
+          </Data>
+          <Data name="mail">
+            <value>info@juliangayarre.com</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.juliangayarre.com'&gt;www.juliangayarre.com&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Enero-marzo y octubre-diciembre: sábados: 11:30-13:30 y 16:00-18:00, domingos: 11:30-13:30 y festivos: consultar.
+Abril-septiembre: martes-domingos 11:30-13:30 y 17:00-19:00.
+Otros horarios: agosto tardes 17:00-20:00.
+Cerrado: lunes.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 2 ?. Reducida, gratuita y grupos consultar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>En el solar de su casa natal se presenta una muestra de objetos y recuerdos del célebre tenor universal Julián Gayarre (Roncal 1844-Madrid 1890). El recorrido por la exposición permanente puede completarse visitando su mausoleo, en el cementerio de Roncal.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente, mausoleo de Julián Gayarre y villa.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.806642</value>
+          </Data>
+          <Data name="longitud">
+            <value>-0.957162</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>CASA DE LA MEMORIA DE ISABA/IZABAKO OROIPENAREN ETXEA</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-0.923066,42.861283</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>CASA DE LA MEMORIA DE ISABA/IZABAKO OROIPENAREN ETXEA</value>
+          </Data>
+          <Data name="localidad">
+            <value>Isaba-Izaba</value>
+          </Data>
+          <Data name="direccion">
+            <value>Barrio Izarjentea, 28</value>
+          </Data>
+          <Data name="cp">
+            <value>31741</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948893251 / +34 948893005</value>
+          </Data>
+          <Data name="mail">
+            <value>casadelamemoria@isaba.es</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.isabacasadelamemoria.com'&gt;www.isabacasadelamemoria.com&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Consultar.</value>
+          </Data>
+          <Data name="precio">
+            <value>Consultar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Situada en el centro del núcleo urbano de Isaba, este centro muestra la historia, costumbres y formas de vida tradicionales en el Valle de Roncal, a través de una exposición de piezas de los siglos XIX y XX con una museografía moderna.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value></value>
+          </Data>
+          <Data name="latitud">
+            <value>42.861283</value>
+          </Data>
+          <Data name="longitud">
+            <value>-0.923066</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>ECOMUSEO ZUBIETAKO ERROTA-MOLINO DE ZUBIETA</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.742792,43.124323</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>ECOMUSEO ZUBIETAKO ERROTA-MOLINO DE ZUBIETA</value>
+          </Data>
+          <Data name="localidad">
+            <value>Zubieta</value>
+          </Data>
+          <Data name="direccion">
+            <value>Carretera Leiza</value>
+          </Data>
+          <Data name="cp">
+            <value>31746</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948451926</value>
+          </Data>
+          <Data name="mail">
+            <value>zubietakoerrota@gmail.com</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.zubietakoerrota.net'&gt;www.zubietakoerrota.net&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Enero-mayo: miércoles-domingo 11:00-14:00.
+Junio y julio: lunes-domingo 11:00-14:00.
+Agosto: lunes-domingo 11:00-14:00 y 17:00 a 20:00.
+Septiembre y diciembre: miércoles-domigo 11:00 a 14:00.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 3 ?. Reducida, gratuita y grupos consultar.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Ubicado en el propio edificio original del molino (siglo XVIII), mantiene en funcionamiento la sala de molienda de maíz. A través de la exposición de una pequeña colección etnográfica local se da testimonio de la actividad cotidiana de las gentes de la localidad.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>43.124323</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.742792</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+      <Placemark>
+        <name>MUSEO Y YACIMIENTO ARQUEOLÓGICO LAS ERETAS (BERBINZANA)</name>
+        <styleUrl>#MyBalloonStyle</styleUrl>
+        <Point>
+          <coordinates>-1.83476,42.528828</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="nombre">
+            <value>MUSEO Y YACIMIENTO ARQUEOLÓGICO LAS ERETAS (BERBINZANA)</value>
+          </Data>
+          <Data name="localidad">
+            <value>Berbinzana</value>
+          </Data>
+          <Data name="direccion">
+            <value>Seretas, 2</value>
+          </Data>
+          <Data name="cp">
+            <value>31252</value>
+          </Data>
+          <Data name="telefono">
+            <value>+34 948722176</value>
+          </Data>
+          <Data name="mail">
+            <value>ayuntamiento@berbinzana.info</value>
+          </Data>
+          <Data name="web">
+            <value>&lt;a href='http://www.eretas.es'&gt;www.eretas.es&lt;/a&gt;</value>
+          </Data>
+          <Data name="horario">
+            <value>Sábado: mañanas 11:00-14:00, tardes 1 abril-30 septiembre 17:00-19:30 y 1 octubre-31 marzo 16:00-18:00.
+Domingo y festivos: 11:00-14:00.
+Otros horarios: Semana Santa y puentes de diciembre: consultar.
+Cerrado: lunes-viernes (excepto visitas concertadas grupos) 1 y 6 enero, 24, 25 y 31 diciembre.</value>
+          </Data>
+          <Data name="precio">
+            <value>General 4 ?. Reducida, gratuita y grupos consultar.
+Ticket conjunto Artajona 6 ?.</value>
+          </Data>
+          <Data name="descripcion">
+            <value>Instalado en una antigua fábrica conservera rehabilitada, presenta los modos de vida en un poblado de la Edad del Hierro a través de la visita al yacimiento de Las Eretas (siglos VI-IV a.C.), parcialmente reconstruido, y la exposición de piezas arqueológicas.</value>
+          </Data>
+          <Data name="exposiciones">
+            <value>-Visitas guiadas a exposición permanente y yacimiento.
+
+-Actualidad: visite la página web del Museo.</value>
+          </Data>
+          <Data name="latitud">
+            <value>42.528828</value>
+          </Data>
+          <Data name="longitud">
+            <value>-1.83476</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>

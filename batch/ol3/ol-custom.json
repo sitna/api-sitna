@@ -1,0 +1,68 @@
+{
+  "exports": [
+    "ol.Map",
+	"ol.Overlay",
+    "ol.View",
+    "ol.control.defaults",
+	"ol.control.OverviewMap",
+	"ol.control.ScaleLine",
+	"ol.control.ZoomSlider",
+	"ol.control.ZoomToExtent",
+	"ol.Geolocation",
+	"ol.geom.LineString",
+	"ol.geom.MultiLineString",
+	"ol.geom.MultiPolygon",
+	"ol.geom.Point",
+	"ol.geom.Polygon",
+	"ol.format.Feature",
+	"ol.format.GeoJSON",
+	"ol.format.GML2",
+	"ol.format.GML3",
+    "ol.format.GPX",
+    "ol.format.KML",
+    "ol.format.WFS",
+    "ol.format.WKT",
+	"ol.format.WMSCapabilities",
+	"ol.format.WMSGetFeatureInfo",
+	"ol.format.WMTSCapabilities",
+	"ol.interaction.Draw",
+    "ol.interaction.Pointer",
+    "ol.interaction.Translate",
+    "ol.layer.Tile",
+	"ol.layer.Image",
+	"ol.layer.Vector",
+	"ol.proj.Projection",
+	"ol.source.Cluster",
+	"ol.source.ImageWMS",
+	"ol.source.WMTS",
+	"ol.style.Circle",
+	"ol.style.Fill",
+	"ol.style.Icon",
+	"ol.style.Stroke",
+	"ol.style.Style",
+	"ol.style.Text"
+  ],
+  "compile": {
+    "externs": [
+      "externs/closure-compiler.js",
+      "externs/geojson.js",
+      "externs/oli.js",
+      "externs/olx.js",
+      "externs/proj4js.js"
+    ],
+    "define": [
+      "goog.array.ASSUME_NATIVE_FUNCTIONS=true",
+      "goog.dom.ASSUME_STANDARDS_MODE=true",
+      "goog.json.USE_NATIVE_JSON=true",
+      "goog.DEBUG=false"
+    ],
+    "jscomp_off": [
+      "unknownDefines"
+    ],
+    "extra_annotation_name": [
+      "api", "observable"
+    ],
+    "compilation_level": "SIMPLE_OPTIMIZATIONS",
+    "manage_closure_dependencies": true
+  }
+}

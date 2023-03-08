@@ -1,0 +1,153 @@
+﻿
+.tc-ctl-dldlog-dl {
+    padding: 0.5em;
+    background-image: linear-gradient(45deg, #ffffff 25%, #cccccc 25%, #cccccc 50%, #ffffff 50%, #ffffff 75%, #cccccc 75%, #cccccc 100%);
+    /* background-size: 3.13px 3.13px; */
+    background-size: 4.66px 4.66px;
+    border-radius: 0.3em;
+}
+
+.tc-ctl-dldlog .tc-ctl-dldlog-dl button {
+    width: 25%;
+    border: 0;
+    border-left: 1px solid;
+    border-left-color: var(--main-bg-color);
+    border-right: 1px solid;
+    border-right-color: var(--main-bg-color);
+    border-radius: 0;
+    margin: 0.5em 0 0.5em 0;
+}
+
+.tc-ctl-dldlog .tc-ctl-dldlog-dl .tc-btn-dl.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-dldlog .tc-btn-dl:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.tc-ctl-dldlog .tc-btn-dl:last-child {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+.tc-ctl-dldlog .tc-ctl-dldlog-dl button.tc-ctl-wfsquery-dl-btn-geojson {
+    text-indent: -0.6em;
+}
+
+.tc-ctl-dldlog .tc-ctl-dldlog-dl h2 {
+    color: var(--title-color);
+    text-transform: lowercase;
+    background-color: var(--main-bg-color);
+    border-bottom: 1px solid;
+    border-bottom-color: var(--main-divider-color);
+    font-family: Arial, helvetica, sans-serif;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 0.2em;
+    margin: 0;
+}
+
+.tc-ctl-dldlog-elev {
+    height: 2em;
+}
+
+.tc-ctl-dldlog .tc-ctl-dldlog-elev input[type=checkbox] {
+    display: none;
+}
+
+    .tc-ctl-dldlog .tc-ctl-dldlog-elev input[type=checkbox] + label:before {
+        display: inline-block;
+        content: "\2610";
+        margin-right: 0.3em;
+    }
+
+    .tc-ctl-dldlog .tc-ctl-dldlog-elev input[type=checkbox]:checked + label:before {
+        content: "\2611";
+    }
+
+.tc-ctl-dldlog-ip {
+    margin-bottom: 0.5em;
+    text-align: center;
+    overflow: hidden;
+    transition: height ease 0.2s;
+}
+
+    .tc-ctl-dldlog-ip.tc-hidden * {
+        display: none;
+    }
+
+    .tc-ctl-dldlog-ip.tc-hidden label span {
+        display: none;
+    }
+
+    .tc-ctl-dldlog-ip.tc-hidden label {
+        display: inline-block;
+    }
+
+    .tc-ctl-dldlog-ip input[type=radio] {
+        display: none;
+    }
+
+    .tc-ctl-dldlog-ip label {
+        display: inline-block;
+        width: 6em;
+        height: 6em;
+        transition: height ease 0.2s;
+    }
+
+    .tc-ctl-dldlog-ip.tc-hidden label {
+        height: 0;
+        opacity: 0;
+    }
+
+    .tc-ctl-dldlog-ip label input[type=radio] ~ span {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+        border: 0.3em solid transparent;
+        border-radius: var(--border-radius);
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .tc-ctl-dldlog-ip.tc-hidden label input[type=radio] ~ span {
+        display: none;
+    }
+
+    .tc-ctl-dldlog-ip label input[type=radio]:checked ~ span {
+        border-color: var(--main-hl-color);
+    }
+
+    .tc-ctl-dldlog-ip label input[type=radio][value="0"] ~ span {
+        background-image: url(../img/uip-features.svg);
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position-y: bottom;
+    }
+
+    .tc-ctl-dldlog-ip label input[type=radio][value="1"] ~ span {
+        background-image: url(../img/ip-features.svg);
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position-y: bottom;
+    }
+
+.tc-ctl-dldlog-ip-m {
+    transition: height ease 0.2s;
+    height: 2.2em;
+    opacity: 1;
+    padding-top: 0.5em;
+}
+
+    .tc-ctl-dldlog-ip-m.tc-hidden {
+        visibility: visible;
+        height: 0;
+        opacity: 0;
+        padding-top: 0;
+    }
+
+.tc-ctl-dldlog .tc-ctl-dldlog-ip-m input[type=number] {
+    width: 3em;
+}

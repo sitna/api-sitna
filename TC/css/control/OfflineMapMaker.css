@@ -1,0 +1,353 @@
+﻿
+.tc-ctl-omm {
+    clear: both;
+}
+
+.tc-modal ul.tc-ctl-omm-bl-list {
+    list-style-type: none;
+    margin: 0.5em 0 0 0;
+    padding: 0;
+}
+
+.tc-ctl-omm-bl-node label {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    cursor: pointer;
+    border: var(--thumb-border-width) solid var(--thumb-border-color);
+    border-radius: var(--border-radius);
+}
+
+.tc-ctl-omm-bl-node label {
+    width: 9em;
+    height: 9em;
+}
+
+.tc-ctl-omm .tc-ctl-omm-new, .tc-ctl-omm .tc-ctl-omm-drawing {
+    height: 2.5em;
+}
+
+.tc-ctl-omm .tc-ctl-omm-progress {
+    height: 6em;
+}
+
+.tc-ctl-omm-off-panel {
+    position: absolute;
+    z-index: 10008;
+    bottom: 1em;
+    right: 1em;
+    background-color: #ccc;
+    opacity: 0.5;
+    border-radius: var(--border-radius);
+    padding: 0.3em;
+    font-size: 0.8em;
+    font-weight: bold;
+    max-width: 6em;
+}
+
+    .tc-ctl-omm-off-panel span, .tc-ctl-omm-off-panel a {
+        display: inline-block;
+        text-align: center;
+    }
+
+.tc-ctl-omm-bl-node label span {
+    position: absolute;
+    display: block;
+    margin: 0;
+    padding-top: 1em;
+    top: calc(-1 * var(--thumb-border-width));
+    left: calc(-1 * var(--thumb-border-width));
+    color: var(--thumb-text-color);
+    text-shadow: 0.1em 0.1em 0 var(--thumb-text-shadow-color), 0.1em -0.1em 0 var(--thumb-text-shadow-color), -0.1em 0.1em 0 var(--thumb-text-shadow-color), -0.1em -0.1em 0 var(--thumb-text-shadow-color);
+}
+
+.tc-ctl-omm-bl-node label span {
+    width: 9em;
+    height: 8em;
+}
+
+.tc-ctl-omm-bl-node input[type=checkbox] ~ span {
+    border: var(--thumb-border-width) solid var(--thumb-border-color);
+    border-radius: var(--border-radius);
+}
+
+.tc-ctl-omm-bl-node input[type=checkbox]:checked ~ span {
+    border-color: var(--main-hl-color);
+}
+
+.tc-modal ul.tc-ctl-omm-bl-list > li {
+    display: inline-block;
+    font-size: 0.8em;
+    margin: 0.2em;
+    vertical-align: top;
+    text-align: center;
+    color: var(--list-color);
+    background: var(--list-bg-color);
+}
+
+.tc-modal  ul.tc-ctl-omm-bl-list > li.tc-hidden {
+    display: none;
+}
+
+.tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox] {
+    display: none;
+}
+
+.tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox]:checked + div {
+    background-color: var(--main-hl-color);
+    border: 1px solid;
+    border-color: var(--main-hl-color);
+}
+
+
+.tc-ctl-omm .tc-hidden {
+    display: none;
+}
+
+.tc-ctl-omm .tc-ctl-omm-list:empty {
+    border: 0;
+    margin: 0.3em;
+}
+
+.tc-ctl-omm .tc-ctl-omm-list li.tc-active {
+    color: var(--list-hl-color);
+    background: var(--list-hl-bg-color);
+}
+
+.tc-ctl-omm .tc-ctl-omm-list li.tc-disabled {
+    animation: pulsation 2s infinite;
+    -webkit-animation: pulsation 2s infinite;
+}
+    .tc-ctl-omm .tc-ctl-omm-list li button.tc-toggle {
+        font-size: 1.5em;
+    }
+
+    .tc-ctl-omm .tc-ctl-omm-list li button.tc-icon-btn:before {
+        font-family: Mapskin;
+    }
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-edit:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-edit);
+}
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-view:before {
+    font-family: var(--icon-font-family);
+    content: "\e912";
+}
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-delete:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-delete);
+}
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
+}
+
+    .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-save:before {
+        font-family: initial;
+        content: "\2714";
+    }
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
+}
+
+.tc-ctl-omm .tc-ctl-omm-btn-new, .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl {
+    position: relative;
+    float: right;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: clip;
+    height: 2em;
+}
+
+.tc-ctl-omm .tc-ctl-omm-btn-new.tc-hidden {
+    display: inline-block;
+    position: absolute;
+}
+
+.tc-ctl-omm .tc-ctl-omm-btn-cancel-draw {
+    background-color: var(--main-inactive-color);
+    border-color: var(--main-inactive-color);
+}
+
+    .tc-ctl-omm .tc-ctl-omm-btn-new:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl:before {
+        font-family: mapskin;
+        height: 2em;
+        margin-right: 0.5em;
+    }
+
+.tc-ctl-omm .tc-ctl-omm-btn-new:before {
+    content: "\e001";
+}
+
+.tc-ctl-omm .tc-ctl-omm-btn-cancel-draw:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl:before {
+    display: inline-block;
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
+    height: 1em;
+    width: 1em;
+    line-height: 1em;
+}
+
+.tc-ctl-omm .tc-alert {
+    margin-bottom: 0.5em;
+}
+
+.tc-ctl-omm-dialog .tc-ctl-omm-txt-name {
+    width: 100%;
+    box-sizing: border-box;
+    height: 2em;
+    padding: 0 0 0 0.2em;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    margin: 0 0 0.6em 0;
+}
+
+.tc-ctl-omm .tc-ctl-omm-tile-cmd {
+    float: right;
+}
+
+.tc-ctl-omm-dialog .tc-ctl-omm-btn-cancel {
+    display: inline-block;
+    margin-left: 0.5em;
+}
+
+.tc-ctl-omm-dialog .tc-ctl-omm-tile-count {
+    font-size: 0.9em;
+    height: 1em;
+    margin-top: 2em;
+}
+
+.tc-ctl-omm-dialog .tc-ctl-omm-tile-count.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-omm .tc-ctl-omm-progress-count {
+    white-space: nowrap;
+}
+
+.tc-ctl-omm .tc-ctl-omm-progress-bar {
+    width: 100%;
+    height: 0.8em;
+    border: 0.1em solid #999;
+    padding: 0.1em;
+    margin-bottom: 0.5em;
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+}
+
+    .tc-ctl-omm .tc-ctl-omm-progress-bar .tc-ctl-omm-progress-ratio {
+        height: 100%;
+        background-color: var(--main-hl-color);
+        border-color: var(--main-hl-color);
+        border-radius: var(--border-radius);
+    }
+
+.tc-ctl-omm-dialog .tc-ctl-omm-res-panel {
+    position: relative;
+}
+
+    .tc-ctl-omm-dialog .tc-ctl-omm-res-panel h4 {
+        margin-bottom: 0.5em;
+    }
+
+.tc-ctl-omm-dialog .tc-ctl-omm-res-panel.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-omm-dialog .tc-ctl-omm-res {
+    position: absolute;
+    width: 3em;
+    font-size: 0.667em;
+    text-align: center;
+    margin: 2em 0 0 -1.5em;
+}
+
+.tc-ctl-omm-dialog .tc-ctl-omm-rng-maxres {
+    padding: 0;
+}
+
+.tc-ctl-omm.tc-collapsed i.tc-ctl-omm-map-search-icon {
+    display: none;
+}
+
+.tc-ctl-omm-list input {
+    box-sizing: border-box;
+}
+
+.tc-ctl-omm .tc-ctl-omm-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 8em;
+    height: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid #CCC;
+    padding: 0;
+    list-style: none;
+    margin-top: 0.5em;
+    box-sizing: border-box;
+}
+
+    .tc-ctl-omm .tc-ctl-omm-list > li > span {
+        width: calc(100% - 1.2em - 1.2em - 1.2em - 2em);
+        float: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        height: 2em;
+    }
+
+    .tc-ctl-omm .tc-ctl-omm-list > li.tc-ctl-omm-map-available-empty > span {
+        text-decoration: none;
+        color: inherit;
+        cursor: auto;
+    }
+
+.tc-ctl-omm-map-available-srch {
+    width: 100%;
+    height: 2em;
+}
+
+.tc-ctl-omm-map-search-icon {
+    position: relative;
+    margin-top: 4px;
+    right: 1em;
+    line-height: 1em;
+    color: #ccc;
+    font-style: normal;
+    width: 1em;
+    float: right;
+    top: 20px;
+}
+
+    .tc-ctl-omm-map-search-icon:before {
+        font-family: var(--icon-font-family);
+        content: '\e90e';
+    }
+
+.tc-ctl-omm .tc-ctl-omm-list > li {
+    padding: 0.2em;
+    border-bottom: 0.1em solid rgba(0,0,0,0.1);
+    overflow: hidden;
+    line-height: 2em;
+    box-sizing: content-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+    .tc-ctl-omm .tc-ctl-omm-list > li[hidden] {
+        display: none;
+    }
+
+.tc-ctl-omm .tc-ctl-omm-list li .tc-textbox {
+    padding-left: 0.5em;
+    margin-right: 0.5em;
+    width: calc(100% - 1.2em - 1.2em - 1.5em);
+    float: left;
+}

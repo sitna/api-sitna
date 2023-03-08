@@ -6,14 +6,22 @@
     line-height: 1em;
     padding: 0;
     text-align: right;
-    font-size: 1em;
     cursor: pointer;
     overflow: hidden;
+    color: transparent;
+    background-color: var(--win-btn-bg-color);
+    order: 1;
 }
 
+    a.tc-icon-btn.tc-ctl-print-btn:hover, a.tc-icon-btn.tc-ctl-print-btn:active {
+        color: transparent;
+    }
+
     .tc-ctl-print-btn:before {
-        color: #000;
-        font-family: 'mapskin';
-        content: '\e0ce';
+        position: absolute;
+        width: 1.2em;
+        height: 1.2em;
+        font-family: var(--icon-font-family);
+        content: '\e91b';
         margin-right: 0.2em;
     }

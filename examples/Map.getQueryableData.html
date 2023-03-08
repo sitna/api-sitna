@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/classes/SITNA.Map.html#method_getQueryableData">SITNA.Map.getQueryableData</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#getQueryableData">SITNA.Map.getQueryableData</a>.</p>
         <p>Opciones del método.</p>
     </div>
     <script src="../"></script>
@@ -47,89 +47,110 @@
     </div>
     <div id="mapa"></div>
     <script>
-        // Crear mapa.
-        var map = new SITNA.Map("mapa");
+    // Crear mapa.
+    var map = new SITNA.Map("mapa");
 
-        map.loaded(function () {
-            // completamos el desplegable de municipios
-            map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, function (data) {
-                $.each(data, function (key, value) {
-                    $('#municipality').append($("<option></option>")
-                                   .attr("value", value.id)
-                                   .text(value.label));
-                });
+    map.loaded(function () {
+        // completamos el desplegable de municipios
+        map.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
             });
-
-            // completamos el desplegable de concejos
-            map.getQueryableData(SITNA.Consts.mapSearchType.COUNCIL, function (data) {
-                $.each(data, function (key, value) {
-                    $('#council').append($("<option></option>")
-                                   .attr("value", value.id)
-                                   .text(value.label));
-                });
-            });
-
-            // completamos el desplegable de cascos urbanos
-            map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, function (data) {
-                $.each(data, function (key, value) {
-                    $('#urban').append($("<option></option>")
-                                   .attr("value", value.id)
-                                   .text(value.label));
-                });
-            });
-
-            // completamos el desplegable de mancomunidades de residuos
-            map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, function (data) {
-                $.each(data, function (key, value) {
-                    $('#commonwealth').append($("<option></option>")
-                                   .attr("value", value.id)
-                                   .text(value.label));
-                });
-            });
+            document.querySelector("#municipality").appendChild(fragment);
         });
 
-        // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
-        function applyFilter(target) {
-            if (target) {
-                var id;
-                var searchType;
-                switch (true) {
-                    case target.id == SITNA.Consts.mapSearchType.MUNICIPALITY:
-                        searchType = SITNA.Consts.mapSearchType.MUNICIPALITY;
-                        id = $(target).find('option:selected').val();
+        // completamos el desplegable de concejos
+        map.getQueryableData(SITNA.Consts.mapSearchType.COUNCIL, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#council").appendChild(fragment);
+        });
 
-                        $("#council,#urban,#commonwealth").val(-1);
-                        break;
-                    case target.id == SITNA.Consts.mapSearchType.COUNCIL:
-                        searchType = SITNA.Consts.mapSearchType.COUNCIL;
-                        id = $(target).find('option:selected').val();
+        // completamos el desplegable de cascos urbanos
+        map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#urban").appendChild(fragment);
+        });
 
-                        $("#municipality,#urban,#commonwealth").val(-1);
-                        break;
-                    case target.id == SITNA.Consts.mapSearchType.URBAN:
-                        searchType = SITNA.Consts.mapSearchType.URBAN;
-                        id = $(target).find('option:selected').val();
+        // completamos el desplegable de mancomunidades de residuos
+        map.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, function (data) {
+            var fragment = document.createDocumentFragment();
+            data.forEach(function (value) {
+                var option = document.createElement("option");
+                option.setAttribute("value", value.id);
+                option.textContent = value.label;
+                fragment.appendChild(option);
+            });
+            document.querySelector("#commonwealth").appendChild(fragment);
+        });
+    });
 
-                        $("#municipality,#council,#commonwealth").val(-1);
-                        break;
-                    case target.id == SITNA.Consts.mapSearchType.COMMONWEALTH:
-                        searchType = SITNA.Consts.mapSearchType.COMMONWEALTH;
-                        id = $(target).find('option:selected').val();
+    // Establecer como filtro del mapa el valor seleccionado del desplegable que lance el evento change
+    function applyFilter(target) {
+        if (target) {
+            var municipalitySelect = document.querySelector("#municipality");
+            var councilSelect = document.querySelector("#council");
+            var urbanSelect = document.querySelector("#urban");
+            var commonwealthSelect = document.querySelector("#commonwealth");
+            var id = target.querySelector('option:checked').value;
+            var searchType;
+            switch (true) {
+                case target.id == SITNA.Consts.mapSearchType.MUNICIPALITY:
+                    searchType = SITNA.Consts.mapSearchType.MUNICIPALITY;
 
-                        $("#municipality,#council,#urban").val(-1);
-                        break;                    
-                }                
+                    councilSelect.value = -1;
+                    urbanSelect.value = -1;
+                    commonwealthSelect.value = -1;
+                    break;
+                case target.id == SITNA.Consts.mapSearchType.COUNCIL:
+                    searchType = SITNA.Consts.mapSearchType.COUNCIL;
 
-                if (id == -1)
-                    map.removeSearch();
-                else {
-                    map.searchTyped(searchType, id, function (idQuery) {
-                        if (idQuery == null)
-                            alert('No se han encontrado resultados');
-                    });
-                }
+                    municipalitySelect.value = -1;
+                    urbanSelect.value = -1;
+                    commonwealthSelect.value = -1;
+                    break;
+                case target.id == SITNA.Consts.mapSearchType.URBAN:
+                    searchType = SITNA.Consts.mapSearchType.URBAN;
+
+                    municipalitySelect.value = -1;
+                    councilSelect.value = -1;
+                    commonwealthSelect.value = -1;
+                    break;
+                case target.id == SITNA.Consts.mapSearchType.COMMONWEALTH:
+                    searchType = SITNA.Consts.mapSearchType.COMMONWEALTH;
+
+                    municipalitySelect.value = -1;
+                    councilSelect.value = -1;
+                    urbanSelect.value = -1;
+                    break;                    
+            }                
+
+            if (id == -1)
+                map.removeSearch();
+            else {
+                map.searchTyped(searchType, id, function (idQuery) {
+                    if (idQuery == null) {
+                        alert('No se han encontrado resultados');
+                    }
+                });
             }
-        };
+        }
+    };
     </script>
 
 </body>

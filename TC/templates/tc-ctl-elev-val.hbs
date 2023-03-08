@@ -1,0 +1,18 @@
+{{#if originalValue}}
+<tr class="tc-ctl-elev-pair-elev-orig">
+    <th><span>{{i18n "ele"}} ({{i18n "original"}})</span></th>
+    <td>{{originalValue}} m</td>
+</tr>
+{{/if}}
+{{#if elevationValue}}
+<tr class="tc-ctl-elev-pair-elev">
+    <th><span>{{#if originalValue}}{{i18n "ele"}} ({{i18n "mdt"}}){{else}}{{i18n "elevation"}}{{/if}}</span></th>
+    <td>{{elevationValue}} m</td>
+</tr>
+{{/if}}
+{{#if heightValue}}
+<tr class="tc-ctl-elev-pair-height">
+    <th><span>{{i18n "heightOverTerrain"}}</span></th>
+    <td>{{heightValue}} m</td>
+</tr>
+{{/if}}

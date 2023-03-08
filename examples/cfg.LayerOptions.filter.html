@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de LayerOptions.filter</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#LayerOptions">LayerOptions</a>.filter.</p>
+        <p>Filtrado de capas WMS mediante filtros GML o CQL.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        // Añadimos la capa de IDENA de "Estaciones de aforo del Gobierno de Navarra" cuyo titular es "Gobierno de Navarra"
+        // Y añadimos la capa "Estaciones meteorológicas" de IDENA mostrando solo aquellas que están por encima de 1000 m.
+        SITNA.Cfg.workLayers = [
+            {
+                id: "layer1",
+                title: "Estaciones de aforo del Gobierno de Navarra",
+                type: SITNA.Consts.layerType.WMS,
+                url: "//idena.navarra.es/ogc/wms",
+                layerNames: "IDENA:HIDROG_Sym_EstacAforo",
+                filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>TITULAR</ogc:PropertyName><ogc:Literal><![CDATA[Gobierno de Navarra]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
+            },
+            {
+                id: "layer2",
+                title: "Estaciones meteorológicas por encima de 1000m",
+                type: SITNA.Consts.layerType.WMS,
+                url: "//idena.navarra.es/ogc/ows",
+                layerNames: "IDENA:estacMeteor",
+                filter: 'ALTITUD>1000'
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+    </script>
+	
+</body>
+</html>

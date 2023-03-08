@@ -11,17 +11,16 @@
         window.document.title = title;
     }
     TC.loadJS(
-            !window.dust,
-            [TC.url.dustCore, TC.url.dustHelpers, TC.url.templating],
+        !TC._hbs || !TC._hbs.compile,
+        [
+            TC.apiLocation + TC.Consts.url.TEMPLATING_FULL,
+            TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
+        ],
             function () {
                 var src = $('#print-preview-controls').html();
-                var compiled = dust.compile(src, 'print');
-                dust.loadSource(compiled);
+                const template = TC._hbs.compile(src);
 
-                dust.render('print', { Name: title }, function (err, out) {
-                    $('#print-preview-controls').html(out);
-
-                })
+                $('#print-preview-controls').html(template({ Name: title }));
 
             });
 
@@ -39,7 +38,7 @@
 });
 
 function doPrint() {
-    TC.Util.showModal('#printMessage');
+    TC.Util.showModal(document.querySelector('#printMessage'));
 	
 }
 

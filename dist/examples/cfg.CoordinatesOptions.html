@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <title>SITNA - Ejemplo de CoordinatesOptions</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/global.html#CoordinatesOptions">CoordinatesOptions</a>.</p>
+        <p>Utilizar la opción <code>showGeo</code> para mostrar coordenadas geográficas.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Hacemos que el control que muestra las coordenadas en pantalla
+        // muestre también las coordenadas geográficas
+        SITNA.Cfg.controls.coordinates = {
+            showGeo: true
+        };
+        var map = new SITNA.Map('mapa');
+    </script>
+
+</body>
+</html>
