@@ -2,33 +2,30 @@
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
-TC.control.Attribution = function () {
-    const self = this;
+class Attribution extends Control {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
 
-    TC.Control.apply(self, arguments);
+        self.template = TC.apiLocation + "TC/templates/tc-ctl-attrib.hbs";
 
-    self.apiAttribution = '';
-    self.mainDataAttribution = null;
-    self.dataAttributions = [];
-    if (self.options.dataAttributions) {
-        self.dataAttributions = self.options.dataAttributions instanceof Array ? self.options.dataAttributions : [self.options.dataAttributions];
+        self.apiAttribution = '';
+        self.mainDataAttribution = null;
+        self.dataAttributions = [];
+        if (self.options.dataAttributions) {
+            self.dataAttributions = self.options.dataAttributions instanceof Array ? self.options.dataAttributions : [self.options.dataAttributions];
+        }
     }
-};
 
-TC.inherit(TC.control.Attribution, TC.Control);
+    getClassName() {
+        return 'tc-ctl-attrib';
+    }
 
-(function () {
-    var ctlProto = TC.control.Attribution.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-attrib';
-
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-attrib.hbs";
-
-    ctlProto.register = function (map) {
+    register(map) {
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
 
@@ -97,19 +94,19 @@ TC.inherit(TC.control.Attribution, TC.Control);
                         const checkIsSameAttribution = function (toCheckName) {
                             return (/IDENA/.test(attr.name) || /Tracasa Instrumental/.test(attr.name)) &&
                                 (/IDENA/.test(toCheckName) || /Tracasa Instrumental/.test(toCheckName)) ||
-                                    attr.name === toCheckName;
+                                attr.name === toCheckName;
                         };
 
                         // 07/10/2020 Validamos contra el mapa de fondo antes de cambiar de mapa de fondo así que no se borran cuando deberían.
                         // Validamos que la capa a borrar no sea la de fondo actual
                         // Validamos si las atribuciones a borrar son también del mapa base
-                        if (self.map.baseLayer && self.map.baseLayer.wrap.getAttribution() && checkIsSameAttribution(self.map.baseLayer.wrap.getAttribution().name) && 
+                        if (self.map.baseLayer && self.map.baseLayer.wrap.getAttribution() && checkIsSameAttribution(self.map.baseLayer.wrap.getAttribution().name) &&
                             obj.parent.id !== self.map.baseLayer.id) {
                             return;
                         } else {
                             // Validamos si las atribuciones a borrar son también de alguna de las capas raster cargadas
                             if (self.map.workLayers.filter(function (layer) {
-                                return layer.type === TC.Consts.layerType.WMS || layer.type === TC.Consts.layerType.WMTS;
+                                return layer.type === Consts.layerType.WMS || layer.type === Consts.layerType.WMTS;
                             }).some(function (layer) {
                                 var workLayerAttribution = layer.wrap.getAttribution();
                                 return workLayerAttribution && checkIsSameAttribution(workLayerAttribution.name);
@@ -137,7 +134,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             }
         });
 
-        map.on(TC.Consts.event.LAYERADD, function (e) {
+        map.on(Consts.event.LAYERADD, function (e) {
             const layer = e.layer;
             if (!layer.isBase && layer.wrap.getAttribution && layer.wrap.getAttribution()) {
                 addData(layer.wrap);
@@ -145,11 +142,11 @@ TC.inherit(TC.control.Attribution, TC.Control);
             }
         });
 
-        map.on(TC.Consts.event.BEFOREBASELAYERCHANGE + " " + TC.Consts.event.OVERVIEWBASELAYERCHANGE, function (e) {
+        map.on(Consts.event.BEFOREBASELAYERCHANGE + " " + Consts.event.OVERVIEWBASELAYERCHANGE, function (e) {
             const type = e.type;
             const newLayer = e.newLayer;
             const oldLayer = e.oldLayer;
-            if (TC.Consts.event.OVERVIEWBASELAYERCHANGE.indexOf(type) > -1) {
+            if (Consts.event.OVERVIEWBASELAYERCHANGE.indexOf(type) > -1) {
                 self.ignoreLayer = newLayer;
             }
 
@@ -164,7 +161,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             self.render();
         });
 
-        map.on(TC.Consts.event.LAYERREMOVE, function (e) {
+        map.on(Consts.event.LAYERREMOVE, function (e) {
             const layer = e.layer;
             if (layer.wrap.getAttribution) {
                 removeData(layer.wrap);
@@ -172,7 +169,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             }
         });
 
-        map.on(TC.Consts.event.TERRAINPROVIDERADD, function (e) {
+        map.on(Consts.event.TERRAINPROVIDERADD, function (e) {
             const terrainProvider = e.terrainProvider;
             if (terrainProvider.getAttribution) {
                 addData(terrainProvider);
@@ -180,7 +177,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             }
         });
 
-        map.on(TC.Consts.event.TERRAINPROVIDERREMOVE, function (e) {
+        map.on(Consts.event.TERRAINPROVIDERREMOVE, function (e) {
             const terrainProvider = e.terrainProvider;
             if (terrainProvider.getAttribution) {
                 removeData(terrainProvider);
@@ -188,7 +185,7 @@ TC.inherit(TC.control.Attribution, TC.Control);
             }
         });
 
-        map.on(TC.Consts.event.LAYERVISIBILITY, function (e) {
+        map.on(Consts.event.LAYERVISIBILITY, function (e) {
             const layer = e.layer;
             if (self.ignoreLayer === layer) {
                 return;
@@ -205,19 +202,20 @@ TC.inherit(TC.control.Attribution, TC.Control);
         });
 
         return result;
-    };
+    }
 
-    ctlProto.render = function (callback) {
-        const self = this;        
+    render(callback) {
+        const self = this;
 
         return self._set1stRenderPromise(self.renderData({
             api: typeof self.apiAttribution === 'function' ? self.apiAttribution.apply(self) : self.getLocaleString(self.apiAttribution),
             mainData: self.mainDataAttribution,
             otherData: self.dataAttributions,
-            isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(TC.Consts.classes.COLLAPSED) : true
+            isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(Consts.classes.COLLAPSED) : true,
+            lang: self.map?.options.locale
         }, function () {
             const cmd = self.div.querySelector('.' + self.CLASS + '-cmd');
-            cmd && cmd.addEventListener(TC.Consts.event.CLICK, function () {
+            cmd && cmd.addEventListener(Consts.event.CLICK, function () {
                 self.toggleOtherAttributions();
             }, { passive: true });
 
@@ -225,14 +223,14 @@ TC.inherit(TC.control.Attribution, TC.Control);
                 callback();
             }
         }));
-    };
+    }
 
-    ctlProto.toggleOtherAttributions = function () {
+    toggleOtherAttributions() {
         const self = this;
         const other = self.div.querySelector('.' + self.CLASS + '-other');
-        other.classList.toggle(TC.Consts.classes.COLLAPSED);
-    };
-})();
+        other.classList.toggle(Consts.classes.COLLAPSED);
+    }
+}
 
-const Attribution = TC.control.Attribution;
+TC.control.Attribution = Attribution;
 export default Attribution;
