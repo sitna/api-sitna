@@ -1,6 +1,7 @@
 ﻿/**
   * Opciones de control de coordenadas.
   * @typedef CoordinatesOptions
+  * @memberof SITNA.control
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [showGeo] - Determina si se muestran coordenadas geográficas (en EPSG:4326) además de las del mapa, que por defecto son UTM (EPSG:25830).
   * @example <caption>[Ver en vivo](../examples/cfg.CoordinatesOptions.html)</caption> {@lang html} 
@@ -17,10 +18,10 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import ProjectionSelector from './ProjectionSelector';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.ProjectionSelector = ProjectionSelector;
 
 TC.control.Coordinates = function () {
@@ -35,7 +36,7 @@ TC.control.Coordinates = function () {
     self.y = 0;
     self.lat = 0;
     self.lon = 0;
-    self.units = TC.Consts.units.METERS;
+    self.units = Consts.units.METERS;
     self.isGeo = false;
     self.allowReprojection = Object.prototype.hasOwnProperty.call(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
 
@@ -52,7 +53,7 @@ TC.control.Coordinates = function () {
         THREEDMARKER: self.CLASS + '-threed'
     });
 
-    self.geoCrs = self.options.geoCrs || TC.Cfg.geoCrs;
+    self.geoCrs = self.options.geoCrs || Cfg.geoCrs;
     self.wrap = new TC.wrap.control.Coordinates(self);
 };
 
@@ -75,9 +76,9 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
         self.clear();
 
-        map.on(TC.Consts.event.VIEWCHANGE, function (e) {
+        map.on(Consts.event.VIEWCHANGE, function (e) {
             const view = e.view;
-            if (view === TC.Consts.view.PRINTING) {
+            if (view === Consts.view.PRINTING) {
                 return;
             }
 
@@ -87,15 +88,15 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 }
             };
 
-            if (view === TC.Consts.view.THREED) {
+            if (view === Consts.view.THREED) {
                 self.isGeo = true;
-                self.units = TC.Consts.units.DEGREES;
+                self.units = Consts.units.DEGREES;
                 self.crs = self.map.view3D.crs;
 
                 self.map.view3D.container.addEventListener('mouseout', _3dContainerListener);
 
                 /* provisional: faltaría el off cuando pasemos a default*/
-                self.map.view3D.on(TC.Consts.event.MOUSEMOVE, function (coords) {
+                self.map.view3D.on(Consts.event.MOUSEMOVE, function (coords) {
                     if (coords) {
                         if (TC.Util.detectMobile()) { // si estamos en móvil añadimos marcador al mapa 3D                            
 
@@ -116,9 +117,9 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                     }
                 });
 
-            } else if (view === TC.Consts.view.DEFAULT) {
+            } else if (view === Consts.view.DEFAULT) {
                 self.isGeo = self.map.wrap.isGeo();
-                self.units = TC.Consts.units.METERS;
+                self.units = Consts.units.METERS;
                 self.crs = self.map.crs;
 
                 if (self.map.view3D) {
@@ -148,7 +149,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 });                
             }
 
-            map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+            map.on(Consts.event.PROJECTIONCHANGE, function (e) {
                 if (!map.on3DView) {
                     self.isGeo = map.wrap.isGeo();
                     self.crs = e.newCrs;
@@ -158,14 +159,14 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
             self.map.wrap.getViewport().then(function (viewport) {
                 self.renderPromise().then(function () {
-                    viewport.addEventListener(TC.Consts.event.MOUSEMOVE, function (e) {
+                    viewport.addEventListener(Consts.event.MOUSEMOVE, function (e) {
                         if (self.map.on3DView) {
                             return;
                         }
 
                         self.onMouseMove(e);
                     });
-                    viewport.addEventListener(TC.Consts.event.MOUSELEAVE, function (e) {
+                    viewport.addEventListener(Consts.event.MOUSELEAVE, function (e) {
                         self.onMouseLeave(e);
                     });
                 });                
@@ -195,7 +196,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
             }, function () {
                 const button = self.div.querySelector('button.' + self._cssClasses.CRS);
                 if (button) {
-                    button.addEventListener(TC.Consts.event.CLICK, function (_e) {
+                    button.addEventListener(Consts.event.CLICK, function (_e) {
                         self.showProjectionChangeDialog();
                     }, { passive: true });
                 }
@@ -243,29 +244,29 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         }
 
         if (!self.isGeo) {
-            self.x = TC.Util.formatCoord(self.xy[0], TC.Consts.METER_PRECISION);
-            self.y = TC.Util.formatCoord(self.xy[1], TC.Consts.METER_PRECISION);
+            self.x = TC.Util.formatCoord(self.xy[0], Consts.METER_PRECISION);
+            self.y = TC.Util.formatCoord(self.xy[1], Consts.METER_PRECISION);
         }
 
         if (self.isGeo || self.options.showGeo) {
-            self.lat = TC.Util.formatCoord(self.latLon[0], TC.Consts.DEGREE_PRECISION);
-            self.lon = TC.Util.formatCoord(self.latLon[1], TC.Consts.DEGREE_PRECISION);
+            self.lat = TC.Util.formatCoord(self.latLon[0], Consts.DEGREE_PRECISION);
+            self.lon = TC.Util.formatCoord(self.latLon[1], Consts.DEGREE_PRECISION);
         }
 
         self.render(function () {
-            const closeSpan = self.div.querySelector('span.close');
+            const closeBtn = self.div.querySelector('sitna-button[icon="close"]');
             if (TC.Util.detectMobile()) {
-                closeSpan.addEventListener('click', function () {
-                    self.div.classList.add(TC.Consts.classes.HIDDEN);
+                closeBtn.addEventListener('click', function () {
+                    self.div.classList.add(Consts.classes.HIDDEN);
                     self.clear();
                 });
 
-                closeSpan.style.display = '';
+                closeBtn.style.display = '';
             }
             else {
-                self.div.classList.remove(TC.Consts.classes.HIDDEN);
+                self.div.classList.remove(Consts.classes.HIDDEN);
                 self.div.style.visibility = 'visible';
-                closeSpan.style.display = 'none';
+                closeBtn.style.display = 'none';
             }
         });
     };
@@ -273,7 +274,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     ctlProto.clear = function () {
         const self = this;
 
-        self.div.classList.add(TC.Consts.classes.HIDDEN);
+        self.div.classList.add(Consts.classes.HIDDEN);
         self.div.style.visibility = 'hidden';
 
         delete self.currentCoordsMarker;
@@ -287,7 +288,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
     ctlProto.deactivateCoords = function () {
         var self = this;
 
-        self.div.classList.add(TC.Consts.classes.HIDDEN);
+        self.div.classList.add(Consts.classes.HIDDEN);
         self.clear();
 
         self.wrap.coordsDeactivate();
@@ -354,11 +355,11 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         const self = this;
 
         // Si streetView está activo, no responde al click
-        if (!self.map.div.classList.contains('tc-ctl-sv-active') || !self.map.div.classList.contains(TC.Consts.classes.COLLAPSED)) {
+        if (!self.map.div.classList.contains('tc-ctl-sv-active') || !self.map.div.classList.contains(Consts.classes.COLLAPSED)) {
 
             var coordsBounding = self.div.getBoundingClientRect();
             if (coordsBounding.left <= e.clientX && e.clientX <= coordsBounding.right && coordsBounding.top <= e.clientY && e.clientY <= coordsBounding.bottom) {
-                self.div.classList.add(TC.Consts.classes.HIDDEN);
+                self.div.classList.add(Consts.classes.HIDDEN);
                 self.clear();
 
                 return;
@@ -396,7 +397,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
                 self.coordsMarkerAdd(e.coordinate, e.cssClass);
             }
 
-            self.div.classList.remove(TC.Consts.classes.HIDDEN);
+            self.div.classList.remove(Consts.classes.HIDDEN);
             //self.div.style.visibility = 'visible';
 
             //self.div.style.opacity = '0.7';
@@ -415,7 +416,7 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
 
         if (!self.currentCoordsMarker) {
             self.getLayer().then(function (layer) {
-                layer.addMarker(position, { title: 'Coord', showsPopup: false, cssClass: cssClass || TC.Consts.classes.POINT, anchor: [0.5, 0.5] })
+                layer.addMarker(position, { title: 'Coord', showsPopup: false, cssClass: cssClass || Consts.classes.POINT, anchor: [0.5, 0.5] })
                     .then(function (marker) {
                         self.currentCoordsMarker = marker;
                     });
@@ -425,25 +426,19 @@ TC.inherit(TC.control.Coordinates, TC.control.ProjectionSelector);
         }
     };
 
-    ctlProto.getLayer = function () {
+    ctlProto.getLayer = async function () {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            if (self.layer == undefined) {
-                self.map.addLayer({
-                    id: self.getUID(),
-                    type: TC.Consts.layerType.VECTOR,
-                    stealth: true,
-                    owner: self,
-                    title: 'Coordenadas'
-                }).then(function (layer) {
-                    self.layer = layer;
-                    self.layer.map.putLayerOnTop(self.layer);
-                    resolve(self.layer);
-                });
-            } else {
-                resolve(self.layer);
-            }
-        });
+        if (self.layer == undefined) {
+            self.layer = await self.map.addLayer({
+                id: self.getUID(),
+                type: Consts.layerType.VECTOR,
+                stealth: true,
+                owner: self,
+                title: 'Coordenadas'
+            });
+            self.layer.map.putLayerOnTop(self.layer);
+        }
+        return self.layer;
     };
 
 })();
