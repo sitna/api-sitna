@@ -22,7 +22,7 @@ TC.inherit(TC.control.Container, TC.Control);
 (function () {
     var ctlProto = TC.control.Container.prototype;
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
         const ctlRegister = TC.Control.prototype.register.call(self, map);
 
@@ -31,11 +31,9 @@ TC.inherit(TC.control.Container, TC.Control);
             arr[idx] = self.getUID();
         });
 
-        return new Promise(function (resolve, _reject) {
-            Promise.all([ctlRegister, self.renderPromise()]).then(function () {
-                self.onRender().then(ctl => resolve(ctl));
-            });
-        });        
+        await Promise.all([ctlRegister, self.renderPromise()]);
+        const ctl = await self.onRender();
+        return ctl;
     };
 
     ctlProto.onRender = function () {
