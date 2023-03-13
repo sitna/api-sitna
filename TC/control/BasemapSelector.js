@@ -2,7 +2,6 @@
 import Consts from '../Consts';
 import MapContents from './MapContents';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.control.MapContents = MapContents;
 
@@ -36,7 +35,7 @@ TC.control.MapContents = MapContents;
             document.body.appendChild(self._dialogDiv);
         }
 
-        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.tc-modal-close)', function (e) {
+        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.tc-modal-close)', function (e) {
 
             if (e.target.classList.contains(self._cssClasses.LOAD_CRS_BUTTON)) {
                 self.loadFallbackProjections();
@@ -49,7 +48,7 @@ TC.control.MapContents = MapContents;
 
             // dependerá del que esté activo
             const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
-            dialog.classList.add(TC.Consts.classes.HIDDEN);
+            dialog.classList.add(Consts.classes.HIDDEN);
 
             const layer = self.getLayer(dialog.dataset.layerId);
             if (layer) {
@@ -125,7 +124,7 @@ TC.control.MapContents = MapContents;
                     } else if (layer.getFallbackLayer()) {
                         const fallbackLayer = layer.getFallbackLayer();
                         if (fallbackLayer) {
-                            fallbackLayer._capabilitiesPromise.then(function () {
+                            fallbackLayer.getCapabilitiesPromise().then(function () {
                                 if (fallbackLayer.isCompatible(self.map.getCRS())) {
                                     self.map.setBaseLayer(layer);
                                 }
@@ -146,7 +145,7 @@ TC.control.MapContents = MapContents;
                     };
                     const fallbackLayer = layer.getFallbackLayer();
                     if (fallbackLayer) {
-                        fallbackLayer._capabilitiesPromise.then(function () {
+                        fallbackLayer.getCapabilitiesPromise().then(function () {
                             if (fallbackLayer.isCompatible(self.map.getCRS())) {
                                 dialogOptions.fallbackLayer = fallbackLayer;
                             }
@@ -163,7 +162,7 @@ TC.control.MapContents = MapContents;
             }
             else {
 
-                if (layer.type === TC.Consts.layerType.WMS || layer.type === TC.Consts.layerType.WMTS && layer.getProjection() !== self.map.crs) {
+                if (layer.type === Consts.layerType.WMS || layer.type === Consts.layerType.WMTS && layer.getProjection() !== self.map.crs) {
                     layer.setProjection({ crs: self.map.crs });
                 }
 
@@ -181,41 +180,38 @@ TC.control.MapContents = MapContents;
         }
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
 
-        return new Promise(function (resolve, _reject) {
-            TC.control.MapContents.prototype.register.call(self, map).then(function (ctl) {
-                self.div.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(TC.Consts.event.CLICK, function (e) {
-                    self.toggleView();
-                    e.target.blur();                    
-                }, { passive: true });
+        const ctl = await TC.control.MapContents.prototype.register.call(self, map);
+        self.div.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(Consts.event.CLICK, function (e) {
+            self.toggleView();
+            e.target.blur();
+        }, { passive: true });
 
-                if (self.options.dialogMore) {
-                    map.on(TC.Consts.event.VIEWCHANGE, function () {
-                        self._getMoreBaseLayers();
-                    });
-                }
-
-                map.on(TC.Consts.event.BASELAYERCHANGE + ' ' + TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.VIEWCHANGE, function (e) {
-                    self.update(self.div, e.layer);
-                });
-
-
-                self.div.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
-
-                    if (e.target.value === "moreLayers") {
-                        self.showMoreLayersDialog();
-                    } else {
-                        changeInputRadioBaseMap.call(self, e);
-                    }
-
-                    e.stopPropagation();
-                }));
-
-                resolve(ctl);
+        if (self.options.dialogMore) {
+            map.on(Consts.event.VIEWCHANGE, function () {
+                self._getMoreBaseLayers();
             });
+        }
+
+        map.on(Consts.event.BASELAYERCHANGE + ' ' + Consts.event.PROJECTIONCHANGE + ' ' + Consts.event.VIEWCHANGE, function (e) {
+            self.update(self.div, e.layer);
         });
+
+
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
+
+            if (e.target.value === "moreLayers") {
+                self.showMoreLayersDialog();
+            } else {
+                changeInputRadioBaseMap.call(self, e);
+            }
+
+            e.stopPropagation();
+        }));
+
+        return ctl;
     };
 
     ctlProto.render = function (callback) {
@@ -228,7 +224,7 @@ TC.control.MapContents = MapContents;
             if (self.options.dialogMore) {
                 const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
-                dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(Consts.event.CLICK, function (e) {
                     self.toggleMoreLayersDialogView();
                     e.target.blur();
                     e.stopPropagation();
@@ -275,22 +271,22 @@ TC.control.MapContents = MapContents;
 
                         radio.checked = checked;
                         if (mustReproject) {
-                            radio.classList.add(TC.Consts.classes.DISABLED);
+                            radio.classList.add(Consts.classes.DISABLED);
                             li.setAttribute('title', self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded'));
                         }
                         else {
-                            radio.classList.remove(TC.Consts.classes.DISABLED);
+                            radio.classList.remove(Consts.classes.DISABLED);
                             li.removeAttribute('title');
                         }
                     });
                 } else {
                     radio.checked = checked;
                     if (layer.mustReproject) {
-                        radio.classList.add(TC.Consts.classes.DISABLED);
+                        radio.classList.add(Consts.classes.DISABLED);
                         li.setAttribute('title', self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded'));
                     }
                     else {
-                        radio.classList.remove(TC.Consts.classes.DISABLED);
+                        radio.classList.remove(Consts.classes.DISABLED);
                         li.removeAttribute('title');
                     }
                 }
@@ -397,7 +393,7 @@ TC.control.MapContents = MapContents;
         const self = this;
 
         if (layer.isBase && !layer.options.stealth) {
-            self.map.toast(self.getLocaleString('baseLayerNotAvailable', { mapName: layer.title }), { type: TC.Consts.msgType.ERROR });
+            self.map.toast(self.getLocaleString('baseLayerNotAvailable', { mapName: layer.title }), { type: Consts.msgType.ERROR });
         }
     };
 
@@ -421,9 +417,9 @@ TC.control.MapContents = MapContents;
             .querySelector('.' + self._cssClasses.CRS_DIALOG)
             .querySelectorAll('ul.' + self._cssClasses.CRS_LIST + ' li');
         lis.forEach(function (li) {
-            li.classList.remove(TC.Consts.classes.HIDDEN);
+            li.classList.remove(Consts.classes.HIDDEN);
             if (li.querySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON)) {
-                li.classList.add(TC.Consts.classes.HIDDEN);
+                li.classList.add(Consts.classes.HIDDEN);
             }
         });
     };
@@ -434,10 +430,10 @@ TC.control.MapContents = MapContents;
         const layer = options.layer;
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
         const modalBody = dialog.querySelector('.tc-modal-body');
-        modalBody.classList.add(TC.Consts.classes.LOADING);
+        modalBody.classList.add(Consts.classes.LOADING);
         const blCRSList = layer.getCompatibleCRS();
 
-        dialog.classList.remove(TC.Consts.classes.HIDDEN);
+        dialog.classList.remove(Consts.classes.HIDDEN);
 
         dialog.dataset.layerId = layer.id;
         const ul = dialog.querySelector('ul.' + self.CLASS + '-crs-list');
@@ -468,8 +464,8 @@ TC.control.MapContents = MapContents;
                             button.dataset.fallbackLayerId = options.layer.fallbackLayer.id;
                         }
                         button.dataset.crsCode = projObj.code;
-                        button.classList.add(TC.Consts.classes.WARNING);
-                        li.classList.add(TC.Consts.classes.HIDDEN);
+                        button.classList.add(Consts.classes.WARNING);
+                        li.classList.add(Consts.classes.HIDDEN);
                     } else {
                         button.innerHTML = self.getLocaleString('changeMapToCrs', { crs: projObj.name + ' (' + projObj.code + ')' });
                         button.dataset.crsCode = projObj.code;
@@ -500,7 +496,7 @@ TC.control.MapContents = MapContents;
             }
             ul.appendChild(fragment);
 
-            modalBody.classList.remove(TC.Consts.classes.LOADING);
+            modalBody.classList.remove(Consts.classes.LOADING);
         });
         dialog.querySelector('.' + self.CLASS + '-name').innerHTML = layer.title || layer.name;
         TC.Util.showModal(dialog);
@@ -511,12 +507,12 @@ TC.control.MapContents = MapContents;
 
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
-        dialog.classList.toggle(TC.Consts.classes.THREED, !!self.map.on3DView);
+        dialog.classList.toggle(Consts.classes.THREED, !!self.map.on3DView);
 
         const modalBody = dialog.querySelector('.tc-modal-body');
         modalBody.innerHTML = '';
-        modalBody.classList.add(TC.Consts.classes.LOADING);
-        dialog.classList.remove(TC.Consts.classes.HIDDEN);
+        modalBody.classList.add(Consts.classes.LOADING);
+        dialog.classList.remove(Consts.classes.HIDDEN);
 
         TC.Util.showModal(dialog, {
             closeCallback: function () {
@@ -555,13 +551,13 @@ TC.control.MapContents = MapContents;
                 const tree = modalBody.querySelector(`.${self._cssClasses.TREE}`);
                 tree.classList.toggle(self._cssClasses.DETAILS, !isGrid);
                 tree.classList.toggle(self._cssClasses.GRID, isGrid);
-                modalBody.classList.remove(TC.Consts.classes.LOADING);
+                modalBody.classList.remove(Consts.classes.LOADING);
 
                 self.update(modalBody);
             });
         };
         self._getMoreBaseLayers(function (layerIdx) {
-            if (modalBody.classList.contains(TC.Consts.classes.LOADING)) {
+            if (modalBody.classList.contains(Consts.classes.LOADING)) {
                 renderBody();
             }
             else {
@@ -609,14 +605,10 @@ TC.control.MapContents = MapContents;
     };
 
     const getTo3DVIew = function (baseLayer) {
-        return new Promise(function (resolve, _reject) {
-            Promise.all([
-                baseLayer.getCapabilitiesPromise(),
-                baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : Promise.resolve()
-            ]).then(function () {
-                resolve();
-            });
-        });
+        return Promise.all([
+            baseLayer.getCapabilitiesPromise(),
+            baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : Promise.resolve()
+        ]);
     };
 
     ctlProto._getMoreBaseLayers = function (partialCallback) {
@@ -635,9 +627,9 @@ TC.control.MapContents = MapContents;
                             .indexOf(lyr.id) === -1;
                     })
                     .map(function (baseLayer) {
-                        if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
+                        if (baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS) {
                             return new TC.layer.Raster(baseLayer);
-                        } else if (baseLayer.type === TC.Consts.layerType.VECTOR) {
+                        } else if (baseLayer.type === Consts.layerType.VECTOR) {
                             return new TC.layer.Vector(baseLayer);
                         }
                     });
@@ -657,11 +649,11 @@ TC.control.MapContents = MapContents;
                     baseLayer.map = self.map;
                     baseLayer.isBase = baseLayer.options.isBase = true;
 
-                    if (baseLayer.type === TC.Consts.layerType.WMTS) {
+                    if (baseLayer.type === Consts.layerType.WMTS) {
                         await baseLayer.getCapabilitiesPromise();
                         var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
                         baseLayer.mustReproject = !matrixSet;
-                    } else if (baseLayer.type === TC.Consts.layerType.WMS) {
+                    } else if (baseLayer.type === Consts.layerType.WMS) {
                         await baseLayer.getCapabilitiesPromise();
                         baseLayer.mustReproject = !baseLayer.isCompatible(self.map.getCRS());
                     }
@@ -682,7 +674,7 @@ TC.control.MapContents = MapContents;
 
                 Promise.all(noDyn.map(function (baseLayer, i) {
                     return new Promise(function (res, _rej) {
-                        if (baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS) {
+                        if (baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS) {
                             var promise = self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
                             promise.then(
                                 function () {
@@ -706,17 +698,17 @@ TC.control.MapContents = MapContents;
 
             return new Promise(function (resolve, _reject) {
                 Promise.all(self._moreBaseLayers.filter(function (baseLayer) {
-                    return baseLayer.type === TC.Consts.layerType.WMS || baseLayer.type === TC.Consts.layerType.WMTS;
+                    return baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS;
                 }).map(function (baseLayer) {
                     return self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
                 })).then(function () {
 
                     self._moreBaseLayers = self._moreBaseLayers.map(function (baseLayer) {
 
-                        if (baseLayer.type === TC.Consts.layerType.WMTS) {
+                        if (baseLayer.type === Consts.layerType.WMTS) {
                             var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
                             baseLayer.mustReproject = !matrixSet;
-                        } else if (baseLayer.type === TC.Consts.layerType.WMS) {
+                        } else if (baseLayer.type === Consts.layerType.WMS) {
                             baseLayer.mustReproject = !baseLayer.isCompatible(self.map.getCRS());
                         }
                         if (self.map.on3DView && baseLayer.mustReproject && baseLayer.getFallbackLayer && baseLayer.getFallbackLayer()) {
