@@ -1,8 +1,6 @@
 ﻿import TC from '../../TC';
-import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 

@@ -2,7 +2,6 @@
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
@@ -30,7 +29,7 @@ TC.inherit(TC.control.NavBarHome, TC.Control);
         const result = TC.Control.prototype.register.call(self, map);
         self.wrap.register(map);        
 
-        map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+        map.on(Consts.event.PROJECTIONCHANGE, function (e) {
             const crs = e.newCrs;
             var bottomLeft = TC.Util.reproject([map.options.initialExtent[0], map.options.initialExtent[1]], map.options.crs, crs);
             var topRight = TC.Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, crs);
