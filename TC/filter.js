@@ -19,7 +19,7 @@ TC.filter.Filter = function (tagName) {
 TC.filter.Filter.prototype.getTagName = function () {
     return this.tagName_;
 };
-TC.filter.Filter.prototype.setTagName = function (text) {    
+TC.filter.Filter.prototype.setTagName = function (_text) {    
     return this.tagName_;
 };
 
@@ -65,9 +65,9 @@ TC.filter.Filter.prototype.writeInnerCondition_ = function (filter) {
     else
         return filter.write();
 };
-TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (filters) {
+TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (_filters) {
     const parent = this;
-    return parent.conditions.reduce(function (vi, va, index) {
+    return parent.conditions.reduce(function (vi, va, _index) {
         return (vi instanceof TC.filter.Filter ? parent.writeInnerCondition_(vi) : vi) + parent.writeInnerCondition_(va);
     });
 }
@@ -124,12 +124,12 @@ TC.filter.Filter.prototype.readInnerCondition_ = function (text) {
         return filter.read(text);
 };
 
-TC.filter.and = function (conditions) {
+TC.filter.and = function (_conditions) {
     var params = [null].concat(Array.prototype.slice.call(arguments));
     return new (Function.prototype.bind.apply(TC.filter.And, params))();
 };
 
-TC.filter.or = function (conditions) {
+TC.filter.or = function (_conditions) {
     var params = [null].concat(Array.prototype.slice.call(arguments));
     return new (Function.prototype.bind.apply(TC.filter.Or, params))();
 };
@@ -197,7 +197,7 @@ TC.filter.like = function (propertyName, pattern,
         opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase);
 };
 
-TC.filter.LogicalNary = function (tagName, conditions) {
+TC.filter.LogicalNary = function (tagName, _conditions) {
 
     TC.filter.Filter.call(this, tagName);
 
@@ -205,13 +205,13 @@ TC.filter.LogicalNary = function (tagName, conditions) {
 };
 TC.inherit(TC.filter.LogicalNary, TC.filter.Filter);
 
-TC.filter.And = function (conditions) {
+TC.filter.And = function (_conditions) {
     var params = ['And'].concat(Array.prototype.slice.call(arguments));
     TC.filter.LogicalNary.apply(this, params);
 };
 TC.inherit(TC.filter.And, TC.filter.LogicalNary);
 
-TC.filter.Or = function (conditions) {
+TC.filter.Or = function (_conditions) {
     var params = ['Or'].concat(Array.prototype.slice.call(arguments));
     TC.filter.LogicalNary.apply(this, params);
 };
@@ -477,9 +477,9 @@ TC.inherit(TC.filter.Bbox, TC.filter.Spatial);
 TC.filter.Bbox.prototype.write = function () {
     var bbox = '<gml:Envelope{srsName}><gml:lowerCorner>{lowerCorner}</gml:lowerCorner><gml:upperCorner>{upperCorner}</gml:upperCorner></gml:Envelope>'
 	.format({
-	    srsName: (typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : ""),
-	    lowerCorner: (this.extent[0] + ' ' + this.extent[1]),
-	    upperCorner: (this.extent[2] + ' ' + this.extent[3])
+        srsName: (typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : ""),
+        lowerCorner: (this.extent[0] + ' ' + this.extent[1]),
+        upperCorner: (this.extent[2] + ' ' + this.extent[3])
 	});
     var pattern = null;
     if (this.geometryName)
