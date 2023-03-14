@@ -2,7 +2,6 @@
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
@@ -31,7 +30,7 @@ TC.Control = Control;
             document.body.appendChild(self._dialogDiv);
         }
 
-        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self._cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
+        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self._cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
             const crs = e.target.dataset.crsCode;
             if (crs) {
                 self.setProjection({
@@ -41,7 +40,7 @@ TC.Control = Control;
             }
         }), { passive: true });
 
-        self._dialogDiv.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
+        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
             self.loadFallbackProjections();
         }), { passive: true });
     };
@@ -71,7 +70,7 @@ TC.Control = Control;
 
         const dialog = self._dialogDiv.querySelector('.' + self._cssClasses.CRS_DIALOG);
         const body = dialog.querySelector('.tc-modal-body');
-        body.classList.add(TC.Consts.classes.LOADING);
+        body.classList.add(Consts.classes.LOADING);
         const ul = body.querySelector('ul.' + self._cssClasses.CRS_LIST);
         ul.innerHTML = '';
         const blFirstOption = self.map.baseLayer.firstOption || self.map.baseLayer;
@@ -138,8 +137,8 @@ TC.Control = Control;
                             }).length === 0) {
                                 // Es un CRS del fallback
                                 hasFallbackCRS = true;
-                                li.classList.add(TC.Consts.classes.HIDDEN);
-                                button.classList.add(TC.Consts.classes.WARNING);
+                                li.classList.add(Consts.classes.HIDDEN);
+                                button.classList.add(Consts.classes.WARNING);
                             }
                             ul.appendChild(li);
                         }
@@ -160,7 +159,7 @@ TC.Control = Control;
                     li.innerHTML = self.getLocaleString('thereAreNoCompatibleCRS');
                     ul.appendChild(li);
                 }
-                const visibleLi = ul.querySelectorAll('li:not(.' + TC.Consts.classes.HIDDEN + ')');
+                const visibleLi = ul.querySelectorAll('li:not(.' + Consts.classes.HIDDEN + ')');
                 dialog.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
                     elm.style.display = visibleLi.length > 1 ? '' : 'none';
                 });
@@ -168,7 +167,7 @@ TC.Control = Control;
                     elm.style.display = visibleLi.length > 1 ? 'none' : '';
                 });
                 dialog.querySelector('ul.' + self._cssClasses.CRS_LIST).style.display = visibleLi.length > 0 || hasFallbackCRS ? '' : 'none';
-                body.classList.remove(TC.Consts.classes.LOADING);
+                body.classList.remove(Consts.classes.LOADING);
             });
         };
 
@@ -199,13 +198,13 @@ TC.Control = Control;
             .querySelector('.' + self._cssClasses.CRS_DIALOG)
             .querySelectorAll('ul.' + self._cssClasses.CRS_LIST + ' li');
         lis.forEach(function (li) {
-            li.classList.remove(TC.Consts.classes.HIDDEN);
+            li.classList.remove(Consts.classes.HIDDEN);
             if (li.querySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON)) {
-                li.classList.add(TC.Consts.classes.HIDDEN);
+                li.classList.add(Consts.classes.HIDDEN);
             }
         });
-        self._dialogDiv.querySelectorAll('p.' + TC.Consts.classes.WARNING).forEach(function (p) {
-            p.classList.remove(TC.Consts.classes.HIDDEN);
+        self._dialogDiv.querySelectorAll('p.' + Consts.classes.WARNING).forEach(function (p) {
+            p.classList.remove(Consts.classes.HIDDEN);
         });
         self._dialogDiv.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
             elm.style.display = lis.length > 1 ? '' : 'none';
