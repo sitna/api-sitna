@@ -5,7 +5,6 @@ const elementName = "sitna-button";
 class Button extends Component {
 
     #button;
-    #variant = Button.variant.DEFAULT;
     #active = false;
 
     static variant = {
@@ -59,17 +58,21 @@ class Button extends Component {
             self.active = self.hasAttribute(name);
         }
         if (oldValue !== newValue) {
-            if (name === 'text') {
-                self.text = newValue;
-            }
-            if (name === 'icon') {
-                self.icon = newValue;
-            }
-            if (name === 'variant') {
-                self.variant = newValue;
-            }
-            if (name === 'icon-text') {
-                self.iconText = newValue;
+            switch (name) {
+                case 'text':
+                    self.text = newValue;
+                    break;
+                case 'icon':
+                    self.icon = newValue;
+                    break;
+                case 'variant':
+                    self.variant = newValue;
+                    break;
+                case 'icon-text':
+                    self.iconText = newValue;
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -79,27 +82,28 @@ class Button extends Component {
     }
 
     get variant() {
-        return this.#variant;
+        return this.getAttribute('variant') || Button.variant.DEFAULT;
     }
 
     set variant(value) {
         const self = this;
+        value = value || Button.varian.DEFAULT;
 
-        self.#button.classList.remove(self.#variant);
-        if (value && value !== Button.variant.DEFAULT) {
+        self.#button.classList.remove(self.variant);
+        if (value !== Button.variant.DEFAULT) {
             self.#button.classList.add(value);
             self.setAttribute('variant', value);
         }
         else {
             self.removeAttribute('variant');
         }
-        if (value === Button.variant.ICON || value === Button.variant.MINIMAL || value === Button.variant.LINK) {
-            self.#button.setAttribute('title', self.text);
+        const text = self.text;
+        if (text && (value === Button.variant.ICON || value === Button.variant.MINIMAL || value === Button.variant.LINK)) {
+            self.#button.setAttribute('title', text);
         }
         else {
             self.#button.removeAttribute('title');
         }
-        self.#variant = value || Button.variant.DEFAULT;
     }
 
     get text() {
@@ -108,8 +112,22 @@ class Button extends Component {
 
     set text(value) {
         const self = this;
-        self.#button.innerHTML = value;
-        self.setAttribute('text', value);
+        self.#button.innerHTML = value ?? '';
+        if (value) {
+            self.setAttribute('text', value);
+        }
+        else {
+            self.removeAttribute('text');
+        }
+        const variant = self.variant;
+        if (variant === Button.variant.ICON || variant === Button.variant.MINIMAL || variant === Button.variant.LINK) {
+            if (value) {
+                self.#button.setAttribute('title', value);
+            }
+            else {
+                self.#button.removeAttribute('title');
+            }
+        }
     }
 
     get iconText() {
@@ -162,7 +180,11 @@ class Button extends Component {
         const boolValue = !!value;
         self.toggleAttribute('active', boolValue);
         self.#button.classList.toggle('active', boolValue);
-    }}
+    }
+}
 
-customElements.define(elementName, Button);
+if (!customElements.get(elementName)) {
+    Component.preloadStyle(elementName);
+    customElements.define(elementName, Button);
+}
 export default Button;

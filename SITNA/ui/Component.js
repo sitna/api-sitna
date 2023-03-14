@@ -10,12 +10,26 @@ class Component extends HTMLElement {
         self.attachShadow({ mode: 'open' });
         const link = document.createElement('link');
         link.setAttribute('rel', 'stylesheet');
-        link.href = `${TC.apiLocation}css/ui/${self.elementName}.css`;
+        link.href = `${Component.#getStylePath()}${self.elementName}.css`;
         self.shadowRoot.appendChild(link);
     }
 
     get elementName() {
         return elementName;
+    }
+
+    static #getStylePath() {
+        return `${TC.apiLocation}css/ui/`;
+    }
+
+    static preloadStyle(elmName) {
+        if (globalThis.document) {
+            const link = document.createElement('link');
+            link.setAttribute('rel', 'preload');
+            link.setAttribute('as', 'style');
+            link.href = `${Component.#getStylePath()}${elmName}.css`;
+            document.head.appendChild(link);
+        }
     }
 }
 

@@ -123,5 +123,8 @@ class Toggle extends Component {
     }
 }
 
-customElements.define(elementName, Toggle);
+if (!customElements.get(elementName)) {
+    Component.preloadStyle(elementName);
+    customElements.define(elementName, Toggle);
+}
 export default Toggle;
