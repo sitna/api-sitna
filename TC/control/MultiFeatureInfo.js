@@ -11,11 +11,12 @@
   * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
   * @typedef MultiFeatureInfoOptions
   * @extends FeatureInfoOptions
-  * @see MapControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a las pulsaciones hechas en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
+  * @property {TC.control.MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si el valor de esta propiedad es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
@@ -64,10 +65,11 @@
   * Opciones de los distintos modos de consulta espacial (por click, por línea o por recinto)
   * del [control de obtención de información de entidades de mapa por geometría]{@linkplain MultiFeatureInfoOptions}.
   * @typedef MultiFeatureInfoModeOptions
-  * @see MultiFeatureInfoOptions
-  * @property {boolean|FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
-  * @property {boolean|GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
-  * @property {boolean|GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
+  * @memberof SITNA.control
+  * @see SITNA.control.MultiFeatureInfoOptions
+  * @property {boolean|SITNA.control.FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
+  * @property {boolean|SITNA.control.GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
+  * @property {boolean|SITNA.control.GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
   */
 
 import TC from '../../TC';
@@ -75,7 +77,6 @@ import Consts from '../Consts';
 import FeatureInfoCommons from './FeatureInfoCommons';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
 (function () {
@@ -83,11 +84,11 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         var self = this;
         TC.Control.apply(self, arguments);
         self.modes = self.options.modes || {};
-        if (typeof self.modes[TC.Consts.geom.POINT] === 'undefined') {
-            self.modes[TC.Consts.geom.POINT] = true;
+        if (typeof self.modes[Consts.geom.POINT] === 'undefined') {
+            self.modes[Consts.geom.POINT] = true;
         }
-        if (typeof self.modes[TC.Consts.geom.POLYGON] === 'undefined') {
-            self.modes[TC.Consts.geom.POLYGON] = true;
+        if (typeof self.modes[Consts.geom.POLYGON] === 'undefined') {
+            self.modes[Consts.geom.POLYGON] = true;
         }
         self.featureInfoControl = null;
         self.lineFeatureInfoControl = null;
@@ -116,108 +117,103 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         return opt1;
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
 
         self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
             input.checked = false;
         });
 
+        const ctlPromises = [TC.Control.prototype.register.call(self, map)];
+        const styles = self.options.styles || {};
+        const pointMode = self.modes[Consts.geom.POINT];
+        const polylineMode = self.modes[Consts.geom.POLYLINE];
+        const polygonMode = self.modes[Consts.geom.POLYGON];
+        if (pointMode) {
+            ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[Consts.geom.POINT],
+                {
+                    id: self.getUID(),
+                    displayMode: self.options.displayMode,
+                    persistentHighlights: self.options.persistentHighlights,
+                    share: self.options.share
+                })).then(function (control) {
+                    self.featureInfoControl = control;
+                    self.featureInfoControls.push(control);
+                    return control;
+                }));
+        }
+        if (self.modes[Consts.geom.POLYLINE]) {
+            ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[Consts.geom.POLYLINE],
+                {
+                    id: self.getUID(),
+                    active: polylineMode.active,
+                    displayMode: self.options.displayMode,
+                    persistentHighlights: self.options.persistentHighlights,
+                    share: self.options.share,
+                    style: polylineMode.filterStyle || styles.line
+                })).then(function (control) {
+                    self.lineFeatureInfoControl = control;
+                    self.featureInfoControls.push(control);
+                    return control;
+                }));
+        }
+        if (self.modes[Consts.geom.POLYGON]) {
+            ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[Consts.geom.POLYGON],
+                {
+                    id: self.getUID(),
+                    active: polygonMode.active,
+                    displayMode: self.options.displayMode,
+                    persistentHighlights: self.options.persistentHighlights,
+                    share: self.options.share,
+                    style: polygonMode.filterStyle || styles.polygon
+                })).then(function (control) {
+                    self.polygonFeatureInfoControl = control;
+                    self.featureInfoControls.push(control);
+                    return control;
+                }));
+        }
 
-        return new Promise(function (resolve, _reject) {
-            const ctlPromises = [TC.Control.prototype.register.call(self, map)];
-            const styles = self.options.styles || {};
-            const pointMode = self.modes[TC.Consts.geom.POINT];
-            const polylineMode = self.modes[TC.Consts.geom.POLYLINE];
-            const polygonMode = self.modes[TC.Consts.geom.POLYGON];
-            if (pointMode) {
-                ctlPromises.push(map.addControl("featureInfo", mergeOptions(self.modes[TC.Consts.geom.POINT],
-                    {
-                        id: self.getUID(),
-                        displayMode: self.options.displayMode,
-                        persistentHighlights: self.options.persistentHighlights,
-                        share: self.options.share
-                    })).then(function (control) {
-                        self.featureInfoControl = control;
-                        self.featureInfoControls.push(control);
-                        return control;
-                    }));
-            }
-            if (self.modes[TC.Consts.geom.POLYLINE]) {
-                ctlPromises.push(map.addControl("lineFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYLINE],
-                    {
-                        id: self.getUID(),
-                        active: polylineMode.active,
-                        displayMode: self.options.displayMode,
-                        persistentHighlights: self.options.persistentHighlights,
-                        share: self.options.share,
-                        style: polylineMode.filterStyle || styles.line
-                    })).then(function (control) {
-                        self.lineFeatureInfoControl = control;
-                        self.featureInfoControls.push(control);
-                        return control;
-                    }));
-            }
-            if (self.modes[TC.Consts.geom.POLYGON]) {
-                ctlPromises.push(map.addControl("polygonFeatureInfo", mergeOptions(self.modes[TC.Consts.geom.POLYGON],
-                    {
-                        id: self.getUID(),
-                        active: polygonMode.active,
-                        displayMode: self.options.displayMode,
-                        persistentHighlights: self.options.persistentHighlights,
-                        share: self.options.share,
-                        style: polygonMode.filterStyle || styles.polygon
-                    })).then(function (control) {
-                        self.polygonFeatureInfoControl = control;
-                        self.featureInfoControls.push(control);
-                        return control;
-                    }));
-            }
-
-            map.on(`${TC.Consts.event.LAYERADD} ${TC.Consts.event.LAYERREMOVE} ${TC.Consts.event.LAYERVISIBILITY}`, function (_e) {
-                self.updateUI();
-            });
-
-            map.on(`${TC.Consts.event.CONTROLACTIVATE} ${TC.Consts.event.CONTROLDEACTIVATE}`, function (e) {
-                if (e.control === self.featureInfoControl || e.control === self.lineFeatureInfoControl || e.control === self.polygonFeatureInfoControl) {
-                    self.updateUI();
-                }
-            });
-
-            Promise.all(ctlPromises).then(function () {
-                if (self.featureInfoControl) {
-                    self.featureInfoControl.activate();
-                    self.lastCtrlActive = self.featureInfoControl;
-                }
-                self.updateUI();
-                resolve(self);
-            });
+        map.on(`${Consts.event.LAYERADD} ${Consts.event.LAYERREMOVE} ${Consts.event.LAYERVISIBILITY}`, function (_e) {
+            self.updateUI();
         });
 
+        map.on(`${Consts.event.CONTROLACTIVATE} ${Consts.event.CONTROLDEACTIVATE}`, function (e) {
+            if (e.control === self.featureInfoControl || e.control === self.lineFeatureInfoControl || e.control === self.polygonFeatureInfoControl) {
+                self.updateUI();
+            }
+        });
+
+        await Promise.all(ctlPromises);
+        if (self.featureInfoControl) {
+            self.featureInfoControl.activate();
+            self.lastCtrlActive = self.featureInfoControl;
+        }
+        self.updateUI();
+        return self;
     };
 
     ctlProto.render = function (callback) {
         const self = this;
         var renderData = { controlId: self.id };
-        if (self.modes[TC.Consts.geom.POINT]) {
-            renderData.pointSelectValue = TC.Consts.geom.POINT;
+        if (self.modes[Consts.geom.POINT]) {
+            renderData.pointSelectValue = Consts.geom.POINT;
         }
-        if (self.modes[TC.Consts.geom.POLYLINE]) {
-            renderData.lineSelectValue = TC.Consts.geom.POLYLINE;
+        if (self.modes[Consts.geom.POLYLINE]) {
+            renderData.lineSelectValue = Consts.geom.POLYLINE;
         }
-        if (self.modes[TC.Consts.geom.POLYGON]) {
-            renderData.polygonSelectValue = TC.Consts.geom.POLYGON;
+        if (self.modes[Consts.geom.POLYGON]) {
+            renderData.polygonSelectValue = Consts.geom.POLYGON;
         }
         return self._set1stRenderPromise(self.renderData(renderData,
             function () {
                 var changeEvent = function () {
                     switch (this.value) {
-                        case TC.Consts.geom.POLYLINE:
+                        case Consts.geom.POLYLINE:
                             //modo línea
                             self.lineFeatureInfoControl.activate();
                             self.lastCtrlActive = self.lineFeatureInfoControl;
                             break;
-                        case TC.Consts.geom.POLYGON:
+                        case Consts.geom.POLYGON:
                             //modo poligono
                             self.polygonFeatureInfoControl.activate();
                             self.lastCtrlActive = self.polygonFeatureInfoControl;
@@ -235,14 +231,14 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
                 //URI bind del click del boton de borrar seleccionadas
                 const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
-                delFeaturesBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
+                delFeaturesBtn.addEventListener(Consts.event.CLICK, function (_e) {
                     self.featureInfoControls.forEach(ctl => {
                         ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
                         ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
                     });
                 }, { passive: true });
 
-                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(TC.Consts.event.CLICK, async function (_e) {
+                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(Consts.event.CLICK, async function (_e) {
                     const downloadDialog = await self.getDownloadDialog();
                     let options = {
                         title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
@@ -258,20 +254,20 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                 }, { passive: true });
 
                 self.map
-                    //.on(TC.Consts.event.FEATUREINFO, function () {
+                    //.on(Consts.event.FEATUREINFO, function () {
                     //    delFeaturesBtn.disabled = false;
                     //})
-                    //.on(TC.Consts.event.NOFEATUREINFO, function (e) {
+                    //.on(Consts.event.NOFEATUREINFO, function (e) {
                     //    if (e.control && e.control.filterFeature) {
                     //        delFeaturesBtn.disabled = false;
                     //    }
                     //})
-                    .on(TC.Consts.event.FEATUREREMOVE, function (e) {
+                    .on(Consts.event.FEATUREREMOVE, function (e) {
                         if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
                             self.updateUI();
                         }
                     })
-                    .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+                    .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
                         if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
                             self.updateUI();
                         }
@@ -297,24 +293,28 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
     ctlProto.updateUI = function () {
         const self = this;
         self.renderPromise().then(function () {
-            const enabled = self.map.workLayers.some(l => l.type === TC.Consts.layerType.WMS && l.getVisibility());
+            const enabled = self.map.workLayers.some(l => l.type === Consts.layerType.WMS && l.getVisibility());
             self.div.querySelectorAll('input').forEach(function (input) {
                 input.disabled = !enabled;
             });
             if (self.featureInfoControl) {
-                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POINT}]`);
+                const input = self.div.querySelector(`input[value=${Consts.geom.POINT}]`);
                 if (input) {
+                    if (!enabled && (self.lineFeatureInfoControl.isActive || self.polygonFeatureInfoControl.isActive)) {
+                        // Si no hay capas válidas para línea o polígono volvemos a GFI por punto
+                        self.featureInfoControl.activate();
+                    }
                     input.checked = self.featureInfoControl.isActive;
                 }
             }
             if (self.lineFeatureInfoControl) {
-                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYLINE}]`);
+                const input = self.div.querySelector(`input[value=${Consts.geom.POLYLINE}]`);
                 if (input) {
                     input.checked = self.lineFeatureInfoControl.isActive;
                 }
             }
             if (self.polygonFeatureInfoControl) {
-                const input = self.div.querySelector(`input[value=${TC.Consts.geom.POLYGON}]`);
+                const input = self.div.querySelector(`input[value=${Consts.geom.POLYGON}]`);
                 if (input) {
                     input.checked = self.polygonFeatureInfoControl.isActive;
                 }
@@ -324,10 +324,10 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
             const featuresUnavailable = self.featureInfoControls.every(ctl => (!ctl.resultsLayer || ctl.resultsLayer.features.length === 0) &&
                 (!ctl.filterLayer || ctl.filterLayer.features.length === 0));
             const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
-            delFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
+            delFeaturesBtn.classList.toggle(Consts.classes.HIDDEN, !persistentHighlights);
             delFeaturesBtn.disabled = featuresUnavailable;
             const dlFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-dl`);
-            dlFeaturesBtn.classList.toggle(TC.Consts.classes.HIDDEN, !persistentHighlights);
+            dlFeaturesBtn.classList.toggle(Consts.classes.HIDDEN, !persistentHighlights);
             dlFeaturesBtn.disabled = featuresUnavailable;
 
             // Hack para compensar bug de Edge: no se actualiza el estilo al cambiar el estado del radio.
