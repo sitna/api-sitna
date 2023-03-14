@@ -2,40 +2,42 @@
 /**
   * Opciones de control de mapa de situación.
   * @typedef OverviewMapOptions
-  * @extends ControlOptions
-  * @see MapControlOptions
+  * @extends SITNA.control.ControlOptions
+  * @see SITNA.control.MapControlOptions
+  * @memberof SITNA.control
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {string|object} layer - Identificador de capa para usar como mapa de fondo u objeto de opciones de capa.
   */
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Control from '../Control';
+import Raster from '../../SITNA/layer/Raster';
+import Vector from '../../SITNA/layer/Vector';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
-TC.control.OverviewMap = function () {
-    var self = this;
+class OverviewMap extends Control {
+    #wrapPromise;
 
-    TC.Control.apply(self, arguments);
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
 
-    self.isLoaded = false;
+        self.template = TC.apiLocation + "TC/templates/tc-ctl-ovmap.hbs";
 
-    self.layer = null;
-};
+        self.isLoaded = false;
+        self.layer = null;
+    }
 
-TC.inherit(TC.control.OverviewMap, TC.Control);
+    getClassName() {
+        return 'tc-ctl-ovmap';
+    }
 
-(function () {
-    var ctlProto = TC.control.OverviewMap.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-ovmap';
-
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-ovmap.hbs";
-
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
 
         const instanceLayer = function (layer) {
@@ -56,22 +58,22 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
 
             if (typeof layer === 'string') {
                 var lyrObj = findLayerById(layer, map.options.availableBaseLayers);
-                if (!TC.Util.isPlainObject(lyrObj)) {
+                if (!Util.isPlainObject(lyrObj)) {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
                 }
-                if (TC.Util.isPlainObject(lyrObj)) {
-                    lyr = new TC.layer.Raster(lyrObj);
+                if (Util.isPlainObject(lyrObj)) {
+                    lyr = new Raster(lyrObj);
                 }
             }
             else {
-                if (layer instanceof TC.Layer) {
+                if (layer instanceof Raster || layer instanceof Vector) {
                     lyr = layer;
                 }
-                else if (layer.type === TC.Consts.layerType.VECTOR || layer.type === TC.Consts.layerType.KML || layer.type === TC.Consts.layerType.WFS) {
-                    lyr = new TC.layer.Vector(layer);
+                else if (layer.type === Consts.layerType.VECTOR || layer.type === Consts.layerType.KML || layer.type === Consts.layerType.WFS) {
+                    lyr = new Vector(layer);
                 }
                 else {
-                    lyr = new TC.layer.Raster(layer);
+                    lyr = new Raster(layer);
                 }
             }
 
@@ -99,12 +101,12 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
         const changeBaseLayer = function (e) {
             const self = this;
 
-            if (self.map.baseLayer.type === TC.Consts.layerType.WMS || self.map.baseLayer.type === TC.Consts.layerType.WMTS || self.options.layer) {
+            if (self.map.baseLayer.type === Consts.layerType.WMS || self.map.baseLayer.type === Consts.layerType.WMTS || self.options.layer) {
                 var newLayer = self.map.baseLayer.overviewMapLayer || self.options.layer;
                 let ovMapLayer;
                 if (self.layer.id !== newLayer) {
                     ovMapLayer = registerLayer(newLayer);
-                } else if (TC.Consts.event.PROJECTIONCHANGE.includes(e.type)) {
+                } else if (Consts.event.PROJECTIONCHANGE.includes(e.type)) {
                     ovMapLayer = self.layer;
                 }
                 if (ovMapLayer) {
@@ -117,64 +119,61 @@ TC.inherit(TC.control.OverviewMap, TC.Control);
             }
         };
 
-        const result = new Promise(function (resolve, reject) {
-            TC.Control.prototype.register.call(self, map)
-                .then(function (ctl) {
-                    self.wrap = new TC.wrap.control.OverviewMap(self);
-                    map.loaded(function () {
-                        self.defaultLayer = registerLayer(self.options.layer);
-                        self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.options.availableBaseLayers[0]);
+        const ctl = await super.register.call(self, map);
+        self.wrap = new TC.wrap.control.OverviewMap(self);
+        map.loaded(function () {
+            self.defaultLayer = registerLayer(self.options.layer);
+            self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.options.availableBaseLayers[0]);
 
-                        self.wrap.register(map);                        
+            self.#registerWrap().then(() => resetOVMapProjection({ crs: map.crs }));
 
-                        resetOVMapProjection({ crs: map.crs });
-
-                        map.on(TC.Consts.event.PROJECTIONCHANGE + ' ' + TC.Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));
-                    });
-                    resolve(ctl);
-                })
-                .catch(function (err) {
-                    reject(err);
-                });
+            map.on(Consts.event.PROJECTIONCHANGE + ' ' + Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));
         });
 
-        return result;
-    };
+        return ctl;
+    }
 
-    ctlProto.loaded = function (callback) {
-        var self = this;
+    loaded(callback) {
+        const self = this;
 
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             if (self.isLoaded && self.map && self.map.isLoaded) {
                 callback();
             }
             else {
-                self.on(TC.Consts.event.MAPLOAD, callback);
+                self.on(Consts.event.MAPLOAD, callback);
             }
         }
-    };
+    }
 
-    ctlProto.activate = function () {
+    activate() {
         this.enable();
-    };
+    }
 
-    ctlProto.deactivate = function () {
+    deactivate() {
         this.disable();
-    };
+    }
 
-    ctlProto.enable = function () {
-        var self = this;
-        TC.Control.prototype.enable.call(self);
-        self.wrap.enable();
-    };
+    enable() {
+        const self = this;
+        super.enable.call(self);
+        self.#registerWrap().then(() => self.wrap.enable());
+    }
 
-    ctlProto.disable = function () {
-        var self = this;
-        TC.Control.prototype.disable.call(self);
-        self.wrap.disable();
-    };
+    disable() {
+        const self = this;
+        super.disable.call(self);
+        self.#registerWrap().then(() => self.wrap.disable());
+    }
 
-})();
+    #registerWrap() {
+        const self = this;
+        if (!self.#wrapPromise && self.map) {
+            self.#wrapPromise = self.wrap.register(self.map);
+        }
+        return self.#wrapPromise;
+    }
+}
 
-const OverviewMap = TC.control.OverviewMap;
+TC.control.OverviewMap = OverviewMap;
 export default OverviewMap;
