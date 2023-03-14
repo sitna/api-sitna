@@ -1,12 +1,12 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
-TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
+Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
 TC.control.Scale = function () {
     TC.Control.apply(this, arguments);
@@ -23,12 +23,12 @@ TC.inherit(TC.control.Scale, TC.Control);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize }, function () {
+        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize }, function () {
 
             const span = self.div.querySelector('span');
             span.textContent = '1:' + self.format(span.textContent.substr(2));
 
-            self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () {
+            self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
                 self.setScreenSize();
             }, { passive: true });
 
@@ -41,12 +41,12 @@ TC.inherit(TC.control.Scale, TC.Control);
     ctlProto.register = function (map) {
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
-        var screenSize = TC.Util.storage.getLocalValue(TC.Consts.SCREEN_SIZE_KEY);
+        var screenSize = TC.Util.storage.getLocalValue(Consts.SCREEN_SIZE_KEY);
         if (screenSize) {
-            TC.Cfg.screenSize = screenSize;
+            Cfg.screenSize = screenSize;
         }
         self.render(function () {
-            map.on(TC.Consts.event.ZOOM, function () {
+            map.on(Consts.event.ZOOM, function () {
                 delete self.metersPerDegree;
                 self.update();
             });
@@ -64,10 +64,10 @@ TC.inherit(TC.control.Scale, TC.Control);
      */
     ctlProto.setScreenSize = function () {
         var self = this;
-        TC.prompt(self.getLocaleString('selectScreenSize'), TC.Cfg.screenSize, function (value) {
+        TC.prompt(self.getLocaleString('selectScreenSize'), Cfg.screenSize, function (value) {
             if (value) {
-                TC.Cfg.screenSize = parseFloat(value);
-                TC.Util.storage.setLocalValue(TC.Consts.SCREEN_SIZE_KEY, TC.Cfg.screenSize);
+                Cfg.screenSize = parseFloat(value);
+                TC.Util.storage.setLocalValue(Consts.SCREEN_SIZE_KEY, Cfg.screenSize);
                 self.update();
             }
         });
@@ -83,7 +83,7 @@ TC.inherit(TC.control.Scale, TC.Control);
         var result = 0;
         var res = !resolution && self.map ? self.map.wrap.getResolution() : resolution;
         if (res) {
-            result = res * self.getDpi(TC.Cfg.screenSize) / .0254;
+            result = res * self.getDpi(Cfg.screenSize) / .0254;
             if (window.devicePixelRatio) {
                 result = result * window.devicePixelRatio;
             }

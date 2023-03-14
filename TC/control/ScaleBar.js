@@ -1,8 +1,6 @@
 ﻿import TC from '../../TC';
-import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
@@ -26,14 +24,11 @@ TC.inherit(TC.control.ScaleBar, TC.Control);
         return self._set1stRenderPromise(Promise.resolve());
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            Promise.all([TC.Control.prototype.register.call(self, map), map.wrap.getMap()]).then(function (objects) {
-                objects[1].addControl(self.wrap.ctl);
-                resolve(self);
-            });
-        });
+        const objects = await Promise.all([TC.Control.prototype.register.call(self, map), map.wrap.getMap()]);
+        objects[1].addControl(self.wrap.ctl);
+        return self;
     };
 
     ctlProto.getText = function () {
