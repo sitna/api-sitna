@@ -1,10 +1,10 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
+import Util from '../Util';
 
 TC.control = TC.control || {};
 TC.Control = Control;
-TC.Consts = Consts;
 
 TC.control.FullScreen = function () {
     var self = this;
@@ -92,7 +92,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
             if (self.fscreen.fullscreenEnabled) {
 
                 const doFullscreenChange = () => {
-                    btn.classList.toggle(TC.Consts.classes.ACTIVE, self.fscreen.inFullscreen);
+                    btn.classList.toggle(Consts.classes.ACTIVE, self.fscreen.inFullscreen);
                     btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
                 };
 
@@ -110,7 +110,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
                     }
                 }, false);
 
-                if (!TC.Util.detectMobile()) {
+                if (!Util.detectMobile()) {
                     window.addEventListener('resize', () => {
                         if (self.byBtn) {
                             self.byBtn = false;
