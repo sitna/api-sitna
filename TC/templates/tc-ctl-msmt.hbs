@@ -1,0 +1,28 @@
+<div class="tc-ctl-msmt-box">
+{{#if point}}
+    <div class="tc-ctl-msmt-txt">
+        {{i18n "search.list.coordinates"}} 
+        <span class="tc-ctl-msmt-val-coord">
+            <span class="tc-ctl-msmt-txt-elm">
+                <span class="tc-ctl-msmt-val-coord-1-t"></span> <span class="tc-ctl-msmt-val-coord-1-v"></span>
+                <span class="tc-ctl-msmt-val-coord-2-t"></span> <span class="tc-ctl-msmt-val-coord-2-v"></span> <span class="tc-ctl-msmt-val-coord-ele-t"></span> <span class="tc-ctl-msmt-val-coord-ele-v"></span>
+            </span>
+        </span>
+    </div>
+{{else}}
+    {{#if polyline}}
+    <div class="tc-ctl-msmt-txt">
+        <span class="tc-ctl-msmt-txt-elm">{{i18n "2dLength"}}: <span class="tc-ctl-msmt-val-len"></span></span>
+    </div>
+        {{#if enabledProfile}}
+    <sitna-toggle checked class="tc-ctl-msmt-prof-btn" text="{{i18n "deactivateElevationProfile"}}" checked-icon-text="&#xe920;" unchecked-icon-text="&#xe920;"></sitna-toggle>
+        {{/if}}
+    {{else}}
+        {{#if polygon}}
+    <div class="tc-ctl-msmt-txt">
+        <span class="tc-ctl-msmt-txt-elm">{{i18n "area"}}: <span class="tc-ctl-msmt-val-area"></span>,</span> <span class="tc-ctl-msmt-txt-elm">{{i18n "2dPerimeter"}}: <span class="tc-ctl-msmt-val-peri"></span></span>
+    </div>
+        {{/if}}
+    {{/if}}
+{{/if}}
+</div>
