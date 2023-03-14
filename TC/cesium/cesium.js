@@ -45,7 +45,7 @@
             cesium.TileProviderError.handleSuccess(that._requestImageError);
         }
 
-        function failure(e) {            
+        function failure(e) {
             if (typeof e === 'string' && e === TOO_MANY_PARALLEL_REQUESTS) {
                 // Too many parallel requests, so postpone loading tile.
                 imagery.state = cesium.ImageryState.UNLOADED;
@@ -138,16 +138,16 @@
             let deferred = cesium.when.defer();
 
             this.tcLayer.getWebGLUrl.call(this.tcLayer, this.url)
-                .then(function (url) {
-                    self.url = url;
-                    let image = cesium.Resource.prototype._fetchImage.apply(self, options);
+                .then(function (params) {
+                    self.url = params.url;
+                    let image = params.image ? new Promise((resolve) => { resolve(params.image) }) : cesium.Resource.prototype._fetchImage.apply(self, options);
                     if (image) {
                         image.then(deferred.resolve);
                     } else {
                         deferred.reject(TOO_MANY_PARALLEL_REQUESTS);
                     }
                 })
-                .catch(function (error) {                    
+                .catch(function (error) {
                     deferred.reject(error);
                 });
 
@@ -155,7 +155,7 @@
         } else {
             return cesium.Resource.prototype._fetchImage.apply(this, arguments);
         }
-    };    
+    };
 
     return cesium;
 });
