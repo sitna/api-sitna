@@ -1,9 +1,14 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
+import Point from '../../SITNA/feature/Point';
+import MultiPoint from '../../SITNA/feature/MultiPoint';
+import Polyline from '../../SITNA/feature/Polyline';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+import Polygon from '../../SITNA/feature/Polygon';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.Control = Control;
 
 TC.control.FeatureDownloadDialog = function () {
@@ -39,76 +44,67 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
     ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-dldlog.hbs";
 
-    const addElevationAndInterpolation = function (features, options) {
+    const addElevationAndInterpolation = async function (features, options) {
         const self = this;
         options = options || {};
-        return new Promise(function (resolve, reject) {
-            const cloneWithId = function (feat) {
-                const result = feat.clone();
-                result.id = feat.id;
-                return result;
-            };
-            //si no se incluyen las elevaciones quito las Z de las geometrias que las tuvieran
-            if (!options.displayElevation) {
-                resolve(features.map(function (feat) {
-                    if (feat.getGeometryStride() > 2) {
-                        const f = cloneWithId(feat);
-                        f.id = feat.id;
-                        f.layer = feat.layer;
-                        f.getCoordsArray().forEach(coord => coord.length = 2);
-                        f.setCoords(f.geometry);
-                        return f;
-                    }
-                    return feat;
-                }));
-                return;
-            }
-
-            let mustInterpolate = options.elevation && options.elevation.resolution;
-            // Array con features sin altura y nulo donde habia feature con alturas
-            let featuresToAddElevation = mustInterpolate ? features.map(f => cloneWithId(f)) : features.map(f => {
-                return f.getCoordsArray().every(p => !p[2]) ? cloneWithId(f) : null;
+        const cloneWithId = function (feat) {
+            const result = feat.clone();
+            result.id = feat.id;
+            return result;
+        };
+        //si no se incluyen las elevaciones quito las Z de las geometrias que las tuvieran
+        if (!options.displayElevation) {
+            return features.map(function (feat) {
+                if (feat.getGeometryStride() > 2) {
+                    const f = cloneWithId(feat);
+                    f.id = feat.id;
+                    f.layer = feat.layer;
+                    f.removeZ();
+                    return f;
+                }
+                return feat;
             });
+        }
 
-            if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {
-                const elevOptions = {
-                    crs: self.map.crs,
-                    features: featuresToAddElevation,
-                    maxCoordQuantity: options.elevation && options.elevation.maxCoordQuantity,
-                    resolution: options.elevation.resolution,
-                    sampleNumber: options.elevation.sampleNumber || 0
-                };
-                (self.map.elevation || new TC.tool.Elevation(typeof options.elevation === 'boolean' ? {} : options.elevation)).setGeometry(elevOptions).then(
-                    function (processedFeatures) {
-                        // Recombinamos features procesadas y sin procesar
-                        processedFeatures.forEach((f, index) => {
-                            if (!f) {
-                                processedFeatures[index] = features[index];
-                            }
-                        });
-                        resolve(processedFeatures);
-                    },
-                    function (error) {
-                        reject(error instanceof Error ? error : Error(error));
-                    }
-                );
-            }
-            else {
-                resolve(features);
-            }
+        let mustInterpolate = options.elevation && options.elevation.resolution;
+        // Array con features sin altura y nulo donde habia feature con alturas
+        let featuresToAddElevation = mustInterpolate ? features.map(f => cloneWithId(f)) : features.map(f => {
+            return f.getCoordsArray().every(p => !p[2]) ? cloneWithId(f) : null;
         });
+
+        if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {
+            const elevOptions = {
+                crs: self.map.crs,
+                features: featuresToAddElevation,
+                maxCoordQuantity: options.elevation && options.elevation.maxCoordQuantity,
+                resolution: options.elevation.resolution,
+                sampleNumber: options.elevation.sampleNumber || 0
+            };
+            const processedFeatures = await (self.map.elevation || new TC.tool.Elevation(typeof options.elevation === 'boolean' ? {} : options.elevation)).setGeometry(elevOptions);
+            // Recombinamos features procesadas y sin procesar
+            processedFeatures.forEach((f, index) => {
+                if (!f) {
+                    processedFeatures[index] = features[index];
+                }
+            });
+            return processedFeatures;
+        }
+        else {
+            return features;
+        }
     };
+
     const hasPoints = function () {
-        return this.getFeatures().some(feature => TC.feature.Point && feature instanceof TC.feature.Point ||
-            TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint);
+        return this.getFeatures().some(feature => feature instanceof Point ||
+            feature instanceof MultiPoint);
     };
     const hasLines = function () {
-        return this.getFeatures().some(feature => TC.feature.Polyline && feature instanceof TC.feature.Polyline ||
-            TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline);
+        return this.getFeatures().some(feature => feature instanceof Polyline ||
+            feature instanceof MultiPolyline);
     };
     const hasPolygons = function () {
-        return this.getFeatures().some(feature => TC.feature.Polygon && feature instanceof TC.feature.Polygon ||
-            TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon);
+        return this.getFeatures().some(feature => feature instanceof Polygon ||
+            feature instanceof MultiPolygon);
     };
 
     ctlProto.render = function (callback) {
@@ -142,7 +138,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
         //si solo hay poligonos ocultamos el botón de formato GPX
         const excludedFormats = options.excludedFormats ? options.excludedFormats.slice() : [];
         if (!hasPoints.call(self) && !hasLines.call(self) && hasPolygons.call(self)) {
-            excludedFormats.push(TC.Consts.format.GPX);
+            excludedFormats.push(Consts.format.GPX);
         }
         options.formats = _formats.filter(item => excludedFormats.indexOf(item) < 0);
         self.setOptions(options);
@@ -154,7 +150,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             document.body.appendChild(self.modal);
 
             const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
-            modalBody.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
+            modalBody.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
 
                 var resolution = displayElevation && interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation && self.map.elevation.options).resolution : 0;
 
@@ -162,7 +158,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
                     //checkear si son features con datos complejos
                     var cancel = false;
-                    if (format !== TC.Consts.format.GEOJSON && opts.format !== TC.Consts.format.WKT && features.some(function (feat) {
+                    if (format !== Consts.format.GEOJSON && opts.format !== Consts.format.WKT && features.some(function (feat) {
                         for (var attr in feat.getData()) {
                             if (feat.data[attr] instanceof Object)
                                 return true;
@@ -197,17 +193,17 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                                 }).then(data => {
                                     fileName = fileName || TC.getUID();
                                     switch (format) {
-                                        case TC.Consts.format.SHAPEFILE:
+                                        case Consts.format.SHAPEFILE:
                                             TC.Util.downloadBlob(fileName + ".zip", data);
                                             break;
-                                        case TC.Consts.format.GEOPACKAGE:
+                                        case Consts.format.GEOPACKAGE:
                                             TC.Util.downloadFile(fileName + ".gpkg", "application/geopackage+sqlite3", data);
                                             break;
-                                        case TC.Consts.format.KMZ:
+                                        case Consts.format.KMZ:
                                             TC.Util.downloadBlob(fileName + ".kmz", data);
                                             break;
                                         default: {
-                                            const mimeType = TC.Consts.mimeType[options.format];
+                                            const mimeType = Consts.mimeType[options.format];
                                             TC.Util.downloadFile(fileName + '.' + format.toLowerCase(), mimeType, data);
                                             break;
                                         }
@@ -228,12 +224,11 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                 };
 
                 const format = e.target.dataset.format;
-                if (format === TC.Consts.format.GPX) {
+                if (format === Consts.format.GPX) {
                     if (hasPolygons.call(self)) {
                         TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'), function () {
                             endExport(self.getFeatures().filter(function (feature) {
-                                return (!TC.feature.Polygon || !(feature instanceof TC.feature.Polygon)) &&
-                                    (!TC.feature.MultiPolygon || !(feature instanceof TC.feature.MultiPolygon));
+                                return !(feature instanceof Polygon) && !(feature instanceof MultiPolygon);
                             }), self.getOptions());
                         });
                     }
@@ -258,24 +253,24 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
                 if (interpolationPanel) {
                     if (displayElevation) {
-                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {                        
-                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
                         }                        
                     }
 
                     if (displayElevation && (hasLines.call(self) || hasPolygons.call(self)) && options.elevation.resolution) {
-                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {
-                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
                         }
                     }
 
                     modalBody.querySelectorAll(self._selectors.INTERPOLATION_RADIO)[interpolation ? 1 : 0].checked = true;
                     if (interpolation) {
-                        modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE).classList.remove(TC.Consts.classes.HIDDEN);
+                        modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE).classList.remove(Consts.classes.HIDDEN);
                         modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
                     }
                 }
@@ -288,18 +283,18 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
                 if (interpolationPanel) {
                     if (displayElevation) {
-                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {
-                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
                         }
                     }
 
                     if (displayElevation && (hasLines.call(self) || hasPolygons.call(self))) {
-                        interpolationPanel.classList.remove(TC.Consts.classes.HIDDEN);
+                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {
-                        if (!interpolationPanel.classList.contains(TC.Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(TC.Consts.classes.HIDDEN);
+                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
                         }
                     }
                 }               
@@ -307,7 +302,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             }));
             modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (_e) {
                 const idDiv = modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE);
-                idDiv.classList.toggle(TC.Consts.classes.HIDDEN);
+                idDiv.classList.toggle(Consts.classes.HIDDEN);
                 interpolation = !interpolation;
                 if (interpolation) modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
             }));
