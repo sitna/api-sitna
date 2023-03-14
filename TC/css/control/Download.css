@@ -24,10 +24,6 @@ div.tc-ctl-download-cnt label {
     box-sizing: border-box;
 }
 
-.tc-ctl-download-div input[type=checkbox] {
-    display: none;
-}
-
 .tc-ctl-download-div label.tc-ctl-download-image-qr-label,
 .tc-ctl-download-div label.tc-ctl-download-image-wld-label {
     display: inline-block;
@@ -36,18 +32,7 @@ div.tc-ctl-download-cnt label {
     font-weight: normal;
 }
 
-.tc-ctl-download-image input[type=checkbox]:checked + label:before {
-    content: "\2611";
-}
-
-.tc-ctl-download-image input[type=checkbox] + label:before {
-    font-size: 15px;
-    display: inline-block;
-    content: "\2610";
-    width: 18px;
-}
-
-.tc-ctl-download-image input[type=checkbox] + label.tc-loading:after {
+.tc-ctl-download-image label.tc-loading:after {
     font-family: var(--icon-font-family);
     content: var(--icon-spinner);
     display: inline-block;
@@ -56,17 +41,10 @@ div.tc-ctl-download-cnt label {
     -webkit-animation: spin 2s infinite linear;
 }
 
-.tc-ctl-download-help {
-    color: var(--glyph-sec-color);
-    cursor: help;
-    float: left;
-    position: absolute;
-    left: 52%;
+sitna-button.tc-ctl-download-help {
     line-height: 1.55em;
-}
-
-.tc-ctl.tc-collapsed .tc-ctl-download-help {
-    display: none;
+    opacity: 0.5;
+    display: inline-block;
 }
 
 .tc-ctl-download .tc-ctl-download-btn {
@@ -88,17 +66,6 @@ div.tc-ctl-download .tc-ctl-download-btn:before {
     div.tc-ctl-download .tc-alert p {
         margin: 0;
     }*/
-
-.tc-ctl-download-div i.icon-question-sign {
-    font-family: Mapskin;
-    font-style: normal;
-    font-size: 20px;
-    line-height: 2em;
-}
-
-    .tc-ctl-download-div i.icon-question-sign:before {
-        content: '\e02c';
-    }
 
 .tc-ctl-download-select {
     clear: both;
@@ -122,7 +89,7 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
     display: block;
 }
 
-    .tc-ctl-download-cnt.tc-group.tc-collapsed {
+    .tc-ctl-download-cnt.tc-group.tc-hidden {
         display: none;
     }
 
@@ -148,10 +115,5 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
 @media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
     .tc-ctl-share-qr-dialog .tc-modal-body {
         max-width: 256px; /* tamaño del QR */
-    }
-
-    .tc-ctl-download-div i.icon-question-sign {
-        font-size: 17px;
-        line-height: 2.45em;
     }
 }
