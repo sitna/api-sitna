@@ -89,13 +89,22 @@
             }
             return result;
         },
+        equals: function(g1, g2) {
+            if (Array.isArray(g1) && Array.isArray(g2)) {
+                return g1.length === g2.length && g1.every((elm, idx) => Geometry.equals(elm, g2[idx]));
+            }
+            if (Array.isArray(g1) || Array.isArray(g2)) {
+                return false;
+            }
+            return g1 === g2;
+        },
         getSquaredDistance: function (p1, p2) {
             const dx = p2[0] - p1[0];
             const dy = p2[1] - p1[1];
             return dx * dx + dy * dy;
         },
         getDistance: function (p1, p2) {
-            return Math.sqrt(Geometry.getSquaredDistance(p1, p2));
+            return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
         },
         getFlatCoordinates: function (geom) {
             const reductionFn = function (prev, cur) {
@@ -214,6 +223,139 @@
             }
 
             return result;
+        },
+        interpolate: function (coords, options) {
+            let coordinateList = coords;
+            const isSinglePoint = coordinateList.length === 1;
+
+            if (!isSinglePoint) {
+                if (options.resolution) {
+                    const newCoordinateList = [];
+                    coordinateList.forEach(function (point, idx, arr) {
+                        if (idx) {
+                            const prev = arr[idx - 1];
+                            const distance = Geometry.getDistance(prev, point);
+                            if (distance > options.resolution) {
+                                // posición en el segmento del primer punto interpolado
+                                let pos = distance % options.resolution / 2;
+                                // x··$·····|·····|··x
+                                let n = Math.ceil(distance / options.resolution);
+                                if (pos === 0) {
+                                    n = n - 1;
+                                    pos = options.resolution;
+                                }
+                                const x = point[0] - prev[0];
+                                const y = point[1] - prev[1];
+                                const sin = y / distance;
+                                const cos = x / distance;
+                                let xpos = prev[0] + pos * cos;
+                                let ypos = prev[1] + pos * sin;
+                                let dx = options.resolution * cos;
+                                let dy = options.resolution * sin;
+                                for (var i = 0; i < n; i++) {
+                                    newCoordinateList.push([xpos, ypos]);
+                                    xpos += dx;
+                                    ypos += dy;
+                                }
+                            }
+                        }
+                        newCoordinateList.push(point);
+                    });
+                    coordinateList = newCoordinateList;
+                }
+                else if (options.sampleNumber) {
+                    const numPoints = coordinateList.length;
+                    if (numPoints > options.sampleNumber) {
+                        // Sobran puntos. Nos quedamos con los puntos más cercanos a los puntos kilométricos
+                        // de los intervalos definidos por sampleNumber.
+                        const milestones = [];
+                        let accumulatedDistance = 0;
+                        coordinateList.forEach(function (point, idx, arr) {
+                            if (idx) {
+                                accumulatedDistance += TC.Geometry.getDistance(arr[idx - 1], point);
+                            }
+                            milestones.push({
+                                index: idx,
+                                distance: accumulatedDistance
+                            });
+                        });
+                        const intervalLength = accumulatedDistance / options.sampleNumber;
+                        let nextMilestoneDistance = 0;
+                        milestones.forEach(function (milestone, idx, arr) {
+                            const dd = milestone.distance - nextMilestoneDistance;
+                            if (dd === 0) {
+                                milestone.included = true;
+                            }
+                            else if (dd > 0) {
+                                if (milestone.index) {
+                                    const prevMilestone = arr[idx - 1];
+                                    if (nextMilestoneDistance - prevMilestone.distance < dd) {
+                                        prevMilestone.included = true;
+                                    }
+                                    else {
+                                        milestone.included = true;
+                                    }
+                                }
+                                while (milestone.distance > nextMilestoneDistance) {
+                                    nextMilestoneDistance += intervalLength;
+                                }
+                            }
+                        });
+                        milestones.filter(m => !m.included).forEach(function (m) {
+                            coordinateList[m.index] = null;
+                        });
+                        coordinateList = coordinateList.filter(p => p !== null);
+                    }
+                    else if (numPoints < options.sampleNumber) {
+                        // Faltan puntos. Insertamos puntos en las segmentos más largos.
+                        const insertBefore = function (arr, idx, count) {
+                            const p1 = arr[idx - 1];
+                            const p2 = arr[idx];
+                            const n = count + 1;
+                            let x = p1[0];
+                            let y = p1[1];
+                            const dx = (p2[0] - x) / n;
+                            const dy = (p2[1] - y) / n;
+                            const spliceParams = new Array(count + 2);
+                            spliceParams[0] = idx;
+                            spliceParams[1] = 0;
+                            for (var i = 2, ii = spliceParams.length; i < ii; i++) {
+                                x += dx;
+                                y += dy;
+                                spliceParams[i] = [x, y];
+                            }
+                            arr.splice.apply(arr, spliceParams);
+                        };
+                        let totalDistance = 0;
+                        const distances = coordinateList.map(function (point, idx, arr) {
+                            let distance = 0;
+                            if (idx) {
+                                distance = TC.Geometry.getDistance(arr[idx - 1], point);
+                                totalDistance += distance;
+                            }
+                            return {
+                                index: idx,
+                                distance: distance
+                            };
+                        });
+                        // Hacemos copia de la lista porque vamos a insertar puntos
+                        coordinateList = coordinateList.slice();
+                        const defaultCount = options.sampleNumber - numPoints;
+                        let leftCount = defaultCount;
+                        let insertionCount = 0;
+                        for (var i = 0, ii = distances.length; leftCount && i < ii; i++) {
+                            const obj = distances[i];
+                            if (obj.distance !== 0) {
+                                const partialInsertionCount = Math.min(Math.round(defaultCount * obj.distance / totalDistance), leftCount) || 1;
+                                leftCount -= partialInsertionCount;
+                                insertBefore(coordinateList, obj.index + insertionCount, partialInsertionCount);
+                                insertionCount += partialInsertionCount;
+                            }
+                        }
+                    }
+                }
+            }
+            return coordinateList;
         }
     };
 
