@@ -2,8 +2,9 @@
 /**
   * Opciones de control de StreetView.
   * @typedef StreetViewOptions
-  * @extends ControlOptions
-  * @see MapControlOptions
+  * @extends SITNA.control.ControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {string} [googleMapsKey] - El control de StreetView hace uso de la API de Google Maps para funcionar. 
   * Esta propiedad establece la clave de uso asociada al sitio donde está alojada la aplicación que usa la API SITNA. 
@@ -32,17 +33,17 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
 (function () {
-    TC.Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
-    var gMapsUrl = TC.Consts.url.GOOGLEMAPS;
-    TC.Cfg.proxyExceptions = TC.Cfg.proxyExceptions || [];
-    TC.Cfg.proxyExceptions.push(TC.Consts.url.GOOGLEMAPS);
+    Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
+    var gMapsUrl = Consts.url.GOOGLEMAPS;
+    Cfg.proxyExceptions = Cfg.proxyExceptions || [];
+    Cfg.proxyExceptions.push(Consts.url.GOOGLEMAPS);
 
     TC.control.StreetView = function () {
         var self = this;
@@ -52,7 +53,7 @@ TC.Control = Control;
         TC.Control.apply(self, arguments);
 
         self.viewDiv = null;
-        self._startLonLat = null;
+        self._startLonLat = null;        
     };
 
     TC.inherit(TC.control.StreetView, TC.Control);
@@ -68,11 +69,12 @@ TC.Control = Control;
     const dispatchCanvasResize = function () {
         var event = document.createEvent('HTMLEvents');
         event.initEvent('resize', true, false);
-        this.map.div.querySelector('canvas').dispatchEvent(event);
+        const elm = this.map.div.querySelector('canvas') || window;
+        elm.dispatchEvent(event);
     };
 
-    var preset = function (ctl) {
-        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.add(TC.Consts.classes.CHECKED);
+    var preset = function (ctl) {        
+        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.add(Consts.classes.CHECKED);
         ctl.map.div.classList.add(ctl.CLASS + '-active');
     };
 
@@ -92,8 +94,8 @@ TC.Control = Control;
 
 
         ctl.layer.clearFeatures();
-        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.remove(TC.Consts.classes.CHECKED);
-        ctl.div.querySelector('.' + ctl.CLASS + '-drag').classList.remove(TC.Consts.classes.HIDDEN);
+        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
+        ctl.div.querySelector('.' + ctl.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
         ctl.map.div.classList.remove(ctl.CLASS + '-active');
         ctl._startLonLat = null;
     };
@@ -105,7 +107,7 @@ TC.Control = Control;
 
         var btnRect = btn.getBoundingClientRect();
         var dragRect = drag.getBoundingClientRect();
-        drag.classList.add(TC.Consts.classes.HIDDEN);
+        drag.classList.add(Consts.classes.HIDDEN);
         if (dragRect.top < btnRect.top || dragRect.top > btnRect.bottom ||
             dragRect.left < btnRect.left || dragRect.left > btnRect.right) {
             // Hemos soltado fuera del botón: activar StreetView
@@ -124,8 +126,8 @@ TC.Control = Control;
             /////////////////////
             // Activamos StreetView
             var mapRect = ctl.map.div.getBoundingClientRect();
-            var xpos = (dragRect.left * window.devicePixelRatio + dragRect.right * window.devicePixelRatio) / 2 - mapRect.left * window.devicePixelRatio;
-            var ypos = dragRect.bottom * window.devicePixelRatio - mapRect.top * window.devicePixelRatio;
+            var xpos = (dragRect.left + dragRect.right) / 2 - mapRect.left;
+            var ypos = dragRect.bottom - mapRect.top;
             var coords = ctl.map.wrap.getCoordinateFromPixel([xpos, ypos]);
             ctl.callback(coords);
         }
@@ -140,14 +142,14 @@ TC.Control = Control;
 
         if (!self.viewDiv) {
             self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
-            self.viewDiv.classList.add(self.CLASS + '-view', TC.Consts.classes.HIDDEN);
+            self.viewDiv.classList.add(self.CLASS + '-view', Consts.classes.HIDDEN);
             if (!self.options.viewDiv) {
                 map.div.insertAdjacentElement('beforebegin', self.viewDiv);
             }
         }
 
         const result = TC.Control.prototype.register.call(self, map);
-
+                
         const googleMapsKey = self.options.googleMapsKey || map.options.googleMapsKey;
         if (googleMapsKey) {
             gMapsUrl += '&key=' + googleMapsKey;
@@ -157,7 +159,7 @@ TC.Control = Control;
         var layerId = self.getUID();
         for (var i = 0; i < map.workLayers.length; i++) {
             var layer = map.workLayers[i];
-            if (layer.type === TC.Consts.layerType.VECTOR && layer.id === layerId) {
+            if (layer.type === Consts.layerType.VECTOR && layer.id === layerId) {
                 self.layer = layer;
                 break;
             }
@@ -168,7 +170,7 @@ TC.Control = Control;
                     id: layerId,
                     owner: self,
                     stealth: true,
-                    type: TC.Consts.layerType.VECTOR
+                    type: Consts.layerType.VECTOR
                 }).then(function (layer) {
                     self.layer = layer;
                 });
@@ -176,12 +178,10 @@ TC.Control = Control;
         }
 
         self.renderPromise().then(function () {
-            TC.loadJS(
-                !window.Draggabilly,
-                [TC.apiLocation + TC.Consts.url.DRAGGABILLY],
-                function () {
+            import("draggabilly").then(function (module) {
+                const Draggabilly = module.default;
                     const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
-                        containment: self.map.div
+                        ontainment: self.map.div
                     });
                     drag.on('dragStart', function (_e) {
                         preset(self);
@@ -190,11 +190,10 @@ TC.Control = Control;
                         resolve(self);
                         drag.setPosition(0, 0);
                     });
-                }
-            );
+            });
 
             const view = self.viewDiv;
-            view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(TC.Consts.event.CLICK, function (e) {
+            view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(Consts.event.CLICK, function (e) {
                 e.stopPropagation();
                 self.closeView();
             }, { passive: true });
@@ -202,7 +201,7 @@ TC.Control = Control;
             , function () {
                 TC.error("Error de renderizado StreetView");
             });
-
+               
         return result;
     };
 
@@ -247,7 +246,7 @@ TC.Control = Control;
     ctlProto.callback = function (coords) {
         var self = this;
         var geogCrs = 'EPSG:4326';
-
+        
         var ondrop = function (feature) {
             if (self._sv) {
                 var bounds = feature.getBounds();
@@ -283,7 +282,7 @@ TC.Control = Control;
             else {
                 xy = coords;
                 heading = 0;
-            }
+            }            
             self.map.addMarker(xy, {
                 cssClass: 'tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16,
                 width: 48,
@@ -295,14 +294,14 @@ TC.Control = Control;
             Promise.all(self.map._markerPromises).then(function () {
                 // Para poder arrastrar a pegman                
                 self.layer.wrap.setDraggable(true, ondrop, ondrag);
-            });
+            });                        
 
             if (center) {
-                var setCenter = function () {
+                var setCenter = function () {                    
                     self.map.setCenter(xy);
                 };
                 // Esperamos a que el mapa esté colapsado para centrarnos: ahorramos ancho de banda
-                if (mapDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                if (mapDiv.classList.contains(Consts.classes.COLLAPSED)) {
                     setCenter();
                 }
                 else {
@@ -310,7 +309,7 @@ TC.Control = Control;
                 }
             }
         };
-
+        
         TC.loadJS(
             !window.google || !google.maps,
             gMapsUrl,
@@ -381,7 +380,7 @@ TC.Control = Control;
                                     if (!self._sv) {
                                         self._sv = new google.maps.StreetViewPanorama(view, svOptions);
                                         google.maps.event.addListener(self._sv, 'position_changed', function () {
-                                            setMarker(self._sv, view.classList.contains(TC.Consts.classes.VISIBLE));
+                                            setMarker(self._sv, view.classList.contains(Consts.classes.VISIBLE));
                                         });
                                         google.maps.event.addListener(self._sv, 'pov_changed', function () {
                                             if (self.layer.features && self.layer.features.length > 0) {
@@ -419,18 +418,28 @@ TC.Control = Control;
                             self._transitioning = true;
                             view.addEventListener('transitionend', onTransitionend);
 
-                            if (!self.options.viewDiv) {
+                            if (!self.options.viewDiv || !mapDiv.classList.contains(Consts.classes.FULL_SCREEN)) {
                                 // No había definida una vista. Para hacer el control compatible con mapas incrustados,
                                 // en este caso a la vista nueva le asignamos el tamaño del mapa.
                                 const mapRect = mapDiv.getBoundingClientRect();
                                 self.viewDiv.style.height = mapRect.height + 'px';
                                 self.viewDiv.style.width = mapRect.width + 'px';
                             }
-                            mapDiv.classList.add(TC.Consts.classes.COLLAPSED);
+                            const zIndexMap = parseInt(window.getComputedStyle(mapDiv).zIndex, 10);
+
+                            mapDiv.classList.add(Consts.classes.COLLAPSED);
+                            mapDiv.style.width = self.options.ovmapW || "25vh";
+                            mapDiv.style.height = self.options.ovmapH || "25vh";
+                            if (self.map.on3DView)//si es en modo 3d se oculta el mapa 2D para que no interfiera
+                                self.map.div.style.display = "none"
                             view.style.left = '';
                             view.style.top = '';
-                            view.classList.remove(TC.Consts.classes.HIDDEN);
-                            view.classList.add(TC.Consts.classes.VISIBLE);
+                            view.classList.remove(Consts.classes.HIDDEN);
+                            view.classList.add(Consts.classes.VISIBLE);
+
+                            const zIndexView = parseInt(window.getComputedStyle(view).zIndex, 10);
+                            if (zIndexMap <= zIndexView)
+                                mapDiv.style.zIndex = (zIndexView + 1) 
 
 
                             // Por si no salta transitionend
@@ -467,7 +476,10 @@ TC.Control = Control;
         const view = self.viewDiv;
 
         const endProcess = function () {
-            mapDiv.classList.remove(TC.Consts.classes.COLLAPSED);
+            mapDiv.classList.remove(Consts.classes.COLLAPSED);
+            mapDiv.style.width = mapDiv.style.height = mapDiv.style.zIndex = "";
+            if (self.map.on3DView)//si es en modo 3d se oculta el mapa 2D para que no interfiera
+                self.map.div.style.display = '';
             const resizeEvent = document.createEvent('HTMLEvents');
             resizeEvent.initEvent('resize', false, false);
             mapDiv.dispatchEvent(resizeEvent); // Para evitar que salga borroso el mapa tras cerrar SV.
@@ -489,9 +501,10 @@ TC.Control = Control;
             self.viewDiv.style.removeProperty('height');
             self.viewDiv.style.removeProperty('width');
         }
-        view.classList.add(TC.Consts.classes.HIDDEN);
-        view.classList.remove(TC.Consts.classes.VISIBLE);
-        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(TC.Consts.classes.HIDDEN);
+        view.classList.add(Consts.classes.HIDDEN);
+        view.classList.remove(Consts.classes.VISIBLE);
+        view.style.height = view.style.width="";
+        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
         self.layer.wrap.setDraggable(false);
         reset(self);
         self._sv.setVisible(false);
