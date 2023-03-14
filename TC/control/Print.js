@@ -1,12 +1,12 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
-TC.Consts.classes.PRINTABLE = 'tc-printable';
+Consts.classes.PRINTABLE = 'tc-printable';
 
 TC.control.Print = function (options)
 {
@@ -15,11 +15,11 @@ TC.control.Print = function (options)
 
     self.ready = false;
 
-    self.title = self.options.title || TC.Util.getLocaleString(TC.Cfg.locale, 'printPage');
+    self.title = self.options.title || TC.Util.getLocaleString(Cfg.locale, 'printPage');
     self.cssUrl = self.options.cssUrl || TC.apiLocation + 'TC/css/print.css';
 
     if (self.options.target) {
-        (self.options.printableElement || self.options.target).classList.add(TC.Consts.classes.PRINTABLE);
+        (self.options.printableElement || self.options.target).classList.add(Consts.classes.PRINTABLE);
         self.render();
     }
 };
@@ -71,36 +71,23 @@ TC.inherit(TC.control.Print, TC.Control);
         }
     };
 
-    ctlProto.renderData = function (data, callback) {
+    ctlProto.renderData = async function (data, callback) {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            if (self.div) {
-                TC.Control.prototype.renderData.call(self, data, callback)
-                    .then(() => resolve())
-                    .catch((e) => reject(e));
+        if (self.div) {
+            await TC.Control.prototype.renderData.call(self, data, callback);
+            return;
+        }
+        const target = self.getRenderTarget();
+        if (target) {
+            const html = await self.getRenderedHtml(self.CLASS, null);
+            if (!target.querySelector('.' + self.CLASS + '-btn')) {
+                self._mustAddListeners = true;
+                target.insertAdjacentHTML('beforeend', html);
             }
-            else {
-                const target = self.getRenderTarget();
-                if (target) {
-                    self.getRenderedHtml(self.CLASS, null).then(function (out) {
-                        if (!target.querySelector('.' + self.CLASS + '-btn')) {
-                            self._mustAddListeners = true;
-                            target.insertAdjacentHTML('beforeend', out);
-                        }
-                        if (TC.Util.isFunction(callback)) {
-                            callback();
-                        }
-                        resolve();
-                    });
-                }
-                else {
-                    if (TC.Util.isFunction(callback)) {
-                        callback();
-                    }
-                    resolve();
-                }
-            }
-        });
+        }
+        if (TC.Util.isFunction(callback)) {
+            callback();
+        }
     };
 
 })();
