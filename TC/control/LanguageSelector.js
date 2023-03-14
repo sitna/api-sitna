@@ -3,6 +3,8 @@ import Consts from '../Consts';
 import Util from '../Util';
 import TC from '../../TC';
 
+const optionElementName = 'sitna-language-option';
+
 class LanguageOption extends HTMLElement {
     #link;
 
@@ -78,7 +80,9 @@ class LanguageOption extends HTMLElement {
     }
 }
 
-customElements.define('sitna-language-option', LanguageOption);
+customElements.get(optionElementName) || customElements.define(optionElementName, LanguageOption);
+
+const controlElementName = 'sitna-language-select'
 
 class LanguageSelector extends WebComponentControl {
     static PARAMETER_NAME = "lang";
@@ -89,10 +93,9 @@ class LanguageSelector extends WebComponentControl {
         super(...arguments);
 
         const self = this;
-        self.CLASS = 'tc-ctl-lang-select';
         self.template = {};
         self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-lang-select.hbs";
-        
+        self.languages = [];
         if (self.options.static) {
             self.static = true;
         }
@@ -152,6 +155,10 @@ class LanguageSelector extends WebComponentControl {
         }
     }
 
+    getClassName() {
+        return 'tc-ctl-lang-select';
+    }
+
     get static() {
         return this.hasAttribute('static');
     }
@@ -204,8 +211,8 @@ class LanguageSelector extends WebComponentControl {
                         activeLink = link;
                     }
                 });
-                activeLink ??= self.languages[0].querySelector(`a.${language.CLASS}`);
-                activeLink.classList.add(Consts.classes.ACTIVE);
+                activeLink ??= self.languages[0]?.querySelector(`a.${language.CLASS}`);
+                activeLink?.classList.add(Consts.classes.ACTIVE);
                 self.toggle = self.querySelector(`.${self.CLASS}-toggle`);
 
                 self.toggle.addEventListener(Consts.event.CLICK, function (_e) {
@@ -263,5 +270,5 @@ LanguageSelector.currentLocale;
 
 TC.control = TC.control || {};
 TC.control.LanguageSelector = LanguageSelector;
-customElements.define('sitna-language-select', LanguageSelector);
+customElements.get(controlElementName) || customElements.define(controlElementName, LanguageSelector);
 export default LanguageSelector;
