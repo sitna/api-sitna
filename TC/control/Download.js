@@ -5,7 +5,6 @@ import MapInfo from './MapInfo';
 import filter from '../filter';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.MapInfo = MapInfo;
 TC.filter = filter;
 
@@ -43,60 +42,25 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
-            return TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
-
-                const cs = '.tc-ctl-tctr';
-                self._selectors = {
-                    TAB: cs + '-tab',
-                    RADIOBUTTON: `input[type=radio][name="${self.id}-sel"]`,
-                    ELEMENT: cs + '-elm'
-                };
-
-                const clickHandler = function (_e) {
-                    var tab = this;
-                    while (tab && !tab.matches(self._selectors.TAB)) {
-                        tab = tab.parentElement;
-                    }
-                    if (tab) {
-                        const checkbox = tab.querySelector(self._selectors.RADIOBUTTON);
-                        const newValue = checkbox.value;
-                        const elms = self.div.querySelectorAll(self._selectors.ELEMENT);
-                        if (self._oldValue === newValue && self.options.deselectableTabs) {
-                            setTimeout(function () {
-                                checkbox.checked = false;
-                            }, 0);
-                            self._oldValue = null;
-                            self._activeElm = null;
-                            elms.forEach(function (elm) {
-                                self._hiddenElms.push(elm);
-                            });
+            return TC.Control.prototype.renderData.call(self, {
+                controlId: self.id,
+                deselectableTabs: self.options.deselectableTabs
+            }, function () {
+                const cs = 'tctr';                
+                self.div.querySelectorAll(`.tc-ctl-${cs}-select sitna-tab`).forEach(function (tab) {
+                    tab.callback = function () {
+                        const target = this.target;
+                        if (target) {
+                            self._activeElm = target;
                         }
-                        else {
-                            elms.forEach(function (elm) {
-                                if (elm.matches(self._selectors.ELEMENT + '-' + newValue)) {
-                                    self._activeElm = elm;
-                                }
-                                else {
-                                    self._hiddenElms.push(elm);
-                                }
-                            });
-                            self._oldValue = newValue;
-                        }
-
-                        self._hiddenElms.forEach(function (elm) {
-                            elm.classList.add(TC.Consts.classes.COLLAPSED);
-                        });
-                        if (self._activeElm) {
-                            self._activeElm.classList.remove(TC.Consts.classes.COLLAPSED);
-                        }
-                        checkbox.checked = true;
-                    }
-                };
-
-                self.div.querySelectorAll('span').forEach(function (span) {
-                    span.addEventListener(TC.Consts.event.CLICK, clickHandler, { passive: true });
+                    };
                 });
-                if (callback) {
+                const firstTab = self.div.querySelector(`.tc-ctl-${cs}-select sitna-tab:first-of-type`);
+                if (firstTab && firstTab.attributes["for"]) {
+                    self._activeElm = document.getElementById(firstTab.attributes["for"].value);
+                }
+
+                if (TC.Util.isFunction(callback)) {
                     callback();
                 }
             });
@@ -131,7 +95,8 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                     self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
                 }
 
-                if (!self._activeElm.querySelector(`#${self.CLASS}-image-qr-${self.id}:disabled`) && self._activeElm.querySelector(`#${self.CLASS}-image-qr-${self.id}:checked`)) {
+                if (!self._activeElm.querySelector(`.${self.CLASS}-image-qr:disabled`) &&
+                    self._activeElm.querySelector(`.${self.CLASS}-image-qr:checked`)) {
                     const codeContainerId = 'qrcode';
                     var codeContainer = document.getElementById(codeContainerId);
                     if (codeContainer) {
@@ -147,7 +112,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                     codeContainer.style.left = '-200px';
                     codeContainer.style.position = 'absolute';
 
-                    self.makeQRCode(codeContainer, 87, 87).then(function (qrCodeBase64) {
+                    self.makeQRCode(codeContainer, 87).then(function (qrCodeBase64) {
                         if (qrCodeBase64) {
                             var ctx = newCanvas.getContext("2d");
                             ctx.fillStyle = "#ffffff";
@@ -168,9 +133,10 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             doneQR.then(function (_canvas) {
                 const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
                 const fileExtension = '.' + format.split('/')[1];
-                const worldFileExtension = format === TC.Consts.mimeType.JPEG ? '.jgw' : '.pgw';
-                if (self._activeElm.querySelector(`#${self.CLASS}-image-wld-${self.id}:checked`)) {
-                    TC.loadJS(!window.JSZip, TC.apiLocation + 'lib/jszip/jszip', function () {
+                const worldFileExtension = format === Consts.mimeType.JPEG ? '.jgw' : '.pgw';
+                if (self._activeElm.querySelector(`.${self.CLASS}-image-wld:checked`)) {
+                    import('jszip').then(module => {
+                        const JSZip = module.default;
                         const xScale = (extent[2] - extent[0]) / _canvas.width;
                         const ySkew = 0;
                         const xSkew = 0;
@@ -227,7 +193,7 @@ ${toFixed(yOrigin)}`);
 
                 var responses = responseArray.filter(item => !!item);
                 if (responses.length === 0) {
-                    _showAlertMsg({ key: TC.Consts.WFSErrors.NO_LAYERS }, wait);
+                    _showAlertMsg({ key: Consts.WFSErrors.NO_LAYERS }, wait);
                     return;
                 }
                 var arrDownloads = [];
@@ -249,7 +215,7 @@ ${toFixed(yOrigin)}`);
                     await TC.Util.downloadFileForm(arrDownloads);
                 }
                 catch (err) {
-                    if (err.key === TC.Consts.DownloadError.MIMETYPE_NOT_SUPORTED) {
+                    if (err.key === Consts.DownloadError.MIMETYPE_NOT_SUPORTED) {
                         const service = responseArray.find(response => response.data === err.data).service;
                         const params = {
                             plural: service.layers.length > 1 ? self.getLocaleString("dl.format.notSupported.plural") : "",
@@ -259,7 +225,7 @@ ${toFixed(yOrigin)}`);
                             serviceTitle: service.mapLayers[0].title,
                             format: format
                         };
-                        self.map.toast(self.getLocaleString("dl.format.notSupported").format(params), { type: TC.Consts.msgType.ERROR });
+                        self.map.toast(self.getLocaleString("dl.format.notSupported").format(params), { type: Consts.msgType.ERROR });
                     }
                 }
 
@@ -281,32 +247,32 @@ ${toFixed(yOrigin)}`);
         };
 
         var _showAlertMsg = function (error, wait) {
-            const alert = self.div.querySelector('.alert-warning:not(.' + self.CLASS + '-alert)');
+            const alert = self.div.querySelector('.tc-alert-warning:not(.' + self.CLASS + '-alert)');
             var errorMsg;
             switch (error.key) {
-                case TC.Consts.WFSErrors.MAX_NUM_FEATURES:
+                case Consts.WFSErrors.MAX_NUM_FEATURES:
                     errorMsg = alert.querySelector("#zoom-msg-" + self.id).innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
-                case TC.Consts.WFSErrors.NO_LAYERS:
+                case Consts.WFSErrors.NO_LAYERS:
                     errorMsg = self.getLocaleString('noLayersLoaded');
                     break;
-                case TC.Consts.WFSErrors.GETCAPABILITIES:
+                case Consts.WFSErrors.GETCAPABILITIES:
                     errorMsg = alert.querySelector("#novalid-msg-" + self.id).innerHTML.format({ serviceName: error.params.serviceTitle });
                     break;
-                case TC.Consts.WFSErrors.NO_FEATURES:
+                case Consts.WFSErrors.NO_FEATURES:
                     errorMsg = alert.querySelector("#noFeatures-msg-" + self.id).innerHTML;
                     break;
-                case TC.Consts.WFSErrors.INDETERMINATE:
+                case Consts.WFSErrors.INDETERMINATE:
                     errorMsg = self.getLocaleString("wfs.IndeterminateError");
-                    self.map.toast(errorMsg, { type: TC.Consts.msgType.ERROR });
-                    TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), TC.Consts.msgErrorMode.CONSOLE);
+                    self.map.toast(errorMsg, { type: Consts.msgType.ERROR });
+                    TC.error("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}".format({ error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), Consts.msgErrorMode.CONSOLE);
                     self.map.getLoadingIndicator().removeWait(wait);
                     return;
                 default:
                     errorMsg = self.getLocaleString("wfs." + error.key, error.params);
                     break;
             }
-            self.map.toast(errorMsg, { type: TC.Consts.msgType.WARNING });
+            self.map.toast(errorMsg, { type: Consts.msgType.WARNING });
 
             self.map.getLoadingIndicator().removeWait(wait);
         };
@@ -316,18 +282,18 @@ ${toFixed(yOrigin)}`);
             TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-help-dialog'));
         };
 
-        self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', _download), { passive: true });
-        self.div.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', _showHelp), { passive: true });
+        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', _download), { passive: true });
+        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', _showHelp), { passive: true });
 
-        self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (e) {
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (e) {
             if (e.target.checked) {
                 self.generateLink();
             } else {
-                self.div.querySelector('.' + self.CLASS + '-alert').classList.add(TC.Consts.classes.HIDDEN);
+                self.div.querySelector('.' + self.CLASS + '-alert').classList.add(Consts.classes.HIDDEN);
             }
         }));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (evt) {            
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (_evt) {            
             if (!self.registeredListeners) {
                 self.generateLink();
             }
@@ -340,25 +306,25 @@ ${toFixed(yOrigin)}`);
     ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
         const self = this;
         const alert = self.div.querySelector('.' + self.CLASS + '-alert');
-        const checkboxQR = document.getElementById(`${self.CLASS}-image-qr-${self.id}`);
+        const checkboxQR = self.div.querySelector(`.${self.CLASS}-image-qr`);
 
         checkboxQR.disabled = maxLengthExceed.qr;
 
         if (checkboxQR.checked) {
-            alert.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
+            alert.classList.toggle(Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
-            alert.classList.add(TC.Consts.classes.HIDDEN);
+            alert.classList.add(Consts.classes.HIDDEN);
         }
     };
 
     ctlProto.generateLink = async function () {
         const self = this;
-        const checkbox = self.div.querySelector(`.${self.CLASS}-div input[id|="${self.CLASS}-image-qr-download"]`);
-        const label = self.div.querySelector(`label[for="${checkbox.id}"]`);
+        const checkbox = self.div.querySelector(`.${self.CLASS}-div input.${self.CLASS}-image-qr`);
+        const label = self.div.querySelector(`label.${self.CLASS}-image-qr-label`);
         checkbox.disabled = true;
-        label.classList.add(TC.Consts.classes.LOADING);
+        label.classList.add(Consts.classes.LOADING);
         const result = await TC.control.MapInfo.prototype.generateLink.call(self);
-        label.classList.remove(TC.Consts.classes.LOADING);
+        label.classList.remove(Consts.classes.LOADING);
         return result;
     };
 
