@@ -2,8 +2,9 @@
 /**
   * Opciones de control de impresión.
   * @typedef PrintMapOptions
-  * @extends ControlOptions
-  * @see MapControlOptions
+  * @extends SITNA.control.ControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {string} [logo] - URL del archivo de imagen del logo a añadir a la hoja de impresión.
   * @property {PrintMapLegendOptions} [legend] - Opciones de configuración para mostrar la leyenda del mapa en una segunda página de impresión.
@@ -12,7 +13,8 @@
 /**
   * Opciones de leyenda para la impresión.
   * @typedef PrintMapLegendOptions
-  * @see PrintMapOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.PrintMapOptions
   * @property {boolean} [visible=false] - Determina si junto a la página del mapa se imprime una segunda página con la leyenda.
   * @property {string} [orientation="portrait"] - Determina la orientación de la página de impresión que contiene la leyenda. Puede tomar el valor `portrait` (vertical) o `landscape` (horizontal).
   */
@@ -22,10 +24,7 @@ import Consts from '../Consts';
 import Control from '../Control';
 import MapInfo from './MapInfo';
 import Proxification from '../tool/Proxification';
-TC.tool = TC.tool || {};
-TC.tool.Proxification = Proxification;
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 TC.control.MapInfo = MapInfo;
@@ -500,7 +499,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         const self = this;
 
         return self.map.workLayers.some(function (layer) {
-            return layer.type === TC.Consts.layerType.WMS && layer.getVisibility();
+            return layer.type === Consts.layerType.WMS && layer.getVisibility();
         });
     };
 
@@ -508,7 +507,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         const self = this;
 
         return self.map.workLayers.some(function (layer) {
-            if (layer.type === TC.Consts.layerType.WMS && layer.getVisibility()) {
+            if (layer.type === Consts.layerType.WMS && layer.getVisibility()) {
                 for (var i = 0; i < layer.names.length; i++) {
                     if (layer.isVisibleByScale(layer.names[i])) {
                         return true;
@@ -536,10 +535,10 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
         const print = function () {
 
-            self.map.setView(TC.Consts.view.PRINTING);
+            self.map.setView(Consts.view.PRINTING);
 
             var codeContainer = document.querySelector('.' + self.CLASS + '-qrcode');
-            const cb = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+            const cb = self.div.querySelector(`.${self.CLASS}-image-qr`);
             if (!cb.disabled && cb.checked) {
                 if (!codeContainer) {
                     codeContainer = document.createElement('div');
@@ -548,7 +547,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 }
 
                 codeContainer.innerHTML = '';
-                self.makeQRCode(codeContainer, options.qrCode.sideLength, options.qrCode.sideLength);
+                self.makeQRCode(codeContainer, options.qrCode.sideLength);
             } else {
                 if (codeContainer) {
                     codeContainer.innerHTML = '';
@@ -556,21 +555,21 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             }
 
             const printBtnSelector = '.' + self.CLASS + '-btn';
-            self.map.on(TC.Consts.event.STARTLOADING, function () {
+            self.map.on(Consts.event.STARTLOADING, function () {
                 const printBtn = self.div.querySelector(printBtnSelector);
-                printBtn.classList.add('disabled');
+                printBtn.classList.add(Consts.classes.DISABLED);
                 printBtn.disabled = true;
             });
 
-            self.map.on(TC.Consts.event.STOPLOADING, function () {
+            self.map.on(Consts.event.STOPLOADING, function () {
                 const printBtn = self.div.querySelector(printBtnSelector);
-                printBtn.classList.remove('disabled');
+                printBtn.classList.remove(Consts.classes.DISABLED);
                 printBtn.disabled = false;
             });
 
             if (hasLegend.call(self)) {
                 // GLS: controlamos si una capa deja de verse por la escala para resetear la leyenda                
-                self.map.on(TC.Consts.event.ZOOM, manageLegendOnZoom);
+                self.map.on(Consts.event.ZOOM, manageLegendOnZoom);
             }
 
             const updateCanvas = function (printFormat) {
@@ -592,7 +591,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     self._viewDiv.querySelector(`.${self.CLASS}-view-right`).style.width = newWidth;
                     self._viewDiv.querySelector(`.${self.CLASS}-view-bottom`).style.top = bounding.height + 'px';
 
-                    self.map.toast(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'), { type: TC.Consts.msgType.INFO, duration: 7000 });
+                    self.map.toast(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'), { type: Consts.msgType.INFO, duration: 7000 });
 
                     // En móviles no se ve el mapa entero, así que escalamos el viewport
                     bounding = self.map.div.getBoundingClientRect();
@@ -607,7 +606,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         self._toolsTransformOrigin = toolsStyle.transformOrigin;
                         toolsStyle.transform = `scale(${zoomIn}, ${zoomIn})`;
                         toolsStyle.transformOrigin = '100% 0%';
-                        const toast = document.querySelector('.' + TC.Consts.classes.TOAST_CONTAINER);
+                        const toast = document.querySelector('.' + Consts.classes.TOAST_CONTAINER);
                         if (toast) {
                             const toastStyle = toast.style;
                             self._toastTransform = toastStyle.transform;
@@ -632,7 +631,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     toolsStyle.transformOrigin = self._toolsTransformOrigin;
                     delete self._toolsTransform;
                     delete self._toolsTransformOrigin;
-                    const toast = document.querySelector('.' + TC.Consts.classes.TOAST_CONTAINER);
+                    const toast = document.querySelector('.' + Consts.classes.TOAST_CONTAINER);
                     if (toast) {
                         toast.style.transform = self._toastTransform;
                         toast.style.transformOrigin = self._toastTransformOrigin;
@@ -645,7 +644,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 layout.reset();
 
                 if (hasLegend.call(self)) {
-                    self.map.off(TC.Consts.event.ZOOM, manageLegendOnZoom);
+                    self.map.off(Consts.event.ZOOM, manageLegendOnZoom);
                 }
 
                 self.map.toastHide(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'));
@@ -657,9 +656,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                 updateCanvas();
 
-                self.map.setView(TC.Consts.view.DEFAULT);
+                self.map.setView(Consts.view.DEFAULT);
 
-                self._viewDiv.classList.add(TC.Consts.classes.HIDDEN);
+                self._viewDiv.classList.add(Consts.classes.HIDDEN);
             };
 
             if (!self._viewDiv) {
@@ -684,7 +683,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
             self.currentFormat = self.CLASS + '-' + self.orientation + '-' + self.format;
 
-            self._viewDiv.classList.remove(TC.Consts.classes.HIDDEN);
+            self._viewDiv.classList.remove(Consts.classes.HIDDEN);
 
             self.map.div.classList.add(self.CLASS + "-printing");
             updateCanvas(self.currentFormat);
@@ -692,7 +691,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
         self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.' + self.CLASS + '-btn', print));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector(`#${self.CLASS}-image-qr-${self.id}`, function (_evt) {
+        self.div.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (_evt) {
             self.generateLink();
         }));
 
@@ -738,8 +737,8 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             try {
                 pdfMake.createPdf(printLayout).download(filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf');
             } catch (error) {
-                self.map.toast(self.getLocaleString('print.error'), { type: TC.Consts.msgType.ERROR });
-                TC.error(error.message + '  ' + error.stack, TC.Consts.msgErrorMode.EMAIL);
+                self.map.toast(self.getLocaleString('print.error'), { type: Consts.msgType.ERROR });
+                TC.error(error.message + '  ' + error.stack, Consts.msgErrorMode.EMAIL);
             }
 
             loadingCtrl.removeWait(hasWait);
@@ -747,7 +746,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
         const imageErrorHandling = function (imageUrl) {
             TC.error(self.getLocaleString('print.error'));
-            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, TC.Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
+            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
         };
 
         const getLogo = function () {
@@ -826,7 +825,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         const getLegend = function () {
             var content = [];
             var layers = self.map.workLayers.filter(function (layer) {
-                return layer.type === TC.Consts.layerType.WMS && layer.getVisibility();
+                return layer.type === Consts.layerType.WMS && layer.getVisibility();
             });
             var legendByGroup = [];
 
@@ -878,13 +877,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                             if (src) {
 
-                                if (!TC.tool || !TC.tool.Proxification) {
-                                    TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
-                                }
-
                                 imagePromises.push(new Promise(function (resolve, reject) {
-                                    var toolProxification = new TC.tool.Proxification(TC.proxify, { allowedMixedContent: true });
-                                    toolProxification.fetchImage(src, { exportable: true }).then(function (img) {
+                                    const proxificationTool = new Proxification(TC.proxify, { allowedMixedContent: true });
+                                    proxificationTool.fetchImage(src, { exportable: true }).then(function (img) {
                                         if (img.complete) {
                                             var imageDetail = TC.Util.imgTagToDataUrl(img, 'image/png');
                                             layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas, height: img.height, width: img.width };
@@ -909,14 +904,14 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             layers.forEach(function (layer) {
                 result = [];
                 if (!layer.layerNames || layer.layerNames.length === 0) return;
-                var hideTree = layer.options.hideTree;
+                var hideTree = layer.hideTree;
 
                 layer.tree = null;
-                layer.options.hideTree = true;
+                layer.hideTree = true;
 
                 _traverse(layer.getNestedTree(), _process, layer, 0);
 
-                layer.options.hideTree = hideTree;
+                layer.hideTree = hideTree;
 
                 if (result.length > 0) {
                     legendByGroup.push({ title: layer.title, layers: result });
@@ -1046,11 +1041,11 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         const drawQR = function () {
             // GLS: añadimos el QR
             //QR
-            const cb = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+            const cb = self.div.querySelector(`.${self.CLASS}-image-qr`);
             if (!cb.disabled && cb.checked) {
                 const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
                 qrTarget.innerHTML = '';
-                return self.makeQRCode(qrTarget, options.qrCode.sideLength, options.qrCode.sideLength).then(function (qrCodeBase64) {
+                return self.makeQRCode(qrTarget, options.qrCode.sideLength).then(function (qrCodeBase64) {
                     if (qrCodeBase64) {
                         return TC.Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, {width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
                             return mapCanvas;
@@ -1126,25 +1121,25 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
     ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
         const self = this;
         const alertElm = self.div.querySelector('.' + self.CLASS + '-alert');
-        const checkboxQR = document.querySelector(`#${self.CLASS}-image-qr-${self.id}`);
+        const checkboxQR = self.div.querySelector(`.${self.CLASS}-image-qr`);
 
         checkboxQR.disabled = maxLengthExceed.qr;
 
         if (checkboxQR.checked) {
-            alertElm.classList.toggle(TC.Consts.classes.HIDDEN, !maxLengthExceed.qr);
+            alertElm.classList.toggle(Consts.classes.HIDDEN, !maxLengthExceed.qr);
         } else {
-            alertElm.classList.add(TC.Consts.classes.HIDDEN);
+            alertElm.classList.add(Consts.classes.HIDDEN);
         }
     };
 
     ctlProto.generateLink = async function () {
         const self = this;
-        const checkbox = self.div.querySelector(`.${self.CLASS}-div input[id|="${self.CLASS}-image-qr-${self.id}"]`);
-        const label = self.div.querySelector(`label[for="${checkbox.id}"]`);
+        const checkbox = self.div.querySelector(`.${self.CLASS}-div input.${self.CLASS}-image-qr`);
+        const label = self.div.querySelector(`label.${self.CLASS}-image-qr-label`);
         checkbox.disabled = true;
-        label.classList.add(TC.Consts.classes.LOADING);
+        label.classList.add(Consts.classes.LOADING);
         const result = await TC.control.MapInfo.prototype.generateLink.call(self);
-        label.classList.remove(TC.Consts.classes.LOADING);
+        label.classList.remove(Consts.classes.LOADING);
         return result;
     };
 
