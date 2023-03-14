@@ -1,5 +1,5 @@
 /* MergeTerrainProvider */
-(function () {    
+(function () {
     /* d3-polygon: para validar si un punto está dentro de la cobertura de Navarra */
     // https://d3js.org/d3-polygon/ Version 1.0.3. Copyright 2017 Mike Bostock.
     !function (n, r) { "object" == typeof exports && "undefined" != typeof module ? r(exports) : "function" == typeof define && define.amd ? define(["exports"], r) : r(n.d3 = n.d3 || {}) }(this, function (n) { "use strict"; function r(n, r) { return n[0] - r[0] || n[1] - r[1] } function e(n) { for (var r = n.length, e = [0, 1], t = 2, o = 2; o < r; ++o) { for (; t > 1 && f(n[e[t - 2]], n[e[t - 1]], n[o]) <= 0;)--t; e[t++] = o } return e.slice(0, t) } var t = function (n) { for (var r, e = -1, t = n.length, o = n[t - 1], f = 0; ++e < t;) r = o, o = n[e], f += r[1] * o[0] - r[0] * o[1]; return f / 2 }, o = function (n) { for (var r, e, t = -1, o = n.length, f = 0, u = 0, l = n[o - 1], i = 0; ++t < o;) r = l, l = n[t], i += e = r[0] * l[1] - l[0] * r[1], f += (r[0] + l[0]) * e, u += (r[1] + l[1]) * e; return i *= 3, [f / i, u / i] }, f = function (n, r, e) { return (r[0] - n[0]) * (e[1] - n[1]) - (r[1] - n[1]) * (e[0] - n[0]) }, u = function (n) { if ((o = n.length) < 3) return null; var t, o, f = new Array(o), u = new Array(o); for (t = 0; t < o; ++t) f[t] = [+n[t][0], +n[t][1], t]; for (f.sort(r), t = 0; t < o; ++t) u[t] = [f[t][0], -f[t][1]]; var l = e(f), i = e(u), g = i[0] === l[0], a = i[i.length - 1] === l[l.length - 1], c = []; for (t = l.length - 1; t >= 0; --t) c.push(n[f[l[t]][2]]); for (t = +g; t < i.length - a; ++t) c.push(n[f[i[t]][2]]); return c }, l = function (n, r) { for (var e, t, o = n.length, f = n[o - 1], u = r[0], l = r[1], i = f[0], g = f[1], a = !1, c = 0; c < o; ++c) f = n[c], e = f[0], t = f[1], t > l != g > l && u < (i - e) * (l - t) / (g - t) + e && (a = !a), i = e, g = t; return a }, i = function (n) { for (var r, e, t = -1, o = n.length, f = n[o - 1], u = f[0], l = f[1], i = 0; ++t < o;) r = u, e = l, f = n[t], u = f[0], l = f[1], r -= u, e -= l, i += Math.sqrt(r * r + e * e); return i }; n.polygonArea = t, n.polygonCentroid = o, n.polygonHull = u, n.polygonContains = l, n.polygonLength = i, Object.defineProperty(n, "__esModule", { value: !0 }) });
@@ -23,12 +23,12 @@
         });
 
         this.defaultFallbackProvider = new cesium.EllipsoidTerrainProvider();
-        
+
         this.attributions = {};
-        
+
         if (options.attributions) {
             this.attributions = options.attributions;
-            this.view.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this });
+            this.view.map.trigger(SITNA.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this });
         }
 
         if (!(options.url instanceof cesium.Resource)) {
@@ -43,7 +43,7 @@
 
         cesium.when.all([this._readyPromise, this.fallbackProvider[0].readyPromise, this.surfaceHasTilesToRender], function () {
             this.commutingProvidersReady = true;
-            this.commutingProvidersPromises.resolve();            
+            this.commutingProvidersPromises.resolve();
         }.bind(this))
     }
 
@@ -89,7 +89,7 @@
             loadPolygonContains();
         }
 
-        if (!d3.polygonContains(this.boundaries, [cesium.Math.toDegrees(cartographic.longitude), cesium.Math.toDegrees(cartographic.latitude)])) {            
+        if (!d3.polygonContains(this.boundaries, [cesium.Math.toDegrees(cartographic.longitude), cesium.Math.toDegrees(cartographic.latitude)])) {
             return false;
         }
 
@@ -135,7 +135,7 @@
 
     MergeTerrainProvider.prototype.getAttribution = function () {
         var self = this;
-        
+
         return self.attributions;
     };
 
@@ -144,7 +144,7 @@
         let promise = cesium.when.defer();
 
         const manageAttributions = function (provider) {
-            self.view.map.trigger(TC.Consts.event.TERRAINPROVIDERADD, { terrainProvider: provider });
+            self.view.map.trigger(SITNA.Consts.event.TERRAINPROVIDERADD, { terrainProvider: provider });
         };
 
         const otherwise = function () {
@@ -198,10 +198,10 @@
     MergeTerrainProvider.prototype.sampleTerrainMostDetailed = function (positions) {
         var rectangle = cesium.Rectangle.fromCartographicArray(positions);
         var toCheck = [cesium.Rectangle.center(rectangle),
-					   cesium.Rectangle.northeast(rectangle),
-					   cesium.Rectangle.northwest(rectangle),
-					   cesium.Rectangle.southeast(rectangle),
-					   cesium.Rectangle.southwest(rectangle)];
+        cesium.Rectangle.northeast(rectangle),
+        cesium.Rectangle.northwest(rectangle),
+        cesium.Rectangle.southeast(rectangle),
+        cesium.Rectangle.southwest(rectangle)];
 
         if (toCheck.filter(function (position) { return !this.isPointInDefaultBoundaries(position); }.bind(this)).length === 0) {
             return cesium.sampleTerrainMostDetailed(this, positions);
@@ -299,7 +299,7 @@ WCSTerrainProvider  */
                 var linkNode = xml.querySelector('Service').querySelector('metadataLink');
                 if (linkNode) {
                     this.attributions.site = linkNode.getAttribute('about');
-                }                
+                }
             }
         }.bind(this));
 
@@ -402,7 +402,7 @@ WCSTerrainProvider  */
 
     WCSTerrainProvider.prototype.getAttribution = function () {
         var self = this;
-        
+
         return self.attributions;
     };
 
@@ -490,17 +490,17 @@ WCSTerrainProvider  */
 
                     if (cesium.defined(resultat.getHeightmapTerrainDataFromWCS)) {
 
-                        if (!provider.adviced && level > 14) {                            
-                            provider.view.map.toast(TC.Util.getLocaleString(provider.view.map.options.locale, "threed.terrainAdvice"), { type: TC.Consts.msgType.INFO });
+                        if (!provider.adviced && level > 14) {
+                            provider.view.map.toast(TC.Util.getLocaleString(provider.view.map.options.locale, "threed.terrainAdvice"), { type: SITNA.Consts.msgType.INFO });
                             provider.adviced = true;
                         }
 
                         if (level <= resultat.minLevel &&
                             level >= resultat.maxLevel) {
 
-                            if (resultat.isTileInside(x, y, level, provider) == true) {                                
+                            if (resultat.isTileInside(x, y, level, provider) == true) {
                                 retour = resultat.getHeightmapTerrainDataFromWCS(x, y, level);
-                            } else {                                
+                            } else {
                                 retour = cesium.when.defer().reject();
                             }
                         } else {
@@ -580,14 +580,14 @@ WCSTerrainProvider  */
                         var xSpacing = (rect.east - rect.west) / (provider.heightMapWidth - 1);
                         var ySpacing = (rect.north - rect.south) / (provider.heightMapHeight - 1);
                         var scalingX = provider.pixelSize[0] / xSpacing
-                        var scalingY = provider.pixelSize[1] / ySpacing;                        
+                        var scalingY = provider.pixelSize[1] / ySpacing;
 
                         if (scalingX < 10 && scalingX > 1 / 10 && Math.abs(scalingY) < 10 && Math.abs(scalingY) > 1 / 10) {
                             if (j < resultat.minLevel) resultat.minLevel = j;
                             if (j > resultat.maxLevel) resultat.maxLevel = j;
 
                         }
-                    }                    
+                    }
                 }
             } else {
                 console.log("Error al obtener terreno fuera de Navarra");
@@ -1846,8 +1846,8 @@ WCSTerrainProvider  */
                     var decompressed = LZString.decompressFromUint8Array(decodedBlock);
 
                     break;
-                    // Deflate 
-                    // Code not yes validate 
+                // Deflate 
+                // Code not yes validate 
                 case 32946:
                     var inflator = new moduleDecompression.Inflate();
                     var bitOffset = 0;
@@ -1899,7 +1899,7 @@ WCSTerrainProvider  */
                     decodedBlock.push(inflator.result);
                     break;
 
-                    // PackBits
+                // PackBits
                 case 32773:
                     var currentSample = 0;
                     var sample = 0;
@@ -1967,7 +1967,7 @@ WCSTerrainProvider  */
                     }
                     break;
 
-                    // Unknown compression algorithm
+                // Unknown compression algorithm
                 default:
                     throw Error("Do not attempt to parse the data Compression not handled  : " + this.getCompressionTypeName(this.compression));
                     // Do not attempt to parse the image data.
@@ -2050,13 +2050,13 @@ WCSTerrainProvider  */
                         samples[index] = invertValue - sample;
                     });
 
-                    // Bilevel or Grayscale
-                    // BlackIsZero
+                // Bilevel or Grayscale
+                // BlackIsZero
                 case 1:
                     red = green = blue = this.clampColorSample(pixelSamples[0], this.sampleProperties[0].bitsPerSample);
                     break;
 
-                    // RGB Full Color
+                // RGB Full Color
                 case 2:
                     if (this.samplesPerPixel == 1)
                         red = green = blue = this.clampColorSample(pixelSamples[0], this.sampleProperties[0].bitsPerSample);
@@ -2073,7 +2073,7 @@ WCSTerrainProvider  */
                     }
                     break;
 
-                    // RGB Color Palette
+                // RGB Color Palette
                 case 3:
                     if (this.colorMapValues === undefined) {
                         throw Error("Palette image missing color map");
@@ -2088,7 +2088,7 @@ WCSTerrainProvider  */
                     break;
 
 
-                    // Unknown Photometric Interpretation
+                // Unknown Photometric Interpretation
                 default:
                     throw RangeError(' Photometric Interpretation Not Yet Implemented::', this.getPhotometricName(this.photometricInterpretation));
                     break;
@@ -2133,13 +2133,13 @@ WCSTerrainProvider  */
                         samples[index] = invertValue - sample;
                     });
 
-                    // Bilevel or Grayscale
-                    // BlackIsZero
+                // Bilevel or Grayscale
+                // BlackIsZero
                 case 1:
                     red = green = blue = this.clampAffineColorSample(pixelSamples[0], this.sampleProperties[0].bitsPerSample, vmin, vmax);
                     break;
 
-                    // RGB Full Color
+                // RGB Full Color
                 case 2:
                     if (this.samplesPerPixel == 1)
                         red = green = blue = this.clampAffineColorSample(pixelSamples[0], this.sampleProperties[0].bitsPerSample, vmin, vmax);
@@ -2156,7 +2156,7 @@ WCSTerrainProvider  */
                     }
                     break;
 
-                    // RGB Color Palette
+                // RGB Color Palette
                 case 3:
                     if (this.colorMapValues === undefined) {
                         throw Error("Palette image missing color map");
@@ -2171,7 +2171,7 @@ WCSTerrainProvider  */
                     break;
 
 
-                    // Unknown Photometric Interpretation
+                // Unknown Photometric Interpretation
                 default:
                     throw RangeError(' Photometric Interpretation Not Yet Implemented::', this.getPhotometricName(this.photometricInterpretation));
                     break;
@@ -2555,9 +2555,9 @@ WCSTerrainProvider  */
                 res = this.GTIFTiepointTranslate(tiepoint_count / 6, x, y, true);
             }
 
-                //--------------------------------------------------------------------
-                //If we have a transformation matrix, use it. 			
-                //--------------------------------------------------------------------
+            //--------------------------------------------------------------------
+            //If we have a transformation matrix, use it. 			
+            //--------------------------------------------------------------------
             else if (transform_count == 16) {
                 var transform = fileDirectory.ModelTransformation.values;
 
@@ -2570,9 +2570,9 @@ WCSTerrainProvider  */
                 res = [1, x, y];
             }
 
-                //--------------------------------------------------------------------
-                //For now we require one tie point, and a valid pixel scale.      
-                //-------------------------------------------------------------------- 
+            //--------------------------------------------------------------------
+            //For now we require one tie point, and a valid pixel scale.      
+            //-------------------------------------------------------------------- 
             else if (count < 3 || tiepoint_count < 6) {
                 res = [0, x, y];
             }
@@ -2666,10 +2666,10 @@ WCSTerrainProvider  */
                 res = this.GTIFTiepointTranslate(tiepoint_count / 6, x, y, false);
             }
 
-                // -------------------------------------------------------------------- 
-                //      Handle matrix - convert to "geotransform" format, invert and    
-                //      apply.                                                          
-                // -------------------------------------------------------------------- 
+            // -------------------------------------------------------------------- 
+            //      Handle matrix - convert to "geotransform" format, invert and    
+            //      apply.                                                          
+            // -------------------------------------------------------------------- 
             else if (transform_count == 16) {
                 var transform = fileDirectory.ModelTransformation.values;
 
@@ -2698,9 +2698,9 @@ WCSTerrainProvider  */
                 }
             }
 
-                // -------------------------------------------------------------------- 
-                //      For now we require one tie point, and a valid pixel scale.      
-                // -------------------------------------------------------------------- 
+            // -------------------------------------------------------------------- 
+            //      For now we require one tie point, and a valid pixel scale.      
+            // -------------------------------------------------------------------- 
             else if (count >= 3 && tiepoint_count >= 6) {
                 var pixel_scale = fileDirectory.ModelPixelScale.values;
                 var tiepoints = fileDirectory.ModelTiepoint.values;
