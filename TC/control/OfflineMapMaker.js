@@ -14,8 +14,9 @@
   *    una lista de todos los recursos a cargar en la cache del navegador, y un manifiesto de caché de aplicaciones es precisamente una lista de ese tipo. 
   *    Se usa este formato por compatibilidad hacia atrás y por ser de un estándar bien documentado.
   * @typedef OfflineMapMakerOptions
-  * @extends ControlOptions
-  * @see MapControlOptions
+  * @extends SITNA.control.ControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {number} [averageTileSize=31000] - Tamaño medio estimado en bytes para cada una de las teselas del mapa. Este valor se utiliza para estimar el tamaño total que tendrá en disco el mapa sin conexión.
   * @property {HTMLElement|string} [offlineMapHintDiv] - Elemento del DOM en el que crear el indicador de que se está en un mapa offline. Si no se especifica dicho indicador se mostrará superpuesto al área del mapa.
@@ -65,62 +66,52 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import SWCacheClient from './SWCacheClient';
+import md5 from 'md5';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.SWCacheClient = SWCacheClient;
 
 (function () {
 
-    TC.Consts.classes.CONNECTION_OFFLINE = TC.Consts.classes.CONNECTION_OFFLINE || 'tc-conn-offline';
-    TC.Consts.classes.CONNECTION_WIFI = TC.Consts.classes.CONNECTION_WIFI || 'tc-conn-wifi';
-    TC.Consts.classes.CONNECTION_MOBILE = TC.Consts.classes.CONNECTION_MOBILE || 'tc-conn-mobile';
-    TC.Consts.classes.OFFLINE = TC.Consts.classes.OFFLINE || 'tc-offline';
+    Consts.classes.CONNECTION_OFFLINE = Consts.classes.CONNECTION_OFFLINE || 'tc-conn-offline';
+    Consts.classes.CONNECTION_WIFI = Consts.classes.CONNECTION_WIFI || 'tc-conn-wifi';
+    Consts.classes.CONNECTION_MOBILE = Consts.classes.CONNECTION_MOBILE || 'tc-conn-mobile';
+    Consts.classes.OFFLINE = Consts.classes.OFFLINE || 'tc-offline';
 
     var ALREADY_EXISTS = 'already_exists';
 
-    var requestManifest = function () {
-        return new Promise(function (resolve, reject) {
-            const manifestFile = document.documentElement.getAttribute('manifest') || 'manifest.appcache';
-            TC.ajax({
-                url: TC.Util.addURLParameters(manifestFile, { ts: Date.now() }),
-                method: 'GET',
-                responseType: 'text'
-            }).then(function (response) {
-                let data = response.data.normalize();
-                TC.loadJS(
-                    !window.hex_md5,
-                    [TC.apiLocation + TC.Consts.url.HASH],
-                    function () {
-                        var hash = hex_md5(data);
-                        var idxEnd = data.indexOf('NETWORK:');
-                        if (idxEnd >= 0) {
-                            data = data.substr(0, idxEnd);
-                        }
-                        idxEnd = data.indexOf('FALLBACK:');
-                        if (idxEnd >= 0) {
-                            data = data.substr(0, idxEnd);
-                        }
-                        idxEnd = data.indexOf('SETTINGS:');
-                        if (idxEnd >= 0) {
-                            data = data.substr(0, idxEnd);
-                        }
-                        var lines = data.split(/[\n\r]/).filter(function (elm) {
-                            return elm.length > 0 && elm.indexOf('#') !== 0 && elm !== 'CACHE:';
-                        });
-                        // Eliminamos la primera línea porque siempre es CACHE MANIFEST
-                        lines.shift();
-                        resolve({
-                            hash: hash,
-                            urls: lines
-                        });
-                    }
-                );
-            }).catch(function (error) {
-                reject(error);
-            });
+    var requestManifest = async function () {
+        const manifestFile = document.documentElement.getAttribute('manifest') || 'manifest.appcache';
+        const response = await TC.ajax({
+            url: TC.Util.addURLParameters(manifestFile, { ts: Date.now() }),
+            method: 'GET',
+            responseType: 'text'
         });
+        let data = response.data.normalize();
+        var hash = md5(data);
+        var idxEnd = data.indexOf('NETWORK:');
+        if (idxEnd >= 0) {
+            data = data.substr(0, idxEnd);
+        }
+        idxEnd = data.indexOf('FALLBACK:');
+        if (idxEnd >= 0) {
+            data = data.substr(0, idxEnd);
+        }
+        idxEnd = data.indexOf('SETTINGS:');
+        if (idxEnd >= 0) {
+            data = data.substr(0, idxEnd);
+        }
+        var lines = data.split(/[\n\r]/).filter(function (elm) {
+            return elm.length > 0 && elm.indexOf('#') !== 0 && elm !== 'CACHE:';
+        });
+        // Eliminamos la primera línea porque siempre es CACHE MANIFEST
+        lines.shift();
+        return {
+            hash: hash,
+            urls: lines
+        };
     };
 
     TC.control.OfflineMapMaker = function () {
@@ -221,7 +212,7 @@ TC.control.SWCacheClient = SWCacheClient;
 
         if (self.mapIsOffline) {
             document.querySelectorAll(self._selectors.OFFLINEHIDDEN).forEach(function (elm) {
-                elm.classList.add(TC.Consts.classes.HIDDEN);
+                elm.classList.add(Consts.classes.HIDDEN);
             });
         }
 
@@ -231,7 +222,7 @@ TC.control.SWCacheClient = SWCacheClient;
         self.isDownloading = false;
         self.baseLayers = [];
 
-        self.options.averageTileSize = self.options.averageTileSize || TC.Cfg.averageTileSize;
+        self.options.averageTileSize = self.options.averageTileSize || Cfg.averageTileSize;
         self.requestSchemas = [];
         self.minResolution = 0;
         self.currentMap = null;
@@ -259,19 +250,19 @@ TC.control.SWCacheClient = SWCacheClient;
             if (self._offlineMapHintDiv) {
                 const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
                 panel.classList.remove(
-                    TC.Consts.classes.CONNECTION_OFFLINE,
-                    TC.Consts.classes.CONNECTION_MOBILE,
-                    TC.Consts.classes.CONNECTION_WIFI);
+                    Consts.classes.CONNECTION_OFFLINE,
+                    Consts.classes.CONNECTION_MOBILE,
+                    Consts.classes.CONNECTION_WIFI);
 
                 var type = connection.type;
                 switch (type) {
                     case 1:
                     case 2:
                     case undefined:
-                        panel.classList.add(TC.Consts.classes.CONNECTION_WIFI);
+                        panel.classList.add(Consts.classes.CONNECTION_WIFI);
                         break;
                     default:
-                        panel.classList.add(TC.Consts.classes.CONNECTION_MOBILE);
+                        panel.classList.add(Consts.classes.CONNECTION_MOBILE);
                         break;
                 }
             }
@@ -283,8 +274,8 @@ TC.control.SWCacheClient = SWCacheClient;
         window.addEventListener('offline', function () {
             if (self._offlineMapHintDiv) {
                 const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
-                panel.classList.add(TC.Consts.classes.CONNECTION_OFFLINE);
-                panel.classList.remove(TC.Consts.classes.CONNECTION_MOBILE, TC.Consts.classes.CONNECTION_WIFI);
+                panel.classList.add(Consts.classes.CONNECTION_OFFLINE);
+                panel.classList.remove(Consts.classes.CONNECTION_MOBILE, Consts.classes.CONNECTION_WIFI);
             }
         });
     };
@@ -334,10 +325,10 @@ TC.control.SWCacheClient = SWCacheClient;
         'workLayerManager'
     ];
 
-    TC.Consts.event.MAPCACHEDOWNLOAD = TC.Consts.event.MAPCACHEDOWNLOAD || 'mapcachedownload.tc';
-    TC.Consts.event.MAPCACHEDELETE = TC.Consts.event.MAPCACHEDELETE || 'mapcachedelete.tc';
-    TC.Consts.event.MAPCACHEPROGRESS = TC.Consts.event.MAPCACHEPROGRESS || 'mapcacheprogress.tc';
-    TC.Consts.event.MAPCACHEERROR = TC.Consts.event.MAPCACHEERROR || 'mapcacheerror.tc';
+    Consts.event.MAPCACHEDOWNLOAD = Consts.event.MAPCACHEDOWNLOAD || 'mapcachedownload.tc';
+    Consts.event.MAPCACHEDELETE = Consts.event.MAPCACHEDELETE || 'mapcachedelete.tc';
+    Consts.event.MAPCACHEPROGRESS = Consts.event.MAPCACHEPROGRESS || 'mapcacheprogress.tc';
+    Consts.event.MAPCACHEERROR = Consts.event.MAPCACHEERROR || 'mapcacheerror.tc';
 
     ctlProto.template = {};
     ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-omm.hbs";
@@ -356,9 +347,9 @@ TC.control.SWCacheClient = SWCacheClient;
         ctl._state = ctl._states.DOWNLOADING;
         TC.Util.closeModal();
         ctl.showDownloadProgress(0, 1);
-        ctl.div.querySelector(ctl._selectors.NEW).classList.add(TC.Consts.classes.HIDDEN);
-        ctl.div.querySelector(ctl._selectors.DRAWING).classList.add(TC.Consts.classes.HIDDEN);
-        ctl.div.querySelector(ctl._selectors.PROGRESS).classList.remove(TC.Consts.classes.HIDDEN);
+        ctl.div.querySelector(ctl._selectors.NEW).classList.add(Consts.classes.HIDDEN);
+        ctl.div.querySelector(ctl._selectors.DRAWING).classList.add(Consts.classes.HIDDEN);
+        ctl.div.querySelector(ctl._selectors.PROGRESS).classList.remove(Consts.classes.HIDDEN);
         ctl._dialogDiv.querySelector(ctl._selectors.OKBTN).disabled = true;
         ctl.div.querySelector(ctl._selectors.NEWBTN).disabled = true;
         ctl.layer.clearFeatures();
@@ -368,11 +359,11 @@ TC.control.SWCacheClient = SWCacheClient;
     const setDeletingState = function (ctl) {
         ctl._state = ctl._states.DELETING;
         ctl.showDownloadProgress(0, 1);
-        ctl.div.querySelector(ctl._selectors.DRAWING).classList.add(TC.Consts.classes.HIDDEN);
-        ctl.div.querySelector(ctl._selectors.PROGRESS).classList.add(TC.Consts.classes.HIDDEN);
-        ctl.div.querySelector(ctl._selectors.NEW).classList.remove(TC.Consts.classes.HIDDEN);
+        ctl.div.querySelector(ctl._selectors.DRAWING).classList.add(Consts.classes.HIDDEN);
+        ctl.div.querySelector(ctl._selectors.PROGRESS).classList.add(Consts.classes.HIDDEN);
+        ctl.div.querySelector(ctl._selectors.NEW).classList.remove(Consts.classes.HIDDEN);
         ctl.div.querySelectorAll(ctl._selectors.LISTITEM).forEach(function (li) {
-            li.classList.add(TC.Consts.classes.DISABLED);
+            li.classList.add(Consts.classes.DISABLED);
         });
         ctl._dialogDiv.querySelector(ctl._selectors.OKBTN).disabled = true;
         ctl.div.querySelector(ctl._selectors.NEWBTN).disabled = false;
@@ -381,26 +372,26 @@ TC.control.SWCacheClient = SWCacheClient;
     };
 
     const setNameEditingState = function (ctl, li) {
-        li.querySelector('span').classList.add(TC.Consts.classes.HIDDEN);
+        li.querySelector('span').classList.add(Consts.classes.HIDDEN);
         const textbox = li.querySelector(ctl._selectors.TEXTBOX);
-        textbox.classList.remove(TC.Consts.classes.HIDDEN);
+        textbox.classList.remove(Consts.classes.HIDDEN);
         textbox.value = li.querySelector('span a').innerHTML;
         textbox.focus();
-        li.querySelector(ctl._selectors.SAVEBTN).classList.remove(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.CANCELBTN).classList.remove(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.EDITBTN).classList.add(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.VIEWBTN).classList.add(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.DELETEBTN).classList.add(TC.Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.SAVEBTN).classList.remove(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.CANCELBTN).classList.remove(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.EDITBTN).classList.add(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.VIEWBTN).classList.add(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.DELETEBTN).classList.add(Consts.classes.HIDDEN);
     };
 
     const setNameReadyState = function (ctl, li) {
-        li.querySelector('span').classList.remove(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.TEXTBOX).classList.add(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.SAVEBTN).classList.add(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.CANCELBTN).classList.add(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.EDITBTN).classList.remove(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.VIEWBTN).classList.remove(TC.Consts.classes.HIDDEN);
-        li.querySelector(ctl._selectors.DELETEBTN).classList.remove(TC.Consts.classes.HIDDEN);
+        li.querySelector('span').classList.remove(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.TEXTBOX).classList.add(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.SAVEBTN).classList.add(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.CANCELBTN).classList.add(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.EDITBTN).classList.remove(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.VIEWBTN).classList.remove(Consts.classes.HIDDEN);
+        li.querySelector(ctl._selectors.DELETEBTN).classList.remove(Consts.classes.HIDDEN);
     };
 
     var formatNumber = function (number) {
@@ -436,7 +427,7 @@ TC.control.SWCacheClient = SWCacheClient;
             resLevel = parseInt(range.value);
             var resValue = Math.floor(new Number(resolutions[resLevel]) * 1000) / 1000;
             resText = ctl.getLocaleString('metersPerPixel', {
-                value: resValue.toLocaleString((ctl.map ? ctl.map.options.locale : TC.Cfg.locale).replace('_', '-'))
+                value: resValue.toLocaleString((ctl.map ? ctl.map.options.locale : Cfg.locale).replace('_', '-'))
             });
             resLeft = (resLevel + 1) * 100 / (resolutions.length + 1) + '%';
             range.disabled = false;
@@ -450,8 +441,8 @@ TC.control.SWCacheClient = SWCacheClient;
             ctl.minResolution = 0;
             range.disabled = true;
         }
-        ctl._dialogDiv.querySelector(ctl._selectors.RESOLUTIONPANEL).classList.toggle(TC.Consts.classes.HIDDEN, !!range.disabled);
-        ctl._dialogDiv.querySelector(ctl._selectors.TILECOUNT).classList.toggle(TC.Consts.classes.HIDDEN, !!range.disabled);
+        ctl._dialogDiv.querySelector(ctl._selectors.RESOLUTIONPANEL).classList.toggle(Consts.classes.HIDDEN, !!range.disabled);
+        ctl._dialogDiv.querySelector(ctl._selectors.TILECOUNT).classList.toggle(Consts.classes.HIDDEN, !!range.disabled);
 
         resDiv.style.left = resLeft;
         resDiv.innerHTML = resText;
@@ -469,7 +460,7 @@ TC.control.SWCacheClient = SWCacheClient;
     };
 
     const updateThumbnails = function (ctl) {
-        ctl._dialogDiv.querySelectorAll(ctl._classSelector + '-bl-node input[type=checkbox]').forEach(function (cb, idx) {
+        ctl._dialogDiv.querySelectorAll(ctl._classSelector + '-bl-node input[type=checkbox]').forEach(function (cb, _idx) {
             if (cb.checked) {
                 var schema = ctl.requestSchemas.filter(function (elm) {
                     return elm.layerId === cb.value;
@@ -638,7 +629,7 @@ TC.control.SWCacheClient = SWCacheClient;
             var renderObject = { storedMaps: self.storedMaps, listId: self.CLASS + '-list-' + TC.getUID() };
             self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
                 self._dialogDiv.innerHTML = html;
-                self._dialogDiv.querySelector(self._selectors.NAMETB).addEventListener(TC.Consts.event.CLICK, function (e) {
+                self._dialogDiv.querySelector(self._selectors.NAMETB).addEventListener(Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     this.selectionStart = 0;
                     this.selectionEnd = this.value.length;
@@ -647,36 +638,36 @@ TC.control.SWCacheClient = SWCacheClient;
                 });
             }).then(function () {
                 self.renderData(renderObject, function () {
-                    self._dialogDiv.querySelector(self._selectors.OKBTN).addEventListener(TC.Consts.event.CLICK, function () {
+                    self._dialogDiv.querySelector(self._selectors.OKBTN).addEventListener(Consts.event.CLICK, function () {
                         self.generateCache();
                     }, { passive: true });
                     self._dialogDiv.querySelector(self._selectors.NAMETB).addEventListener('input', function () {
                         self._updateReadyState();
                     });
-                    self.div.querySelector(self._selectors.NEWBTN).addEventListener(TC.Consts.event.CLICK, function () {
+                    self.div.querySelector(self._selectors.NEWBTN).addEventListener(Consts.event.CLICK, function () {
                         self.setEditState();
                     }, { passive: true });
-                    self.div.querySelector(self._classSelector + '-btn-cancel-draw').addEventListener(TC.Consts.event.CLICK, function () {
+                    self.div.querySelector(self._classSelector + '-btn-cancel-draw').addEventListener(Consts.event.CLICK, function () {
                         self.setReadyState();
                     }, { passive: true });
 
-                    self.div.querySelector(self._classSelector + '-btn-cancel-dl').addEventListener(TC.Consts.event.CLICK, function () {
+                    self.div.querySelector(self._classSelector + '-btn-cancel-dl').addEventListener(Consts.event.CLICK, function () {
                         self.cancelCacheRequest();
                     }, { passive: true });
 
                     const list = self.div.querySelector(self._selectors.LIST);
-                    list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.DELETEBTN, function (e) {
+                    list.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.DELETEBTN, function (e) {
                         self.startDeleteMap(e.target.parentElement.querySelector('a').innerHTML);
                     }), { passive: true });
-                    list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.EDITBTN, function (e) {
+                    list.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.EDITBTN, function (e) {
                         setNameEditingState(self, e.target.parentElement);
                     }), { passive: true });
-                    list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.CANCELBTN, function (e) {
+                    list.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.CANCELBTN, function (e) {
                         const li = e.target.parentElement;
                         li.querySelector(self._selectors.TEXTBOX).value = li.querySelector('a').innerHTML;
                         setNameReadyState(self, li);
                     }), { passive: true });
-                    list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.SAVEBTN, function (e) {
+                    list.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.SAVEBTN, function (e) {
                         const li = e.target.parentElement;
                         setNameReadyState(self, li);
                         const anchor = li.querySelector('a');
@@ -689,10 +680,10 @@ TC.control.SWCacheClient = SWCacheClient;
                             saveMapToStorage(self, map);
                         }
                     }), { passive: true });
-                    list.addEventListener(TC.Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.VIEWBTN, function (e) {
+                    list.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector(self._selectors.VIEWBTN, function (e) {
                         const btn = e.target;
-                        var showExtent = !btn.classList.contains(TC.Consts.classes.ACTIVE);
-                        self.div.querySelectorAll(self._selectors.VIEWBTN).forEach(b => b.classList.remove(TC.Consts.classes.ACTIVE));
+                        var showExtent = !btn.classList.contains(Consts.classes.ACTIVE);
+                        self.div.querySelectorAll(self._selectors.VIEWBTN).forEach(b => b.classList.remove(Consts.classes.ACTIVE));
                         const mapName = btn.parentElement.querySelector('a').innerHTML;
                         if (mapName) {
                             var map = self.findStoredMap({ name: mapName });
@@ -717,7 +708,7 @@ TC.control.SWCacheClient = SWCacheClient;
                                         }).then(function () {
                                             self.layer.map.zoomToFeatures(self.layer.features);
                                         });
-                                    btn.classList.add(TC.Consts.classes.ACTIVE);
+                                    btn.classList.add(Consts.classes.ACTIVE);
                                     btn.setAttribute('title', self.getLocaleString('removeMapExtent'));
                                 }
                             }
@@ -733,7 +724,7 @@ TC.control.SWCacheClient = SWCacheClient;
                         });
                         const mapLis = [];
                         lis.forEach(function (li) {
-                            if (li.matches('li:not([class]),li.' + TC.Consts.classes.ACTIVE)) {
+                            if (li.matches('li:not([class]),li.' + Consts.classes.ACTIVE)) {
                                 mapLis.push(li);
                             }
                         });
@@ -803,7 +794,7 @@ TC.control.SWCacheClient = SWCacheClient;
 
                     const li = getListElementByMapUrl(self, location.href);
                     if (li) {
-                        li.classList.add(TC.Consts.classes.ACTIVE);
+                        li.classList.add(Consts.classes.ACTIVE);
                     }
 
                     if (TC.Util.isFunction(callback)) {
@@ -829,10 +820,10 @@ TC.control.SWCacheClient = SWCacheClient;
         }));
     };
 
-    ctlProto.register = function (map) {
-        var self = this;
+    ctlProto.register = async function (map) {
+        const self = this;
 
-        const result = TC.control.SWCacheClient.prototype.register.call(self, map);
+        const swCacheClientPromise = TC.control.SWCacheClient.prototype.register.call(self, map);
 
         self.getServiceWorker().then(
             function () {
@@ -840,7 +831,7 @@ TC.control.SWCacheClient = SWCacheClient;
                     navigator.serviceWorker.addEventListener('message', function (event) {
                         switch (event.data.event) {
                             case 'progress':
-                                self.trigger(TC.Consts.event.MAPCACHEPROGRESS, {
+                                self.trigger(Consts.event.MAPCACHEPROGRESS, {
                                     url: event.data.name,
                                     requestId: event.data.requestId,
                                     loaded: event.data.count,
@@ -848,13 +839,13 @@ TC.control.SWCacheClient = SWCacheClient;
                                 });
                                 break;
                             case 'cached':
-                                self.trigger(TC.Consts.event.MAPCACHEDOWNLOAD, {
+                                self.trigger(Consts.event.MAPCACHEDOWNLOAD, {
                                     url: event.data.name,
                                     requestId: event.data.requestId
                                 });
                                 break;
                             case 'deleted':
-                                self.trigger(TC.Consts.event.MAPCACHEDELETE, { url: event.data.name });
+                                self.trigger(Consts.event.MAPCACHEDELETE, { url: event.data.name });
                                 break;
                             case 'error':
                                 if (event.data.action === self._actions.CREATE) {
@@ -888,10 +879,10 @@ TC.control.SWCacheClient = SWCacheClient;
                                             location.reload();
                                         });
                                     }
-                                    self.off(TC.Consts.event.MAPCACHEDOWNLOAD, onCacheDownload);
+                                    self.off(Consts.event.MAPCACHEDOWNLOAD, onCacheDownload);
                                 }
                             };
-                            self.on(TC.Consts.event.MAPCACHEDOWNLOAD, onCacheDownload);
+                            self.on(Consts.event.MAPCACHEDOWNLOAD, onCacheDownload);
                         }
                     });
                 }
@@ -900,7 +891,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 self.renderPromise().then(function () {
                     const container = self.div.querySelector(`.${self.CLASS}-new`);
                     const warning = document.createElement('div');
-                    warning.classList.add('tc-alert', 'alert-warning');
+                    warning.classList.add('tc-alert', 'tc-alert-warning');
                     const header = document.createElement('p');
                     const text = document.createElement('strong');
                     text.innerHTML = self.getLocaleString('offlineMap.error');
@@ -909,14 +900,14 @@ TC.control.SWCacheClient = SWCacheClient;
                     reason.innerHTML = error.message;
                     warning.appendChild(header);
                     warning.appendChild(reason);
-                    container.querySelector(self._selectors.NEWBTN).classList.add(TC.Consts.classes.HIDDEN);
+                    container.querySelector(self._selectors.NEWBTN).classList.add(Consts.classes.HIDDEN);
                     container.appendChild(warning);
                 });
             }
         ).catch(() => console.log("No SW available: no events handled"));
 
         if (self.mapIsOffline) {
-            map.div.classList.add(TC.Consts.classes.OFFLINE);
+            map.div.classList.add(Consts.classes.OFFLINE);
 
             // Si no está especificado, el panel de aviso offline se cuelga del div del mapa
             self._offlineMapHintDiv = TC.Util.getDiv(self.options.offlineMapHintDiv);
@@ -927,10 +918,10 @@ TC.control.SWCacheClient = SWCacheClient;
                 self._offlineMapHintDiv.innerHTML = html;
                 if (!navigator.onLine) {
                     const offPanel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
-                    offPanel.classList.add(TC.Consts.classes.CONNECTION_OFFLINE);
-                    offPanel.classList.remove(TC.Consts.classes.CONNECTION_MOBILE, TC.Consts.classes.CONNECTION_WIFI);
+                    offPanel.classList.add(Consts.classes.CONNECTION_OFFLINE);
+                    offPanel.classList.remove(Consts.classes.CONNECTION_MOBILE, Consts.classes.CONNECTION_WIFI);
                 }
-                self._offlineMapHintDiv.querySelector(self._selectors.EXIT).addEventListener(TC.Consts.event.CLICK, function (e) {
+                self._offlineMapHintDiv.querySelector(self._selectors.EXIT).addEventListener(Consts.event.CLICK, function (e) {
                     TC.confirm(self.getLocaleString('offlineMapExit.confirm'),
                         null,
                         function () {
@@ -944,7 +935,7 @@ TC.control.SWCacheClient = SWCacheClient;
         const layerId = self.getUID();
         self.layerPromise = map.addLayer({
             id: layerId,
-            type: TC.Consts.layerType.VECTOR,
+            type: Consts.layerType.VECTOR,
             stealth: true,
             owner: self,
             styles: {
@@ -952,93 +943,90 @@ TC.control.SWCacheClient = SWCacheClient;
             }
         });
         self.layer = null;
-        Promise.all([
+        const objects = await Promise.all([
             self.layerPromise,
-            self.renderPromise(),
-            map.addControl('draw', {
-                id: drawId,
-                div: self.div.querySelector(self._selectors.DRAW),
-                mode: TC.Consts.geom.RECTANGLE,
-                persistent: false
+            self.renderPromise()
+        ]);
+        const layer = self.layer = objects[0];
+        self.boxDraw = await map.addControl('draw', {
+            id: drawId,
+            div: self.div.querySelector(self._selectors.DRAW),
+            mode: Consts.geom.RECTANGLE,
+            singleSketch: true
+        });
+        self.boxDraw.setLayer(layer);
+        self.boxDraw
+            .on(Consts.event.DRAWSTART, function (_e) {
+                self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: Consts.msgType.INFO });
             })
-        ]).then(function (objects) {
-            const layer = self.layer = objects[0];
-            const boxDraw = self.boxDraw = objects[2];
-            boxDraw.setLayer(layer);
-            boxDraw
-                .on(TC.Consts.event.DRAWSTART, function (e) {
-                    self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: TC.Consts.msgType.INFO });
-                })
-                .on(TC.Consts.event.DRAWEND, function (e) {
-                    var points = e.feature.geometry[0];
-                    var pStart = points[0];
-                    var pEnd = points[2];
-                    var minx = Math.min(pStart[0], pEnd[0]);
-                    var maxx = Math.max(pStart[0], pEnd[0]);
-                    var miny = Math.min(pStart[1], pEnd[1]);
-                    var maxy = Math.max(pStart[1], pEnd[1]);
-                    self.setExtent([minx, miny, maxx, maxy]);
-                    const checkboxes = self._dialogDiv.querySelectorAll('input[type=checkbox]');
-                    checkboxes.forEach(function (checkbox) {
-                        // Comprobamos que la extensión del mapa está disponible a alguna resolución
-                        const layer = self.map.getLayer(checkbox.value);
-                        var li = checkbox;
-                        while (li && li.tagName !== 'LI') {
-                            li = li.parentElement;
-                        }
-                        if (layer.wrap.getCompatibleMatrixSets(map.crs).includes(layer.matrixSet)) {
-                            const tml = self.wrap.getRequestSchemas({
-                                extent: self.extent,
-                                layers: [layer]
-                            })[0].tileMatrixLimits;
+            .on(Consts.event.DRAWEND, function (e) {
+                var points = e.feature.geometry[0];
+                var pStart = points[0];
+                var pEnd = points[2];
+                var minx = Math.min(pStart[0], pEnd[0]);
+                var maxx = Math.max(pStart[0], pEnd[0]);
+                var miny = Math.min(pStart[1], pEnd[1]);
+                var maxy = Math.max(pStart[1], pEnd[1]);
+                self.setExtent([minx, miny, maxx, maxy]);
+                const checkboxes = self._dialogDiv.querySelectorAll('input[type=checkbox]');
+                checkboxes.forEach(function (checkbox) {
+                    // Comprobamos que la extensión del mapa está disponible a alguna resolución
+                    const layer = self.map.getLayer(checkbox.value);
+                    var li = checkbox;
+                    while (li && li.tagName !== 'LI') {
+                        li = li.parentElement;
+                    }
+                    if (layer.wrap.getCompatibleMatrixSets(map.crs).includes(layer.matrixSet)) {
+                        const tml = self.wrap.getRequestSchemas({
+                            extent: self.extent,
+                            layers: [layer]
+                        })[0].tileMatrixLimits;
 
-                            li.classList.toggle(TC.Consts.classes.HIDDEN, !tml.length);
+                        li.classList.toggle(Consts.classes.HIDDEN, !tml.length);
+                    }
+                    else {
+                        li.classList.add(Consts.classes.HIDDEN);
+                    }
+                });
+                const visibleLi = self._dialogDiv.querySelector(self._selectors.BLLISTITEM + ':not(.' + Consts.classes.HIDDEN + ')');
+                self._dialogDiv.querySelector(self._selectors.BLLISTTEXT).innerHTML = self.getLocaleString(visibleLi ? 'selectAtLeastOne' : 'cb.noMapsAtSelectedExtent');
+
+                updateThumbnails(self);
+                showEstimatedMapSize(self);
+                TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-dialog'), {
+                    openCallback: function () {
+                        setTimeout(function () { // Este timeout evita el pulsado accidental cuando sale el diálogo
+                            checkboxes.forEach(function (cb) {
+                                cb.disabled = false;
+                            });
+                        }, 100);
+                        var time;
+                        if (Date.prototype.toLocaleString) {
+                            var opt = {};
+                            opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
+                            time = new Date().toLocaleString(self.map.options.locale.replace('_', '-'), opt);
                         }
                         else {
-                            li.classList.add(TC.Consts.classes.HIDDEN);
+                            time = new Date().toString();
                         }
-                    });
-                    const visibleLi = self._dialogDiv.querySelector(self._selectors.BLLISTITEM + ':not(.' + TC.Consts.classes.HIDDEN + ')');
-                    self._dialogDiv.querySelector(self._selectors.BLLISTTEXT).innerHTML = self.getLocaleString(visibleLi ? 'selectAtLeastOne' : 'cb.noMapsAtSelectedExtent');
-
-                    updateThumbnails(self);
-                    showEstimatedMapSize(self);
-                    TC.Util.showModal(self._dialogDiv.querySelector(self._classSelector + '-dialog'), {
-                        openCallback: function () {
-                            setTimeout(function () { // Este timeout evita el pulsado accidental cuando sale el diálogo
-                                checkboxes.forEach(function (cb) {
-                                    cb.disabled = false;
-                                });
-                            }, 100);
-                            var time;
-                            if (Date.prototype.toLocaleString) {
-                                var opt = {};
-                                opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
-                                time = new Date().toLocaleString(self.map.options.locale.replace('_', '-'), opt);
-                            }
-                            else {
-                                time = new Date().toString();
-                            }
-                            self._dialogDiv.querySelector(self._selectors.NAMETB).value = time;
-                            self._updateReadyState();
-                        },
-                        closeCallback: function () {
-                            checkboxes.forEach(function (cb) {
-                                cb.disabled = true;
-                            });
-                            self.boxDraw.layer.clearFeatures();
-                        }
-                    });
-                });
-
-            map.on(TC.Consts.event.CONTROLDEACTIVATE, function (e) {
-                if (boxDraw === e.control) {
-                    if (self._state === self._states.EDITING) {
-                        self.setReadyState();
+                        self._dialogDiv.querySelector(self._selectors.NAMETB).value = time;
+                        self._updateReadyState();
+                    },
+                    closeCallback: function () {
+                        checkboxes.forEach(function (cb) {
+                            cb.disabled = true;
+                        });
+                        self.boxDraw.layer.clearFeatures();
                     }
-                }
+                });
             });
 
+        map.on(Consts.event.CONTROLDEACTIVATE, function (e) {
+            if (self.boxDraw === e.control) {
+                if (self._state === self._states.EDITING) {
+                    self.setReadyState();
+                }
+            }
         });
 
         var addRenderedListNode = function (layer) {
@@ -1047,7 +1035,7 @@ TC.control.SWCacheClient = SWCacheClient;
             const isLayerAdded = function () {
                 return !!blList.querySelector('li[data-layer-uid="' + layer.id + '"]');
             };
-            var isValidLayer = layer.type === TC.Consts.layerType.WMTS && !layer.mustReproject;
+            var isValidLayer = layer.type === Consts.layerType.WMTS && !layer.mustReproject;
             if (TC.Util.detectSafari() && TC.Util.detectIOS()) {
                 isValidLayer = isValidLayer && TC.Util.isSameOrigin(layer.url);
             }
@@ -1081,14 +1069,14 @@ TC.control.SWCacheClient = SWCacheClient;
         };
 
         map
-            .on(TC.Consts.event.LAYERADD, function (e) {
+            .on(Consts.event.LAYERADD, function (e) {
                 addLayer(e.layer);
             })
-            .on(TC.Consts.event.LAYERREMOVE, function (e) {
+            .on(Consts.event.LAYERREMOVE, function (e) {
                 //14/03/2019 GLS: esperamos a que se haya renderizado el dialogo para obtener la lista
                 self.renderPromise().then(function () {
                     const layer = e.layer;
-                    if (layer.type === TC.Consts.layerType.WMTS) {
+                    if (layer.type === Consts.layerType.WMTS) {
                         const li = self._dialogDiv
                             .querySelector(self._selectors.BLLIST)
                             .querySelector('li[data-layer-uid="' + layer.id + '"]');
@@ -1096,7 +1084,7 @@ TC.control.SWCacheClient = SWCacheClient;
                     }
                 });
             })
-            .on(TC.Consts.event.PROJECTIONCHANGE, function (_e) {
+            .on(Consts.event.PROJECTIONCHANGE, function (_e) {
                 map.baseLayers.forEach(l => addLayer(l));
             });
 
@@ -1118,7 +1106,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 });
 
                 document.querySelectorAll(self._selectors.OFFLINEHIDDEN).forEach(function (elm) {
-                    elm.classList.add(TC.Consts.classes.HIDDEN);
+                    elm.classList.add(Consts.classes.HIDDEN);
                 });
             }
         });
@@ -1142,7 +1130,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 };
                 // Añadimos al mapa las capas guardadas que no están por defecto
                 const missingLayers = map.options.availableBaseLayers
-                    .filter((abl) => abl.type === TC.Consts.layerType.WMTS) // Capas cacheables
+                    .filter((abl) => abl.type === Consts.layerType.WMTS) // Capas cacheables
                     .filter((abl) => { // Que estén en el mapa sin conexión
                         return mapDef.layers.some((l) => isSameLayer(abl, l));
                     })
@@ -1157,7 +1145,7 @@ TC.control.SWCacheClient = SWCacheClient;
                     for (var i = 0, ii = mapDef.layers.length; i < ii; i++) {
                         for (var j = 0, jj = map.baseLayers.length; j < jj; j++) {
                             const baseLayer = map.baseLayers[j];
-                            if (baseLayer && baseLayer.type === TC.Consts.layerType.WMTS && isSameLayer(baseLayer, mapDef.layers[i])) {
+                            if (baseLayer && baseLayer.type === Consts.layerType.WMTS && isSameLayer(baseLayer, mapDef.layers[i])) {
                                 cachedLayers.push(baseLayer);
                                 break;
                             }
@@ -1168,12 +1156,12 @@ TC.control.SWCacheClient = SWCacheClient;
                             // Quitamos las capas no disponibles (la capa en blanco la mantenemos)
                             for (var i = map.baseLayers.length - 1; i >= 0; i--) {
                                 const baseLayer = map.baseLayers[i];
-                                if (baseLayer && baseLayer.type !== TC.Consts.layerType.VECTOR && !cachedLayers.includes(baseLayer)) {
+                                if (baseLayer && baseLayer.type !== Consts.layerType.VECTOR && !cachedLayers.includes(baseLayer)) {
                                     map.removeLayer(baseLayer);
                                 }
                             }
 
-                            map.setExtent(self.currentMapExtent, { animate: false });
+                            map.setExtent(self.currentMapExtent, { animate: false, contain: true });
                         });
                     }
                 });
@@ -1181,7 +1169,7 @@ TC.control.SWCacheClient = SWCacheClient;
         });
 
         self
-            .on(TC.Consts.event.MAPCACHEDOWNLOAD, function (e) {
+            .on(Consts.event.MAPCACHEDOWNLOAD, function (e) {
                 self.isDownloading = false;
                 const removeHash = function (url) {
                     const hashIdx = url.indexOf('#');
@@ -1191,7 +1179,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 const li = getListElementByMapUrl(self, url);
                 if (li && !self.serviceWorkerEnabled) {
                     // Se ha descargado un mapa cuando se quería borrar. Pasa cuando la cache ya estaba borrada pero la entrada en localStorage no.
-                    li.classList.remove(TC.Consts.classes.DISABLED);
+                    li.classList.remove(Consts.classes.DISABLED);
                     TC.alert(self.getLocaleString('cb.delete.error'));
                 }
                 else {
@@ -1203,7 +1191,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 self.currentMap = null;
                 self.setReadyState();
             })
-            .on(TC.Consts.event.MAPCACHEDELETE, function (e) {
+            .on(Consts.event.MAPCACHEDELETE, function (e) {
                 self.isDownloading = false;
                 var mapName = removeMap(self, e.url) || self.currentMap && self.currentMap.name;
                 self.currentMap = null;
@@ -1212,7 +1200,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 }
                 self.setReadyState();
             })
-            .on(TC.Consts.event.MAPCACHEPROGRESS, function (e) {
+            .on(Consts.event.MAPCACHEPROGRESS, function (e) {
                 var total = e.total;
                 if (!total && self.requestSchemas) {
                     total = self.requestSchemas[0].tileCount;
@@ -1227,7 +1215,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 }
                 self.showDownloadProgress(loaded, total);
             })
-            .on(TC.Consts.event.MAPCACHEERROR, function (e) {
+            .on(Consts.event.MAPCACHEERROR, function (e) {
                 self.isDownloading = false;
                 self.setReadyState();
                 var msg = self.getLocaleString('cb.mapCreation.error');
@@ -1263,7 +1251,8 @@ TC.control.SWCacheClient = SWCacheClient;
                 self.currentMap = null;
             });
 
-        return result;
+        await swCacheClientPromise;
+        return self;
     };
 
     ctlProto.setExtent = function (extent) {
@@ -1286,11 +1275,11 @@ TC.control.SWCacheClient = SWCacheClient;
         const self = this;
         self._state = self._states.READY;
         self.showDownloadProgress(0, 1);
-        self.div.querySelector(self._selectors.DRAWING).classList.add(TC.Consts.classes.HIDDEN);
-        self.div.querySelector(self._selectors.PROGRESS).classList.add(TC.Consts.classes.HIDDEN);
-        self.div.querySelector(self._selectors.NEW).classList.remove(TC.Consts.classes.HIDDEN);
+        self.div.querySelector(self._selectors.DRAWING).classList.add(Consts.classes.HIDDEN);
+        self.div.querySelector(self._selectors.PROGRESS).classList.add(Consts.classes.HIDDEN);
+        self.div.querySelector(self._selectors.NEW).classList.remove(Consts.classes.HIDDEN);
         self.div.querySelectorAll(self._selectors.LISTITEM).forEach(function (li) {
-            li.classList.remove(TC.Consts.classes.DISABLED);
+            li.classList.remove(Consts.classes.DISABLED);
         });
         self._dialogDiv.querySelector(self._selectors.OKBTN).disabled = true;
         self.div.querySelector(self._selectors.NEWBTN).disabled = false;
@@ -1306,10 +1295,10 @@ TC.control.SWCacheClient = SWCacheClient;
         const self = this;
         self._state = self._states.EDITING;
         self.showDownloadProgress(0, 1);
-        self.div.querySelector(self._selectors.NEW).classList.add(TC.Consts.classes.HIDDEN);
-        self.div.querySelector(self._selectors.PROGRESS).classList.add(TC.Consts.classes.HIDDEN);
-        self.div.querySelector(self._selectors.DRAWING).classList.remove(TC.Consts.classes.HIDDEN);
-        self.map.toast(self.getLocaleString('clickOnDownloadAreaFirstCorner'), { type: TC.Consts.msgType.INFO });
+        self.div.querySelector(self._selectors.NEW).classList.add(Consts.classes.HIDDEN);
+        self.div.querySelector(self._selectors.PROGRESS).classList.add(Consts.classes.HIDDEN);
+        self.div.querySelector(self._selectors.DRAWING).classList.remove(Consts.classes.HIDDEN);
+        self.map.toast(self.getLocaleString('clickOnDownloadAreaFirstCorner'), { type: Consts.msgType.INFO });
         self._dialogDiv.querySelector(self._selectors.OKBTN).disabled = true;
         self.div.querySelector(self._selectors.NEWBTN).disabled = true;
         self._dialogDiv.querySelector(self._selectors.NAMETB).value = '';
@@ -1412,7 +1401,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 });
 
                 // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
-                var precision = Math.pow(10, self.map.wrap.isGeo() ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION);
+                var precision = Math.pow(10, self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION);
                 intersectionExtent = intersectionExtent.map(function (elm, idx) {
                     var round = idx < 3 ? Math.ceil : Math.floor;
                     return round(elm * precision) / precision;
@@ -1573,7 +1562,7 @@ TC.control.SWCacheClient = SWCacheClient;
         else {
             const pb = self.div.querySelector(cs + '-progress-bar');
             if (pb) {
-                pb.classList.add(TC.Consts.classes.HIDDEN);
+                pb.classList.add(Consts.classes.HIDDEN);
             }
             if (count) {
                 count.innerHTML = self.getLocaleString('xFiles', { quantity: current });
