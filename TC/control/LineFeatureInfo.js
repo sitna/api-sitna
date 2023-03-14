@@ -3,7 +3,6 @@ import Consts from '../Consts';
 import GeometryFeatureInfo from './GeometryFeatureInfo';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
 
 
@@ -11,7 +10,7 @@ TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
     TC.control.LineFeatureInfo = function () {
         var self = this;
         TC.control.GeometryFeatureInfo.apply(this, arguments);
-        self.geometryType = TC.Consts.geom.POLYLINE;
+        self.geometryType = Consts.geom.POLYLINE;
         self.style = TC.Util.extend(true, { strokeColor: self.DEFAULT_STROKE_COLOR, strokeWidth: 2 }, self.options.style); 
     };
 
