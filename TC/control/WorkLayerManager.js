@@ -1,17 +1,15 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import TOC from './TOC';
-import WebComponentControl from './WebComponentControl';
 import Button from '../../SITNA/ui/Button';
 import Toggle from '../../SITNA/ui/Toggle';
 import itemToolContainer from './itemToolContainer';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 
-TC.Consts.classes.DRAG = TC.Consts.classes.DRAG || 'tc-drag';
-TC.Consts.classes.DRAGEND = TC.Consts.classes.DRAGEND || 'tc-dragend';
-TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
+Consts.classes.DRAG = Consts.classes.DRAG || 'tc-drag';
+Consts.classes.DRAGEND = Consts.classes.DRAGEND || 'tc-dragend';
+Consts.event.TOOLSOPEN = Consts.event.TOOLSOPEN || 'toolsopen.tc';
 
 //const fileOriginCompare = async function (l1, l2) {
 //    if (l1._fileHandle && l2._fileHandle) {
@@ -25,7 +23,6 @@ TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
 //};
 
 class WorkLayerManager extends TOC {
-    CLASS = 'tc-ctl-wlm';
     CLICKEVENT = 'click';
 
     constructor() {
@@ -84,6 +81,10 @@ class WorkLayerManager extends TOC {
                 });
             }
         });
+    }
+
+    getClassName() {
+        return 'tc-ctl-wlm';
     }
 
     render(callback, options) {
@@ -172,48 +173,28 @@ class WorkLayerManager extends TOC {
         });
 
         map
-            .on(TC.Consts.event.LAYEROPACITY, function (e) {
+            .on(Consts.event.LAYEROPACITY, function (e) {
                 const li = self.#findLayerElement(e.layer);
                 if (li) {
                     li.querySelector('input[type=range]').value = Math.round(e.opacity * 100);
                 }
             })
-            .on(TC.Consts.event.FEATURESIMPORT, function (e) {
+            .on(Consts.event.FEATURESIMPORT, function (e) {
                 var fileName = e.fileName;
                 if (e.features && e.features.length > 0) { // GLS: Escuchamos al evento FEATURESIMPORT para poder desplegar el control de capas cargadas
                     // Ignoramos los GPX (se supone que los gestionará Geolocation)
-                    var pattern = '.' + TC.Consts.format.GPX.toLowerCase();
+                    var pattern = '.' + Consts.format.GPX.toLowerCase();
                     if (e.fileName.toLowerCase().indexOf(pattern) === e.fileName.length - pattern.length) {
                         return;
                     }
 
-                    map.one(TC.Consts.event.LAYERADD, function (e) {
+                    map.one(Consts.event.LAYERADD, function (e) {
                         if (e && e.layer && e.layer.title === fileName) {
                             // Desplegamos el control capas cargadas
-                            if (self.map && self.map.layout && self.map.layout.accordion) {
-                                if (self.div.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                                    self.map.controls
-                                        .filter(function (ctl) {
-                                            // Todos los otros controles que no cuelgan de otro control
-                                            return ctl !== self && !ctl.containerControl;
-                                        })
-                                        .forEach(function (ctl) {
-                                            let element;
-                                            if (ctl instanceof WebComponentControl) {
-                                                element = ctl;
-                                            }
-                                            else {
-                                                element = ctl.div;
-                                            }
-                                            element.classList.add(TC.Consts.classes.COLLAPSED);
-                                        });
-                                }
-                            }
+                            self.highlight();
 
                             // abrimos el panel de herramientas
-                            self.map.trigger(TC.Consts.event.TOOLSOPEN);
-
-                            self.div.classList.remove(TC.Consts.classes.COLLAPSED);
+                            self.map.trigger(Consts.event.TOOLSOPEN);
                         }
                     });
                 }
@@ -229,7 +210,7 @@ class WorkLayerManager extends TOC {
         const self = this;
 
         self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`sitna-toggle.${self.CLASS}-cb-visibility`, function (e) {
-            // al estar en ipad el evento pasa a ser touchstart en la constante: TC.Consts.event.CLICK, los checkbox no funcionan bien con este evento
+            // al estar en ipad el evento pasa a ser touchstart en la constante: Consts.event.CLICK, los checkbox no funcionan bien con este evento
             const checkbox = e.target;
             var li = checkbox;
             do {
@@ -269,7 +250,7 @@ class WorkLayerManager extends TOC {
             info.querySelectorAll('.' + self.CLASS + '-legend img').forEach(function (img) {
                 self.styleLegendImage(img, layer);
             });
-            info.classList.toggle(TC.Consts.classes.HIDDEN, !checkbox.checked);
+            info.classList.toggle(Consts.classes.HIDDEN, !checkbox.checked);
         }));
 
         self.div.addEventListener(self.CLICKEVENT, TC.EventTarget.listenerBySelector(`.${self.CLASS}-btn-del:not(:disabled)`, function (e) {
@@ -299,7 +280,7 @@ class WorkLayerManager extends TOC {
             const button = e.target;
             const container = button.parentElement;
             const isExpanded = container.classList.toggle('tc-expanded');
-            button.title = isExpanded ? '' : self.getLocaleString('otherTools');
+            button.text = self.getLocaleString(isExpanded ? 'collapse' : 'otherTools');
             button.iconText = isExpanded ? '\u2bc7' : '\u2022\u2022\u2022';
         }));
     }
@@ -316,18 +297,16 @@ class WorkLayerManager extends TOC {
     updateLayerTree(layer) {
         const self = this;
 
-        var getLegendImgByPost = function (layer) {
-            return new Promise(function (resolve, _reject) {
-                if (layer && layer.options.method && layer.options.method === "POST") {
-                    layer.getLegendGraphicImage()
-                        .then(function (src) {
-                            resolve(src);
-                        })
-                        .catch(function (err) { TC.error(err); });
-                } else {
-                    resolve();
+        var getLegendImgByPost = async function (layer) {
+            if (layer && layer.options.method && layer.options.method === "POST") {
+                try {
+                    const src = await layer.getLegendGraphicImage();
+                    return src;
                 }
-            });
+                catch (err) {
+                    TC.error(err);
+                }
+            }
         };
 
         if (!layer.isBase && !layer.options.stealth) {
@@ -348,7 +327,7 @@ class WorkLayerManager extends TOC {
                 const layerTitle = layer.title || layer.wrap.getServiceTitle && layer.wrap.getServiceTitle();
                 layer._title = layerTitle;
                 var layerData = {
-                    title: layer.options.hideTitle ? '' : layerTitle,
+                    title: layer.hideTitle ? '' : layerTitle,
                     hide: layer.renderOptions && layer.renderOptions.hide ? true : false,
                     opacity: layer.renderOptions && layer.renderOptions.opacity ? layer.renderOptions.opacity * 100 : 100,
                     customLegend: layer.customLegend,
@@ -367,9 +346,9 @@ class WorkLayerManager extends TOC {
                     layerData.metadata = [];
                     layer.names.forEach(function (name) {
                         var info = layer.getInfo(name);
-                        layerData.legend.push(info.legend);
-                        layerData.abstract.push(info.abstract);
-                        layerData.metadata.push(info.metadata);
+                        info.legend && layerData.legend.push(info.legend);
+                        info.abstract && layerData.abstract.push(info.abstract);
+                        info.metadata && layerData.metadata.push(info.metadata);
                     });
 
                     const info = layer.getInfo();
@@ -414,7 +393,7 @@ class WorkLayerManager extends TOC {
 
                         const zoomBtn = li.querySelector(`.${self.CLASS}-btn-zoom`);
                         if (zoomBtn) {
-                            zoomBtn.addEventListener(TC.Consts.event.CLICK, function (_e) {
+                            zoomBtn.addEventListener(Consts.event.CLICK, function (_e) {
                                 self.map.zoomToLayer(li.dataset.layerId, { animate: true });
                             }, { passive: true });
                         }
@@ -477,18 +456,18 @@ class WorkLayerManager extends TOC {
                 const contentElm = self.div.querySelector('.' + self.CLASS + '-content');
                 numElm.textContent = elligibleLayersNum;
                 if (elligibleLayersNum > 0) {
-                    numElm.classList.add(TC.Consts.classes.VISIBLE);
-                    emptyElm.classList.add(TC.Consts.classes.HIDDEN);
-                    contentElm.classList.remove(TC.Consts.classes.HIDDEN);
+                    numElm.classList.add(Consts.classes.VISIBLE);
+                    emptyElm.classList.add(Consts.classes.HIDDEN);
+                    contentElm.classList.remove(Consts.classes.HIDDEN);
                 }
                 else {
-                    numElm.classList.remove(TC.Consts.classes.VISIBLE);
-                    emptyElm.classList.remove(TC.Consts.classes.HIDDEN);
-                    contentElm.classList.add(TC.Consts.classes.HIDDEN);
+                    numElm.classList.remove(Consts.classes.VISIBLE);
+                    emptyElm.classList.remove(Consts.classes.HIDDEN);
+                    contentElm.classList.add(Consts.classes.HIDDEN);
                 }
 
                 const deleteAllElm = self.div.querySelector('.' + self.CLASS + '-del-all');
-                deleteAllElm.classList.toggle(TC.Consts.classes.HIDDEN, !self.#shouldBeDelAllVisible());
+                deleteAllElm.classList.toggle(Consts.classes.HIDDEN, !self.#shouldBeDelAllVisible());
             }
             else {
                 let layerTitle = layer.title || layer.wrap.getServiceTitle && layer.wrap.getServiceTitle();
@@ -499,24 +478,25 @@ class WorkLayerManager extends TOC {
                 //filtramos las capas por aquellas que sean hermanas es decir file-1-[numero_fichero]-[numero capa] y busco la posición de la capa actual
                 //en el array filtrado
                 const index = (self.layers.filter((l) => l.title === layer.title).reduce((vi, va) => {
-                    const layerIdRoot = regExpConstr().exec(va.id) ? regExpConstr().exec(va.id)[0]:va.id;
+                    const layerIdRoot = regExpConstr().exec(va.id) ? regExpConstr().exec(va.id)[0] : va.id;
                     return vi.indexOf(layerIdRoot) >= 0 ? vi : vi.concat(layerIdRoot);
-                }, []).findIndex((l) => l === /^[\w]*-\d-\d/gi.exec(layer.id) || [layer.id][0]));
+                }, []).findIndex((l) => { const _match = /^[\w]*-\d-\d/gi.exec(layer.id); return l === (_match ? _match[0] : layer.id) }));
                 //Si la posición es mayor que 0, añado el ordinal al titulo de capa
                 if (index > 0)
                     layer._title = layerTitle = layerTitle + " (" + (index + 1) + ")";
                 const prevLi = self.div.querySelector("ul li[data-layer-id='" + layer.id + "']");
-                if (layer.features && layer.features.length) {
-                    if (layer.features[0].getPath().length) {
+                if (layer.features?.length) {
+                    if (layer.features.some(f => f.getPath().length)) {
                         prevLi.querySelector(".tc-ctl-wlm-lyr").innerHTML = layerTitle;
                         prevLi.querySelector(".tc-ctl-wlm-lyr").title = layerTitle;
-                        prevLi.querySelector(".tc-ctl-wlm-path").innerHTML = layer.features[0].getPath().join(' &rsaquo; ');
+                        // Obtenemos las rutas de todas las entidades y eliminamos los duplicados
+                        const uniquePaths = [...new Set(layer.features.map(f => f.getPath().join(' &rsaquo; ')))];
+                        prevLi.querySelector(".tc-ctl-wlm-path").innerHTML = uniquePaths.join(' &bull; ');
                     }
                     else {
                         prevLi.querySelector(".tc-ctl-wlm-path").innerHTML = layerTitle;
                         prevLi.querySelector(".tc-ctl-wlm-path").title = layerTitle;
                     }
-
                 }                
             }
         }
@@ -584,17 +564,17 @@ class WorkLayerManager extends TOC {
         var nChildren = self.#getElligibleLayersNumber();
         numberElm.textContent = nChildren;
         if (nChildren > 0) {
-            contentElm.classList.remove(TC.Consts.classes.HIDDEN);
-            emptyElm.classList.add(TC.Consts.classes.HIDDEN);
-            numberElm.classList.add(TC.Consts.classes.VISIBLE);
+            contentElm.classList.remove(Consts.classes.HIDDEN);
+            emptyElm.classList.add(Consts.classes.HIDDEN);
+            numberElm.classList.add(Consts.classes.VISIBLE);
         }
         else {
             if (self.#shouldBeDelAllVisible()) {
-                self.div.querySelector('.' + self.CLASS + '-del-all').classList.add(TC.Consts.classes.HIDDEN);
+                self.div.querySelector('.' + self.CLASS + '-del-all').classList.add(Consts.classes.HIDDEN);
             }
-            contentElm.classList.add(TC.Consts.classes.HIDDEN);
-            emptyElm.classList.remove(TC.Consts.classes.HIDDEN);
-            numberElm.classList.remove(TC.Consts.classes.VISIBLE);
+            contentElm.classList.add(Consts.classes.HIDDEN);
+            emptyElm.classList.remove(Consts.classes.HIDDEN);
+            numberElm.classList.remove(Consts.classes.VISIBLE);
         }
     }
 
@@ -605,11 +585,11 @@ class WorkLayerManager extends TOC {
 
     #findLayerElement(layer) {
         this.getLayerUIElements().find(li => li.dataset.layerId === layer.id);
-    };
+    }
 
     #shouldBeDelAllVisible = function () {
         return !this.layers.some(layer => layer.unremovable);
-    };
+    }
 
     #getElligibleLayersNumber() {
         return this.layers.length;
@@ -634,7 +614,7 @@ class WorkLayerManager extends TOC {
         if (newIdx >= 1 && newIdx < self.map.layers.length) {
             self.map.insertLayer(sourceLayer, newIdx, callback);
         }
-    };
+    }
 }
 
 TC.mix(WorkLayerManager, itemToolContainer);
