@@ -6,11 +6,12 @@
   *
   * También se pueden añadir datos de archivos buscándolos en el cuadro de diálogo que se abre tras pulsar _Abrir archivo_ o arrastrándolos y soltándolos dentro del área del mapa.
   * @typedef DataLoaderOptions
-  * @extends ControlOptions
-  * @see MapControlOptions
+  * @extends SITNA.control.ControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [enableDragAndDrop] - Propiedad que establece si está permitido arrastrar y soltar archivos al área del mapa, además de abrirlos de la manera convencional abriendo el cuadro de diálogo de búsqueda de archivos.
-  * @property {WMSGroupOptions[]} [wmsSuggestions] - Lista de grupos de sugerencias de servicios WMS ofrecidos por el control. Por ejemplo se puede establecer un grupo de servicios WMS estatales y otro de servicios WMS mundiales.
+  * @property {SITNA.layer.WmsGroupOptions[]} [wmsSuggestions] - Lista de grupos de sugerencias de servicios WMS ofrecidos por el control. Por ejemplo se puede establecer un grupo de servicios WMS estatales y otro de servicios WMS mundiales.
   * @example <caption>[Ver en vivo](../examples/cfg.DataLoaderOptions.html)</caption> {@lang html} 
   * <div id="mapa"></div>
   * <script>
@@ -73,26 +74,26 @@
 
 /**
   * Opciones de sugerencia de servicio externo WMS.
-  * @typedef WMSOptions
-  * @see WMSGroupOptions
+  * @typedef WmsOptions
+  * @memberof SITNA.layer
+  * @see SITNA.layer.WmsGroupOptions
   * @property {string} name - Nombre del servicio WMS. Se mostrará como un elemento en la lista de opciones del control.
   * @property {string} url - URL de acceso al servicio WMS.
   */
 
 /**
   * Opciones de grupo de sugerencias de servicios externos WMS.
-  * @typedef WMSGroupOptions
-  * @see DataLoaderOptions
+  * @typedef WmsGroupOptions
+  * @memberof SITNA.layer
+  * @see SITNA.control.DataLoaderOptions
   * @property {string} group - Nombre del grupo de sugerencias. Se mostrará como una sección en la lista de opciones del control.
-  * @property {WMSOptions[]} items - Lista de sugerencias de servicios externos WMS.
+  * @property {SITNA.layer.WmsOptions[]} items - Lista de sugerencias de servicios externos WMS.
   */
 
 import TC from '../../TC';
-import Consts from '../Consts';
 import TabContainer from './TabContainer';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.TabContainer = TabContainer;
 
 TC.control.DataLoader = function () {
@@ -122,16 +123,13 @@ TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
 (function () {
     const ctlProto = TC.control.DataLoader.prototype;
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
         self.map = map;
         self.title = self.getLocaleString('addMaps');
-        return new Promise(function (resolve, _reject) {
-            TC.control.TabContainer.prototype.register.call(self, map).then(ctl => {
-                ctl.div.classList.add(self.CLASS + '-datldr');
-                resolve(ctl);
-            });
-        });
+        const ctl = await TC.control.TabContainer.prototype.register.call(self, map);
+        ctl.div.classList.add(self.CLASS + '-datldr');
+        return ctl;
     };
 
 })();
