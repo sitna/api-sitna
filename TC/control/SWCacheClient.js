@@ -2,7 +2,6 @@
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
@@ -72,14 +71,14 @@ TC.Control = Control;
                 }
             }
             if (unsafeProtocol) {
-                map.toast(self.getLocaleString('httpsRequired.warning', { url: location.href.replace(location.protocol, '') }), { type: TC.Consts.msgType.WARNING });
+                map.toast(self.getLocaleString('httpsRequired.warning', { url: location.href.replace(location.protocol, '') }), { type: Consts.msgType.WARNING });
             }
             else if (isFrame) {
-                map.toast(self.getLocaleString('frameOrNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
+                map.toast(self.getLocaleString('frameOrNotCompatible.warning'), { type: Consts.msgType.WARNING });
             }
             else {
                 if (self.serviceWorkerIsRequired) {
-                    map.toast(self.getLocaleString('browserNotCompatible.warning'), { type: TC.Consts.msgType.WARNING });
+                    map.toast(self.getLocaleString('browserNotCompatible.warning'), { type: Consts.msgType.WARNING });
                 }
             }
         });
