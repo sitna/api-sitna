@@ -2,7 +2,6 @@ import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
@@ -40,7 +39,7 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         self._waits[layerId] = self._waits[layerId] + 1;
         self.show();
 
-        self.map.trigger(TC.Consts.event.STARTLOADING);
+        self.map.trigger(Consts.event.STARTLOADING);
     };
 
     ctlProto.stopWait = function (e) {
@@ -53,13 +52,10 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         if (!wait) {
             delete self._waits[layerId];
         }
-        var count = 0;
-        for (var key in self._waits) {
-            count++;
-        }
+        const count = Object.keys(self._waits).length;
         if (!count) {
             self.hide();
-            self.map.trigger(TC.Consts.event.STOPLOADING);
+            self.map.trigger(Consts.event.STOPLOADING);
         }
     };
 
@@ -70,13 +66,10 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         if (wait > 0) {
             delete self._waits[layerId];
         }
-        var count = 0;
-        for (var key in self._waits) {
-            count++;
-        }
+        const count = Object.keys(self._waits).length;
         if (!count) {
             self.hide();
-            self.map.trigger(TC.Consts.event.STOPLOADING);
+            self.map.trigger(Consts.event.STOPLOADING);
         }
     };
 
@@ -84,33 +77,33 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         var self = this;
         self._waits = {};
         self.hide();
-        self.map && self.map.trigger(TC.Consts.event.STOPLOADING);
+        self.map && self.map.trigger(Consts.event.STOPLOADING);
     };
 
     ctlProto.register = function (map) {
         const self = this;
         const result = TC.Control.prototype.register.call(self, map);
         map
-            .on(TC.Consts.event.BEFORELAYERADD + ' ' +
-                TC.Consts.event.BEFORELAYERUPDATE + ' ' +
-                TC.Consts.event.BEFOREFEATURESADD, function (e) {
+            .on(Consts.event.BEFORELAYERADD + ' ' +
+                Consts.event.BEFORELAYERUPDATE + ' ' +
+                Consts.event.BEFOREFEATURESADD, function (e) {
                     self.startWait(e);
                 })
-            .on(TC.Consts.event.LAYERADD + ' ' +
-                TC.Consts.event.LAYERERROR + ' ' +
-                TC.Consts.event.LAYERUPDATE + ' ' +
-                TC.Consts.event.FEATURESADD, function (e) {
+            .on(Consts.event.LAYERADD + ' ' +
+                Consts.event.LAYERERROR + ' ' +
+                Consts.event.LAYERUPDATE + ' ' +
+                Consts.event.FEATURESADD, function (e) {
                     self.stopWait(e);
                 })
-            .on(TC.Consts.event.BEFOREFEATUREINFO, function () {
-                self.addWait(TC.Consts.event.FEATUREINFO);
+            .on(Consts.event.BEFOREFEATUREINFO, function () {
+                self.addWait(Consts.event.FEATUREINFO);
             })
-            .on(TC.Consts.event.FEATUREINFO + ' ' +
-                TC.Consts.event.NOFEATUREINFO + ' ' +
-                TC.Consts.event.FEATUREINFOERROR, function () {
-                    self.removeWait(TC.Consts.event.FEATUREINFO);
+            .on(Consts.event.FEATUREINFO + ' ' +
+                Consts.event.NOFEATUREINFO + ' ' +
+                Consts.event.FEATUREINFOERROR, function () {
+                    self.removeWait(Consts.event.FEATUREINFO);
                 })
-            .on(TC.Consts.event.LAYERREMOVE, function (e) {
+            .on(Consts.event.LAYERREMOVE, function (e) {
                 self.endWait(e);
             });
         if (!TC.isDebug) {
