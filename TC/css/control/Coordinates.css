@@ -130,16 +130,6 @@ div.tc-ctl-coords-xy {
     font-size: 1em;
 }
 
-.tc-ctl-coords span.close {
-    color: var(--win-btn-color);
-    height: 2em;
-    margin: 0 0.3em 0 0.5em;
-}
-
-    .tc-ctl-coords span.close:after {
-        content: '\2716';
-    }
-
 .tc-ctl-coords button.tc-ctl-coords-crs {
     border: 0.1em solid #666;
     border-radius: 0.2em;
