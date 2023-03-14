@@ -3,17 +3,16 @@ import Consts from '../Consts';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.Control = Control;
 
-TC.control.ExternalWMS = function (options) {
+TC.control.ExternalWMS = function () {
     const self = this;
     self.count = 0;
     self._addedUrls = [];
 
     TC.Control.apply(self, arguments);
 
-    self.allowReprojection = self.options.hasOwnProperty('allowReprojection') ? self.options.allowReprojection : true;
+    self.allowReprojection = Object.prototype.hasOwnProperty.call(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
 };
 
 TC.inherit(TC.control.ExternalWMS, TC.Control);
@@ -134,7 +133,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
                                 return;
                             }
 
-                            self.map.trigger(TC.Consts.event.EXTERNALSERVICEADDED, { layer: layer });
+                            self.map.trigger(Consts.event.EXTERNALSERVICEADDED, { layer: layer });
                             self.div.querySelector('input').value = '';
 
                             const selectedOptions = [];
@@ -168,7 +167,7 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
 
         self.div.addEventListener('click', TC.EventTarget.listenerBySelector('button[name="agregar"]', addWMS));
 
-        map.on(TC.Consts.event.LAYERADD, function (e) {
+        map.on(Consts.event.LAYERADD, function (e) {
             const layer = e.layer;
             if (layer && !layer.isBase) {
                 var url = layer.url;
@@ -215,6 +214,10 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
             });
 
             self.pending_markServicesAsSelected = [];
+
+            if (typeof callback === 'function') {
+                callback();
+            }
         }));
     };
 
