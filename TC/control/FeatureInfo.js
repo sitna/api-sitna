@@ -2,8 +2,9 @@
 /**
   * Opciones de control de obtención de información de entidades de mapa por click.
   * @typedef FeatureInfoOptions
-  * @see MapControlOptions
-  * @see MultiFeatureInfoModeOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
+  * @see SITNA.control.MultiFeatureInfoModeOptions
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {boolean} [persistentHighlights] - Cuando el control `featureInfo` muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
@@ -32,10 +33,11 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import FeatureInfoCommons from './FeatureInfoCommons';
+import md5 from 'md5';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
 (function () {
@@ -44,8 +46,8 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         TC.control.FeatureInfoCommons.apply(this, arguments);
         self.wrap = new TC.wrap.control.FeatureInfo(self);
 
-        TC.Consts.classes.FROMLEFT = 'tc-fromleft';
-        TC.Consts.classes.FROMRIGHT = 'tc-fromright';
+        Consts.classes.FROMLEFT = 'tc-fromleft';
+        Consts.classes.FROMRIGHT = 'tc-fromright';
     };
 
     TC.inherit(TC.control.FeatureInfo, TC.control.FeatureInfoCommons);
@@ -69,18 +71,12 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         return result;
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            TC.control.FeatureInfoCommons.prototype.register.call(self, map).then(
-                function (ctl) {
-                    // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
-                    document.createElement('div').appendChild(self.div);
-                    resolve(ctl);
-                },
-                error => reject(error)
-            );
-        });
+        const ctl = await TC.control.FeatureInfoCommons.prototype.register.call(self, map);
+        // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
+        document.createElement('div').appendChild(self.div);
+        return ctl;
     };
 
     ctlProto.callback = function (coords, _xy) {
@@ -129,7 +125,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                     var visibleLayers = false;
                     for (var i = 0; i < self.map.workLayers.length; i++) {
                         var layer = self.map.workLayers[i];
-                        if (layer.type === TC.Consts.layerType.WMS) {
+                        if (layer.type === Consts.layerType.WMS) {
                             if (layer.getVisibility() && layer.names.length > 0) {
                                 visibleLayers = true;
                                 break;
@@ -194,7 +190,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
                 if (self.sharedFeatureInfo) {
                     self.div.querySelectorAll('ul.' + self.CLASS + '-services li').forEach(function (li) {
-                        li.classList.add(TC.Consts.classes.CHECKED);
+                        li.classList.add(Consts.classes.CHECKED);
                     });
                     var sharedFeature;
                     var featureObj = self.sharedFeatureInfo;
@@ -208,9 +204,9 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                                         var feature = layer.features[k];
                                         if (feature.id === featureObj.f) {
                                             sharedFeature = feature;
-                                            var hash = hex_md5(JSON.stringify({
+                                            var hash = md5(JSON.stringify({
                                                 data: feature.getData(),
-                                                geometry: roundCoordinates(feature.geometry, TC.Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
+                                                geometry: roundCoordinates(feature.geometry, Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
                                             }));
                                             if (featureObj.h !== hash) {
                                                 TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
@@ -228,7 +224,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                         self.highlightedFeature = sharedFeature;
                         self.map.addLayer({
                             id: self.getUID(),
-                            type: TC.Consts.layerType.VECTOR,
+                            type: Consts.layerType.VECTOR,
                             title: self.getLocaleString('foi'),
                             owner: self,
                             stealth: true
@@ -247,7 +243,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                 }
                 //capturamos el click de label y enlaces para no propagarlos a las tablas y que haga zoom cuando no se quiere
                 self.div.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services a').forEach(function (label) {
-                    label.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    label.addEventListener(Consts.event.CLICK, function (e) {
                         e.stopPropagation();
                     }, { passive: true });
                 });                
@@ -261,7 +257,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
         if (self.elevationRequest) {
             const ctl = self.getDisplayControl();
-            self.getDisplayTarget().querySelectorAll(`.${self.CLASS}-elev,.${self.CLASS}-height`).forEach(elm => elm.classList.add(TC.Consts.classes.HIDDEN));
+            self.getDisplayTarget().querySelectorAll(`.${self.CLASS}-elev,.${self.CLASS}-height`).forEach(elm => elm.classList.add(Consts.classes.HIDDEN));
             self.elevationRequest.then(function (elevationCoords) {
                 if (ctl.currentFeature && elevationCoords.length) {
                     const currentCoords = ctl.currentFeature.geometry;
@@ -277,7 +273,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         const resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
                 entry.target.querySelectorAll('ul.' + self.CLASS + '-services label, ul.' + self.CLASS + '-services h4, ul.' + self.CLASS + '-services h3 span').forEach(function (h4) {
-                    h4.addEventListener("mouseenter", function (e) {
+                    h4.addEventListener("mouseenter", function (_e) {
                         if (this.offsetWidth < this.scrollWidth) {
                             this.title = this.childNodes.item(this.tagName === "H4" ? 2 : 0).textContent;
                         }
@@ -305,7 +301,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                 if (options.coords) {
                     options.crs = self.map.crs;
                     options.coords = options.coords.map(function (value) {
-                        const precision = options.isGeo ? TC.Consts.DEGREE_PRECISION : TC.Consts.METER_PRECISION;
+                        const precision = options.isGeo ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION;
                         return TC.Util.formatCoord(value, precision);
                     });
                 }
@@ -325,14 +321,14 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
             tValue = value;
             sValue = null;
         }
-        const locale = self.map.options.locale || TC.Cfg.locale;
+        const locale = self.map.options.locale || Cfg.locale;
         let elevationString = tValue === null ? '-' : TC.Util.formatNumber(Math.round(tValue), locale) + ' m';
         let heightString = sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) + ' m' : '-';
         const elevationDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`);
         const heightDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-height`);
         if (elevationDisplay && heightDisplay) {
-            elevationDisplay.classList.toggle(TC.Consts.classes.HIDDEN, tValue === null);
-            heightDisplay.classList.toggle(TC.Consts.classes.HIDDEN, !sValue);
+            elevationDisplay.classList.toggle(Consts.classes.HIDDEN, tValue === null);
+            heightDisplay.classList.toggle(Consts.classes.HIDDEN, !sValue);
             elevationDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = elevationString;
             heightDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = heightString;
         }
@@ -344,32 +340,26 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         if (featureObj) {
             //buscamos si la feature compartida pertenece a alguna de las capas añadidas
             if (self.map.workLayers.filter(function (item, _i) {
-                return item.type === TC.Consts.layerType.WMS && item.url === featureObj.s && item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0;
+                return item.type === Consts.layerType.WMS && item.url === featureObj.s && item.getDisgregatedLayerNames().indexOf(featureObj.l) >= 0;
             }).length === 0) {
-                TC.error(self.getLocaleString('sharedFeatureNotValid'), TC.Consts.msgErrorMode.TOAST);
+                TC.error(self.getLocaleString('sharedFeatureNotValid'), Consts.msgErrorMode.TOAST);
                 return;
             }
             self.sharedFeatureInfo = featureObj;
-            TC.loadJS(
-                !window.hex_md5,
-                [TC.apiLocation + TC.Consts.url.HASH],
-                function () {
-                    // Creamos una consulta getFeatureInfo ad-hoc, con la resolución a la que estaba la consulta original.
-                    const coords = [-100, -100];
-                    self.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos dónde ponerlo.
-                    //aquí se pone el puntito temporal
-                    self.filterLayer.clearFeatures();
-                    self.filterFeature = null;
-                    self.filterLayer.addMarker(coords).then(function (marker) {
-                        self.filterFeature = marker;
-                        self.wrap.getFeatureInfo(featureObj.xy, featureObj.r, {
-                            serviceUrl: featureObj.s,
-                            layerName: featureObj.l,
-                            featureId: featureObj.f
-                        });
-                    });
-                }
-            );
+            // Creamos una consulta getFeatureInfo ad-hoc, con la resolución a la que estaba la consulta original.
+            const coords = [-100, -100];
+            self.beforeRequest({ xy: coords }); // xy negativo para que no se vea el marcador, ya que no sabemos dónde ponerlo.
+            //aquí se pone el puntito temporal
+            self.filterLayer.clearFeatures();
+            self.filterFeature = null;
+            self.filterLayer.addMarker(coords).then(function (marker) {
+                self.filterFeature = marker;
+                self.wrap.getFeatureInfo(featureObj.xy, featureObj.r, {
+                    serviceUrl: featureObj.s,
+                    layerName: featureObj.l,
+                    featureId: featureObj.f
+                });
+            });
         }
     };
 
