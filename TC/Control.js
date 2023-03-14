@@ -1,14 +1,17 @@
 import TC from '../TC';
 import Consts from './Consts';
+import Cfg from './Cfg';
 import EventTarget from './EventTarget';
 import i18n from './i18n';
-TC.Consts = Consts;
+import Handlebars from '../lib/handlebars/helpers';
 TC.i18n = TC.i18n || i18n;
+TC._hbs = Handlebars;
 
 /**
   * Opciones básicas de control.
   * @typedef ControlOptions
-  * @see MapControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @see 2-configuration
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   */
@@ -22,6 +25,7 @@ TC.Control = function () {
     self.map = null;
     self.isActive = false;
     self.isDisabled = false;
+    self.CLASS = self.getClassName();
 
     var len = arguments.length;
 
@@ -50,7 +54,9 @@ TC.inherit(TC.Control, EventTarget);
     };
 
     ctlProto.hide = function () {
-        this.div.style.display = 'none';
+        const self = this;
+        self.div.style.display = 'none';
+        self.unhighlight();
     };
 
     ctlProto.render = function (callback) {
@@ -63,6 +69,10 @@ TC.inherit(TC.Control, EventTarget);
         }));
     };
 
+    ctlProto.getClassName = function () {
+        return this.CLASS;
+    };
+
     ctlProto._set1stRenderPromise = function (promise) {
         const self = this;
         if (!self._firstRender) {
@@ -71,151 +81,105 @@ TC.inherit(TC.Control, EventTarget);
         return promise;
     };
 
-    ctlProto.renderData = function (data, callback) {
+    ctlProto.renderData = async function (data, callback) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            if (self.map) {
-                self.trigger(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
-            }
-            self.div.classList.toggle(TC.Consts.classes.DISABLED, self.isDisabled);
+        if (self.map) {
+            self.trigger(Consts.event.BEFORECONTROLRENDER, { dataObject: data });
+        }
+        self.div.classList.toggle(Consts.classes.DISABLED, self.isDisabled);
 
-            let template;
-            if (typeof self.template === 'object' && !self.template.compiler) {
-                template = self.template[self.CLASS];
-            }
-            else {
-                template = self.template;
-                self.template = {};
-                self.template[self.CLASS] = template;
-            }
+        let template;
+        if (typeof self.template === 'object' && !self.template.compiler) {
+            template = self.template[self.CLASS];
+        }
+        else {
+            template = self.template;
+            self.template = {};
+            self.template[self.CLASS] = template;
+        }
 
-            self.getRenderedHtml(self.CLASS, data)
-                .then(function (html) {
-                    self.div.innerHTML = html;
-                    if (self.map) {
-                        self.trigger(TC.Consts.event.CONTROLRENDER);
-                    }
-                    if (TC.Util.isFunction(callback)) {
-                        callback();
-                    }
-                    resolve();
-                });
-        });
+        const html = await self.getRenderedHtml(self.CLASS, data);
+        self.div.innerHTML = html;
+        if (self.map) {
+            self.trigger(Consts.event.CONTROLRENDER);
+        }
+        if (TC.Util.isFunction(callback)) {
+            callback();
+        }
     };
 
-    const processTemplates = function (templates, options) {
+    const processTemplates = async function (templates, options) {
         options = options || {};
-        return new Promise(function (resolve, _reject) {
-            let mustCompile = false;
-            for (var key in templates) {
-                const template = templates[key];
-                if (typeof template === 'string') {
-                    mustCompile = true;
-                }
-            }
 
-            const callback = function () {
-                const templatePromises = [];
-                for (var key in templates) {
-                    const templateName = key;
-                    let template = templates[templateName];
-                    if (typeof template === 'string') {
-                        templatePromises.push(new Promise(function (res, rej) {
-                            TC.ajax({
-                                url: template,
-                                method: 'GET',
-                                responseType: 'text'
-                            })
-                                .then(function (response) {
-                                    templates[templateName] = template = TC._hbs.compile(response.data); // TODO: add optimization options
-                                    res(template);
-                                })
-                                .catch(function (err) {
-                                    console.log("Error fetching template: " + err);
-                                    rej(err);
-                                });
-                        }));
-                    }
-                    else {
-                        if (typeof template === 'object') {
-                            templates[key] = template = TC._hbs.template(template);
-                        }
-                    }
-                }
-
-                Promise.all(templatePromises).then(function () {
-                    for (var key in templates) {
-                        const t = templates[key];
-                        if (t && key !== options.className) {
-                            TC._hbs.registerPartial(key, templates[key]);
-                        }
-                    }
-                    resolve();
-                });
-            };
-
-            if (mustCompile) {
-                TC.loadJSInOrder(
-                    !TC._hbs || !TC._hbs.compile,
-                    [
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_FULL,
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
-                    ],
-                    callback
-                );
+        const templatePromises = [];
+        for (var key in templates) {
+            const templateName = key;
+            let template = templates[templateName];
+            if (typeof template === 'string') {
+                templatePromises.push(new Promise(function (res, rej) {
+                    TC.ajax({
+                        url: template,
+                        method: 'GET',
+                        responseType: 'text'
+                    })
+                        .then(function (response) {
+                            templates[templateName] = template = Handlebars.compile(response.data); // TODO: add optimization options
+                            res(template);
+                        })
+                        .catch(function (err) {
+                            console.log("Error fetching template: " + err);
+                            rej(err);
+                        });
+                }));
             }
             else {
-                TC.loadJSInOrder(
-                    !TC._hbs,
-                    [
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_RUNTIME,
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
-                    ],
-                    callback
-                );
+                if (typeof template === 'object') {
+                    templates[key] = template = Handlebars.template(template);
+                }
             }
-        });
+        }
+
+        await Promise.all(templatePromises);
+        for (var key2 in templates) {
+            const t = templates[key2];
+            if (t && key2 !== options.className) {
+                Handlebars.registerPartial(key2, templates[key2]);
+            }
+        }
     };
 
-    ctlProto.getRenderedHtml = function (templateId, data, callback) {
+    ctlProto.getRenderedHtml = async function (templateId, data, callback) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
 
-            const endFn = function (template) {
-                if (typeof template === 'undefined') {
-                    resolve('');
-                    return;
-                }
-                const html = template(data);
-                if (TC.Util.isFunction(callback)) {
-                    callback(html);
-                }
-                resolve(html);
-            };
+        const endFn = function (template) {
+            if (typeof template === 'undefined') {
+                return '';
+            }
+            const html = template(data);
+            if (TC.Util.isFunction(callback)) {
+                callback(html);
+            }
+            return html;
+        };
 
-            const template = self.template[templateId];
-            if (typeof template !== 'function') {
-                processTemplates(self.template, { locale: self.map && self.map.options.locale, className: self.CLASS }).then(function () {
-                    endFn(self.template[templateId]);
-                });
-            }
-            else {
-                endFn(template);
-            }
-        });
+        const template = self.template[templateId];
+        if (typeof template !== 'function') {
+            await processTemplates(self.template, { locale: self.map && self.map.options.locale, className: self.CLASS });
+            return endFn(self.template[templateId]);
+        }
+        else {
+            return endFn(template);
+        }
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            self.map = map;
-            Promise.resolve(self.render()).then(function () {
-                if (self.options.active) {
-                    self.activate();
-                }
-                resolve(self);
-            });
-        });
+        self.map = map;
+        await self.render();
+        if (self.options.active) {
+            self.activate();
+        }
+        return self;
     };
 
     ctlProto.activate = function () {
@@ -227,8 +191,8 @@ TC.inherit(TC.Control, EventTarget);
         self.isActive = true;
         if (self.map) {
             self.map.activeControl = self;
-            self.map.trigger(TC.Consts.event.CONTROLACTIVATE, { control: self });
-            self.trigger(TC.Consts.event.CONTROLACTIVATE, { control: self });
+            self.map.trigger(Consts.event.CONTROLACTIVATE, { control: self });
+            self.trigger(Consts.event.CONTROLACTIVATE, { control: self });
         }
     };
 
@@ -256,8 +220,8 @@ TC.inherit(TC.Control, EventTarget);
                 if (nextControl)
                     nextControl.activate();
             }
-            self.map.trigger(TC.Consts.event.CONTROLDEACTIVATE, { control: self });
-            self.trigger(TC.Consts.event.CONTROLDEACTIVATE, { control: self });
+            self.map.trigger(Consts.event.CONTROLDEACTIVATE, { control: self });
+            self.trigger(Consts.event.CONTROLDEACTIVATE, { control: self });
         }
     };
 
@@ -265,7 +229,7 @@ TC.inherit(TC.Control, EventTarget);
         const self = this;
         self.isDisabled = false;
         if (self.div) {
-            self.div.classList.remove(TC.Consts.classes.DISABLED);
+            self.div.classList.remove(Consts.classes.DISABLED);
             delete self.div.dataset.tcMessage;
         }
         if (self.containerControl && self.containerControl.onControlEnable) {
@@ -278,7 +242,7 @@ TC.inherit(TC.Control, EventTarget);
         options = options || {};
         self.isDisabled = true;
         if (self.div) {
-            self.div.classList.add(TC.Consts.classes.DISABLED);
+            self.div.classList.add(Consts.classes.DISABLED);
             let message = self.getLocaleString('disabledControl');
             if (options.reason) {
                 message = `${message} - ${options.reason}`;
@@ -288,6 +252,34 @@ TC.inherit(TC.Control, EventTarget);
         if (self.containerControl && self.containerControl.onControlDisable) {
             self.containerControl.onControlDisable(self);
         }
+    };
+
+    ctlProto.highlight = function () {
+        const self = this;
+        if (self.div) {
+            self.div.classList.add(Consts.classes.HIGHLIGHTED);
+        }
+        if (self.map) {
+            self.map.trigger(Consts.event.CONTROLHIGHLIGHT, { control: self });
+        }
+    };
+
+    ctlProto.unhighlight = function () {
+        const self = this;
+        if (self.div) {
+            self.div.classList.remove(Consts.classes.HIGHLIGHTED);
+        }
+        if (self.map) {
+            self.map.trigger(Consts.event.CONTROLUNHIGHLIGHT, { control: self });
+        }
+    };
+
+    ctlProto.isHighlighted = function () {
+        const self = this;
+        if (self.div) {
+            return self.div.classList.contains(Consts.classes.HIGHLIGHTED);
+        }
+        return false;
     };
 
     //ctlProto.remove = function () {
@@ -313,7 +305,7 @@ TC.inherit(TC.Control, EventTarget);
     ctlProto.renderPromise = function () {
         const self = this;
         return self._firstRender || new Promise(function (resolve, _reject) {
-            self.one(TC.Consts.event.CONTROLRENDER, function () {
+            self.one(Consts.event.CONTROLRENDER, function () {
                 resolve(self);
             });
         });
@@ -336,7 +328,7 @@ TC.inherit(TC.Control, EventTarget);
 
     ctlProto.getLocaleString = function (key, texts) {
         var self = this;
-        var locale = self.map ? self.map.options.locale : TC.Cfg.locale;
+        var locale = self.map ? self.map.options.locale : Cfg.locale;
         return TC.Util.getLocaleString(locale, key, texts);
     };
 
@@ -358,73 +350,55 @@ TC.inherit(TC.Control, EventTarget);
     ctlProto.importState = function (_state) {
     };
     
-    ctlProto.getDownloadDialog = function () {
+    ctlProto.getDownloadDialog = async function () {
         const self = this;
         self._downloadDialog = self._downloadDialog || self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
-        if (self._downloadDialog) {
-            self._downloadDialog.caller = self;
-            return Promise.resolve(self._downloadDialog);
+        if (!self._downloadDialog) {
+            self._downloadDialog = await self.map.addControl('FeatureDownloadDialog');
         }
-        return new Promise(function (resolve, _reject) {
-            self.map.addControl('FeatureDownloadDialog').then(ctl => {
-                self._downloadDialog = ctl;
-                self._downloadDialog.caller = self;
-                resolve(ctl);
-            });
-        });
+        self._downloadDialog.caller = self;
+        return self._downloadDialog;
     };
 
-    ctlProto.getElevationTool = function () {
+    ctlProto.getElevationTool = async function () {
         const self = this;
         if (!self.displayElevation && !self.options.displayElevation) {
-            return Promise.resolve(null);
+            return null;
         }
         if (self.elevation) {
-            return Promise.resolve(self.elevation);
+            return self.elevation;
         }
-        return new Promise(function (resolve, _reject) {
-            TC.loadJS(
-                !TC.tool || !TC.tool.Elevation,
-                TC.apiLocation + 'TC/tool/Elevation',
-                function () {
-                    if (typeof self.options.displayElevation === 'boolean') {
-                        if (self.map) {
-                            self.map.getElevationTool().then(function (mapElevation) {
-                                if (mapElevation) {
-                                    self.elevation = mapElevation;
-                                }
-                                else {
-                                    self.elevation = new TC.tool.Elevation();
-                                }
-                                resolve(self.elevation);
-                            });
-                        }
-                        else {
-                            self.elevation = new TC.tool.Elevation();
-                            resolve(self.elevation);
-                        }
-                    }
-                    else {
-                        if (self.map) {
-                            self.map.getElevationTool().then(function (mapElevation) {
-                                if (mapElevation) {
-                                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
-                                }
-                                else {
-                                    self.elevation = new TC.tool.Elevation(self.options.displayElevation);
-                                }
-                                resolve(self.elevation);
-                            });
-                        }
-                        else {
-                            self.elevation = new TC.tool.Elevation(self.options.displayElevation);
-                            resolve(self.elevation);
-                        }
-                    }
+        await TC.loadJS(!TC.tool || !TC.tool.Elevation, TC.apiLocation + 'TC/tool/Elevation');
+        if (typeof self.options.displayElevation === 'boolean') {
+            if (self.map) {
+                const mapElevation = await self.map.getElevationTool();
+                if (mapElevation) {
+                    self.elevation = mapElevation;
                 }
-            );
-        });
-    };   
+                else {
+                    self.elevation = new TC.tool.Elevation();
+                }
+            }
+            else {
+                self.elevation = new TC.tool.Elevation();
+            }
+        }
+        else {
+            if (self.map) {
+                const mapElevation = await self.map.getElevationTool();
+                if (mapElevation) {
+                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
+                }
+                else {
+                    self.elevation = new TC.tool.Elevation(self.options.displayElevation);
+                }
+            }
+            else {
+                self.elevation = new TC.tool.Elevation(self.options.displayElevation);
+            }
+        }
+        return self.elevation;
+    };
 
 })();
 
