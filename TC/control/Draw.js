@@ -1,79 +1,106 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
-import Control from '../Control';
-import Point from '../feature/Point';
-import Polyline from '../feature/Polyline';
-import Polygon from '../feature/Polygon';
+import Cfg from '../Cfg';
+import { Defaults } from '../Cfg';
+import Util from '../Util';
+import WebComponentControl from './WebComponentControl';
 
 TC.control = TC.control || {};
-TC.Control = Control;
-TC.Consts = Consts;
-TC.feature = TC.feature || {};
-TC.feature.Point = Point;
-TC.feature.Polyline = Polyline;
-TC.feature.Polygon = Polygon;
 
-TC.Consts.event.DRAWSTART = 'drawstart.tc';
-TC.Consts.event.DRAWEND = 'drawend.tc';
-TC.Consts.event.DRAWCANCEL = 'drawcancel.tc';
-TC.Consts.event.DRAWUNDO = 'drawundo.tc';
-TC.Consts.event.DRAWREDO = 'drawredo.tc';
-TC.Consts.event.POINT = 'point.tc';
-TC.Consts.event.MEASURE = 'measure.tc';
-TC.Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
-TC.Consts.event.STYLECHANGE = 'stylechange.tc';
-TC.Consts.event.CHANGE = 'change';
+Consts.event.DRAWSTART = 'drawstart.tc';
+Consts.event.DRAWEND = 'drawend.tc';
+Consts.event.DRAWCANCEL = 'drawcancel.tc';
+Consts.event.DRAWUNDO = 'drawundo.tc';
+Consts.event.DRAWREDO = 'drawredo.tc';
+Consts.event.POINT = 'point.tc';
+Consts.event.MEASURE = 'measure.tc';
+Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
+Consts.event.STYLECHANGE = 'stylechange.tc';
+Consts.event.CHANGE = 'change';
 
-(function () {
+const formatColor = function (color) {
+    const match = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+    if (match && match.length) {
+        return '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
+    }
+    return color;
+};
 
-    const formatColor = function (color) {
-        const match = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
-        if (match && match.length) {
-            return '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
-        }
-        return color;
+const className = 'tc-ctl-draw';
+const elementName = 'sitna-draw';
+
+class Draw extends WebComponentControl {
+    CLASS = className;
+    #classSelector = '.' + className;
+    #pointClass = className + '-point';
+    #lineClass = className + '-line';
+    #polygonClass = className + '-polygon';
+    #rectangleClass = className + '-rectangle';
+    #style;
+    #hasOwnLayer;
+    #layerPromise;
+    #cancelClick;
+    #newBtn;
+    #cancelBtn;
+    #endBtn;
+    #undoBtn;
+    #redoBtn;
+    #strokeColorPicker;
+    #strokeWidthSelector;
+    #strokeWidthWatch;
+    #fillColorPicker;
+    #fillOpacitySelector;
+    #previousStyles = new WeakMap();
+
+    static extensibility = {
+        DISABLED: 'disabled',
+        ENABLED: 'enabled',
+        EXTEND_ONLY: 'extend_only'
     };
 
-    TC.control.Draw = function () {
-        var self = this;
+    constructor() {
+        super(...arguments);
+        const self = this;
 
-        TC.Control.apply(self, arguments);
+        self.template = {};
+        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-draw.hbs";
 
-        if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
-            TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
-            TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
-        }
-
-        self._classSelector = '.' + self.CLASS;
-
-        self._pointClass = self.CLASS + '-point';
-        self._lineClass = self.CLASS + '-line';
-        self._polygonClass = self.CLASS + '-polygon';
+        self.styles = self.options.styles || Util.extend(true, {}, Defaults.styles);
+        self
+            .initProperty('measurer')
+            .initProperty('stylable')
+            .initProperty('singleSketch')
+            .initProperty('extensibleSketch')
+            .initProperty('mode');
+        // Si self.options.layer === false se instancia el control sin capa asociada
+        self.#hasOwnLayer = !(self.options.layer === false);
 
         self.history = [];
         self.historyIndex = 0;
         self.exportsState = true;
 
+        self.#layerPromise = null;
+
         self
-            .on(TC.Consts.event.DRAWSTART, function (e) {
+            .on(Consts.event.DRAWSTART, function (e) {
                 self.resetValues();
                 if (e.feature) {
                     self.history = e.feature.getCoordinates();
                     self.historyIndex = self.history.length;
                 }
             })
-            .on(TC.Consts.event.POINT, function (e) {
-                if (self.layer && !self.persistent && self.layer.features && self.layer.features.length > 0) {
+            .on(Consts.event.POINT, function (e) {
+                if (self.layer && self.singleSketch && self.layer.features && self.layer.features.length > 0) {
                     self.layer.clearFeatures();
                 }
 
                 self.history.length = self.historyIndex;
                 self.history[self.historyIndex++] = e.point;
 
-                setDrawState(self);
+                self.#setDrawState();
             })
-            .on(TC.Consts.event.DRAWEND, function (e) {
-                setFeatureAddReadyState(self);
+            .on(Consts.event.DRAWEND, function (e) {
+                self.#setFeatureAddReadyState();
 
                 const featureId = TC.getUID({
                     prefix: self.getLocaleString('sketch') + '.',
@@ -85,74 +112,151 @@ TC.Consts.event.CHANGE = 'change';
                     self.callback(e.feature);
                 }
             });
+    }
 
-        self._layerPromise = null;
-    };
+    connectedCallback() {
+        super.connectedCallback();
+        const self = this;
+        self.#hasOwnLayer = !self.hasAttribute('borrowed-layer');
+    }
 
-    TC.inherit(TC.control.Draw, TC.Control);
+    static get observedAttributes() {
+        return ['mode', 'stylable'];
+    }
 
-    var ctlProto = TC.control.Draw.prototype;
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) {
+            return;
+        }
+        const self = this;
+        if (name === 'stylable') {
+            self.#onStylableChange();
+        }
+        if (name === 'mode') {
+            self.#onModeChange();
+        }
+    }
 
-    ctlProto.CLASS = 'tc-ctl-draw';
+    getClassName() {
+        return className;
+    }
 
-    var setDrawState = function (ctl) {
-        ctl._endBtn.disabled =
-            ctl.historyIndex === 0 ||
-            ctl.mode === TC.Consts.geom.POLYGON && ctl.historyIndex < 3 ||
-            ctl.mode === TC.Consts.geom.POLYLINE && ctl.historyIndex < 2;
-        ctl._redoBtn.disabled = ctl.history.length === ctl.historyIndex;
-        ctl._undoBtn.disabled = ctl.historyIndex === 0;
-    };
+    get mode() {
+        const self = this;
+        if (self.hasAttribute('mode')) {
+            return self.getAttribute('mode');
+        }
+        return Consts.geom.POLYLINE;
+    }
 
-    var setFeatureAddReadyState = function (ctl) {
-        ctl.resetValues();
-        ctl._endBtn.disabled = true;
-        ctl._cancelBtn.disabled = false;
-    };
+    set mode(value) {
+        const self = this;
+        if (value) {
+            self.setAttribute('mode', value);
+        }
+        else {
+            self.removeAttribute('mode');
+        }
+    }
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-draw.hbs";
+    #onModeChange() {
+        const self = this;
+        const mode = self.mode;
+        self.#style = self.getModeStyle(mode);
+        self.toggleFillStyleTools(mode !== Consts.geom.POLYLINE &&
+            mode !== Consts.geom.MULTIPOLYLINE &&
+            mode !== Consts.geom.RECTANGLE);
+    }
 
-    ctlProto.render = function (callback) {
+    get stylable() {
+        return this.hasAttribute('stylable');
+    }
+
+    set stylable(value) {
+        this.toggleAttribute('stylable', !!value);
+    }
+
+    #onStylableChange() {
+        const self = this;
+        if (self.map) {
+            self.render();
+        }
+    }
+
+    get measurer() {
+        return this.hasAttribute('measurer');
+    }
+
+    set measurer(value) {
+        this.toggleAttribute('measurer', !!value);
+    }
+
+    get singleSketch() {
+        return this.hasAttribute('single-sketch');
+    }
+
+    set singleSketch(value) {
+        this.toggleAttribute('single-sketch', !!value);
+    }
+
+    get extensibleSketch() {
+        return this.hasAttribute('extensible-sketch');
+    }
+
+    set extensibleSketch(value) {
+        this.toggleAttribute('extensible-sketch', !!value);
+    }
+
+    render(callback) {
         const self = this;
         let strToolTip;
         let strokeColor;
         let strokeWidth;
         let fillColor;
         let fillOpacity;
-        switch (self.options.mode) {
-            case TC.Consts.geom.POLYLINE:
-            case TC.Consts.geom.MULTIPOLYLINE:
+        const styles = self.styles;
+        switch (self.mode) {
+            case Consts.geom.POLYLINE:
+            case Consts.geom.MULTIPOLYLINE:
                 strToolTip = self.getLocaleString('drawLine');
-                self.div.classList.add(self._lineClass);
-                strokeColor = self.styles.line.strokeColor;
-                strokeWidth = self.styles.line.strokeWidth;
-                fillColor = self.styles.polygon.fillColor;
-                fillOpacity = self.styles.polygon.fillOpacity;
+                self.classList.add(self.#lineClass);
+                strokeColor = styles.line.strokeColor;
+                strokeWidth = styles.line.strokeWidth;
+                fillColor = styles.polygon.fillColor;
+                fillOpacity = styles.polygon.fillOpacity;
                 break;
-            case TC.Consts.geom.POLYGON:
-            case TC.Consts.geom.MULTIPOLYGON:
+            case Consts.geom.POLYGON:
+            case Consts.geom.MULTIPOLYGON:
                 strToolTip = self.getLocaleString('drawPolygon');
-                self.div.classList.add(self._polygonClass);
-                strokeColor = self.styles.polygon.strokeColor;
-                strokeWidth = self.styles.polygon.strokeWidth;
-                fillColor = self.styles.polygon.fillColor;
-                fillOpacity = self.styles.polygon.fillOpacity;
+                self.classList.add(self.#polygonClass);
+                strokeColor = styles.polygon.strokeColor;
+                strokeWidth = styles.polygon.strokeWidth;
+                fillColor = styles.polygon.fillColor;
+                fillOpacity = styles.polygon.fillOpacity;
                 break;
-            case TC.Consts.geom.POINT:
-            case TC.Consts.geom.MULTIPOINT:
+            case Consts.geom.POINT:
+            case Consts.geom.MULTIPOINT:
                 strToolTip = self.getLocaleString('drawPoint');
-                self.div.classList.add(self._pointClass);
-                strokeColor = self.styles.point.strokeColor;
-                strokeWidth = self.styles.point.strokeWidth;
-                fillColor = self.styles.point.fillColor;
-                fillOpacity = self.styles.point.fillOpacity;
+                self.classList.add(self.#pointClass);
+                strokeColor = styles.point.strokeColor;
+                strokeWidth = styles.point.strokeWidth;
+                fillColor = styles.point.fillColor;
+                fillOpacity = styles.point.fillOpacity;
+                break;
+            case Consts.geom.RECTANGLE:
+                strToolTip = self.getLocaleString('drawRectangle');
+                self.classList.add(self.#rectangleClass);
+                strokeColor = styles.line.strokeColor;
+                strokeWidth = styles.line.strokeWidth;
+                fillColor = styles.polygon.fillColor;
+                fillOpacity = 0;
                 break;
             default:
                 strToolTip = self.getLocaleString('draw');
-                strokeColor = self.styles.line.strokeColor;
-                strokeWidth = self.styles.line.strokeWidth;
-                fillColor = self.styles.polygon.fillColor;
-                fillOpacity = self.styles.polygon.fillOpacity;
+                strokeColor = styles.line.strokeColor;
+                strokeWidth = styles.line.strokeWidth;
+                fillColor = styles.polygon.fillColor;
+                fillOpacity = styles.polygon.fillOpacity;
                 break;
         }
         const renderObject = {
@@ -160,143 +264,101 @@ TC.Consts.event.CHANGE = 'change';
             strokeColor: formatColor(strokeColor),
             strokeWidth: strokeWidth,
             fillColor: formatColor(fillColor),
-            fillOpacity: fillOpacity * 100,
-            styling: self.options.styling
+            fillOpacity: (fillOpacity || 0) * 100,
+            stylable: self.stylable
         };
         return self._set1stRenderPromise(self.renderData(renderObject, function () {
-            if (!TC.browserFeatures.inputTypeColor()) {
-                // El navegador no soporta input[type=color], usamos polyfill
-                const input = self.div.querySelector('input[type=color]');
-                if (input) {
-                    input.style.backgroundColor = input.value;
-                    input.style.color = 'transparent';
-                    const picker = new CP(input, 'click', document.body);
-
-                    input.onclick = function (e) {
-                        e.preventDefault();
-                    };
-
-                    // Evitamos que salga el teclado virtual en iOS
-                    input.onfocus = function (_e) {
-                        this.blur();
-                    };
-
-                    input.onchange = function (_e) {
-                        this.style.backgroundColor = this.value;
-                    };
-
-                    self.map.loaded(function () {
-                        picker.on("change", function (color) {
-                            self.setStrokeColor('#' + color);
-                        });
-                    });
-                }
-            }
             self.reset = true;
             self.callback = null;
-            self.measure = false;
-            self._cancelClick = false;
+            self.#cancelClick = false;
 
-            self.mode = self.options.mode || TC.Consts.geom.POLYLINE;
-
-            if (self.options.measure) {
-                self.measure = self.options.measure;
-            }
-            if (TC.Util.isFunction(self.options.callback)) {
+            if (Util.isFunction(self.options.callback)) {
                 self.callback = self.options.callback;
-            }
-            if (self.options.persistent === undefined) {
-                self.persistent = true;
-            }
-            else {
-                self.persistent = self.options.persistent;
             }
 
             self.wrap = new TC.wrap.control.Draw(self);
 
-            self._newBtn = self.div.querySelector(self._classSelector + '-btn-new');
-            self._newBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#newBtn = self.querySelector(self.#classSelector + '-btn-new');
+            self.#newBtn.addEventListener(Consts.event.CLICK, function () {
                 self.new();
             }, { passive: true });
 
-            self._cancelBtn = self.div.querySelector(self._classSelector + '-btn-cancel');
-            self._cancelBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#cancelBtn = self.querySelector(self.#classSelector + '-btn-cancel');
+            self.#cancelBtn.addEventListener(Consts.event.CLICK, function () {
                 self.cancel();
             }, { passive: true });
 
-            self._endBtn = self.div.querySelector(self._classSelector + '-btn-end');
-            self._endBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#endBtn = self.querySelector(self.#classSelector + '-btn-end');
+            self.#endBtn.addEventListener(Consts.event.CLICK, function () {
                 self.end();
             }, { passive: true });
 
-            self._undoBtn = self.div.querySelector(self._classSelector + '-btn-undo');
-            self._undoBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#undoBtn = self.querySelector(self.#classSelector + '-btn-undo');
+            self.#undoBtn.addEventListener(Consts.event.CLICK, function () {
                 self.undo();
             }, { passive: true });
 
-            self._redoBtn = self.div.querySelector(self._classSelector + '-btn-redo');
-            self._redoBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#redoBtn = self.querySelector(self.#classSelector + '-btn-redo');
+            self.#redoBtn.addEventListener(Consts.event.CLICK, function () {
                 self.redo();
             }, { passive: true });
 
-            if (self.options.styling) {
-                self._strokeColorPicker = self.div.querySelector(self._classSelector + '-str-c');
-                self._strokeColorPicker.addEventListener(TC.Consts.event.CHANGE, function (e) {
+            if (self.stylable) {
+                self.#strokeColorPicker = self.querySelector(self.#classSelector + '-str-c');
+                self.#strokeColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
                     self.setStrokeColor(e.target.value);
                 });
 
-                self._strokeWidthSelector = self.div.querySelector(self._classSelector + '-str-w');
-                self._strokeWidthSelector.addEventListener(TC.Consts.event.CHANGE, function (e) {
+                self.#strokeWidthSelector = self.querySelector(self.#classSelector + '-str-w');
+                self.#strokeWidthSelector.addEventListener(Consts.event.CHANGE, function (e) {
                     self.setStrokeWidth(e.target.value);
                 });
-                self._strokeWidthWatch = self.div.querySelector(self._classSelector + '-str-w-watch');
+                self.#strokeWidthWatch = self.querySelector(self.#classSelector + '-str-w-watch');
 
-                self._fillColorPicker = self.div.querySelector(self._classSelector + '-fll-c');
-                self._fillColorPicker.addEventListener(TC.Consts.event.CHANGE, function (e) {
+                self.#fillColorPicker = self.querySelector(self.#classSelector + '-fll-c');
+                self.#fillColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
                     self.setFillColor(e.target.value);
                 });
-                self._fillOpacitySelector = self.div.querySelector(self._classSelector + '-fll-w');
-                self._fillOpacitySelector.addEventListener(TC.Consts.event.CHANGE, function (e) {
+                self.#fillOpacitySelector = self.querySelector(self.#classSelector + '-fll-w');
+                self.#fillOpacitySelector.addEventListener(Consts.event.CHANGE, function (e) {
                     self.setFillOpacity(parseFloat(e.target.value) / 100);
                 });
             }
 
-            if (TC.Util.isFunction(callback)) {
+            if (Util.isFunction(callback)) {
                 callback();
             }
         }));
-    };
+    }
 
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
-        self.styles = TC.Util.extend(true, {}, map.options.styles, self.options.styles);
-        const result = TC.Control.prototype.register.call(self, map);
+        self.styles = Util.extend(true, {}, map.options.styles, self.options.styles);
+        await super.register(map);
 
         self.map
-            .on(TC.Consts.event.VIEWCHANGE, function () {
-                if (self.map.view === TC.Consts.view.PRINTING) {
+            .on(Consts.event.VIEWCHANGE, function () {
+                if (self.map.view === Consts.view.PRINTING) {
                     self.end();
 
                     // No lanzo el evento porque da error al no llegar una feature
-                    // self.trigger(TC.Consts.event.DRAWEND);
+                    // self.trigger(Consts.event.DRAWEND);
                 }
             })
-            .on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+            .on(Consts.event.PROJECTIONCHANGE, function (e) {
                 self.history.forEach(function (point, idx, arr) {
-                    arr[idx] = TC.Util.reproject(point, e.oldCrs, e.newCrs);
+                    arr[idx] = Util.reproject(point, e.oldCrs, e.newCrs);
                 });
             });
 
-        self._layerPromise = new Promise(function (resolve, reject) {
+        self.#layerPromise = new Promise(function (resolve, _reject) {
             map.loaded(function () {
                 if (self.options.layer) {
                     self.setLayer(self.options.layer);
                     resolve(self.layer);
                 }
                 else {
-                    // Si self.options.layer === false se instancia el control sin capa asociada
-                    if (self.options.layer === false) {
-                        self.setLayer(null);
+                    if (!self.#hasOwnLayer) {
                         resolve(null);
                     }
                     else {
@@ -305,7 +367,7 @@ TC.Consts.event.CHANGE = 'change';
                             title: 'DrawControl',
                             stealth: true,
                             owner: self,
-                            type: TC.Consts.layerType.VECTOR,
+                            type: Consts.layerType.VECTOR,
                             styles: {
                                 point: self.styles.point,
                                 line: self.styles.line,
@@ -321,181 +383,224 @@ TC.Consts.event.CHANGE = 'change';
             });
         });
 
-        return result;
-    };
+        return self;
+    }
 
-    ctlProto.new = function () {
-        var self = this;
-        if (self.layer && !self.persistent) {
+    new() {
+        const self = this;
+        if (self.layer && self.singleSketch) {
             self.layer.clearFeatures();
         }
-        self._cancelBtn.disabled = false;
+        self.#cancelBtn.disabled = false;
         self.setMode(self.mode, true);
         return self;
-    };
+    }
 
-    ctlProto.undo = function () {
-        var self = this;
-        var result = self.wrap.undo();
+    undo() {
+        const self = this;
+        let result = self.wrap.undo();
         if (result) {
             self.historyIndex--;
-            setDrawState(self);
+            self.#setDrawState();
 
             if (self.historyIndex <= 0) {
                 self.resetValues();
             }
-            self.trigger(TC.Consts.event.DRAWUNDO);
+            self.trigger(Consts.event.DRAWUNDO);
         }
 
         return result;
-    };
+    }
 
-    ctlProto.redo = function () {
-        var self = this;
-        var result = this.wrap.redo();
+    redo() {
+        const self = this;
+        let result = this.wrap.redo();
         if (result) {
             self.historyIndex++;
-            setDrawState(self);
-            self.trigger(TC.Consts.event.DRAWREDO);
+            self.#setDrawState();
+            self.trigger(Consts.event.DRAWREDO);
         }
         return result;
-    };
+    }
 
-    ctlProto.cancel = function () {
-        var self = this;
-        self._cancelClick = true;
-        this.setMode(null, false);
+    cancel() {
+        const self = this;
+        self.#cancelClick = true;
         self.resetValues();
-        setFeatureAddReadyState(self);
-        self._cancelBtn.disabled = true;
-        self.trigger(TC.Consts.event.DRAWCANCEL, { ctrl: self });
+        self.#setFeatureAddReadyState();
+        self.#cancelBtn.disabled = true;
+        self.trigger(Consts.event.DRAWCANCEL, { ctrl: self });
         return self;
-    };
+    }
 
-    ctlProto.activate = function () {
-        var self = this;
-        self._newBtn.classList.add(TC.Consts.classes.ACTIVE);
-        self._cancelBtn.disabled = false;
+    activate() {
+        const self = this;
+        self.#newBtn.classList.add(Consts.classes.ACTIVE);
+        self.#cancelBtn.disabled = false;
         TC.Control.prototype.activate.call(self);
         self.wrap.activate(self.mode);
-        self.div.classList.remove(self._pointClass, self._lineClass, self._polygonClass);
-        self.toggleFillStyleTools(self.mode !== TC.Consts.geom.POLYLINE && self.mode !== TC.Consts.geom.MULTIPOLYLINE);
+        self.classList.remove(self.#pointClass, self.#lineClass, self.#polygonClass, self.#rectangleClass);
+        self.toggleFillStyleTools(self.mode !== Consts.geom.POLYLINE &&
+            self.mode !== Consts.geom.MULTIPOLYLINE && 
+            self.mode !== Consts.geom.RECTANGLE);
         switch (self.mode) {
-            case TC.Consts.geom.POINT:
-                self.div.classList.add(self._pointClass);
+            case Consts.geom.POINT:
+                self.classList.add(self.#pointClass);
                 break;
-            case TC.Consts.geom.POLYLINE:
-                self.div.classList.add(self._lineClass);
+            case Consts.geom.POLYLINE:
+                self.classList.add(self.#lineClass);
                 break;
-            case TC.Consts.geom.POLYGON:
-                self.div.classList.add(self._polygonClass);
+            case Consts.geom.POLYGON:
+                self.classList.add(self.#polygonClass);
+                break;
+            case Consts.geom.RECTANGLE:
+                self.classList.add(self.#rectangleClass);
                 break;
             default:
                 break;
         }
+        return self;
+    }
 
-    };
-
-    ctlProto.deactivate = function () {
-        var self = this;
-        if (self._newBtn) {
-            self._newBtn.classList.remove(TC.Consts.classes.ACTIVE);
+    deactivate() {
+        const self = this;
+        if (self.#newBtn) {
+            self.#newBtn.classList.remove(Consts.classes.ACTIVE);
         }
-        if (self._cancelBtn) {
-            self._cancelBtn.disabled = true;
+        if (self.#cancelBtn) {
+            self.#cancelBtn.disabled = true;
         }
-        TC.Control.prototype.deactivate.call(self, !self._cancelClick);
+        TC.Control.prototype.deactivate.call(self, !self.#cancelClick);
         if (self.wrap) {
             self.wrap.deactivate();
         }
         self.resetValues();
-        //self.trigger(TC.Consts.event.DRAWCANCEL, { ctrl: self });
-        self._cancelClick = false;
-    };
+        //self.trigger(Consts.event.DRAWCANCEL, { ctrl: self });
+        self.#cancelClick = false;
+        return self;
+    }
 
-    ctlProto.clear = function () {
+    clear() {
         const self = this;
         if (self.layer) {
             self.layer.clearFatures();
         }
         self.resetValues();
         return self;
-    };
+    }
 
-    ctlProto.isExclusive = function () {
+    isExclusive() {
         return true;
-    };
+    }
 
-    ctlProto.end = function () {
+    end() {
         const self = this;
         self.wrap.end();
         self.resetValues();
         return self;
-    };
+    }
 
-    ctlProto.setMode = function (mode, activate) {
+    setMode(mode, activate) {
         const self = this;
 
-        if (mode) {
-            self.mode = mode;
-            self.toggleFillStyleTools(mode !== TC.Consts.geom.POLYLINE && mode !== TC.Consts.geom.MULTIPOLYLINE);
-        }
-
+        self.mode = mode;
         if (activate && mode) {
             //if (self.layer) {
-                //self.layer.map.putLayerOnTop(self.layer);
+            //self.layer.map.putLayerOnTop(self.layer);
             //}
             self.activate();
         }
         else {
-            self.deactivate();
+            if (self.isActive) {
+                self.deactivate();
+            }
         }
         return self;
-    };
+    }
 
-    ctlProto.setStyle = function (style) {
+    setStyle(style) {
         const self = this;
-        switch (self.options.mode) {
-            case TC.Consts.geom.POLYLINE:
-            case TC.Consts.geom.MULTIPOLYLINE:
-            case TC.Consts.geom.RECTANGLE:
-                style = TC.Util.extend(self.styles.line, style);
-                break;
-            case TC.Consts.geom.POLYGON:
-            case TC.Consts.geom.MULTIPOLYGON:
-                style = TC.Util.extend(self.styles.polygon, style);
-                break;
-            case TC.Consts.geom.POINT:
-            case TC.Consts.geom.MULTIPOINT:
-                style = TC.Util.extend(self.styles.point, style);
-                break;
-            default:
-                style = {};
-                break;
-        }
-        self.style = TC.Util.extend(self.style, style);
-        self.wrap.setStyle();
-    };
+        style = Util.extend(self.#style, style);
+        self.renderPromise().then(function () {
+            switch (self.mode) {
+                case Consts.geom.POLYLINE:
+                case Consts.geom.MULTIPOLYLINE:
+                case Consts.geom.RECTANGLE:
+                    if (style.strokeColor) {
+                        self.setStrokeColor(style.strokeColor);
+                    }
+                    if (style.strokeWidth) {
+                        self.setStrokeWidth(style.strokeWidth);
+                    }
+                    break;
+                case Consts.geom.POLYGON:
+                case Consts.geom.MULTIPOLYGON:
+                    if (style.strokeColor) {
+                        self.setStrokeColor(style.strokeColor);
+                    }
+                    if (style.strokeWidth) {
+                        self.setStrokeWidth(style.strokeWidth);
+                    }
+                    if (style.fillColor) {
+                        self.setFillColor(style.fillColor);
+                    }
+                    if (style.fillOpacity) {
+                        self.setFillOpacity(style.fillOpacity);
+                    }
+                    break;
+                case Consts.geom.POINT:
+                case Consts.geom.MULTIPOINT:
+                    if (style.strokeColor) {
+                        self.setStrokeColor(style.strokeColor);
+                    }
+                    if (style.strokeWidth) {
+                        self.setStrokeWidth(style.strokeWidth);
+                    }
+                    if (style.fillColor) {
+                        self.setFillColor(style.fillColor);
+                    }
+                    if (style.fillOpacity) {
+                        self.setFillOpacity(style.fillOpacity);
+                    }
+                    break;
+                default:
+                    style = {};
+                    break;
+            }
+            self.wrap.setStyle();
+        });
+    }
 
-    ctlProto.getModeStyle = function(mode) {
+    getStyle() {
+        return this.#style;
+    }
+
+    resetStyle() {
         const self = this;
-        mode = mode || self.options.mode;
+        self.setStyle(self.getModeStyle());
+        return self;
+    }
+
+    getModeStyle(mode) {
+        const self = this;
+        mode = mode || self.mode;
         switch (mode) {
-            case TC.Consts.geom.POLYLINE:
-            case TC.Consts.geom.MULTIPOLYLINE:
+            case Consts.geom.POLYLINE:
+            case Consts.geom.MULTIPOLYLINE:
+            case Consts.geom.RECTANGLE:
                 return self.styles.line;
-            case TC.Consts.geom.POLYGON:
-            case TC.Consts.geom.MULTIPOLYGON:
+            case Consts.geom.POLYGON:
+            case Consts.geom.MULTIPOLYGON:
                 return self.styles.polygon;
-            case TC.Consts.geom.POINT:
-            case TC.Consts.geom.MULTIPOINT:
+            case Consts.geom.POINT:
+            case Consts.geom.MULTIPOINT:
                 return self.styles.point;
             default:
                 return null;
         }
-    };
+    }
 
-    const setColorWatch = function (colorPicker, color) {
+    #setColorWatch(colorPicker, color) {
         const toHex = c => new Number(c).toString(16).padStart(2, '0');
         if (Array.isArray(color)) {
             color = `#${toHex(color[0])}${toHex(color[1])}${toHex(color[2])}`;
@@ -512,146 +617,159 @@ TC.Consts.event.CHANGE = 'change';
             input.style.backgroundColor = color;
             input.blur();
         }
-    };
+    }
 
-    ctlProto.setStrokeColorWatch = function (color) {
+    setStrokeColorWatch(color) {
         const self = this;
-        if (self.options.styling) {
+        if (self.stylable) {
             if (color === undefined) {
                 color = self.getModeStyle().strokeColor;
             }
-            setColorWatch(self._strokeColorPicker, color);
+            self.#setColorWatch(self.#strokeColorPicker, color);
         }
         return self;
-    };
+    }
 
-    ctlProto.setFillColorWatch = function (color) {
+    setFillColorWatch(color) {
         const self = this;
-        if (self.options.styling) {
+        if (self.stylable) {
             if (color === undefined) {
                 color = self.getModeStyle().fillColor;
             }
-            setColorWatch(self._fillColorPicker, color);
+            self.#setColorWatch(self.#fillColorPicker, color);
         }
         return self;
-    };
+    }
 
-    const setPropertyColor = function (property, watchFn, color) {
+    #setPropertyColor(property, watchFn, color) {
         const self = this;
-        const style = self.style || self.getModeStyle();
+        const style = self.#style;
         if (style) {
+            watchFn.call(self, color);
+            const currentValue = style[property];
+            if (currentValue === color) {
+                return self;
+            }
             style[property] = color;
         }
 
-        self.setStyle(style);
+        self.wrap.setStyle();
 
-        watchFn.call(self, color);
-        self.trigger(TC.Consts.event.STYLECHANGE, { property: property, value: color });
+        self.trigger(Consts.event.STYLECHANGE, { property: property, value: color });
         return self;
-    };
+    }
 
-    ctlProto.setStrokeColor = function (color) {
+    setStrokeColor(color) {
         const self = this;
-        return setPropertyColor.call(self, 'strokeColor', self.setStrokeColorWatch, color);
-    };
+        return self.#setPropertyColor('strokeColor', self.setStrokeColorWatch, color);
+    }
 
-    ctlProto.setFillColor = function (color) {
+    setFillColor(color) {
         const self = this;
-        return setPropertyColor.call(self, 'fillColor', self.setFillColorWatch, color);
-    };
+        return self.#setPropertyColor('fillColor', self.setFillColorWatch, color);
+    }
 
-    ctlProto.setFillOpacityWatch = function (percentage) {
+    setFillOpacityWatch(percentage) {
         const self = this;
-        if (self.options.styling) {
+        if (self.stylable) {
             if (percentage === undefined) {
                 percentage = Math.round(self.getModeStyle().fillOpacity * 100);
             }
             percentage = parseInt(percentage, 10);
-            if (percentage !== Number.NaN) {
-                self._fillOpacitySelector.value = percentage;
+            if (!Number.isNaN(percentage)) {
+                self.#fillOpacitySelector.value = percentage;
             }
         }
         return self;
-    };
+    }
 
-    ctlProto.setFillOpacity = function (alpha) {
+    setFillOpacity(alpha) {
         const self = this;
-        if (alpha !== Number.NaN) {
-            const style = self.getModeStyle();
+        if (!Number.isNaN(alpha)) {
+            self.setFillOpacityWatch(Math.round(alpha * 100));
+            const style = self.#style;
             if (style) {
+                if (style.fillOpacity === alpha) {
+                    return self;
+                }
                 style.fillOpacity = alpha;
             }
 
-            self.setStyle(style);
+            self.wrap.setStyle();
 
-            self.setFillOpacityWatch(Math.round(alpha * 100));
-            self.trigger(TC.Consts.event.STYLECHANGE, { property: 'fillOpacity', value: alpha });
+            self.trigger(Consts.event.STYLECHANGE, { property: 'fillOpacity', value: alpha });
         }
         return self;
-    };
+    }
 
-    ctlProto.setStrokeWidthWatch = function (width) {
+    setStrokeWidthWatch(width) {
         const self = this;
-        if (self.options.styling) {
+        if (self.stylable) {
             if (width === undefined) {
                 width = self.getModeStyle().strokeWidth;
             }
             width = parseInt(width, 10);
-            if (width !== Number.NaN) {
-                self._strokeWidthSelector.value = width;
-                self._strokeWidthWatch.style.borderBottomWidth = width + 'px';
+            if (!Number.isNaN(width)) {
+                self.#strokeWidthSelector.value = width;
+                self.#strokeWidthWatch.style.borderBottomWidth = width + 'px';
             }
         }
         return self;
-    };
+    }
 
-    ctlProto.setStrokeWidth = function(width) {
+    setStrokeWidth(width) {
         const self = this;
         width = parseInt(width, 10);
-        if (width !== Number.NaN) {
-            const style = self.getModeStyle();
+        if (!Number.isNaN(width)) {
+            self.setStrokeWidthWatch(width);
+            const style = self.#style;
             if (style) {
+                if (style.strokeWidth === width) {
+                    return self;
+                }
                 style.strokeWidth = width;
             }
 
-            self.setStyle(style);
+            self.wrap.setStyle();
 
-            self.setStrokeWidthWatch(width);
-            self.trigger(TC.Consts.event.STYLECHANGE, { property: 'strokeWidth', value: width });
+            self.trigger(Consts.event.STYLECHANGE, { property: 'strokeWidth', value: width });
         }
         return self;
-    };
+    }
 
-    const toggleTools = function (tools, visible) {
+    #toggleTools(tools, visible) {
         if (tools) {
             const classToggle = visible !== undefined ? !visible : undefined;
-            tools.classList.toggle(TC.Consts.classes.HIDDEN, classToggle);
+            tools.classList.toggle(Consts.classes.HIDDEN, classToggle);
         }
-    };
+    }
 
-    ctlProto.toggleStyleTools = function (visible) {
+    toggleStyleTools(visible) {
         const self = this;
-        toggleTools(self.div.querySelector(`.${self.CLASS}-style`), visible);
+        self.#toggleTools(self.querySelector(`.${self.CLASS}-style`), visible);
         return self;
-    };
+    }
 
-    ctlProto.toggleFillStyleTools = function (visible) {
+    toggleFillStyleTools(visible) {
         const self = this;
-        toggleTools(self.div.querySelector(`.${self.CLASS}-style-fill`), visible);
+        self.#toggleTools(self.querySelector(`.${self.CLASS}-style-fill`), visible);
         return self;
-    };
+    }
 
-    ctlProto.getLayer = function () {
+    getLayer() {
         const self = this;
         if (self.layer) {
             return Promise.resolve(self.layer);
         }
-        return this._layerPromise;
-    };
+        return this.#layerPromise;
+    }
 
-    ctlProto.setLayer = function (layer) {
+    setLayer(layer) {
         const self = this;
         if (self.map) {
+            if (self.layer) {
+                self.#previousStyles.set(self.layer, Object.assign({}, self.#style));
+            }
             if (typeof layer === "string") {
                 self.layer = self.map.getLayer(layer);
             }
@@ -660,21 +778,27 @@ TC.Consts.event.CHANGE = 'change';
             }
 
             self.styles = {};
-            const layerStyles = self.layer && self.layer.styles || TC.Cfg.styles;
-            TC.Util.extend(true, self.styles, self.options.styles || layerStyles);
-
+            const previousStyle = self.#previousStyles.get(layer);
+            if (previousStyle) {
+                self.setStyle(previousStyle);
+            }
+            else {
+                const layerStyles = self.layer && self.layer.styles || Cfg.styles;
+                Util.extend(true, self.styles, self.options.styles || layerStyles);
+                self.resetStyle();
+            }
         }
-    };
+    }
 
-    ctlProto.resetValues = function () {
+    resetValues() {
         const self = this;
         self.history.length = 0;
         self.historyIndex = 0;
-        setDrawState(self);
+        self.#setDrawState();
         return self;
-    };
+    }
 
-    ctlProto.exportState = function () {
+    exportState() {
         const self = this;
         if (self.exportsState && self.layer) {
             return {
@@ -683,15 +807,38 @@ TC.Consts.event.CHANGE = 'change';
             };
         }
         return null;
-    };
+    }
 
-    ctlProto.importState = function (state) {
+    importState(state) {
         const self = this;
         self.getLayer().then(function (layer) {
             layer.importState(state.layer);
         });
-    };
-})();
+        return self;
+    }
 
-const Draw = TC.control.Draw;
+    async #setDrawState() {
+        const self = this;
+        await self.renderPromise();
+        const mode = self.mode;
+        self.#endBtn.disabled =
+            self.historyIndex === 0 ||
+            mode === Consts.geom.POLYGON && self.historyIndex < 3 ||
+            mode === Consts.geom.POLYLINE && self.historyIndex < 2;
+        self.#redoBtn.disabled = self.history.length === self.historyIndex;
+        self.#undoBtn.disabled = self.historyIndex === 0;
+    }
+
+
+    async #setFeatureAddReadyState() {
+        const self = this;
+        await self.renderPromise();
+        self.resetValues();
+        self.#endBtn.disabled = true;
+        self.#cancelBtn.disabled = false;
+    }
+}
+
+customElements.get(elementName) || customElements.define(elementName, Draw);
+TC.control.Draw = Draw;
 export default Draw;
