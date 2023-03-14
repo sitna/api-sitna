@@ -2,7 +2,6 @@
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.Control = Control;
 
@@ -31,81 +30,76 @@ TC.inherit(TC.control.MapContents, TC.Control);
         }) : Promise.reject(Error('Cannot render: control has no map')));
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]).then(function () {
-                for (var i = 0, len = map.layers.length; i < len; i++) {
-                    self.updateLayerTree(map.layers[i]);
-                }
+        await Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]);
+        for (var i = 0, len = map.layers.length; i < len; i++) {
+            self.updateLayerTree(map.layers[i]);
+        }
 
-                map
-                    .on(TC.Consts.event.ZOOM + ' ' + TC.Consts.event.PROJECTIONCHANGE, function () {
-                        self.updateScale();
-                    })
-                    .on(TC.Consts.event.UPDATEPARAMS, function (e) {
-                        const layer = e.layer;
-                        var names = layer.names;
-                        var containsName = function containsName(node) {
-                            var result = false;
-                            if (node) {
-                                if (names.indexOf(node.name) >= 0) {
-                                    result = true;
-                                }
-                                else {
-                                    for (var i = 0; i < node.children.length; i++) {
-                                        if (containsName(node.children[i])) {
-                                            result = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            return result;
-                        };
-                        if (containsName(self.layerTrees[layer.id]) || names.length === 0) {
-                            self.update(self instanceof TC.control.BasemapSelector ? undefined:layer);
+        map
+            .on(Consts.event.ZOOM + ' ' + Consts.event.PROJECTIONCHANGE, function () {
+                self.updateScale();
+            })
+            .on(Consts.event.UPDATEPARAMS, function (e) {
+                const layer = e.layer;
+                var names = layer.names;
+                var containsName = function containsName(node) {
+                    var result = false;
+                    if (node) {
+                        if (names.indexOf(node.name) >= 0) {
+                            result = true;
                         }
                         else {
-                            self.updateLayerTree(layer);
-                        }
-                    })
-                    .on(TC.Consts.event.LAYERVISIBILITY, function (e) {
-                        self.updateLayerVisibility(e.layer);
-                    })
-                    .on(TC.Consts.event.LAYERADD, function (e) {
-                        self.updateLayerTree(e.layer);
-                    })
-                    .on(TC.Consts.event.VECTORUPDATE + ' ' + TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
-                        const layer = e.layer;
-                        // Se introduce un timeout porque pueden venir muchos eventos de este tipo seguidos y no tiene sentido actualizar con cada uno
-                        self._updateLayerTreeTimeouts = self._updateLayerTreeTimeouts || {};
-                        if (self._updateLayerTreeTimeouts[layer.id]) {
-                            clearTimeout(self._updateLayerTreeTimeouts[layer.id]);
-                        }
-                        self._updateLayerTreeTimeouts[layer.id] = setTimeout(function () {
-                            if (self.map.workLayers.indexOf(layer) > -1) {
-                                // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
-                                self.updateLayerTree(layer);
-                                delete self._updateLayerTreeTimeouts[layer.id];
+                            for (var i = 0; i < node.children.length; i++) {
+                                if (containsName(node.children[i])) {
+                                    result = true;
+                                    break;
+                                }
                             }
-                        }, 100);
-                    })
-                    .on(TC.Consts.event.LAYERREMOVE, function (e) {
-                        self.removeLayer(e.layer);
-                    })
-                    .on(TC.Consts.event.LAYERORDER, function (e) {
-                        self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
-                    })
-                    .on(TC.Consts.event.LAYERERROR, function (e) {
-                        self.onErrorLayer(e.layer);                                                    
-                    });
-
-                resolve(self);
-            }).catch(function (err) {
-                reject(err instanceof Error ? err : Error(err));
+                        }
+                    }
+                    return result;
+                };
+                if (containsName(self.layerTrees[layer.id]) || names.length === 0) {
+                    self.update(self instanceof TC.control.BasemapSelector ? undefined : layer);
+                }
+                else {
+                    self.updateLayerTree(layer);
+                }
+            })
+            .on(Consts.event.LAYERVISIBILITY, function (e) {
+                self.updateLayerVisibility(e.layer);
+            })
+            .on(Consts.event.LAYERADD, function (e) {
+                self.updateLayerTree(e.layer);
+            })
+            .on(Consts.event.VECTORUPDATE + ' ' + Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
+                const layer = e.layer;
+                // Se introduce un timeout porque pueden venir muchos eventos de este tipo seguidos y no tiene sentido actualizar con cada uno
+                self._updateLayerTreeTimeouts = self._updateLayerTreeTimeouts || {};
+                if (self._updateLayerTreeTimeouts[layer.id]) {
+                    clearTimeout(self._updateLayerTreeTimeouts[layer.id]);
+                }
+                self._updateLayerTreeTimeouts[layer.id] = setTimeout(function () {
+                    if (self.map.workLayers.indexOf(layer) > -1) {
+                        // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
+                        self.updateLayerTree(layer);
+                        delete self._updateLayerTreeTimeouts[layer.id];
+                    }
+                }, 100);
+            })
+            .on(Consts.event.LAYERREMOVE, function (e) {
+                self.removeLayer(e.layer);
+            })
+            .on(Consts.event.LAYERORDER, function (e) {
+                self.updateLayerOrder(e.layer, e.oldIndex, e.newIndex);
+            })
+            .on(Consts.event.LAYERERROR, function (e) {
+                self.onErrorLayer(e.layer);
             });
-        });
+
+        return self;
     };
 
     ctlProto.updateScale = function () {
@@ -115,6 +109,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
     };
 
     ctlProto.updateLayerTree = function (layer) {
+        layer.tree = null;
         this.layerTrees[layer.id] = layer.getTree();
     };
 
@@ -162,7 +157,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
             }
         }
         if (self.getLayerUIElements().length === 0) {
-            self.div.querySelector('.' + self.CLASS + '-empty').classList.remove(TC.Consts.classes.HIDDEN);
+            self.div.querySelector('.' + self.CLASS + '-empty').classList.remove(Consts.classes.HIDDEN);
         }
     };
 
@@ -184,14 +179,14 @@ TC.inherit(TC.control.MapContents, TC.Control);
         if (!img.getAttribute('src')) {
             var imgSrc = img.dataset.img;
 
-            const toolProxification = new TC.tool.Proxification(TC.proxify);
+            const proxificationTool = new TC.tool.Proxification(TC.proxify);
 
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
                     .then(function (src) {
                         img.src = src; // ya se ha validado en getLegendGraphicImage
                     }).catch(function (err) {
-                        TC.error(err);
+                        TC.error(err.statusText || err);
                     });
             } else {
                 if (isGetLegendGraphic(imgSrc)) {
@@ -223,19 +218,24 @@ TC.inherit(TC.control.MapContents, TC.Control);
                         imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
                     }
 
-                    toolProxification.fetchImage(imgSrc).then(function (img) {
+                    proxificationTool.fetchImage(imgSrc).then(function (img) {
                         img.dataset.img = img.src;
                     }).catch(function (err) {
-                        TC.error(err);
+                        TC.error(err.statusText || err);
                     });
                 }
 
-                toolProxification.fetchImage(imgSrc).then(function (i) {
+                proxificationTool.fetchImage(imgSrc).then(function (i) {
                     img.src = i.src;
                 }).catch(function (err) {
                     if (err.status && (err.status === 404 || err.status === 401))
                         TC.error(TC.Util.getLocaleString(layer.map.options.locale, 'simbologyImgNotFound',
                             { url: imgSrc }));
+                    else if (proxificationTool._image.ErrorType.UNEXPECTEDCONTENTTYPE === err.message) {
+                        TC.error(TC.Util.getLocaleString(layer.map.options.locale, 'simbologyNotCompatible'));
+                        //URI:Añado este atributo data para que no se intente obtener la leyenda cade vez que se cambia el zoom del mapa
+                        img.src = Consts.BLANK_IMAGE
+                    }
                     else
                         TC.error(err);
                 });                
