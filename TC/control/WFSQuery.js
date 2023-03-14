@@ -8,9 +8,10 @@
   * para poder hacer consultas a la capa en base a los valores de las propiedades de los elementos de la capa. Esta interfaz de usuario es accesible desde el control
   * `workLayerManager`.
   * @typedef WFSQueryOptions
-  * @see MapControlOptions
-  * @property {StyleOptions} [styles] - Opciones de estilo de las geometrías de las entidades resultado de la consulta.
-  * @property {StyleOptions} [highlightStyles] - Opciones de estilo de las geometrías de las entidades resaltadas.
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
+  * @property {SITNA.layer.StyleOptions} [styles] - Opciones de estilo de las geometrías de las entidades resultado de la consulta.
+  * @property {SITNA.layer.StyleOptions} [highlightStyles] - Opciones de estilo de las geometrías de las entidades resaltadas.
   * @example <caption>[Ver en vivo](../examples/cfg.WFSQueryOptions.html)</caption> {@lang html}
   * <div id="mapa" />
   * <script>
@@ -124,17 +125,17 @@ if (typeof Object.assign !== 'function') {
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import Control from '../Control';
 import infoShare from './infoShare';
 import filter from '../filter';
 import autocomplete from '../ui/autocomplete';
 //cargo los objetos features, si no, no resaltara las geometrías
-import Feature from '../Feature';
-import Point from '../feature/Point';
-import Polyline from '../feature/Polyline';
-import Polygon from '../feature/Polygon';
-import MultiPolyline from '../feature/MultiPolyline';
-import MultiPolygon from '../feature/MultiPolygon';
+import Point from '../../SITNA/feature/Point';
+import Polyline from '../../SITNA/feature/Polyline';
+import Polygon from '../../SITNA/feature/Polygon';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 import Button from '../../SITNA/ui/Button';
 
 TC.control = TC.control || {};
@@ -142,15 +143,7 @@ TC.control.infoShare = infoShare;
 TC.UI = TC.UI || {};
 TC.UI.autocomplete = autocomplete;
 TC.Control = Control;
-TC.Consts = Consts;
 TC.filter = filter;
-TC.Feature = Feature;
-TC.feature = TC.feature || {};
-TC.feature.Point = Point;
-TC.feature.Polyline = Polyline;
-TC.feature.Polygon = Polygon;
-TC.feature.MultiPolyline = MultiPolyline;
-TC.feature.MultiPolygon = MultiPolygon;
 
 TC.control.WFSQuery = function (_options) {
     var self = this;
@@ -198,8 +191,8 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
     const ctlProto = TC.control.WFSQuery.prototype;
     ctlProto.DEFAULT_STROKE_COLOR = '#0000ff';
 
-    const loadingCssClass = TC.Consts.classes.LOADING;
-    const hiddenCssClass = TC.Consts.classes.HIDDEN;
+    const loadingCssClass = Consts.classes.LOADING;
+    const hiddenCssClass = Consts.classes.HIDDEN;
     const spatialCssClass = 'tc-spatial';
     var modalBody = null;
     var timer = null;
@@ -613,13 +606,13 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         }, function (html) {
             whereDiv.innerHTML = html;
             whereDiv.querySelectorAll(`.${ctl.CLASS}-where-cond-view`).forEach(function (btn, idx) {
-                btn.addEventListener(TC.Consts.event.CLICK, function () {
+                btn.addEventListener(Consts.event.CLICK, function () {
                     ctl.map.zoomToFeatures([ctl.filters.filter(f => f instanceof TC.filter.Spatial)[idx].geometry]);
                     ctl.showGeometryPanel();
                 }, { passive: true });
             });
             form.querySelectorAll(`.${ctl.CLASS}-del-cond`).forEach(function (btn, idx) {
-                btn.addEventListener(TC.Consts.event.CLICK, function () {
+                btn.addEventListener(Consts.event.CLICK, function () {
                     ctl.removeFilter(idx);
                 }, { passive: true });
             });
@@ -632,7 +625,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
 
         if (dateInputMask && !dateInputMask.masked.isComplete) {
             if (/^(?=\d)(?:(?:31(?!.(?:0?[2469]|11))|(?:30|29)(?!.0?2)|29(?=.0?2.(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(?:\x20|$))|(?:2[0-8]|1\d|0?[1-9]))([-.\/])(?:1[012]|0?[1-9])\1(?:1[6-9]|[2-9]\d)?\d\d(?:(?=\x20\d)\x20|$))?(((0?[1-9]|1[012])(:[0-5]\d){0,2}(\x20[AP]M))|([01]\d|2[0-3])(:[0-5]\d){1,2})?$/.test(str) === false)
-                _showMessage.call(self, "Fecha " + str + " inválida", TC.Consts.msgType.ERROR);
+                _showMessage.call(self, getLocaleString("query.msgNoValidDate"));
             return false;
         }
         if (option.length === 0) {
@@ -660,7 +653,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
 
     const _getLayerName = () => _currentLayerTitle;
 
-    var _createResultPanel = function (layerName) {
+    var _createResultPanel = async function (layerName) {
         const self = this;
         var _layerName = layerName;
         var _downloadClickHandler = function (_self, layerName) {
@@ -678,39 +671,36 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 control.open(self.resultsLayer.features, options);
             });
         };
-        return new Promise(async function (resolve) {
-            if (!self.resultsPanel) {
-                var ccontainer = self.map.getControlsByClass(TC.control.ControlContainer);
-                const panelOptions = {
-                    content: "table",
-                    titles: {
-                        main: "",
-                        max: ""
-                    },
-                    save: {
-                        fileName: _layerName + ".xls"
-                    },
-                    download: () => _downloadClickHandler(self, _getLayerName),
-                    share: true,
-                    resize: true
-                };
-                if (ccontainer.length === 0) {
-                    self.resultsPanel = await self.map.addControl('resultsPanel', panelOptions);
-                    self.resultsPanel.caller = self;
-                }
-                else {
-                    panelOptions.position = "right";
-                    self.resultsPanel = await ccontainer[0].addControl('resultsPanel', panelOptions);
-                    self.resultsPanel.caller = self;
-                }
-                self.resultsPanel.template[self.resultsPanel.CLASS + "-table"] = self.template[self.CLASS + "-table"];
+        if (!self.resultsPanel) {
+            var ccontainer = self.map.getControlsByClass(TC.control.ControlContainer);
+            const panelOptions = {
+                content: "table",
+                titles: {
+                    main: "",
+                    max: ""
+                },
+                save: {
+                    fileName: _layerName + ".xls"
+                },
+                download: () => _downloadClickHandler(self, _getLayerName),
+                share: true,
+                resize: true
+            };
+            if (ccontainer.length === 0) {
+                self.resultsPanel = await self.map.addControl('resultsPanel', panelOptions);
+                self.resultsPanel.caller = self;
             }
             else {
-                self.resultsPanel.options.save.fileName = _layerName + ".xls";
+                panelOptions.position = "right";
+                self.resultsPanel = await ccontainer[0].addControl('resultsPanel', panelOptions);
+                self.resultsPanel.caller = self;
             }
-            self.resultsPanel.options.titles.max = self.resultsPanel.getLocaleString('geo.trk.chart.exp');
-            resolve();
-        });
+            self.resultsPanel.template[self.resultsPanel.CLASS + "-table"] = self.template[self.CLASS + "-table"];
+        }
+        else {
+            self.resultsPanel.options.save.fileName = _layerName + ".xls";
+        }
+        self.resultsPanel.options.titles.max = self.resultsPanel.getLocaleString('geo.trk.chart.exp');
     };
 
     var _showMessage = function (Message, type) {
@@ -723,13 +713,13 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
             else {
                 messageDiv.innerHTML = Message;
                 switch (type) {
-                    case TC.Consts.msgType.INFO:
+                    case Consts.msgType.INFO:
                         messageDiv.classList.add("tc-msg-info");
                         break;
-                    case TC.Consts.msgType.WARNING:
+                    case Consts.msgType.WARNING:
                         messageDiv.classList.add("tc-msg-warning");
                         break;
-                    case TC.Consts.msgType.ERROR:
+                    case Consts.msgType.ERROR:
                     default:
                         messageDiv.classList.add("tc-msg-error");
                         break;
@@ -754,6 +744,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 break;
             case "contains":
             case "eq":
+            case "neq":
                 value = "*" + value + "*";
                 break;
             case "ends":
@@ -768,7 +759,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         let signal = controller.signal;
 
         try {
-            var data = await _currentLayer.toolProxification.fetch(_currentLayerURL, {
+            var data = await _currentLayer.proxificationTool.fetch(_currentLayerURL, {
                 //URI:si el valor de field contiene "/" se supone que es un dato compuesto entonces no establezco propiedades a devolver sino que se deja vacío para que devuelva todos.
                 data: TC.Util.WFGetPropertyValue(_currentLayerName, field.indexOf("/") >= 0 ? false : field, TC.filter.like(field, value, undefined, undefined, undefined, false), _capabilities),//TC.Util.WFSQueryBuilder([_currentLayerName], TC.filter.like(field, value, undefined, undefined, undefined, false), _capabilities, "JSON", false),
                 contentType: "application/xml",
@@ -780,7 +771,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 let xmlDoc = new DOMParser().parseFromString(data.responseText, "text/xml");
                 let error = xmlDoc.querySelector("Exception ExceptionText");
                 if (error) {
-                    _showMessage.call(self, error.innerHTML, TC.Consts.msgType.ERROR);
+                    _showMessage.call(self, error.innerHTML, Consts.msgType.ERROR);
                     return [];
                 }
                 //parser de features XML
@@ -818,7 +809,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         }
         catch (err) {
             if (err instanceof DOMException && err.name !== "AbortError")
-                _showMessage.call(self, err, TC.Consts.msgType.ERROR);
+                _showMessage.call(self, err, Consts.msgType.ERROR);
             return null;
         }
     };
@@ -834,7 +825,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 if (timerAutocomplete)
                     window.clearTimeout(timerAutocomplete);
                 timerAutocomplete = window.setTimeout(async function () {
-                    if (!document.querySelector(".tc-ctl-wfsquery.tc-ctl-wfsquery-text").classList.contains(TC.Consts.classes.HIDDEN)) {
+                    if (!document.querySelector(".tc-ctl-wfsquery.tc-ctl-wfsquery-text").classList.contains(Consts.classes.HIDDEN)) {
                         var data = await _getPossibleValues.call(_self, property, text);
                         if (data) {
                             if (data.length)
@@ -888,19 +879,19 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         const self = this;
         var _addFeature = function (layer, feature) {
             var result;
-            if (feature instanceof TC.feature.Point) {
+            if (feature instanceof Point) {
                 result = layer.addPoint(feature.getCoords());
             }
-            else if (feature instanceof TC.feature.Polyline) {
+            else if (feature instanceof Polyline) {
                 result = layer.addPolyline(feature.getCoords());
             }
-            else if (feature instanceof TC.feature.Polygon) {
+            else if (feature instanceof Polygon) {
                 result = layer.addPolygon(feature.getCoords());
             }
-            else if (feature instanceof TC.feature.MultiPolygon) {
+            else if (feature instanceof MultiPolygon) {
                 result = layer.addMultiPolygon(feature.getCoords());
             }
-            else if (feature instanceof TC.feature.MultiPolyline) {
+            else if (feature instanceof MultiPolyline) {
                 result = layer.addMultiPolyline(feature.getCoords());
             }
             return result;
@@ -911,7 +902,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         if (!layer) {
             feature.layer.map.addLayer({
                 id: "WFSQueryResultsHighlight",
-                type: TC.Consts.layerType.VECTOR,
+                type: Consts.layerType.VECTOR,
                 owner: self,
                 stealth: true,
                 styles: _getHighLightStyles()
@@ -939,167 +930,160 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         ]));
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        return new Promise(function (resolve, reject) {
 
-            map.on(TC.Consts.event.LAYERERROR, (e) => {
-                if (e.layer === self.resultsLayer) {
-                    if (self.modalDialog) {
-                        self.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass);
-                    }
-                    if (e.reason === TC.Consts.WFSErrors.MAX_NUM_FEATURES) {
-                        _showMessage.call(self, getLocaleString("query.msgTooManyResults", { limit: e.data.limit }), TC.Consts.msgType.WARNING);
-                    }
-                    else {
-                        //console.error(e.reason);
-                        _showMessage.call(self, getLocaleString("query.errorUndefined"), TC.Consts.msgType.ERROR);
-                        throw new Error(e.reason);
-                    }
+        map.on(Consts.event.LAYERERROR, (e) => {
+            if (e.layer === self.resultsLayer) {
+                if (self.modalDialog) {
+                    self.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass);
                 }
-            });
-            map.on(TC.Consts.event.BEFOREFEATUREREMOVE, (e) => {
-                if (e.layer === self.resultsLayer) {
-                    const index = e.layer.features.indexOf(e.feature);
-                    self.deletedFeatures.push(index);
-                    const tr = self.resultsPanel.div.querySelector("table tbody tr:not(." + TC.Consts.classes.DISABLED + ")[data-index='" + index + "']");
-                    delete tr.dataset.index;
-                    tr.removeAttribute("title");
-                    tr.classList.add(TC.Consts.classes.DISABLED);
-                    for (let j = index + 1; j < e.layer.features.length; j++) {
-                        const tr2 = self.resultsPanel.div.querySelector("table tbody tr[data-index='" + j + "']");
-                        if (tr2 && tr2.dataset.index)
-                            tr2.dataset.index = parseInt(tr2.dataset.index, 10) - 1;
-                    }
+                if (e.reason === Consts.WFSErrors.MAX_NUM_FEATURES) {
+                    _showMessage.call(self, getLocaleString("query.msgTooManyResults", { limit: e.data.limit }), Consts.msgType.WARNING);
                 }
-            })
+                else {
+                    //console.error(e.reason);
+                    _showMessage.call(self, getLocaleString("query.errorUndefined"), Consts.msgType.ERROR);
+                    throw new Error(e.reason);
+                }
+            }
+        });
+        map.on(Consts.event.BEFOREFEATUREREMOVE, (e) => {
+            if (e.layer === self.resultsLayer) {
+                const index = e.layer.features.indexOf(e.feature);
+                self.deletedFeatures.push(index);
+                const tr = self.resultsPanel.div.querySelector("table tbody tr:not(." + Consts.classes.DISABLED + ")[data-index='" + index + "']");
+                delete tr.dataset.index;
+                tr.removeAttribute("title");
+                tr.classList.add(Consts.classes.DISABLED);
+                for (let j = index + 1; j < e.layer.features.length; j++) {
+                    const tr2 = self.resultsPanel.div.querySelector("table tbody tr[data-index='" + j + "']");
+                    if (tr2 && tr2.dataset.index)
+                        tr2.dataset.index = parseInt(tr2.dataset.index, 10) - 1;
+                }
+            }
+        })
 
-            TC.Control.prototype.register.call(self, map).then(function (ctrl) {
-                var self = ctrl;
+        await TC.Control.prototype.register.call(self, map);
 
-                _getStyles = function () {
-                    var styleFN = function (geomType, property) {
-                        return this.options.styles && this.options.styles[geomType] ? this.options.styles[geomType][property] || TC.Cfg.styles[geomType][property] : TC.Cfg.styles[geomType][property];
-                    };
-                    return {
-                        polygon: {
-                            fillColor: styleFN.bind(self, 'polygon', 'fillColor'),
-                            fillOpacity: styleFN.bind(self, 'polygon', 'fillOpacity'),
-                            strokeColor: styleFN.bind(self, 'polygon', 'strokeColor'),
-                            strokeOpacity: styleFN.bind(self, 'polygon', 'strokeOpacity'),
-                            strokeWidth: styleFN.bind(self, 'polygon', 'strokeWidth')
-                        },
-                        line: {
-                            strokeColor: styleFN.bind(self, 'line', 'strokeColor'),
-                            strokeOpacity: styleFN.bind(self, 'line', 'strokeOpacity'),
-                            strokeWidth: styleFN.bind(self, 'line', 'strokeWidth')
-                        },
-                        point: {
-                            radius: styleFN.bind(self, 'point', 'radius'),
-                            height: styleFN.bind(self, 'point', 'height'),
-                            width: styleFN.bind(self, 'point', 'width'),
-                            fillColor: styleFN.bind(self, 'point', 'fillColor'),
-                            fillOpacity: styleFN.bind(self, 'point', 'fillOpacity'),
-                            strokeColor: styleFN.bind(self, 'point', 'strokeColor'),
-                            strokeWidth: styleFN.bind(self, 'point', 'strokeWidth'),
-                            fontSize: styleFN.bind(self, 'point', 'fontSize'),
-                            fontColor: styleFN.bind(self, 'point', 'fontColor'),
-                            labelOutlineColor: styleFN.bind(self, 'point', 'labelOutlineColor'),
-                            labelOutlineWidth: styleFN.bind(self, 'point', 'labelOutlineWidth'),
-                            label: styleFN.bind(self, 'point', 'label'),
-                            angle: styleFN.bind(self, 'point', 'angle')
-                        }
-                    };
-                };
-                _getHighLightStyles = function () {
-                    var _default = {
-                        "polygon": TC.Util.extend(true, {}, TC.Cfg.styles.polygon, {
-                            fillColor: "#0099FF",
-                            fillOpacity: 1,
-                            strokeColor: "#0099FF",
-                            strokeWidth: 2
-                        }),
-                        "line": TC.Util.extend(true, {}, TC.Cfg.styles.line, {
-                            strokeColor: "#0099FF",
-                            strokeWidth: 2
-                        }),
-                        "point": TC.Util.extend(true, {}, TC.Cfg.styles.point, {
-                            strokeColor: "#0099FF"
-                        })
-                    };
-                    return self.highlightStyles ? {
-                        "polygon": TC.Util.extend(true, {}, _default.polygon, self.highlightStyles.polygon ? self.highlightStyles.polygon : {}),
-                        "line": TC.Util.extend(true, {}, _default.line, self.highlightStyles.line ? self.highlightStyles.line : {}),
-                        "point": TC.Util.extend(true, {}, _default.point, self.highlightStyles.point ? self.highlightStyles.point : {})
-                    } : _default;
-                };
+        _getStyles = function () {
+            var styleFN = function (geomType, property) {
+                return this.options.styles && this.options.styles[geomType] ? this.options.styles[geomType][property] || Cfg.styles[geomType][property] : Cfg.styles[geomType][property];
+            };
+            return {
+                polygon: {
+                    fillColor: styleFN.bind(self, 'polygon', 'fillColor'),
+                    fillOpacity: styleFN.bind(self, 'polygon', 'fillOpacity'),
+                    strokeColor: styleFN.bind(self, 'polygon', 'strokeColor'),
+                    strokeOpacity: styleFN.bind(self, 'polygon', 'strokeOpacity'),
+                    strokeWidth: styleFN.bind(self, 'polygon', 'strokeWidth')
+                },
+                line: {
+                    strokeColor: styleFN.bind(self, 'line', 'strokeColor'),
+                    strokeOpacity: styleFN.bind(self, 'line', 'strokeOpacity'),
+                    strokeWidth: styleFN.bind(self, 'line', 'strokeWidth')
+                },
+                point: {
+                    radius: styleFN.bind(self, 'point', 'radius'),
+                    height: styleFN.bind(self, 'point', 'height'),
+                    width: styleFN.bind(self, 'point', 'width'),
+                    fillColor: styleFN.bind(self, 'point', 'fillColor'),
+                    fillOpacity: styleFN.bind(self, 'point', 'fillOpacity'),
+                    strokeColor: styleFN.bind(self, 'point', 'strokeColor'),
+                    strokeWidth: styleFN.bind(self, 'point', 'strokeWidth'),
+                    fontSize: styleFN.bind(self, 'point', 'fontSize'),
+                    fontColor: styleFN.bind(self, 'point', 'fontColor'),
+                    labelOutlineColor: styleFN.bind(self, 'point', 'labelOutlineColor'),
+                    labelOutlineWidth: styleFN.bind(self, 'point', 'labelOutlineWidth'),
+                    label: styleFN.bind(self, 'point', 'label'),
+                    labelRotationKey: styleFN.bind(self, 'point', 'labelRotationKey')
+                }
+            };
+        };
+        _getHighLightStyles = function () {
+            var _default = {
+                "polygon": TC.Util.extend(true, {}, Cfg.styles.polygon, {
+                    fillColor: "#0099FF",
+                    fillOpacity: 1,
+                    strokeColor: "#0099FF",
+                    strokeWidth: 2
+                }),
+                "line": TC.Util.extend(true, {}, Cfg.styles.line, {
+                    strokeColor: "#0099FF",
+                    strokeWidth: 2
+                }),
+                "point": TC.Util.extend(true, {}, Cfg.styles.point, {
+                    strokeColor: "#0099FF"
+                })
+            };
+            return self.highlightStyles ? {
+                "polygon": TC.Util.extend(true, {}, _default.polygon, self.highlightStyles.polygon ? self.highlightStyles.polygon : {}),
+                "line": TC.Util.extend(true, {}, _default.line, self.highlightStyles.line ? self.highlightStyles.line : {}),
+                "point": TC.Util.extend(true, {}, _default.point, self.highlightStyles.point ? self.highlightStyles.point : {})
+            } : _default;
+        };
 
-                locale = map.options.locale;
+        locale = map.options.locale;
 
-                getLocaleString = function (key, texts) {
-                    return TC.Util.getLocaleString(locale, key, texts);
-                };
+        getLocaleString = function (key, texts) {
+            return TC.Util.getLocaleString(locale, key, texts);
+        };
 
-                map.ready(function () {
-                    map.getControlsByClass('TC.control.WorkLayerManager').forEach(function (ctl) {
-                        ctl.addItemTool({
-                            renderFn: function (container, layerId) {
-                                const className = self.CLASS + '-btn-open';
-                                let button = container.querySelector('sitna-button.' + className);
-                                if (!button) {
-                                    const layer = map.getLayer(layerId);
-                                    if (layer.type === TC.Consts.layerType.WMS || layer.type === TC.Consts.layerType.WFS) {
-                                        const text = self.getLocaleString('query.tooltipMagnifBtn');
-                                        button = new Button();
-                                        button.variant = Button.variant.MINIMAL;
-                                        button.text = text;
-                                        button.iconText = '\ue916';
-                                        button.classList.add(className);
-                                        button.dataset.layerId = layerId;
-                                        if (layer.type === TC.Consts.layerType.WMS) {
-                                            button.classList.add(loadingCssClass);
-                                            layer.getWFSCapabilities().then((WFSCapabilities) => {
-                                                //check si tiene GetFeature Disponible
-                                                if (!WFSCapabilities.Operations.GetFeature) {
-                                                    button.classList.add(hiddenCssClass);
-                                                    return;
-                                                }
-                                                //check si las capas hijas están en capabilties WFS
-                                                var layers = layer.getDisgregatedLayerNames ? layer.getDisgregatedLayerNames() : layer.featureType;
-                                                layers = layers.filter(function (l) {
-                                                    return Object.prototype.hasOwnProperty.call(WFSCapabilities.FeatureTypes, l.substring(l.indexOf(":") + 1));
-                                                });
-                                                if (!layers.length) {
-                                                    button.classList.add(hiddenCssClass);
-                                                    return;
-                                                }
-                                            }).catch(() => button.classList.add(hiddenCssClass))
-                                                .finally(() => button.classList.remove(loadingCssClass));
+        map.ready(function () {
+            map.getControlsByClass('TC.control.WorkLayerManager').forEach(function (ctl) {
+                ctl.addItemTool({
+                    renderFn: function (container, layerId) {
+                        const className = self.CLASS + '-btn-open';
+                        let button = container.querySelector('sitna-button.' + className);
+                        if (!button) {
+                            const layer = map.getLayer(layerId);
+                            if (layer.type === Consts.layerType.WMS || layer.type === Consts.layerType.WFS) {
+                                const text = self.getLocaleString('query.tooltipMagnifBtn');
+                                button = new Button();
+                                button.variant = Button.variant.MINIMAL;
+                                button.text = text;
+                                button.iconText = '\ue916';
+                                button.classList.add(className);
+                                button.dataset.layerId = layerId;
+                                if (layer.type === Consts.layerType.WMS) {
+                                    button.classList.add(loadingCssClass);
+                                    layer.getWFSCapabilities().then((WFSCapabilities) => {
+                                        //check si tiene GetFeature Disponible
+                                        if (!WFSCapabilities.Operations.GetFeature) {
+                                            button.classList.add(hiddenCssClass);
+                                            return;
                                         }
-                                    }
+                                        //check si las capas hijas están en capabilties WFS
+                                        var layers = layer.getDisgregatedLayerNames ? layer.getDisgregatedLayerNames() : layer.featureType;
+                                        layers = layers.filter(function (l) {
+                                            return Object.prototype.hasOwnProperty.call(WFSCapabilities.FeatureTypes, l.substring(l.indexOf(":") + 1));
+                                        });
+                                        if (!layers.length) {
+                                            button.classList.add(hiddenCssClass);
+                                            return;
+                                        }
+                                    }).catch(() => button.classList.add(hiddenCssClass))
+                                        .finally(() => button.classList.remove(loadingCssClass));
                                 }
-                                return button;
-                            },
-                            updateEvents: [],
-                            actionFn: function () {
-                                const button = this;
-                                if (button.classList.contains('tc-unavailable') || button.classList.contains('tc-loading')) {
-                                    return;
-                                }
-                                const layer = self.map.getLayer(button.dataset.layerId);
-                                self.renderModalDialog(layer);
                             }
-                        });
-                    });
-                });
-
-                self.getShareDialog().then(function () {
-                    resolve(self);
-                }).catch(function (err) {
-                    reject(err instanceof Error ? err : Error(err));
+                        }
+                        return button;
+                    },
+                    updateEvents: [],
+                    actionFn: function () {
+                        const button = this;
+                        if (button.classList.contains('tc-unavailable') || button.classList.contains('tc-loading')) {
+                            return;
+                        }
+                        const layer = self.map.getLayer(button.dataset.layerId);
+                        self.renderModalDialog(layer);
+                    }
                 });
             });
         });
+
+        await self.getShareDialog();
+        return self;
     };
 
     const _onFeaturesUpdate = function (e) {
@@ -1107,7 +1091,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         if (ctl && e.layer === ctl.resultsLayer) {
             if (e.newData && e.newData.totalFeatures === 0) {
                 ctl.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass);
-                _showMessage.call(ctl, getLocaleString("query.msgNoResults"), TC.Consts.msgType.INFO);
+                _showMessage.call(ctl, getLocaleString("query.msgNoResults"), Consts.msgType.INFO);
                 return;
             }
             var features = e.layer.features;
@@ -1143,7 +1127,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                     _currentLayerTitle);
             }
 
-            e.layer.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+            e.layer.map.off(Consts.event.LAYERUPDATE, _onFeaturesUpdate);
         }
     };
 
@@ -1160,18 +1144,18 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         if (_currentLayer && _currentLayerName && _currentLayerTitle && filter) {
             var _url = await _currentLayer.getWFSURL();
             await _createResultPanel.apply(self, [_currentLayerTitle]);
-            _currentLayer.toolProxification.cacheHost.getAction(_url).then(function (cacheHost) {
+            _currentLayer.proxificationTool.cacheHost.getAction(_url).then(function (cacheHost) {
                 const url = cacheHost.action(_url);
                 if (self.resultsLayer && self.resultsLayer.url !== url) {
                     self.map.removeLayer(self.resultsLayer);
                     self.resultsLayer = null;
                 }
                 if (!self.resultsLayer) {
-                    self.map.on(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                    self.map.on(Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
                     self.map
                         .addLayer({
                             id: "WFSQueryResults",
-                            type: TC.Consts.layerType.WFS,
+                            type: Consts.layerType.WFS,
                             url: url,
                             owner: self,
                             stealth: true,
@@ -1179,15 +1163,15 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                             featurePrefix: _currentLayerName.substring(0, _currentLayerName.indexOf(":")),
                             featureType: _currentLayerName.substring(_currentLayerName.indexOf(":") + 1),
                             properties: filter,
-                            outputFormat: TC.Consts.format.JSON,
+                            outputFormat: Consts.format.JSON,
                             styles: _getStyles()
                         })
                         .then(function (layer) {
                             self.resultsLayer = layer;
-                            layer.map.on(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                            layer.map.on(Consts.event.LAYERUPDATE, _onFeaturesUpdate);
                         });
 
-                    self.map.on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
+                    self.map.on(Consts.event.RESULTSPANELCLOSE, function (e) {
                         if (e.control !== self.resultsPanel)
                             return;
                         if (TC.browserFeatures.touch()) {
@@ -1196,19 +1180,19 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                         self.resultsLayer.clearFeatures();
                         self.resultsLayer.setVisibility(false);
                         self.clearFilters();
-                        self.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
-                        self.map.off(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                        self.map.off(Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                        self.map.off(Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
                         delete self.toShare;
                     });
                 }
                 else {
-                    self.map.off(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
-                    self.map.on(TC.Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                    self.map.off(Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
+                    self.map.on(Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
                     self.resultsLayer.setVisibility(false);
                     self.resultsLayer.clearFeatures();
                     //borro el evento featureUpdate por si hago una búsqueda sin cerra el panel previamente
-                    self.map.off(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
-                    self.map.on(TC.Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                    self.map.off(Consts.event.LAYERUPDATE, _onFeaturesUpdate);
+                    self.map.on(Consts.event.LAYERUPDATE, _onFeaturesUpdate);
                     self.resultsLayer.url = url;
                     self.resultsLayer.featurePrefix = _currentLayerName.substring(0, _currentLayerName.indexOf(":"));
                     self.resultsLayer.featureType = _currentLayerName.substring(_currentLayerName.indexOf(":") + 1);
@@ -1231,7 +1215,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         let filter;
         if (self.filters.length > 1) {
             const condition = self.modalDialog.querySelector(".tc-ctl-wfsquery-logOpRadio:checked").value;
-            filter = TC.filter[TC.Consts.logicalOperator[condition]].apply(null, self.filters);
+            filter = TC.filter[Consts.logicalOperator[condition]].apply(null, self.filters);
         }
         else {
             filter = self.filters[0];
@@ -1332,7 +1316,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         self.deletedFeatures = [];
         //en funcion del número de elementos cargo un título en singular o plural
 
-        self.resultsPanel.div.querySelector(".prpanel-title-text").innerText = self.resultsPanel.getLocaleString(data.length > 1 ? 'query.titleResultPaneMany' : 'query.titleResultPanelOne', { "numero": data.length, "layerName": layername });
+        self.resultsPanel.div.querySelector(`.${self.resultsPanel.CLASS}-title-text`).innerText = self.resultsPanel.getLocaleString(data.length > 1 ? 'query.titleResultPaneMany' : 'query.titleResultPanelOne', { "numero": data.length, "layerName": layername });
 
         self.resultsPanel.div.classList.add("tc-ctl-wfsquery-results");
 
@@ -1354,7 +1338,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
 
                 self.resultsPanel.maximize();
                 console.log("render del panel de resultados");
-                var col = tabla.querySelectorAll(".table>tbody>tr");
+                var col = tabla.querySelectorAll(".tc-table > tbody > tr");
                 var j = 1;
                 for (var key in data[0]) {
                     if (Object.prototype.hasOwnProperty.call(dataTypes, key)) {
@@ -1381,13 +1365,13 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 for (var i = 0; i < col.length; i++) {
                     col[i].addEventListener("click", function (e) {
                         e.stopPropagation();
-                        if (this.classList.contains(TC.Consts.classes.DISABLED)) return;
+                        if (this.classList.contains(Consts.classes.DISABLED)) return;
                         var index = this.dataset.index;
                         if (index != undefined)
                             self.resultsLayer.map.zoomToFeatures([self.resultsLayer.features[index]]);
                     });
                     col[i].addEventListener("mouseenter", function () {
-                        if (this.classList.contains(TC.Consts.classes.DISABLED)) return;
+                        if (this.classList.contains(Consts.classes.DISABLED)) return;
                         var index = this.dataset.index;
                         if (index == undefined) return;
                         var feat = self.resultsLayer.features[index];
@@ -1395,7 +1379,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                             //feat.select();
                             _select.call(self, feat);
                         }
-                        var celdasHoja = this.querySelectorAll("td.value div");
+                        var celdasHoja = this.querySelectorAll("td.tc-value div");
                         if (celdasHoja.length > 0) {
                             celdasHoja.forEach(function (celda) {
                                 if (celda.offsetWidth < celda.scrollWidth)
@@ -1417,19 +1401,19 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                             //feat.unselect();
                             _unselect(feat);
                             //esto es porque el unselect no devulve al estilo por defecto
-                            //feat.setStyle(TC.Cfg.styles[feat.STYLETYPE]);
+                            //feat.setStyle(Cfg.styles[feat.STYLETYPE]);
                         }
                     });
                 }
-                tabla.querySelectorAll(".complexAttr label,.complexAttr input").forEach(function (label) {
+                tabla.querySelectorAll(".tc-complex-attr label,.tc-complex-attr input").forEach(function (label) {
                     label.addEventListener("click", function (e) {
                         e.stopPropagation();
                     });
                 });
-                tabla.querySelectorAll(".complexAttr input").forEach(function (chkBox) {
+                tabla.querySelectorAll(".tc-complex-attr input").forEach(function (chkBox) {
                     chkBox.addEventListener("change", function (_e) {
                         if (this.checked) {
-                            this.nextElementSibling.querySelectorAll("td.value div").forEach(function (div) {
+                            this.nextElementSibling.querySelectorAll("td.tc-value div").forEach(function (div) {
                                 if (div.offsetWidth < div.scrollWidth)
                                     div.title = div.innerText;
                             });
@@ -1440,7 +1424,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(tabla);
                 tabla.querySelectorAll("td > img, td > video, td > audio, td > iframe").forEach((e) => e.parentNode.classList.add("tc-multimedia"));
                 tabla.querySelectorAll("video").forEach((v) => {
-                    v.addEventListener(TC.Consts.event.CLICK, function (e) {
+                    v.addEventListener(Consts.event.CLICK, function (e) {
                         e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
                     }, { passive: true });
                 });
@@ -1450,10 +1434,10 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                         const tr = self.resultsPanel.div.querySelector("table tbody tr[data-index='" + f + "']");
                         delete tr.dataset.index;
                         tr.removeAttribute("title");
-                        tr.classList.add(TC.Consts.classes.DISABLED);
+                        tr.classList.add(Consts.classes.DISABLED);
                     });
                     //rellenamos los huecos de data-index
-                    Array.from(self.resultsPanel.div.querySelectorAll("table tbody tr:not(." + TC.Consts.classes.DISABLED + ")")).forEach((notDeleted) => {
+                    Array.from(self.resultsPanel.div.querySelectorAll("table tbody tr:not(." + Consts.classes.DISABLED + ")")).forEach((notDeleted) => {
                         const index = parseInt(notDeleted.dataset.index, 10);
                         notDeleted.dataset.index = index - self.deletedFeatures.filter((x) => x < index).length;
                     });
@@ -1486,7 +1470,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 self.geometryPanel = await self.map.addControl('resultsPanel', ctlOptions);
             }
             self.map
-                .on(TC.Consts.event.RESULTSPANELCLOSE, function onResultsPanelClose(e) {
+                .on(Consts.event.RESULTSPANELCLOSE, function onResultsPanelClose(e) {
                     if (e.control === self.geometryPanel) {
                         setTimeout(() => self.drawControl.cancel(), 500); // timeout para evitar una llamada indeseada a GFI.
                         TC.Util.showModal(self.modalDialog, {
@@ -1496,7 +1480,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 });
             const html = await self.getRenderedHtml(self.CLASS + '-geom');
             self.geometryPanel.open(html);
-            self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn-ok`).addEventListener(TC.Consts.event.CLICK, function () {
+            self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn-ok`).addEventListener(Consts.event.CLICK, function () {
                 self.geometryPanel.close();
             }, { passive: true });
             if (!self.drawControl) {
@@ -1504,7 +1488,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                     div: self.geometryPanel.getTableContainer().querySelector(`.${self.CLASS}-geom-draw`),
                     styles: self.styles
                 });
-                self.drawControl.on(TC.Consts.event.DRAWEND, function (e) {
+                self.drawControl.on(Consts.event.DRAWEND, function (e) {
                     e.feature.showsPopup = false;
                     self.geometryPanel.close();
 
@@ -1540,8 +1524,8 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         else {
             self.geometryPanel.open();
         }
-        self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-draw`).classList.toggle(TC.Consts.classes.HIDDEN, !mode);
-        self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn`).classList.toggle(TC.Consts.classes.HIDDEN, !!mode);
+        self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-draw`).classList.toggle(Consts.classes.HIDDEN, !mode);
+        self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn`).classList.toggle(Consts.classes.HIDDEN, !!mode);
         if (mode) {
             self.drawControl.setMode(mode, true);
         }
@@ -1612,7 +1596,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                             });
                         });
 
-                        form.querySelector(".tc-button").addEventListener(TC.Consts.event.CLICK, function () {
+                        form.querySelector(".tc-button").addEventListener(Consts.event.CLICK, function () {
                             var valueField = form.querySelector('input.tc-textbox');
                             TC.UI.autocomplete.call(valueField, "clear");
                             if (inputMaskNumber)
@@ -1684,7 +1668,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                         const onGeomClick = function (e) {
                             ctl.showGeometryPanel(e.target.value);
                         };
-                        form.querySelectorAll("button[name='geometry']").forEach(btn => btn.addEventListener(TC.Consts.event.CLICK, onGeomClick, { passive: true }));
+                        form.querySelectorAll("button[name='geometry']").forEach(btn => btn.addEventListener(Consts.event.CLICK, onGeomClick, { passive: true }));
                     }
                 });
         }
@@ -1756,13 +1740,13 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
                 tbody.classList.remove(loadingCssClass);
                 tbody.insertAdjacentHTML('beforeend', "<div class=\"tc-ctl-wfsquery-message tc-msg-warning\">" + getLocaleString("query.LayerNotAvailable") + "</div>");
                 //TC.Util.closeModal();
-                //layer.map.toast("Mal", { type: TC.Consts.msgType.WARNING });
+                //layer.map.toast("Mal", { type: Consts.msgType.WARNING });
             }
 
         }
         else {
             TC.Util.closeModal();
-            layer.map.toast(TC.Util.getLocaleString(layer.map.options.locale, "query.LayerNotAvailable"), { type: TC.Consts.msgType.ERROR });
+            layer.map.toast(TC.Util.getLocaleString(layer.map.options.locale, "query.LayerNotAvailable"), { type: Consts.msgType.ERROR });
         }
     };
 
@@ -1832,12 +1816,12 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
         const self = this;
         let title;
         let capabilitiesPromise;
-        if (layer.type === TC.Consts.layerType.WMS) {
+        if (layer.type === Consts.layerType.WMS) {
             const path = layer.getPath();
             title = path[path.length - 1];
             capabilitiesPromise = layer.getWFSCapabilities();
         }
-        else if (layer.type === TC.Consts.layerType.WFS) {
+        else if (layer.type === Consts.layerType.WFS) {
             title = layer.title;
             capabilitiesPromise = layer.getCapabilitiesPromise();
         }
