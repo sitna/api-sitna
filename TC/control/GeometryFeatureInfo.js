@@ -3,8 +3,9 @@
   * Opciones de control de obtención de información de entidades de mapa por línea o por recinto.
   * @typedef GeometryFeatureInfoOptions
   * @extends FeatureInfoOptions
-  * @see MultiFeatureInfoModeOptions
-  * @property {LineStyleOptions|PolygonStyleOptions} [filterStyle] - Estilo de la entidad cuya geometría servirá de filtro espacial para la consulta.
+  * @memberof SITNA.control
+  * @see SITNA.control.MultiFeatureInfoModeOptions
+  * @property {PolylineStyleOptions|PolygonStyleOptions} [filterStyle] - Estilo de la entidad cuya geometría servirá de filtro espacial para la consulta.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta muestra también resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si este valor es verdadero, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
@@ -17,7 +18,6 @@ import FeatureInfoCommons from './FeatureInfoCommons';
 import filter from '../filter';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.control.FeatureInfoCommons = FeatureInfoCommons;
 TC.filter = filter;
 
@@ -39,7 +39,7 @@ TC.filter = filter;
         const self = this;
         const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
 
-        self.on(TC.Consts.event.CONTROLDEACTIVATE, function (_e) {
+        self.on(Consts.event.CONTROLDEACTIVATE, function (_e) {
             self.wrap.cancelDraw();
         });
 
@@ -62,7 +62,7 @@ TC.filter = filter;
             var visibleLayers = false;
             for (var i = 0; i < self.map.workLayers.length; i++) {
                 var layer = self.map.workLayers[i];
-                if (layer.type === TC.Consts.layerType.WMS) {
+                if (layer.type === Consts.layerType.WMS) {
                     if (layer.getVisibility() && layer.names.length > 0) {
                         visibleLayers = true;
                         break;
@@ -123,9 +123,9 @@ TC.filter = filter;
                 if (services.length) {
                     self.insertLinks();
                 }
-                self.div.querySelector(`.${self.CLASS}-coords`).classList.add(TC.Consts.classes.HIDDEN);
+                self.div.querySelector(`.${self.CLASS}-coords`).classList.add(Consts.classes.HIDDEN);
                 if (!self.info || !self.info.services.length) {
-                    self.map.toast(self.getLocaleString('query.msgNoResults'), { type: TC.Consts.msgType.INFO });
+                    self.map.toast(self.getLocaleString('query.msgNoResults'), { type: Consts.msgType.INFO });
                     return;
                 }
                 self.displayResults();
