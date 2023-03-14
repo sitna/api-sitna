@@ -14,7 +14,7 @@
 }
 
 /* búsqueda de direcciones */
-.panel-content .tc-ctl-btn, .panel-content .tc-ctl-btn::after, .panel-content .tc-ctl-btn::before {
+.tc-panel-content .tc-ctl-btn, .tc-panel-content .tc-ctl-btn::after, .tc-panel-content .tc-ctl-btn::before {
     box-sizing: content-box;
 }
 /* miniaturas de los mapas de fondo */
@@ -76,4 +76,28 @@ input[type="search"] {
 
 .tooltip.top > .tooltip-arrow, .tooltip > .tooltip-inner {
     border-top-color: #eee !important;
+}
+
+.tc-ctl-share div.tc-ctl-share-qr-dialog .modal-dialog {
+    width: 340px;
+}
+
+.tc-ctl-share button.form-control {
+    width: 70px;
+}
+
+.tc-ctl-sb, .tc-ctl-sb *, .tc-ctl-sv-btn-close {
+    box-sizing: content-box;
+}
+
+.tc-ctl input[type=checkbox]:focus {
+    outline-offset: 0px;
+}
+
+.tc-ctl.tc-ctl-sb, .tc-ctl.tc-ctl-sb * {
+    box-sizing: content-box;
+}
+
+.tc-ctl-sb {
+    height: auto
 }
