@@ -1,0 +1,32 @@
+﻿sitna-measurement.tc-ctl-msmt {
+    padding: 0;
+}
+
+sitna-measurement .tc-ctl-msmt-box {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 2em;
+    margin: 0.5em 0 0.5em 0;
+    border: 1px solid var(--sec-divider-color);
+    border-radius: var(--border-radius);
+    background-color: var(--main-bg-color);
+    text-align: left;
+    padding: 0.3em;
+    box-sizing: border-box;
+}
+
+sitna-measurement .tc-ctl-msmt-txt {
+    flex-grow: 1;
+    line-height: 1.5em;
+}
+
+sitna-measurement .tc-ctl-msmt-txt-elm {
+    white-space: nowrap;
+}
+
+sitna-measurement .tc-ctl-msmt-box sitna-toggle {
+    font-size: 1em;
+    margin-right: 0;
+}
