@@ -22,6 +22,7 @@ TC.control = {};
 TC.capabilities = {};
 TC.capabilitiesWFS = {};
 TC.describeFeatureType = {};
+TC.tool = {};
 
 TC.cache = {};
 
@@ -113,20 +114,20 @@ var _showLoadFailedError = function (url) {
         stack = error && error.stack ? error.stack : error.toString();
     }
 
-    const mapObj = TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
+    const mapObj = TC.Map.get(document.querySelector('.' + SITNA.Consts.classes.MAP));
     const subject = "Error al cargar " + url;
     const body = TC.Util.getLocaleString(mapObj ? mapObj.options.locale : 'es-ES', "urlFailedToLoad", { url: url });
 
     // tostada sin la pila
     TC.error(
         body,
-        [TC.Consts.msgErrorMode.TOAST],
+        [SITNA.Consts.msgErrorMode.TOAST],
         subject);
     // email con pila
     TC.error(
         `${body}. Pila de la llamada al recurso: 
 ${stack && stack.length > 0 ? stack : ""}`,
-        [TC.Consts.msgErrorMode.EMAIL],
+        [SITNA.Consts.msgErrorMode.EMAIL],
         subject);
 };
 
@@ -136,7 +137,7 @@ TC.syncLoadJS = function (url) {
         req.open("GET", url, false); // 'false': synchronous.
         var result;
 
-        req.onreadystatechange = function (e) {
+        req.onreadystatechange = function (_e) {
             if (req.readyState === 4) {
                 if (req.status === 404) {
                     result = false;
@@ -185,7 +186,7 @@ TC.syncLoadJS = function (url) {
 };
 
 TC.loadJSInOrder = function (condition, url, callback) {
-    TC.loadJS(condition, url, callback, true);
+    return TC.loadJS(condition, url, callback, true);
 };
 
 const addCrossOriginAttr = function (path, scriptEl) {
@@ -194,83 +195,88 @@ const addCrossOriginAttr = function (path, scriptEl) {
     }
 };
 
-TC.loadJS = function (condition, url, callback, inOrder, notCrossOrigin) {
-    if (arguments.length < 4) {
-        inOrder = false;
-    }
-
-    var urls = Array.isArray(url) ? url : [url];
-    urls = urls.map(function (elm) {
-        if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensión y es nuestro se la ponemos según el entorno
-            return elm + (TC.isDebug ? '.js' : '.min.js');
-        }
-        return elm;
-    });
-
-    if (condition) {
-        urls = urls instanceof Array ? urls : [urls];
-
-        var name = "";
-        const getName = function (path) {
-            return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
-        };
-        if (urls.length > 1) {
-            var toReduce = urls.slice(0).filter(function (path, index) {
-                if (loadjs.isDefined(getName(path))) {
-                    urls.splice(index, 1);
-                    loadjs.ready(getName(path), callback);
-                    return false;
-                } else {
-                    return true;
-                }
-            });
-            if (toReduce.length === 1) {
-                name = getName(toReduce[0]);
-            } else if (toReduce.length > 0) {
-                name = toReduce.reduce(function (prev, curr) {
-                    return getName(prev) + "_" + getName(curr);
-                });
+TC.loadJS = function (condition, url, callback, inOrder=false, notCrossOrigin) {
+    return new Promise(function (resolve, _reject) {
+        const endFn = function () {
+            if (TC.Util.isFunction(callback)) {
+                callback();
             }
-        } else {
-            name = getName(urls[0]);
-        }
+            resolve();
+        };
 
-        if (name.length > 0) {
-            if (!loadjs.isDefined(name)) {
-                var options = {
-                    async: !inOrder,
-                    numRetries: 1
-                };
+        var urls = Array.isArray(url) ? url : [url];
+        urls = urls.map(function (elm) {
+            if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensión y es nuestro se la ponemos según el entorno
+                return elm + (TC.isDebug ? '.js' : '.min.js');
+            }
+            return elm;
+        });
 
-                if (!notCrossOrigin && !TC.Util.detectIE()) {
-                    options.before = addCrossOriginAttr;
-                }
+        if (condition) {
+            urls = urls instanceof Array ? urls : [urls];
 
-                loadjs(urls, name, options);
-                loadjs.ready(name, {
-                    success: function () {
-                        callback();
-                    },
-                    error: function (pathsNotFound) {
-                        _showLoadFailedError(pathsNotFound);
+            var name = "";
+            const getName = function (path) {
+                return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
+            };
+            if (urls.length > 1) {
+                var toReduce = urls.slice(0).filter(function (path, index) {
+                    if (loadjs.isDefined(getName(path))) {
+                        urls.splice(index, 1);
+                        loadjs.ready(getName(path), endFn);
+                        return false;
+                    } else {
+                        return true;
                     }
                 });
+                if (toReduce.length === 1) {
+                    name = getName(toReduce[0]);
+                } else if (toReduce.length > 0) {
+                    name = toReduce.reduce(function (prev, curr) {
+                        return getName(prev) + "_" + getName(curr);
+                    });
+                }
             } else {
-                // Esto vuelve a añadir el script al head si se está pidiendo un script cargado previamente.
-                //urls.forEach(function (url) {
-                //    const urlObj = new URL(url, location.href);
-                //    const script = Array.from(document.scripts).filter((scr) => scr.src === urlObj.href)[0];
-                //    if (script) {
-                //        document.head.appendChild(script.cloneNode());
-                //    }
-                //});
-                loadjs.ready(name, callback);
+                name = getName(urls[0]);
+            }
+
+            if (name.length > 0) {
+                if (!loadjs.isDefined(name)) {
+                    var options = {
+                        async: !inOrder,
+                        numRetries: 1
+                    };
+
+                    if (!notCrossOrigin && !TC.Util.detectIE()) {
+                        options.before = addCrossOriginAttr;
+                    }
+
+                    loadjs(urls, name, options);
+                    loadjs.ready(name, {
+                        success: function () {
+                            endFn();
+                        },
+                        error: function (pathsNotFound) {
+                            _showLoadFailedError(pathsNotFound);
+                        }
+                    });
+                } else {
+                    // Esto vuelve a añadir el script al head si se está pidiendo un script cargado previamente.
+                    //urls.forEach(function (url) {
+                    //    const urlObj = new URL(url, location.href);
+                    //    const script = Array.from(document.scripts).filter((scr) => scr.src === urlObj.href)[0];
+                    //    if (script) {
+                    //        document.head.appendChild(script.cloneNode());
+                    //    }
+                    //});
+                    loadjs.ready(name, endFn);
+                }
             }
         }
-    }
-    else {
-        callback();
-    }
+        else {
+            endFn();
+        }
+    });
 };
 
 TC.loadCSS = function (url) {
@@ -344,11 +350,11 @@ TC.ajax = function (options) {
                     try {
                         let responseData;
                         switch (options.responseType) {
-                            case TC.Consts.mimeType.JSON:
+                            case SITNA.Consts.mimeType.JSON:
                                 //URI: Compruebo que la respuesta no es un XML de excepción
                                 responseData = await response.json();
                                 break;
-                            case TC.Consts.mimeType.XML:
+                            case SITNA.Consts.mimeType.XML:
                                 responseData = await response.text();
                                 responseData = new DOMParser().parseFromString(responseData, 'application/xml');
                                 break;
@@ -376,12 +382,12 @@ TC.ajax = function (options) {
 
 var projectionDataCache = {};
 
-TC.getProjectionData = function (options) {
+TC.getProjectionData = async function (options) {
     options = options || {};
     const crs = options.crs || '';
     const match = crs.match(/\d{4,5}$/g);
     let code = match ? match[0] : '';
-    const url = TC.Consts.url.EPSG + '?format=json&q=' + code;
+    const url = SITNA.Consts.url.EPSG + '?format=json&q=' + code;
     let projData = projectionDataCache[code];
     if (projData) {
         if (options.sync) {
@@ -392,7 +398,7 @@ TC.getProjectionData = function (options) {
     if (options.sync) {
         let result;
         const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function (e) {
+        xhr.onreadystatechange = function (_e) {
             if (xhr.readyState == 4) {
                 if (xhr.status == 404) {
                     result = false;
@@ -415,15 +421,15 @@ TC.getProjectionData = function (options) {
         }
         return result;
     }
-    return new Promise(function (resolve, reject) {
-        const toolProxification = new TC.tool.Proxification(TC.proxify);
-        toolProxification.fetchJSON(url, options).then(function (data) {
-            projectionDataCache[code] = data;
-            resolve(data);
-        }).catch(function (error) {
-            reject(error instanceof Error ? error : Error(error));
-        });
-    });
+
+    if (!TC.tool.Proxification) {
+        TC.tool.Proxification = (await import('./TC/tool/Proxification')).default;
+    }
+
+    const proxificationTool = new TC.tool.Proxification(TC.proxify);
+    const data = await proxificationTool.fetchJSON(url, options);
+    projectionDataCache[code] = data;
+    return data;
 };
 
 TC.loadProjDef = function (options) {
@@ -583,10 +589,10 @@ const urlString = 'http://sitna.tracasa.es/';
 var touch;
 var inputTypeColor;
 var urlParser;
-TC.browserFeatures = {
+const browserFeatures = {
     touch: function () {
         if (touch === undefined) {
-            if (('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch) {
+            if (('ontouchstart' in window) || window.DocumentTouch && document instanceof window.DocumentTouch) {
                 touch = true;
                 return true;
             }
@@ -622,6 +628,7 @@ TC.browserFeatures = {
         return urlParser;
     }
 };
+TC.browserFeatures = browserFeatures;
 
 const pluses = /\+/g;
 function raw(s) {
@@ -670,3 +677,4 @@ TC.cookie = function (key, value, options) {
 };
 
 export default TC;
+export { browserFeatures };
