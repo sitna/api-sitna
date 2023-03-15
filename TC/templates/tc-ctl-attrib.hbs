@@ -1,5 +1,8 @@
 <div>
     <span>{{{api}}}</span>
+    <span><a href="https://github.com/sitna/api-sitna/blob/master/README{{#unless (eq lang "en-US")}}.es-ES{{/unless}}.md" class="tc-github" title="{{i18n "attributionGithubTooltip"}}" target="_blank">
+    API SITNA
+</a></span>
     {{#if mainData}} - {{i18n "data"}}:
         {{#if mainData.site}}
             <span> <a href="{{mainData.site}}" target="_blank">{{mainData.name}}</a></span>
