@@ -26,7 +26,7 @@ html, body {
         box-sizing: border-box;
     }
 
-    .tc-map.tc-collapsed .slide-panel {
+    .tc-map.tc-collapsed .tc-slide-panel {
         display: none;
     }
 
@@ -109,13 +109,6 @@ body {
         content: '\f019';
     }
 
-.alert {
-    padding: 6px 30px 6px 13px;
-    margin-bottom: 0;
-    border: none;
-    border-radius: 0;
-}
-
 header h1 {
     margin: 0;
 }
@@ -161,7 +154,3 @@ div.ol-viewport {
     bottom: 2px;
     z-index: 1;
 }
-
-    #qrcode > canvas {
-        display: none !important;
-    }
