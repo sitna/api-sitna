@@ -272,7 +272,6 @@
     font-size: 1em;
     color: #666;
     margin: 0.5em 0 0.2em 0;
-    text-transform: lowercase;
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-metadata ul {
@@ -370,8 +369,8 @@
 .tc-ctl-wlm .tc-ctl-wlm-tools.tc-expanded :nth-child(4) ~ sitna-button,
 .tc-ctl-wlm .tc-ctl-wlm-tools sitna-button:nth-child(5):nth-last-child(2) {
     visibility: visible;
-    width: 1.2em;
-    min-width: 1.2em;
+    width: 1.5em;
+    min-width: 1.5em;
     margin-left: 0.5em;
     margin-right: 0.5em;
 }
