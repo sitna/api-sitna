@@ -21,13 +21,6 @@
         width: 100%;
     }
 
-    .tc-ctl-search-list li span.highlight {
-        font-style: italic;
-        /*font-weight: bold;*/
-        color: #CB0000;
-    }
-
-
 .tc-ctl-search-list a {
     font-size: 95%;
 }
@@ -212,16 +205,16 @@ button.tc-ctl-btn.tc-ctl-search-share-btn {
         color: #971414;
     }
 
-    .tc-ctl-search .tc-ctl-search-list > li > span.header {
+    .tc-ctl-search .tc-ctl-search-list > li > span.tc-header {
         font-weight: bold;
         font-size: 90%;
     }
 
-    .tc-ctl-search .tc-ctl-search-list > li > span.header-color {
+    .tc-ctl-search .tc-ctl-search-list > li > span.tc-header-color {
         float: right;
         padding: 0em 1em;
     }
 
-        .tc-ctl-search .tc-ctl-search-list > li > span.header-color:after {
+        .tc-ctl-search .tc-ctl-search-list > li > span.tc-header-color:after {
             content: '\25a0';
         }
