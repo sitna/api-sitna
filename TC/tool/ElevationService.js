@@ -1,16 +1,17 @@
 ﻿/**
   * Opciones de servicio de obtención de elevaciones de puntos.
   * @typedef ElevationServiceOptions
-  * @see ElevationOptions
+  * @memberof SITNA
+  * @see SITNA.ElevationOptions
   * @property {string[]} [allowedGeometryTypes] - Si se establece, indica para qué geometrías se van a hacer consultas 
   * de elevación al servicio. Esto es conveniente por ejemplo si el servicio solo permite obtener elevaciones de un punto simple,
   * invalidándolo para la consulta si la geometría es un polígono o una línea. Los elementos del array tienen que ser cadenas 
-  * cuyos valores deben ser los definidos por {@link SITNA.Consts.geom}.
+  * cuyos valores deben ser los definidos por [SITNA.Consts.geom]{@link SITNA.Consts}.
   * @property {string} [googleMapsKey] - Valor de una clave válida de la API de Google Maps. Solamente es necesaria cuando 
-  * el valor de la propiedad `name` es {@link SITNA.Consts.elevationService.GOOGLE}.
+  * el valor de la propiedad `name` es [SITNA.Consts.elevationService.GOOGLE]{@link SITNA.Consts}.
   *
   * Puede obtener más información en el [sitio para desarrolladores de Google](https://developers.google.com/maps/documentation/javascript/get-api-key).
-  * @property {string} name - Nombre del servicio que queremos utilizar. Debe tener un valor de {@link SITNA.Consts.elevationService}.
+  * @property {string} name - Nombre del servicio que queremos utilizar. Debe tener un valor de [SITNA.Consts.elevationService]{@link SITNA.Consts}.
   * @property {string} [url] - URL del servicio. Cada servicio de elevaciones de puntos tiene asignada una URL por defecto, 
   * así que rara vez será necesario establecer esta propiedad.
   */
@@ -73,16 +74,16 @@ TC.tool.ElevationService = function (options) {
                         const data = {
                             process: options.process || self.process,
                             dataInputs: options.dataInputs,
-                            responseType: TC.Consts.mimeType.JSON,
+                            responseType: SITNA.Consts.mimeType.JSON,
                             version: options.serviceVersion || self.serviceVersion || '1.0.0',
                             output: options.output
                         };
-                        const contentType = typeof options.contentType === 'boolean' ? options.contentType : options.contentType || TC.Consts.mimeType.XML;
+                        const contentType = typeof options.contentType === 'boolean' ? options.contentType : options.contentType || SITNA.Consts.mimeType.XML;
                         TC.ajax({
                             url: self.url,
                             method: 'POST',
                             contentType: contentType,
-                            responseType: TC.Consts.mimeType.JSON,
+                            responseType: SITNA.Consts.mimeType.JSON,
                             data: options.body || TC.format.WPS.buildExecuteQuery(data)
                         }).then(function (response) {
                             resolve(response.data);
