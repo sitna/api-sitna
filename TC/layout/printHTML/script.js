@@ -13,8 +13,8 @@
     TC.loadJS(
         !TC._hbs || !TC._hbs.compile,
         [
-            TC.apiLocation + TC.Consts.url.TEMPLATING_FULL,
-            TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
+            TC.apiLocation + SITNA.Consts.url.TEMPLATING_FULL,
+            TC.apiLocation + SITNA.Consts.url.TEMPLATING_HELPERS
         ],
             function () {
                 var src = $('#print-preview-controls').html();

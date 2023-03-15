@@ -19,7 +19,7 @@ html, body {
     bottom: 0;
 }
 
-    .tc-map.tc-collapsed .slide-panel {
+    .tc-map.tc-collapsed .tc-slide-panel {
         display: none;
     }
 
