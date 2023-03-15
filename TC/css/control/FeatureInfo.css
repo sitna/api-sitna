@@ -75,7 +75,7 @@
     overflow-x: hidden;
 }
 
-.tc-ctl-finfo .tc-ctl-finfo-result table:not(.complexAttr) {
+.tc-ctl-finfo .tc-ctl-finfo-result table:not(.tc-complex-attr) {
     margin: 0.5em;
 }
 
@@ -205,7 +205,7 @@ audio.tc-audio-attr {
         transition: border .3s ease;
     }
 
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table:not(.complexAttr) {
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table:not(.tc-complex-attr) {
         cursor: zoom-in;
         outline: 0.2em var(--main-hl-color) solid;
     }
