@@ -519,11 +519,11 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         -webkit-animation: spin 2s infinite linear;
     }
 
-    .tc-ctl-lcat-loading-node.error {
+    .tc-ctl-lcat-loading-node.tc-error {
         color: #c9c9c9;
     }
 
-    .tc-ctl-lcat-loading-node.error:before {
+    .tc-ctl-lcat-loading-node.tc-error:before {
         animation: none;
         -webkit-animation: none;
         content: "\2bbf";
