@@ -1,10 +1,10 @@
 <h2>{{title}}</h2>
 <div class="tc-ctl-tctr-select">
     {{#each controls~}}
-    <label class="tc-ctl-tctr-tab tc-ctl-tctr-tab-{{@index}}"><input type="radio" name="{{../controlId}}-sel" value="{{@index}}" /><span>{{title}}</span></label>
+    <sitna-tab text="{{title}}" group="{{../controlId}}-sel" for="{{../controlId}}-sel-{{@index}}"{{#if ../deselectableTabs}} deselectable{{/if}}></sitna-tab>
     {{~/each}}
 </div>
 {{#each controls}}
-<div class="tc-ctl-tctr-elm tc-ctl-tctr-elm-{{@index}} tc-hidden">
+<div id="{{../controlId}}-sel-{{@index}}" class="tc-ctl-tctr-elm tc-ctl-tctr-elm-{{@index}} tc-hidden">
 </div>
 {{/each}}
