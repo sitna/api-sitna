@@ -187,103 +187,103 @@
 
 /*Pupurri*/
 
-.tc-ctl-popup table.complexAttr {
+.tc-ctl-popup table.tc-complex-attr {
     font-size: 100%;
     padding: 0;
     margin: 0;
     width:100%;
 }
 
-.tc-ctl-finfo ul.tc-ctl-finfo-features li table.complexAttr {
+.tc-ctl-finfo ul.tc-ctl-finfo-features li table.tc-complex-attr {
     box-shadow: none;
 }
 
-.tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table.complexAttr {
+.tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table.tc-complex-attr {
     outline: none;
 }
 
-.tc-ctl-finfo ul.tc-ctl-finfo-features li:not(.tc-checked) table.complexAttr,
-.tc-ctl-popup table.complexAttr {
+.tc-ctl-finfo ul.tc-ctl-finfo-features li:not(.tc-checked) table.tc-complex-attr,
+.tc-ctl-popup table.tc-complex-attr {
     border: none;
 }
 
-    .tc-ctl-finfo ul.tc-ctl-finfo-features li table.complexAttr *, .tc-ctl-popup table.complexAttr * {
+    .tc-ctl-finfo ul.tc-ctl-finfo-features li table.tc-complex-attr *, .tc-ctl-popup table.tc-complex-attr * {
         background-color: transparent;
         padding: 0;
         box-sizing: border-box
     }
 
-    .tc-ctl-popup table.complexAttr table,
-    .tc-ctl-popup table.complexAttr tbody,
-    .tc-ctl-popup table.complexAttr table.complexAttr tr,
-    .tc-ctl-popup table.complexAttr td {
+    .tc-ctl-popup table.tc-complex-attr table,
+    .tc-ctl-popup table.tc-complex-attr tbody,
+    .tc-ctl-popup table.tc-complex-attr table.tc-complex-attr tr,
+    .tc-ctl-popup table.tc-complex-attr td {
         width: 100%;
         display: block;
     }
 
-.tc-ctl-finfo ul.tc-ctl-finfo-features li .complexAttr table td, .tc-ctl-popup .complexAttr table td {
+.tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table td, .tc-ctl-popup .tc-complex-attr table td {
     padding: 3px 3px 3px 7px;
 }
 
-.tc-ctl-popup .complexAttr input {
+.tc-ctl-popup .tc-complex-attr input {
     display: none;
 }
 
-.tc-ctl-popup .complexAttr label {
+.tc-ctl-popup .tc-complex-attr label {
     cursor: pointer;
     margin-right: .5em;
     line-height: 1.3em;
 }
 
-.tc-ctl-popup .complexAttr input:checked ~ div > table {
+.tc-ctl-popup .tc-complex-attr input:checked ~ div > table {
     display: inline-block;
 }
 
-.tc-ctl-popup .complexAttr input:not(checked) ~ div > table {
+.tc-ctl-popup .tc-complex-attr input:not(checked) ~ div > table {
     display: none;
 }
 
-.tc-ctl-popup .complexAttr table tr {
+.tc-ctl-popup .tc-complex-attr table tr {
     border-bottom: solid #999 1px;
 }
 
-    .tc-ctl-popup .complexAttr table tr:last-of-type {
+    .tc-ctl-popup .tc-complex-attr table tr:last-of-type {
         border-bottom: none;
     }
 
-.tc-ctl-popup .complexAttr .title {
+.tc-ctl-popup .tc-complex-attr .tc-title {
     font-weight: bold;
 }
 
-.tc-ctl-popup .complexAttr .plus:before {
+.tc-ctl-popup .tc-complex-attr .tc-plus:before {
     font-family: FontAwesome;
     content: "\f0fe";
     font-size: 1em;
 }
 
-.tc-ctl-popup .complexAttr input:checked ~ div > .plus:before {
+.tc-ctl-popup .tc-complex-attr input:checked ~ div > .tc-plus:before {
     content: "\f146";
 }
 
-.tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .complexAttr table, .tc-ctl-popup table.complexAttr table, .tc-ctl-popup div.complexAttr table {
+.tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table, .tc-ctl-popup table.tc-complex-attr table, .tc-ctl-popup div.tc-complex-attr table {
     border: solid #999 1px;
     border-radius: 3px;
     box-sizing: border-box;
 }
 
-.tc-ctl-popup table.complexAttr .key {
+.tc-ctl-popup table.tc-complex-attr .tc-key {
     display: table-cell;
 }
 
-.tc-ctl-popup table.complexAttr .value {
+.tc-ctl-popup table.tc-complex-attr .tc-value {
     display: table-cell;
 }
 
-.tc-ctl-finfo ul.tc-ctl-finfo-features li table.complexAttr th.key, .tc-ctl-popup table.complexAttr th.key {
+.tc-ctl-finfo ul.tc-ctl-finfo-features li table.tc-complex-attr th.tc-key, .tc-ctl-popup table.tc-complex-attr th.tc-key {
     padding-right: 0.5em;
     padding-left: 0;
 }
 
-.tc-ctl-finfo ul.tc-ctl-finfo-features li table.complexAttr table th.key, .tc-ctl-popup table.complexAttr table th.key {
+.tc-ctl-finfo ul.tc-ctl-finfo-features li table.tc-complex-attr table th.tc-key, .tc-ctl-popup table.tc-complex-attr table th.tc-key {
     padding-left: 0.5em;
 }
