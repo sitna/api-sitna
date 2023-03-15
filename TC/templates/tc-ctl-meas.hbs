@@ -1,12 +1,13 @@
 <h2>{{i18n "measure"}}</h2>
 <div class="tc-ctl-meas-select">
-    <label class="tc-ctl-meas-btn-len"><input type="radio" name="{{controlId}}-mode" value="polyline" /><span>{{i18n "length"}}</span></label><label class="tc-ctl-meas-btn-area"><input type="radio" name="{{controlId}}-mode" value="polygon" /><span>{{i18n "areaAndPerimeter"}}</span></label>
+    <sitna-tab class="tc-ctl-meas-select-mode-polyline" text="{{i18n "length"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-polyline"></sitna-tab>
+    <sitna-tab class="tc-ctl-meas-select-mode-polygon" text="{{i18n "areaAndPerimeter"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-polygon"></sitna-tab>
 </div>
-<div class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
-    <div class="tc-ctl-meas-line"></div>
-    <div class="tc-ctl-meas-txt">{{i18n "length"}}: <span class="tc-ctl-meas-val-len"></span></div>
+<div id="{{controlId}}-mode-polyline" class="tc-ctl-meas-mode tc-ctl-meas-len tc-hidden">
+    <sitna-draw mode="polyline" measurer borrowed-layer{{#if singleSketch}} single-sketch{{/if}}{{#if stylable}} stylable{{/if}}></sitna-draw>
+    <sitna-measurement mode="polyline"></sitna-measurement>
 </div>
-<div class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
-    <div class="tc-ctl-meas-polygon"></div>
-    <div class="tc-ctl-meas-txt">{{i18n "area"}}: <span class="tc-ctl-meas-val-area"></span>, {{i18n "perimeter"}}: <span class="tc-ctl-meas-val-peri"></span></div>
+<div id="{{controlId}}-mode-polygon" class="tc-ctl-meas-mode tc-ctl-meas-area tc-hidden">
+    <sitna-draw mode="polygon" measurer borrowed-layer{{#if singleSketch}} single-sketch{{/if}}{{#if stylable}} stylable{{/if}}></sitna-draw>
+    <sitna-measurement mode="polygon"></sitna-measurement>
 </div>
