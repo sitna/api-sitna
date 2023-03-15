@@ -80,8 +80,10 @@
 </div>
 {{#if featureCount}}
     {{#if (gt featureCount 1)}}
-<button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-prev">{{i18n "previous"}}</button>
-<div class="tc-ctl-finfo-counter"><span class="tc-ctl-finfo-counter-current"></span>/{{featureCount}}</div>
-<button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-next">{{i18n "next"}}</button>
+<div class="tc-ctl-finfo-counter">
+    <button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-prev">{{i18n "previous"}}</button>
+    <div class="tc-ctl-finfo-counter-pages"><span class="tc-ctl-finfo-counter-current"></span>/{{featureCount}}</div>
+    <button type="button" class="tc-ctl-btn tc-ctl-finfo-btn-next">{{i18n "next"}}</button>
+    </div>
     {{/if}}
-{{/if}}
+    {{/if}}
