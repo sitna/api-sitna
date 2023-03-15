@@ -17,17 +17,9 @@ sitna-file-edit input[type="file"] {
 }
 
 sitna-file-edit ul.tc-ctl-file-recent {
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: 8em;
+    max-height: 12em;
     height: auto;
-    border-radius: var(--border-radius);
-    border: 1px solid #CCC;
-    padding: 0;
-    list-style: none;
     margin-top: 0.5em;
-    box-sizing: border-box;
-    scroll-behavior: smooth;
 }
 
     sitna-file-edit ul.tc-ctl-file-recent:empty {
@@ -44,7 +36,7 @@ sitna-file-edit ul.tc-ctl-file-recent {
     }
 
         sitna-file-edit ul.tc-ctl-file-recent > li h3 {
-            margin: 0.5em;
+            margin: 0 0.5em 0 0.5em;
             font-size: 1em;
             font-weight: bold;
         }
@@ -63,8 +55,12 @@ sitna-file-edit ul.tc-ctl-file-recent {
     display: none;
 }
 
-.tc-ctl-fedit-panel .tc-ctl-edit .tc-ctl-edit-btn-other {
-    display: none;
+.tc-ctl-fedit-panel .tc-ctl-fedit-edit {
+    padding: 0.4em;
+}
+
+.tc-ctl-fedit-panel .tc-ctl-fedit-edit sitna-edit {
+    padding: 0;
 }
 
 .tc-ctl-fedit-panel .tc-ctl-fedit-actions {
