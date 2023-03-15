@@ -4,91 +4,27 @@
 
 .tc-ctl-meas-select {
     padding-top: 0.5em;
-    margin-bottom: 0.5em;
+    margin-bottom: 0.8em;
+    display: flex;
+    display: flex;
+    width: 100%;
 }
 
-.tc-ctl-meas .tc-ctl-meas-select.tc-hidden {
-    margin-top: 0.5em;
-}
-
-    .tc-ctl-meas-select label {
-        position: relative;
-        display: inline-block;
-        height: 2em;
-        margin: 0.2em 0;
-        width: calc(50% - 1px);
+    .tc-ctl-meas-select sitna-tab {
+        width: 50%;
     }
 
-    .tc-ctl-meas-select input[type=radio] {
-        display: none;
-    }
-
-        .tc-ctl-meas-select input[type=radio] ~ span {
-            position: absolute;
-            display: block;
-            width: 100%;
-            height: 100%;
-            line-height: 2em;
-            text-align: center;
-            border: 1px solid var(--tab-border-color);
-            background-color: var(--main-bg-color);
-            color: var(--tab-color);
-            cursor: pointer;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .tc-ctl-meas-select sitna-tab.tc-ctl-meas-select-mode-polyline:before {
+            content: '\e90b';
         }
 
-        .tc-ctl-meas-select input[type=radio]:checked ~ span {
-            border-color: var(--main-hl-color);
-            color: var(--main-hl-color);
-            z-index: 10007;
+        .tc-ctl-meas-select sitna-tab.tc-ctl-meas-select-mode-polygon:before {
+            content: '\e90c';
         }
 
-    .tc-ctl-meas-select label:first-child input[type=radio] ~ span {
-        border-top-left-radius: var(--border-radius);
-        border-bottom-left-radius: var(--border-radius);
+    .tc-ctl-meas .tc-ctl-meas-select.tc-hidden {
+        margin-top: 0.5em;
     }
-
-    .tc-ctl-meas-select label:last-child input[type=radio] ~ span {
-        border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
-    }
-
-.tc-ctl-meas-select label input[type=radio]:checked ~ span {
-    border-bottom-color: transparent;
-}
-
-    .tc-ctl-meas-select label:first-child input[type=radio]:checked ~ span {
-        border-bottom-left-radius: 0;
-    }
-
-    .tc-ctl-meas-select label:last-child input[type=radio]:checked ~ span {
-        border-bottom-right-radius: 0;
-    }
-
-    .tc-ctl-meas-select input[type=radio] ~ span:before {
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        text-align: left;
-        font-family: mapskin;
-        margin-left: -0.2em;
-        margin-right: 0.2em;
-    }
-
-label.tc-ctl-meas-btn-pt span:before {
-    content: '\e045';
-}
-
-label.tc-ctl-meas-btn-len span:before {
-    content: '\e046';
-}
-
-label.tc-ctl-meas-btn-area span:before {
-    content: '\e047';
-}
 
 .tc-ctl-meas-txt {
     margin: 0.5em 0 0.5em 0;
