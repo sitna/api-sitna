@@ -137,10 +137,6 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
         z-index: 100000;
     }
 
-    .tc-map.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode > canvas {
-        display: none !important;
-    }
-
 .tc-ctl-prnmap-btn-pdf {
     position: absolute;
     width: 1em;
@@ -173,49 +169,13 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     float: left;
 }
 
-.tc-ctl-prnmap-cnt input[type=checkbox]:checked + label:before {
-    content: "\2611";
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox]:disabled + label:before {
-    content: "\2610";
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox]:disabled + label {    
-    color: var(--disabled-text-color);
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox] + label:before {
-    font-size: 15px;
-    display: inline-block;
-    content: "\2610";
-    width: 18px;
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox] + label.tc-loading:after {
+.tc-ctl-prnmap-cnt label.tc-loading:after {
     font-family: var(--icon-font-family);
     content: var(--icon-spinner);
     display: inline-block;
     margin-left: 0.5em;
     animation: spin 2s infinite linear;
     -webkit-animation: spin 2s infinite linear;
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox] + label:before {
-    font-family: FontAwesome;
-    content: "\f096";
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox]:checked + label:before {
-    content: "\f046";
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox]:disabled + label:before {
-    content: "\f096";
-}
-
-.tc-ctl-prnmap-cnt input[type=checkbox]:disabled + label {
-    color: var(--disabled-text-color);
 }
 
 .tc-map.tc-collapsed .tc-ctl-prnmap-tools {
