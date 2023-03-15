@@ -3,23 +3,31 @@
     height: 2em;
 }
 
-:host[variant="link"] {
+:host([variant="link"]) {
     display: inline;
     height: auto;
 }
     
-:host[variant="minimal"] {
-    display: inline;
+:host([variant="minimal"]) {
+    display: inline-block;
     width: 2em;
     height: 2em;
 }
 
-:host[hidden] {
-    display: none
+:host([variant="minimal"][disabled]) {
+    background-color: transparent;
+    display: inline-block;
+    width: 2em;
+    height: 2em;
+}
+
+:host([hidden]) {
+    display: none;
 }
 
 button {
     position: relative;
+    display: block;
     width: 100%;
     height: 100%;
     font-size: 1em;
@@ -36,6 +44,10 @@ button {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+button[data-icon="help"] {
+    cursor: help;
 }
 
 :host(:first-of-type) button {
@@ -77,6 +89,10 @@ button.minimal[data-icon-text]::before {
 
 button::before {
     font-family: var(--icon-font-family);
+    content: var(--icon-text);
+}
+
+button[data-icon-text]::before {
     content: attr(data-icon-text);
 }
 
@@ -98,6 +114,10 @@ button[data-icon="edit"]::before {
 
 button[data-icon="share"]::before {
     content: var(--icon-share);
+}
+
+button[data-icon="help"]::before {
+    content: var(--icon-help);
 }
 
 button::before:empty {
@@ -140,6 +160,14 @@ button.minimal {
         line-height: 1.5em;
         left: 0;
         top: 0;
+    }
+
+button.minimal:disabled {
+    background-color: transparent;
+}
+
+    button.minimal:disabled::before {
+        color: var(--glyph-disabled-color);
     }
 
 button.link {
