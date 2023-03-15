@@ -3,80 +3,33 @@
     display: flex;
 }
 
-.tc-ctl-edit .tc-ctl-edit-mode label {
-    position: relative;
-    display: inline-block;
-    height: 2em;
-    flex-grow: 1;
-    margin: 0.2em 0;
-}
-
-.tc-ctl-edit .tc-ctl-edit-mode input[type=radio] {
-    display: none;
-}
-
-    .tc-ctl-edit .tc-ctl-edit-mode input[type=radio] ~ span {
-        position: absolute;
-        display: block;
-        width: 100%;
-        height: 100%;
-        line-height: 2em;
-        text-align: center;
-        border-radius: var(--border-radius);
-        border: 1px solid var(--tab-border-color);
-        background-color: var(--main-bg-color);
-        color: var(--tab-color);
-        cursor: pointer;
-    }
-
-    .tc-ctl-edit .tc-ctl-edit-mode input[type=radio]:disabled ~ span {
-        color: var(--tab-disabled-color);
-        border-top: 1px solid var(--tab-disabled-border-color);
-        border-bottom: 1px solid var(--tab-disabled-border-color);
-        cursor: default;
-    }
-
-    .tc-ctl-edit .tc-ctl-edit-mode input[type=radio] ~ span:before {
-        position: absolute;
-        font-family: mapskin;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-modify input[type=radio] ~ span:before {
-    text-indent: 0;
+.tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-modify:before {
     font-family: var(--icon-font-family);
     content: var(--icon-select);
 }
 
-.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-point input[type=radio] ~ span:before {
-    text-indent: 0;
+.tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-point:before {
     letter-spacing: 0.2em;
     font-size: 1.2em;
     font-family: var(--icon-font-family);
     content: '\e90a';
 }
 
-.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-line input[type=radio] ~ span:before {
-    text-indent: 0;
+.tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-line:before {
     letter-spacing: 0.2em;
     font-size: 1.2em;
     font-family: var(--icon-font-family);
     content: '\e90b';
 }
 
-.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-polygon input[type=radio] ~ span:before {
-    text-indent: 0;
+.tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-polygon:before {
     letter-spacing: 0.2em;
     font-size: 1.2em;
     font-family: var(--icon-font-family);
     content: '\e90c';
 }
 
-.tc-ctl-edit .tc-ctl-edit-mode label.tc-ctl-edit-btn-other input[type=radio] ~ span:before {
-    text-indent: 0;
+.tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-other:before {
     content: '\e032'
 }
 
@@ -95,29 +48,6 @@
     border-bottom-left-radius: var(--border-radius);
 }
 
-    label.tc-ctl-edit-btn-modify input[type=radio] ~ span {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line input[type=radio] ~ span, label.tc-ctl-edit-btn-polygon input[type=radio] ~ span {
-    border-radius: 0;
-}
-
-    label.tc-ctl-edit-btn-other input[type=radio] ~ span {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-
-.tc-ctl-edit-mode input[type=radio]:checked ~ span {
-    border-color: var(--tab-border-hl-color);
-    border-bottom-right-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-color: var(--main-bg-color);
-    color: var(--main-hl-color);
-    z-index: 10007;
-}
-
 .tc-ctl-edit {
     text-align: center;
 }
@@ -130,17 +60,20 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
         display: none;
     }
 
-    .tc-ctl-edit-modify, .tc-ctl-edit .tc-ctl.tc-ctl-edit-point, .tc-ctl-edit .tc-ctl.tc-ctl-edit-line, .tc-ctl-edit .tc-ctl.tc-ctl-edit-polygon, .tc-ctl-edit .tc-ctl.tc-ctl-edit-other {
-        /*position: fixed;*/
-        box-sizing: border-box;
-        background-color: var(--main-bg-color);
-        padding-top: 0.5em;
-        top: 0;
-        left: 0;
-        width: 100%;
-        overflow: hidden;
-        transition: all .2s ease;
-    }
+.tc-ctl-edit-modify sitna-modify, .tc-ctl-edit .tc-ctl-edit-point sitna-draw, .tc-ctl-edit .tc-ctl-edit-line sitna-draw, .tc-ctl-edit .tc-ctl-edit-polygon sitna-draw, .tc-ctl-edit .tc-ctl.tc-ctl-edit-other {
+    /*position: fixed;*/
+    box-sizing: border-box;
+    padding-top: 0.5em;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    transition: all .2s ease;
+}
+
+.tc-ctl-edit sitna-draw .tc-ctl-draw-tools {
+    margin-top: 0.5em;
+}
 
 .tc-ctl-edit-tools.tc-hidden {
     position: absolute;
@@ -152,25 +85,25 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
     }
 
 .tc-ctl-edit .tc-ctl-edit-modify {
-    display: block;
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
-    padding-left: 0;
-    padding-right: 0;
-    padding-bottom: 0;
 }
 
-.tc-ctl-edit-modify > button.tc-ctl-btn {
-    width: calc(33.333% - 0.2em);
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-btn {
+    width: calc(25% - 0.2em);
 }
 
-    .tc-ctl-edit-modify > button.tc-ctl-mod-btn-text, .tc-ctl-edit-modify > button.tc-ctl-mod-btn-join, .tc-ctl-edit-modify > button.tc-ctl-mod-btn-split {
-        display: none;
-    }
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-text,
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-join,
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-split {
+    display: none;
+}
 
-    .tc-ctl-edit-modify > button.tc-ctl-mod-btn-attr {
-        border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
-    }
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-attr {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
 
 .tc-ctl-mod-attr-body select.tc-combo {
     box-sizing: border-box;
@@ -329,4 +262,8 @@ label.tc-ctl-edit-btn-point input[type=radio] ~ span, label.tc-ctl-edit-btn-line
     padding: 1em;
     text-align: right;
     box-sizing: border-box;
+}
+
+sitna-edit sitna-modify .tc-ctl-mod-style.tc-hidden {
+    display:none;
 }
