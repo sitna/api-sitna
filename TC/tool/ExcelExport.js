@@ -1,4 +1,6 @@
-﻿TC.tool = TC.tool || {};
+﻿import TC from '../../TC';
+import Util from '../Util';
+TC.tool = TC.tool || {};
 TC.tool.ExcelExport = function () {
 
     //var EOL = '\r\n';
@@ -108,7 +110,7 @@ TC.tool.ExcelExport = function () {
         if (Array.isArray(responseData)) {
             arrData = responseData;
         }
-        else if (TC.Util.isFunction(responseData)) {
+        else if (Util.isFunction(responseData)) {
             arrData = responseData();
         }
         const object2Table = function (obj, str) {
@@ -285,3 +287,6 @@ TC.tool.ExcelExport.prototype.Save = function (filename, rows, title) {
     }
 
 };
+
+const ExcelExport = TC.tool.ExcelExport;
+export default ExcelExport;
