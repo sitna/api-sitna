@@ -2,7 +2,7 @@
   "i18n": true,
   "controls": {
     "controlContainer": {
-      "div": "ccontainer",
+      "div": "tc-slot-ccontainer",
       "controls": [
         {
           "position": "left",
@@ -25,25 +25,25 @@
       ]
     },
     "basemapSelector": {
-      "div": "bms"
+      "div": "tc-slot-bms"
     },
     "TOC": {
-      "div": "toc"
+      "div": "tc-slot-toc"
     },
     "legend": {
-      "div": "legend"
+      "div": "tc-slot-legend"
     },
     "coordinates": {
-      "div": "coordinates"
+      "div": "tc-slot-coordinates"
     },
     "search": {
-      "div": "search"
+      "div": "tc-slot-search"
     },
     "measure": {
-      "div": "measure"
+      "div": "tc-slot-measure"
     },
     "overviewMap": {
-      "div": "ovmap",
+      "div": "tc-slot-ovmap",
       "layer": "mapabase"
     },
     "popup": true,
