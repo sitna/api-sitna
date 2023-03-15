@@ -1,7 +1,5 @@
+import TC from '../../TC';
 import Consts from '../Consts';
-
-var TC = TC || {};
-TC.Consts = Consts;
 
 TC.tool = TC.tool || {};
 
@@ -53,7 +51,7 @@ TC.tool.Proxification = function (proxy, options) {
             }
             if (support.arrayBuffer) {
                 var viewClasses = ['[object Int8Array]', '[object Uint8Array]', '[object Uint8ClampedArray]', '[object Int16Array]', '[object Uint16Array]', '[object Int32Array]', '[object Uint32Array]', '[object Float32Array]', '[object Float64Array]']
-                var isDataView = function (obj) { return obj && DataView.prototype.isPrototypeOf(obj) }
+                var isDataView = function (obj) { return obj && Object.prototype.isPrototypeOf.call(DataView.prototype, obj) }
                 var isArrayBufferView = ArrayBuffer.isView || function (obj) { return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1 }
             }
             function normalizeName(name) {
@@ -90,9 +88,19 @@ TC.tool.Proxification = function (proxy, options) {
                 name = normalizeName(name)
                 return this.has(name) ? this.map[name] : null
             }
-            Headers.prototype.has = function (name) { return this.map.hasOwnProperty(normalizeName(name)) }
-            Headers.prototype.set = function (name, value) { this.map[normalizeName(name)] = normalizeValue(value) }
-            Headers.prototype.forEach = function (callback, thisArg) { for (var name in this.map) { if (this.map.hasOwnProperty(name)) { callback.call(thisArg, this.map[name], name, this) } } }
+            Headers.prototype.has = function (name) {
+                return Object.prototype.hasOwnProperty.call(this.map, normalizeName(name));
+            }
+            Headers.prototype.set = function (name, value) {
+                this.map[normalizeName(name)] = normalizeValue(value);
+            }
+            Headers.prototype.forEach = function (callback, thisArg) {
+                for (var name in this.map) {
+                    if (Object.prototype.hasOwnProperty.call(this.map, name)) {
+                        callback.call(thisArg, this.map[name], name, this);
+                    }
+                }
+            }
             Headers.prototype.keys = function () {
                 var items = []
                 this.forEach(function (value, name) { items.push(name) })
@@ -148,11 +156,33 @@ TC.tool.Proxification = function (proxy, options) {
                 this.bodyUsed = !1
                 this._initBody = function (body) {
                     this._bodyInit = body
-                    if (!body) { this._bodyText = '' } else if (typeof body === 'string') { this._bodyText = body } else if (support.blob && Blob.prototype.isPrototypeOf(body)) { this._bodyBlob = body } else if (support.formData && FormData.prototype.isPrototypeOf(body)) { this._bodyFormData = body } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) { this._bodyText = body.toString() } else if (support.arrayBuffer && support.blob && isDataView(body)) {
-                        this._bodyArrayBuffer = bufferClone(body.buffer)
-                        this._bodyInit = new Blob([this._bodyArrayBuffer])
-                    } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) { this._bodyArrayBuffer = bufferClone(body) } else { throw new Error('unsupported BodyInit type') }
-                    if (!this.headers.get('content-type')) { if (typeof body === 'string') { this.headers.set('content-type', 'text/plain;charset=UTF-8') } else if (this._bodyBlob && this._bodyBlob.type) { this.headers.set('content-type', this._bodyBlob.type) } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) { this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8') } }
+                    if (!body) {
+                        this._bodyText = '';
+                    } else if (typeof body === 'string') {
+                        this._bodyText = body;
+                    } else if (support.blob && Object.prototype.isPrototypeOf.call(Blob.prototype, body)) {
+                        this._bodyBlob = body;
+                    } else if (support.formData && Object.prototype.isPrototypeOf.call(FormData.prototype, body)) {
+                        this._bodyFormData = body;
+                    } else if (support.searchParams && Object.prototype.isPrototypeOf.call(URLSearchParams.prototype, body)) {
+                        this._bodyText = body.toString();
+                    } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+                        this._bodyArrayBuffer = bufferClone(body.buffer);
+                        this._bodyInit = new Blob([this._bodyArrayBuffer]);
+                    } else if (support.arrayBuffer && (Object.prototype.isPrototypeOf.call(ArrayBuffer.prototype, body) || isArrayBufferView(body))) {
+                        this._bodyArrayBuffer = bufferClone(body);
+                    } else {
+                        throw new Error('unsupported BodyInit type');
+                    }
+                    if (!this.headers.get('content-type')) {
+                        if (typeof body === 'string') {
+                            this.headers.set('content-type', 'text/plain;charset=UTF-8');
+                        } else if (this._bodyBlob && this._bodyBlob.type) {
+                            this.headers.set('content-type', this._bodyBlob.type);
+                        } else if (support.searchParams && Object.prototype.isPrototypeOf.call(URLSearchParams.prototype, body)) {
+                            this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+                        }
+                    }
                 }
                 if (support.blob) {
                     this.blob = function () {
@@ -342,7 +372,7 @@ TC.tool.Proxification = function (proxy, options) {
             request.onsuccess = function (evt) {
                 that.database = evt.target.result;
             };
-            request.onerror = function (evt) {
+            request.onerror = function (_evt) {
                 console.log("IndexedDB--> onerror ");
             };
             request.onupgradeneeded = function (evt) {
@@ -388,7 +418,7 @@ TC.tool.Proxification = function (proxy, options) {
                         else { reject("no action"); }
                     };
 
-                    requestGet.onerror = function (evt) {
+                    requestGet.onerror = function (_evt) {
                         reject("no action get failed");
                     };
                 }
@@ -570,12 +600,13 @@ TC.tool.Proxification = function (proxy, options) {
         }, function (error) {
             if (error === self._image.ErrorType.PROTOCOL) {
                 reject(error);
-            } else {
+            }            
+            else {
                 _byProxy.call(self, toHTTP(src), options, resolve, reject);
             }
         });
     };
-
+    
     var _currentHTTPS = function (src, options, resolve, reject) {
         var self = this;
         src = toHTTP(src);
@@ -583,7 +614,7 @@ TC.tool.Proxification = function (proxy, options) {
         self._image.getImgTag(src, options).then(function (img) {
             resolve(img, self._actionHTTP);
         }, function (error) {
-            if (error === self._image.ErrorType.PROTOCOL) {
+            if (error === self._image.ErrorType.PROTOCOL || error === self._image.ErrorType.UNEXPECTEDCONTENTTYPE) {
                 reject(error);
             } else {
                 _byProxy.call(self, toHTTPS(src), options, resolve, reject);
@@ -627,8 +658,10 @@ TC.tool.Proxification = function (proxy, options) {
             PROTOCOL: 'protocol',
             NOTFOUNDED: 'notfounded',
             UNEXPECTED: 'unexpected',
-            OFFLINE: 'offline'
+            OFFLINE: 'offline',
+            UNEXPECTEDCONTENTTYPE: 'Un_Expected_ContentType'
         },
+        validContentType: ["image/png", "image/jpeg", "image/tiff", "image/gif", "image/bmp", "image/svg+xml", "image/webp","image/avif"],
         checkHttpStatus: function (src) {
             const self = this;
             if (!navigator.onLine) {
@@ -636,11 +669,14 @@ TC.tool.Proxification = function (proxy, options) {
             }
 
             return fetch(src, { credentials: 'omit' })
+                .then(toolProto._fetch.validateContentType.bind(toolProto, self.validContentType))
                 .then(function (response) {
                     return { status: response.status, statusText: response.statusText };
                 })
                 .catch(function (error) {
-                    return { statusText: self.ErrorType.UNEXPECTED };
+                    if (error.message === self.ErrorType.UNEXPECTEDCONTENTTYPE)
+                        return error;
+                    return { statusText: self.ErrorType.UNEXPECTED};
                 });
         },
         getImgTag: function (src, options) {
@@ -685,7 +721,7 @@ TC.tool.Proxification = function (proxy, options) {
                     } else { resolve(img); }
                 };
 
-                img.onerror = function (error) {
+                img.onerror = function (_error) {
 
                     console.log('Load crossOrigin ERROR: ' + img.src);
 
@@ -693,7 +729,7 @@ TC.tool.Proxification = function (proxy, options) {
                         img.crossOrigin = null;
 
                         img.onerror = undefined;
-                        img.onerror = function (error) {
+                        img.onerror = function (_error) {
                             console.log('Load ERROR: ' + img.src);
 
                             self.checkHttpStatus(img.src).then(function (error) {
@@ -702,7 +738,8 @@ TC.tool.Proxification = function (proxy, options) {
                                 } else {
                                     if (error.status === 400) {
                                         reject(self.ErrorType.PROTOCOL);
-                                    } else {
+                                    }                                    
+                                    else {
                                         reject(error);
                                     }
                                 }
@@ -756,7 +793,7 @@ TC.tool.Proxification = function (proxy, options) {
                     img.onload = img.onerror = undefined;
                     resolve(img);
                 };
-                img.onerror = function (error) {
+                img.onerror = function (_error) {
                     console.log('Load ERROR: ' + img.src);
                     img.onload = img.onerror = undefined;
 
@@ -983,7 +1020,7 @@ TC.tool.Proxification = function (proxy, options) {
         const self = this;
 
         options = options || {};
-        options.responseType = "xml"; // No puedo usar la constante de la API porque está como application/xml y hay servicios que devuelven text/xml //TC.Consts.mimeType.XML;
+        options.responseType = "xml"; // No puedo usar la constante de la API porque está como application/xml y hay servicios que devuelven text/xml //Consts.mimeType.XML;
 
         return self.fetch(url, options);
     };
@@ -992,7 +1029,7 @@ TC.tool.Proxification = function (proxy, options) {
         const self = this;
 
         options = options || {};
-        options.responseType = TC.Consts.mimeType.JSON;
+        options.responseType = Consts.mimeType.JSON;
 
         return self.fetch(url, options);
     };
@@ -1113,7 +1150,7 @@ TC.tool.Proxification = function (proxy, options) {
                     switch (true) {
                         case options.responseType.indexOf('xml') > -1:
                         case options.responseType.indexOf('text/xml') > -1:
-                        case options.responseType.indexOf(TC.Consts.mimeType.XML) > -1:
+                        case options.responseType.indexOf(Consts.mimeType.XML) > -1:
                             hasCharset = /charset=([^;]*)/i.exec(contentType);
                             if (hasCharset && hasCharset.length === 2 && hasCharset[1] !== "UTF-8") {
                                 return responseWithCharsetToDecodedString(hasCharset[1]).then(function (text) {
@@ -1138,7 +1175,7 @@ TC.tool.Proxification = function (proxy, options) {
                             }).catch(function (error) { throw error; });
                         case options.responseType.indexOf('document') > -1:
                             throw new DeveloperError('Unhandled responseType: ' + options.responseType);
-                        case options.responseType.indexOf(TC.Consts.mimeType.JSON) > -1:
+                        case options.responseType.indexOf(Consts.mimeType.JSON) > -1:
                             return response.json();
                         case options.responseType == '':
                         case options.responseType.indexOf('text') > -1:
