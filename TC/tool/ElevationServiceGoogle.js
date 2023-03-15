@@ -64,10 +64,10 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
         let geomType;
         let coordinateList = options.coordinates;
         if (coordinateList.length === 1) {
-            geomType = TC.Consts.geom.POINT;
+            geomType = SITNA.Consts.geom.POINT;
         }
         else {
-            geomType = TC.Consts.geom.POLYLINE;
+            geomType = SITNA.Consts.geom.POLYLINE;
         }
 
         if (self.options.allowedGeometryTypes && !self.options.allowedGeometryTypes.includes(geomType)) {

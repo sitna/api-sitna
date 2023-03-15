@@ -58,14 +58,11 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
                     endFn();
                 }
                 else {
-                    TC.loadJS(
-                        !TC.tool || !TC.tool.Proxification,
-                        [TC.apiLocation + 'TC/tool/Proxification'],
-                        function () {
-                            proxificationTool = new TC.tool.Proxification(TC.proxify);
-                            endFn();
-                        }
-                    );
+                    import('./Proxification').then(function (module) {
+                        const Proxification = module.default;
+                        proxificationTool = new Proxification(TC.proxify);
+                        endFn();
+                    });
                 }
             });
         }

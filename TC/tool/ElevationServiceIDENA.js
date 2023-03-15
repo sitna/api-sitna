@@ -23,11 +23,11 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
         options = options || {};
         const geometryOptions = {
             coordinates: options.coordinates,
-            type: TC.Consts.geom.POLYLINE
+            type: SITNA.Consts.geom.POLYLINE
         };
         if (options.coordinates.length === 1) {
             geometryOptions.coordinates = options.coordinates[0];
-            geometryOptions.type = TC.Consts.geom.POINT;
+            geometryOptions.type = SITNA.Consts.geom.POINT;
         }
         let coverageClass = options.coverageClass || self.coverageClass;
         const sepIdx = coverageClass.indexOf(',');
@@ -37,7 +37,7 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
         const dataInputs = {
             coverageClass: coverageClass,
             geometry: {
-                mimeType: TC.Consts.mimeType.JSON,
+                mimeType: SITNA.Consts.mimeType.JSON,
                 value: TC.wrap.Geometry.toGeoJSON(geometryOptions)
             }
         };
