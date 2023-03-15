@@ -17,17 +17,9 @@ sitna-file-import input[type="file"] {
 }
 
 sitna-file-import ul.tc-ctl-file-recent {
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: 8em;
+    max-height: 12em;
     height: auto;
-    border-radius: var(--border-radius);
-    border: 1px solid #CCC;
-    padding: 0;
-    list-style: none;
     margin-top: 0.5em;
-    box-sizing: border-box;
-    scroll-behavior: smooth;
 }
 
     sitna-file-import ul.tc-ctl-file-recent:empty {
