@@ -1,7 +1,7 @@
 {{#if singleFeature}}
     {{#each attributes}}
         {{#if (getHeader name)}}
-<{{getHeader name}}>{{value}}</{{getHeader name}}>
+<{{getHeader name}}>{{{value}}}</{{getHeader name}}>
         {{/if}}
     {{/each}}
 {{/if}}
@@ -49,10 +49,17 @@
             </td>
         </tr>                                                            
                     {{else}}
+                {{#if (hasDisplayName value)}}
+        <tr>
+            <th class="tc-ctl-finfo-attr">{{value.displayName}}</th>
+            <td class="tc-ctl-finfo-val">{{value.value}}</td>
+        </tr>                                                                   
+                {{else}}
         <tr>
             <th class="tc-ctl-finfo-attr">{{name}}</th>
             <td class="tc-ctl-finfo-val">{{#unless (eq value null)}}{{> tc-ctl-finfo-object value }}{{/unless}}</td>                                                               
         </tr>
+                        {{/if}}
                     {{/if}}
                 {{/if}}
             {{/if}}
