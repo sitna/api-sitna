@@ -18,7 +18,7 @@
         content: '3D';
     }
 
-    .tc-ctl-3d button.active:before {
+    .tc-ctl-3d button.tc-checked:before {
         font-weight: bold;
         font-size: 0.9em;
         content: '2D';
@@ -27,11 +27,3 @@
     .tc-ctl-3d button[disabled] {
         background-color: rgba(156, 156, 156, 0.5);
     }
-
-/*.tc-ctl-3d button[disabled]:before {
-        content: '';
-    }
-
-    .tc-ctl-3d button[disabled].active:before {
-        content: '';
-    }*/
