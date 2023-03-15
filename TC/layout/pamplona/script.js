@@ -11,13 +11,13 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             TC.Cfg.styles.selection.point.fillColor = "#000";
             TC.Cfg.styles.selection.line.strokeColor = "#D2EA56";
 
-            const ovPanel = document.querySelector('.ovmap-panel');
-            const rcollapsedClass = 'right-collapsed';
-            const lcollapsedClass = 'left-collapsed';
+            const ovPanel = document.querySelector(`.${TC.Consts.classes.OVERVIEW_MAP_PANEL}`);
+            const rcollapsedClass = TC.Consts.classes.COLLAPSED_RIGHT;
+            const lcollapsedClass = TC.Consts.classes.COLLAPSED_LEFT;
             var ovmap;
 
-            map.div.querySelectorAll('.right-panel > h1').forEach(function (h1) {
-                h1.addEventListener(TC.Consts.event.CLICK, function (e) {
+            map.div.querySelectorAll(`.${TC.Consts.classes.RIGHT_PANEL} > h1`).forEach(function (h1) {
+                h1.addEventListener(SITNA.Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const tab = e.target;
@@ -39,8 +39,8 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             });
 
 
-            map.div.querySelectorAll('.left-panel > h1').forEach(function (h1) {
-                h1.addEventListener(TC.Consts.event.CLICK, function (e) {
+            map.div.querySelectorAll(`.${TC.Consts.classes.LEFT_PANEL} > h1`).forEach(function (h1) {
+                h1.addEventListener(SITNA.Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const panel = e.target.parentElement;
@@ -48,74 +48,112 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 });
             });
 
-            map.div.querySelector('.tools-panel').addEventListener(TC.Consts.event.CLICK, function (e) {
-                const tab = e.target;
-                if (tab.tagName === ('H2')) {
-                    const ctlDiv = tab.parentElement;
-                    if (map && map.layout && map.layout.accordion) {
-                        if (ctlDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                            this.querySelectorAll('h2').forEach(function (h2) {
-                                const div = h2.parentElement;
-                                if (div !== ctlDiv && !div.matches('.tc-ctl-search')) {
-                                    div.classList.add(TC.Consts.classes.COLLAPSED);
-                                }
-                            });
+            const toolsPanel = map.div.querySelector('.' + TC.Consts.classes.TOOLS_PANEL);
+
+            const toggleCollapsed = function (value) {
+                const self = this;
+                let element;
+                if (self instanceof TC.control.WebComponentControl) {
+                    element = self;
+                }
+                else {
+                    element = self.div;
+                }
+                element.classList.toggle(SITNA.Consts.classes.COLLAPSED, value);
+
+            };
+
+            map
+                .on(SITNA.Consts.event.CONTROLHIGHLIGHT, function (e) {
+                    const ctl = e.control;
+                    toggleCollapsed.call(ctl, false);
+
+                    if (map.layout && map.layout.accordion) {
+                        // Hacemos que solamente un control del panel de herramientas esté desplegado cada vez
+                        const toolPanelControls = map
+                            .controls
+                            .filter(ctl => !ctl.containerControl)
+                            .filter(ctl => ctl.div && toolsPanel.contains(ctl.div));
+                        if (toolPanelControls.includes(ctl)) {
+                            toolPanelControls
+                                .filter(c => c !== ctl)
+                                .forEach(ctl => ctl.unhighlight());
                         }
                     }
-                    ctlDiv.classList.toggle(TC.Consts.classes.COLLAPSED);
+                })
+                .on(SITNA.Consts.event.CONTROLUNHIGHLIGHT, function (e) {
+                    const ctl = e.control;
+                    toggleCollapsed.call(ctl, true);
+                });
+
+            toolsPanel.addEventListener(SITNA.Consts.event.CLICK, function (e) {
+                let tab = e.target;
+                if (tab.tagName === "BUTTON" && tab.closest("div.tc-ctl." + SITNA.Consts.classes.COLLAPSED)) {
+                    tab = tab.parentElement;
                 }
-            });
-
-            if (map) {
-
-                map.loaded(function () {
-
-                    ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
-                    if (ovmap) {
-                        ovmap.loaded(function () {
-                            ovmap.disable();
-                        });
-                    }
-                    //mover el Multifeature info dentro del TOC
-                    const toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
-                    const mfi = map.getControlsByClass('TC.control.MultiFeatureInfo')[0];
-                    if (toc && mfi) {
-                        toc.div.querySelector('.' + toc.CLASS + '-content').firstChild.insertAdjacentElement('beforebegin', mfi.div);
-                    }
-                });
-
-                TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
-                TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
-
-                map.on(TC.Consts.event.TOOLSOPEN, function (e) {
-                    map.div.querySelector('.tools-panel').classList.remove(rcollapsedClass);
-                });
-
-                map.on(TC.Consts.event.TOOLSCLOSE, function (e) {
-                    map.div.querySelector('.tools-panel').classList.add(rcollapsedClass);
-                });
-
-                // En pantalla estrecha colapsar panel de herramientas al activar una
-                map.on(TC.Consts.event.CONTROLACTIVATE, function (e) {
-                    var control = e.control;
-                    var measureCtls = map.getControlsByClass('TC.control.Measure');
-                    for (var i = 0, len = measureCtls.length; i < len; i++) {
-                        if (measureCtls[i] === control) {
-                            const toolsPanel = document.querySelector('.tools-panel');
-                            var condition = window.matchMedia ?
-                                !matchMedia('screen and (min-height: 40em) and (min-width: 42em)').matches :
-                                parseInt(control.map.div.getBoundingClientRect().width) <
-                                parseInt(control.div.querySelector('.' + control.CLASS + (control.searchType === TC.Consts.LENGTH ? '-len' : '-area')).getBoundingClientRect().width) +
-                                parseInt(toolsPanel.getBoundingClientRect().width) ||
-                                (TC.control.Draw && control instanceof TC.control.Draw);
-                            if (condition) {
-                                toolsPanel.classList.add(rcollapsedClass);
+                if (tab.tagName === ('H2')) {
+                    for (var i = 0; i < map.controls.length; i++) {
+                        const ctl = map.controls[i];
+                        if (ctl.div && ctl.div.contains(tab)) {
+                            if (ctl.isHighlighted()) {
+                                ctl.unhighlight();
+                            }
+                            else {
+                                ctl.highlight();
                             }
                             break;
                         }
                     }
-                });
-            }
+                }
+            });
+
+            map.loaded(function () {
+
+                ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
+                if (ovmap) {
+                    ovmap.loaded(function () {
+                        ovmap.disable();
+                    });
+                }
+                //mover el Multifeature info dentro del TOC
+                const toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
+                const mfi = map.getControlsByClass('TC.control.MultiFeatureInfo')[0];
+                if (toc && mfi) {
+                    toc.div.querySelector('.' + toc.CLASS + '-content').firstChild.insertAdjacentElement('beforebegin', mfi.div);
+                }
+            });
+
+            SITNA.Consts.event.TOOLSCLOSE = SITNA.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
+            SITNA.Consts.event.TOOLSOPEN = SITNA.Consts.event.TOOLSOPEN || 'toolsopen.tc';
+
+            map.on(SITNA.Consts.event.TOOLSOPEN, function (_e) {
+                map.div.querySelector('.' + TC.Consts.classes.TOOLS_PANEL).classList.remove(rcollapsedClass);
+            });
+
+            map.on(SITNA.Consts.event.TOOLSCLOSE, function (_e) {
+                map.div.querySelector('.' + TC.Consts.classes.TOOLS_PANEL).classList.add(rcollapsedClass);
+            });
+
+            // En pantalla estrecha colapsar panel de herramientas al activar una
+            map.on(SITNA.Consts.event.CONTROLACTIVATE, function (e) {
+                var control = e.control;
+                var measureCtls = map.getControlsByClass('TC.control.Measure');
+                for (var i = 0, len = measureCtls.length; i < len; i++) {
+                    if (measureCtls[i] === control) {
+                        const toolsPanel = document.querySelector('.' + TC.Consts.classes.TOOLS_PANEL);
+                        var condition = window.matchMedia ?
+                            !matchMedia('screen and (min-height: 40em) and (min-width: 42em)').matches :
+                            parseInt(control.map.div.getBoundingClientRect().width) <
+                            parseInt(control.div.querySelector('.' + control.CLASS + (control.searchType === SITNA.Consts.LENGTH ? '-len' : '-area')).getBoundingClientRect().width) +
+                            parseInt(toolsPanel.getBoundingClientRect().width) ||
+                            (TC.control.Draw && control instanceof TC.control.Draw);
+                        if (condition) {
+                            toolsPanel.classList.add(rcollapsedClass);
+                        }
+                        break;
+                    }
+                }
+            });
 
             if (TC.browserFeatures.touch()) {
                 const addSwipe = function (direction) {
