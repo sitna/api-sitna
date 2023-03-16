@@ -6,7 +6,9 @@ module.exports = {
     devtool: 'source-map',
     resolve: {
         fallback: {
-            buffer: require.resolve('buffer/')
+            buffer: require.resolve('buffer/'),
+            assert: false,
+            util: false
         }
     },
     module: {
@@ -29,6 +31,7 @@ module.exports = {
             }
         ]
     },
+    ignoreWarnings: [/Failed to parse source map/],
     plugins: [
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],

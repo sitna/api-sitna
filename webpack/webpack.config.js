@@ -8,7 +8,9 @@ module.exports = {
     devtool: 'source-map',
     resolve: {
         fallback: {
-            buffer: require.resolve('buffer/')
+            buffer: require.resolve('buffer/'),
+            assert: false,
+            util: false
         }
     },
     plugins: [
@@ -22,6 +24,22 @@ module.exports = {
                 test: /\.js$/,
                 enforce: 'pre',
                 use: ['source-map-loader']
+            },
+            {
+                test: /\.js$/,
+                exclude: [/node_modules/, /lib/],
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        plugins: ['@babel/plugin-proposal-class-properties'
+                            , '@babel/plugin-proposal-class-static-block'
+                            , '@babel/plugin-proposal-private-methods'
+                            , '@babel/plugin-proposal-private-property-in-object'
+                            , '@babel/plugin-proposal-optional-chaining'
+                            , '@babel/plugin-proposal-logical-assignment-operators'
+                            , '@babel/plugin-proposal-nullish-coalescing-operator']
+                    }
+                }
             },
             {
                 resource: path.resolve(__dirname, '../sitna.js'),
@@ -67,6 +85,7 @@ module.exports = {
             }
         ]
     },
+    ignoreWarnings: [/Failed to parse source map/],
     optimization: {
         minimizer: [new TerserPlugin({
             extractComments: false
