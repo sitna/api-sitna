@@ -89,7 +89,6 @@
     "lib/geopackagejs/**/*",
     "lib/handlebars/**/*",
     "lib/jsnlog/**/*",
-    "lib/jsonpack/**/*",
     "lib/ol/**/*",
     "lib/polyfill/**/*",
     "lib/qrcode/**/*",
