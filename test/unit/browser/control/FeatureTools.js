@@ -9,7 +9,7 @@ describe('Tests de TC.control.FeatureTools', function () {
 
     describe('render', function () {
         it("debe establecer la propiedad _firstRender", async function () {
-            var ctl = await TC.Control.create('FeatureTools', { div: 'ctl-container' });
+            var ctl = await TC.Control.create('FeatureTools', { div: addControlDiv() });
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });

@@ -10,7 +10,7 @@
 
     //describe('render', function () {
     //    it("debe establecer la propiedad _firstRender", async function () {
-    //        var ctl = await TC.Control.create('StreetView', { div: 'ctl-container' });
+    //        var ctl = await TC.Control.create('StreetView', { div: addControlDiv() });
     //        ctl.render();
     //        expect(ctl._firstRender).to.be.an.instanceof(Promise);
     //    });
