@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de métodos de SITNA.feature.Feature</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.feature.Feature.html#metodos">métodos de SITNA.feature.Feature</a></p>
+        <p>Actualizar coordenadas y estilo de un marcador.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        SITNA.Cfg.workLayers = [
+            {
+                id: "entidades",
+                title: "Demostración de uso de métodos de entidades geográficas",
+                type: SITNA.Consts.layerType.VECTOR
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+        map.loaded(async () => {
+            // Obtenemos la instancia de la capa vectorial
+            const vectorLayer = map.getLayer("entidades");
+            let step = 0;
+            const stepAngle = Math.PI / 200;
+            const stepLength = 1;
+
+            const iconUrlBase = '//sitna.navarra.es/api/TC/css/img/pegman';
+            const iconUrls = [
+                iconUrlBase + '0.png',
+                iconUrlBase + '23.png',
+                iconUrlBase + '45.png',
+                iconUrlBase + '68.png',
+                iconUrlBase + '90.png',
+                iconUrlBase + '113.png',
+                iconUrlBase + '135.png',
+                iconUrlBase + '158.png',
+                iconUrlBase + '180.png',
+                iconUrlBase + '203.png',
+                iconUrlBase + '225.png',
+                iconUrlBase + '248.png',
+                iconUrlBase + '270.png',
+                iconUrlBase + '293.png',
+                iconUrlBase + '315.png',
+                iconUrlBase + '338.png'
+            ];
+            const updateMarker = function (marker) {
+                const coords = marker.getCoordinates();
+                const style = marker.getStyle();
+
+                const dx = stepLength * Math.cos(step * stepAngle);
+                const dy = stepLength * Math.sin(step * stepAngle / 2);
+
+                let direction = Math.atan(dx / dy);
+                if (dy < 0) {
+                    direction = (direction + Math.PI) % (2 * Math.PI);
+                }
+
+                const iconIndex = Math.round(iconUrls.length * direction / Math.PI / 2);
+
+                // Asignamos nuevas coordenadas y nuevo icono
+                style.url = iconUrls[iconIndex];
+                marker
+                    .setCoordinates([coords[0] + dx, coords[1] + dy])
+                    .setStyle(style);
+
+                step++;
+            };
+
+            vectorLayer.addMarker([610431, 4740837], {
+                url: iconUrls[0]
+            }).then(marker => {
+                // Nos centramos en el marcador recién creado
+                map.zoomToFeatures([marker]);
+                setInterval(() => {
+                    updateMarker(marker);
+                }, 50);
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.feature.Point</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.feature.Point.html">SITNA.feature.Point</a></p>
+        <p>Añadir de distintos modos entidades puntuales.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        SITNA.Cfg.workLayers = [
+            {
+                id: "entidades",
+                title: "Demostración de puntos",
+                type: SITNA.Consts.layerType.VECTOR
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+        map.loaded(() => {
+            // Obtenemos la instancia de la capa vectorial
+            const vectorLayer = map.getLayer("entidades");
+
+            // Añadimos una instancia de la clase SITNA.feature.Point
+            const tree1 = new SITNA.feature.Point([563220, 4738485], {
+                strokeColor: '#ffffff', // blanco
+                strokeWidth: 4,
+                fillColor: '#285228', // verde
+                fillOpacity: 1, // opaco
+                radius: 10,
+                data: {
+                    'Denominación': 'Haya de Limitaciones',
+                    'Especie': 'Fagus sylvatica L.'
+                }
+            });
+            vectorLayer.addPoint(tree1);
+
+            // Añadimos una entidad geográfica introduciendo directamente las coordenadas de su geometría
+            vectorLayer.addPoint([570651, 4736235], {
+                strokeColor: '#ffffff', // blanco
+                strokeWidth: 4,
+                fillColor: '#522852', // violeta
+                fillOpacity: 1, // opaco
+                radius: 10,
+                data: {
+                    'Denominación': 'El centinela',
+                    'Especie': 'Quercus faginea Lam.'
+                }
+            });
+
+            // Añadimos varias entidades geográficas de una vez introduciendo directamente las coordenadas de sus geometrías
+            vectorLayer.addPoints([
+                // Colección de dos puntos
+                [571367, 4734769], [578315, 4729752]
+            ], {
+                strokeColor: '#ffffff', // blanco
+                strokeWidth: 4,
+                fillColor: '#282892', // azul
+                fillOpacity: 1, // opaco
+                radius: 10,
+            }).then(holmOaks => {
+                holmOaks[0].setData({
+                    'Denominación': 'Encina de Basaura',
+                    'Especie': 'Quercus ilex L. subsp. ilex L.'
+                });
+                holmOaks[1].setData({
+                    'Denominación': 'Encina de Eraul',
+                    'Especie': 'Quercus ilex L. subsp. ilex L. x Quercus ilex subsp. ballota (Desf.) Samp.'
+                });
+                map.zoomToFeatures(vectorLayer.features);
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.feature.Marker</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.feature.Marker.html">SITNA.feature.Marker</a></p>
+        <p>Añadir de distintos modos entidades puntuales con iconos.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        SITNA.Cfg.workLayers = [
+            {
+                id: "entidades",
+                title: "Demostración de marcadores",
+                type: SITNA.Consts.layerType.VECTOR
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+        map.loaded(() => {
+            // Obtenemos la instancia de la capa vectorial
+            const vectorLayer = map.getLayer("entidades");
+
+            // Añadimos una instancia de la clase SITNA.feature.Marker
+            const school1 = new SITNA.feature.Marker([611059.0, 4741572.7], {
+                anchor: [0, 1], // Punto de anclaje en la esquina inferior izquierda
+                url: 'data/speech-icon.png',
+                width: 32,
+                height: 32, // 32x32 pixels
+                data: {
+                    'Centro': 'Escuela Oficial de Idiomas de Pamplona'
+                }
+            });
+            vectorLayer.addMarker(school1);
+
+            // Añadimos una entidad geográfica introduciendo directamente las coordenadas de su geometría
+            vectorLayer.addMarker([615502.2, 4657758.4], {
+                anchor: [0, 1], // Punto de anclaje en la esquina inferior izquierda
+                url: 'data/speech-icon.png',
+                width: 32,
+                height: 32, // 32x32 pixels
+                data: {
+                    'Centro': 'Escuela Oficial de Idiomas de Tudela'
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

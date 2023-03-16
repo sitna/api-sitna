@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.MarkerOptions</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.feature.html#.MarkerOptions">SITNA.MarkerOptions</a>.</p>
+        <p>Añadir HTML en el bocadillo de una marcador</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <style>
+        .firstIcon {
+            background-image: url('data/star.png');
+        }
+
+        .secondIcon {
+            background-image: url('data/circle.png');
+        }
+
+        .thirdIcon {
+            background-image: url('data/triangle.png');
+        }
+    </style>
+    <div id="mapa"></div>
+    <script>
+        // Crear mapa.
+        var map = new SITNA.Map("mapa");
+
+        // Cuando esté todo cargado proceder a trabajar con el mapa.
+        map.loaded(function () {
+            // Lista de clases CSS que tienen una propiedad 'backgroung-image' establecida
+            const iconClassList = ["firstIcon", "secondIcon", "thirdIcon"];
+            // Añadir un marcador.
+            map.addMarker([609299, 4740700], {
+                classes: iconClassList,
+                group: "Cines" // Primer grupo que se ha definido: este marcador tendrá el icono star.png
+            });
+            map.addMarker([610681, 4741659], {
+                classes: iconClassList,
+                group: "Museos" // Segundo grupo que se ha definido: este marcador tendrá el icono circle.png
+            });
+            map.addMarker([610865, 4741600], {
+                classes: iconClassList,
+                group: "Instalaciones deportivas" // Tercer grupo que se ha definido: este marcador tendrá el icono triangle.png
+            });
+            map.addMarker([611246, 4741403], {
+                classes: iconClassList,
+                group: "Instalaciones deportivas" // Grupo definido antes, compartirá icono con el otro marcador del mismo grupo
+            });
+            map.addMarker([610280, 4741340], {
+                classes: iconClassList,
+                group: "Parques" // Cuarto grupo que se ha definido: vuelve a empezar el ciclo, este marcador tendrá el icono star.png
+            });
+            // Centrar el mapa en los marcadores.
+            map.zoomToMarkers();
+        });
+    </script>
+</body>
+</html>
