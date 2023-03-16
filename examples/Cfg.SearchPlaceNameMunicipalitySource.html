@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/global.html#PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.PlaceNameMunicipalitySearchOptions">PlaceNameMunicipalitySearchOptions</a>.</p>
         <p>Establecer configuración de un origen de datos distinto en la búsqueda de topónimo en un municipio.</p>
     </div>
     <script src="../"></script>
@@ -32,7 +32,7 @@
                             secondQueryWord: ['TOPONIMO', 'TOPONINOAC'] // Campos en los que buscar el nombre del topónimo.
                         },
                         suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-                            label: "search.list.placeName", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Topónimo
+                            labelKey: "search.list.placeName", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Topónimo
                             color: "fontColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
                         }, // El resultado de la configuración anterior será: '#FF5722'.
                         outputProperties: ['MUNICIPIO', 'TOPONIMO', 'CMUNICIPIO', 'CTOPONIMO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias. 
@@ -41,8 +41,8 @@
                             {
                                 point: { // Opciones de estilo de punto para los resultados obtenidos.
                                     radius: 0, // Radio en píxeles del símbolo que representa el punto.
-                                    label: "TOPONIMO", // Nombre de campo del cual extraer el valor de la etiqueta.
-                                    angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
+                                    labelKey: "TOPONIMO", // Nombre de campo del cual extraer el valor de la etiqueta.
+                                    labelRotationKey: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
                                     fontColor: "#ff5722", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
                                     fontSize: 14, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
                                     labelOutlineColor: "#FFFFFF",  // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
