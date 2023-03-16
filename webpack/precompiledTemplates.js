@@ -20,8 +20,11 @@ const path = require('path');
         files
             .filter(f => f.endsWith('.hbs'))
             .forEach(function (file) {
+                const content = fs
+                    .readFileSync(ourPath + '\\' + file, "utf8")
+                    .replace(/^\uFEFF/, ''); // Elimina BOM
                 precompiledTemplates[file] = handlebars
-                    .precompile(fs.readFileSync(ourPath + '\\' + file, "utf8"), {
+                    .precompile(content, {
                         knownHelpers: {
                             i18n: true,
                             gt: true,
@@ -48,7 +51,8 @@ const path = require('path');
                             getTagHeight: true,
                             getHeader: true,
                             removeSpecialAttributeTag: true,
-                            formatDateOrNumber: true
+                            formatDateOrNumber: true,
+                            hasDisplayName: true
                         },
                         knownHelpersOnly: true
                     })
