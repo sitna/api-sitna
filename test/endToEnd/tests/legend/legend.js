@@ -9,7 +9,7 @@ exports.testLegend = function (test) {
     var layerIdsBefore, layerIdsAfter;
 
     // Pinchamos en "herramientas"
-    const toolsTabSelector = "#tools-tab";
+    const toolsTabSelector = ".tc-tools-panel .tc-panel-tab";
     casper.waitForSelector(toolsTabSelector,
           function success() {
               //test.assertExists(toolsTabSelector);
@@ -92,11 +92,11 @@ exports.testLegend = function (test) {
         function success() {
             //test.assertExists(tocNodesSelector);
             var firstNodeSelector = tocNodesSelector + ':first-child';
-            this.captureSelector('images/toc1.png', '#tools-panel');
+            this.captureSelector('images/toc1.png', '.tc-tools-panel');
             this.click(firstNodeSelector);
             this.page.sendEvent('keydown', this.page.event.key.Down);
             this.wait(10000, function () {
-                this.captureSelector('images/toc2.png', '#tools-panel');
+                this.captureSelector('images/toc2.png', '.tc-tools-panel');
                 // Esperamos a que la leyenda cambie
                 const firstLegendNodeSelector = legendNodesSelector + '[data-layer-uid=' + layerIdsBefore[1] + ']:first-child';
                 casper.waitForSelector(firstLegendNodeSelector,
