@@ -41,21 +41,19 @@
 
         map.ready(function () {
 
-            const ovPanel = document.querySelector('.ovmap-panel');
-            const rcollapsedClass = 'right-collapsed';
-            const lcollapsedClass = 'left-collapsed';
+            const ovPanel = document.querySelector(`.${TC.Consts.classes.OVERVIEW_MAP_PANEL}`);
             var ovmap;
 
-            map.div.querySelectorAll('.right-panel > h1').forEach(function (h1) {
-                h1.addEventListener(TC.Consts.event.CLICK, function (e) {
+            map.div.querySelectorAll(`.${TC.Consts.classes.RIGHT_PANEL} > h1`).forEach(function (h1) {
+                h1.addEventListener(SITNA.Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const tab = e.target;
                     const panel = tab.parentElement;
-                    panel.classList.toggle(rcollapsedClass);
+                    panel.classList.toggle(TC.Consts.classes.COLLAPSED_RIGHT);
                     if (map && panel === ovPanel) {
                         if (ovmap) {
-                            if (panel.classList.contains(rcollapsedClass)) {
+                            if (panel.classList.contains(TC.Consts.classes.COLLAPSED_RIGHT)) {
                                 ovmap.disable();
                             }
                             else {
@@ -68,35 +66,76 @@
                 });
             });
 
-            map.div.querySelectorAll('.left-panel > h1').forEach(function (h1) {
-                h1.addEventListener(TC.Consts.event.CLICK, function (e) {
+            map.div.querySelectorAll(`.${TC.Consts.classes.LEFT_PANEL} > h1`).forEach(function (h1) {
+                h1.addEventListener(SITNA.Consts.event.CLICK, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const panel = e.target.parentElement;
-                    if (panel.classList.contains(lcollapsedClass)) {
-                        panel.classList.remove(lcollapsedClass);
+                    if (panel.classList.contains(TC.Consts.classes.COLLAPSED_LEFT)) {
+                        panel.classList.remove(TC.Consts.classes.COLLAPSED_LEFT);
                     }
                     else {
-                        panel.classList.add(lcollapsedClass);
+                        panel.classList.add(TC.Consts.classes.COLLAPSED_LEFT);
                     }
                 });
             });
 
-            map.div.querySelector('.tools-panel').addEventListener(TC.Consts.event.CLICK, function (e) {
-                const tab = e.target;
-                if (tab.tagName === ('H2')) {
-                    const ctlDiv = tab.parentElement;
-                    if (map && map.layout && map.layout.accordion) {
-                        if (ctlDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
-                            this.querySelectorAll('h2').forEach(function (h2) {
-                                const div = h2.parentElement;
-                                if (div !== ctlDiv && !div.matches('.tc-ctl-search')) {
-                                    div.classList.add(TC.Consts.classes.COLLAPSED);
-                                }
-                            });
+            const toolsPanel = map.div.querySelector(`.${TC.Consts.classes.TOOLS_PANEL}`);
+
+            const toggleCollapsed = function (value) {
+                const self = this;
+                let element;
+                if (self instanceof TC.control.WebComponentControl) {
+                    element = self;
+                }
+                else {
+                    element = self.div;
+                }
+                element.classList.toggle(SITNA.Consts.classes.COLLAPSED, value);
+
+            };
+
+            map
+                .on(SITNA.Consts.event.CONTROLHIGHLIGHT, function (e) {
+                    const ctl = e.control;
+                    toggleCollapsed.call(ctl, false);
+
+                    if (map.layout && map.layout.accordion) {
+                        // Hacemos que solamente un control del panel de herramientas esté desplegado cada vez
+                        const toolPanelControls = map
+                            .controls
+                            .filter(ctl => !ctl.containerControl)
+                            .filter(ctl => ctl.div && toolsPanel.contains(ctl.div));
+                        if (toolPanelControls.includes(ctl)) {
+                            toolPanelControls
+                                .filter(c => c !== ctl)
+                                .forEach(ctl => ctl.unhighlight());
                         }
                     }
-                    ctlDiv.classList.toggle(TC.Consts.classes.COLLAPSED);
+                })
+                .on(SITNA.Consts.event.CONTROLUNHIGHLIGHT, function (e) {
+                    const ctl = e.control;
+                    toggleCollapsed.call(ctl, true);
+                });
+
+            toolsPanel.addEventListener(SITNA.Consts.event.CLICK, function (e) {
+                let tab = e.target;
+                if (tab.tagName === "BUTTON" && tab.closest("div.tc-ctl." + SITNA.Consts.classes.COLLAPSED)) {
+                    tab = tab.parentElement;
+                }
+                if (tab.tagName === ('H2')) {
+                    for (var i = 0; i < map.controls.length; i++) {
+                        const ctl = map.controls[i];
+                        if (ctl.div && ctl.div.contains(tab)) {
+                            if (ctl.isHighlighted()) {
+                                ctl.unhighlight();
+                            }
+                            else {
+                                ctl.highlight();
+                            }
+                            break;
+                        }
+                    }
                 }
             });
 
@@ -154,41 +193,41 @@
                         toc.div.querySelector('.' + toc.CLASS + '-content').firstChild.insertAdjacentElement('beforebegin', mfi.div);
                     }
 
-            //Aplicar clases CSS cuando se haga click en elementos definidos por configuración
-            TC.Cfg.applyChanges([
-                {
-                    "map": map,
-                    "screenCondition": "(max-width: 42em)",
-                    "apply": {
-                        "event": "click",
-                        "elements": [".tc-ctl-bms-node > label"],
-                        "changes": [
-                            {
-                                "targets": "#tools-panel",
-                                "classes": "right-collapsed"
+                    //Aplicar clases CSS cuando se haga click en elementos definidos por configuración
+                    TC.Cfg.applyChanges([
+                        {
+                            "map": map,
+                            "screenCondition": "(max-width: 42em)",
+                            "apply": {
+                                "event": "click",
+                                "elements": [".tc-ctl-bms-node > label"],
+                                "changes": [
+                                    {
+                                        "targets": '.' + TC.Consts.classes.TOOLS_PANEL,
+                                        "classes": TC.Consts.classes.COLLAPSED_RIGHT
+                                    }
+                                ]
                             }
-                        ]
-                    }
-                }
-            ]);
-        });
-
-                TC.Consts.event.TOOLSCLOSE = TC.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
-                TC.Consts.event.TOOLSOPEN = TC.Consts.event.TOOLSOPEN || 'toolsopen.tc';
-
-                map.on(TC.Consts.event.TOOLSOPEN, function (e) {
-                    document.querySelector('.tools-panel').classList.remove(rcollapsedClass);
+                        }
+                    ]);
                 });
 
-                map.on(TC.Consts.event.TOOLSCLOSE, function (e) {
-                    document.querySelector('.tools-panel').classList.add(rcollapsedClass);
+                SITNA.Consts.event.TOOLSCLOSE = SITNA.Consts.event.TOOLSCLOSE || 'toolsclose.tc';
+                SITNA.Consts.event.TOOLSOPEN = SITNA.Consts.event.TOOLSOPEN || 'toolsopen.tc';
+
+                map.on(SITNA.Consts.event.TOOLSOPEN, function (_e) {
+                    document.querySelector('.' + TC.Consts.classes.TOOLS_PANEL).classList.remove(TC.Consts.classes.COLLAPSED_RIGHT);
+                });
+
+                map.on(SITNA.Consts.event.TOOLSCLOSE, function (_e) {
+                    document.querySelector('.' + TC.Consts.classes.TOOLS_PANEL).classList.add(TC.Consts.classes.COLLAPSED_RIGHT);
                 });
             }
 
             if (TC.browserFeatures.touch()) {
                 const addSwipe = function (direction) {
                     const selector = '.' + direction + '-panel';
-                    const className = direction + '-collapsed';
+                    const className = 'tc-collapsed-' + direction;
                     const options = { noSwipe: 'li,a' };
                     options[direction] = function () {
                         this.classList.add(className);
