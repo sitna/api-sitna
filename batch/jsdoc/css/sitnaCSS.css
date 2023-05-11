@@ -32,3 +32,16 @@ body .toc .nav > li.active > a:focus {
     color: black;
     font-weight: bold;
 }
+
+.dropdown-menu li a[href="SITNA.Map.html"] {
+    font-weight: bold;
+}
+
+td.attributes {
+    color: #adadad;
+}
+
+td.attributes + td:not(.last) {
+    /* Celda de valores por defecto */
+    font-family: monospace;
+}

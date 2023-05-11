@@ -13,9 +13,10 @@
       "./TC/Consts.js",
       "./TC/Cfg.js",
       "./SITNA/Map.js",
-      "./SITNA/feature/Marker.js",
+      "./SITNA/feature/",
       "./TC/Control.js",
       "./TC/control/",
+      "./SITNA/layer/",
       "./TC/tool/",
       "./TC/view/"
     ]
@@ -29,9 +30,9 @@
     "includeDate": true,
     "dateFormat": "DD/MM/YYYY",
     "systemName": "API SITNA",
-    "systemVersion": "v3.0.1",
+    "systemVersion": "v4.0.0",
     "systemSummary": "API JavaScript para la visualización de datos georreferenciados en aplicaciones web",
-    "systemLogo": "./tc/css/img/sitna-logo.png",
+    "systemLogo": "./css/img/sitna-logo.png",
     "systemColor": "#cc0000",
     "copyright": "© 2019 Gobierno de Navarra. <a href=\"https://github.com/sitna/api-sitna/blob/master/LICENSE.md\">Licencia BSD-2-Clause</a>.",
     "linenums": true,
@@ -54,7 +55,7 @@
         "title": "Tipos globales"
       },
       {
-        "kind": "mixin",
+        "kind": "mixin_",
         "title": "Mixins",
         "summary": "All documented mixins."
       },
