@@ -34,8 +34,8 @@
 import TC from '../../TC';
 import Consts from '../Consts';
 import Measure from './Measure';
-import Modify from './Modify';
-import Measurement from './Measurement';
+import './Modify';
+import './Measurement';
 import Point from '../../SITNA/feature/Point';
 import MultiPoint from '../../SITNA/feature/MultiPoint';
 import Polyline from '../../SITNA/feature/Polyline';
@@ -89,7 +89,11 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
     Consts.event.RESULTSPANELCLOSE = Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
     Consts.event.FEATURESSELECT = Consts.event.FEATURESSELECT || "featuresselect.tc";
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-dmm.hbs";        
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-dmm.mjs');
+        self.template = module.default;
+    };
 
     ctlProto.render = function (callback) {
         const self = this;
@@ -159,10 +163,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 });
             })
             .on(Consts.event.FEATURESUNSELECT, function (_e) {
-                const features = self.modify.getSelectedFeatures();
-                if (!features.length) {
-                    self.resetDrawWatches();
-                }
+                const features = self.modify.getSelectedFeatures();                
                 self.getElevationControl().then(function (ctl) {
                     ctl.resetElevationProfile();
                     if (ctl.resultsPanel) {
@@ -186,7 +187,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                                 tool
                                     .setGeometry({
                                         features: [e.feature],
-                                        crs: self.map.crs
+                                        crs: self.map.getCRS()
                                     })
                                     .then(
                                         function (features) {
@@ -213,7 +214,6 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             .on(Consts.event.CONTROLDEACTIVATE, function (e) {
                 const control = e.control;
                 if (control === self.modify || control === self.lineDrawControl) {
-                    self.resetDrawWatches();
                     self.getElevationControl().then(function (ctl) {
                         ctl.resetElevationProfile();
                         if (ctl.resultsPanel) {
@@ -350,7 +350,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         pointDrawControl
             .on(Consts.event.DRAWEND, function (e) {
                 const updateChanges = function (feat) {
-                    self.displayMeasurements({ coordinates: feat.geometry, units: map.wrap.isGeo() ? 'degrees' : 'm' });
+                    self.displayMeasurements({ coordinates: feat.geometry, units: map.wrap.isGeo() || map.on3DView ? 'degrees' : 'm' });
                     self.setFeatureMeasurementData(feat);
                 };
                 updateChanges(e.feature);
@@ -358,7 +358,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     if (tool) {
                         tool.setGeometry({
                             features: [e.feature],
-                            crs: self.map.crs
+                            crs: self.map.getCRS()
                         }).then(function (features) {
                             updateChanges(features[0]);
                         }, function (e) {
@@ -544,7 +544,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
     ctlProto.getFeatureMeasurementData = function (feature) {
         const self = this;
         const result = {
-            units: 'm'
+            units: self.map.wrap.isGeo() || self.map.on3DView ? 'degree' : 'm'
         };
         const measureOptions = {
             crs: self.map.options.utmCrs
@@ -594,15 +594,6 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         TC.control.Measure.prototype.resetValues.call(self);
         self.getPointMeasurementControl().then(ctl => ctl.clearMeasurement());
         return self;
-    };
-
-    ctlProto.resetDrawWatches = function () {
-        const self = this;
-        self.drawControls.forEach(function (ctl) {
-            ctl
-                .setStrokeColorWatch()
-                .setStrokeWidthWatch();
-        });
     };
 
     ctlProto.clear = function () {
