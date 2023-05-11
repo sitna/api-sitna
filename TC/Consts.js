@@ -1,5 +1,3 @@
-import TC from '../TC';
-
 /**
  * Dentro de este objeto estático se definen las constantes de utilidad que utiliza la API SITNA.
  * @member Consts
@@ -135,12 +133,14 @@ Consts.SRSDOWNLOAD_GEOJSON_KML = "urn:ogc:def:crs:OGC::CRS84";
 
 Consts.url = {
     SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
-    EPSG: 'https://epsg.io/',
-    CESIUM: TC.isDebug ? 'lib/cesium/build/cesium-sitna.js' : 'lib/cesium/build/cesium-sitna.min.js',
-    CESIUM_CONNECTOR: 'TC/cesium/cesium.js',
-    JSNLOG: 'lib/jsnlog/jsnlog.min.js',
-    ERROR_LOGGER: TC.apiLocation + 'errors/logger.ashx'
+    EPSG: 'https://epsg.io/'
 };
+if (typeof SITNA_BASE_URL !== "undefined") {
+    Consts.url.ERROR_LOGGER = SITNA_BASE_URL + 'errors/logger.ashx';
+}
+else {
+    Consts.url.ERROR_LOGGER = 'errors/logger.ashx';
+}
 Consts.classes = {
     MAP: 'tc-map',
     POINT: 'tc-point',
