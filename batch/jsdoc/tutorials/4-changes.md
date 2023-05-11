@@ -1,19 +1,29 @@
+### [4.0.0](https://github.com/sitna/api-sitna/releases/tag/v4.0.0)
+- Añadido espacio de nombres {@link SITNA.feature} con las clases que representan entidades geográficas.
+- Añadido espacio de nombres {@link SITNA.layer} con las clases que representan capas del mapa.
+- Añadida herramienta para eliminar vértices de entidades geográficas dibujadas previamente.
+- Añadidas las capas OpenTopoMap y ortofoto 2022 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
+- Añadido operador "no es igual a" para cadenas en el [control de consultas WFS]{@linkplain SITNA.control.WFSQueryOptions}.
+- Cambios de clases CSS para paliar interferencias con CSS de terceros.
+- Corrección de errores.
+
 ### [3.0.1](https://github.com/sitna/api-sitna/releases/tag/v3.0.1)
 - Corrección de dependencias de proyecto.
+- Añadido código necesario para la compilación del proyecto.
 - Corrección de error en el generador de documentación.
 
 ### [3.0.0](https://github.com/sitna/api-sitna/releases/tag/v3.0.0)
 - Añadida clase {@link SITNA.feature.Marker} para representar marcadores en un mapa.
 - Añadido control `download` para descarga de mapas.
-- Añadido control `drawMeasureModify` de [dibujo y medición]{@linkplain DrawMeasureModifyOptions}.
-- Añadido control `WFSEdit` de [edición por medio de servicios WFS]{@linkplain WFSEditOptions}.
+- Añadido control `drawMeasureModify` de [dibujo y medición]{@linkplain SITNA.control.DrawMeasureModifyOptions}.
+- Añadido control `WFSEdit` de [edición por medio de servicios WFS]{@linkplain SITNA.control.WFSEditOptions}.
 - Añadido control `share` para compartir mapa.
-- Añadido control `geolocation` para [geoposicionamiento]{@linkplain GeolocationOptions}.
-- Añadido control `offlineMapMaker` que permite [crear mapas que son utilizables sin conexión a Internet]{@linkplain OfflineMapMakerOptions}.
+- Añadido control `geolocation` para [geoposicionamiento]{@linkplain SITNA.control.GeolocationOptions}.
+- Añadido control `offlineMapMaker` que permite [crear mapas que son utilizables sin conexión a Internet]{@linkplain SITNA.control.OfflineMapMakerOptions}.
 - Añadido control `fullScreen` para la visualización a pantalla completa.
 - Añadido control `threed` para la visualización en 3D sobre un globo terráqueo.
-- Añadido control `multiFeatureInfo` para la obtención de información de entidades geográficas 
-[a través de tres tipos de filtros espaciales]{@linkplain MultiFeatureInfoOptions}: punto, línea y recinto.
+- Añadido control `multiFeatureInfo` para la obtención de información de entidades geográficas.
+[a través de tres tipos de filtros espaciales]{@linkplain SITNA.control.MultiFeatureInfoOptions}: punto, línea y recinto.
 - El control de búsquedas permite la búsqueda por carretera y punto kilométrico.
 - Añadida la opción de configurar qué capa de fondo se utilizará en el mapa de situación según qué capa de fondo está en el mapa principal.
 - Añadido el estilo de mapa de calor para capas vectoriales.
@@ -22,16 +32,17 @@ la [extensión máxima]{@linkplain SITNA.Map#getMaxExtent} del mapa.
 - Cambios de CSS para favorecer la incrustación de mapas sin interferencia de estilos.
 - Eliminada la dependencia del motor de plantillas *dust*.
 - Eliminada la variante de carga bajo demanda de la API SITNA.
+- Actualización a OpenLayers 6.
 - Corrección de errores.
 
 ### [2.2.1](https://github.com/sitna/api-sitna/releases/tag/v2.2.1)
-- Añadida la [ortofoto 2021]{@linkplain SITNA.Consts.layer.IDENA_ORTHOPHOTO2021} a la lista de capas disponibles.
+- Añadida la ortofoto 2021 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
 - Corrección de errores.
 
 ### [2.2.0](https://github.com/sitna/api-sitna/releases/tag/v2.2.0)
 
-- Añadida la [ortofoto 2020]{@linkplain SITNA.Consts.layer.IDENA_ORTHOPHOTO2020} a la lista de capas disponibles.
-- Añadida la [ortofoto 2020 de la comarca de Pamplona]{@linkplain SITNA.Consts.layer.IDENA_PAMPLONA_ORTHOPHOTO2020} a la lista de capas disponibles.
+- Añadida la ortofoto 2020 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
+- Añadida la ortofoto 2020 de la comarca de Pamplona a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
 - Añadida herramienta para obtener datos de elevación de entidades puntuales. Si estas tienen datos de elevación, se muestran junto con las obtenidas de servicios MDT.
 - Añadida herramienta para obtener perfil de elevación de entidades lineales. Si estas tienen datos de elevación, se permite la representación simultánea de perfiles de elevaciones propias y obtenidas de servicios MDT.
 - Definida [convención de nombres de atributo de entidad](tutorial-4-embedding.html) para incrustar imágenes, vídeos y otros recursos. Se utiliza 
@@ -53,7 +64,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 
 ### [2.0.1](https://github.com/sitna/api-sitna/releases/tag/v2.0.1)
 
-- Añadida la [ortofoto 2019]{@linkplain SITNA.Consts.layer.IDENA_ORTHOPHOTO2019} a la lista de capas disponibles.
+- Añadida la ortofoto 2019 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
 - Corrección de errores.
 
 ### [2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0)
@@ -181,7 +192,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 
 ### 1.0.3
 
-- Añadida la opción de deshabilitar el zoom en el mapa con la rueda de ratón mediante la propiedad `mousewWheelZoom` de {@link MapOptions}.
+- Añadida la opción de deshabilitar el zoom en el mapa con la rueda de ratón mediante la propiedad `mousewWheelZoom` de {@link SITNA.MapOptions}.
 - Añadida la posibilidad de mostrar un marcador con su bocadillo de información asociada visible por defecto, mediante la propiedad `showPopup` de {@link MarkerOptions}.
 - Corrección de errores.
 
