@@ -33,9 +33,16 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
 
     ctlProto.CLASS = 'tc-ctl-download';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-download.hbs";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-download-dialog.hbs";
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-download.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-download-dialog.mjs');
+
+        const template = {};
+        template[ctlProto.CLASS] = (await mainTemplatePromise).default;
+        template[ctlProto.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
+    };
 
     ctlProto.render = function (callback) {
         const self = this;
@@ -88,10 +95,10 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             const extent = self.map.getExtent();
             const doneQR = new Promise(function (resolve, _reject) {
                 var canvases = self.map.wrap.getCanvas();
-                var newCanvas = TC.Util.mergeCanvases(canvases);
+                var newCanvas = canvases.length > 1 ? TC.Util.mergeCanvases(canvases) : canvases[0];
 
                 var sb = self.map.getControlsByClass(TC.control.ScaleBar);
-                if (sb) {
+                if (sb && !self.map.on3DView) {
                     self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
                 }
 
@@ -133,8 +140,8 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
             doneQR.then(function (_canvas) {
                 const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
                 const fileExtension = '.' + format.split('/')[1];
-                const worldFileExtension = format === Consts.mimeType.JPEG ? '.jgw' : '.pgw';
-                if (self._activeElm.querySelector(`.${self.CLASS}-image-wld:checked`)) {
+                const worldFileExtension = format === TC.Consts.mimeType.JPEG ? '.jgw' : '.pgw';
+                if (self._activeElm.querySelector(`#${self.CLASS}-image-wld-${self.id}:checked`) && !self.map.on3DView) {
                     import('jszip').then(module => {
                         const JSZip = module.default;
                         const xScale = (extent[2] - extent[0]) / _canvas.width;
@@ -184,8 +191,17 @@ ${toFixed(yOrigin)}`);
             const li = self.map.getLoadingIndicator();
             const wait = li && li.addWait();
 
+            const _filterBuilder = function () {
+                if (self.map.on3DView) {
+                    return new filter.Within(null, new polygon(self.map.view3D.getFovCoords(self.map.view3D.crs)), self.map.view3D.crs);
+                }
+                else {
+                    return new filter.bbox(self.map.getExtent(), self.map.getCRS());
+                }
+            }
+
             const arrPromises = self.map.extractFeatures({
-                filter: TC.filter.bbox(self.map.getExtent(), self.map.getCRS()),
+                filter: _filterBuilder(),
                 outputFormat: format,
                 download: true
             });
