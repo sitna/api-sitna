@@ -889,7 +889,7 @@
     <Content Include="layout\pamplona\config.json" />
     <Content Include="layout\pamplona\resources\es-ES.json" />
     <Content Include="layout\pamplona\resources\eu-ES.json" />
-    <Content Include="TC\config\browser-versions.json" />
+    <Content Include="config\browser-versions.json" />
     <Content Include="layout\pamplona\resources\en-US.json" />
     <Content Include="css\fonts\sitna.eot" />
     <Content Include="css\fonts\sitna.ttf" />
