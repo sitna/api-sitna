@@ -1,4 +1,4 @@
-﻿import TC from '../../TC';
+import TC from '../../TC';
 import Consts from '../../TC/Consts';
 import Util from '../../TC/Util';
 import Cfg from '../../TC/Cfg';
@@ -234,8 +234,8 @@ class Feature {
      */
     getCoordinates(options) {
         const self = this;
-        const sourceCrs = options?.geometryCrs || self.layer?.map?.crs;
-        const destCrs = options?.crs || self.layer?.map?.options.utmCrs || Cfg.utmCrs;
+        const sourceCrs = options?.geometryCrs || (self.layer?.map?.on3DView ? self.layer.map.view3D.crs:self.layer?.map?.crs);
+        const destCrs = options?.crs || self.layer?.map?.getCRS() || Cfg.utmCrs;
         self.geometry = self.wrap.getGeometry();
         if (sourceCrs && destCrs) {
             return TC.Util.reproject(self.geometry, sourceCrs, destCrs);
@@ -724,7 +724,8 @@ class Feature {
                 control = await self.showPopup(opts);
             }
         }
-
+        self.layer.features.filter((f) => f !== self).forEach((f) => f.toggleSelectedStyle(false));
+        self.toggleSelectedStyle(true);
         TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(control.getContainerElement());
     }
 
@@ -736,6 +737,8 @@ class Feature {
         }
         var selectionOptions = self.options.selection || {};
         self.setStyle(Util.extend({}, Cfg.styles.selection[self.STYLETYPE], selectionOptions[self.STYLETYPE]));
+        //URI:Traer al frente
+
         return self;
     }
 
@@ -744,6 +747,7 @@ class Feature {
         self.#selected = false;
         // Volvemos al estilo por defecto
         self.setStyle(self.options);
+        //self.setStyle(Object.assign({}, self.options, Cfg.styles[self.STYLETYPE]));
 
         if (self.layer) {
             const idx = self.layer.selectedFeatures.indexOf(self);
