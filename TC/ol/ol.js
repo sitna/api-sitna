@@ -523,6 +523,21 @@ ol.proj.proj4.register(proj4);
 //ol.proj.get('urn:ogc:def:crs:EPSG::4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
 //ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
 
+// Reescribimos la obtención de proyección para que soporte códigos tipo EPSG:X, urn:ogc:def:crs:EPSG::X y http://www.opengis.net/gml/srs/epsg.xml#X
+//ol.proj.oldGet = ol.proj.get;
+//ol.proj.get = function (projectionLike) {
+//    let result = ol.proj.oldGet.call(this, projectionLike);
+//    if (!result && typeof projectionLike === 'string') {
+//        projectionLike = projectionLike.trim();
+//        TC.loadProjDef({ crs: projectionLike, sync: true });
+//        result = ol.proj.oldGet.call(this, projectionLike);
+//    }
+//    return result;
+//};
+
+
+
+
 const isMobile = TC.Util.detectMobile();
 // El viewState del mapa tiene una resolución con respecto al pixel virtual. Esto hace que se pida
 // teselas en un nivel de zoom distinto al deseado para que se vean en el dispositivo en relación pixel 1:1.
@@ -1448,7 +1463,29 @@ TC.wrap.Map.prototype.getViewport = function (options) {
 
 TC.wrap.Map.prototype.getCanvas = function () {
     const self = this;
-    return Array.from(self.parent.div.querySelectorAll('.ol-viewport canvas:not(.tc-ctl-ovmap canvas)'));
+    if (self.parent.on3DView) {
+        const scene = self.parent.view3D.getScene();
+        const newCanvas = document.createElement("canvas");
+        newCanvas.width = scene.canvas.width;
+        newCanvas.height = scene.canvas.height;
+        const ctxt = newCanvas.getContext("2d");
+        scene.canvas.getContext('webgl', { preserveDrawingBuffer: true });
+        scene.requestRenderMode = false;
+        scene.render();
+        ctxt.drawImage(scene.canvas, 0, 0, scene.canvas.width, scene.canvas.height);
+        scene.requestRenderMode = true;
+        scene.canvas.getContext('webgl', { preserveDrawingBuffer: false });
+
+        //const image = document.createElement("img");
+        //image.width=newCanvas.width = scene.canvas.width;
+        //image.height = newCanvas.height = scene.canvas.height;
+
+        //image.src = data.image;
+
+        return [newCanvas];
+    }
+    else
+        return Array.from(self.parent.div.querySelectorAll('.ol-viewport canvas:not(.tc-ctl-ovmap canvas)'));
 };
 
 TC.wrap.Map.prototype.isNative = function (map) {
@@ -1802,7 +1839,7 @@ TC.wrap.Map.prototype.exportFeatures = function (features, options) {
                         text: text.clone(),
                         image: new ol.style.Icon({
                             crossOrigin: 'anonymous',
-                            src: TC.apiLocation + 'TC/css/img/transparent.gif'
+                            src: TC.apiLocation + 'css/img/transparent.gif'
                         })
                     }));
                     pointsToAdd.push(newFeature);
@@ -6717,6 +6754,7 @@ TC.wrap.control.OverviewMap.prototype.enable = function () {
         self.parent.map.div.dispatchEvent(resizeEvent);
     }
     self.ovMap.resetExtent_();
+    self.ovMap.updateBox_();
 };
 
 TC.wrap.control.OverviewMap.prototype.disable = function () {
@@ -8091,7 +8129,9 @@ TC.wrap.Feature.prototype.getStyle = function () {
         if (olStyle._balloon && olStyle._balloon.getText())
             result.balloon = olStyle._balloon.getText();
     }
-    TC.Util.extend(self.parent.options, result);    
+    TC.Util.extend(self.parent.options, result);
+    if (self.feature3D)
+        result = Object.assign(result, self.feature3D.getStyle())
     return result;
 };
 
@@ -8243,6 +8283,10 @@ TC.wrap.Feature.prototype.getLength = function (options) {
     options = options || {};
     let result = 0;
 
+    if (self.feature3D && self.parent?.layer?.map.on3DView) {
+        return self.parent.layer.map.view3D.getLength(self.feature3D);
+    }
+
     const geom = self.feature.getGeometry();
     const coordinates = options.coordinates || geom.getCoordinates();
     switch (true) {
@@ -8270,7 +8314,11 @@ TC.wrap.Feature.prototype.getLength = function (options) {
 TC.wrap.Feature.prototype.getArea = function (options) {
     const self = this;
     options = options || {};
-        
+
+    if (self.feature3D && self.parent?.layer?.map.on3DView) {
+        return self.parent.layer.map.view3D.getArea(self.feature3D);
+    }
+
     const geom = self.feature.getGeometry();
     let Ctor;
     if (geom instanceof ol.geom.Polygon) {
@@ -8350,8 +8398,6 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
     if (!Array.isArray(newStyle)) {
         newStyle = [newStyle];
     }
-    newStyle = newStyle.map(s => s.clone());
-
     let style = newStyle[newStyle.length - 1];
     if (geom instanceof ol.geom.Point || geom instanceof ol.geom.MultiPoint) {
 
@@ -8411,8 +8457,8 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
                 circleOptions.radius = imageStyle.getRadius();
             }
             if (imageStyle.getFill) {
-                const fill = imageStyle.getFill();
-                const previousColor = fill.getColor();
+                const fill = imageStyle.getFill() || new ol.style.Fill();
+                const previousColor = fill?.getColor();
                 const previousOpacity = Array.isArray(previousColor) ? previousColor[3] : 1;
                 fill.setColor(getRGBA(getStyleValue(options.fillColor || previousColor, feature), getStyleValue(options.fillOpacity || previousOpacity, feature)));
                 circleOptions.fill = fill;
@@ -8482,7 +8528,32 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
             style.setText();
         }
     }
-    olFeat.setStyle(newStyle);    
+    style.setZIndex(options.zIndex);
+    
+    olFeat.setStyle(newStyle);
+    //estilos de features 3D
+    if (feature.layer  && self.feature3D) {
+
+        let currentStyle = olFeat._originalStyle || newStyle;
+        if (TC.Util.isFunction(currentStyle))
+            currentStyle = currentStyle();
+        const textStyle = currentStyle.find((s) => s.getText());
+        feature.layer.map.view3D.setStyle(self.feature3D, {
+            strokeColor: (currentStyle.findLast((s) => s.getStroke())?.getStroke() || currentStyle.findLast((s) => s.getImage() && s.getImage().getStroke()).getImage().getStroke())?.getColor(),
+            strokeWidth: (currentStyle.findLast((s) => s.getStroke())?.getStroke() || currentStyle.findLast((s) => s.getImage() && s.getImage().getStroke()).getImage().getStroke()).getWidth(),
+            fillColor: (currentStyle.findLast((s) => s.getFill())?.getFill() || currentStyle.findLast((s) => s.getImage() && s.getImage().getFill())?.getImage().getFill())?.getColor()
+        });
+        if (textStyle)
+            feature.layer.map.view3D.setLabel(self.feature3D, {
+                outlineColor: "#FFFFFF",
+                fillColor: textStyle.getText().getFill().getColor().slice(0, 3),
+                outlineWidth: 2,
+                font: textStyle.getText().getFont(),
+                text: textStyle.getText().getText(),
+            })
+    }
+
+
     olFeat.changed();
 };
 
@@ -8911,10 +8982,20 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
             type = olGeometryType.LINE_STRING;
             break;
     }
+
     if (self.parent.map) {
         Promise.all([self.parent.map.wrap.getMap(), self.parent.getLayer()]).then(function (objects) {
             const olMap = objects[0];
-            const layer = objects[1];            
+            const layer = objects[1];
+            if (self.parent.map.on3DView) {
+                self.interaction3D = new self.parent.map.view3D.UI.DrawControl(mode, function (feature) {
+                    return layer.addFeature(feature);
+                });
+                self.setStyle();
+                self.interaction3D.activate();
+                self.redoStack = [];
+                return;
+            }
             if (layer) {
                 layer.wrap.getLayer().then(function (olLayer) {
 
@@ -9147,6 +9228,9 @@ TC.wrap.control.Draw.prototype.deactivate = function () {
             }
         });
     }
+    if (self.interaction3D) {
+        self.interaction3D.deactivate();
+    }
 };
 
 TC.wrap.control.Draw.prototype._extendFeature = function (feature) {
@@ -9225,7 +9309,10 @@ TC.wrap.control.Draw.prototype.popCoordinate = function () {
 
                 feature.setGeometry(geom);
             }
-        }    
+        }
+    }
+    else if (self.interaction3D) {
+        result = self.interaction3D.popCoordinate();
     }
     return result;
 };
@@ -9286,7 +9373,11 @@ TC.wrap.control.Draw.prototype.pushCoordinate = function (coord) {
             }
 
             result = true;
-        }    
+        }
+    }
+    else if (self.interaction3D) {
+        self.interaction3D.pushCoordinate(coord);
+        result = true;
     }
     return result;
 };
@@ -9323,7 +9414,10 @@ TC.wrap.control.Draw.prototype.redo = function () {
 TC.wrap.control.Draw.prototype.end = function () {
     var self = this;
     if (self.interaction && self.interaction.sketchFeature_)
-        self.interaction.finishDrawing();    
+        self.interaction.finishDrawing();
+    else if (self.interaction3D) {
+        self.interaction3D.end();
+    }
 };
 
 TC.wrap.control.Draw.prototype.setStyle = function () {
@@ -9408,7 +9502,10 @@ TC.wrap.control.Draw.prototype.setStyle = function () {
                 }
             }
             self.interaction.overlay_.setStyle(olStyle);
-        }    
+        }
+    }
+    else if (self.interaction3D) {
+        self.interaction3D.setStyle(self.parent.getStyle());
     }
 };
 
@@ -9416,7 +9513,10 @@ TC.wrap.control.Draw.prototype.setVisibility = function (visibility) {
     const self = this;
     if (self.interaction) {
         self.interaction.getOverlay().setVisible(visibility)
-    }    
+    }
+    if (self.interaction3D) {
+        self.interaction3D.visibility(visibility)
+    }
 }
 
 TC.wrap.control.OfflineMapMaker.prototype.getRequestSchemas = function (options) {
@@ -9559,10 +9659,10 @@ const addHaloToStyle = function (style) {
 const createSelectedStyle = function (feat) {
     let originalStyle = feat._originalStyle = feat._originalStyle || feat.getStyle();
     if (!feat._originalStyle && feat._wrap.parent.layer) {
-        originalStyle = feat._wrap.parent.layer.wrap.layer.getStyle();
+        originalStyle = feat._originalStyle = feat._wrap.parent.layer.wrap.layer.getStyle();
     }
     if (!originalStyle) {
-        originalStyle = createNativeStyle({}, feat);
+        originalStyle = feat._originalStyle = createNativeStyle({}, feat);
     }
     if (TC.Util.isFunction(originalStyle)) {
         return function (f, r) {
@@ -9580,7 +9680,7 @@ const setSelectedStyle = function (feat) {
 
 const removeSelectedStyle = function (feat) {
     //ol.events.unlistenByKey(feat._changeListenerKey);
-    if (Object.prototype.hasOwnProperty.call(feat, '_originalStyle')) {
+    if (Object.prototype.hasOwnProperty.call(feat, '_originalStyle') && feat._originalStyle) {
         feat.setStyle(feat._originalStyle);
     }
     delete feat._originalStyle;
@@ -9610,9 +9710,17 @@ TC.wrap.control.Modify.prototype.activate = function () {
                 }
                 olMap.removeInteraction(self.selectInteraction);
             }
-            var select = new ol.interaction.Select(selectOptions);
-            self.selectInteraction = select;
-            olMap.addInteraction(select);
+            var select = null;
+            if (self.parent.map.on3DView) {
+                select = self.selectInteraction || new self.parent.map.view3D.UI.SelectControl();
+                select.activate(deleteMode);
+                self.selectInteraction = select;
+            }
+            else {
+                select = new ol.interaction.Select(selectOptions);
+                self.selectInteraction = select;
+                olMap.addInteraction(select);
+            }
             var getWrapperFeature = function (elm) {
                 return elm._wrap.parent;
             };
@@ -9748,7 +9856,10 @@ TC.wrap.control.Modify.prototype.getSelectedFeatures = function () {
         self.selectInteraction.getFeatures().forEach(function (elm) {
             result.push(elm._wrap.parent);
         });
-    }    
+    }
+    //if (self.interaction3D) {
+
+    //}
     return result;
 };
 
@@ -9867,7 +9978,6 @@ TC.wrap.Feature.prototype.toGML = function (_version, srsName) {
         });
     //return new XMLSerializer().serializeToString(xml.firstChild).replace(/\</gm, "<gml:");
 };
-
 
 TC.wrap.Feature.prototype.toGeoJSON = function () {
     var parser = new ol.format.GeoJSON();
