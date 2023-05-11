@@ -9,11 +9,11 @@ examples.js
 ../TC/css/tcmap.css
 ../TC/resources/es-ES.json
 ../TC/config/browser-versions.js
-../TC/layout/responsive/style.css
+../layout/responsive/style.css
 ../TC/workers/tc-caps-web-worker.js
 ../TC/css/fonts/sitna.woff
 ../TC/css/fonts/mapskin.woff
-../TC/layout/responsive/fonts/fontawesome-webfont.woff?v=4.5.0
+../layout/responsive/fonts/fontawesome-webfont.woff?v=4.5.0
 ../TC/css/img/thumb-orthophoto.jpg
 ../TC/css/img/thumb-bta.png
 ../TC/css/img/thumb-basemap.png
