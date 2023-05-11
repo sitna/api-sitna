@@ -1,6 +1,6 @@
 Cuando se instancia un mapa, se carga una maquetación que establece qué datos se cargan, qué controles y en qué 
 distribución se muestran, y qué estilo va a tener el visor. La API SITNA tiene una maquetación definida por defecto, 
-pero esto se puede cambiar utilizando la propiedad `layout` en las [opciones del mapa]{@linkplain MapOptions}:
+pero esto se puede cambiar utilizando la propiedad `layout` en las [opciones del mapa]{@linkplain SITNA.MapOptions}:
 
 ### Caso simple
 ``` javascript
@@ -12,7 +12,7 @@ var map = new SITNA.Map("mapa", {
 El valor de esa propiedad es una ruta a una carpeta, donde se encontrarán todos o alguno de los siguientes archivos:
 
 * `markup.html`, con la plantilla HTML que se inyectará en el elemento del DOM del mapa.
-* `config.json`, con un [objeto]{@linkplain MapOptions} JSON que sobreescribirá propiedades de {@link SITNA.Cfg}.
+* `config.json`, con un [objeto]{@linkplain SITNA.MapOptions} JSON que sobreescribirá propiedades de {@link SITNA.Cfg}.
 * `style.css`, para personalizar el estilo del visor y sus controles.
 * `script.js`, para añadir lógica nueva. Este es el lugar idóneo para la lógica de la nueva interfaz definida por el marcado inyectado con markup.html.
 * `resources/*.json`, donde `*` es el [código IETF](https://es.wikipedia.org/wiki/C%C3%B3digo_de_idioma_IETF) del idioma que tendrá la interfaz de usuario, por ejemplo `resources/es-ES.json`. Si se van a soportar varios idiomas hay que preparar un archivo por idioma. Para saber cómo establecer un idioma de interfaz de usuario, consultar la opción locale del constructor de {@link SITNA.Map}.
@@ -22,7 +22,7 @@ Puede [descargar](../layout/responsive/responsive.zip) la maquetación por defec
 
 ### Especificando la maquetación archivo por archivo
 Es muy frecuente el caso en el que se necesite modificar solamente uno o dos archivos de la maquetación y aprovechar el resto 
-de los archivos de la maquetación por defecto. Para llevar a cabo esto, la propiedad `layout` puede tener un valor de tipo {@link LayoutOptions}.
+de los archivos de la maquetación por defecto. Para llevar a cabo esto, la propiedad `layout` puede tener un valor de tipo {@link SITNA.LayoutOptions}.
 ``` javascript
 // Instanciamos un mapa cuya maquetación tiene la configuración y el marcado personalizados 
 // y el resto de elementos se obtienen de la maquetación por defecto
