@@ -1,5 +1,4 @@
 const path = require('path');
-const precompiledTemplates = require('./precompiledTemplates');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
 module.exports = {
@@ -9,13 +8,12 @@ module.exports = {
     resolve: {
         fallback: {
             buffer: require.resolve('buffer/'),
-            assert: false,
-            util: false
+            assert: false
         }
     },
     plugins: [
-        new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer']
+        new webpack.IgnorePlugin({
+            resourceRegExp: /wkx/
         })
     ],
     module: {
@@ -56,28 +54,6 @@ module.exports = {
                             search: /TC\.version = '(\d+\.\d+\.\d+)';/,
                             replace(match, p1) {
                                 return "TC.version = '" + p1 + " [" + (new Date()).toLocaleString() + "]';";
-                            }
-                        }
-                    ]
-                }
-            },
-            {
-                test: /(sitna)|(TC).+\.js$/,
-                loader: 'string-replace-loader',
-                options: {
-                    multiple: [
-                        // Sustituimos plantillas de control únicas por su resultado compilado
-                        {
-                            search: /template = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g,
-                            replace(match, p1) {
-                                return "template = " + precompiledTemplates[p1 + '.hbs'];
-                            }
-                        },
-                        // Sustituimos plantillas de control múltiples por su resultado compilado
-                        {
-                            search: /template\[(.+)\] = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g,
-                            replace(match, p1, p2) {
-                                return "template[" + p1 + "] = " + precompiledTemplates[p2 + '.hbs'];
                             }
                         }
                     ]
