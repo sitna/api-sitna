@@ -3,9 +3,9 @@ import Consts from '../../TC/Consts';
 import Util from '../../TC/Util';
 import localforage from 'localforage';
 import Proxification from '../../TC/tool/Proxification';
+import wwBlob from '../../workers/tc-caps-web-worker-blob.mjs';
 
 const isWebWorkerEnabled = Object.prototype.hasOwnProperty.call(window, 'Worker');
-const wwPromise = Util.getWebWorkerCrossOriginURL(TC.apiLocation + 'TC/workers/tc-caps-web-worker.js');
 
 const srcToURL = function (src) {
     const anchor = document.createElement('a');
@@ -464,30 +464,29 @@ class Layer {
         else {
             return new Promise(function (resolve, reject) {
                 if (isWebWorkerEnabled && typeof data === 'string') {
-                    wwPromise.then(function (wwUrl) {
-                        var worker = new Worker(wwUrl);
-                        worker.onmessage = function (e) {
-                            if (e.data.state === 'success') {
-                                capabilities = e.data.capabilities;
+                    const workerUrl = URL.createObjectURL(wwBlob);
+                    var worker = new Worker(workerUrl);
+                    worker.onmessage = function (e) {
+                        if (e.data.state === 'success') {
+                            capabilities = e.data.capabilities;
 
-                                // GLS: Sólo almacenamos si el capabilities es correcto
-                                self.#storeCapabilities(capabilities);
-                            }
-                            else {
-                                capabilities = {
-                                    error: 'Web worker error: ' + self.url
-                                };
-                                reject(capabilities.error);
-                            }
+                            // GLS: Sólo almacenamos si el capabilities es correcto
+                            self.#storeCapabilities(capabilities);
+                        }
+                        else {
+                            capabilities = {
+                                error: 'Web worker error: ' + self.url
+                            };
+                            reject(capabilities.error);
+                        }
 
-                            resolve(capabilities);
-                            worker.terminate();
-                        };
-                        worker.postMessage({
-                            type: self.type,
-                            text: data,
-                            url: TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation
-                        });
+                        resolve(capabilities);
+                        worker.terminate();
+                    };
+                    worker.postMessage({
+                        type: self.type,
+                        text: data,
+                        url: TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation
                     });
                 }
                 else {

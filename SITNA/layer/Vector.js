@@ -13,6 +13,7 @@ import MultiMarker from '../feature/MultiMarker';
 import MultiPolyline from '../feature/MultiPolyline';
 import MultiPolygon from '../feature/MultiPolygon';
 import Circle from '../feature/Circle';
+import wwBlob from '../../workers/tc-dft-web-worker-blob.mjs';
 
 TC.Layer = Layer;
 TC.Util = Util;
@@ -799,26 +800,10 @@ class Vector extends Layer {
                         return;
                     }
                     if (Object.prototype.hasOwnProperty.call(window, 'Worker')) {
-                        const wwGetUrl = async function () {
-                            var wwLocation = TC.apiLocation + 'TC/workers/tc-dft-web-worker.js';
-                            if (TC.Util.isSameOrigin(TC.apiLocation)) {
-                                return wwLocation;
-                            }
-                            else {
-                                const response = await TC.ajax({
-                                    url: wwLocation,
-                                    method: 'GET',
-                                    responseType: 'text'
-                                });
-                                const data = response.data;
-                                var blob = new Blob([data], { type: "text/javascript" });
-                                var url = window.URL.createObjectURL(blob);
-                                return url;
-                            }
-                        };
-                        const wwInit = async function () {
+                        const wwInit = function () {
                             if (!self.WebWorkerDFT) {
-                                self.WebWorkerDFT = new Worker(await wwGetUrl());
+                                const workerUrl = URL.createObjectURL(wwBlob);
+                                self.WebWorkerDFT = new Worker(workerUrl);
                             }
                             self.WebWorkerDFT.onmessage = async function (e) {
                                 if (!(e.data instanceof Object)) {
