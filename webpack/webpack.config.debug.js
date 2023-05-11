@@ -7,8 +7,7 @@ module.exports = {
     resolve: {
         fallback: {
             buffer: require.resolve('buffer/'),
-            assert: false,
-            util: false
+            assert: false
         }
     },
     module: {
@@ -36,6 +35,9 @@ module.exports = {
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
         }),
+        new webpack.IgnorePlugin({
+            resourceRegExp: /wkx/
+        })
     ],
     devServer: {
         allowedHosts: 'auto',
@@ -44,7 +46,8 @@ module.exports = {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
             "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
-        }
+        },
+        watchFiles: 'TC/templates/*.mjs'
     },
     output: {
         filename: 'sitna.debug.js',
