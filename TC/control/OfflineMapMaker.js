@@ -4,7 +4,7 @@
   * 
   * Para que ese control funcione correctamente, es necesario cumplir estos dos requisitos:
   *    1. Debe instalarse en el ámbito de la aplicación que contiene el visor el _[Service Worker](https://developer.mozilla.org/es/docs/Web/API/Service_Worker_API)_ creado para el funcionamiento de este control.
-  *    Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/TC/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
+  *    Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
   *    2. Debe incluirse en la carpeta de la aplicación un archivo de texto con el nombre `manifest.appcache`. 
   *    Este archivo es un documento de manifiesto de [caché de aplicaciones](https://developer.mozilla.org/es/docs/Web/HTML/Using_the_application_cache#habilitando_cach%C3%A9_de_aplicaciones)[*] 
   *    que contiene una lista de las URL de todos los recursos que tienen que almacenarse en la cache del navegador y así asegurar la carga de la aplicación
@@ -44,18 +44,17 @@
   * examples.css
   * examples.js
   * ../
-  * ../TC/css/tcmap.css
-  * ../TC/resources/es-ES.json
+  * ../css/tcmap.css
+  * ../resources/es-ES.json
   * ../TC/config/browser-versions.js
-  * ../TC/layout/responsive/style.css
-  * ../TC/workers/tc-caps-web-worker.js
-  * ../TC/css/fonts/sitna.woff
-  * ../TC/css/fonts/mapskin.woff
-  * ../TC/layout/responsive/fonts/fontawesome-webfont.woff?v=4.5.0
-  * ../TC/css/img/thumb-orthophoto.jpg
-  * ../TC/css/img/thumb-bta.png
-  * ../TC/css/img/thumb-basemap.png
-  * ../TC/css/img/thumb-cadaster.png
+  * ../layout/responsive/style.css
+  * ../css/fonts/sitna.woff
+  * ../css/fonts/mapskin.woff
+  * ../layout/responsive/fonts/fontawesome-webfont.woff?v=4.5.0
+  * ../css/img/thumb-orthophoto.jpg
+  * ../css/img/thumb-bta.png
+  * ../css/img/thumb-basemap.png
+  * ../css/img/thumb-cadaster.png
   * layout/ctl-container/config.json
   * layout/ctl-container/style.css
   * layout/ctl-container/script.js
@@ -246,7 +245,7 @@ TC.control.SWCacheClient = SWCacheClient;
 
         // Detección de estado de conexión
         var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
-        var onlineHandler = function () {
+        const onlineHandler = function () {
             if (self._offlineMapHintDiv) {
                 const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
                 panel.classList.remove(
@@ -267,15 +266,21 @@ TC.control.SWCacheClient = SWCacheClient;
                 }
             }
         };
-        if (connection.addEventListener) {
-            connection.addEventListener('typechange', onlineHandler);
-        }
-        window.addEventListener('online', onlineHandler);
-        window.addEventListener('offline', function () {
+        const offlineHandler = function () {
             if (self._offlineMapHintDiv) {
                 const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
                 panel.classList.add(Consts.classes.CONNECTION_OFFLINE);
                 panel.classList.remove(Consts.classes.CONNECTION_MOBILE, Consts.classes.CONNECTION_WIFI);
+            }
+        };
+        if (connection.addEventListener) {
+            connection.addEventListener('typechange', onlineHandler);
+        }
+        window.addEventListener('online', onlineHandler);
+        window.addEventListener('offline', offlineHandler);
+        self.renderPromise().then(() => {
+            if (!navigator.onLine) {
+                offlineHandler();
             }
         });
     };
@@ -329,13 +334,6 @@ TC.control.SWCacheClient = SWCacheClient;
     Consts.event.MAPCACHEDELETE = Consts.event.MAPCACHEDELETE || 'mapcachedelete.tc';
     Consts.event.MAPCACHEPROGRESS = Consts.event.MAPCACHEPROGRESS || 'mapcacheprogress.tc';
     Consts.event.MAPCACHEERROR = Consts.event.MAPCACHEERROR || 'mapcacheerror.tc';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-omm.hbs";
-    ctlProto.template[ctlProto.CLASS + '-map-node'] = TC.apiLocation + "TC/templates/tc-ctl-omm-map-node.hbs";
-    ctlProto.template[ctlProto.CLASS + '-bl-node'] = TC.apiLocation + "TC/templates/tc-ctl-omm-bl-node.hbs";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-omm-dialog.hbs";
-    ctlProto.template[ctlProto.CLASS + '-off-panel'] = TC.apiLocation + "TC/templates/tc-ctl-omm-off-panel.hbs";
 
     const getExtentFromString = function (str) {
         return decodeURIComponent(str).split(',').map(function (elm) {
@@ -621,6 +619,23 @@ TC.control.SWCacheClient = SWCacheClient;
         }
 
         return null;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-omm.mjs');
+        const mapNodeTemplatePromise = import('../templates/tc-ctl-omm-map-node.mjs');
+        const baseLayerNodeTemplatePromise = import('../templates/tc-ctl-omm-bl-node.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-omm-dialog.mjs');
+        const offlinePanelTemplatePromise = import('../templates/tc-ctl-omm-off-panel.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-map-node'] = (await mapNodeTemplatePromise).default;
+        template[self.CLASS + '-bl-node'] = (await baseLayerNodeTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS + '-off-panel'] = (await offlinePanelTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {
@@ -909,12 +924,12 @@ TC.control.SWCacheClient = SWCacheClient;
         if (self.mapIsOffline) {
             map.div.classList.add(Consts.classes.OFFLINE);
 
-            // Si no está especificado, el panel de aviso offline se cuelga del div del mapa
-            self._offlineMapHintDiv = TC.Util.getDiv(self.options.offlineMapHintDiv);
-            if (!self.options.offlineMapHintDiv) {
-                map.div.appendChild(self._offlineMapHintDiv);
-            }
             self.getRenderedHtml(self.CLASS + '-off-panel', { url: self.getOnlineMapUrl() }, function (html) {
+                // Si no está especificado, el panel de aviso offline se cuelga del div del mapa
+                self._offlineMapHintDiv = TC.Util.getDiv(self.options.offlineMapHintDiv);
+                if (!self.options.offlineMapHintDiv) {
+                    map.div.appendChild(self._offlineMapHintDiv);
+                }
                 self._offlineMapHintDiv.innerHTML = html;
                 if (!navigator.onLine) {
                     const offPanel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
