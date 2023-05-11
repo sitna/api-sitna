@@ -69,6 +69,10 @@ TC.inherit(TC.Control, EventTarget);
         }));
     };
 
+    ctlProto.loadTemplates = async function () {
+
+    };
+
     ctlProto.getClassName = function () {
         return this.CLASS;
     };
@@ -89,6 +93,9 @@ TC.inherit(TC.Control, EventTarget);
         self.div.classList.toggle(Consts.classes.DISABLED, self.isDisabled);
 
         let template;
+        if (!self.template) {
+            await self.loadTemplates();
+        }
         if (typeof self.template === 'object' && !self.template.compiler) {
             template = self.template[self.CLASS];
         }
@@ -162,6 +169,9 @@ TC.inherit(TC.Control, EventTarget);
             return html;
         };
 
+        if (!self.template) {
+            await self.loadTemplates();
+        }
         const template = self.template[templateId];
         if (typeof template !== 'function') {
             await processTemplates(self.template, { locale: self.map && self.map.options.locale, className: self.CLASS });
@@ -368,7 +378,9 @@ TC.inherit(TC.Control, EventTarget);
         if (self.elevation) {
             return self.elevation;
         }
-        await TC.loadJS(!TC.tool || !TC.tool.Elevation, TC.apiLocation + 'TC/tool/Elevation');
+        if (!TC.tool.Elevation) {
+            await import('./tool/Elevation');
+        }
         if (typeof self.options.displayElevation === 'boolean') {
             if (self.map) {
                 const mapElevation = await self.map.getElevationTool();
