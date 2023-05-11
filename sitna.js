@@ -65,7 +65,7 @@ globalThis.TC = TC;
 
 TC.version = '4.0.0';
 
-TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
+TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
 // Precargamos el CRS por defecto
 TC.loadProjDef({ crs: 'EPSG:25830', name: 'ETRS89 / UTM zone 30N', def: '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs' });
@@ -92,36 +92,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
     TC.browser = TC.Util.getBrowser();
 
-    TC.loadJS(!TC.Cfg.acceptedBrowserVersions, TC.apiLocation + 'TC/config/browser-versions.js', () => {
+    fetch(TC.apiLocation + 'TC/config/browser-versions.json')
+        .then(r => {
+            if (r.ok) {
+                return r.json();
+            }
+            return Promise.resolve([]);
+        })
+        .then(browserVersions => {
+            TC._isSupported = true;
+            TC.Cfg.acceptedBrowserVersions = browserVersions;
 
-        TC._isSupported = true;
-        const browserVersions = TC.Cfg.acceptedBrowserVersions;
+            const match = browserVersions.find(item => item.name.toLowerCase() === TC.browser.name.toLowerCase());
 
-        const match = browserVersions.find(item => item.name.toLowerCase() === TC.browser.name.toLowerCase());
+            // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
+            if (match && match.expired) {
+                TC.Cfg.loggingErrorsEnabled = false;
+            } else {
+                if (match && !isNaN(match.version)) {
+                    if (TC.browser.version < match.version) {
+                        TC._isSupported = false;
+                    }
+                }
 
-        // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
-        if (match && match.expired) {
-            TC.Cfg.loggingErrorsEnabled = false;
-        } else {
-            if (match && !isNaN(match.version)) {
-                if (TC.browser.version < match.version) {
-                    TC._isSupported = false;
+                if (TC.Cfg.oldBrowserAlert && !TC._isSupported) {
+                    TC.Cfg.loggingErrorsEnabled = false;
+                    // Timeout para evitar pedir el mapa antes de que se instancie
+                    setTimeout(() => {
+                        const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
+
+                        TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
+                            TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), Consts.msgErrorMode.TOAST);
+                        });
+                    }, 500);
                 }
             }
-
-            if (TC.Cfg.oldBrowserAlert && !TC._isSupported) {
-                TC.Cfg.loggingErrorsEnabled = false;
-                // Timeout para evitar pedir el mapa antes de que se instancie
-                setTimeout(() => {
-                    const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
-
-                    TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
-                        TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), Consts.msgErrorMode.TOAST);
-                    });
-                }, 500);
-            }
-        }
-    });
+        });
 
 
     if (/ip(ad|hone|od)/i.test(navigator.userAgent)) {
@@ -234,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * @namespace SITNA
  */
 
-Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
+Cfg.layout = TC.apiLocation + 'layout/responsive';
 
 export { Cfg, SitnaMap as Map, Consts, feature, layer };
 
