@@ -259,7 +259,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
             const ctl = self.getDisplayControl();
             self.getDisplayTarget().querySelectorAll(`.${self.CLASS}-elev,.${self.CLASS}-height`).forEach(elm => elm.classList.add(Consts.classes.HIDDEN));
             self.elevationRequest.then(function (elevationCoords) {
-                if (ctl.currentFeature && elevationCoords.length) {
+                if (ctl.currentFeature && elevationCoords?.length) {
                     const currentCoords = ctl.currentFeature.geometry;
                     const elevPoint = elevationCoords[0];
                     if (currentCoords[0] === elevPoint[0] && currentCoords[1] === elevPoint[1]) {
