@@ -62,9 +62,6 @@ class Draw extends WebComponentControl {
         super(...arguments);
         const self = this;
 
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-draw.hbs";
-
         self.styles = self.options.styles || Util.extend(true, {}, Defaults.styles);
         self
             .initProperty('measurer')
@@ -205,6 +202,12 @@ class Draw extends WebComponentControl {
 
     set extensibleSketch(value) {
         this.toggleAttribute('extensible-sketch', !!value);
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-draw.mjs');
+        self.template = module.default;
     }
 
     render(callback) {

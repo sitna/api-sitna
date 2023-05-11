@@ -19,7 +19,11 @@ TC.inherit(TC.control.Scale, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-scl';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-scl.hbs";
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-scl.mjs');
+        self.template = module.default;
+    };
 
     ctlProto.render = function (callback) {
         const self = this;

@@ -16,7 +16,7 @@ TC.control.Print = function (options)
     self.ready = false;
 
     self.title = self.options.title || TC.Util.getLocaleString(Cfg.locale, 'printPage');
-    self.cssUrl = self.options.cssUrl || TC.apiLocation + 'TC/css/print.css';
+    self.cssUrl = self.options.cssUrl || TC.apiLocation + 'css/print.css';
 
     if (self.options.target) {
         (self.options.printableElement || self.options.target).classList.add(Consts.classes.PRINTABLE);
@@ -30,10 +30,6 @@ TC.inherit(TC.control.Print, TC.Control);
     const ctlProto = TC.control.Print.prototype;
 
     ctlProto.CLASS = 'tc-ctl-print';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-print.hbs";
-    ctlProto.template[ctlProto.CLASS + '-page'] = TC.apiLocation + "TC/templates/tc-ctl-print-page.hbs";
 
     ctlProto.renderPrintPage = function () {
         const self = this;
@@ -69,6 +65,17 @@ TC.inherit(TC.control.Print, TC.Control);
                 }
             }
         }
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-print.mjs');
+        const pageTemplatePromise = import('../templates/tc-ctl-print-page.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-page'] = (await pageTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.renderData = async function (data, callback) {

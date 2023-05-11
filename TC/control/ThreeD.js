@@ -84,8 +84,6 @@ TC.Control = Control;
 
     ctlProto.CLASS = 'tc-ctl-3d';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-3d.hbs";
-
     ctlProto.register = function (map) {
         const self = this;
 
@@ -98,6 +96,12 @@ TC.Control = Control;
         });
 
         return result;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-3d.mjs');
+        self.template = module.default;
     };
 
     ctlProto.renderData = function (data, callback) {

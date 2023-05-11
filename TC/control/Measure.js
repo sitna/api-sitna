@@ -36,7 +36,11 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-meas';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-meas.hbs";
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-meas.mjs');
+        self.template = module.default;
+    };
 
     ctlProto.render = function (callback) {
         const self = this;

@@ -26,8 +26,6 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-load';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-load.hbs";
-
     //var ctlProto.waits = {};
     
     ctlProto.startWait = function (e) {
@@ -78,6 +76,12 @@ TC.inherit(TC.control.LoadingIndicator, TC.Control);
         self._waits = {};
         self.hide();
         self.map && self.map.trigger(Consts.event.STOPLOADING);
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-load.mjs');
+        self.template = module.default;
     };
 
     ctlProto.register = function (map) {

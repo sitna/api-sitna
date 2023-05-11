@@ -27,14 +27,18 @@ class OverviewMap extends Control {
         const self = this;
         self.div.classList.add(self.CLASS);
 
-        self.template = TC.apiLocation + "TC/templates/tc-ctl-ovmap.hbs";
-
         self.isLoaded = false;
         self.layer = null;
     }
 
     getClassName() {
         return 'tc-ctl-ovmap';
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-ovmap.mjs');
+        self.template = module.default;
     }
 
     async register(map) {

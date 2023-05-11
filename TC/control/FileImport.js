@@ -26,9 +26,6 @@ class FileImport extends WebComponentControl {
 
         const self = this;
         self.LAYER_METADATA_STORE_KEY_PREFIX = 'TC.fileLayerMetadata.';
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-file.hbs";
-        self.template[self.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-file-dialog.hbs";
 
         self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
@@ -313,6 +310,17 @@ class FileImport extends WebComponentControl {
         });
 
         return result;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-file.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-file-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
     }
 
     render() {

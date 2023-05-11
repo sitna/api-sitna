@@ -2,7 +2,7 @@
 import Consts from '../Consts';
 import TOC from './TOC';
 import Button from '../../SITNA/ui/Button';
-import Toggle from '../../SITNA/ui/Toggle';
+import '../../SITNA/ui/Toggle';
 import itemToolContainer from './itemToolContainer';
 
 TC.control = TC.control || {};
@@ -30,13 +30,6 @@ class WorkLayerManager extends TOC {
         const self = this;
         self.div.classList.remove(super.CLASS);
         self.div.classList.add(self.CLASS);
-
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-wlm.hbs";
-        self.template[self.CLASS + '-elm'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-elm.hbs";
-        self.template[self.CLASS + '-type-sgl'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-type-sgl.hbs";
-        self.template[self.CLASS + '-type-grp'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-type-grp.hbs";
-        self.template[self.CLASS + '-type-grp-node'] = TC.apiLocation + "TC/templates/tc-ctl-wlm-type-grp-node.hbs";
 
         self.layers = [];
 
@@ -85,6 +78,23 @@ class WorkLayerManager extends TOC {
 
     getClassName() {
         return 'tc-ctl-wlm';
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-wlm.mjs');
+        const elementTemplatePromise = import('../templates/tc-ctl-wlm-elm.mjs');
+        const singleTemplatePromise = import('../templates/tc-ctl-wlm-type-sgl.mjs');
+        const groupTemplatePromise = import('../templates/tc-ctl-wlm-type-grp.mjs');
+        const groupNodeTemplatePromise = import('../templates/tc-ctl-wlm-type-grp-node.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-elm'] = (await elementTemplatePromise).default;
+        template[self.CLASS + '-type-sgl'] = (await singleTemplatePromise).default;
+        template[self.CLASS + '-type-grp'] = (await groupTemplatePromise).default;
+        template[self.CLASS + '-type-grp-node'] = (await groupNodeTemplatePromise).default;
+        self.template = template;
     }
 
     render(callback, options) {

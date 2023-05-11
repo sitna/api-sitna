@@ -2430,10 +2430,6 @@ TC.mix(TC.control.Search, TC.control.infoShare);
 
     Consts.event.SEARCHQUERYEMPTY = Consts.event.SEARCHQUERYEMPTY || 'searchqueryempty.tc';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-search.hbs";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-search-dialog.hbs";
-
     ctlProto.register = function (map) {
         const self = this;
         return new Promise(function (resolve, reject) {
@@ -2714,6 +2710,17 @@ TC.mix(TC.control.Search, TC.control.infoShare);
         });
 
         return html.join('');
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-search.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-search-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function () {

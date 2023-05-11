@@ -55,8 +55,6 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
 
     ctlProto.CLASS = 'tc-ctl-tctr';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-tctr.hbs";
-
     ctlProto.onRender = async function () {
         const self = this;
 
@@ -102,6 +100,12 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
             await writeTitle(ctl, i);
         }
         return self;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-tctr.mjs');
+        self.template = module.default;
     };
 
     ctlProto.render = function (callback) {

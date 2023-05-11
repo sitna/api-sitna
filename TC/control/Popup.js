@@ -27,9 +27,6 @@ TC.inherit(TC.control.Popup, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-popup';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-popup.hbs";
-
     ctlProto.render = function (callback) {
         const self = this;
         return self._set1stRenderPromise(new Promise(function (resolve, reject) {
@@ -52,6 +49,12 @@ TC.inherit(TC.control.Popup, TC.Control);
                 })
                 .catch(err => reject(err instanceof Error ? err : Error(err)));
         }));
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-popup.mjs');
+        self.template = module.default;
     };
 
     ctlProto.register = async function (map) {

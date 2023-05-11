@@ -21,7 +21,11 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
 
     ctlProto.CLASS = 'tc-ctl-ss';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-ss.hbs";
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-ss.mjs');
+        self.template = module.default;
+    };
 
     ctlProto.render = function (callback) {
         var self = this;

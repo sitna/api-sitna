@@ -11,8 +11,6 @@ class Attribution extends Control {
         const self = this;
         self.div.classList.add(self.CLASS);
 
-        self.template = TC.apiLocation + "TC/templates/tc-ctl-attrib.hbs";
-
         self.apiAttribution = '';
         self.mainDataAttribution = null;
         self.dataAttributions = [];
@@ -202,6 +200,12 @@ class Attribution extends Control {
         });
 
         return result;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-attrib.mjs');
+        self.template = module.default;
     }
 
     render(callback) {

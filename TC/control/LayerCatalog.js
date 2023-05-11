@@ -97,15 +97,6 @@ TC.control.ProjectionSelector = ProjectionSelector;
 
     ctlProto.CLASS = 'tc-ctl-lcat';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-lcat.hbs";
-    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-branch.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-node.hbs";
-    ctlProto.template[ctlProto.CLASS + '-info'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-info.hbs";
-    ctlProto.template[ctlProto.CLASS + '-results'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-results.hbs";
-    ctlProto.template[ctlProto.CLASS + '-results-path'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-results-path.hbs";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-lcat-dialog.hbs";
-
     const showProjectionChangeDialog = function (ctl, layer) {
         ctl.showProjectionChangeDialog({
             layer: layer,
@@ -783,6 +774,27 @@ TC.control.ProjectionSelector = ProjectionSelector;
                 self.map.toast(errorMessage, { type: Consts.msgType.ERROR });
 
             }.bind(layer));
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-lcat.mjs');
+        const branchTemplatePromise = import('../templates/tc-ctl-lcat-branch.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-lcat-node.mjs');
+        const infoTemplatePromise = import('../templates/tc-ctl-lcat-info.mjs');
+        const resultsTemplatePromise = import('../templates/tc-ctl-lcat-results.mjs');
+        const pathResultsTemplatePromise = import('../templates/tc-ctl-lcat-results-path.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-lcat-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-branch'] = (await branchTemplatePromise).default;
+        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        template[self.CLASS + '-info'] = (await infoTemplatePromise).default;
+        template[self.CLASS + '-results'] = (await resultsTemplatePromise).default;
+        template[self.CLASS + '-results-path'] = (await pathResultsTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {

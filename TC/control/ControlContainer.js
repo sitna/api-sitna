@@ -44,10 +44,6 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
     // GLS: 20/01/2020 código compatibilidad hacia atrás
     ctlProto.SIDE = ctlProto.POSITION;
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-cctr.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-cctr-node.hbs";
-
     ctlProto.onRender = async function () {
         const self = this;
 
@@ -65,6 +61,17 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
             ctl.containerControl = self;
         }
         return self;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-cctr.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-cctr-node.mjs');
+
+        const template = {};
+        template[ctlProto.CLASS] = (await mainTemplatePromise).default;
+        template[ctlProto.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {

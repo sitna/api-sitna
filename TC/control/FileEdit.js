@@ -42,9 +42,6 @@ class FileEdit extends FileImport {
         super(...arguments);
 
         const self = this;
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-file.hbs";
-        self.template[self.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-file-dialog.hbs";
-        self.template[self.CLASS + '-panel'] = TC.apiLocation + "TC/templates/tc-ctl-fedit-panel.hbs";
 
         self.layer = null;
         self.#initialStyles = self.options.styles || {
@@ -283,6 +280,14 @@ class FileEdit extends FileImport {
             });
         });
         return result;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        await super.loadTemplates.call(self);
+        const panelTemplatePromise = import('../templates/tc-ctl-fedit-panel.mjs');
+
+        self.template[self.CLASS + '-panel'] = (await panelTemplatePromise).default;
     }
 
     async render(callback) {

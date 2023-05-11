@@ -28,10 +28,6 @@ TC.inherit(TC.control.Elevation, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-elev';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-ftools.hbs";
-    ctlProto.template[ctlProto.CLASS + '-val'] = TC.apiLocation + "TC/templates/tc-ctl-elev-val.hbs";
-
     const pointElevationCache = new WeakMap();
     const elevationProfileCache = new Map();
 
@@ -62,6 +58,18 @@ TC.inherit(TC.control.Elevation, TC.Control);
             }
         }
     };
+
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-ftools.mjs');
+        const valueTemplatePromise = import('../templates/tc-ctl-elev-val.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-val'] = (await valueTemplatePromise).default;
+        self.template = template;
+    }
 
     ctlProto.register = async function (map) {
         const self = this;
@@ -233,8 +241,8 @@ TC.inherit(TC.control.Elevation, TC.Control);
             let elevLines = elevCoordLines;
             let maxElevation = Number.NEGATIVE_INFINITY;
             let minElevation = Number.POSITIVE_INFINITY;
-            if (self.map.crs !== self.map.options.utmCrs) {
-                elevLines = Util.reproject(elevCoordLines, self.map.crs, self.map.options.utmCrs);
+            if (self.map.getCRS() !== self.map.options.utmCrs) {
+                elevLines = Util.reproject(elevCoordLines, self.map.getCRS(), self.map.options.utmCrs);
             }
             const profile = elevLines
                 .map(line => {
@@ -317,7 +325,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
         const timestamp = Date.now();
         self._depTimestamp = timestamp;
         const elevationOptionsTemplate = {
-            crs: self.map.crs
+            crs: self.map.getCRS()
         };
 
         if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {

@@ -190,15 +190,6 @@ class Geolocation extends Control {
         const self = this;
         self.div.classList.add(self.CLASS);
 
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-geolocation.hbs";
-        self.template[self.CLASS + '-track-node'] = TC.apiLocation + "TC/templates/tc-ctl-geolocation-track-node.hbs";
-        self.template[self.CLASS + '-track-snapping-node'] = TC.apiLocation + "TC/templates/tc-ctl-geolocation-track-snapping-node.hbs";
-        self.template[self.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-geolocation-dialog.hbs";
-        self.template[self.CLASS + '-tracking-toast'] = TC.apiLocation + "TC/templates/tc-ctl-geolocation-tracking-toast.hbs";
-        self.template[self.CLASS + '-ext-dldlog'] = TC.apiLocation + "TC/templates/tc-ctl-geolocation-ext-dldlog.hbs";
-        self.template[self.CLASS + '-share-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-geolocation-share-dialog.hbs";
-
         self.#dialogDiv = Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
             document.body.appendChild(self.#dialogDiv);
@@ -461,6 +452,27 @@ class Geolocation extends Control {
         const newPosition = self.map.layers.indexOf(self.trackLayer);
         self.map.insertLayer(self.gpsLayer, newPosition)
         return self;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-geolocation.mjs');
+        const trackNodeTemplatePromise = import('../templates/tc-ctl-geolocation-track-node.mjs');
+        const trackSnappingTemplatePromise = import('../templates/tc-ctl-geolocation-track-snapping-node.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-geolocation-dialog.mjs');
+        const trackingToastTemplatePromise = import('../templates/tc-ctl-geolocation-tracking-toast.mjs');
+        const downloadDialogTemplatePromise = import('../templates/tc-ctl-geolocation-ext-dldlog.mjs');
+        const shareDialogTemplatePromise = import('../templates/tc-ctl-geolocation-share-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-track-node'] = (await trackNodeTemplatePromise).default;
+        template[self.CLASS + '-track-snapping-node'] = (await trackSnappingTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS + '-tracking-toast'] = (await trackingToastTemplatePromise).default;
+        template[self.CLASS + '-ext-dldlog'] = (await downloadDialogTemplatePromise).default;
+        template[self.CLASS + '-share-dialog'] = (await shareDialogTemplatePromise).default;
+        self.template = template;
     }
 
     async render(callback) {

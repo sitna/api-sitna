@@ -3,15 +3,20 @@ import Consts from '../Consts';
 import Cfg from '../Cfg';
 import Util from '../Util';
 import wrap from '../ol/ol';
-import Draw from './Draw';
-import Modify from './Modify';
-import Measurement from './Measurement';
+import './Draw';
+import './Modify';
+import './Measurement';
 import Point from '../../SITNA/feature/Point';
 import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 import WebComponentControl from './WebComponentControl';
+import mainTemplate from '../templates/tc-ctl-edit.mjs';
+import attributesTemplate from '../templates/tc-ctl-edit-attr.mjs';
+import importTemplate from '../templates/tc-ctl-edit-import.mjs';
+import importLayerTemplate from '../templates/tc-ctl-edit-import-layer.mjs';
+import importFeatureTemplate from '../templates/tc-ctl-edit-import-feature.mjs';
 
 TC.wrap = wrap;
 
@@ -40,13 +45,6 @@ class Edit extends WebComponentControl {
     constructor() {
         super(...arguments);
         const self = this;
-
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-edit.hbs";
-        self.template[self.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-edit-attr.hbs";
-        self.template[self.CLASS + '-import'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import.hbs";
-        self.template[self.CLASS + '-import-layer'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import-layer.hbs";
-        self.template[self.CLASS + '-import-feature'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import-feature.hbs";
 
         self.#classSelector = '.' + self.CLASS;
 
@@ -622,6 +620,25 @@ class Edit extends WebComponentControl {
     #getModeTab(mode) {
         const self = this;
         return self.querySelector(`sitna-tab[for="${self.id}-mode-${mode}"]`);
+    }
+
+
+    async loadTemplates() {
+        const self = this;
+
+        const mainTemplatePromise = import('../templates/tc-ctl-edit.mjs');
+        const attributesTemplatePromise = import('../templates/tc-ctl-edit-attr.mjs');
+        const importTemplatePromise = import('../templates/tc-ctl-edit-import.mjs');
+        const importLayerTemplatePromise = import('../templates/tc-ctl-edit-import-layer.mjs');
+        const importFeatureTemplatePromise = import('../templates/tc-ctl-edit-import-feature.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
+        template[self.CLASS + '-import'] = (await importTemplatePromise).default;
+        template[self.CLASS + '-import-layer'] = (await importLayerTemplatePromise).default;
+        template[self.CLASS + '-import-feature'] = (await importFeatureTemplatePromise).default;
+        self.template = template;
     }
 
     render(callback) {

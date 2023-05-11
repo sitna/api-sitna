@@ -253,8 +253,6 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
     ctlProto.CLASS = 'tc-ctl-wfsedit';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-wfsedit.hbs";
-
     ctlProto.LOCAL_STORAGE_KEY_PREFIX = "TC.offline.edit.";
     ctlProto.LOCAL_STORAGE_ADDED_KEY_PREFIX = ".added.";
     ctlProto.LOCAL_STORAGE_MODIFIED_KEY_PREFIX = ".modified.";
@@ -483,6 +481,12 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
             });
 
         return self;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-wfsedit.mjs');
+        self.template = module.default;
     };
 
     ctlProto.render = function (callback) {

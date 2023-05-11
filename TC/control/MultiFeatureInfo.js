@@ -105,8 +105,6 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
     ctlProto.CLASS = 'tc-ctl-m-finfo';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-m-finfo.hbs";
-
     const mergeOptions = function (opt1, opt2) {
         if (opt1) {
             if (opt1 === true) {
@@ -190,6 +188,12 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         }
         self.updateUI();
         return self;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-m-finfo.mjs');
+        self.template = module.default;
     };
 
     ctlProto.render = function (callback) {

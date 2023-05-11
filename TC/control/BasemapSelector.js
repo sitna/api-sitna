@@ -79,11 +79,6 @@ TC.control.MapContents = MapContents;
 
     ctlProto.CLASS = 'tc-ctl-bms';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-bms.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-bms-node.hbs";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-bms-dialog.hbs";
-
     const getClosestParent = function (elm, selector) {
         while (elm && !elm.matches(selector)) {
             elm = elm.parentElement;
@@ -212,6 +207,19 @@ TC.control.MapContents = MapContents;
         }));
 
         return ctl;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-bms.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-bms-node.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-bms-dialog.mjs');
+
+        const template = {};
+        template[ctlProto.CLASS] = (await mainTemplatePromise).default;
+        template[ctlProto.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        template[ctlProto.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {

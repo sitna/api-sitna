@@ -19,8 +19,6 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
     ctlProto.CLASS = 'tc-ctl-fscreen';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-fscreen.hbs";
-
     const key = {
         fullscreenEnabled: 0,
         fullscreenElement: 1,
@@ -80,6 +78,12 @@ TC.inherit(TC.control.FullScreen, TC.Control);
         set onfullscreenchange(handler) { return document[("on" + vendor[key.fullscreenchange]).toLowerCase()] = handler; },
         get onfullscreenerror() { return document["on" + vendor[key.fullscreenerror].toLowerCase()]; },
         set onfullscreenerror(handler) { return document["on" + vendor[key.fullscreenerror].toLowerCase()] = handler; }
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-fscreen.mjs');
+        self.template = module.default;
     };
 
     ctlProto.register = function (map) {

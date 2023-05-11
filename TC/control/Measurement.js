@@ -44,8 +44,6 @@ class Measurement extends WebComponentControl {
             .initProperty('enabledProfile')
             .initProperty('mode')
             .initProperty('units');
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-msmt.hbs";
     }
 
     static get observedAttributes() {
@@ -124,6 +122,12 @@ class Measurement extends WebComponentControl {
         else {
             self.setAttribute('units', value);
         }
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-msmt.mjs');
+        self.template = module.default;
     }
 
     render(callback) {
@@ -222,7 +226,7 @@ class Measurement extends WebComponentControl {
                 break;
             }
             case feature instanceof Polyline:
-                if (Object.prototype.hasOwnProperty.call(self.#measurementData, "length")) {
+                if (Object.prototype.hasOwnProperty.call(self.#measurementData, "length")) {                    
                     data[self.getLocaleString('2dLength')] = self.#measurementData.length;
                     feature.setData(data);
                 }
@@ -231,7 +235,7 @@ class Measurement extends WebComponentControl {
                 if (Object.prototype.hasOwnProperty.call(self.#measurementData, "area") &&
                     Object.prototype.hasOwnProperty.call(self.#measurementData, "perimeter")) {
                     data[self.getLocaleString('area')] = self.#measurementData.area;
-                    data[self.getLocaleString('2dPerimeter')] = self.#measurementData.perimeter;
+                    data[self.getLocaleString('2dPerimeter')] = self.#measurementData.perimeter;                    
                     feature.setData(data);
                 }
                 break;
@@ -327,7 +331,7 @@ class Measurement extends WebComponentControl {
                 self.#c2Text.innerHTML = self.#measurementData.coord2Text;
                 self.#c1Value.innerHTML = Util.formatNumber(self.#measurementData.coord1.toFixed(precision), locale);
                 self.#c1Value.dataset.value = self.#measurementData.coord1;
-                self.#c2Value.innerHTML = Util.formatNumber(self.#measurementData.coord1.toFixed(precision), locale);
+                self.#c2Value.innerHTML = Util.formatNumber(self.#measurementData.coord2.toFixed(precision), locale);
                 self.#c2Value.dataset.value = self.#measurementData.coord2;
                 if (Object.prototype.hasOwnProperty.call(self.#measurementData, 'elevation')) {
                     self.#elevationText.innerHTML = self.#measurementData.elevationText;

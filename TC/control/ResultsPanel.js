@@ -78,11 +78,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         MAX_WIDTH: 445
     };
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-rpanel.hbs";
-    ctlProto.template[ctlProto.CLASS + '-table'] = TC.apiLocation + "TC/templates/tc-ctl-rpanel-table.hbs";
-    ctlProto.template[ctlProto.CLASS + '-chart'] = TC.apiLocation + "TC/templates/tc-ctl-rpanel-chart.hbs";
-
     const isElementVisible = function (elm) {
         const computedStyle = getComputedStyle(elm);
         return elm && !elm.hidden && computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden';
@@ -145,6 +140,19 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         document.querySelectorAll('.' + ctl.CLASS + '-resize-handler').forEach((el) => {
             el.classList.add(Consts.classes.HIDDEN);
         });
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-rpanel.mjs');
+        const tableTemplatePromise = import('../templates/tc-ctl-rpanel-table.mjs');
+        const chartTemplatePromise = import('../templates/tc-ctl-rpanel-chart.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-table'] = (await tableTemplatePromise).default;
+        template[self.CLASS + '-chart'] = (await chartTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {

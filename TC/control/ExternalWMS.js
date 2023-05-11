@@ -193,8 +193,11 @@ TC.inherit(TC.control.ExternalWMS, TC.Control);
         return result;
     };
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-xwms.hbs";
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-xwms.mjs');
+        self.template = module.default;
+    };
 
     ctlProto.render = function (callback) {
         const self = this;

@@ -18,11 +18,6 @@ TC.inherit(TOC, MapContents);
 
     ctlProto.CLASS = 'tc-ctl-toc';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-toc.hbs";
-    ctlProto.template[ctlProto.CLASS + '-branch'] = TC.apiLocation + "TC/templates/tc-ctl-toc-branch.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-toc-node.hbs";
-
     var CLICKEVENT = 'click';
 
     ctlProto.register = function (map) {
@@ -313,6 +308,19 @@ TC.inherit(TOC, MapContents);
 
     ctlProto.updateLayerOrder = function (_layer, _oldIdx, _newIdx) {
         // Este control no tiene que hacer nada
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-toc.mjs');
+        const branchTemplatePromise = import('../templates/tc-ctl-toc-branch.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-toc-node.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-branch'] = (await branchTemplatePromise).default;
+        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {

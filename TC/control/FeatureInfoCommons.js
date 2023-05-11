@@ -73,19 +73,6 @@ TC.control.FeatureInfoCommons = function () {
 
     ctlProto.TITLE_SEPARATOR = ' › ';
     ctlProto.DEFAULT_STROKE_COLOR = '#0000ff';
-    
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-finfo.hbs";
-    ctlProto.template[ctlProto.CLASS + "-attr"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr.hbs";
-    ctlProto.template[ctlProto.CLASS + "-object"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-object.hbs";
-    ctlProto.template[ctlProto.CLASS + "-buttons"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-buttons.hbs";
-    ctlProto.template[ctlProto.CLASS + "-dialog"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-dialog.hbs";
-    ctlProto.template[ctlProto.CLASS + "-attr-val"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-val.hbs";
-    ctlProto.template[ctlProto.CLASS + "-attr-video"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-video.hbs";
-    ctlProto.template[ctlProto.CLASS + "-attr-image"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-image.hbs";
-    ctlProto.template[ctlProto.CLASS + "-attr-audio"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-audio.hbs";
-    ctlProto.template[ctlProto.CLASS + "-attr-embed"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-embed.hbs";
-
 
     const setShowAllUI = function () {
         const self = this;
@@ -130,10 +117,11 @@ TC.control.FeatureInfoCommons = function () {
         });
 
         map
-            .on(Consts.event.POPUPHIDE + ' ' + Consts.event.RESULTSPANELCLOSE, function (e) {
-                if (e.control === self.getDisplayControl() && self.resultsLayer) {
+            .on(Consts.event.POPUPHIDE + ' ' + Consts.event.RESULTSPANELCLOSE, function (e) {                
+                self?.highlightedFeature?.toggleSelectedStyle(false);
+                if (e.control === self.getDisplayControl() && self.resultsLayer) {                                        
                     if (self.highlightedFeature && !self.options.persistentHighlights) {
-                        self.downplayFeature(self.highlightedFeature);
+                        self.downplayFeature(self.highlightedFeature);                        
                         self.highlightedFeature = null;
                     }
                     if (!self.querying && e.feature) {
@@ -145,7 +133,7 @@ TC.control.FeatureInfoCommons = function () {
             //    self.highlightedFeature = null;
             //})
             .on(Consts.event.POPUP + ' ' + Consts.event.DRAWTABLE + ' ' + Consts.event.DRAWCHART, function (e) {
-                const control = e.control;
+                const control = e.control;                
                 if (control.currentFeature !== self.filterFeature) {
                     self.highlightedFeature = control.currentFeature;
                 }
@@ -226,6 +214,34 @@ TC.control.FeatureInfoCommons = function () {
             await self.getShareDialog();
         }
         return self;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-finfo.mjs');
+        const attributesTemplatePromise = import('../templates/tc-ctl-finfo-attr.mjs');
+        const objectTemplatePromise = import('../templates/tc-ctl-finfo-object.mjs');
+        const buttonsTemplatePromise = import('../templates/tc-ctl-finfo-buttons.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-finfo-dialog.mjs');
+        const valueTemplatePromise = import('../templates/tc-ctl-finfo-attr-val.mjs');
+        const videoTemplatePromise = import('../templates/tc-ctl-finfo-attr-video.mjs');
+        const imageTemplatePromise = import('../templates/tc-ctl-finfo-attr-image.mjs');
+        const audioTemplatePromise = import('../templates/tc-ctl-finfo-attr-audio.mjs');
+        const embedTemplatePromise = import('../templates/tc-ctl-finfo-attr-embed.mjs');
+
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
+        template[self.CLASS + '-object'] = (await objectTemplatePromise).default;
+        template[self.CLASS + '-buttons'] = (await buttonsTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS + '-attr-val'] = (await valueTemplatePromise).default;
+        template[self.CLASS + '-attr-video'] = (await videoTemplatePromise).default;
+        template[self.CLASS + '-attr-image'] = (await imageTemplatePromise).default;
+        template[self.CLASS + '-attr-audio'] = (await audioTemplatePromise).default;
+        template[self.CLASS + '-attr-embed'] = (await embedTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function () {

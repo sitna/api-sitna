@@ -120,10 +120,6 @@ class Modify extends WebComponentControl {
             .initProperty('mode')
             .initProperty('snapping');
 
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-mod.hbs";
-        self.template[self.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-mod-attr.hbs";
-
         self.styles = TC.Util.extend(true, Cfg.styles.selection, self.options.styles);
         self.styles.text = self.styles.text || {
             fontSize: self.styles.line.fontSize,
@@ -261,6 +257,17 @@ class Modify extends WebComponentControl {
         });
 
         return result;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-mod.mjs');
+        const attributesTemplatePromise = import('../templates/tc-ctl-mod-attr.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
+        self.template = template;
     }
 
     render(callback) {

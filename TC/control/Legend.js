@@ -16,10 +16,6 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
 
     ctlProto.CLASS = 'tc-ctl-legend';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-legend.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-legend-node.hbs";
-
     ctlProto.register = function (map) {
         const self = this;
 
@@ -35,6 +31,17 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
         });
 
         return TC.control.MapContents.prototype.register.call(self, map);
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-legend.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-legend-node.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.loadGraphics = function () {

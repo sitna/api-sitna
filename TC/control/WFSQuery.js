@@ -290,17 +290,6 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
     var type = null;
     ctlProto.CLASS = 'tc-ctl-wfsquery';
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS + "-dialog"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-dialog.hbs";
-    ctlProto.template[ctlProto.CLASS + "-form"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-form.hbs";
-    ctlProto.template[ctlProto.CLASS + "-filter"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-filter.hbs";
-    ctlProto.template[ctlProto.CLASS + "-table"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-table.hbs";
-    ctlProto.template["tc-ctl-finfo-attr-val"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-attr-val.hbs";
-    ctlProto.template["tc-ctl-finfo-object"] = TC.apiLocation + "TC/templates/tc-ctl-finfo-object.hbs";
-    ctlProto.template[ctlProto.CLASS + "-geom"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-geom.hbs";
-    ctlProto.template[ctlProto.CLASS + "-share-dialog"] = TC.apiLocation + "TC/templates/tc-ctl-wfsquery-share-dialog.hbs";
-
-
     var checkInput = function (type) {
         var input = document.createElement("input");
         input.setAttribute("type", type);
@@ -316,7 +305,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
             }
             else {
                 TC.loadJS(true,
-                    [TC.apiLocation + '/lib/polyfill/IMask' + (TC.isDebug ? '' : '.min') + '.js'],
+                    [TC.apiLocation + '/lib/polyfill/imask'],
                     function () {
                         console.log("Imask loaded");
                         resolve();
@@ -333,7 +322,7 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
             }
             else {
                 TC.loadJS(true,
-                    [TC.apiLocation + '/lib/polyfill/IMask' + (TC.isDebug ? '' : '.min') + '.js'],
+                    [TC.apiLocation + '/lib/polyfill/imask'],
                     function () {
                         console.log("Imask loaded");
                         resolve();
@@ -919,6 +908,30 @@ TC.mix(TC.control.WFSQuery, TC.control.infoShare);
             layer.clearFeatures();
         }
     };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const dialogTemplatePromise = import('../templates/tc-ctl-wfsquery-dialog.mjs');
+        const formTemplatePromise = import('../templates/tc-ctl-wfsquery-form.mjs');
+        const filterTemplatePromise = import('../templates/tc-ctl-wfsquery-filter.mjs');
+        const tableTemplatePromise = import('../templates/tc-ctl-wfsquery-table.mjs');
+        const valueTemplatePromise = import('../templates/tc-ctl-finfo-attr-val.mjs');
+        const objectTemplatePromise = import('../templates/tc-ctl-finfo-object.mjs');
+        const geometryTemplatePromise = import('../templates/tc-ctl-wfsquery-geom.mjs');
+        const shareDialogTemplatePromise = import('../templates/tc-ctl-wfsquery-share-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS + '-form'] = (await formTemplatePromise).default;
+        template[self.CLASS + '-filter'] = (await filterTemplatePromise).default;
+        template[self.CLASS + '-table'] = (await tableTemplatePromise).default;
+        template['tc-ctl-finfo-attr-val'] = (await valueTemplatePromise).default;
+        template['tc-ctl-finfo-object'] = (await objectTemplatePromise).default;
+        template[self.CLASS + '-geom'] = (await geometryTemplatePromise).default;
+        template[self.CLASS + '-share-dialog'] = (await shareDialogTemplatePromise).default;
+        self.template = template;
+    };
+
     ctlProto.render = function (callback) {
         const self = this;
 

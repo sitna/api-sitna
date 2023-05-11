@@ -40,10 +40,6 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
     var displayElevation, interpolation = false;
     var interpolationDistance = null;
 
-    ctlProto.template = {};
-
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-dldlog.hbs";
-
     const addElevationAndInterpolation = async function (features, options) {
         const self = this;
         options = options || {};
@@ -74,7 +70,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
         if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {
             const elevOptions = {
-                crs: self.map.crs,
+                crs: self.map.getCRS(),
                 features: featuresToAddElevation,
                 maxCoordQuantity: options.elevation && options.elevation.maxCoordQuantity,
                 resolution: options.elevation.resolution,
@@ -105,6 +101,12 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
     const hasPolygons = function () {
         return this.getFeatures().some(feature => feature instanceof Polygon ||
             feature instanceof MultiPolygon);
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-dldlog.mjs');
+        self.template = module.default;
     };
 
     ctlProto.render = function (callback) {

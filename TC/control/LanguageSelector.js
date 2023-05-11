@@ -93,8 +93,7 @@ class LanguageSelector extends WebComponentControl {
         super(...arguments);
 
         const self = this;
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-lang-select.hbs";
+
         self.languages = [];
         if (self.options.static) {
             self.static = true;
@@ -192,6 +191,12 @@ class LanguageSelector extends WebComponentControl {
         const result = super.register.call(self, map);
         map.ready(() => LanguageSelector.setDocumentTexts());
         return result;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-lang-select.mjs');
+        self.template = module.default;
     }
 
     render() {
