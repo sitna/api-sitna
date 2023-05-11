@@ -1323,7 +1323,17 @@ class Raster extends Layer {
                 if (node.BoundingBox) {
                     bboxes = Array.isArray(node.BoundingBox) ? node.BoundingBox : [node.BoundingBox];
                 }
-                if (self.capabilities.version === '1.3.0') {
+                if (node.EX_GeographicBoundingBox) {
+                    bboxes = bboxes || [];
+                    bboxes.unshift({
+                        crs: 'EPSG:4326',
+                        extent: node.EX_GeographicBoundingBox
+                    });
+                }
+                if (!bboxes && node.parent) {
+                    bboxes = getNodeBoundingBoxes(node.parent);
+                }
+                if (self.capabilities.version === '1.3.0' && bboxes) {
                     // En WMS 1.3.0 las coordenadas de EPSG:4326 están en formato neu en vez de enu
                     // Cambiamos el orden
                     bboxes = bboxes.map(function (bbox) {
@@ -1343,18 +1353,8 @@ class Raster extends Layer {
                         return bbox;
                     });
                 }
-                if (node.EX_GeographicBoundingBox) {
-                    bboxes = bboxes || [];
-                    bboxes.unshift({
-                        crs: 'EPSG:4326',
-                        extent: node.EX_GeographicBoundingBox
-                    });
-                }
-                if (!bboxes && node.parent) {
-                    return getNodeBoundingBoxes(node.parent);
-                }
                 return bboxes;
-            };
+            }
 
             const boundingBoxes = new Array(self.names.length);
             for (var i = 0, ii = boundingBoxes.length; i < ii; i++) {
