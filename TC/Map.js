@@ -2,6 +2,7 @@ import localforage from 'localforage';
 
 import TC from '../TC';
 import Consts from './Consts';
+import Cfg from './Cfg';
 import Util from './Util';
 import EventTarget from './EventTarget';
 import i18n from './i18n';
@@ -79,6 +80,7 @@ import Polyline from '../SITNA/feature/Polyline';
 import MultiPolyline from '../SITNA/feature/MultiPolyline';
 import Polygon from '../SITNA/feature/Polygon';
 import MultiPolygon from '../SITNA/feature/MultiPolygon';
+import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
 
 TC.EventTarget = EventTarget;
 TC.i18n = TC.i18n || i18n;
@@ -136,7 +138,7 @@ TC.control.ScaleBar = ScaleBar;
 TC.control.ScaleSelector = ScaleSelector;
 TC.control.Search = Search;
 TC.control.SelectContainer = SelectContainer;
-TC.control.Share = Share;
+TC.control.Share = Share
 TC.control.StreetView = StreetView;
 TC.control.SWCacheClient = SWCacheClient;
 TC.control.TabContainer = TabContainer;
@@ -334,13 +336,9 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    let jsonPackWorkerUrlPromise;
     const jsonPackSettleFunctions = {};
-    const getJsonPackWorker = async function () {
-        if (!jsonPackWorkerUrlPromise) {
-            jsonPackWorkerUrlPromise = TC.Util.getWebWorkerCrossOriginURL(TC.apiLocation + 'TC/workers/tc-jsonpack-web-worker.js');
-        }
-        const jsonPackWorkerUrl = await jsonPackWorkerUrlPromise;
+    const getJsonPackWorker = function () {
+        const jsonPackWorkerUrl = URL.createObjectURL(wwBlob);
         const jsonPackWorker = new Worker(jsonPackWorkerUrl);
         jsonPackWorker.onmessage = function (e) {
             const settleFunctions = jsonPackSettleFunctions[e.data.id];
@@ -360,14 +358,13 @@ TC.mix = function (targetCtor, ...mixins) {
 
     const jsonpackProcess = function (action, json) {
         return new Promise(function (resolve, reject) {
-            getJsonPackWorker().then(function (worker) {
-                const workId = TC.getUID();
-                jsonPackSettleFunctions[workId] = { resolve: resolve, reject: reject };
-                worker.postMessage({
-                    id: workId,
-                    action: action,
-                    object: json
-                });
+            const worker = getJsonPackWorker();
+            const workId = TC.getUID();
+            jsonPackSettleFunctions[workId] = { resolve: resolve, reject: reject };
+            worker.postMessage({
+                id: workId,
+                action: action,
+                object: json
             });
         });
     };
@@ -1046,7 +1043,7 @@ TC.mix = function (targetCtor, ...mixins) {
         self._fileHandles = new WeakMap();
 
         if (!TC.ready) {
-            TC.Cfg = TC.Util.extend({}, TC.Defaults, SITNA.Cfg);
+            TC.Cfg = TC.Util.extend({}, TC.Defaults, Cfg);
             TC.ready = true;
         }
 
@@ -1384,7 +1381,7 @@ TC.mix = function (targetCtor, ...mixins) {
 
         const locale = self.options.locale;
 
-        TC.i18n.loadResources(!TC.i18n[locale], TC.apiLocation + 'TC/resources/', locale).finally(function () {
+        TC.i18n.loadResources(!TC.i18n[locale], TC.apiLocation + 'resources/', locale).finally(function () {
             // Si no hay tamaño definido en el div, lo ponemos a pantalla completa
             // Lo ponemos aquí porque es poco antes de cargar markup.html
             const divRect = self.div.getBoundingClientRect();
@@ -3201,10 +3198,10 @@ TC.mix = function (targetCtor, ...mixins) {
                 return name;
             };
             const currentCrs = self.crs;
-            const geopackage = await import("../lib/geopackagejs/dist/geopackage-browser");
-            await import("wkx/dist/wkx");
-            const wkx = require('wkx');
-            //Promise.all([import("../lib/geopackagejs/dist/geopackage-browser"), import("wkx/dist/wkx")]).then(async function (responses) {                                    
+            await TC.loadJS(!window.geopackage, TC.apiLocation + "lib/geopackagejs/dist/geopackage-browser.js");
+            const geopackage = window.geopackage;
+            const wkx = (await import('wkx')).default;
+            //Promise.all([import("../lib/geopackagejs/dist/geopackage-browser"), import("wkx/dist/wkx")]).then(async function (responses) {
             const geopackageAPI = geopackage.GeoPackageAPI;
             const FeatureColumn = geopackage.FeatureColumn;
             const GeometryColumns = geopackage.GeometryColumns;
@@ -3554,7 +3551,8 @@ TC.mix = function (targetCtor, ...mixins) {
         if (self.elevation) {
             return self.elevation;
         }
-        await TC.loadJS(!TC.tool || !TC.tool.Elevation, TC.apiLocation + 'TC/tool/Elevation');
+        //await TC.loadJS(!TC.tool || !TC.tool.Elevation, TC.apiLocation + 'TC/tool/Elevation');
+        await import('./tool/Elevation');
         if (!self.options.elevation) {
             self.elevation = null;
         }
