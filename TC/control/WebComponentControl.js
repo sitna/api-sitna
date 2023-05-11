@@ -134,6 +134,10 @@ class WebComponentControl extends HTMLElement {
         }));
     }
 
+    async loadTemplates() {
+
+    }
+
     _set1stRenderPromise(promise) {
         const self = this;
         if (!self._firstRender) {
@@ -150,6 +154,9 @@ class WebComponentControl extends HTMLElement {
         self.classList.toggle(Consts.classes.DISABLED, self.isDisabled);
 
         let template;
+        if (!self.template) {
+            await self.loadTemplates();
+        }
         if (typeof self.template === 'object' && !self.template.compiler) {
             template = self.template[self.CLASS];
         }
@@ -186,6 +193,9 @@ class WebComponentControl extends HTMLElement {
             return html;
         };
 
+        if (!self.template) {
+            await self.loadTemplates();
+        }
         const template = self.template[templateId];
         if (typeof template !== 'function') {
             await self.#processTemplates({ locale: self.map && self.map.options.locale, className: self.CLASS });
@@ -442,7 +452,9 @@ class WebComponentControl extends HTMLElement {
         if (self.elevation) {
             return self.elevation;
         }
-        await TC.loadJS(!TC.tool || !TC.tool.Elevation, TC.apiLocation + 'TC/tool/Elevation');
+        if (!TC.tool.Elevation) {
+            await import('../tool/Elevation');
+        }
         if (typeof self.options.displayElevation === 'boolean') {
             if (self.map) {
                 const mapElevation = await self.map.getElevationTool();
