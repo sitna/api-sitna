@@ -1,4 +1,9 @@
-﻿/**
+import TC from '../../TC';
+import Consts from '../Consts';
+import Util from '../Util';
+import Geometry from '../Geometry';
+
+/**
  * Colección de identificadores de servicios para obtener elevaciones de puntos.
  * @member elevationService
  * @memberof SITNA.Consts
@@ -9,7 +14,7 @@
  * @property {string} IGN_FR - Identificador del servicio de elevación del Instituto Geográfico Nacional Francés.
  * @see SITNA.ElevationOptions
  */
-SITNA.Consts.elevationService = {
+Consts.elevationService = {
     GOOGLE: 'elevationServiceGoogle',
     IDENA: 'elevationServiceIDENA',
     IGN_ES: 'elevationServiceIGNEs',
@@ -39,48 +44,34 @@ SITNA.Consts.elevationService = {
 
 TC.tool = TC.tool || {};
 
-TC.tool.Elevation = function (options) {
+const Elevation = function (options) {
     const self = this;
     self.options = options || {};
     self._servicePromises = [];
     const serviceOptions = self.options.services || [
-        SITNA.Consts.elevationService.IDENA,
-        SITNA.Consts.elevationService.IGN_FR,
-        SITNA.Consts.elevationService.IGN_ES/*,
-        SITNA.Consts.elevationService.GOOGLE*/
-    ];
-
-    const abstractServicePromise = new Promise(function (resolve, _reject) {
-        TC.loadJS(
-            !TC.tool.ElevationService,
-            TC.apiLocation + 'TC/tool/ElevationService',
-            function () {
-                resolve();
-            }
-        );
-    });
+        Consts.elevationService.IDENA,
+        Consts.elevationService.IGN_FR,
+        Consts.elevationService.IGN_ES/*,
+        Consts.elevationService.GOOGLE*/
+    ];      
 
     serviceOptions.forEach(function (srv, idx) {
         self._servicePromises[idx] = new Promise(function (resolve, _reject) {
             const serviceName = typeof srv === 'string' ? srv : srv.name;
             const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
-            const path = TC.apiLocation + 'TC/tool/' + ctorName;
+            
             const srvOptions = typeof srv === 'string' ? {} : srv;
-            TC.loadJS(
-                !TC.tool[ctorName],
-                path,
-                function () {
-                    abstractServicePromise.then(function () {
-                        resolve(new TC.tool[ctorName](srvOptions));
-                    });
-                }
-            );
+            import('./' + ctorName).then(function (elevationModule) {
+                const ElevationService = elevationModule.default;
+                TC.tool[ctorName] = ElevationService;
+                resolve(new ElevationService(srvOptions));
+            });
         });
     });
 };
 
 (function () {
-    const toolProto = TC.tool.Elevation.prototype;
+    const toolProto = Elevation.prototype;
 
     let requestUID = 1;
     const getRequestUID = function () {
@@ -110,12 +101,12 @@ TC.tool.Elevation = function (options) {
         let done = false;
         let partialResult;
         let partialCallback;
-        if (TC.Util.isFunction(opts.partialCallback)) {
+        if (Util.isFunction(opts.partialCallback)) {
             partialCallback = opts.partialCallback;
         }
 
         const isSinglePoint = opts.coordinates.length === 1;
-        opts.coordinates = TC.Geometry.interpolate(opts.coordinates, opts);
+        opts.coordinates = Geometry.interpolate(opts.coordinates, opts);
         opts.resolution = 0;
         opts.sampleNumber = 0;
 
@@ -219,7 +210,7 @@ TC.tool.Elevation = function (options) {
                         return acc;
                     }, 0);
                     if (numPoints > options.maxCoordQuantity) {
-                        throw Error(TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED);
+                        throw Error(Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED);
                     }
                 }
             }
@@ -290,7 +281,7 @@ TC.tool.Elevation = function (options) {
 
             const coordsArray = await Promise.all(coordPromises);
             const copyElevation = function (source, target) {
-                if (TC.Geometry.isPoint(source)) {
+                if (Geometry.isPoint(source)) {
                     target[2] = source[2];
                     if (source.length > 3) {
                         target[3] = source[3];
@@ -303,7 +294,7 @@ TC.tool.Elevation = function (options) {
                 }
             };
             const getNumVertices = function (coords) {
-                if (TC.Geometry.isPoint(coords)) {
+                if (Geometry.isPoint(coords)) {
                     return 1;
                 }
                 if (Array.isArray(coords)) {
@@ -374,11 +365,14 @@ TC.tool.Elevation = function (options) {
 
 })();
 
-TC.tool.Elevation.errors = {
+Elevation.errors = {
     MAX_COORD_QUANTITY_EXCEEDED: 'max_coord_quantity_exceeded',
     UNDEFINED: 'undefined'
 };
 
-TC.tool.Elevation.getElevationGain = function (options) {
-    return TC.Util.getElevationGain(options);
+Elevation.getElevationGain = function (options) {
+    return Util.getElevationGain(options);
 };
+
+TC.tool.Elevation = Elevation;
+export default Elevation;

@@ -1,31 +1,26 @@
-﻿TC.tool = TC.tool || {};
+import TC from '../../TC';
+import ElevationService from './ElevationService';
+import Util from '../Util';
 
-if (!TC.tool.ElevationService) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
-}
+let proxificationTool;
 
-TC.tool.ElevationServiceIGNEs = function (_options) {
-    const self = this;
-    TC.tool.ElevationService.apply(self, arguments);
-    self.url = self.options.url || '//servicios.idee.es/wcs-inspire/mdt';
-    self.minimumElevation = self.options.minimumElevation || -9998;
-    self.nativeCRS = 'EPSG:25830';
-};
+class ElevationServiceIGNEs extends ElevationService {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.url = self.options.url || '//servicios.idee.es/wcs-inspire/mdt';
+        self.minimumElevation = self.options.minimumElevation || -9998;
+        self.nativeCRS = 'EPSG:25830';
+    }
 
-TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
-
-(function () {
-    const toolProto = TC.tool.ElevationServiceIGNEs.prototype;
-    let proxificationTool;
-
-    toolProto.request = function (options) {
+    async request(options) {
         const self = this;
         options = options || {};
         if (options.coordinates.length === 1) {
             let point = options.coordinates[0];
 
             if (options.crs && options.crs !== self.nativeCRS) {
-                point = TC.Util.reproject(point, options.crs, self.nativeCRS);
+                point = Util.reproject(point, options.crs, self.nativeCRS);
             }
 
             let coverageName = 'Elevacion25830_5';
@@ -40,37 +35,26 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
                 point[1] + halfRes2
             ];
             const requestUrl = self.url + '?SERVICE=WCS&REQUEST=GetCoverage&VERSION=2.0.1' +
-                '&SUBSET=' + encodeURIComponent('x,' + self.nativeCRS + '(' + bbox[0] + ',' + bbox[2] + ')') + 
-                '&SUBSET=' + encodeURIComponent('y,' + self.nativeCRS + '(' + bbox[1] + ',' + bbox[3] + ')') + 
+                '&SUBSET=' + encodeURIComponent('x,' + self.nativeCRS + '(' + bbox[0] + ',' + bbox[2] + ')') +
+                '&SUBSET=' + encodeURIComponent('y,' + self.nativeCRS + '(' + bbox[1] + ',' + bbox[3] + ')') +
                 '&COVERAGEID=' + encodeURIComponent(coverageName) +
-                '&RESOLUTION=x(1)' + 
-                '&RESOLUTION=y(1)' + 
+                '&RESOLUTION=x(1)' +
+                '&RESOLUTION=y(1)' +
                 '&FORMAT=' + encodeURIComponent('application/asc') +
                 '&EXCEPTIONS=XML';
-            return new Promise(function (resolve, reject) {
-                const endFn = function () {
-                    proxificationTool
-                        .fetch(requestUrl)
-                        .then(r => resolve(r.responseText))
-                        .catch(err => reject(Error(err)));
-                };
-                if (proxificationTool) {
-                    endFn();
-                }
-                else {
-                    import('./Proxification').then(function (module) {
-                        const Proxification = module.default;
-                        proxificationTool = new Proxification(TC.proxify);
-                        endFn();
-                    });
-                }
-            });
+
+            if (!proxificationTool) {
+                const Proxification = (await import('./Proxification')).default;
+                proxificationTool = new Proxification(TC.proxify);
+            }
+            const response = await proxificationTool.fetch(requestUrl);
+            return response.responseText;
         }
 
-        return Promise.reject(new Error('ign.es elevation service supports only points'));
-    };
+        throw new Error('ign.es elevation service supports only points');
+    }
 
-    toolProto.parseResponse = function (response, options) {
+    parseResponse(response, options) {
         const self = this;
         const lines = response.split('\n');
         const nColsLine = lines.filter(line => line.indexOf('ncols') === 0)[0];
@@ -91,11 +75,13 @@ TC.inherit(TC.tool.ElevationServiceIGNEs, TC.tool.ElevationService);
                 let point = options.coordinates[0].slice();
                 point[2] = elevation;
                 if (options.crs && options.crs !== self.nativeCRS) {
-                    point = TC.Util.reproject(point, self.nativeCRS, options.crs);
+                    point = Util.reproject(point, self.nativeCRS, options.crs);
                 }
-                return TC.tool.ElevationService.prototype.parseResponse.call(self, { coordinates: [point] }, options);
+                return super.parseResponse.call(self, { coordinates: [point] }, options);
             }
         }
         return [];
-    };
-})();
+    }
+}
+
+export default ElevationServiceIGNEs;
