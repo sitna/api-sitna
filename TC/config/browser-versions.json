@@ -1,4 +1,4 @@
-TC.Cfg.acceptedBrowserVersions = [
+[
     {
         "name": "Chrome",
         "version": 109
@@ -19,4 +19,4 @@ TC.Cfg.acceptedBrowserVersions = [
         "name": "Mobile Safari",
         "version": 15
     }
-];
+]
