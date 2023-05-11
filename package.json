@@ -1,6 +1,6 @@
 {
   "name": "api-sitna",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "API de creación de mapas JavaScript",
   "homepage": "https://sitna.navarra.es/api/doc/",
   "main": "./index.js",
@@ -81,9 +81,17 @@
     "wkx": "^0.5.0"
   },
   "files": [
+    "index.js",
     "sitna.js",
     "TC.js",
-    "css/**/*",
+    "config/browser-versions.json",
+    "css/sitna.css",
+    "css/sitna.css.map",
+    "css/print.css",
+    "css/bootstrap-adapter.css",
+    "css/fonts/*",
+    "css/img/*",
+    "css/ui/*",
     "resources/**/*",
     "layout/responsive/**/*",
     "lib/geopackagejs/**/*",
@@ -93,8 +101,10 @@
     "lib/polyfill/**/*",
     "SITNA/**/*.js",
     "TC/**/*.js",
+    "TC/cesium/layer.json",
     "TC/templates/*.mjs",
     "wmts/**/*",
-    "workers/*.mjs"
+    "workers/*.mjs",
+    "workers/tc-cb-service-worker.js"
   ]
 }
