@@ -490,11 +490,6 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         }
     };
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-prnmap.hbs";
-    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/tc-ctl-prnmap-view.hbs";
-    ctlProto.template[ctlProto.CLASS + '-tools'] = TC.apiLocation + "TC/templates/tc-ctl-prnmap-tools.hbs";
-
     const hasLegend = function () {
         const self = this;
 
@@ -534,6 +529,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         };
 
         const print = function () {
+            const div = self.getContainer();
 
             self.map.setView(Consts.view.PRINTING);
 
@@ -543,7 +539,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 if (!codeContainer) {
                     codeContainer = document.createElement('div');
                     codeContainer.classList.add(self.CLASS + '-qrcode');
-                    self.map.div.appendChild(codeContainer);
+                    self.getContainer().appendChild(codeContainer);
                 }
 
                 codeContainer.innerHTML = '';
@@ -573,19 +569,20 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             }
 
             const updateCanvas = function (printFormat) {
+                
                 if (printFormat) {
-                    self.map.div.classList.add(printFormat);
+                    div.classList.add(printFormat);
                     /*
                      * Validamos que el resultado en pixels sean valores enteros, si no lo son, redondeamos y establecemos evitando estiramiento del canvas /
                      */
-                    var bounding = self.map.div.getBoundingClientRect();
+                    var bounding = div.getBoundingClientRect();
                     if (!Number.isInteger(bounding.width)) {
-                        self.map.div.style.width = Math.round(bounding.width) + 'px';
+                        div.style.width = Math.round(bounding.width) + 'px';
                     }
                     if (!Number.isInteger(bounding.height)) {
-                        self.map.div.style.height = Math.round(bounding.height) + 'px';
+                        div.style.height = Math.round(bounding.height) + 'px';
                     }
-
+                    
                     const newWidth = `calc(50% - ${bounding.width / 2}px)`;
                     self._viewDiv.querySelector(`.${self.CLASS}-view-left`).style.width = newWidth;
                     self._viewDiv.querySelector(`.${self.CLASS}-view-right`).style.width = newWidth;
@@ -594,7 +591,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     self.map.toast(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'), { type: Consts.msgType.INFO, duration: 7000 });
 
                     // En móviles no se ve el mapa entero, así que escalamos el viewport
-                    bounding = self.map.div.getBoundingClientRect();
+                    bounding = div.getBoundingClientRect();
                     if (window.screen.width < bounding.width) {
                         const zoomOut = window.screen.width / bounding.width;
                         const zoomIn = bounding.width / window.screen.width;
@@ -615,9 +612,12 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                             toastStyle.transformOrigin = '0% 100%';
                         }
                     }
+                    
                 }
-
-                self.map.wrap.map.updateSize();
+                if (!self.map.on3DView)
+                    self.map.wrap.map.updateSize();
+                else
+                    self.map.view3D.getScene().render();
             };
 
             const resetPrinting = function () {
@@ -649,10 +649,12 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                 self.map.toastHide(self.getLocaleString('print.advice.title') + ': ' + self.getLocaleString('print.advice.desc'));
 
-                self.map.div.classList.remove(self.currentFormat, self.CLASS + '-printing');
+                const div = self.getContainer();
 
-                self.map.div.style.removeProperty('width');
-                self.map.div.style.removeProperty('height');
+                div.classList.remove(self.currentFormat, self.CLASS + '-printing');
+
+                div.style.removeProperty('width');
+                div.style.removeProperty('height');
 
                 updateCanvas();
 
@@ -670,11 +672,11 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 });
 
                 self.getRenderedHtml(self.CLASS + '-tools', null, function (html) {
-                    self.map.div.insertAdjacentHTML('beforeend', html);
+                    div.insertAdjacentHTML('beforeend', html);
 
-                    self.map.div.querySelector('.' + self.CLASS + '-btn-close').addEventListener('click', resetPrinting);
+                    div.querySelector('.' + self.CLASS + '-btn-close').addEventListener('click', resetPrinting);
 
-                    self.map.div.querySelector('.' + self.CLASS + '-btn-pdf').addEventListener('click', self.createPdf.bind(self));
+                    div.querySelector('.' + self.CLASS + '-btn-pdf').addEventListener('click', self.createPdf.bind(self));
                 });
             }
 
@@ -685,7 +687,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
             self._viewDiv.classList.remove(Consts.classes.HIDDEN);
 
-            self.map.div.classList.add(self.CLASS + "-printing");
+            self.getContainer().classList.add(self.CLASS + "-printing");
             updateCanvas(self.currentFormat);
         };
 
@@ -705,6 +707,23 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         return result;
     };
 
+    ctlProto.getContainer = function () {
+        return this.map.on3DView ? this.map.view3D.container : this.map.div
+    }
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-prnmap.mjs');
+        const viewTemplatePromise = import('../templates/tc-ctl-prnmap-view.mjs');
+        const toolsTemplatePromise = import('../templates/tc-ctl-prnmap-tools.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-view'] = (await viewTemplatePromise).default;
+        template[self.CLASS + '-tools'] = (await toolsTemplatePromise).default;
+        self.template = template;
+    };
+
     ctlProto.render = function (callback) {
         const self = this;
         return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback));
@@ -719,7 +738,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         let pdfFonts = await import("pdfmake/build/vfs_fonts");
         pdfMake.vfs = pdfFonts.pdfMake.vfs;        
         let result;
-        self.canvas = TC.Util.mergeCanvases(self.map.wrap.getCanvas());
+        var canvases = self.map.wrap.getCanvas();
+        self.canvas = TC.Util.mergeCanvases(canvases);
+        //self.canvas = TC.Util.mergeCanvases(self.map.wrap.getCanvas());
         var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
         var printLayout = layout.layoutPDF;
 
@@ -781,47 +802,69 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             }
         };
         const getScaleBar = function () {
-            const onError = function () {
-                var scaleBarColumn = getScaleBarColumn(layout);
+            var scaleBarColumn = getScaleBarColumn(layout);
+            const onError = function () {                
                 delete scaleBarColumn.image;
                 scaleBarColumn.text = "";
                 scaleBarColumn.width = "auto";
                 return scaleBarColumn;
             };
+            
+            if (self.map.on3DView) {
+                scaleBarColumn.table = { widths: [0], body: [{ border: [false, false, false, false], text: "" }] };
+                //scaleBarColumn.table = {
+                //    widths: [layout.layoutPDF.pageSize.width - layout.layoutPDF.pageMargins[0] - layout.layoutPDF.pageMargins[2] - layout.logoWidth],
+                //    body: [
+                //        [{ border: [false, false, false, false], text: formatCameraData(), fontSize: 10, alignment: 'right' }]
+                //    ]
+                //};
+            }
+            else {
+                let scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
+                if (scaleCtrl) {
+                    var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
+                    var bounding = elem[0].getBoundingClientRect();
+                    if (bounding) {
+                        var styling = getComputedStyle(elem[0], null);
+                        var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
+                        var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
+                                                
+                        scaleBarColumn.table = {
+                            widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
+                            body: [
+                                [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
+                            ]
+                        };                            
 
-            let scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
-            if (scaleCtrl) {
-                var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
-                var bounding = elem[0].getBoundingClientRect();
-                if (bounding) {
-                    var styling = getComputedStyle(elem[0], null);
-                    var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
-                    var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
+                        scaleBarColumn.layout = {
+                            paddingLeft: function (_i, _node) { return 0; },
+                            paddingRight: function (_i, _node) { return 0; },
+                            paddingTop: function (_i, _node) { return 0; },
+                            paddingBottom: function (_i, _node) { return 0; }
+                        };
 
-                    var scaleBarColumn = getScaleBarColumn(layout);
-
-                    scaleBarColumn.table = {
-                        widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
-                        body: [
-                            [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
-                        ]
-                    };
-
-                    scaleBarColumn.layout = {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    };
-
-                    return scaleBarColumn;
+                        
+                    } else {
+                        return onError();
+                    }
                 } else {
                     return onError();
                 }
-            } else {
-                return onError();
             }
+            return scaleBarColumn;
+
+            
         };
+        const formatCameraData = function () {
+            const cameraData = self.map.view3D.getCameraData();
+            return self.getLocaleString("printCameraCoords", {
+                x: TC.Util.formatCoord(cameraData.latitude, Consts.DEGREE_PRECISION),
+                y: TC.Util.formatCoord(cameraData.longitude, Consts.DEGREE_PRECISION),
+                z: TC.Util.formatCoord(cameraData.height, Consts.METER_PRECISION),
+                head: Math.round(cameraData.heading),
+                pitch: Math.round(cameraData.pitch),
+            })
+        }
         const getLegend = function () {
             var content = [];
             var layers = self.map.workLayers.filter(function (layer) {
@@ -1145,7 +1188,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
     ctlProto.getToolsElement = function () {
         const self = this;
-        return self.map.div.querySelector(`.${self.CLASS}-tools`);
+        return self.getContainer().querySelector(`.${self.CLASS}-tools`);
     };
 
 })();
