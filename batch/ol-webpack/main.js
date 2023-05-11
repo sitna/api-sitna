@@ -44,10 +44,12 @@ import TileGrid from 'ol/tilegrid/TileGrid';
 import { unByKey } from 'ol/Observable';
 
 import BaseObject from 'ol/Object';
-import { METERS_PER_UNIT, Projection, addEquivalentProjections, get, getTransform, transform, transformExtent } from 'ol/proj';
-import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from 'ol/proj/epsg4326';
+import { METERS_PER_UNIT, Projection, addEquivalentProjections, get, getTransform, transform, transformExtent } from '../../lib/ol/proj';
+//import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from 'ol/proj/epsg4326';
+import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from '../../lib/ol/proj/epsg4326';
 import Units from 'ol/proj/Units';
 import { register } from 'ol/proj/proj4';
+//import { register } from '../../lib/ol/proj/proj4';
 import { toContext } from 'ol/render';
 import r_EventType from 'ol/render/EventType';
 import { Vector as s_Vector, Cluster, ImageWMS, WMTS, ImageCanvas } from 'ol/source';
