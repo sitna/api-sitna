@@ -53,10 +53,6 @@ class FeatureTools extends Control {
         const self = this;
         self.div.classList.add(self.CLASS);
 
-        self.template = {};
-        self.template[self.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-ftools.hbs";
-        self.template[self.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-ftools-dialog.hbs";
-
         self.exportsState = true;
         const cs = self.#classSelector = '.' + self.CLASS;
         self.#selectors = {
@@ -87,14 +83,27 @@ class FeatureTools extends Control {
             })
             .on(Consts.event.FEATUREHIGHLIGHT, function (e) {
                 self.addUI(e.control.getDisplayControl());
+                e.feature.toggleSelectedStyle(true);
             })
             .on(Consts.event.FEATUREDOWNPLAY, function (e) {
                 self.updateUI(e.control.getDisplayControl());
+                e.feature.toggleSelectedStyle(false);
             });
 
         await Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]);
         await self.getShareDialog();
         return self;
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-ftools.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-ftools-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
     }
 
     render() {
