@@ -118,7 +118,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: true,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-basemap.png',
                 fallbackLayer: Consts.layer.IDENA_DYNBASEMAP,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -133,7 +133,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-orthophoto.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -148,7 +148,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2022.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2022.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2022,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -163,7 +163,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2021.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2021.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2021,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -178,7 +178,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2020.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2020.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2020,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -193,7 +193,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2019.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2019.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2019,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -208,7 +208,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2018.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2018.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2018,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -223,7 +223,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2017.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2017.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2017,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -238,7 +238,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2014.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2014,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -253,7 +253,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2012.jpg',
                 fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2012,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -268,7 +268,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho-pamplona2020.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho-pamplona2020.jpg',
                 fallbackLayer: Consts.layer.IDENA_PAMPLONA_DYNORTHOPHOTO2020,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -283,7 +283,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-bta.png',
                 fallbackLayer: Consts.layer.IDENA_DYNCARTO,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
@@ -296,7 +296,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-cadaster.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-cadaster.png',
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
             {
@@ -308,7 +308,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-relief_bw.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-relief_bw.jpg',
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
             {
@@ -320,7 +320,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-base_ortho.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-base_ortho.png',
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
             {
@@ -332,7 +332,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-basemap.png',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -344,7 +344,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-orthophoto.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -356,7 +356,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2022.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2022.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -368,7 +368,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2021.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2021.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -380,7 +380,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2020.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2020.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -392,7 +392,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2019.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2019.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -404,7 +404,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2018.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2018.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -416,7 +416,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2017.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2017.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -428,7 +428,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2014.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2014.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -440,7 +440,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho2012.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2012.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -452,7 +452,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-ortho-pamplona2020.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho-pamplona2020.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -464,7 +464,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-bta.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-bta.png',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -476,7 +476,7 @@ const Defaults = (function () {
                 layerNames: "MTN",
                 matrixSet: "EPSG:25830",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-carto_ign.png",
+                thumbnail: TC.apiLocation + "css/img/thumb-carto_ign.png",
                 fallbackLayer: Consts.layer.IGN_ES_DYNCARTO,
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
@@ -489,7 +489,7 @@ const Defaults = (function () {
                 layerNames: "IGNBaseTodo",
                 matrixSet: "EPSG:25830",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-basemap_ign.png",
+                thumbnail: TC.apiLocation + "css/img/thumb-basemap_ign.png",
                 fallbackLayer: Consts.layer.IGN_ES_DYNBASEMAP,
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
@@ -502,7 +502,7 @@ const Defaults = (function () {
                 layerNames: "IGNBase-gris",
                 matrixSet: "GoogleMapsCompatible",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-basemap_grey_ign.png",
+                thumbnail: TC.apiLocation + "css/img/thumb-basemap_grey_ign.png",
                 fallbackLayer: Consts.layer.IGN_ES_DYNBASEMAP_GREY,
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
@@ -515,7 +515,7 @@ const Defaults = (function () {
                 layerNames: "Relieve",
                 matrixSet: "EPSG:25830",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-relief_ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-relief_ign.jpg",
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
             {
@@ -527,7 +527,7 @@ const Defaults = (function () {
                 layerNames: "OI.OrthoimageCoverage",
                 matrixSet: "EPSG:25830",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-orthophoto_pnoa.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-orthophoto_pnoa.jpg",
                 fallbackLayer: Consts.layer.IGN_ES_DYNORTHOPHOTO,
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
@@ -540,7 +540,7 @@ const Defaults = (function () {
                 layerNames: "EL.GridCoverageDSM",
                 matrixSet: "GoogleMapsCompatible",
                 format: "image/png",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-lidar_ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-lidar_ign.jpg",
                 fallbackLayer: Consts.layer.IGN_ES_DYNLIDAR,
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
@@ -550,7 +550,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: '//www.ign.es/wms-inspire/ign-base',
                 layerNames: 'IGNBaseTodo',
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap_ign.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-basemap_ign.png',
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
             {
@@ -559,7 +559,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: '//www.ign.es/wms-inspire/ign-base',
                 layerNames: 'IGNBaseTodo-gris',
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-basemap_grey_ign.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-basemap_grey_ign.png',
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
             {
@@ -568,7 +568,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: '//www.ign.es/wms-inspire/pnoa-ma',
                 layerNames: 'OI.OrthoimageCoverage',
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-orthophoto_pnoa.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-orthophoto_pnoa.jpg',
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
             {
@@ -577,7 +577,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: '//www.ign.es/wms-inspire/mapa-raster',
                 layerNames: 'mtn_rasterizado',
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto_ign.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-carto_ign.png',
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
             {
@@ -586,7 +586,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: '//wms-mapa-lidar.idee.es/lidar',
                 layerNames: 'EL.GridCoverage',
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-lidar_ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-lidar_ign.jpg",
                 overviewMapLayer: Consts.layer.IGN_ES_BASEMAP
             },
             /*{
@@ -598,7 +598,7 @@ const Defaults = (function () {
                 layerNames: "GEOGRAPHICALGRIDSYSTEMS.MAPS",
                 matrixSet: "PM",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-carto-fr-ign.png",
+                thumbnail: TC.apiLocation + "css/img/thumb-carto-fr-ign.png",
                 fallbackLayer: Consts.layer.IGN_FR_DYNCARTO,
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
@@ -612,7 +612,7 @@ const Defaults = (function () {
                 layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
                 matrixSet: "PM",
                 format: "image/png",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.png",
+                thumbnail: TC.apiLocation + "css/img/thumb-base-fr-ign.png",
                 fallbackLayer: Consts.layer.IGN_FR_DYNBASEMAP,
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
@@ -626,7 +626,7 @@ const Defaults = (function () {
                 layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
                 matrixSet: "PM",
                 format: "image/png",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-estom-fr-ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-estom-fr-ign.jpg",
                 fallbackLayer: Consts.layer.IGN_FR_DYNRELIEF,
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
@@ -640,7 +640,7 @@ const Defaults = (function () {
                 layerNames: "ORTHOIMAGERY.ORTHOPHOTOS",
                 matrixSet: "PM",
                 format: "image/jpeg",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-ortho-fr-ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-ortho-fr-ign.jpg",
                 fallbackLayer: Consts.layer.IGN_FR_DYNORTHOPHOTO,
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
@@ -661,7 +661,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: "//wxs.ign.fr/essentiels/geoportail/r/wms",
                 layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-base-fr-ign.png",
+                thumbnail: TC.apiLocation + "css/img/thumb-base-fr-ign.png",
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
             },
@@ -671,7 +671,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: "//wxs.ign.fr/altimetrie/geoportail/r/wms",
                 layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-estom-fr-ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-estom-fr-ign.jpg",
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
             },
@@ -681,7 +681,7 @@ const Defaults = (function () {
                 type: Consts.layerType.WMS,
                 url: "//wxs.ign.fr/essentiels/geoportail/r/wms",
                 layerNames: "ORTHOIMAGERY.ORTHOPHOTOS",
-                thumbnail: TC.apiLocation + "tc/css/img/thumb-ortho-fr-ign.jpg",
+                thumbnail: TC.apiLocation + "css/img/thumb-ortho-fr-ign.jpg",
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
             },
@@ -696,7 +696,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-osm.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-osm.png',
                 overviewMapLayer: Consts.layer.OSM
             },
             {
@@ -710,7 +710,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-opentopomap.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-opentopomap.png',
                 overviewMapLayer: Consts.layer.OSM
             },
             {
@@ -724,7 +724,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-voyager.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-carto-voyager.png',
                 overviewMapLayer: Consts.layer.CARTO_VOYAGER
             },
             {
@@ -738,7 +738,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-light.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-carto-light.png',
                 overviewMapLayer: Consts.layer.CARTO_VOYAGER
             },
             {
@@ -752,7 +752,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-carto-dark.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-carto-dark.png',
                 overviewMapLayer: Consts.layer.CARTO_VOYAGER
             },
             {
@@ -766,7 +766,7 @@ const Defaults = (function () {
                 format: 'image/png',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-streets.png',
+                thumbnail: TC.apiLocation + 'css/img/thumb-mapbox-streets.png',
                 overviewMapLayer: Consts.layer.MAPBOX_STREETS
             },
             {
@@ -780,7 +780,7 @@ const Defaults = (function () {
                 format: 'image/jpeg',
                 isDefault: false,
                 hideTree: true,
-                thumbnail: TC.apiLocation + 'TC/css/img/thumb-mapbox-satellite.jpg',
+                thumbnail: TC.apiLocation + 'css/img/thumb-mapbox-satellite.jpg',
                 overviewMapLayer: Consts.layer.MAPBOX_STREETS
             },
             {
@@ -1167,7 +1167,8 @@ const Defaults = (function () {
                     labelOutlineColor: '#ffffff',
                     labelOffset: [0, -16],
                     fontColor: '#000000',
-                    fontSize: 10
+                    fontSize: 10,
+                    zIndex:1
                 },
                 line: {
                     strokeColor: '#008000',
@@ -1175,7 +1176,8 @@ const Defaults = (function () {
                     labelOutlineWidth: 2,
                     labelOutlineColor: '#ffffff',
                     fontColor: '#000000',
-                    fontSize: 10
+                    fontSize: 10,
+                    zIndex: 1
                 },
                 polygon: {
                     strokeColor: '#008000',
@@ -1185,7 +1187,8 @@ const Defaults = (function () {
                     labelOutlineWidth: 2,
                     labelOutlineColor: '#ffffff',
                     fontColor: '#000000',
-                    fontSize: 10
+                    fontSize: 10,
+                    zIndex: 1
                 }
             }
         }

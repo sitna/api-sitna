@@ -120,7 +120,7 @@
     line-height: 20px;
 }
 
-div.tc-ctl-coords-xy {
+div.tc-ctl-coords-main {
     padding: 0 0 0 0.5em;
     margin: auto;
 }
@@ -165,6 +165,10 @@ div.tc-ctl-coords-xy {
         margin-right: 0.5em;
     }
 
+.tc-ctl-coords-xy.tc-hidden, .tc-ctl-coords-latlon.tc-hidden {
+    display: none;
+}
+
 .tc-ctl-coords-x, .tc-ctl-coords-y {
     width: 4.8em;
     display: inline-block;
@@ -173,6 +177,10 @@ div.tc-ctl-coords-xy {
 .tc-ctl-coords-lat, .tc-ctl-coords-lon {
     width: 4.8em;
     display: inline-block;
+}
+
+.tc-ctl-coords .tc-ctl-coords-elev-container.tc-hidden {
+    display: none;
 }
 
 .tc-ctl-coords-elevation {

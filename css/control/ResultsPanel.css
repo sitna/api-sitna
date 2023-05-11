@@ -672,9 +672,9 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
     margin: 0;
 }
 
-    .tc-ctl-rpanel-main > .tc-ctl-rpanel-heading > h4 sitna-button {
-        margin: 0.3em 0.2em 0.2em 0.2em;
-    }
+.tc-ctl-rpanel-main > .tc-ctl-rpanel-heading > h4 sitna-button {
+    margin: 0.3em 0.2em 0.2em 0.2em;
+}
 
 .tc-ctl-rpanel-heading {
     height: 2em;
@@ -950,6 +950,7 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
 .tc-ctl-rpanel .tc-ctl-rpanel-title span.tc-ctl-rpanel-title-text {
     flex: 1 1 auto;
     margin-left: 0;
+    max-height: 2em;
 }
 
 .tc-ctl-rpanel .tc-ctl-finfo-coords {
@@ -1120,6 +1121,7 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn,
     padding: 0;
     width: 1.8em;
     height: 1.8em;
+    min-width: 1.6em;
 }
 
 .tc-ctl-rpanel-heading sitna-button {
@@ -1184,7 +1186,7 @@ button.tc-icon-btn.tc-ctl-p-results-csv-btn:after,
     left: 0;
     width: 100%;
     height: 100%;
-    cursor: pointer;
+    pointer-events: none;
 }
 
 

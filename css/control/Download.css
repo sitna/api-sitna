@@ -31,6 +31,9 @@ div.tc-ctl-download-cnt label {
     width: calc(50% - 2px);
     font-weight: normal;
 }
+.tc-3d .tc-ctl-download-div label.tc-ctl-download-image-wld-label {
+    display: none;
+}
 
 .tc-ctl-download-image label.tc-loading:after {
     font-family: var(--icon-font-family);

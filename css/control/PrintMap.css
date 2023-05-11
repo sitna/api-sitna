@@ -70,7 +70,7 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     content: '\f00d';
 }
 
-.tc-map.tc-ctl-prnmap-printing {
+.tc-map.tc-ctl-prnmap-printing, .tc-map-3d.tc-ctl-prnmap-printing {
     z-index: 100000;
     top: 0;
     left: 0;
@@ -80,25 +80,23 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     box-sizing: content-box;
 }
 
-    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a4 {
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a4, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a4 {
         /* ya hemos restado los márgenes y demás */
         width: 712px;
         height: 1034px;
-
         /*width: 535, -> 534pt 712px 
           height: 753.5 -> 753pt - >775.5 1034px*/
     }
 
-    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a4 {
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a4, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a4 {
         /* ya hemos restado los márgenes y demás */
         width: 1040px;
         height: 704px;
-
         /*width: 780pt -> 1,040px 
           height: 528pt -> 704px */
     }
 
-    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a3 {
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a3, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a3 {
         /* ya hemos restado los márgenes y demás */
         width: 1040px;
         height: 1500px;
@@ -106,7 +104,7 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
           height: 1125pt -> 1500px */
     }
 
-    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a3 {
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a3, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a3 {
         /* ya hemos restado los márgenes y demás */
         width: 1508px;
         height: 1044px;
@@ -114,23 +112,21 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
           height: 783pt -> 1044px */
     }
 
-.tc-map.tc-ctl-prnmap-printing .ol-viewport {
-    z-index: 100000;
-}
+    .tc-map.tc-ctl-prnmap-printing .ol-viewport, .tc-map-3d.tc-ctl-prnmap-printing .ol-viewport {
+        z-index: 100000;
+    }
 
-.tc-map.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *,
-.tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, 
-.tc-toast, .tc-toast *,
-.tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)) {
-    visibility: hidden;
-}
+    .tc-map.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)),
+    .tc-map-3d.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)) {
+        visibility: hidden;
+    }
 
 .tc-map.tc-ctl-prnmap-printing .tc-ctl-coords {
     display: none;
 }
 
 
-    .tc-map.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode {
+    .tc-map.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode, .tc-map-3d.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode {
         position: absolute;
         right: 0px;
         bottom: 0px;
