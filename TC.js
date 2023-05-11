@@ -1,3 +1,4 @@
+import Consts from './TC/Consts';
 import loadjs from 'loadjs';
 import proj4 from 'proj4';
 
@@ -5,16 +6,27 @@ var TC = TC || {};
 
 (function () {
     if (!TC.apiLocation) {
-        var script;
-        if (document.currentScript) {
-            script = document.currentScript;
+        if (typeof SITNA_BASE_URL !== "undefined") {
+            // Obtenemos la URL base de la configuración SITNA_BASE_URL (necesario para usar como paquete npm)
+            TC.apiLocation = SITNA_BASE_URL;
+            if (!TC.apiLocation.endsWith('/')) {
+                TC.apiLocation = TC.apiLocation + '/';
+            }
         }
         else {
-            var scripts = document.getElementsByTagName('script');
-            script = scripts[scripts.length - 1];
+            // Obtenemos la URL base de la dirección del script
+            var script;
+            if (document.currentScript) {
+                script = document.currentScript;
+            }
+            else {
+                var scripts = document.getElementsByTagName('script');
+                script = scripts[scripts.length - 1];
+            }
+            var src = script.getAttribute('src');
+            TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
+            globalThis.SITNA_BASE_URL = TC.apiLocation;
         }
-        var src = script.getAttribute('src');
-        TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
     }
 })();
 
@@ -114,20 +126,20 @@ var _showLoadFailedError = function (url) {
         stack = error && error.stack ? error.stack : error.toString();
     }
 
-    const mapObj = TC.Map.get(document.querySelector('.' + SITNA.Consts.classes.MAP));
+    const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
     const subject = "Error al cargar " + url;
     const body = TC.Util.getLocaleString(mapObj ? mapObj.options.locale : 'es-ES', "urlFailedToLoad", { url: url });
 
     // tostada sin la pila
     TC.error(
         body,
-        [SITNA.Consts.msgErrorMode.TOAST],
+        [Consts.msgErrorMode.TOAST],
         subject);
     // email con pila
     TC.error(
         `${body}. Pila de la llamada al recurso: 
 ${stack && stack.length > 0 ? stack : ""}`,
-        [SITNA.Consts.msgErrorMode.EMAIL],
+        [Consts.msgErrorMode.EMAIL],
         subject);
 };
 
@@ -350,11 +362,11 @@ TC.ajax = function (options) {
                     try {
                         let responseData;
                         switch (options.responseType) {
-                            case SITNA.Consts.mimeType.JSON:
+                            case Consts.mimeType.JSON:
                                 //URI: Compruebo que la respuesta no es un XML de excepción
                                 responseData = await response.json();
                                 break;
-                            case SITNA.Consts.mimeType.XML:
+                            case Consts.mimeType.XML:
                                 responseData = await response.text();
                                 responseData = new DOMParser().parseFromString(responseData, 'application/xml');
                                 break;
@@ -387,7 +399,7 @@ TC.getProjectionData = async function (options) {
     const crs = options.crs || '';
     const match = crs.match(/\d{4,5}$/g);
     let code = match ? match[0] : '';
-    const url = SITNA.Consts.url.EPSG + '?format=json&q=' + code;
+    const url = Consts.url.EPSG + '?format=json&q=' + code;
     let projData = projectionDataCache[code];
     if (projData) {
         if (options.sync) {
