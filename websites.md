@@ -26,6 +26,7 @@
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
   * [Centros de Interpretación de la Naturaleza](https://www.navarra.es/es/web/cin-navarra)
+  * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales "Wildfire prevention")
 
 * Govenment of Navarre's own developments:
   * Anonymous access:
