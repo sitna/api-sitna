@@ -20,12 +20,12 @@
 
 * Usos en Gobierno de Navarra del visor de KMLs:
   * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Cámaras de tráfico. Gobierno de Navarra")
-  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Zonas de baño. Gobierno de Navarra")
+  * [Zonas de baño naturales](https://www.navarra.es/es/medio-ambiente/zonas-de-bano-naturales "Zonas de baño naturales. Gobierno de Navarra")
   * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Presupuesto y Cuentas")
   * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Presupuesto y Cuentas")
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Presupuesto y Cuentas")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
-  * [Actúa - Centros de Interpretación de la Naturaleza y Observatorios](https://www.navarra.es/home_es/Temas/Medio+Ambiente/Actua/Centros+de+Interpretacion+de+la+Naturaleza+y+Observatorios.htm)
+  * [Centros de Interpretación de la Naturaleza](https://www.navarra.es/es/web/cin-navarra)
 
 * Desarrollos propios del Gobierno de Navarra:
   * Acceso anónimo:
@@ -34,10 +34,8 @@
     * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Registro de Viviendas. Gobierno de Navarra")
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Direcciones de Navarra")
-    * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Servicio Navarro de Empleo - Nafar Lansare")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)   
-    * [Centros de Salud](https://centrossanitarios.navarra.es/)
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire)
   * Acceso autenticado:
