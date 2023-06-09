@@ -20,12 +20,12 @@
 
 * Government of Navarre's KML viewer applications:
   * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Traffic Cameras. Government of Navarre")
-  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Bathing Sites. Government of Navarre")
+  * [Zonas de baño naturales](https://www.navarra.es/es/medio-ambiente/zonas-de-bano-naturales "Natural bathing Sites. Government of Navarre")
   * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Budget and Accounting")
   * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
   * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
-  * [Actúa - Centros de Interpretación de la Naturaleza y Observatorios](https://www.navarra.es/home_es/Temas/Medio+Ambiente/Actua/Centros+de+Interpretacion+de+la+Naturaleza+y+Observatorios.htm)
+  * [Centros de Interpretación de la Naturaleza](https://www.navarra.es/es/web/cin-navarra)
 
 * Govenment of Navarre's own developments:
   * Anonymous access:
