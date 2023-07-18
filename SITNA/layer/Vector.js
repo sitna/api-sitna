@@ -922,12 +922,12 @@ class Vector extends Layer {
         id = Array.isArray(id) ? id : [id];
 
 
-        self.state = TC.Layer.state.LOADING;
+        self.state = Layer.state.LOADING;
         self.map.trigger(Consts.event.BEFOREUPDATE);
         self.map.trigger(Consts.event.BEFORELAYERUPDATE, { layer: self });
 
         id.forEach(function (id) {
-            nodes.push(TC.Layer.prototype.setNodeVisibility.call(self, id, visible));
+            nodes.push(Layer.prototype.setNodeVisibility.call(self, id, visible));
         });
         if (nodes.some((node) => !node.parent)) { // Si es el nodo raíz, es la capa entera
             self.setVisibility(visible);
@@ -989,7 +989,7 @@ class Vector extends Layer {
             })
 
         }
-        self.state = TC.Layer.state.IDLE;
+        self.state = Layer.state.IDLE;
         self.map.trigger(Consts.event.LAYERUPDATE, { layer: self });
         self.map.trigger(Consts.event.UPDATE);
         return nodes.length > 1 ? nodes : nodes[0];
@@ -997,7 +997,7 @@ class Vector extends Layer {
 
     getNodeVisibility(id) {
         var self = this;
-        var result = TC.Layer.prototype.getNodeVisibility.call(self, id);
+        var result = super.getNodeVisibility.call(self, id);
 
         var node = self.findNode(id, self.getTree());
         if (!node) return undefined;
@@ -1106,34 +1106,34 @@ class Vector extends Layer {
                 switch (true) {
                     case f instanceof Marker:
                         fObj.type = Consts.geom.POINT;
-                        layerStyle = self.options.styles && self.options.styles.marker;
+                        layerStyle = self.styles?.marker;
                         break;
                     case f instanceof Point:
                         fObj.type = Consts.geom.POINT;
-                        layerStyle = self.options.styles && self.options.styles.point;
+                        layerStyle = self.styles?.point;
                         break;
                     case f instanceof MultiPoint:
                         fObj.type = Consts.geom.MULTIPOINT;
                         break;
                     case f instanceof Polyline:
                         fObj.type = Consts.geom.POLYLINE;
-                        layerStyle = self.options.styles && self.options.styles.line;
+                        layerStyle = self.styles?.line;
                         break;
                     case f instanceof MultiPolyline:
                         fObj.type = Consts.geom.MULTIPOLYLINE;
-                        layerStyle = self.options.styles && self.options.styles.line;
+                        layerStyle = self.styles?.line;
                         break;
                     case f instanceof Polygon:
                         fObj.type = Consts.geom.POLYGON;
-                        layerStyle = self.options.styles && self.options.styles.polygon;
+                        layerStyle = self.styles?.polygon;
                         break;
                     case f instanceof MultiPolygon:
                         fObj.type = Consts.geom.MULTIPOLYGON;
-                        layerStyle = self.options.styles && self.options.styles.polygon;
+                        layerStyle = self.styles?.polygon;
                         break;
                     case f instanceof Circle:
                         fObj.type = Consts.geom.CIRCLE;
-                        layerStyle = self.options.styles && self.options.styles.polygon;
+                        layerStyle = self.styles?.polygon;
                         break;
                     default:
                         break;
@@ -1141,6 +1141,7 @@ class Vector extends Layer {
                 fObj.id = f.id;
                 fObj.geom = TC.Util.compactGeometry(f.geometry, precision);
                 fObj.data = f.getData();
+                fObj.autoPopup = f.autoPopup;
                 fObj.showsPopup = f.showsPopup;
                 if (options.exportStyles === undefined || options.exportStyles) {
                     layerStyle = TC.Util.extend({}, layerStyle);
@@ -1172,7 +1173,12 @@ class Vector extends Layer {
         const promises = new Array(obj.features.length);
         obj.features.forEach(function (f, idx) {
             let style = TC.Util.extend({}, obj.style || {}, f.style);
-            const featureOptions = TC.Util.extend({}, style, { data: f.data, id: f.id, showsPopup: f.showsPopup });
+            const featureOptions = TC.Util.extend({}, style, {
+                data: f.data,
+                id: f.id,
+                showsPopup: f.showsPopup,
+                showPopup: f.autoPopup
+            });
             var addFn;
             switch (f.type) {
                 case Consts.geom.POLYGON:
