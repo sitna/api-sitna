@@ -240,6 +240,10 @@ class Polygon extends Feature {
         return this.setCoordinates(coords);
     }
 
+    getCoordsArray() {
+        return this.getCoordinates().flat();
+    }
+
     /**
      * Obtiene la longitud total del borde (perímetro y agujeros) del polígono en metros.
      * @method getLength

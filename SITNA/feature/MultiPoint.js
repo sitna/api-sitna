@@ -112,6 +112,10 @@ class MultiPoint extends Feature {
     setCoords(coords) {
         return this.setCoordinates(coords);
     }
+
+    getCoordsArray() {
+        return this.getCoordinates();
+    }
 }
 
 export default MultiPoint;

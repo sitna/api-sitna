@@ -234,6 +234,10 @@ class MultiPolygon extends Feature {
         return this.setCoordinates(coords);
     }
 
+    getCoordsArray() {
+        return this.getCoordinates().flat(2);
+    }
+
     /**
      * Obtiene la longitud total en metros de todos los bordes (perímetro y agujeros) de los polígonos.
      * @method getLength

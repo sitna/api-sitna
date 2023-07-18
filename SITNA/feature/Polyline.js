@@ -159,6 +159,10 @@ class Polyline extends Feature {
         return this.setCoordinates(coords);
     }
 
+    getCoordsArray() {
+        return this.getCoordinates();
+    }
+
     /**
      * Obtiene la longitud total de la línea en metros.
      * @method getLength

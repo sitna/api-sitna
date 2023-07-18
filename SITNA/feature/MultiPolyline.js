@@ -144,11 +144,10 @@ class MultiPolyline extends Feature {
      * @returns {Array.<Array.<number[]>>} Coordenadas de los vértices de las líneas en el CRS actual del mapa.
      */
     getCoordinates(options) {
-        const coords = super.getCoordinates.call(this, options);
         if (options?.pointArray) {
-            return [].concat.apply([], coords);
+            return this.getCoordsArray();
         }
-        return coords;
+        return super.getCoordinates.call(this, options);
     }
 
     /**
@@ -173,6 +172,10 @@ class MultiPolyline extends Feature {
 
     setCoords(coords) {
         return this.setCoordinates(coords);
+    }
+
+    getCoordsArray() {
+        return this.getCoordinates().flat();
     }
 
     appendPolyline(polyline) {

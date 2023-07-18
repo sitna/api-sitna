@@ -218,6 +218,10 @@ class Circle extends Feature {
         return this.setCoordinates(coords);
     }
 
+    getCoordsArray() {
+        return this.getCoordinates();
+    }
+
     toPolygon(numPoints = 72) {
         const self = this;
         const radius = self.getRadius();
