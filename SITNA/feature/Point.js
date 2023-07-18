@@ -1,4 +1,6 @@
 ﻿import Consts from '../../TC/Consts';
+import Cfg from '../../TC/Cfg';
+import Util from '../../TC/Util';
 import Feature from './Feature';
 
 /**
@@ -136,6 +138,30 @@ class Point extends Feature {
 
     getCoords(options) {
         return this.getCoordinates(options);
+    }
+
+    getCoordsArray() {
+        return [this.getCoordinates()];
+    }
+
+    setStyle(style) {
+        const self = this;
+        const isCluster = Array.isArray(self.features) && self.features.length > 1;
+        if (isCluster) {
+            const mergedStyles = [];
+            if (self.layer?.styles?.cluster) {
+                mergedStyles.unshift(self.layer.styles.cluster);
+            }
+            if (self.layer?.map.options.styles?.cluster) {
+                mergedStyles.unshift(self.layer.map.options.styles.cluster);
+            }
+            if (Cfg?.styles?.cluster) {
+                mergedStyles.unshift(Cfg.styles.cluster);
+            }
+            const newStyle = Util.mergeStyles(...mergedStyles);
+            return self.wrap.setStyle(newStyle);
+        }
+        return super.setStyle.call(self, style);
     }
 }
 
