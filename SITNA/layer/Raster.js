@@ -1318,19 +1318,21 @@ class Raster extends Layer {
         let extent = null;
 
         if (self.type === Consts.layerType.WMS) {
+            const mapCrs = options.crs || self.map && self.map.getCRS() || 'EPSG:4326';
+            const mapCrsCode = Util.getCRSCode(mapCrs);
+
             const getNodeBoundingBoxes = function (node) {
                 let bboxes = null;
+                let hasOwnBBox = false;
                 if (node.BoundingBox) {
                     bboxes = Array.isArray(node.BoundingBox) ? node.BoundingBox : [node.BoundingBox];
+                    const crsBboxes = bboxes.filter(bbox => Util.getCRSCode(bbox.crs) === mapCrsCode);
+                    if (crsBboxes.length) {
+                        hasOwnBBox = true;
+                        bboxes = crsBboxes;
+                    }
                 }
-                if (node.EX_GeographicBoundingBox) {
-                    bboxes = bboxes || [];
-                    bboxes.unshift({
-                        crs: 'EPSG:4326',
-                        extent: node.EX_GeographicBoundingBox
-                    });
-                }
-                if (!bboxes && node.parent) {
+                if (!bboxes && !node.EX_GeographicBoundingBox && node.parent) {
                     bboxes = getNodeBoundingBoxes(node.parent);
                 }
                 if (self.capabilities.version === '1.3.0' && bboxes) {
@@ -1352,6 +1354,12 @@ class Raster extends Layer {
                         }
                         return bbox;
                     });
+                    if (!hasOwnBBox && node.EX_GeographicBoundingBox) {
+                        bboxes.unshift({
+                            crs: 'EPSG:4326',
+                            extent: node.EX_GeographicBoundingBox
+                        });
+                    }
                 }
                 return bboxes;
             }
@@ -1367,8 +1375,6 @@ class Raster extends Layer {
                 boundingBoxes[i] = bboxes;
             }
 
-            const mapCrs = options.crs || self.map && self.map.getCRS() || 'EPSG:4326';
-            const mapCrsCode = Util.getCRSCode(mapCrs);
             extent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
             boundingBoxes
                 .map(function getBestBbox(bboxes) {
