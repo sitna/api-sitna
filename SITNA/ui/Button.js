@@ -43,7 +43,7 @@ class Button extends Component {
     }
 
     static get observedAttributes() {
-        return ['text', 'icon', 'variant', 'disabled', 'active', 'icon-text'];
+        return ['text', 'icon', 'variant', 'disabled', 'active', 'icon-text', 'title'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -70,6 +70,18 @@ class Button extends Component {
                     break;
                 case 'icon-text':
                     self.iconText = newValue;
+                    break;
+                case 'title':
+                    if (self.hasAttribute(name)) {
+                        if (self.#button.hasAttribute('title')) {
+                            self.#button.setAttribute('title', newValue);
+                        }
+                    }
+                    else {
+                        if (self.#button.hasAttribute('title')) {
+                            self.text = self.text;
+                        }
+                    }
                     break;
                 default:
                     break;
@@ -172,7 +184,7 @@ class Button extends Component {
     }
 
     get active() {
-        return this.#active;
+        return this.hasAttribute('active');
     }
 
     set active(value) {
