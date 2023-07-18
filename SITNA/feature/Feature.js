@@ -130,6 +130,9 @@ class Feature {
         else {
             self.showsPopup = opts.showsPopup;
         }
+        if (opts.showPopup) {
+            self.autoPopup = true;
+        }
         self.layer = opts.layer || null;
 
         if (opts.selected) {
@@ -204,7 +207,24 @@ class Feature {
 
     setStyle(style) {
         const self = this;
-        self.wrap.setStyle(style);
+        let newStyle;
+        if (style === null) {
+            newStyle = null;
+        }
+        else {
+            const mergedStyles = [self.getStyle(), style];
+            if (self.layer?.styles?.[self.STYLETYPE]) {
+                mergedStyles.unshift(self.layer.styles[self.STYLETYPE]);
+            }
+            if (self.layer?.map.options.styles?.[self.STYLETYPE]) {
+                mergedStyles.unshift(self.layer.map.options.styles[self.STYLETYPE]);
+            }
+            if (Cfg?.styles?.[self.STYLETYPE]) {
+                mergedStyles.unshift(Cfg.styles[self.STYLETYPE]);
+            }
+            newStyle = Util.mergeStyles(...mergedStyles);
+        }
+        self.wrap.setStyle(newStyle);
         return self;
     }
 
@@ -305,7 +325,7 @@ class Feature {
             }
             return acc;
         };
-        return flattenFn(self.getCoords());
+        return flattenFn(self.getCoordinates());
     }
 
     getGeometryStride = function () {
@@ -364,7 +384,7 @@ class Feature {
             self.data = Util.extend(self.data, data);
             self.attributes = self.attributes || [];
             for (var key in data) {
-                let attr = self.attributes.filter(attr => attr.name === key)[0];
+                let attr = self.attributes.find(attr => attr.name === key);
                 if (attr) {
                     attr.value = data[key];
                 }
@@ -380,7 +400,7 @@ class Feature {
     unsetData(key) {
         const self = this;
         delete self.data[key];
-        const attr = (self.attributes || []).filter(attr => attr.name === key)[0];
+        const attr = (self.attributes || []).find(attr => attr.name === key);
         if (attr) {
             self.attributes.splice(self.attributes.indexOf(attr), 1);
         }
@@ -595,6 +615,7 @@ class Feature {
             map.getControlsByClass('TC.control.Popup')
                 .filter(p => p !== popup && p.isVisible())
                 .forEach(p => p.hide());
+            if (!popup.getContainerElement()) await popup.renderPromise();            
             popup.setDragged(false);
             self.wrap.showPopup(Object.assign({}, options, { control: popup }));
             map.trigger(Consts.event.POPUP, { control: popup });
@@ -724,6 +745,7 @@ class Feature {
                 control = await self.showPopup(opts);
             }
         }
+        self.infoControl = control;
         self.layer.features.filter((f) => f !== self).forEach((f) => f.toggleSelectedStyle(false));
         self.toggleSelectedStyle(true);
         TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(control.getContainerElement());
