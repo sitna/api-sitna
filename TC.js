@@ -15,15 +15,8 @@ var TC = TC || {};
         }
         else {
             // Obtenemos la URL base de la dirección del script
-            var script;
-            if (document.currentScript) {
-                script = document.currentScript;
-            }
-            else {
-                var scripts = document.getElementsByTagName('script');
-                script = scripts[scripts.length - 1];
-            }
-            var src = script.getAttribute('src');
+            const script = document.currentScript;
+            const src = script.getAttribute('src');
             TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
             globalThis.SITNA_BASE_URL = TC.apiLocation;
         }
