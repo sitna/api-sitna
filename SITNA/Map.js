@@ -1009,7 +1009,7 @@ TC.inherit(Map, TC.Map);
                     }
 
                     const add = (Array.isArray(data.label) ? data.label.join('') : data.label).trim().length > 0;
-                    data.label = queryable.outputFormatLabel ? queryable.outputFormatLabel.tcFormat(data.label) : data.label.join('-');
+                    data.label = queryable.outputFormatLabel ? Util.formatString(queryable.outputFormatLabel, ...data.label) : data.label.join('-');
 
                     if (add) {
                         queryable.queryableData.push(data);
@@ -1417,7 +1417,7 @@ TC.inherit(Map, TC.Map);
         const query = search.availableSearchTypes[searchType];
 
         if (Array.isArray(id) && query.goToIdFormat) {
-            id = query.goToIdFormat.tcFormat(id);
+            id = Util.formatString(query.goToIdFormat, ...id);
         }
 
         search.data = search.data || [];
