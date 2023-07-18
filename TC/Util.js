@@ -74,6 +74,26 @@ const countDecimals = (value) => {
     return 0;
 };
 
+const stylePropertyNames = new Set([
+    'strokeColor',
+    'strokeWidth',
+    'fillColor',
+    'strokeOpacity',
+    'fillOpacity',
+    'url',
+    'radius',
+    'anchor',
+    'width',
+    'height',
+    'label',
+    'labelKey',
+    'labelOutlineWidth',
+    'labelOutlineColor',
+    'labelOffset',
+    'fontColor',
+    'fontSize'
+]);
+
 
 var Util = {
 
@@ -1370,6 +1390,8 @@ var Util = {
                 return Consts.format.GML;
             case '.wkt':
                 return Consts.format.WKT;
+            case '.wkb':
+                return Consts.format.WKB;
             case '.topojson':
                 return Consts.format.TOPOJSON;
             case '.gpkg':
@@ -2203,23 +2225,27 @@ var Util = {
         };
     },
 
+    isStyleOption: function (name) {
+        return stylePropertyNames.has(name);
+    },
+
     hasStyleOptions: function (options) {
-        const hasOwnProperty = Object.prototype.hasOwnProperty;
-        return hasOwnProperty.call(options, 'strokeColor') ||
-            hasOwnProperty.call(options, 'strokeWidth') ||
-            hasOwnProperty.call(options, 'fillColor') ||
-            hasOwnProperty.call(options, 'strokeOpacity') ||
-            hasOwnProperty.call(options, 'fillOpacity') ||
-            hasOwnProperty.call(options, 'url') ||
-            hasOwnProperty.call(options, 'radius') ||
-            hasOwnProperty.call(options, 'anchor') ||
-            hasOwnProperty.call(options, 'width') ||
-            hasOwnProperty.call(options, 'height') ||
-            hasOwnProperty.call(options, 'labelOutlineWidth') ||
-            hasOwnProperty.call(options, 'labelOutlineColor') ||
-            hasOwnProperty.call(options, 'labelOffset') ||
-            hasOwnProperty.call(options, 'fontColor') ||
-            hasOwnProperty.call(options, 'fontSize');
+        for (let value of stylePropertyNames.values()) {
+            if (Object.prototype.hasOwnProperty.call(options, value)) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    mergeStyles() {
+        const styles = Array.from(arguments);
+        if (styles.some(s => Util.isFunction(s))) {
+            return function (f) {
+                return Object.assign({}, ...styles.map(s => Util.isFunction(s) ? s(f) : s));
+            };
+        }
+        return Object.assign({}, ...styles);
     },
 
     formatCoord: function (x, nDecimales) {
@@ -2234,6 +2260,16 @@ var Util = {
 
         //result = result.replace(".", ",").replace(/\|/g, ".");
         //return result;
+    },
+
+    formatString: function (str, ...values) {
+        const args = values.length ? values : [""];
+        return str.replace(/{(\d+)}/g, function (match, number) {
+            return typeof args[number] !== 'undefined' ?
+                args[number]
+                : match
+                ;
+        });
     },
 
     getWebWorkerCrossOriginURL: function (url) {
