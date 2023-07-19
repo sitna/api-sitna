@@ -26,7 +26,7 @@ import { inflateCoordinates } from 'ol/geom/flat/inflate';
 import { linearRingLength } from 'ol/geom/flat/length';
 import { xhr } from 'ol/featureloader';
 import GMLBase from '../../lib/ol/format/GMLBase';
-import { GML, WFS, WKT, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
+import { GML, WFS, WKT, WKB, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
 import GeoJSON from '../../lib/ol/format/GeoJSON';
 import GPX from '../../lib/ol/format/GPX';
 import KML from '../../lib/ol/format/KML';
@@ -105,6 +105,8 @@ import MultiMarker from '../../SITNA/feature/MultiMarker';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import MultiPolygon_s from '../../SITNA/feature/MultiPolygon';
 import Circle from '../../SITNA/feature/Circle';
+import Layer_s from '../../SITNA/layer/Layer';
+import Raster from '../../SITNA/layer/Raster';
 import Geometry from '../Geometry';
 
 TC.wrap = wrap;
@@ -212,6 +214,7 @@ ol.format = {
     KML: KML,
     WFS: WFS,
     WKT: WKT,
+    WKB: WKB,
     GeoJSON: GeoJSON,
     WMSCapabilities: WMSCapabilities,
     WMSGetFeatureInfo: WMSGetFeatureInfo,
@@ -393,6 +396,8 @@ const olGeometryType = {
 };
 
 const hitTolerance = TC.Util.detectMouse() ? 3 : 10;
+
+const DATA_IMAGE_SVG_PREFIX = "data:image/svg+xml;base64,";
 
 /////////////////////////// ol patches
 
@@ -632,6 +637,13 @@ ol.source.ImageWMS.prototype.getRequestUrl_ = function (extent, size, pixelRatio
         params.DPI = dpi;
     }
     return oldGetRequestUrl_.call(this, extent, size, pixelRatio, projection, params);
+};
+
+const oldSnapTo = ol.interaction.Snap.prototype.snapTo;
+ol.interaction.Snap.prototype.snapTo = function (pixel, pixelCoordinate, map) {
+    const result = oldSnapTo.call(this, pixel, pixelCoordinate, map);
+    this._snapData = result;
+    return result;
 };
 
 //////////////////////// end ol patches
@@ -903,11 +915,9 @@ TC.wrap.Map.prototype.setMap = function () {
                 }
             });
     };
-
     const addChangeResolutionListener = function () {
         olView.on('change:resolution', changeResolutionListener);
     };
-
     const onChangeView = function () {
         olView = self.map.getView();
         addChangeResolutionListener();
@@ -1183,14 +1193,14 @@ TC.wrap.Map.prototype.insertLayer = function (olLayer, idx) {
         var loadingTileCount = 0;
 
         var beforeTileLoadHandler = function (_e) {
-            wrap.parent.state = TC.Layer.state.LOADING;
+            wrap.parent.state = Layer_s.state.LOADING;
             if (loadingTileCount <= 0) {
                 loadingTileCount = 0;
                 self.parent.trigger(Consts.event.BEFORELAYERUPDATE, { layer: wrap.parent });
             }
             olLayer._loadingTileCount = olLayer._loadingTileCount + 1;
         };
-        if (wrap.parent.state === TC.Layer.state.LOADING && wrap.parent.isRaster()) {
+        if (wrap.parent.state === Layer_s.state.LOADING && wrap.parent.isRaster()) {
             beforeTileLoadHandler();
         }
         wrap.$events.on(Consts.event.BEFORETILELOAD, beforeTileLoadHandler);
@@ -1199,7 +1209,7 @@ TC.wrap.Map.prototype.insertLayer = function (olLayer, idx) {
             loadingTileCount = loadingTileCount - 1;
             if (loadingTileCount <= 0) {
                 loadingTileCount = 0;
-                wrap.parent.state = TC.Layer.state.IDLE;
+                wrap.parent.state = Layer_s.state.IDLE;
                 self.parent.trigger(Consts.event.LAYERUPDATE, { layer: wrap.parent });
             }
         });
@@ -1690,6 +1700,8 @@ var getFormatFromName = function (name, extractStyles) {
             return new ol.format.TopoJSON();
         case Consts.format.WKT:
             return new ol.format.WKT();
+        case Consts.format.WKB:
+            return new ol.format.WKB();
         default:
             return null;
     }
@@ -1703,6 +1715,8 @@ TC.wrap.Map.prototype.exportFeatures = function (features, options) {
     });
     var olFeatures = features.map(function (feature) {
         var result = feature.wrap.feature.clone();
+        // Copiamos propiedad _wrap para poder acceder a las propiedades en la función de estilo
+        result._wrap = feature.wrap;
         const path = feature.getPath();
         if (path) {
             result._folders = path;
@@ -1741,6 +1755,7 @@ TC.wrap.Map.prototype.exportFeatures = function (features, options) {
                         const radius = shape.getRadius();
                         const stroke = shape.getStroke();
                         const strokeWidth = stroke.getWidth();
+                        const fill = shape.getFill();
                         const diameter = 2 * radius + strokeWidth;
                         //const position = diameter / 2;
                         const canvas = document.createElement('canvas');
@@ -1766,8 +1781,12 @@ TC.wrap.Map.prototype.exportFeatures = function (features, options) {
 
                         newFeature.setStyle(new ol.style.Style({
                             image: new ol.style.Icon({
-                                src: ("data:image/svg+xml;base64," + window.btoa('<svg xmlns="http://www.w3.org/2000/svg" width="' + diameter + '" height="' + diameter + '">' +
-                                    '<circle cx="' + diameter / 2 + '" cy="' + diameter / 2 + '" r="' + radius + '" stroke="' + stroke.getColor() + '" fill="none" stroke-width="' + strokeWidth + '" />' +
+                                src: (DATA_IMAGE_SVG_PREFIX + window.btoa('<svg xmlns="http://www.w3.org/2000/svg" width="' +
+                                    diameter + '" height="' + diameter + '">' +
+                                    '<circle cx="' + diameter / 2 + '" cy="' + diameter / 2 + '" r="' + radius +
+                                    '" stroke="' + stroke.getColor() + '" fill="rgba(' +
+                                    fill.getColor() + ')" stroke-width="' + strokeWidth +
+                                    '" />' +
                                     '</svg>')),
                                 //canvas.toDataURL('image/png'),
                                 size: [diameter, diameter],
@@ -1979,6 +1998,11 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options) {
                     splitCollection: true
                 });
             },
+            function () {
+                return new ol.format.WKB({
+                    splitCollection: true
+                });
+            },
             ol.format.TopoJSON
         ]
     };
@@ -1991,98 +2015,138 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options) {
     var zipFiles = null;
     var ddInteraction = new ol.interaction.DragAndDrop(ddOptions);
     ddInteraction.on('addfeatures', function (e) {
-        var featurePromises = e.features ? e.features.map(function (elm) {
+
+        // Proceso de puntos de KML: al exportarlos traducimos radius, strokeColor, strokeWidth, etc.
+        // a un SVG con elemento circle. Aquí hacemos el proceso inverso.
+        if (e.features?.length) {
+            const circleRegExp = /<circle cx="(?:\d+(?:\.\d+)?)" cy="(?:\d+(?:\.\d+)?)" r="(\d+(?:\.\d+)?)" stroke="([\w\d#(),]+)" fill="([\w\d#(),]+)" stroke-width="(\d+(?:\.\d+)?)" fill-opacity="(\d+(?:\.\d+)?)" \/>/;
+            e.features.forEach(f => {
+                let style = f.getStyle();
+                if (style) {
+                    if (Util.isFunction(style)) {
+                        style = style(f);
+                    }
+                    if (Array.isArray(style)) {
+                        style = style[0];
+                    }
+                    const image = style.getImage();
+                    if (image) {
+                        const url = image.getSrc();
+                        if (url.startsWith(DATA_IMAGE_SVG_PREFIX)) {
+                            const svg = window.atob(url.substr(DATA_IMAGE_SVG_PREFIX.length));
+                            const match = svg.match(circleRegExp);
+                            if (match) {
+                                const olCircle = new ol.style.Circle({
+                                    radius: parseFloat(match[1]),
+                                    stroke: new ol.style.Stroke({
+                                        color: match[2],
+                                        width: parseFloat(match[4])
+                                    }),
+                                    fill: new ol.style.Fill({
+                                        color: match[3],
+                                        opacity: parseFloat(match[5])
+                                    })
+                                });
+                                style.setImage(olCircle);
+                                f.setStyle(style);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const features = e.features ? e.features.map(function (elm) {
             if (!elm.getId()) {
                 elm.setId(TC.getUID());
             }
             return TC.wrap.Feature.createFeature(elm);
         }) : [];
 
-        Promise.all(featurePromises).then(function (features) {
-            var li = self.parent.getLoadingIndicator();
-            if (li) {
-                li.removeWait(self.parent._featureImportWaitId);
+        var li = self.parent.getLoadingIndicator();
+        if (li) {
+            li.removeWait(self.parent._featureImportWaitId);
+        }
+        const featuresWithGeometry = features.filter(f => f.geometry);
+        //15/11/2021 RI: Cambio la lógica. Si alguna fatures no tienen geometría lanzo un evento nuevo para a posteriori sacar un warning
+        if (featuresWithGeometry.length) {
+            const featuresImportEventData = {
+                features: featuresWithGeometry,
+                file: e.file,
+                fileHandle: ddInteraction.getFileHandle(e.file),
+                fileName: e.file.name,
+                dropTarget: e.target.target,
+                timeStamp: e.file.lastModified,
+                groupIndex: e._groupIndex,
+                groupCount: e._groupCount
+            };
+            if (e.file.name.substring(e.file.name.lastIndexOf(".") + 1).toLowerCase() === 'shp') {
+                // Los shapefiles son multiarchivo, añado los demás fileHandles.
+                const nameBase = e.file.name.substring(0, e.file.name.lastIndexOf("."));
+                featuresImportEventData.additionalFileHandles = ['.dbf', '.prj', '.cst', '.cpg']
+                    .map(ext => ddInteraction.getFileHandleByName(nameBase + ext))
+                    .filter(fh => fh !== null)
+                    .filter(fh => fh !== featuresImportEventData.fileHandle);
             }
-            const featuresWithGeometry = features.filter(f => f.geometry);
-            //15/11/2021 RI: Cambio la lógica. Si alguna fatures no tienen geometría lanzo un evento nuevo para a posteriori sacar un warning
-            if (featuresWithGeometry.length) {
-                const featuresImportEventData = {
-                    features: featuresWithGeometry,
-                    file: e.file,
-                    fileHandle: ddInteraction.getFileHandle(e.file),
-                    fileName: e.file.name,
-                    dropTarget: e.target.target,
-                    timeStamp: e.file.lastModified,
-                    groupIndex: e._groupIndex,
-                    groupCount: e._groupCount
-                };
-                if (e.file.name.substring(e.file.name.lastIndexOf(".") + 1).toLowerCase() === 'shp') {
-                    // Los shapefiles son multiarchivo, añado los demás fileHandles.
-                    const nameBase = e.file.name.substring(0, e.file.name.lastIndexOf("."));
-                    featuresImportEventData.additionalFileHandles = ['.dbf', '.prj', '.cst', '.cpg']
-                        .map(ext => ddInteraction.getFileHandleByName(nameBase + ext))
-                        .filter(fh => fh !== null)
-                        .filter(fh => fh !== featuresImportEventData.fileHandle);
-                }
-                if (e.file._fileSystemFile) {
-                    featuresImportEventData.fileSystemFile = e.file._fileSystemFile;
-                    delete e.file._fileSystemFile;
-                }
-                if (ddInteraction._fileLayers) {
-                    const fileLayers = ddInteraction._fileLayers.filter(l =>
-                        l.options.file === e.file.name && l.options.groupIndex === e._groupIndex);
-                    if (fileLayers.length) {
-                        featuresImportEventData.targetLayers = fileLayers;
-                    }
-                    else {
-                        return;
-                    }
-                }
-
-                let recentFileEntryPromise;
-
-                // Lógica para gestionar archivos recientes
-                if (featuresImportEventData.fileHandle) {
-                    let recentFileEntry = {
-                        mainHandle: featuresImportEventData.fileHandle
-                    };
-                    if (featuresImportEventData.additionalFileHandles) {
-                        recentFileEntry.additionalHandles = featuresImportEventData.additionalFileHandles;
-                    }
-                    recentFileEntryPromise = self.parent.addRecentFileEntry(recentFileEntry);
+            if (e.file._fileSystemFile) {
+                featuresImportEventData.fileSystemFile = e.file._fileSystemFile;
+                delete e.file._fileSystemFile;
+            }
+            if (ddInteraction._fileLayers) {
+                const fileLayers = ddInteraction._fileLayers.filter(l =>
+                    l.options.file === e.file.name && l.options.groupIndex === e._groupIndex);
+                if (fileLayers.length) {
+                    featuresImportEventData.targetLayers = fileLayers;
                 }
                 else {
-                    recentFileEntryPromise = Promise.resolve();
+                    return;
                 }
+            }
 
-                recentFileEntryPromise.then(() => {
-                    self.parent.trigger(Consts.event.FEATURESIMPORT, featuresImportEventData);
-                    if (features.some(f => !f.geometry)) {
-                        self.parent.trigger(Consts.event.FEATURESIMPORTWARN, {
-                            file: e.file
-                        });
-                    }
-                })
+            let recentFileEntryPromise;
+
+            // Lógica para gestionar archivos recientes
+            if (featuresImportEventData.fileHandle) {
+                let recentFileEntry = {
+                    mainHandle: featuresImportEventData.fileHandle
+                };
+                if (featuresImportEventData.additionalFileHandles) {
+                    recentFileEntry.additionalHandles = featuresImportEventData.additionalFileHandles;
+                }
+                recentFileEntryPromise = self.parent.addRecentFileEntry(recentFileEntry);
             }
-            else { //if (!features.length || features.some(f => !f.geometry)) {
-                if (zipFiles) {
-                    if (++zipFiles.failed < zipFiles.total) {
-                        return;
-                    }
-                    else {
-                        const fileHandle = ddInteraction.getFileHandle(e.file);
-                        e.file = new File([], zipFiles.zipName);
-                        if (fileHandle) {
-                            ddInteraction.setFileHandle(e.file, fileHandle);
-                        }
+            else {
+                recentFileEntryPromise = Promise.resolve();
+            }
+
+            recentFileEntryPromise.then(() => {
+                self.parent.trigger(Consts.event.FEATURESIMPORT, featuresImportEventData);
+                if (features.some(f => !f.geometry)) {
+                    self.parent.trigger(Consts.event.FEATURESIMPORTWARN, {
+                        file: e.file
+                    });
+                }
+            })
+        }
+        else { //if (!features.length || features.some(f => !f.geometry)) {
+            if (zipFiles) {
+                if (++zipFiles.failed < zipFiles.total) {
+                    return;
+                }
+                else {
+                    const fileHandle = ddInteraction.getFileHandle(e.file);
+                    e.file = new File([], zipFiles.zipName);
+                    if (fileHandle) {
+                        ddInteraction.setFileHandle(e.file, fileHandle);
                     }
                 }
-                self.parent.trigger(Consts.event.FEATURESIMPORTERROR, {
-                    file: e.file
-                });
             }
-        });
+            self.parent.trigger(Consts.event.FEATURESIMPORTERROR, {
+                file: e.file
+            });
+        }
     });
+
     ddInteraction.on('error', function (e) {
         TC.error(e);
     });
@@ -2208,7 +2272,7 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options) {
                     }
                 });
             }
-            else if (!/\.(json|geojson|kml|kmz|wkt|gml|gml2|gpx)$/ig.test(file.name)) {
+            else if (!/\.(json|geojson|kml|kmz|wkt|wkb|gml|gml2|gpx)$/ig.test(file.name)) {
                 if (!/\.(shp)$/ig.test(file.name)) {
                     window.dropFilesCounter--;
                 }
@@ -3536,20 +3600,17 @@ var getStyleValue = function (property, feature) {
     var olFeat = feature && feature.wrap && feature.wrap.feature;
     if (typeof property === 'string') {
         var match = property.match(/^\$\{(.+)\}$/);
-        if (match && olFeat) {
-            // Permitimos el formato ${prop.subprop.subsubprop}
-            var m = match[1].split('.');
-            var r = olFeat.getProperties();
-            for (var i = 0; i < m.length && r !== undefined; i++) {
-                r = r[m[i]];
-            }
-            if (r === undefined) {
-                r = feature.data;
-                for (i = 0; i < m.length && r !== undefined; i++) {
+        if (match) {
+            result = '';
+            if (olFeat) {
+                // Permitimos el formato ${prop.subprop.subsubprop}
+                var m = match[1].split('.');
+                var r = olFeat.getProperties();
+                for (var i = 0; i < m.length && r !== undefined; i++) {
                     r = r[m[i]];
                 }
+                result = r;
             }
-            result = r;
         }
     }
     else if (TC.Util.isFunction(property)) {
@@ -3566,154 +3627,186 @@ const mergeMapAndGeneralStyles = function (layer) {
     return result;
 };
 
-// Transformación de opciones de estilo en un estilo nativo OL3.
-const createNativeStyle = function (options, olFeat) {
-    const nativeStyleOptions = [];
+const isParamStyle = function (options) {
+    if (options) {
+        for (var key in options) {
+            if (key == 'point' || key == 'line' || key == 'polygon' || key == 'marker' || key == 'cluster' || Util.isStyleOption(key)) {
+                const value = options[key];
+                if (typeof value === 'string') {
+                    if (/^\$\{(.+)\}$/.test(value)) {
+                        return true;
+                    }
+                }
+                else if (typeof value === 'object') {
+                    if (isParamStyle(value)) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+};
 
-    var feature;
-    var isPoint, isLine, isPolygon;
-    if (olFeat) {
-        const olGeom = olFeat.getGeometry();
-        switch (olGeom && olGeom.getType()) {
-            case 'Point':
-            case 'MultiPoint':
-                isPoint = true;
-                break;
-            case 'LineString':
-            case 'MultiLineString':
-                isLine = true;
-                break;
-            case 'Polygon':
-            case 'MultiPolygon':
-                isPolygon = true;
-                break;
+// Transformación de opciones de estilo en un estilo nativo OL.
+const createNativeStyle = function (options, olFeat) {
+    if (Util.isFunction(options)) {
+        return function (f) {
+            return createNativeStyle(options(f._wrap.parent));
         }
-        if (olFeat._wrap) {
-            feature = olFeat._wrap.parent;
-        }
-        else {
-            // Si la API SITNA no ha completado su feature, creamos un mock-up para que no fallen las funciones de estilo
-            feature = {
-                id: TC.wrap.Feature.prototype.getId.call({
-                    feature: olFeat
-                }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
-                features: olFeat.get('features'),
-                getData: function () {
-                    return TC.wrap.Feature.prototype.getData.call({
+    }
+
+    const isDynamicStyle = isParamStyle(options.styles);
+
+    const styleFunction = function (olFeat) {
+
+        const nativeStyleOptions = [];
+
+        var feature;
+        var isPoint, isLine, isPolygon;
+        if (olFeat) {
+            const olGeom = olFeat.getGeometry();
+            switch (olGeom && olGeom.getType()) {
+                case 'Point':
+                case 'MultiPoint':
+                    isPoint = true;
+                    break;
+                case 'LineString':
+                case 'MultiLineString':
+                    isLine = true;
+                    break;
+                case 'Polygon':
+                case 'MultiPolygon':
+                    isPolygon = true;
+                    break;
+            }
+            if (olFeat._wrap) {
+                feature = olFeat._wrap.parent;
+            }
+            else {
+                // Si la API SITNA no ha completado su feature, creamos un mock-up para que no fallen las funciones de estilo
+                feature = {
+                    id: TC.wrap.Feature.prototype.getId.call({
                         feature: olFeat
+                    }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
+                    features: olFeat.get('features'),
+                    getData: function () {
+                        return TC.wrap.Feature.prototype.getData.call({
+                            feature: olFeat
+                        });
+                    }
+                };
+            }
+        }
+        const styles = options.styles;
+        let styleOptions = {};
+        if (styles.line && (isLine || !olFeat)) {
+            styleOptions = styles.line;
+            (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
+                nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {},
+                    {
+                        "stroke": new ol.style.Stroke({
+                            color: getStyleValue(currentStyle.strokeColor, feature),
+                            width: getStyleValue(currentStyle.strokeWidth, feature),
+                            lineDash: currentStyle.lineDash
+                        })
+                    });
+            });
+        }
+
+        if (styles.polygon && (isPolygon || !olFeat)) {
+            styleOptions = styles.polygon;
+            (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
+                nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {},
+                    {
+                        "fill": new ol.style.Fill({
+                            color: getRGBA(getStyleValue(currentStyle.fillColor, feature), getStyleValue(currentStyle.fillOpacity, feature))
+                        }),
+                        "stroke": new ol.style.Stroke({
+                            color: getStyleValue(currentStyle.strokeColor, feature),
+                            width: getStyleValue(currentStyle.strokeWidth, feature),
+                            lineDash: currentStyle.lineDash
+                        })
+                    });
+            });
+        }
+
+        if (styles.point && (isPoint || !olFeat)) {
+            styleOptions = styles.point;
+            (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
+                var circleOptions = {
+                    radius: getStyleValue(currentStyle.radius, feature) ||
+                        (getStyleValue(currentStyle.height, feature) + getStyleValue(currentStyle.width, feature)) / 4
+                };
+                if (currentStyle.fillColor) {
+                    circleOptions.fill = new ol.style.Fill({
+                        color: getRGBA(getStyleValue(currentStyle.fillColor, feature), getStyleValue(currentStyle.fillOpacity, feature))
                     });
                 }
-            };
+                if (currentStyle.strokeColor) {
+                    circleOptions.stroke = new ol.style.Stroke({
+                        color: getStyleValue(currentStyle.strokeColor, feature),
+                        width: getStyleValue(currentStyle.strokeWidth, feature),
+                        lineDash: currentStyle.lineDash
+                    });
+                }
 
+                if (!isNaN(circleOptions.radius))
+                    nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, { "image": new ol.style.Circle(circleOptions) });
+            });
 
         }
-    }
-    var isCluster = feature && Array.isArray(feature.features) && feature.features.length > 1;
-    var styles;
-    const externalStyles = mergeMapAndGeneralStyles(options.layer);
-    if (isCluster) {
-        styles = TC.Util.extend(true, {}, externalStyles.cluster, options && options.styles && options.styles.cluster ? options.styles.cluster : {});
-    }
-    else {
-        styles = TC.Util.extend(true, {}, externalStyles, options.styles);
-    }
 
-    var styleOptions = {};
-    if (styles.line && (isLine || !olFeat)) {
-        styleOptions = styles.line;
-        (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
-            nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {},
-                {
-                    "stroke": new ol.style.Stroke({
-                        color: getStyleValue(currentStyle.strokeColor, feature),
-                        width: getStyleValue(currentStyle.strokeWidth, feature),
-                        lineDash: currentStyle.lineDash
-                    })
-                });
+        if (styleOptions.label || styleOptions.labelKey) {
+            nativeStyleOptions[nativeStyleOptions.length] = { "text": createNativeTextStyle(styleOptions, feature) };
+        }
+
+        if (styles.marker && (isPoint || !olFeat)) {
+            styleOptions = styles.marker;
+            (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
+
+                const iconUrl = currentStyle.url || Util.getBackgroundUrlFromCss(currentStyle.cssClass);
+
+                var ANCHOR_DEFAULT_UNITS = 'fraction';
+                if (iconUrl) {
+                    let iconSize;
+                    if (currentStyle.width && currentStyle.height) {
+                        iconSize = [getStyleValue(currentStyle.width, feature), getStyleValue(currentStyle.height, feature)];
+                    }
+                    nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, {
+                        "image": new ol.style.Icon({
+                            crossOrigin: 'anonymous',
+                            anchor: currentStyle.anchor || styles.marker.anchor || [0.5, 1],
+                            anchorXUnits: currentStyle.anchorXUnits || ANCHOR_DEFAULT_UNITS,
+                            anchorYUnits: currentStyle.anchorYUnits || ANCHOR_DEFAULT_UNITS,
+                            src: iconUrl,
+                            width: iconSize?.[0],
+                            height: iconSize?.[1],
+                            //10/11/2021 URI: Recuperamos la rotación de los iconos que viene en grados y lo pasamos a radianes
+                            rotation: currentStyle.rotation ? currentStyle.rotation / 180 * Math.PI : undefined
+                        }),
+                        "text": createNativeTextStyle(currentStyle, feature)
+                    });
+                }
+            });
+        }
+        //10/11/2021 URI:Si entre la opciones de estilos trae un globo (balloon), seguramente se trate de la importación de un KML. Creamos un atributo nuevo llamado _balloon que posteriormente
+        //será leido en el método getTemplate de la feature para pintar el bocadillo tipado
+        //if (styleOptions.balloon)
+        //    (styleOptions.balloon instanceof Array ? styleOptions.balloon : [styleOptions.balloon]).forEach(function (currentStyle, index) {
+        //        nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, {
+        //            "_balloon": new ol.style.Text({ text: currentStyle })
+        //        });
+        //    });
+        var nativeStyle = nativeStyleOptions.map((currentStyle) => {
+            var style = new ol.style.Style(currentStyle)
+            if (styleOptions.balloon) style._balloon = new ol.style.Text({ text: styleOptions.balloon });
+            return style;
         });
+        return nativeStyle;
     }
 
-    if (styles.polygon && (isPolygon || !olFeat)) {
-        styleOptions = styles.polygon;
-        (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
-            nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {},
-                {
-                    "fill": new ol.style.Fill({
-                        color: getRGBA(getStyleValue(currentStyle.fillColor, feature), getStyleValue(currentStyle.fillOpacity, feature))
-                    }),
-                    "stroke": new ol.style.Stroke({
-                        color: getStyleValue(currentStyle.strokeColor, feature),
-                        width: getStyleValue(currentStyle.strokeWidth, feature),
-                        lineDash: currentStyle.lineDash
-                    })
-                });
-        });
-    }
-
-    if (styles.point && (isPoint || !olFeat)) {
-        styleOptions = styles.point;
-        (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
-            var circleOptions = {
-                radius: getStyleValue(currentStyle.radius, feature) ||
-                    (getStyleValue(currentStyle.height, feature) + getStyleValue(currentStyle.width, feature)) / 4
-            };
-            if (currentStyle.fillColor) {
-                circleOptions.fill = new ol.style.Fill({
-                    color: getRGBA(getStyleValue(currentStyle.fillColor, feature), getStyleValue(currentStyle.fillOpacity, feature))
-                });
-            }
-            if (currentStyle.strokeColor) {
-                circleOptions.stroke = new ol.style.Stroke({
-                    color: getStyleValue(currentStyle.strokeColor, feature),
-                    width: getStyleValue(currentStyle.strokeWidth, feature),
-                    lineDash: currentStyle.lineDash
-                });
-            }
-
-            if (!isNaN(circleOptions.radius))
-                nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, { "image": new ol.style.Circle(circleOptions) });
-        });
-
-    }
-
-    if (styleOptions.label || styleOptions.labelKey) {
-        nativeStyleOptions[nativeStyleOptions.length] = { "text": createNativeTextStyle(styleOptions, feature) };
-    }
-
-    if (styles.marker && (isPoint || !olFeat)) {
-        styleOptions = styles.marker;
-        (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
-            var ANCHOR_DEFAULT_UNITS = 'fraction';
-            if (currentStyle.url) {
-                nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, {
-                    "image": new ol.style.Icon({
-                        crossOrigin: 'anonymous',
-                        anchor: styleOptions.anchor || styles.marker.anchor || [0.5, 1],
-                        anchorXUnits: styleOptions.anchorXUnits || ANCHOR_DEFAULT_UNITS,
-                        anchorYUnits: styleOptions.anchorYUnits || ANCHOR_DEFAULT_UNITS,
-                        src: styleOptions.url,
-                        //10/11/2021 URI: Recuperamos la rotación de los iconos que viene en grados y lo pasamos a radianes
-                        rotation: styleOptions.rotation ? styleOptions.rotation / 180 * Math.PI : undefined
-                    }),
-                    "text": createNativeTextStyle(styleOptions, feature)
-                });
-            }
-        });
-    }
-    //10/11/2021 URI:Si entre la opciones de estilos trae un globo (balloon), seguramente se trate de la importación de un KML. Creamos un atributo nuevo llamado _balloon que posteriormente
-    //será leido en el método getTemplate de la feature para pintar el bocadillo tipado
-    //if (styleOptions.balloon)
-    //    (styleOptions.balloon instanceof Array ? styleOptions.balloon : [styleOptions.balloon]).forEach(function (currentStyle, index) {
-    //        nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, {
-    //            "_balloon": new ol.style.Text({ text: currentStyle })
-    //        });
-    //    });
-    var nativeStyle = nativeStyleOptions.map((currentStyle) => {
-        var style = new ol.style.Style(currentStyle)
-        if (styleOptions.balloon) style._balloon = new ol.style.Text({ text: styleOptions.balloon });
-        return style;
-    });
-    return nativeStyle;
+    return isDynamicStyle ? styleFunction : styleFunction(olFeat);
 };
 
 const createNativeTextStyle = function (styleObj, feature) {
@@ -3923,7 +4016,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
     var createGenericLoader = function (url, format) {
         var internalLoader = ol.featureloader.xhr(url, format);
         return function (extent, resolution, projection) {
-            self.parent.state = TC.Layer.state.LOADING;
+            self.parent.state = Layer_s.state.LOADING;
             if (self.parent.map) {
                 self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
                     layer: self.parent
@@ -3965,7 +4058,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
         vectorOptions.loader = !(vectorOptions.format instanceof ol.format.KML) ? createGenericLoader(vectorOptions.url, vectorOptions.format) : function (_extent, _resolution, projection) {
             const url = vectorOptions.url;
             const format = vectorOptions.format;
-            self.parent.state = TC.Layer.state.LOADING;
+            self.parent.state = Layer_s.state.LOADING;
             if (self.parent.map) {
                 self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
                     layer: self.parent
@@ -3978,7 +4071,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     const xDocFilename = new DOMParser().parseFromString(text, "text/xml").querySelector("Document > name");
 
                     self.addFeatures(features);
-                    self.parent.state = TC.Layer.state.IDLE;
+                    self.parent.state = Layer_s.state.IDLE;
                     if (response.headers.has("content-disposition") && /(attachment);([^;]*)/gi.test(response.headers.get("content-disposition"))) {
                         const contentDisposition = response.headers.get("content-disposition");
                         var name;
@@ -4001,7 +4094,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     }
                 }
             }).catch(function (response) {
-                self.parent.state = TC.Layer.state.IDLE;
+                self.parent.state = Layer_s.state.IDLE;
                 if (self.parent.map) {
                     self.parent.map.trigger(Consts.event.LAYERERROR, {
                         layer: self.parent, reason: response
@@ -4016,7 +4109,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
         vectorOptions = {
             projection: options.crs,
             loader: function (extent, resolution, projection) {
-                self.parent.state = TC.Layer.state.LOADING;
+                self.parent.state = Layer_s.state.LOADING;
                 if (self.parent.map) {
                     self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
                         layer: self.parent
@@ -4028,7 +4121,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                         featureProjection: projection
                     });
                     this.addFeatures(fs);
-                    self.parent.state = TC.Layer.state.IDLE;
+                    self.parent.state = Layer_s.state.IDLE;
                     if (self.parent.map) {
                         self.parent.map.trigger(Consts.event.LAYERUPDATE, {
                             layer: self.parent, newData: options.data
@@ -4036,7 +4129,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     }
                 }
                 catch (e) {
-                    self.parent.state = TC.Layer.state.IDLE;
+                    self.parent.state = Layer_s.state.IDLE;
                     if (self.parent.map) {
                         self.parent.map.trigger(Consts.event.LAYERERROR, {
                             layer: self.parent, reason: e.message
@@ -4076,7 +4169,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                 var sOrigin = this;
                 var serviceUrl = options.url;
                 if (serviceUrl) {
-                    self.parent.state = TC.Layer.state.LOADING;
+                    self.parent.state = Layer_s.state.LOADING;
                     self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
                         layer: self.parent
                     });
@@ -4111,7 +4204,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                         else {
                             triggerLayerUpdate();
                         }
-                        self.parent.state = TC.Layer.state.IDLE;
+                        self.parent.state = Layer_s.state.IDLE;
                     };
                     const manageError = (error) => {
                         if (error instanceof XMLDocument) {
@@ -4377,8 +4470,11 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
     source.addEventListener(ADDFEATURE, function (e) {
         const olFeat = e.feature;
 
-        const addFeatureToLayer = function (feat) {
-            var addFn;
+        if (!olFeat._wrap ||
+            !olFeat._wrap.parent.layer ||
+            !olFeat._wrap.parent.layer.features.includes(olFeat._wrap.parent)) { // Solo actuar si no es una feature añadida desde la API
+            const feat = TC.wrap.Feature.createFeature(olFeat);
+            let addFn;
             switch (true) {
                 case feat instanceof Point_s:
                     addFn = self.parent.addPoint;
@@ -4419,10 +4515,6 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     }, 50);
                 });
             }
-        };
-
-        if (!olFeat._wrap || !olFeat._wrap.parent.layer) { // Solo actuar si no es una feature añadida desde la API
-            TC.wrap.Feature.createFeature(olFeat).then(addFeatureToLayer);
         }
     });
 
@@ -4491,17 +4583,17 @@ TC.wrap.layer.Vector.prototype.createStyles = function (options) {
 
     var dynamicStyle = false;
 
-    if (TC.Util.isFunction(options)) {
+    options = TC.Util.extend({}, options);
+    options.crs = options.crs || TC.Cfg.crs;
+    if (Util.isFunction(options.styles)) {
         dynamicStyle = true;
         self.styleFunction = function (olFeat) {
-            return createNativeStyle(options(olFeat));
-        };
+            return createNativeStyle(options.styles(olFeat._wrap.parent));
+        }
     }
     else {
-        options = TC.Util.extend({}, options);
-        options.crs = options.crs || TC.Cfg.crs;
         const externalStyles = mergeMapAndGeneralStyles(self.parent);
-        options.styles = TC.Util.extend(true, externalStyles, options.styles);
+        const newStyles = TC.Util.extend(true, externalStyles, options.styles);
         var isDynamicStyle = function isDynamicStyle(obj) {
             for (var key in obj) {
                 var prop = obj[key];
@@ -4525,18 +4617,27 @@ TC.wrap.layer.Vector.prototype.createStyles = function (options) {
             return false;
         };
 
-        dynamicStyle = !!(options.cluster && options.cluster.styles) || isDynamicStyle(options.styles);
-        const opts = {};
+        dynamicStyle = !!(options.cluster && options.cluster.styles) || isDynamicStyle(newStyles);
+        const opts = {
+            styles: Object.assign({}, newStyles)
+        };
         if (self.parent.styles) {
-            opts.styles = Object.assign({}, self.parent.styles);
+            opts.styles = Object.assign(opts.styles, self.parent.styles);
         }
         if (options.cluster && options.cluster.styles) {
             opts.styles = Object.assign({}, opts.styles, { cluster: options.cluster.styles });
         }
         self.styleFunction = function (olFeat) {
             opts.layer = self.parent;
-            return createNativeStyle(opts, olFeat);
+            let nativeStyle = createNativeStyle(opts, olFeat);
+            if (Util.isFunction(nativeStyle)) {
+                nativeStyle = nativeStyle(olFeat);
+            }
+            return nativeStyle;
         };
+        if (opts.styles && Object.keys(opts.styles).length > 1) {
+            dynamicStyle = true;
+        }
     }
 
     var nativeStyle = dynamicStyle ? self.styleFunction : self.styleFunction();
@@ -5138,9 +5239,9 @@ TC.wrap.control.Geolocation.prototype.register = function (map) {
 var getGeotrackingLine = function () {
     var self = this;
 
-    return self.parent.geotrackingLayer.features.filter(function (f) {
+    return self.parent.geotrackingLayer.features.find(function (f) {
         return f instanceof Polyline;
-    })[0];
+    });
 };
 
 TC.wrap.control.Geolocation.prototype.hasCoordinates = function () {
@@ -5337,11 +5438,11 @@ TC.wrap.control.Geolocation.prototype.setGeotracking = function (tracking) {
                 });
             }
 
-            var coordinates = features.filter(function (feature) {
+            var coordinates = features.find(function (feature) {
                 var type = feature.getGeometry().getType().toLowerCase();
                 if (type === 'point') { sessionwaypoint.push(feature); }
                 return type === 'linestring' || type === 'multilinestring';
-            })[0].getGeometry().getCoordinates();
+            }).getGeometry().getCoordinates();
 
             nativeGeotrackingFeature = new ol.Feature({
                 geometry: new ol.geom.LineString(coordinates, 'XYZM'),
@@ -5357,96 +5458,89 @@ TC.wrap.control.Geolocation.prototype.setGeotracking = function (tracking) {
 
         if (nativeGeotrackingFeature) {
 
-            TC.wrap.Feature.createFeature(nativeGeotrackingFeature).then(function (tcFeature) {
-                self.parent.geotrackingLayer.addFeature(tcFeature);
+            const tcFeature = TC.wrap.Feature.createFeature(nativeGeotrackingFeature);
+            self.parent.geotrackingLayer.addFeature(tcFeature);
 
-                if (tcFeature.geometry.length > 1) {
-                    self.parent.map.zoomToFeatures(self.parent.geotrackingLayer.features);
-                }
+            if (tcFeature.geometry.length > 1) {
+                self.parent.map.zoomToFeatures(self.parent.geotrackingLayer.features);
+            }
 
-                if (sessionwaypoint.length > 0) {
-                    Promise.all(sessionwaypoint.map(function (waypoint) {
-                        return TC.wrap.Feature.createFeature(waypoint);
-                    })).then(function (features) {
-                        if (features) {
-                            features.forEach(function (feature) {
-                                self.parent.geotrackingLayer.addFeature(feature);
-                            });
-                        }
-                    });
-                }
+            if (sessionwaypoint.length > 0) {
+                sessionwaypoint
+                    .map(waypoint =>TC.wrap.Feature.createFeature(waypoint))
+                    .forEach(feature => self.parent.geotrackingLayer.addFeature(feature));
+            }
 
-                self.parent.currentPositionWaiting = self.parent.getLoadingIndicator().addWait();
+            self.parent.currentPositionWaiting = self.parent.getLoadingIndicator().addWait();
 
-                if (!self.currentPositionTrk) {
-                    self.currentPositionTrk = [];
-                }
+            if (!self.currentPositionTrk) {
+                self.currentPositionTrk = [];
+            }
 
-                var getCurrentPositionInterval;
-                var getCurrentPositionRequest = 0;
-                var errorTimeout = 0;
-                var toast = false;
-                var options = {
-                    enableHighAccuracy: true, timeout: 600000
-                };
+            var getCurrentPositionInterval;
+            var getCurrentPositionRequest = 0;
+            var errorTimeout = 0;
+            var toast = false;
+            var options = {
+                enableHighAccuracy: true, timeout: 600000
+            };
 
-                function getCurrentPosition(errorCallback) {
-                    var id = getCurrentPositionRequest++;
-                    navigator.geolocation.getCurrentPosition(
-                        function (data) {
-                            clearInterval(getCurrentPositionInterval);
-                            self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
-                            self.positionChangehandler(data).then(function (obj) {
-                                if (self.parent.geotrackingPosition == true && obj && obj.marker && obj.accuracy) {
-                                    self.currentPositionTrk.push(navigator.geolocation.watchPosition(self.positionChangehandler.bind(self), self.parent.onGeolocateError.bind(self.parent), options));
-                                }
-                            });
-                        },
-                        errorCallback ? errorCallback :
-                            function (error) {
-                                switch (error.code) {
-                                    case error.TIMEOUT:
-                                        if (errorTimeout > 10) {
-                                            clearInterval(getCurrentPositionInterval);
-                                            self.parent.onGeolocateError.call(self.parent, error);
-                                        } else {
-                                            errorTimeout++;
-                                            getCurrentPosition(function () {
-                                                clearInterval(getCurrentPositionInterval);
-                                                if (!toast) {
-                                                    toast = true;
-                                                    self.parent.onGeolocateError.call(self.parent, error);
-                                                }
-                                            });
-                                        }
-                                        break;
-                                    default:
+            const getCurrentPosition = function getCurrentPosition(errorCallback) {
+                var id = getCurrentPositionRequest++;
+                navigator.geolocation.getCurrentPosition(
+                    function (data) {
+                        clearInterval(getCurrentPositionInterval);
+                        self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
+                        self.positionChangehandler(data).then(function (obj) {
+                            if (self.parent.geotrackingPosition == true && obj && obj.marker && obj.accuracy) {
+                                self.currentPositionTrk.push(navigator.geolocation.watchPosition(self.positionChangehandler.bind(self), self.parent.onGeolocateError.bind(self.parent), options));
+                            }
+                        });
+                    },
+                    errorCallback ? errorCallback :
+                        function (error) {
+                            switch (error.code) {
+                                case error.TIMEOUT:
+                                    if (errorTimeout > 10) {
                                         clearInterval(getCurrentPositionInterval);
                                         self.parent.onGeolocateError.call(self.parent, error);
-                                }
-                            }, {
-                        timeout: 5000 + id,
-                        maximumAge: 10,
-                        enableHighAccuracy: true
-                    }
-                    );
+                                    } else {
+                                        errorTimeout++;
+                                        getCurrentPosition(function () {
+                                            clearInterval(getCurrentPositionInterval);
+                                            if (!toast) {
+                                                toast = true;
+                                                self.parent.onGeolocateError.call(self.parent, error);
+                                            }
+                                        });
+                                    }
+                                    break;
+                                default:
+                                    clearInterval(getCurrentPositionInterval);
+                                    self.parent.onGeolocateError.call(self.parent, error);
+                            }
+                        }, {
+                    timeout: 5000 + id,
+                    maximumAge: 10,
+                    enableHighAccuracy: true
                 }
-                getCurrentPositionInterval = setInterval(getCurrentPosition, 1000);
+                );
+            };
+            getCurrentPositionInterval = setInterval(getCurrentPosition, 1000);
 
-                setTimeout(function () {
-                    if (self.parent.geotrackingLayer && self.parent.geotrackingLayer.features && self.parent.geotrackingLayer.features.length > 0 && self.parent.geotrackingLayer.features[0].geometry.length == 0) {
-                        clearInterval(getCurrentPositionInterval);
+            setTimeout(function () {
+                if (self.parent.geotrackingLayer && self.parent.geotrackingLayer.features && self.parent.geotrackingLayer.features.length > 0 && self.parent.geotrackingLayer.features[0].geometry.length == 0) {
+                    clearInterval(getCurrentPositionInterval);
 
-                        self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
-                        self.map.toast(self.parent.getLocaleString("geo.error.permission_denied"), {
-                            type: Consts.msgType.WARNING
-                        });
-                        self.parent.track.activateButton.classList.remove(Consts.classes.HIDDEN);
-                        self.parent.track.deactivateButton.classList.add(Consts.classes.HIDDEN);
-                    }
-                }, options.timeout + 1000); // Wait extra second
+                    self.parent.getLoadingIndicator().removeWait(self.parent.currentPositionWaiting);
+                    self.map.toast(self.parent.getLocaleString("geo.error.permission_denied"), {
+                        type: Consts.msgType.WARNING
+                    });
+                    self.parent.track.activateButton.classList.remove(Consts.classes.HIDDEN);
+                    self.parent.track.deactivateButton.classList.add(Consts.classes.HIDDEN);
+                }
+            }, options.timeout + 1000); // Wait extra second
 
-            });
         }
     } else {
         self.parent.firstPosition = false;
@@ -5649,8 +5743,6 @@ TC.wrap.control.Geolocation.prototype.initSnap = function (coordinate, eventPixe
 TC.wrap.control.Geolocation.prototype.drawTrackData = async function (track) {
     const self = this;
 
-    const featurePromises = [];
-
     const JSONParser = new TC.wrap.parser.JSON();
     const features = JSONParser.parser.readFeatures(track.data);
 
@@ -5662,16 +5754,13 @@ TC.wrap.control.Geolocation.prototype.drawTrackData = async function (track) {
 
     self.activateSnapping.call(self);
 
-    for (var i = 0, len = features.length; i < len; i++) {
-        featurePromises.push(TC.wrap.Feature.createFeature(features[i]));
-    }
-
-    const feats = await Promise.all(featurePromises);
-    feats.forEach(function (feat) {
-        if (feat) {
-            self.parent.trackLayer.addFeature(feat);
-        }
-    });
+    features
+        .map(f => TC.wrap.Feature.createFeature(f))
+        .forEach(function (feat) {
+            if (feat) {
+                self.parent.trackLayer.addFeature(feat);
+            }
+        });
     if (!self.parent.toShare || self.parent.toShare && self.parent.toShare.doZoom) {
         self.parent.map.zoomToFeatures(self.parent.trackLayer.features);
     }
@@ -5761,11 +5850,7 @@ TC.wrap.control.Geolocation.prototype.export = function (li) {
                     olFeatures = new ol.format.GeoJSON().readFeatures(geoJSON);
                 }
 
-                Promise.all(olFeatures.map(function (feature) {
-                    return TC.wrap.Feature.createFeature(feature);
-                })).then((features) => {
-                    resolve(features);
-                });
+                resolve(olFeatures.map(f => TC.wrap.Feature.createFeature(f)));
             } else {
                 reject();
             }
@@ -5855,25 +5940,33 @@ TC.wrap.control.Geolocation.prototype.processImportedFeatures = function (option
     for (var f = 0; f < features.length; f++) {
         var feature = features[f];
 
-        if (feature instanceof Feature_s)
+        if (feature instanceof Feature_s) {
             feature = features[f].wrap.feature;
+        }
 
-        if (feature.getGeometry() instanceof ol.geom.Point) {
-            coord.push(feature.getGeometry().getCoordinates());
+        const geometry = feature.getGeometry();
+        if (geometry instanceof ol.geom.Point) {
+            const pointCoords = geometry.getCoordinates();
+            if (pointCoords.length > 2 && pointCoords[3] > 100000) {
+                // Si la tercera coordenada es muy grande podemos considerar que es un timestamp y no una elevación
+                // En ese caso metemos una elevación
+                pointCoords.splice(2, 0, 0);
+            }
+            coord.push(pointCoords);
             maybeRemove.push(feature);
         }
-        else if (feature.getGeometry() instanceof ol.geom.LineString) {
+        else if (geometry instanceof ol.geom.LineString) {
             // GLS: 31/01/2018 Routes (<rte>) are converted into LineString geometries, and tracks (<trk>) into MultiLineString, por tanto, las líneas las cargamos como N Rutas, no las unimos como hasta ahora: // segments.push(feature.getGeometry());                
             getName(feature);
             const newFeature = new ol.Feature({
-                geometry: new ol.geom.LineString(feature.getGeometry().getCoordinates(), feature.getGeometry().getLayout())
+                geometry: new ol.geom.LineString(geometry.getCoordinates(), geometry.getLayout())
             });
             newFeature.setId(feature.getId() || TC.getUID());
             newFeature.setProperties(feature.getProperties());
             toAdd.push(newFeature);
             toRemove.push(feature);
         }
-        else if (feature.getGeometry() instanceof ol.geom.MultiLineString) {
+        else if (geometry instanceof ol.geom.MultiLineString) {
             var clone = feature.clone();
             getName(clone);
 
@@ -5881,7 +5974,7 @@ TC.wrap.control.Geolocation.prototype.processImportedFeatures = function (option
 
             const coords = segmentsUnion(ls);
             const newFeature = new ol.Feature({
-                geometry: new ol.geom.LineString(coords, feature.getGeometry().getLayout())
+                geometry: new ol.geom.LineString(coords, geometry.getLayout())
             });
             newFeature.setId(feature.getId() || TC.getUID());
             newFeature.setProperties(feature.getProperties());
@@ -6689,7 +6782,15 @@ TC.wrap.control.OverviewMap.prototype.get3DCameraLayer = function () {
         });
 
         if (!result) {
-            var fovStyle = createNativeStyle({});
+            const styleOptions = {
+                styles: {
+                    polygon: Object.assign({}, self.parent.map.options.styles?.polygon)
+                }
+            };
+            let fovStyle = createNativeStyle(styleOptions);
+            if (Util.isFunction(fovStyle)) {
+                fovStyle = fovStyle();
+            }
             // Ponemos los cuadriláteros de fov sin relleno (por legibilidad)
             fovStyle[0].getFill().setColor([0, 0, 0, 0]);
             result = new ol.layer.Vector({
@@ -6845,7 +6946,7 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
             var auxInfo = {};
             const requestPromises = [];
             const requestDataArray = [];
-            var featurePromises = [];
+            const sitnaFeatures = [];
             var services = [];
 
             //var infoFormats = [];
@@ -7065,7 +7166,7 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
                                             if (service.mapLayers.some(mapLayer => isParentOrSame(mapLayer, lName, layerName))) {
                                                 found = true;
                                                 if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                                                    featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
+                                                    sitnaFeatures.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
                                                     featureInsertionPoints.push(l.features);
                                                 }
                                                 break;
@@ -7087,7 +7188,7 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
                                             }
 
                                             if (!opts.featureId || feature.getId() === opts.featureId) { // Mirar si en las opciones pone que solo busque una feature
-                                                featurePromises.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
+                                                sitnaFeatures.push(TC.wrap.Feature.createFeature(feature, { showsPopup: false }));
                                                 featureInsertionPoints.push(fakeLayer.features);
                                             }
                                         }
@@ -7130,52 +7231,50 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
 
                     }
                     if (someSuccess) {
-                        Promise.all(featurePromises).then(function afterFeatureInfoPromises(features) {
-                            var defaultFeature;
-                            features.forEach(function (feat, idx) {
-                                feat.attributes = [];
-                                for (var key in feat.data) {
-                                    var value = feat.data[key];
-                                    if (typeof value !== 'object') {
-                                        feat.attributes.push({
-                                            name: key,
-                                            value: typeof value === "number" ? value.toLocaleString(TC.Util.getMapLocale(self.parent.map)) : value
-                                        });
-                                    }
-                                    else {
-                                        feat.attributes.push({
-                                            name: key,
-                                            value: value//"objeto complejo"
-                                        });
-                                    }
+                        var defaultFeature;
+                        sitnaFeatures.forEach(function (feat, idx) {
+                            feat.attributes = [];
+                            for (var key in feat.data) {
+                                var value = feat.data[key];
+                                if (typeof value !== 'object') {
+                                    feat.attributes.push({
+                                        name: key,
+                                        value: typeof value === "number" ? value.toLocaleString(TC.Util.getMapLocale(self.parent.map)) : value
+                                    });
                                 }
-                                if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
-                                    defaultFeature = feat;
-                                }
-                                const featureInsertionPoint = featureInsertionPoints[idx];
-                                // Añadimos la feature si no ha sido ya añadida (por ejemplo porque hay dos capas en el 
-                                // mapa que tienen features coincidentes)
-                                if (!featureInsertionPoint.some(f => f.id === feat.id)) {
-                                    featureInsertionPoint.push(feat);
-                                }
-                            });
-
-                            var services = [];
-                            for (let serviceUrl in targetServices) {
-                                if (Object.prototype.hasOwnProperty.call(targetServices, serviceUrl)) {
-                                    services.push(targetServices[serviceUrl]);
+                                else {
+                                    feat.attributes.push({
+                                        name: key,
+                                        value: value//"objeto complejo"
+                                    });
                                 }
                             }
-
-                            self.parent.responseCallback({
-                                coords: coords,
-                                resolution: resolution,
-                                services: services,
-                                featureCount: featureCount,
-                                defaultFeature: defaultFeature
-                            });
-                            resolve();
+                            if (!defaultFeature && TC.Geometry.isInside(coords, feat.geometry)) {
+                                defaultFeature = feat;
+                            }
+                            const featureInsertionPoint = featureInsertionPoints[idx];
+                            // Añadimos la feature si no ha sido ya añadida (por ejemplo porque hay dos capas en el 
+                            // mapa que tienen features coincidentes)
+                            if (!featureInsertionPoint.some(f => f.id === feat.id)) {
+                                featureInsertionPoint.push(feat);
+                            }
                         });
+
+                        var services = [];
+                        for (let serviceUrl in targetServices) {
+                            if (Object.prototype.hasOwnProperty.call(targetServices, serviceUrl)) {
+                                services.push(targetServices[serviceUrl]);
+                            }
+                        }
+
+                        self.parent.responseCallback({
+                            coords: coords,
+                            resolution: resolution,
+                            services: services,
+                            featureCount: featureCount,
+                            defaultFeature: defaultFeature
+                        });
+                        resolve();
                     }
                     else {
                         resolve();
@@ -7200,7 +7299,7 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
             else {
 
                 if (map.workLayers.filter(function (layer) {
-                    return layer instanceof TC.layer.Raster;
+                    return layer instanceof Raster;
                 }).length > 0) {
                     map.toast(self.parent.getLocaleString('featureInfo.notQueryableLayers'), {
                         type: Consts.msgType.INFO
@@ -7301,17 +7400,8 @@ TC.wrap.control.GeometryFeatureInfo.prototype.beginDraw = function (options) {
                 type: olGeomType,
                 style: styleFunction
             });
-            var setShowsPopup = function (wrap) {
-                wrap.parent.showsPopup = false;
-            };
             olLayer.getSource().on(ADDFEATURE, function (event) {
-                const olFeat = event.feature;
-                if (olFeat._wrap) {
-                    setShowsPopup(olFeat._wrap);
-                }
-                else {
-                    TC.wrap.Feature.createFeature(olFeat).then(f => setShowsPopup(f.wrap));
-                }
+                TC.wrap.Feature.createFeature(event.feature).showsPopup = false;
             });
             self.drawCtrl.handleEvent = function (event) {
                 //esta ñapa para solucionar cuando haces un primer punto y acontinuación otro muy rápido
@@ -7355,13 +7445,12 @@ TC.wrap.control.GeometryFeatureInfo.prototype.beginDraw = function (options) {
                 }, 500);
                 event.feature.setId(self.parent.getUID());
 
-                TC.wrap.Feature.createFeature(event.feature, { showsPopup: false }).then(function (feat) {
-                    self.parent.filterFeature = feat;
-                    feat.layer = self.parent.filterLayer;
-                    if (callback) {
-                        callback(feat);
-                    }
-                });
+                const feat = TC.wrap.Feature.createFeature(event.feature, { showsPopup: false });
+                self.parent.filterFeature = feat;
+                feat.layer = self.parent.filterLayer;
+                if (callback) {
+                    callback(feat);
+                }
             });
         });
 
@@ -7438,7 +7527,7 @@ var readFeaturesFromResponse = function (map, data, contentType) {
     }
 };
 var featureToServiceDistributor = async function (features, service) {
-    var featurePromises = [];
+    const apiFeatures = [];
     var featureInsertionPoints = [];
     var isParentOrSame = function (layer, na, nb) {
         var result = false;
@@ -7473,7 +7562,7 @@ var featureToServiceDistributor = async function (features, service) {
                 var lName = l.name.substr(l.name.indexOf(':') + 1);
                 if (service.mapLayers.some(mapLayer => isParentOrSame(mapLayer, lName, layerName))) {
                     found = true;
-                    featurePromises.push(TC.wrap.Feature.createFeature(feature));
+                    apiFeatures.push(TC.wrap.Feature.createFeature(feature));
 
                     featureInsertionPoints[feature.id_] = l.features;
                     break;
@@ -7494,13 +7583,12 @@ var featureToServiceDistributor = async function (features, service) {
                     service.layers.push(fakeLayer);
                 }
 
-                featurePromises.push(TC.wrap.Feature.createFeature(feature));
+                apiFeatures.push(TC.wrap.Feature.createFeature(feature));
                 featureInsertionPoints.push(feature.id_);
             }
         }
     }//iteraci\u00f3n sobre las features de esta respuesta
 
-    const apiFeatures = await Promise.all(featurePromises);
     apiFeatures.forEach(function (feat) {
         feat.attributes = [];
         //feat.showsPopup = false;
@@ -7635,6 +7723,12 @@ TC.wrap.control.Popup.prototype.fitToView = function () {
 
     var topLeft = olMap.getCoordinateFromPixel([popupBoundingRect.left - mapBoundingRect.left, popupBoundingRect.top - mapBoundingRect.top]);
     var bottomRight = olMap.getCoordinateFromPixel([popupBoundingRect.right - mapBoundingRect.left, popupBoundingRect.bottom - mapBoundingRect.top]);
+
+    if (!topLeft) {
+        // El mapa no está listo (Su frameState no está establecido).
+        //Pasa por ejemplo cuando se abre en una pestaña en segundo plano.
+        return;
+    }
     var west = topLeft[0];
     var north = topLeft[1];
     var east = bottomRight[0];
@@ -7955,70 +8049,68 @@ TC.wrap.Feature.prototype.createCircle = function (coords, options) {
 };
 
 TC.wrap.Feature.createFeature = function (olFeat, options) {
-    if (!olFeat._featurePromise) {
-        olFeat._featurePromise = new Promise(function (resolve, _reject) {
-            var olGeometry = olFeat.getGeometry();
-            options = options || {};
-            options.id = olFeat.getId();
-            let olStyle = olFeat.getStyle();
-            if (olStyle) {
-                TC.Util.extend(options, getStyleFromNative(olStyle, olFeat));
-            }
-            // geometría
-            let geomStr;
-            switch (true) {
-                case olGeometry instanceof ol.geom.Point:
-                case olGeometry instanceof ol.geom.MultiPoint:
-                    if (TC.Util.isFunction(olStyle)) {
-                        olStyle = olStyle(olFeat);
+    if (!olFeat._sitnaFeature) {
+        var olGeometry = olFeat.getGeometry();
+        options = options || {};
+        options.id = olFeat.getId();
+        let olStyle = olFeat.getStyle();
+        if (olStyle) {
+            TC.Util.extend(options, getStyleFromNative(olStyle, olFeat));
+        }
+        // geometría
+        let geomStr;
+        switch (true) {
+            case olGeometry instanceof ol.geom.Point:
+            case olGeometry instanceof ol.geom.MultiPoint:
+                if (TC.Util.isFunction(olStyle)) {
+                    olStyle = olStyle(olFeat);
+                }
+                var olStyles = olStyle ?
+                    Array.isArray(olStyle) ? olStyle : [olStyle] :
+                    [];
+                for (var i = 0, len = olStyles.length; i < len; i++) {
+                    olStyle = olStyles[i];
+                    if (olStyle.getImage() instanceof ol.style.Icon) {
+                        geomStr = 'Marker';
+                        break;
                     }
-                    var olStyles = olStyle ?
-                        Array.isArray(olStyle) ? olStyle : [olStyle] :
-                        [];
-                    for (var i = 0, len = olStyles.length; i < len; i++) {
-                        olStyle = olStyles[i];
-                        if (olStyle.getImage() instanceof ol.style.Icon) {
-                            geomStr = 'Marker';
-                            break;
-                        }
+                }
+                geomStr = geomStr || 'Point';
+                if (olGeometry instanceof ol.geom.MultiPoint) {
+                    if (geomStr === 'Point') {
+                        geomStr = 'MultiPoint';
                     }
-                    geomStr = geomStr || 'Point';
-                    if (olGeometry instanceof ol.geom.MultiPoint) {
-                        if (geomStr === 'Point') {
-                            geomStr = 'MultiPoint';
-                        }
-                        if (geomStr === 'Marker') {
-                            geomStr = 'MultiMarker';
-                        }
+                    if (geomStr === 'Marker') {
+                        geomStr = 'MultiMarker';
                     }
-                    break;
-                case olGeometry instanceof ol.geom.LineString:
-                    geomStr = 'Polyline';
-                    break;
-                case olGeometry instanceof ol.geom.Polygon:
-                    geomStr = 'Polygon';
-                    break;
-                case olGeometry instanceof ol.geom.MultiLineString:
-                    geomStr = 'MultiPolyline';
-                    break;
-                case olGeometry instanceof ol.geom.MultiPolygon:
-                    geomStr = 'MultiPolygon';
-                    break;
-                default:
-                    break;
-            }
-            let feat;
-            if (geomStr) {
-                feat = new featureNamespace[geomStr](olFeat, options);
-            }
-            else {
-                feat = new Feature_s(olFeat, options);
-            }
-            feat.data = feat.wrap.getData();
-            resolve(feat);
-        });
+                }
+                break;
+            case olGeometry instanceof ol.geom.LineString:
+                geomStr = 'Polyline';
+                break;
+            case olGeometry instanceof ol.geom.Polygon:
+                geomStr = 'Polygon';
+                break;
+            case olGeometry instanceof ol.geom.MultiLineString:
+                geomStr = 'MultiPolyline';
+                break;
+            case olGeometry instanceof ol.geom.MultiPolygon:
+                geomStr = 'MultiPolygon';
+                break;
+            default:
+                break;
+        }
+        let feat;
+        if (geomStr) {
+            feat = new featureNamespace[geomStr](olFeat, options);
+        }
+        else {
+            feat = new Feature_s(olFeat, options);
+        }
+        feat.data = feat.wrap.getData();
+        olFeat._sitnaFeature = feat;
     }
-    return olFeat._featurePromise;
+    return olFeat._sitnaFeature;
 };
 
 TC.wrap.Feature.prototype.cloneFeature = function () {
@@ -8035,14 +8127,17 @@ TC.wrap.Feature.prototype.getStyle = function () {
     var olStyles = olStyle ?
         Array.isArray(olStyle) ? olStyle : [olStyle] :
         [];
-
+    const toHex = function (value) {
+        return ("0" + (Number(value).toString(16))).slice(-2)
+    };
     const getFill = function (style, obj) {
         if (style) {
-            const fill = style.getFill();
+            const fill = style.getFill() || style.getImage()?.getFill?.()
             if (fill) {
-                obj.fillColor = fill.getColor();
-                if (Array.isArray(obj.fillColor)) {
-                    obj.fillOpacity = obj.fillColor[3];
+                var _color = fill.getColor();
+                obj.fillColor = "#" + toHex(_color[0]) + toHex(_color[1]) + toHex(_color[2]);
+                if (Array.isArray(_color)) {
+                    obj.fillOpacity = _color[3];
                 }
             }
         }
@@ -8063,6 +8158,7 @@ TC.wrap.Feature.prototype.getStyle = function () {
         getStroke(olStyle, result);
         const image = olStyle.getImage();
         if (image instanceof ol.style.Icon) {
+            if (!self.parent.options?.cssClass || (self.parent.options?.cssClass && !TC.Util.getBackgroundUrlFromCss(self.parent.options?.cssClass)))
             result.url = image.getSrc();
             const size = image.getSize();
             const scale = image.getScale() || 1;
@@ -8356,20 +8452,6 @@ const getNativeFeatureStyle = function (feature, readonly) {
     return style;
 };
 
-const getNativeLayerStyle = function (feature) {
-    var style = this.getStyle();
-    if (TC.Util.isFunction(style)) {
-        style = style(feature);
-    }
-    if (Array.isArray(style)) {
-        style = style[style.length - 1];
-    }
-    if (!style) {
-        style = new ol.style.Style();
-    }
-    return style;
-};
-
 TC.wrap.Feature.prototype.setStyle = function (options) {
     const self = this;
     const olFeat = self.feature;
@@ -8378,158 +8460,12 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
         return;
     }
     const feature = self.parent;
-    const geom = olFeat.getGeometry();
-    let newStyle = olFeat.getStyle();
-    let layerStyle;
-    if (feature.layer) {
-        layerStyle = getNativeLayerStyle.call(feature.layer.wrap.layer, feature.wrap.feature);
-    }
-    if (!newStyle) {
-        if (layerStyle) {
-            newStyle = layerStyle.clone();
-        }
-        else {
-            newStyle = new ol.style.Style();
-        }
-    }
-    if (TC.Util.isFunction(newStyle)) {
-        newStyle = newStyle(olFeat);
-    }
-    if (!Array.isArray(newStyle)) {
-        newStyle = [newStyle];
-    }
-    let style = newStyle[newStyle.length - 1];
-    if (geom instanceof ol.geom.Point || geom instanceof ol.geom.MultiPoint) {
+    const featureStyleOptions = {
+        styles: {}
+    };
+    featureStyleOptions.styles[feature.STYLETYPE] = options;
+    let newStyle = createNativeStyle(featureStyleOptions, olFeat);
 
-        var imageStyle;
-        if (options.anchor || options.url || options.cssClass) { // Marcador
-            imageStyle = style.getImage();
-            const iconOptions = {};
-            if (imageStyle instanceof ol.style.Icon) {
-                iconOptions.src = options.url || TC.Util.getBackgroundUrlFromCss(options.cssClass) || imageStyle.getSrc();
-
-                if (options.width && options.height) {
-                    iconOptions.size = [getStyleValue(options.width, feature), getStyleValue(options.height, feature)];
-                }
-                else {
-                    iconOptions.size = imageStyle.getSize();
-                }
-                iconOptions.anchor = getStyleValue(options.anchor, feature);
-                if (!iconOptions.anchor) {
-                    const imgAnchor = imageStyle.getAnchor();
-                    if (Array.isArray(imgAnchor)) {
-                        iconOptions.anchor = imgAnchor.map(function (elm, idx) {
-                            return elm / iconOptions.size[idx];
-                        });
-                    }
-                }
-            }
-            else {
-                iconOptions.src = TC.Util.getPointIconUrl(options);
-                iconOptions.anchor = getStyleValue(options.anchor, feature);
-                iconOptions.size = [getStyleValue(options.width, feature), getStyleValue(options.height, feature)];
-            }
-            if (options.angle) {
-                iconOptions.rotation = options.angle / 180 * Math.PI;
-            }
-
-            imageStyle = new ol.style.Icon(iconOptions);
-        }
-        else if (!style.getImage() && style.getText()) { // Etiqueta
-
-            if (options.labelKey?.length || options.label?.length) {
-                style.setText(createNativeTextStyle(options, feature));
-            }
-            else {
-                style.setText();
-            }
-        }
-        else { // Punto sin icono
-            imageStyle = style.getImage();
-            if (!imageStyle) {
-                imageStyle = new ol.style.Circle();
-            }
-            const circleOptions = {
-                radius: getStyleValue(options.radius, feature) ||
-                    (getStyleValue(options.height, feature) + getStyleValue(options.width, feature)) / 4
-            };
-            if (isNaN(circleOptions.radius) && imageStyle.getRadius) {
-                circleOptions.radius = imageStyle.getRadius();
-            }
-            if (imageStyle.getFill) {
-                const fill = imageStyle.getFill() || new ol.style.Fill();
-                const previousColor = fill?.getColor();
-                const previousOpacity = Array.isArray(previousColor) ? previousColor[3] : 1;
-                fill.setColor(getRGBA(getStyleValue(options.fillColor || previousColor, feature), getStyleValue(options.fillOpacity || previousOpacity, feature)));
-                circleOptions.fill = fill;
-            }
-            circleOptions.stroke = imageStyle.getStroke ? imageStyle.getStroke() : new ol.style.Stroke();
-            const layerStroke = layerStyle && layerStyle.getStroke();
-            if (options.strokeColor || options.strokeWidth) {
-                if (!circleOptions.stroke) {
-                    circleOptions.stroke = new ol.style.Stroke();
-                }
-                if (options.strokeColor) {
-                    circleOptions.stroke.setColor(getStyleValue(options.strokeColor, feature));
-                }
-                else {
-                    const strokeColor = circleOptions.stroke.getColor() || (layerStroke && layerStroke.getColor() || TC.Cfg.styles.point.strokeColor);
-                    circleOptions.stroke.setColor(getStyleValue(strokeColor, feature));
-                }
-                if (options.strokeWidth) {
-                    circleOptions.stroke.setWidth(getStyleValue(options.strokeWidth, feature));
-                }
-                else {
-                    const strokeWidth = circleOptions.stroke.getWidth() || (layerStroke && layerStroke.getWidth() || TC.Cfg.styles.point.strokeWidth);
-                    circleOptions.stroke.setWidth(getStyleValue(strokeWidth, feature));
-                }
-            }
-            imageStyle = new ol.style.Circle(circleOptions);
-        }
-        style.setImage(imageStyle);
-    }
-    else {
-        var stroke = style.getStroke();
-        var strokeChanged = false;
-        if (!stroke) {
-            stroke = new ol.style.Stroke();
-        }
-        if (options.strokeColor) {
-            stroke.setColor(getStyleValue(options.strokeColor, feature));
-            strokeChanged = true;
-        }
-        if (options.strokeWidth) {
-            stroke.setWidth(getStyleValue(options.strokeWidth, feature));
-            strokeChanged = true;
-        }
-        if (options.lineDash) {
-            stroke.setLineDash(options.lineDash);
-            strokeChanged = true;
-        }
-        if (strokeChanged) {
-            style.setStroke(stroke);
-        }
-        if (geom instanceof ol.geom.Polygon || geom instanceof ol.geom.MultiPolygon) {
-            if (options.fillColor || options.fillOpacity) {
-                var fill = style.getFill() || new ol.style.Fill();
-                const previousColor = fill.getColor();
-                const previousOpacity = Array.isArray(previousColor) ? previousColor[3] : 1;
-                fill.setColor(getRGBA(getStyleValue(options.fillColor || previousColor, feature), getStyleValue(options.fillOpacity || previousOpacity, feature)));
-                style.setFill(fill);
-            }
-        }
-    }
-
-    if (options.label !== undefined) {
-        if (options.label.length) {
-            style.setText(createNativeTextStyle(options, feature));
-        }
-        else {
-            style.setText();
-        }
-    }
-    style.setZIndex(options.zIndex);
-    
     olFeat.setStyle(newStyle);
     //estilos de features 3D
     if (feature.layer  && self.feature3D) {
@@ -8538,21 +8474,27 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
         if (TC.Util.isFunction(currentStyle))
             currentStyle = currentStyle();
         const textStyle = currentStyle.find((s) => s.getText());
-        feature.layer.map.view3D.setStyle(self.feature3D, {
-            strokeColor: (currentStyle.findLast((s) => s.getStroke())?.getStroke() || currentStyle.findLast((s) => s.getImage() && s.getImage().getStroke()).getImage().getStroke())?.getColor(),
-            strokeWidth: (currentStyle.findLast((s) => s.getStroke())?.getStroke() || currentStyle.findLast((s) => s.getImage() && s.getImage().getStroke()).getImage().getStroke()).getWidth(),
-            fillColor: (currentStyle.findLast((s) => s.getFill())?.getFill() || currentStyle.findLast((s) => s.getImage() && s.getImage().getFill())?.getImage().getFill())?.getColor()
-        });
+        feature.layer.map.view3D.setStyle(self.feature3D, options);
+        //feature.layer.map.view3D.setStyle(self.feature3D, {
+        //    strokeColor: options.strokeColor || (currentStyle.findLast((s) => s.getStroke())?.getStroke() || currentStyle.findLast((s) => s.getImage() && s.getImage().getStroke()).getImage().getStroke())?.getColor(),
+        //    strokeWidth: options.strokeWidth ||(currentStyle.findLast((s) => s.getStroke())?.getStroke() || currentStyle.findLast((s) => s.getImage() && s.getImage().getStroke()).getImage().getStroke()).getWidth(),
+        //    fillColor: options.fillColor || (currentStyle.findLast((s) => s.getFill())?.getFill() || currentStyle.findLast((s) => s.getImage() && s.getImage().getFill())?.getImage().getFill())?.getColor(),
+        //    //fillOpacity: options.fillOpacity || 
+        //});
         if (textStyle)
             feature.layer.map.view3D.setLabel(self.feature3D, {
                 outlineColor: "#FFFFFF",
-                fillColor: textStyle.getText().getFill().getColor().slice(0, 3),
+                fontColor: textStyle.getText().getFill().getColor().slice(0, 3),
                 outlineWidth: 2,
                 font: textStyle.getText().getFont(),
                 text: textStyle.getText().getText(),
             })
     }
 
+    if (olFeat._originalStyle) {
+        delete olFeat._originalStyle;
+        self.toggleSelectedStyle(true);
+    }
 
     olFeat.changed();
 };
@@ -8665,11 +8607,11 @@ TC.wrap.Feature.prototype.showPopup = function (options) {
 
             var parentOptions = self.parent.options;
             if (TC.Util.isEmptyObject(parentOptions) && self.parent.layer &&
-                self.parent.layer.options && self.parent.layer.options.styles) {
+                self.parent.layer.styles) {
 
                 switch (true) {
                     case parentFeature instanceof Point_s:
-                        parentOptions = self.parent.layer.options.styles.point;
+                        parentOptions = self.parent.layer.styles.point;
 
                         // 11/03/2019 Al crear las features del API desde las features nativas, 
                         // se valida si la feature tiene icono para definir si es punto o marcador
@@ -8677,20 +8619,20 @@ TC.wrap.Feature.prototype.showPopup = function (options) {
                         // en esos casos se define como punto lo que es un marcador y cuando llegamos aquí no se accede a las
                         // opciones de marcador sino de punto.
                         if (!parentOptions || TC.Util.isEmptyObject(parentOptions)) {
-                            parentOptions = self.parent.layer.options.styles.marker;
+                            parentOptions = self.parent.layer.styles.marker;
                         }
                         break;
                     case parentFeature instanceof Marker:
-                        parentOptions = self.parent.layer.options.styles.marker;
+                        parentOptions = self.parent.layer.styles.marker;
                         break;
                     case parentFeature instanceof Circle:
                     case parentFeature instanceof MultiPolygon_s:
                     case parentFeature instanceof Polygon_s:
-                        parentOptions = self.parent.layer.options.styles.polygon;
+                        parentOptions = self.parent.layer.styles.polygon;
                         break;
                     case parentFeature instanceof MultiPolyline:
                     case parentFeature instanceof Polyline:
-                        parentOptions = self.parent.layer.options.styles.line;
+                        parentOptions = self.parent.layer.styles.line;
                         break;
                 }
             }
@@ -8899,6 +8841,16 @@ TC.wrap.control.Draw.prototype.getMeasureData = function () {
         else {
             data.length = projectedLine.getLength();
         }
+        if (self._extendedFeature) {
+            const extendedFeatureGeometry = self._extendedFeature.getGeometry();
+            if (extendedFeatureGeometry !== line) {
+                const extendedFeatureData = {};
+                formatLength(extendedFeatureGeometry, extendedFeatureData);
+                if (extendedFeatureData.length) {
+                    data.length += extendedFeatureData.length;
+                }
+            }
+        }
     };
 
     const formatArea = function (polygon, data) {
@@ -8926,6 +8878,21 @@ TC.wrap.control.Draw.prototype.getMeasureData = function () {
 
     return result;
 };
+
+TC.wrap.control.Draw.prototype.getSketch = function () {
+    const self = this;
+    if (self.sketch) {
+        let sketchGeometry = self.sketch.getGeometry().clone();
+        if (self._extendedFeature) {
+            const extendedFeatureGeometry = self._extendedFeature.getGeometry().clone();
+            sketchGeometry = new sketchGeometry.constructor(sketchGeometry.getCoordinates(), extendedFeatureGeometry.getLayout());
+            extendedFeatureGeometry.appendLineString(sketchGeometry);
+            sketchGeometry = extendedFeatureGeometry;
+        }
+        return TC.wrap.Feature.createFeature(new ol.Feature(sketchGeometry));
+    }
+    return null;
+}
 
 // Función para reproyectar el dibujo actual
 const drawProjectionChangeHandler = function (ctl, e) {
@@ -9017,9 +8984,6 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                         }
                     }
 
-                    if (self.snapInteraction) {
-                        olMap.removeInteraction(self.snapInteraction);
-                    }
 
                     if (mode) {
                         self._pointerdownHandler = self.pointerdownHandler.bind(self);
@@ -9088,7 +9052,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                             const eventObject = {};
                             const drawMode = self.parent.mode;
                             if (self._extending) {
-                                eventObject.feature = self.interaction.sketchFeature_._wrap.parent;
+                                eventObject.feature = self.interaction.sketchFeature_._sitnaFeature;
                             }
                             else if (self.parent.extensibleSketch &&
                                 (drawMode === Consts.geom.POLYLINE || drawMode === Consts.geom.MULTIPOLYLINE)) {
@@ -9097,7 +9061,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                                     .parent
                                     .layer
                                     .features
-                                    .filter(f => !(f instanceof Point_s))
+                                    .filter(f => f instanceof Polyline || f instanceof MultiPolyline)
                                     .find(f => {
                                         const lastPoint = f.wrap.feature.getGeometry().getLastCoordinate();
                                         return firstPoint[0] === lastPoint[0] && firstPoint[1] === lastPoint[1];
@@ -9113,11 +9077,9 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                         }, this);
 
                         self.interaction.on('drawend', function (evt) {
-                            const overlayStyle = evt.target.overlay_.getStyle();
                             if (!evt.feature.getStyle()) {
-                                evt.feature.setStyle(Array.isArray(overlayStyle) ? overlayStyle.map(function (style) {
-                                    return style.clone();
-                                }) : overlayStyle);
+                                const featureStyleOptions = getStyleOptionsFromMode(self.parent.mode, self.parent.getStyle());
+                                evt.feature.setStyle(createNativeStyle(featureStyleOptions));
                             }
                             if (self.parent.measurer) {
                                 self.parent.trigger(Consts.event.MEASURE, self.getMeasureData());
@@ -9145,28 +9107,27 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                                 endFn(feat);
                             }
                             else {
-                                TC.wrap.Feature.createFeature(self.sketch).then(function (feat) {
-                                    if (self.parent.mode === Consts.geom.RECTANGLE) {
-                                        const delay = 400;
-                                        const dblClickInteraction = self.interaction
-                                            .getMap()
-                                            .getInteractions()
-                                            .getArray()
-                                            .filter(i => i instanceof ol.interaction.DoubleClickZoom)[0];
-                                        // Desactivamos temporalmente el zoom por doble clic para evitar que se lance accidentalmente
-                                        if (dblClickInteraction && dblClickInteraction.getActive()) {
-                                            dblClickInteraction.setActive(false);
-                                            setTimeout(function () {
-                                                dblClickInteraction.setActive(true);
-                                            }, delay);
-                                        }
-                                        self.interaction.setActive(false);
-                                        setTimeout(() => endFn(feat), delay); // Retardo para evitar pulsaciones accidentales en dobles clics del usuario
+                                const feat = TC.wrap.Feature.createFeature(self.sketch);
+                                if (self.parent.mode === Consts.geom.RECTANGLE) {
+                                    const delay = 400;
+                                    const dblClickInteraction = self.interaction
+                                        .getMap()
+                                        .getInteractions()
+                                        .getArray()
+                                        .find(i => i instanceof ol.interaction.DoubleClickZoom);
+                                    // Desactivamos temporalmente el zoom por doble clic para evitar que se lance accidentalmente
+                                    if (dblClickInteraction && dblClickInteraction.getActive()) {
+                                        dblClickInteraction.setActive(false);
+                                        setTimeout(function () {
+                                            dblClickInteraction.setActive(true);
+                                        }, delay);
                                     }
-                                    else {
-                                        endFn(feat);
-                                    }
-                                });
+                                    self.interaction.setActive(false);
+                                    setTimeout(() => endFn(feat), delay); // Retardo para evitar pulsaciones accidentales en dobles clics del usuario
+                                }
+                                else {
+                                    endFn(feat);
+                                }
                             }
                             delete self._extendedFeature;
                             delete self._extending;
@@ -9179,16 +9140,27 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
 
                         olMap.addInteraction(self.interaction);
 
-                        if (self.parent.options.snapping || self.parent.extensibleSketch) {
-                            var snapOptions = {};
-                            if (olLayer) {
-                                snapOptions.source = olLayer.getSource();
-                            }
-                            else if (self.parent.options.snapping instanceof TC.Layer) {
-                                snapOptions.source = self.parent.options.snapping.wrap.layer.getSource();
-                            }
-                            self.snapInteraction = new ol.interaction.Snap(snapOptions);
-                            olMap.addInteraction(self.snapInteraction);
+                        let snapping = self.parent.snapping;
+                        const snappingByExtensibleSketch = !snapping && self.parent.extensibleSketch;
+                        const isLine = f => {
+                            const geom = f.getGeometry();
+                            return geom instanceof LineString || geom instanceof MultiLineString;
+                        };
+                        if (snappingByExtensibleSketch) {
+                            snapping = olLayer
+                                .getSource()
+                                .getFeatures()
+                                .filter(isLine)
+                                .map(f => f._wrap.parent);
+                        }
+                        self.setSnapping(snapping);
+                        if (snappingByExtensibleSketch) {
+                            const snapInteraction = self.snapInteraction
+                            olLayer.getSource().on('addfeature', function (e) {
+                                if (isLine(e.feature) && self.snapInteraction === snapInteraction) {
+                                    self.snapInteraction.addFeature(e.feature);
+                                }
+                            });
                         }
                     }
 
@@ -9196,6 +9168,32 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                 });
             }
         });
+    }
+};
+
+TC.wrap.control.Draw.prototype.setSnapping = function (snapping) {
+    const self = this;
+    const olMap = self.parent.map.wrap.map;
+    if (self.snapInteraction) {
+        olMap.removeInteraction(self.snapInteraction);
+        self.snapInteraction = null;
+    }
+    if (snapping) {
+        const snapOptions = {};
+        if (snapping instanceof Layer) {
+            snapOptions.source = snapping.wrap.layer.getSource();
+        }
+        else if (Array.isArray(snapping)) {
+            snapOptions.features = new Collection(snapping.map(f => f.wrap?.feature));
+        }
+        else {
+            const layer = self.parent.layer;
+            const olLayer = layer.wrap.layer;
+            snapOptions.source = olLayer.getSource();
+        }
+        self.snapInteraction = new ol.interaction.Snap(snapOptions);
+        olMap.addInteraction(self.snapInteraction);
+        self.setStyle();
     }
 };
 
@@ -9253,7 +9251,10 @@ TC.wrap.control.Draw.prototype._extendFeature = function (feature) {
 
 //El valor devuelto es lo que va al stack de redo
 TC.wrap.control.Draw.prototype.popCoordinate = function () {
-    var self = this;
+    const self = this;
+    if (self.parent.mode === Consts.geom.RECTANGLE) {
+        throw Error('popCoordinate not allowed when drawing rectangles');
+    }
     var result = null;
     if (self.interaction) {
         var feature = self.interaction.sketchFeature_;
@@ -9269,11 +9270,13 @@ TC.wrap.control.Draw.prototype.popCoordinate = function () {
             }
             if (coords.length > 1) {
 
-                var puntos;
-                if (geom instanceof ol.geom.Polygon)
-                    puntos = self.interaction.sketchCoords_[0];
-                else if (geom instanceof ol.geom.LineString)
-                    puntos = self.interaction.sketchCoords_;
+                let points;
+                if (geom instanceof ol.geom.Polygon) {
+                    points = self.interaction.sketchCoords_[0];
+                }
+                else if (geom instanceof ol.geom.LineString) {
+                    points = self.interaction.sketchCoords_;
+                }
 
                 /*
                 Al menos con linestring, no necesariamente hay que quitar el último
@@ -9292,18 +9295,18 @@ TC.wrap.control.Draw.prototype.popCoordinate = function () {
                 }
 
                 var index;
-                if (flyingPointContained) index = puntos.length - 2;
-                else index = puntos.length - 1;
+                if (flyingPointContained) index = points.length - 2;
+                else index = points.length - 1;
 
-                result = puntos[index];
-                puntos.splice(index, 1);
+                result = points[index];
+                points.splice(index, 1);
 
                 if (geom instanceof ol.geom.Polygon) {
-                    geom.setCoordinates([puntos]);
-                    self.interaction.sketchLine_.getGeometry().setCoordinates(puntos);
+                    geom.setCoordinates([points]);
+                    self.interaction.sketchLine_.getGeometry().setCoordinates(points);
                 }
                 else {
-                    geom.setCoordinates(puntos);
+                    geom.setCoordinates(points);
                 }
 
 
@@ -9420,86 +9423,96 @@ TC.wrap.control.Draw.prototype.end = function () {
     }
 };
 
+const getStyleOptionsFromMode = function (mode, style) {
+    const styleOptions = {};
+    switch (mode) {
+        case Consts.geom.POLYGON:
+        case Consts.geom.MULTIPOLYGON:
+            styleOptions.styles = {
+                polygon: style,
+                line: false,
+                point: false
+            };
+            break;
+        case Consts.geom.POINT:
+        case Consts.geom.MULTIPOINT:
+            styleOptions.styles = {
+                point: style,
+                line: false,
+                polygon: false
+            };
+            break;
+        default:
+            styleOptions.styles = {
+                line: style,
+                point: false,
+                polygon: false
+            };
+    }
+    return styleOptions;
+};
+
 TC.wrap.control.Draw.prototype.setStyle = function () {
     const self = this;
     if (self.interaction) {
         let olStyle;
         const parentStyle = self.parent.getStyle();
         if (parentStyle) {
-            switch (self.parent.mode) {
-                case Consts.geom.RECTANGLE:
-                    olStyle = createNativeStyle({
-                        styles: {
-                            line: parentStyle,
-                            point: false,
-                            polygon: false
-                        }
+            const currentMode = self.parent.mode;
+            const styleOptions = getStyleOptionsFromMode(currentMode, parentStyle);
+            const defaultStyle = createNativeStyle(styleOptions);
+            let getSnapStyle, getExtensibleSketchSnapStyle;
+            if (self.parent.styles.snapping?.point) {
+                if (self.parent.extensibleSketch &&
+                    (currentMode === Consts.geom.POLYLINE || currentMode === Consts.geom.MULTIPOLYLINE)) {
+                    const snapStyle = createNativeStyle({
+                        styles: Object.assign({}, styleOptions.styles, {
+                            point: Object.assign({}, self.parent.styles.snapping.point, {
+                                label: '+',
+                                fontSize: 12,
+                                labelOffset: [8, -8]
+                            })
+                        })
                     });
-                    break;
-                case Consts.geom.POLYGON:
-                case Consts.geom.MULTIPOLYGON:
-                    olStyle = createNativeStyle({
-                        styles: {
-                            polygon: parentStyle,
-                            line: false,
-                            point: false
-                        }
-                    });
-                    break;
-                case Consts.geom.POINT:
-                case Consts.geom.MULTIPOINT:
-                    olStyle = createNativeStyle({
-                        styles: {
-                            point: parentStyle,
-                            line: false,
-                            polygon: false
-                        }
-                    });
-                    break;
-                case Consts.geom.MULTIPOLYLINE:
-                default: {
-                    const styleOptions = {
-                        styles: {
-                            line: parentStyle,
-                            point: false,
-                            polygon: false
-                        }
-                    };
-                    const defaultStyle = createNativeStyle(styleOptions);
-                    if (self.parent.extensibleSketch && self.parent.styles.point) {
-                        const activeStyle = createNativeStyle({
-                            styles: {
-                                line: parentStyle,
-                                point: self.parent.styles.point,
-                                polygon: false
+                    getExtensibleSketchSnapStyle = coords => {
+                        if (!self.sketch) {
+                            if (self.parent.layer.wrap.layer
+                                .getSource()
+                                .getFeatures()
+                                .map(f => f.getGeometry())
+                                .filter(g => g instanceof ol.geom.LineString || g instanceof ol.geom.MultiLineString)
+                                .some(g => {
+                                    const lastPoint = g.getLastCoordinate();
+                                    return coords[0] === lastPoint[0] && coords[1] === lastPoint[1];
+                                })) {
+                                return snapStyle;
                             }
-                        });
-                        olStyle = function () {
-                            if (self.interaction?.sketchPoint_) {
-                                const pointCoords = self.interaction.sketchPoint_
-                                    .getGeometry()
-                                    .getCoordinates();
-                                const previousFeatureFound = self.parent.layer.wrap.layer
-                                    .getSource()
-                                    .getFeatures()
-                                    .map(f => f.getGeometry())
-                                    .filter(g => !(g instanceof Point_s))
-                                    .some(g => {
-                                        const lastPoint = g.getLastCoordinate();
-                                        return pointCoords[0] === lastPoint[0] && pointCoords[1] === lastPoint[1];
-                                    });
-                                if (previousFeatureFound) {
-                                    return activeStyle;
-                                }
-                            }
-                            return defaultStyle;
                         }
                     }
-                    else {
-                        olStyle = defaultStyle;
-                    }
-                    break;
                 }
+                if (self.parent.snapping || self.parent.extensibleSketch) {
+                    const snapStyle = createNativeStyle({
+                        styles: Object.assign({}, styleOptions.styles, {
+                            point: Object.assign({}, self.parent.styles.snapping.point)
+                        })
+                    });
+                    getSnapStyle = () => snapStyle;
+                }
+                if (getSnapStyle || getExtensibleSketchSnapStyle) {
+                    olStyle = function () {
+                        if (self.snapInteraction?._snapData) {
+                            const pointCoords = self.snapInteraction._snapData.vertex;
+                            const snapStyle = getExtensibleSketchSnapStyle?.(pointCoords) || getSnapStyle(pointCoords);
+                            if (snapStyle) {
+                                return snapStyle;
+                            }
+                        }
+                        return defaultStyle;
+                    }
+                }
+            }
+            if (!olStyle) {
+                olStyle = defaultStyle;
             }
             self.interaction.overlay_.setStyle(olStyle);
         }
@@ -9662,14 +9675,16 @@ const createSelectedStyle = function (feat) {
         originalStyle = feat._originalStyle = feat._wrap.parent.layer.wrap.layer.getStyle();
     }
     if (!originalStyle) {
-        originalStyle = feat._originalStyle = createNativeStyle({}, feat);
+        originalStyle = feat._originalStyle = createNativeStyle({ styles: {} }, feat);
     }
     if (TC.Util.isFunction(originalStyle)) {
         return function (f, r) {
-            return addHaloToStyle(originalStyle(f, r));
+            //URI:Incrementamos el ZIndex para que este por encima del resto de features de la capa
+            return addHaloToStyle(originalStyle(f, r)).map((style) => { style.setZIndex((style.getZIndex() || 0) + 1); return style });;
         };
     }
-    return addHaloToStyle(originalStyle);
+    //URI:Incrementamos el ZIndex para que este por encima del resto de features de la capa
+    return addHaloToStyle(originalStyle)?.map((style) => { style.setZIndex((style.getZIndex() || 0) + 1); return style });
 };
 
 const setSelectedStyle = function (feat) {
@@ -9801,6 +9816,20 @@ TC.wrap.control.Modify.prototype.activate = function () {
                 self.snapInteraction = new ol.interaction.Snap({
                     source: olLayer.getSource()
                 });
+                if (self.parent.styles.snapping?.point) {
+                    const snapStyle = createNativeStyle({
+                        styles: Object.assign({
+                            point: Object.assign({}, self.parent.styles.snapping.point)
+                        })
+                    });
+                    const overlayStyle = function () {
+                        if (self.snapInteraction?._snapData) {
+                            return snapStyle;
+                        }
+                        return null;
+                    }
+                    self.modifyInteraction.getOverlay().setStyle(overlayStyle);
+                }
                 olMap.addInteraction(self.snapInteraction);
             }
 
@@ -9839,13 +9868,12 @@ TC.wrap.control.Modify.prototype.deactivate = function () {
     if (self.modifyInteraction) {
         self.modifyInteraction.setActive(false);
         self.selectInteraction.setActive(false);
-        self.parent.map.wrap.getMap().then(function (olMap) {
-            olMap.getViewport().removeEventListener(MOUSEMOVE, self._onMouseMove);
-            olMap.removeInteraction(self.modifyInteraction);
-            olMap.removeInteraction(self.selectInteraction);
-            self.modifyInteraction = null;
-            self.selectInteraction = null;
-        });
+        const olMap = self.modifyInteraction.getMap();
+        olMap.getViewport().removeEventListener(MOUSEMOVE, self._onMouseMove);
+        olMap.removeInteraction(self.modifyInteraction);
+        olMap.removeInteraction(self.selectInteraction);
+        self.modifyInteraction = null;
+        self.selectInteraction = null;
     }
 };
 
