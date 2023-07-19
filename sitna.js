@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.0.0
+ * @version 4.1.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -24,6 +24,8 @@ import Circle from './SITNA/feature/Circle';
 import Layer from './SITNA/layer/Layer';
 import Raster from './SITNA/layer/Raster';
 import Vector from './SITNA/layer/Vector';
+import './TC/tool/ExcelExport';
+import './TC/tool/Proxification';
 import Map from './TC/Map';
 import Cfg from './TC/Cfg';
 import wrap from './TC/wrap';
@@ -52,8 +54,11 @@ feature.Polygon = Polygon;
 feature.MultiPolygon = MultiPolygon;
 feature.Circle = Circle;
 
+const tool = TC.tool || {};
+
 TC.feature = feature;
 TC.layer = layer;
+TC.tool = tool;
 TC.Util = Util;
 TC.Consts = Consts;
 TC.i18n = i18n;
@@ -63,7 +68,7 @@ TC.wrap = wrap;
 globalThis.TC = TC;
 //window.JL = JL;
 
-TC.version = '4.0.0';
+TC.version = '4.1.0';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
@@ -92,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     TC.browser = TC.Util.getBrowser();
 
-    fetch(TC.apiLocation + 'TC/config/browser-versions.json')
+    fetch(TC.apiLocation + 'config/browser-versions.json')
         .then(r => {
             if (r.ok) {
                 return r.json();
@@ -242,5 +247,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 Cfg.layout = TC.apiLocation + 'layout/responsive';
 
-export { Cfg, SitnaMap as Map, Consts, feature, layer };
+export { Cfg, SitnaMap as Map, Consts, feature, layer, tool };
 
