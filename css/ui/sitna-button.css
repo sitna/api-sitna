@@ -175,4 +175,5 @@ button.link {
     display: inline;
     color: var(--main-hl-color);
     border: 0;
+    text-align: left;
 }
