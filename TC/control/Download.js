@@ -1,18 +1,18 @@
 ﻿
 import TC from '../../TC';
 import Consts from '../Consts';
+import Control from '../Control';
 import MapInfo from './MapInfo';
 import filter from '../filter';
 
 TC.control = TC.control || {};
-TC.control.MapInfo = MapInfo;
 TC.filter = filter;
 
-TC.control.Download = function (options) {
+const Download = function (options) {
     var self = this;
     self._classSelector = '.' + self.CLASS;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 
     self._hiddenElms = [];
 
@@ -26,10 +26,10 @@ TC.control.Download = function (options) {
     }    
 };
 
-TC.inherit(TC.control.Download, TC.control.MapInfo);
+TC.inherit(Download, MapInfo);
 
 (function () {
-    var ctlProto = TC.control.Download.prototype;
+    var ctlProto = Download.prototype;
 
     ctlProto.CLASS = 'tc-ctl-download';
 
@@ -49,7 +49,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
         return self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
         }).then(function () {
-            return TC.Control.prototype.renderData.call(self, {
+            return Control.prototype.renderData.call(self, {
                 controlId: self.id,
                 deselectableTabs: self.options.deselectableTabs
             }, function () {
@@ -84,7 +84,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
 
     ctlProto.register = function (map) {
         var self = this;
-        const result = TC.control.MapInfo.prototype.register.call(self, map);
+        const result = MapInfo.prototype.register.call(self, map);
 
         // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
         self.map.crossOrigin = 'anonymous';
@@ -141,7 +141,7 @@ TC.inherit(TC.control.Download, TC.control.MapInfo);
                 const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
                 const fileExtension = '.' + format.split('/')[1];
                 const worldFileExtension = format === TC.Consts.mimeType.JPEG ? '.jgw' : '.pgw';
-                if (self._activeElm.querySelector(`#${self.CLASS}-image-wld-${self.id}:checked`) && !self.map.on3DView) {
+                if (self._activeElm.querySelector(`.${self.CLASS}-image-wld:checked`) && !self.map.on3DView) {
                     import('jszip').then(module => {
                         const JSZip = module.default;
                         const xScale = (extent[2] - extent[0]) / _canvas.width;
@@ -339,12 +339,12 @@ ${toFixed(yOrigin)}`);
         const label = self.div.querySelector(`label.${self.CLASS}-image-qr-label`);
         checkbox.disabled = true;
         label.classList.add(Consts.classes.LOADING);
-        const result = await TC.control.MapInfo.prototype.generateLink.call(self);
+        const result = await MapInfo.prototype.generateLink.call(self);
         label.classList.remove(Consts.classes.LOADING);
         return result;
     };
 
 })();
 
-const Download = TC.control.Download;
+TC.control.Download = Download;
 export default Download;
