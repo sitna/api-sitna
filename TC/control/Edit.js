@@ -6,17 +6,13 @@ import wrap from '../ol/ol';
 import './Draw';
 import './Modify';
 import './Measurement';
+import Geometry from '../Geometry';
 import Point from '../../SITNA/feature/Point';
 import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 import WebComponentControl from './WebComponentControl';
-import mainTemplate from '../templates/tc-ctl-edit.mjs';
-import attributesTemplate from '../templates/tc-ctl-edit-attr.mjs';
-import importTemplate from '../templates/tc-ctl-edit-import.mjs';
-import importLayerTemplate from '../templates/tc-ctl-edit-import-layer.mjs';
-import importFeatureTemplate from '../templates/tc-ctl-edit-import-feature.mjs';
 
 TC.wrap = wrap;
 
@@ -63,7 +59,6 @@ class Edit extends WebComponentControl {
         //self.feature = self.options.feature ? self.options.feature : null;
         self.callback = Util.isFunction(arguments[2]) ? arguments[2] : (self.options.callback ? self.options.callback : null);
         self.cancelActionConfirmTxt = self.options.cancelText ? self.options.eraseText : "Si continua todos los cambios se perderán. ¿Desea continuar?";
-        self.styles = self.options.styles;
         self.layersEditData = {};
         self.pointDrawControl = null;
         self.lineDrawControl = null;
@@ -87,6 +82,9 @@ class Edit extends WebComponentControl {
         if (name === 'mode') {
             self.#onModeChange();
         }
+        if (name == 'snapping') {
+            self.#onSnappingChange();
+        }
     }
 
     getClassName() {
@@ -101,11 +99,16 @@ class Edit extends WebComponentControl {
         this.toggleAttribute('stylable', !!value);
     }
 
-    #onStylableChange() {
+    async #onStylableChange() {
         const self = this;
-        if (self.map) {
-            self.render();
-        }
+        const controls = await Promise.all([
+            self.getModifyControl(),
+            self.getPointDrawControl(),
+            self.getLineDrawControl(),
+            self.getPolygonDrawControl()
+        ]);
+        const isStylable = self.stylable;
+        controls.forEach(c => c.stylable = isStylable);
     }
 
     get snapping() {
@@ -114,6 +117,14 @@ class Edit extends WebComponentControl {
 
     set snapping(value) {
         this.toggleAttribute('snapping', !!value);
+    }
+
+    async #onSnappingChange() {
+        const self = this;
+        const snapping = self.snapping;
+        (await self.getPointDrawControl()).snapping = snapping;
+        (await self.getLineDrawControl()).snapping = snapping;
+        (await self.getPolygonDrawControl()).snapping = snapping;
     }
 
     get mode() {
@@ -228,6 +239,145 @@ class Edit extends WebComponentControl {
         //    },
         //    layer: false
         //});
+
+
+        if (Array.isArray(self.options.modes) && self.options.modes.length == 1) {
+            self.mode = self.options.modes[0];
+        }
+
+        map.loaded(function () {
+            self.setLayer(self.options.layer);
+        });
+
+        map
+            .on(Consts.event.RESULTSPANELCLOSE, function (e) {
+                if (e.control === self.featureImportPanel) {
+                    self.featuresToImport = [];
+                    self.getHighlightsLayer().then(l => l.clearFeatures());
+                }
+            })
+            .on(Consts.event.LAYERREMOVE + ' ' + Consts.event.FEATURESCLEAR, function (e) {
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    self.getHighlightsLayer().then(function (hlLayer) {
+                        for (let i = self.featuresToImport.length - 1; i >= 0; i--) {
+                            const fti = self.featuresToImport[i];
+                            if (fti.layer === e.layer || (fti.original && fti.original.layer === e.layer)) {
+                                self.featuresToImport.splice(i, 1);
+                                hlLayer.removeFeature(fti);
+                            }
+                        }
+                        const li = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
+                        if (li) {
+                            li.remove();
+                        }
+                    });
+                }
+            })
+            .on(Consts.event.FEATUREREMOVE, function (e) {
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    self.getHighlightsLayer().then(function (hlLayer) {
+                        for (var i = 0, ii = self.featuresToImport.length; i < ii; i++) {
+                            const fti = self.featuresToImport[i];
+                            if (fti === e.feature || fti.original === e.feature) {
+                                self.featuresToImport.splice(i, 1);
+                                hlLayer.removeFeature(fti);
+                                const lli = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
+                                if (lli) {
+                                    const fli = lli.querySelector(`#tc-ctl-edit-import-list-cb-${e.layer.id}-${e.feature.id}`);
+                                    if (fli) {
+                                        fli.remove();
+                                    }
+                                    if (!lli.children.length) {
+                                        lli.remove();
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    });
+                }
+            })
+            .on(Consts.event.LAYERUPDATE, function (e) { // TODO: Actualizar cuando la capa ya existe en la lista
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    const layerObj = self.getAvailableFeaturesToImport().find(l => l.id === e.layer.id);
+                    if (layerObj) {
+                        self.getRenderedHtml(self.CLASS + '-import-layer', layerObj, function (html) {
+                            const list = self
+                                .featureImportPanel
+                                .getInfoContainer()
+                                .querySelector(`.${self.CLASS}-import-list .tc-layers`);
+                            if (!list.querySelector(`li[data-layer-id="${e.layer.id}"]`)) {
+                                list.insertAdjacentHTML('beforeend', html);
+                            }
+                        });
+                    }
+                }
+            })
+            .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    const layer = e.layer;
+                    const features = (e.feature ? [e.feature] : e.features).filter(f => self.isFeatureAllowed(f));
+                    if (features.length) {
+                        self.displayLayerToImport({
+                            id: layer.id,
+                            title: layer.title,
+                            features: features
+                        });
+                    }
+                }
+            })
+            .on(Consts.event.CONTROLACTIVATE, function (e) {
+                switch (e.control) {
+                    case self.pointDrawControl:
+                        self.#measurementControl.setMode(Consts.geom.POINT);
+                        break;
+                    case self.lineDrawControl:
+                        self.#measurementControl.setMode(Consts.geom.POLYLINE);
+                        break;
+                    case self.polygonDrawControl:
+                        self.#measurementControl.setMode(Consts.geom.POLYGON);
+                        break;
+                    default:
+                        self.#measurementControl.clear();
+                        break;
+                }
+            });
+        return self;
+    }
+
+    #getModeTab(mode) {
+        const self = this;
+        return self.querySelector(`sitna-tab[for="${self.id}-mode-${mode}"]`);
+    }
+
+
+    async loadTemplates() {
+        const self = this;
+
+        const mainTemplatePromise = import('../templates/tc-ctl-edit.mjs');
+        const attributesTemplatePromise = import('../templates/tc-ctl-edit-attr.mjs');
+        const importTemplatePromise = import('../templates/tc-ctl-edit-import.mjs');
+        const importLayerTemplatePromise = import('../templates/tc-ctl-edit-import-layer.mjs');
+        const importFeatureTemplatePromise = import('../templates/tc-ctl-edit-import-feature.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
+        template[self.CLASS + '-import'] = (await importTemplatePromise).default;
+        template[self.CLASS + '-import-layer'] = (await importLayerTemplatePromise).default;
+        template[self.CLASS + '-import-feature'] = (await importFeatureTemplatePromise).default;
+        self.template = template;
+    }
+
+    async render(callback) {
+        const self = this;
+        await self._set1stRenderPromise(super.renderData.call(self, {
+            controlId: self.id,
+            stylable: self.stylable,
+            snapping: self.snapping,
+            otherToolsIncluded: self.otherToolsIncluded
+        }));
+
         const controls = await Promise.all([
             self.getPointDrawControl(),
             self.getLineDrawControl(),
@@ -241,24 +391,30 @@ class Edit extends WebComponentControl {
         self.pointDrawControl.id = self.getUID();
         self.lineDrawControl.id = self.getUID();
         self.polygonDrawControl.id = self.getUID();
+        self.pointDrawControl.snapping = self.snapping;
+        self.lineDrawControl.snapping = self.snapping;
+        self.polygonDrawControl.snapping = self.snapping;
         //self.cutDrawControl = controls[3];
         self.modifyControl = controls[3];
         self.modifyControl.id = self.getUID();
 
         const addElevation = async function (feature) {
-            if (map.options.elevation && feature.getGeometryStride() > 2) {
-                const pointsWithoutElevation = feature.getCoordsArray().filter(c => !c[2]);
-                if (pointsWithoutElevation.length) {
-                    const elevationTool = await self.map.getElevationTool();
-                    for (var i = 0; i < pointsWithoutElevation.length; i++) {
-                        const point = pointsWithoutElevation[i];
+            if (self.map.options.elevation && feature.getGeometryStride() > 2) {
+                let changed = false;
+                let elevationTool;
+                for (const point of Geometry.iterateCoordinates(feature.geometry)) {
+                    if (!point[2]) {
+                        elevationTool = elevationTool || await self.map.getElevationTool();
                         const newCoords = await elevationTool.getElevation({
                             coordinates: [point]
                         });
                         if (newCoords?.length) {
+                            changed = true;
                             point[2] = newCoords[0][2];
                         }
                     }
+                }
+                if (changed) {
                     feature.setCoordinates(feature.geometry);
                 }
             }
@@ -513,189 +669,53 @@ class Edit extends WebComponentControl {
             }
         };
 
-        if (Array.isArray(self.options.modes) && self.options.modes.length == 1) {
-            self.mode = self.options.modes[0];
-        }
 
-        map.loaded(function () {
-            self.setLayer(self.options.layer);
-        });
-
-        map
-            .on(Consts.event.RESULTSPANELCLOSE, function (e) {
-                if (e.control === self.featureImportPanel) {
-                    self.featuresToImport = [];
-                    self.getHighlightsLayer().then(l => l.clearFeatures());
-                }
-            })
-            .on(Consts.event.LAYERREMOVE + ' ' + Consts.event.FEATURESCLEAR, function (e) {
-                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
-                    self.getHighlightsLayer().then(function (hlLayer) {
-                        for (let i = self.featuresToImport.length - 1; i >= 0; i--) {
-                            const fti = self.featuresToImport[i];
-                            if (fti.layer === e.layer || (fti.original && fti.original.layer === e.layer)) {
-                                self.featuresToImport.splice(i, 1);
-                                hlLayer.removeFeature(fti);
-                            }
-                        }
-                        const li = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
-                        if (li) {
-                            li.remove();
-                        }
-                    });
-                }
-            })
-            .on(Consts.event.FEATUREREMOVE, function (e) {
-                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
-                    self.getHighlightsLayer().then(function (hlLayer) {
-                        for (var i = 0, ii = self.featuresToImport.length; i < ii; i++) {
-                            const fti = self.featuresToImport[i];
-                            if (fti === e.feature || fti.original === e.feature) {
-                                self.featuresToImport.splice(i, 1);
-                                hlLayer.removeFeature(fti);
-                                const lli = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
-                                if (lli) {
-                                    const fli = lli.querySelector(`#tc-ctl-edit-import-list-cb-${e.layer.id}-${e.feature.id}`);
-                                    if (fli) {
-                                        fli.remove();
-                                    }
-                                    if (!lli.children.length) {
-                                        lli.remove();
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    });
-                }
-            })
-            .on(Consts.event.LAYERUPDATE, function (e) { // TODO: Actualizar cuando la capa ya existe en la lista
-                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
-                    const layerObj = self.getAvailableFeaturesToImport().filter(l => l.id === e.layer.id)[0];
-                    if (layerObj) {
-                        self.getRenderedHtml(self.CLASS + '-import-layer', layerObj, function (html) {
-                            const list = self
-                                .featureImportPanel
-                                .getInfoContainer()
-                                .querySelector(`.${self.CLASS}-import-list .tc-layers`);
-                            if (!list.querySelector(`li[data-layer-id="${e.layer.id}"]`)) {
-                                list.insertAdjacentHTML('beforeend', html);
-                            }
-                        });
-                    }
-                }
-            })
-            .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
-                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
-                    const layer = e.layer;
-                    const features = (e.feature ? [e.feature] : e.features).filter(f => self.isFeatureAllowed(f));
-                    if (features.length) {
-                        self.displayLayerToImport({
-                            id: layer.id,
-                            title: layer.title,
-                            features: features
-                        });
-                    }
-                }
-            })
-            .on(Consts.event.CONTROLACTIVATE, function (e) {
-                switch (e.control) {
-                    case self.pointDrawControl:
-                        self.#measurementControl.setMode(Consts.geom.POINT);
-                        break;
-                    case self.lineDrawControl:
-                        self.#measurementControl.setMode(Consts.geom.POLYLINE);
-                        break;
-                    case self.polygonDrawControl:
-                        self.#measurementControl.setMode(Consts.geom.POLYGON);
-                        break;
-                    default:
-                        self.#measurementControl.clear();
-                        break;
-                }
-            });
-        return self;
-    }
-
-    #getModeTab(mode) {
-        const self = this;
-        return self.querySelector(`sitna-tab[for="${self.id}-mode-${mode}"]`);
-    }
-
-
-    async loadTemplates() {
-        const self = this;
-
-        const mainTemplatePromise = import('../templates/tc-ctl-edit.mjs');
-        const attributesTemplatePromise = import('../templates/tc-ctl-edit-attr.mjs');
-        const importTemplatePromise = import('../templates/tc-ctl-edit-import.mjs');
-        const importLayerTemplatePromise = import('../templates/tc-ctl-edit-import-layer.mjs');
-        const importFeatureTemplatePromise = import('../templates/tc-ctl-edit-import-feature.mjs');
-
-        const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
-        template[self.CLASS + '-import'] = (await importTemplatePromise).default;
-        template[self.CLASS + '-import-layer'] = (await importLayerTemplatePromise).default;
-        template[self.CLASS + '-import-feature'] = (await importFeatureTemplatePromise).default;
-        self.template = template;
-    }
-
-    render(callback) {
-        const self = this;
-        return self._set1stRenderPromise(super.renderData.call(self, {
-            controlId: self.id,
-            stylable: self.stylable,
-            snapping: self.snapping,
-            otherToolsIncluded: self.otherToolsIncluded
-        }, function () {
-
-            //control de renderizado enfunción del modo de edicion
-            if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
-                for (var m in Edit.mode) {
-                    if (typeof m === 'string' && self.options.modes.indexOf(Edit.mode[m]) < 0) {
-                        const tab = self.#getModeTab(Edit.mode[m]);
-                        const div = tab.target;
-                        div.parentElement.removeChild(div);
-                        tab.parentElement.removeChild(tab);
-                    }
-                }
-                if (self.options.modes.length === 1) {
-                    var mode = self.options.modes[0];
-                    const tab = self.#getModeTab(mode);
+        //control de renderizado enfunción del modo de edicion
+        if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
+            for (var m in Edit.mode) {
+                if (typeof m === 'string' && self.options.modes.indexOf(Edit.mode[m]) < 0) {
+                    const tab = self.#getModeTab(Edit.mode[m]);
+                    const div = tab.target;
+                    div.parentElement.removeChild(div);
                     tab.parentElement.removeChild(tab);
                 }
             }
-
-            self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
-                tab.callback = function () {
-                    const targetId = this.target?.getAttribute('id');
-                    if (targetId) {
-                        const newMode = targetId.substr(targetId.lastIndexOf('-') + 1);
-                        self.mode = this.selected ? newMode : null;
-                    }
-                }
-            });
-
-            self.querySelector(self.#classSelector + '-btn-import').addEventListener(Consts.event.CLICK, function (_e) {
-                self.showFeatureImportPanel();
-            }, { passive: true });
-
-            self.querySelector(self.#classSelector + '-btn-dl').addEventListener(Consts.event.CLICK, function (_e) {
-                self.getDownloadDialog().then(function (dialog) {
-                    const options = {
-                        title: self.getLocaleString('download'),
-                        fileName: self.layer.id.toLowerCase().replace(' ', '_') + '_' + Util.getFormattedDate(new Date().toString(), true),
-                        elevation: self.options.downloadElevation
-                    };
-                    dialog.open(self.layer.features, options);
-                });
-            }, { passive: true });
-
-            if (Util.isFunction(callback)) {
-                callback();
+            if (self.options.modes.length === 1) {
+                var mode = self.options.modes[0];
+                const tab = self.#getModeTab(mode);
+                tab.parentElement.removeChild(tab);
             }
-        }));
+        }
+
+        self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
+            tab.callback = function () {
+                const targetId = this.target?.getAttribute('id');
+                if (targetId) {
+                    const newMode = targetId.substr(targetId.lastIndexOf('-') + 1);
+                    self.mode = this.selected ? newMode : null;
+                }
+            }
+        });
+
+        self.querySelector(self.#classSelector + '-btn-import').addEventListener(Consts.event.CLICK, function (_e) {
+            self.showFeatureImportPanel();
+        }, { passive: true });
+
+        self.querySelector(self.#classSelector + '-btn-dl').addEventListener(Consts.event.CLICK, function (_e) {
+            self.getDownloadDialog().then(function (dialog) {
+                const options = {
+                    title: self.getLocaleString('download'),
+                    fileName: self.layer.id.toLowerCase().replace(' ', '_') + '_' + Util.getFormattedDate(new Date().toString(), true),
+                    elevation: self.options.downloadElevation
+                };
+                dialog.open(self.layer.features, options);
+            });
+        }, { passive: true });
+
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+        return self;
     }
 
     getGeometryType(geometryType) {
