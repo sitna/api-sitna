@@ -123,6 +123,19 @@
                     return [];
             }
         },
+        // Función generator que itera por los puntos de una geometría
+        iterateCoordinates: function* iterateCoords(geometry) {
+            if (Array.isArray(geometry)) {
+                if (Geometry.isPoint(geometry)) {
+                    yield geometry;
+                }
+                else {
+                    for (var i = 0, ii = geometry.length; i < ii; i++) {
+                        yield* iterateCoords(geometry[i]);
+                    }
+                }
+            }
+        },
         intersects: function (geom1, geom2) {
             const flatIntersects = function (coords, geom) {
                 for (var i = 0, ii = coords.length; i < ii; i++) {
