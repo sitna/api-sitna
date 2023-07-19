@@ -106,9 +106,6 @@ class WebComponentControl extends HTMLElement {
         if (Object.prototype.hasOwnProperty.call(self.options, name)) {
             self[name] = self.options[name];
         }
-        else {
-            self[name] = self[name];
-        }
         return self;
     }
 
@@ -276,6 +273,10 @@ class WebComponentControl extends HTMLElement {
                     self.map.removeLayer(layer);
                 }
             });
+            const idx = self.map.controls.indexOf(self);
+            if (idx >= 0) {
+                self.map.controls.splice(idx, 1);
+            }
             self.map = null;
         }
         return self;
