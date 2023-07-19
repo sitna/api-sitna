@@ -3,6 +3,8 @@ import Consts from '../Consts';
 import TOC from './TOC';
 import Button from '../../SITNA/ui/Button';
 import '../../SITNA/ui/Toggle';
+import MapContents from './MapContents';
+import Vector from '../../SITNA/layer/Vector';
 import itemToolContainer from './itemToolContainer';
 
 TC.control = TC.control || {};
@@ -43,7 +45,7 @@ class WorkLayerManager extends TOC {
                 let button = container.querySelector('sitna-button.' + className);
                 if (!button) {
                     const layer = self.map.getLayer(layerId);
-                    if (TC.layer.Vector && layer instanceof TC.layer.Vector) {
+                    if (layer instanceof Vector) {
                         const text = self.getLocaleString('downloadFeatures');
                         button = new Button();
                         button.variant = Button.variant.MINIMAL;
@@ -177,6 +179,10 @@ class WorkLayerManager extends TOC {
     async register(map) {
         const self = this;
         await super.register(map);
+
+        if (self.options.fileEditing) {
+            await map.addControl('fileEdit', { caller: self, snapping: true });
+        }
 
         map.loaded(function () {
             self.updateScale();
@@ -320,7 +326,7 @@ class WorkLayerManager extends TOC {
         };
 
         if (!layer.isBase && !layer.options.stealth) {
-            TC.control.MapContents.prototype.updateLayerTree.call(self, layer);
+            MapContents.prototype.updateLayerTree.call(self, layer);
 
             var alreadyExists = false;
             for (var i = 0, len = self.layers.length; i < len; i++) {
@@ -629,4 +635,5 @@ class WorkLayerManager extends TOC {
 
 TC.mix(WorkLayerManager, itemToolContainer);
 
+TC.control.WorkLayerManager = WorkLayerManager;
 export default WorkLayerManager;
