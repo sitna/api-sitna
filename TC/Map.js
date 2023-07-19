@@ -6,71 +6,70 @@ import Cfg from './Cfg';
 import Util from './Util';
 import EventTarget from './EventTarget';
 import i18n from './i18n';
-import Control from './Control';
 import Layer from '../SITNA/layer/Layer';
 import Raster from '../SITNA/layer/Raster';
 import Vector from '../SITNA/layer/Vector';
 import wrap from './ol/ol';
-import Attribution from './control/Attribution';
-import BasemapSelector from './control/BasemapSelector';
-import CacheBuilder from './control/CacheBuilder';
-import Click from './control/Click';
-import Container from './control/Container';
-import ControlContainer from './control/ControlContainer';
-import Coordinates from './control/Coordinates';
-import DataLoader from './control/DataLoader';
-import Download from './control/Download';
-import Draw from './control/Draw';
-import DrawMeasureModify from './control/DrawMeasureModify';
-import Edit from './control/Edit';
-import Elevation from './control/Elevation';
-import ExternalWMS from './control/ExternalWMS';
-import FeatureDownloadDialog from './control/FeatureDownloadDialog';
-import FeatureInfo from './control/FeatureInfo';
-import FeatureInfoCommons from './control/FeatureInfoCommons';
-import FeatureTools from './control/FeatureTools';
-import FileEdit from './control/FileEdit';
-import FileImport from './control/FileImport';
-import FullScreen from './control/FullScreen';
-import Geolocation from './control/Geolocation';
-import GeometryFeatureInfo from './control/GeometryFeatureInfo';
-import infoShare from './control/infoShare';
-import LanguageSelector from './control/LanguageSelector';
-import LayerCatalog from './control/LayerCatalog';
-import Legend from './control/Legend';
-import LineFeatureInfo from './control/LineFeatureInfo';
-import ListTOC from './control/ListTOC';
-import LoadingIndicator from './control/LoadingIndicator';
-import MapContents from './control/MapContents';
-import MapInfo from './control/MapInfo';
-import Measure from './control/Measure';
-import Measurement from './control/Measurement';
-import Modify from './control/Modify';
-import MultiFeatureInfo from './control/MultiFeatureInfo';
-import NavBar from './control/NavBar';
-import NavBarHome from './control/NavBarHome';
-import OfflineMapMaker from './control/OfflineMapMaker';
-import OverviewMap from './control/OverviewMap';
-import PolygonFeatureInfo from './control/PolygonFeatureInfo';
-import Popup from './control/Popup';
-import Print from './control/Print';
-import PrintMap from './control/PrintMap';
-import ProjectionSelector from './control/ProjectionSelector';
-import ResultsPanel from './control/ResultsPanel';
-import Scale from './control/Scale';
-import ScaleBar from './control/ScaleBar';
-import ScaleSelector from './control/ScaleSelector';
-import Search from './control/Search';
-import SelectContainer from './control/SelectContainer';
-import Share from './control/Share';
-import StreetView from './control/StreetView';
-import SWCacheClient from './control/SWCacheClient';
-import TabContainer from './control/TabContainer';
-import ThreeD from './control/ThreeD';
-import TOC from './control/TOC';
-import WFSEdit from './control/WFSEdit';
-import WFSQuery from './control/WFSQuery';
-import WorkLayerManager from './control/WorkLayerManager';
+import './control/Attribution';
+import './control/BasemapSelector';
+import './control/CacheBuilder';
+import './control/Click';
+import './control/Container';
+import './control/ControlContainer';
+import './control/Coordinates';
+import './control/DataLoader';
+import './control/Download';
+import './control/Draw';
+import './control/DrawMeasureModify';
+import './control/Edit';
+import './control/Elevation';
+import './control/ExternalWMS';
+import './control/FeatureDownloadDialog';
+import './control/FeatureInfo';
+import './control/FeatureInfoCommons';
+import './control/FeatureTools';
+import './control/FileEdit';
+import './control/FileImport';
+import './control/FullScreen';
+import './control/Geolocation';
+import './control/GeometryFeatureInfo';
+import './control/infoShare';
+import './control/LanguageSelector';
+import './control/LayerCatalog';
+import './control/Legend';
+import './control/LineFeatureInfo';
+import './control/ListTOC';
+import './control/LoadingIndicator';
+import './control/MapContents';
+import './control/MapInfo';
+import './control/Measure';
+import './control/Measurement';
+import './control/Modify';
+import './control/MultiFeatureInfo';
+import './control/NavBar';
+import './control/NavBarHome';
+import './control/OfflineMapMaker';
+import './control/OverviewMap';
+import './control/PolygonFeatureInfo';
+import './control/Popup';
+import './control/Print';
+import './control/PrintMap';
+import './control/ProjectionSelector';
+import './control/ResultsPanel';
+import './control/Scale';
+import './control/ScaleBar';
+import './control/ScaleSelector';
+import './control/Search';
+import './control/SelectContainer';
+import './control/Share';
+import './control/StreetView';
+import './control/SWCacheClient';
+import './control/TabContainer';
+import './control/ThreeD';
+import './control/TOC';
+import './control/WFSEdit';
+import './control/WFSQuery';
+import './control/WorkLayerManager';
 import { JL } from 'jsnlog';
 import Point from '../SITNA/feature/Point';
 import MultiPoint from '../SITNA/feature/MultiPoint';
@@ -84,72 +83,8 @@ import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
 
 TC.EventTarget = EventTarget;
 TC.i18n = TC.i18n || i18n;
-TC.Control = Control;
 TC.wrap = wrap;
 TC.control = TC.control || {};
-TC.control.Attribution = Attribution;
-TC.control.BasemapSelector = BasemapSelector;
-TC.control.CacheBuilder = CacheBuilder;
-TC.control.Click = Click;
-TC.control.Container = Container;
-TC.control.ControlContainer = ControlContainer;
-TC.control.Coordinates = Coordinates;
-TC.control.DataLoader = DataLoader;
-TC.control.Download = Download;
-TC.control.Draw = Draw;
-TC.control.DrawMeasureModify = DrawMeasureModify;
-TC.control.Edit = Edit;
-TC.control.Elevation = Elevation;
-TC.control.ExternalWMS = ExternalWMS;
-TC.control.FeatureDownloadDialog = FeatureDownloadDialog;
-TC.control.FeatureInfo = FeatureInfo;
-TC.control.FeatureInfoCommons = FeatureInfoCommons;
-TC.control.FeatureTools = FeatureTools;
-TC.control.FileEdit = FileEdit;
-TC.control.FileImport = FileImport;
-TC.control.FullScreen = FullScreen;
-TC.control.Geolocation = Geolocation;
-TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
-TC.control.infoShare = infoShare;
-TC.control.LanguageSelector = LanguageSelector;
-TC.control.LayerCatalog = LayerCatalog;
-TC.control.Legend = Legend;
-TC.control.LineFeatureInfo = LineFeatureInfo;
-TC.control.ListTOC = ListTOC;
-TC.control.LoadingIndicator = LoadingIndicator;
-TC.control.MapContents = MapContents;
-TC.control.MapInfo = MapInfo;
-TC.control.Measure = Measure;
-TC.control.Measurement = Measurement;
-TC.control.Modify = Modify;
-TC.control.MultiFeatureInfo = MultiFeatureInfo;
-TC.control.NavBar = NavBar;
-TC.control.NavBarHome = NavBarHome;
-TC.control.OfflineMapMaker = OfflineMapMaker;
-TC.control.OverviewMap = OverviewMap;
-TC.control.PolygonFeatureInfo = PolygonFeatureInfo;
-TC.control.Popup = Popup;
-TC.control.Print = Print;
-TC.control.PrintMap = PrintMap;
-TC.control.ProjectionSelector = ProjectionSelector;
-TC.control.ResultsPanel = ResultsPanel;
-TC.control.Scale = Scale;
-TC.control.ScaleBar = ScaleBar;
-TC.control.ScaleSelector = ScaleSelector;
-TC.control.Search = Search;
-TC.control.SelectContainer = SelectContainer;
-TC.control.Share = Share
-TC.control.StreetView = StreetView;
-TC.control.SWCacheClient = SWCacheClient;
-TC.control.TabContainer = TabContainer;
-TC.control.ThreeD = ThreeD;
-TC.control.TOC = TOC;
-TC.control.WFSEdit = WFSEdit;
-TC.control.WFSQuery = WFSQuery;
-TC.control.WorkLayerManager = WorkLayerManager;
-TC.layer = TC.layer || {};
-TC.layer.Raster = Raster;
-TC.layer.Vector = Vector;
 
 TC.inherit = function (childCtor, parentCtor) {
     childCtor.prototype = Object.create(parentCtor.prototype);
@@ -632,7 +567,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                     lyrCfg.availableNames = stateLayer.a;
                                 promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
                                     layer.setVisibility(this.v);
-                                    layer.setOpacity(this.o, true);                                    
+                                    layer.setOpacity(this.o, true);
                                 }.bind(stateLayer)));
                             }
                         }
@@ -1189,18 +1124,18 @@ TC.mix = function (targetCtor, ...mixins) {
                         else {
                             lyrCfg.type = Consts.layerType.VECTOR;
                             lyrCfg.file = stateLayer.fn;
-                        }                        
+                        }
                         return lyrCfg;
                     })).concat(
                         //Despues las capas de configuración que no estén en el estado
                         self.options.workLayers.filter(function (workLayer) {
                             return !self.state || !self.state.layers || !self.state.layers.some((stateLayer) => workLayer.url === stateLayer.u && workLayer.id === stateLayer.i);
                         })
-                        .map(function (workLayer) {
-                            return TC.Util.extend({}, workLayer, { map: self });
-                        }))
-                    //por ultimo recorremos el Array añadiendo las capas al mapa
-                    .forEach((lyrCfg) => {
+                            .map(function (workLayer) {
+                                return TC.Util.extend({}, workLayer, { map: self });
+                            }))
+                        //por ultimo recorremos el Array añadiendo las capas al mapa
+                        .forEach((lyrCfg) => {
                             self.addLayer(lyrCfg).then(function (layer) {
                                 if (layer.wrap.getRootLayerNode) {
                                     var rootNode = layer.wrap.getRootLayerNode();
@@ -1221,9 +1156,9 @@ TC.mix = function (targetCtor, ...mixins) {
 
                                     //URI:Si que hacemos ya que si falla el getCapabilities no hay CRS que valga
                                     self.toast(error.message, { type: Consts.msgType.ERROR });
-                            });
+                                });
                         }
-                    );
+                        );
                     Promise.all(ctlPromises).finally(function () {
                         // 13/03/2020 si tenemos estado de controles, pasamos a establecer los estados
                         if (self.state && self.state.ctl) {
@@ -1860,20 +1795,20 @@ TC.mix = function (targetCtor, ...mixins) {
 
             var lyr;
             if (typeof layer === 'string') {
-                lyr = new TC.layer.Raster(TC.Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
+                lyr = new Raster(TC.Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
             }
             else {
-                if (layer instanceof TC.Layer) {
+                if (layer instanceof Layer) {
                     lyr = layer;
                     lyr.map = self;
                 }
                 else {
                     layer.map = self;
                     if (layer.type === Consts.layerType.VECTOR || layer.type === Consts.layerType.KML || layer.type === Consts.layerType.WFS) {
-                        lyr = new TC.layer.Vector(layer);
+                        lyr = new Vector(layer);
                     }
                     else {
-                        lyr = new TC.layer.Raster(layer);
+                        lyr = new Raster(layer);
                     }
                 }
             }
@@ -2373,12 +2308,16 @@ TC.mix = function (targetCtor, ...mixins) {
      * @return {array}
      */
     mapProto.getControlsByClass = function (classObj) {
-        var self = this;
-        var result = [];
-        var obj = classObj;
+        const self = this;
+        let result = [];
+        let obj = classObj;
         if (typeof classObj === 'string') {
+            let classStr = classObj;
+            if (classStr.indexOf('.') < 0) {
+                classStr = 'TC.control.' + classStr;
+            }
             obj = window;
-            var namespaces = classObj.split('.');
+            const namespaces = classStr.split('.');
             for (var i = 0; i < namespaces.length; i++) {
                 obj = obj[namespaces[i]];
                 if (!obj) {
@@ -2998,7 +2937,7 @@ TC.mix = function (targetCtor, ...mixins) {
         const self = this;
         self
             .workLayers
-            .filter(wl => TC.layer.Vector && wl instanceof TC.layer.Vector)
+            .filter(wl => wl instanceof Vector)
             .map(function (layer) {
                 return {
                     layer: layer,
@@ -3201,7 +3140,7 @@ TC.mix = function (targetCtor, ...mixins) {
             await TC.loadJS(!window.geopackage, TC.apiLocation + "lib/geopackagejs/dist/geopackage-browser.js");
             const geopackage = window.geopackage;
             const wkx = (await import('wkx')).default;
-            //Promise.all([import("../lib/geopackagejs/dist/geopackage-browser"), import("wkx/dist/wkx")]).then(async function (responses) {
+            //Promise.all([import("../lib/geopackagejs/dist/geopackage-browser"), import("wkx/dist/wkx")]).then(async function (responses) {                                    
             const geopackageAPI = geopackage.GeoPackageAPI;
             const FeatureColumn = geopackage.FeatureColumn;
             const GeometryColumns = geopackage.GeometryColumns;
@@ -4045,6 +3984,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
         self.recentFiles.unshift(newEntry);
         await self.storeRecentFiles(self.recentFiles);
+        self.trigger(Consts.event.RECENTFILEADD, { file: newEntry });
         recentFileEntrySemaphore.release();
     };
 
