@@ -1,25 +1,22 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
-import FileImport from './FileImport';
+import WebComponentControl from './WebComponentControl';
 import Edit from './Edit';
 import Geometry from '../Geometry';
 import Util from '../Util';
-import Vector from '../../SITNA/layer/Vector';
 import filter from '../filter';
 import Toggle from '../../SITNA/ui/Toggle';
 import Point from '../../SITNA/feature/Point';
-import Marker from '../../SITNA/feature/Marker';
+import '../../SITNA/feature/Marker';
 import Polyline from '../../SITNA/feature/Polyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import MultiMarker from '../../SITNA/feature/MultiMarker';
+import '../../SITNA/feature/Polygon';
+import '../../SITNA/feature/MultiPoint';
+import '../../SITNA/feature/MultiMarker';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import '../../SITNA/feature/MultiPolygon';
 
 TC.control = TC.control || {};
 TC.Geometry = Geometry;
-TC.layer = TC.layer || {};
-TC.layer.Vector = Vector;
 TC.filter = filter;
 
 const editedLayers = new Set();
@@ -32,50 +29,76 @@ window.addEventListener('beforeunload', function onBeforeunload(e) {
 
 const elementName = 'sitna-file-edit';
 
-class FileEdit extends FileImport {
+class FileEdit extends WebComponentControl {
 
     TITLE_SEPARATOR = ' › ';
-    #initialStyles;
-    #previousStyles = new WeakMap();
 
     constructor() {
         super(...arguments);
 
         const self = this;
+        self.initProperty('snapping');
 
         self.layer = null;
-        self.#initialStyles = self.options.styles || {
-            point: {
-                fillColor: "#0000aa",
-                fillOpacity: 0.1,
-                strokeColor: "#0000aa",
-                strokeWidth: 2,
-                strokeOpacity: 1,
-                radius: 6
-            },
-            line: {
-                strokeColor: "#0000aa",
-                strokeWidth: 2,
-                strokeOpacity: 1
-            },
-            polygon: {
-                fillColor: "#0000aa",
-                fillOpacity: 0.1,
-                strokeColor: "#0000aa",
-                strokeWidth: 2,
-                strokeOpacity: 1
-            }
-        };
-        self.styles = self.#initialStyles;
+    }
+
+    static get observedAttributes() {
+        return ['stylable'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) {
+            return;
+        }
+        const self = this;
+        if (name === 'stylable') {
+            self.#onStylableChange();
+        }
+        if (name == 'snapping') {
+            self.#onSnappingChange();
+        }
     }
 
     getClassName() {
         return 'tc-ctl-fedit';
     }
 
+    get stylable() {
+        return this.hasAttribute('stylable');
+    }
+
+    set stylable(value) {
+        this.toggleAttribute('stylable', !!value);
+    }
+
+    async #onStylableChange() {
+        const self = this;
+        const editControl = await self.getEditControl();
+        editControl.stylable = self.stylable;
+    }
+
+    get snapping() {
+        return this.hasAttribute('snapping');
+    }
+
+    set snapping(value) {
+        this.toggleAttribute('snapping', !!value);
+    }
+
+    async #onSnappingChange() {
+        const self = this;
+        const snapping = self.snapping;
+        (await self.getEditControl()).snapping = snapping;
+    }
+
     async register(map) {
         const self = this;
-        const result = await super.register(map);
+        const result = await super.register.call(self, map);
+
+        self.editControl = await self.getEditControl();
+        if (self.editControl) {
+            self.editControl.styles = self.options.styles;
+        }
 
         map
             .on(Consts.event.RESULTSPANELCLOSE, function (e) {
@@ -121,23 +144,42 @@ class FileEdit extends FileImport {
             });
         });
 
-        // Sacamos el carácter unicode de la variable CSS
-        let editIconText;
-        const editIconUcodeString = getComputedStyle(document.querySelector(':root'))
-            .getPropertyValue('--icon-edit');
-        const match = editIconUcodeString.match(/\\([a-f0-9]+)/i);
-        if (match) {
-            editIconText = String.fromCharCode(parseInt(match[1], 16));
-        }
-        else {
-            editIconText = editIconUcodeString.replace(/['"]/g, '');
-        }
-
         map.ready(function () {
-            map.getControlsByClass(TC.control.WorkLayerManager).forEach(function (ctl) {
+            if (self.options.caller) {
+                self.#registerTool(self.options.caller);
+            }
+            else {
+                map.getControlsByClass(TC.control.WorkLayerManager)
+                    .concat(map.getControlsByClass(TC.control.Geolocation))
+                    .forEach(function (ctl) {
+                        self.#registerTool(ctl);
+                    });
+            }
+        });
+        return result;
+    }
+
+    #registerTool(ctl) {
+        const self = this;
+        if (ctl.options.fileEditing) {
+
+            // Sacamos el carácter unicode de la variable CSS
+            let editIconText;
+            const editIconUcodeString = getComputedStyle(document.querySelector(':root'))
+                .getPropertyValue('--icon-edit');
+            const match = editIconUcodeString.match(/\\([a-f0-9]+)/i);
+            if (match) {
+                editIconText = String.fromCharCode(parseInt(match[1], 16));
+            }
+            else {
+                editIconText = editIconUcodeString.replace(/['"]/g, '');
+            }
+
+
+            if (ctl instanceof TC.control.WorkLayerManager) {
                 ctl.addItemTool({
                     renderFn: function (container, layerId) {
-                        const layer = map.getLayer(layerId);
+                        const layer = self.map.getLayer(layerId);
                         if (layer.type !== Consts.layerType.VECTOR) {
                             return;
                         }
@@ -156,14 +198,14 @@ class FileEdit extends FileImport {
                     updateEvents: [Consts.event.CONTROLACTIVATE, Consts.event.CONTROLDEACTIVATE],
                     updateFn: function (_e) {
                         const checkbox = this;
-                        const layer = map.getLayer(checkbox.dataset.layerId);
+                        const layer = self.map.getLayer(checkbox.dataset.layerId);
                         self.getLayer().then(function (ownLayer) {
                             checkbox.checked = ownLayer === layer;
                         });
                     },
                     actionFn: function () {
                         const checkbox = this;
-                        const layer = map.getLayer(checkbox.dataset.layerId);
+                        const layer = self.map.getLayer(checkbox.dataset.layerId);
                         if (!layer.isRaster()) {
                             self.closeEditSession();
                             if (checkbox.checked) {
@@ -174,35 +216,39 @@ class FileEdit extends FileImport {
                         }
                     }
                 });
-            });
-            map.getControlsByClass(TC.control.Geolocation).forEach(function (ctl) {
-
+            }
+            else if (ctl instanceof TC.control.Geolocation) {
+                const editCtlPromise = self.getEditControl();
                 editCtlPromise.then(function (editCtl) {
                     editCtl.on(Consts.event.DRAWEND + ' ' + Consts.event.FEATUREMODIFY, function (e) {
                         if (e.feature.layer === ctl.trackLayer) {
                             if (e.feature instanceof Polyline || e.feature instanceof MultiPolyline) {
                                 ctl.updateEndMarkers();
+                                const selectedTrackItem = ctl.getSelectedTrackItem();
+                                if (selectedTrackItem) {
+                                    ctl.displayTrackProfile(selectedTrackItem, { forceRefresh: true });
+                                }
                             }
-                            ctl.getElevationTool().then(function (elevationTool) {
-                                const endFn = function () {
-                                    if (e.feature instanceof Polyline || e.feature instanceof MultiPolyline) {
-                                        const selectedTrackItem = ctl.getSelectedTrackItem();
-                                        if (selectedTrackItem) {
-                                            ctl.updateEndMarkers();
-                                            ctl.displayTrackProfile(selectedTrackItem, { forceRefresh: true });
-                                        }
-                                    }
-                                };
-                                if (elevationTool) {
-                                    elevationTool.setGeometry({
-                                        features: [e.feature]
-                                    }).then(endFn);
-                                }
-                                else {
-                                    endFn();
-                                }
-                            });
                         }
+                    });
+                    editCtl.on(Consts.event.DRAWEND, function (e) {
+                        if (e.feature.layer === ctl.trackLayer) {
+                            if (e.feature instanceof Point) {
+                                e.feature.setData({ name: '' }); // Atributo necesario en un waypoint
+                                const style = e.feature.getStyle() || {};
+                                style.label = ctl.trackLayer.styles?.point?.label;
+                                e.feature.setStyle(style);
+                            }
+                        }
+                    });
+                    editCtl.getLineDrawControl().then(function (lineCtl) {
+                        lineCtl.on(Consts.event.POINT + ' ' + Consts.event.DRAWUNDO +
+                            ' ' + Consts.event.DRAWREDO + ' ' + Consts.event.DRAWCANCEL, function (_e) {
+                                ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
+                                    forceRefresh: true,
+                                    feature: lineCtl.wrap.getSketch()
+                                });
+                            });
                     });
                 });
 
@@ -222,7 +268,7 @@ class FileEdit extends FileImport {
                         }
                         return checkbox;
                     },
-                    updateEvents: [Consts.event.CONTROLACTIVATE, Consts.event.CONTROLDEACTIVATE],
+                    updateEvents: [Consts.event.CONTROLACTIVATE, Consts.event.CONTROLDEACTIVATE, , Consts.event.LAYERUPDATE],
                     updateFn: function (_e) {
                         const checkbox = this;
                         self.getLayer().then(function (ownLayer) {
@@ -235,11 +281,12 @@ class FileEdit extends FileImport {
                             self.closeEditSession();
                             await self.setLayer(ctl.trackLayer);
                             self.openEditSession({
+                                stylable: false,
                                 extensibleSketch: true, // Permitimos prolongar un track
                                 modes: [
-                                    TC.control.Edit.mode.MODIFY,
-                                    TC.control.Edit.mode.ADDPOINT,
-                                    TC.control.Edit.mode.ADDLINE
+                                    Edit.mode.MODIFY,
+                                    Edit.mode.ADDPOINT,
+                                    Edit.mode.ADDLINE
                                 ]
                             });
                         };
@@ -270,75 +317,73 @@ class FileEdit extends FileImport {
                                 ctl.trackLayer.features.some(f => f instanceof Polyline || f instanceof MultiPolyline)) {
                                 // Cancelamos dibujo y avisamos
                                 lineDrawCtl.new();
-                                map.toast(self.getLocaleString('cannotAddSeparateLines.warning'), {
+                                self.map.toast(self.getLocaleString('cannotAddSeparateLines.warning'), {
                                     type: Consts.msgType.WARNING
                                 });
                             }
                         });
                     });
                 });
-            });
-        });
-        return result;
+            }
+        }
     }
 
     async loadTemplates() {
         const self = this;
-        await super.loadTemplates.call(self);
-        const panelTemplatePromise = import('../templates/tc-ctl-fedit-panel.mjs');
-
-        self.template[self.CLASS + '-panel'] = (await panelTemplatePromise).default;
+        const panelTemplatePromise = import('../templates/tc-ctl-fedit.mjs');
+        const template = {};
+        template[self.CLASS] = (await panelTemplatePromise).default;
+        self.template = template;
     }
 
     async render(callback) {
         const self = this;
-        await super.render.call(self, callback);
         const includeSaveAsButton = !!window.showSaveFilePicker;
-        const html = await self.getRenderedHtml(self.CLASS + '-panel', {
-            editControlId: self.getUID(),
-            snapping: self.snapping,
-            includeSaveAs: includeSaveAsButton
-        });
-       
-        if (!self.panel && self.map) {
-            self.panel = await self.map.addResultsPanel({
-                resize: false,
-                content: 'table',
-                titles: {
-                    main: self.getLocaleString('editFeatures')
+        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
+            self.renderData({
+                editControlId: self.getUID(),
+                stylable: self.stylable,
+                snapping: self.snapping,
+                includeSaveAs: includeSaveAsButton
+            }, function () {
+                if (self.map) {
+                    self.map.addResultsPanel({
+                        resize: false,
+                        content: 'table',
+                        titles: {
+                            main: self.getLocaleString('editFeatures')
+                        }
+                    }).then(panel => {
+                        self.panel = panel;
+                        self.panel.div.querySelector('.' + self.panel.CLASS + '-info').insertAdjacentElement('beforeend', self);
+                        self.saveButton = self.panel.div.querySelector(`.${self.CLASS}-actions sitna-button.${self.CLASS}-btn-save`);
+                        self.saveButton.addEventListener(Consts.event.CLICK, function (_e) {
+                            self.getEditControl().then(function (editControl) {
+                                editControl.getModifyControl().then(function (modifyControl) {
+                                    modifyControl.unselectFeatures(modifyControl.getSelectedFeatures());
+                                    self.save();
+                                });
+                            });
+                        }, { passive: true });
+                        if (includeSaveAsButton) {
+                            self.saveAsButton = self.panel.div.querySelector(`.${self.CLASS}-actions sitna-button.${self.CLASS}-btn-saveas`);
+                            self.saveAsButton.addEventListener(Consts.event.CLICK, function (_e) {
+                                self.getEditControl().then(function (editControl) {
+                                    editControl.getModifyControl().then(function (modifyControl) {
+                                        modifyControl.unselectFeatures(modifyControl.getSelectedFeatures());
+                                        self.save({ showDialog: true });
+                                    });
+                                });
+                            }, { passive: true });
+                        }
+                        if (typeof callback === 'function') {
+                            callback();
+                        }
+                        resolve();
+                    });
                 }
             });
-            self.panel.div.querySelector('.' + self.panel.CLASS + '-info').insertAdjacentHTML('beforeend', html);
-        }
-        if (self.panel) {
-            self.saveButton = self.panel.div.querySelector(`.${self.CLASS}-actions sitna-button.${self.CLASS}-btn-save`);
-            self.saveButton.addEventListener(Consts.event.CLICK, function (_e) {
-                self.getEditControl().then(function (editControl) {
-                    editControl.getModifyControl().then(function (modifyControl) {
-                        modifyControl.unselectFeatures(modifyControl.getSelectedFeatures());
-                        self.save();
-                    });
-                });
-            }, { passive: true });
-            if (includeSaveAsButton) {
-                self.saveAsButton = self.panel.div.querySelector(`.${self.CLASS}-actions sitna-button.${self.CLASS}-btn-saveas`);
-                self.saveAsButton.addEventListener(Consts.event.CLICK, function (_e) {
-                    self.getEditControl().then(function (editControl) {
-                        editControl.getModifyControl().then(function (modifyControl) {
-                            modifyControl.unselectFeatures(modifyControl.getSelectedFeatures());
-                            self.save({ showDialog: true });
-                        });
-                    });
-                }, { passive: true });
-            }
-        }
-        self.editControl = await self.getEditControl();
-        if (self.editControl) {
-            self.editControl.styles = self.options.styles;
-        }
-        if (typeof callback === 'function') {
-            callback();
-        }
+        }));
     }
 
     async getEditControl() {
@@ -353,9 +398,7 @@ class FileEdit extends FileImport {
         await self.renderPromise();
         const layer = await self.getLayer();
         const editControl = await self.getEditControl();
-        const pointControl = await editControl.getPointDrawControl();
         const lineControl = await editControl.getLineDrawControl();
-        const polygonControl = await editControl.getPolygonDrawControl();
         if (options?.extensibleSketch) {
             // OpenLayers tiene la limitación de solamente permitir 
             // extender LineStrings.
@@ -374,60 +417,8 @@ class FileEdit extends FileImport {
                 lineControl.extensibleSketch = options?.extensibleSketch;
             }
         }
-        let styles = self.#previousStyles.get(layer);
-        if (!styles) {
-            if (layer.styles) {
-                styles = [{}, self.#initialStyles, layer.styles];
-            }
-            else {
-                styles = [{}, self.#initialStyles].concat(layer
-                    .features
-                    .map(f => {
-                        const style = f.getStyle();
-                        if (Object.keys(style).length === 0) {
-                            return null;
-                        }
-                        const styleObj = {};
-                        switch (true) {
-                            case f instanceof Polyline:
-                            case f instanceof MultiPolyline:
-                                styleObj.line = style;
-                                break;
-                            case f instanceof Polygon:
-                            case f instanceof MultiPolygon:
-                                styleObj.polygon = style;
-                                break;
-                            case f instanceof Marker:
-                            case f instanceof MultiMarker:
-                                return null;
-                            case f instanceof Point:
-                            case f instanceof MultiPoint:
-                                styleObj.point = style;
-                                break;
-                            default:
-                                break;
-                        }
-                        return styleObj;
-                    })
-                    .filter(style => !!style));
-            }
-            styles = TC.Util.extend(...styles);
-        }
-        pointControl.toggleStyleTools(styles.point);
-        lineControl.toggleStyleTools(styles.line);
-        polygonControl.toggleStyleTools(styles.polygon);
-        if (styles.point) {
-            pointControl.setStyle(styles.point);
-        }
-        if (styles.line) {
-            lineControl.setStyle(styles.line);
-        }
-        if (styles.polygon) {
-            polygonControl.setStyle(styles.polygon);
-            const fillOpacity = styles.polygon.fillOpacity || 0;
-            polygonControl.setFillOpacity(fillOpacity);
-        }
         editControl.constrainModes(modes);
+        self.stylable = options?.stylable ?? true;
         self.#setSaveButtonState();
         self.panel.open();
     }
@@ -435,14 +426,6 @@ class FileEdit extends FileImport {
     closeEditSession() {
         const self = this;
         if (self.editControl) {
-            if (self.editControl.layer) {
-                const previousStyle = {
-                    point: self.editControl.pointDrawControl.getStyle(),
-                    line: self.editControl.lineDrawControl.getStyle(),
-                    polygon: self.editControl.polygonDrawControl.getStyle()
-                };
-                self.#previousStyles.set(self.editControl.layer, previousStyle);
-            }
             self.editControl.setLayer(null);
         }
         if (self.panel && !self.panel.div.classList.contains(Consts.classes.HIDDEN)) {
@@ -461,6 +444,11 @@ class FileEdit extends FileImport {
 
     async getLayer() {
         return await (await this.getEditControl()).getLayer();
+    }
+
+    isStylable(layer) {
+        const name = layer._fileHandle?.name;
+        return !name || name.endsWith('.kml') || name.endsWith('.kmz');
     }
 
     async save(options) {
@@ -506,11 +494,15 @@ class FileEdit extends FileImport {
                 if (options.showDialog) {
                     if (window.showSaveFilePicker) {
                         const mimeType = Util.getMimeTypeFromUrl(fileHandle.name);
-                        const type = self.fileTypes.find(type => type.accept[mimeType]);
+                        const extension = fileHandle.name.substr(fileHandle.name.lastIndexOf('.'));
                         try {
                             fileHandle = await window.showSaveFilePicker({
                                 suggestedName: fileHandle.name,
-                                types: [type]
+                                types: [{
+                                    accept: {
+                                        [mimeType]: [extension]
+                                    }
+                                }]
                             });
                             permission = await getPermission(fileHandle);
                         }
@@ -544,11 +536,10 @@ class FileEdit extends FileImport {
                                 l._fileHandle = fileHandle;
                             }
                             l.options.groupIndex = groupIndex++;
-                            await self.saveLayerMetadata(l);
                         });
                         // Si hemos "guardado como", metemos el nuevo archivo en la lista de archivos recientes
                         if (options.showDialog) {
-                            await self.addRecentFileEntry({ mainHandle: fileHandle });
+                            await self.map.addRecentFileEntry({ mainHandle: fileHandle });
                         }
                         self.map.toast(self.getLocaleString('fileSaved'), { type: Consts.msgType.INFO });
                     }
@@ -619,8 +610,13 @@ class FileEdit extends FileImport {
     async #setSaveButtonState() {
         const self = this;
         const layer = await self.getLayer();
-        self.saveButton.disabled = !layer || !((layer._fileHandle && !layer._additionaFileHandles) || layer.options.fileSystemFile || layer.options.file);
+        const isDisabled = !layer || !((layer._fileHandle && !layer._additionaFileHandles) || layer.options.fileSystemFile || layer.options.file);
+        self.saveButton.disabled = isDisabled;
+        if (self.saveAsButton) {
+            self.saveAsButton.disabled = isDisabled;
+        }
     }
 }
 customElements.get(elementName) || customElements.define(elementName, FileEdit);
+TC.control.FileEdit = FileEdit;
 export default FileEdit;
