@@ -217,7 +217,7 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
 
             if (TC.browserFeatures.touch()) {
                 const addSwipe = function (direction) {
-                    const selector = '.' + direction + '-panel';
+                    const selector = '.tc-' + direction + '-panel';
                     const className = 'tc-collapsed-' + direction;
                     const options = { noSwipe: 'li,a' };
                     options[direction] = function () {
