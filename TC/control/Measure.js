@@ -1,16 +1,15 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
-import Draw from './Draw';
+import './Draw';
 
 TC.control = TC.control || {};
-TC.control.Draw = Draw;
-TC.Control = Control;
 
-TC.control.Measure = function () {
+const Measure = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
+    self.snapping = self.options.snapping;
 
     self.drawControls = [];
     self.persistentDrawControls = false;
@@ -29,10 +28,10 @@ TC.control.Measure = function () {
     });
 };
 
-TC.inherit(TC.control.Measure, TC.Control);
+TC.inherit(Measure, Control);
 
 (function () {
-    var ctlProto = TC.control.Measure.prototype;
+    var ctlProto = Measure.prototype;
 
     ctlProto.CLASS = 'tc-ctl-meas';
 
@@ -44,7 +43,7 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, {
+        return self._set1stRenderPromise(Control.prototype.renderData.call(self, {
             controlId: self.id,
             displayElevation: self.options.displayElevation,
             singleSketch: !self.persistentDrawControls,
@@ -61,7 +60,7 @@ TC.inherit(TC.control.Measure, TC.Control);
             self.lineMeasurementControl.displayElevation = self.options.displayElevation;
             self.polygonMeasurementControl.containerControl = self;
 
-            self.div.querySelectorAll(`.${TC.control.Measure.prototype.CLASS}-select sitna-tab`).forEach(function (tab) {
+            self.div.querySelectorAll(`.${Measure.prototype.CLASS}-select sitna-tab`).forEach(function (tab) {
                 tab.callback = function () {
                     const target = this.target;
                     if (target) {
@@ -78,7 +77,7 @@ TC.inherit(TC.control.Measure, TC.Control);
 
     ctlProto.register = async function (map) {
         const self = this;
-        await TC.Control.prototype.register.call(self, map);
+        await Control.prototype.register.call(self, map);
         self.map.on(Consts.event.VIEWCHANGE, function () {
             if (self.map.view === Consts.view.PRINTING) {
                 self.trigger(Consts.event.DRAWEND);
@@ -121,6 +120,8 @@ TC.inherit(TC.control.Measure, TC.Control);
         self.polygonDrawControl.id = drawPolygonsId;
         self.lineDrawControl.setLayer(self.layer);
         self.polygonDrawControl.setLayer(self.layer);
+        self.lineDrawControl.snapping = self.snapping;
+        self.polygonDrawControl.snapping = self.snapping;
         controls.forEach(function (ctl) {
             ctl.containerControl = self;
             self.drawControls.push(ctl);
@@ -161,14 +162,14 @@ TC.inherit(TC.control.Measure, TC.Control);
         });
         switch (mode) {
             case Consts.geom.POLYLINE:
-                self._activeMode = modes.filter(function (elm) {
+                self._activeMode = modes.find(function (elm) {
                     return elm.matches('.tc-ctl-meas-len');
-                })[0];
+                });
                 break;
             case Consts.geom.POLYGON:
-                self._activeMode = modes.filter(function (elm) {
+                self._activeMode = modes.find(function (elm) {
                     return elm.matches('.tc-ctl-meas-area');
-                })[0];
+                });
                 break;
             case null:
             case undefined:
@@ -326,5 +327,5 @@ TC.inherit(TC.control.Measure, TC.Control);
 
 })();
 
-const Measure = TC.control.Measure;
+TC.control.Measure = Measure;
 export default Measure;
