@@ -43,6 +43,7 @@
 @import url(control/FileEdit.css);
 @import url(control/LanguageSelector.css);
 @import url(control/Measurement.css);
+@import url(control/FeatureStyler.css);
 
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
 .tc-map article, .tc-ctl article, .tc-modal article,
@@ -862,7 +863,7 @@ html.tc-fullscreen, body.tc-fullscreen {
         outline: none;
     }
 
-    .tc-ctl-btn.tc-disabled {
+    .tc-ctl-btn.tc-disabled, .tc-ctl-btn:disabled {
         color: var(--btn-disabled-color);
         background-color: var(--btn-disabled-bg-color);
         border-color: var(--btn-disabled-border-color);
