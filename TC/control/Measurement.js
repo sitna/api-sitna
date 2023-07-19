@@ -11,6 +11,8 @@ import Cfg from '../Cfg';
 import Consts from '../Consts';
 import Util from '../Util';
 
+TC.control = TC.control || {};
+
 const elementName = 'sitna-measurement';
 
 class Measurement extends WebComponentControl {
@@ -84,7 +86,12 @@ class Measurement extends WebComponentControl {
     }
 
     set mode(value) {
-        this.setAttribute('mode', value || '');
+        if (value) {
+            this.setAttribute('mode', value);
+        }
+        else {
+            this.removeAttribute('mode');
+        }
     }
 
     #onModeChange() {
@@ -93,15 +100,13 @@ class Measurement extends WebComponentControl {
 
     setMode(value) {
         const self = this;
-        const oldMode = self.mode;
-        if (oldMode === value) {
-            return Promise.resolve(value);
-        }
         return new Promise(function (resolve, _reject) {
-            self.one(Consts.event.CONTROLRENDER, function () {
-                resolve(value);
-            });
+            const oldMode = self.mode;
+            if (oldMode === value) {
+                self.renderPromise().then(() => resolve(value));
+            }
             self.mode = value;
+            self.render().then(() => resolve(value));
         });
     }
 
@@ -139,22 +144,25 @@ class Measurement extends WebComponentControl {
         if (mode) {
             dataObj[mode] = true;
         }
-        return self._set1stRenderPromise(self.renderData(dataObj, function () {
-            self.#c1Text = self.querySelector(`.${self.CLASS}-val-coord-1-t`);
-            self.#c1Value = self.querySelector(`.${self.CLASS}-val-coord-1-v`);
-            self.#c2Text = self.querySelector(`.${self.CLASS}-val-coord-2-t`);
-            self.#c2Value = self.querySelector(`.${self.CLASS}-val-coord-2-v`);
-            self.#elevationText = self.querySelector(`.${self.CLASS}-val-coord-ele-t`);
-            self.#elevationValue = self.querySelector(`.${self.CLASS}-val-coord-ele-v`);
-            self.#lengthValue = self.querySelector(`.${self.CLASS}-val-len`);
-            self.#areaValue = self.querySelector(`.${self.CLASS}-val-area`);
-            self.#perimeterValue = self.querySelector(`.${self.CLASS}-val-peri`);
-            self.#profileButton = self.querySelector('sitna-toggle.tc-ctl-msmt-prof-btn');
-            self.addUIEventListeners();
-            self.clearMeasurement();
-            if (typeof callback === 'function') {
-                callback();
-            }
+        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
+            self.renderData(dataObj, function () {
+                self.#c1Text = self.querySelector(`.${self.CLASS}-val-coord-1-t`);
+                self.#c1Value = self.querySelector(`.${self.CLASS}-val-coord-1-v`);
+                self.#c2Text = self.querySelector(`.${self.CLASS}-val-coord-2-t`);
+                self.#c2Value = self.querySelector(`.${self.CLASS}-val-coord-2-v`);
+                self.#elevationText = self.querySelector(`.${self.CLASS}-val-coord-ele-t`);
+                self.#elevationValue = self.querySelector(`.${self.CLASS}-val-coord-ele-v`);
+                self.#lengthValue = self.querySelector(`.${self.CLASS}-val-len`);
+                self.#areaValue = self.querySelector(`.${self.CLASS}-val-area`);
+                self.#perimeterValue = self.querySelector(`.${self.CLASS}-val-peri`);
+                self.#profileButton = self.querySelector('sitna-toggle.tc-ctl-msmt-prof-btn');
+                self.addUIEventListeners();
+                self.clearMeasurement();
+                if (typeof callback === 'function') {
+                    callback();
+                }
+                resolve();
+            });
         }));
     }
 
@@ -215,7 +223,7 @@ class Measurement extends WebComponentControl {
                 const elevationText = self.#measurementData.elevationText;
                 if (Object.prototype.hasOwnProperty.call(self.#measurementData, "coord1") &&
                     Object.prototype.hasOwnProperty.call(self.#measurementData, "coord2")) {
-                    data.CRS = self.map.crs;
+                    data.CRS = self.map.getCRS();
                     data[firstCoordText.substr(0, firstCoordText.indexOf(':'))] = self.#measurementData.coord1;
                     data[secondCoordText.substr(0, secondCoordText.indexOf(':'))] = self.#measurementData.coord2;
                     if (elevationText) {
@@ -384,4 +392,5 @@ class Measurement extends WebComponentControl {
 }
 
 customElements.get(elementName) || customElements.define(elementName, Measurement);
+TC.control.Measurement = Measurement;
 export default Measurement;
