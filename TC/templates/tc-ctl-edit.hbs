@@ -8,7 +8,7 @@
         {{#if otherToolsIncluded}}<sitna-tab class="tc-ctl-edit-btn-other" title="{{i18n "otherTools"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-other"></sitna-tab>{{/if}}
     </div>
     <div id="{{controlId}}-mode-modify" class="tc-ctl-edit-modify tc-hidden">
-        <sitna-modify{{#if snapping}} snapping{{/if}}></sitna-modify>
+        <sitna-modify{{#if snapping}} snapping{{/if}}{{#if stylable}} stylable{{/if}}></sitna-modify>
     </div>
     <div id="{{controlId}}-mode-addpoint" class="tc-ctl-edit-point tc-hidden">
         <sitna-draw mode="point" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
