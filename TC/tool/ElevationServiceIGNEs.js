@@ -57,14 +57,14 @@ class ElevationServiceIGNEs extends ElevationService {
     parseResponse(response, options) {
         const self = this;
         const lines = response.split('\n');
-        const nColsLine = lines.filter(line => line.indexOf('ncols') === 0)[0];
+        const nColsLine = lines.find(line => line.indexOf('ncols') === 0);
         const nCols = parseInt(nColsLine && nColsLine.substr(nColsLine.lastIndexOf(' ')));
-        const nRowsLine = lines.filter(line => line.indexOf('nrows') === 0)[0];
+        const nRowsLine = lines.find(line => line.indexOf('nrows') === 0);
         const nRows = parseInt(nColsLine && nRowsLine.substr(nRowsLine.lastIndexOf(' ')));
         if (nCols && nRows) {
-            const xllCornerLine = lines.filter(line => line.indexOf('xllcorner') === 0)[0];
+            const xllCornerLine = lines.find(line => line.indexOf('xllcorner') === 0);
             const x = parseFloat(xllCornerLine && xllCornerLine.substr(xllCornerLine.lastIndexOf(' ')));
-            const yllCornerLine = lines.filter(line => line.indexOf('yllcorner') === 0)[0];
+            const yllCornerLine = lines.find(line => line.indexOf('yllcorner') === 0);
             const y = parseFloat(yllCornerLine && yllCornerLine.substr(yllCornerLine.lastIndexOf(' ')));
             if (!isNaN(x) && !isNaN(y)) {
                 const cellSizeIndex = lines.findIndex(line => line.indexOf('cellsize') === 0);
