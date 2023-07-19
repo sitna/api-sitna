@@ -1,4 +1,5 @@
 ﻿import TC from '../../TC';
+import Util from '../Util';
 import Consts from '../Consts';
 import Control from '../Control';
 import Point from '../../SITNA/feature/Point';
@@ -9,38 +10,60 @@ import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.FeatureDownloadDialog = function () {
-    var self = this;
-    TC.Control.apply(self, arguments);
-    self.title = self.options.title;
-    self.cssClass = self.options.cssClass || "";
+class FeatureDownloadDialog extends Control {
+    #displayElevation;
+    #interpolation = false;
+    #interpolationDistance = null;
+    #formats = ["KMZ",/*"KML",*/ "GML", "GeoJSON", "WKT", "WKB", "GPX", "SHP", "GPKG"];
 
-    self._selectors = {
-        ELEVATION_CHECKBOX: "." + self.CLASS + '-elev input[type=checkbox]',
-        INTERPOLATION_PANEL: "." + self.CLASS + '-ip',
-        INTERPOLATION_RADIO: `input[type=radio][name=${self.id}-finfo-ip-coords]`,
-        INTERPOLATION_DISTANCE: "." + self.CLASS + '-ip-m'
-    };
-    self.features = [];
-    self.options = {};
-};
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.title = self.options.title;
+        self.cssClass = self.options.cssClass || "";
 
-TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
+        self._selectors = {
+            ELEVATION_CHECKBOX: "." + self.CLASS + '-elev input[type=checkbox]',
+            INTERPOLATION_PANEL: "." + self.CLASS + '-ip',
+            INTERPOLATION_RADIO: `input[type=radio][name=${self.id}-finfo-ip-coords]`,
+            INTERPOLATION_DISTANCE: "." + self.CLASS + '-ip-m'
+        };
+        self.features = [];
+        self.options = {};
+    }
 
-(function () {
+    getClassName() {
+        return 'tc-ctl-dldlog';
+    }
 
-    const ctlProto = TC.control.FeatureDownloadDialog.prototype;
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-dldlog.mjs');
+        self.template = module.default;
+    }
 
-    ctlProto.CLASS = 'tc-ctl-dldlog';
+    render(callback) {
+        const self = this;
+        return super.renderData.call(self, { controlId: self.id }, callback);
+    }
 
-    var _formats = ["KMZ",/*"KML",*/ "GML", "GeoJSON", "WKT", "GPX", "SHP", "GPKG"];
+    #hasPoints() {
+        return this.getFeatures().some(feature => feature instanceof Point ||
+            feature instanceof MultiPoint);
+    }
 
-    var displayElevation, interpolation = false;
-    var interpolationDistance = null;
+    #hasLines() {
+        return this.getFeatures().some(feature => feature instanceof Polyline ||
+            feature instanceof MultiPolyline);
+    }
 
-    const addElevationAndInterpolation = async function (features, options) {
+    #hasPolygons() {
+        return this.getFeatures().some(feature => feature instanceof Polygon ||
+            feature instanceof MultiPolygon);
+    }
+
+    async #addElevationAndInterpolation(features, options) {
         const self = this;
         options = options || {};
         const cloneWithId = function (feat) {
@@ -88,43 +111,9 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
         else {
             return features;
         }
-    };
+    }
 
-    const hasPoints = function () {
-        return this.getFeatures().some(feature => feature instanceof Point ||
-            feature instanceof MultiPoint);
-    };
-    const hasLines = function () {
-        return this.getFeatures().some(feature => feature instanceof Polyline ||
-            feature instanceof MultiPolyline);
-    };
-    const hasPolygons = function () {
-        return this.getFeatures().some(feature => feature instanceof Polygon ||
-            feature instanceof MultiPolygon);
-    };
-
-    ctlProto.loadTemplates = async function () {
-        const self = this;
-        const module = await import('../templates/tc-ctl-dldlog.mjs');
-        self.template = module.default;
-    };
-
-    ctlProto.render = function (callback) {
-        const self = this;
-        const result = TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback);
-        return result;
-    };
-
-    ctlProto.close = function (_callback) {
-        const self = this;
-
-        if (self.modal && self.modal.parentElement) {
-            TC.Util.closeModal();
-            self.modal.parentElement.removeChild(self.modal);
-        }
-    };
-
-    ctlProto.open = function (featureOrFeatures, options) {
+    open(featureOrFeatures, options) {
         const self = this;
 
         self.close();
@@ -139,13 +128,13 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
         }, options);
         //si solo hay poligonos ocultamos el botón de formato GPX
         const excludedFormats = options.excludedFormats ? options.excludedFormats.slice() : [];
-        if (!hasPoints.call(self) && !hasLines.call(self) && hasPolygons.call(self)) {
+        if (!self.#hasPoints(self) && !self.#hasLines(self) && self.#hasPolygons(self)) {
             excludedFormats.push(Consts.format.GPX);
         }
-        options.formats = _formats.filter(item => excludedFormats.indexOf(item) < 0);
+        options.formats = self.#formats.filter(item => excludedFormats.indexOf(item) < 0);
         self.setOptions(options);
 
-        self.getRenderedHtml(ctlProto.CLASS, options, function (html) {
+        self.getRenderedHtml(self.CLASS, options, function (html) {
             const template = document.createElement('template');
             template.innerHTML = html;
             self.modal = template.content ? template.content.firstChild : template.firstChild;
@@ -154,7 +143,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
             modalBody.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
 
-                var resolution = displayElevation && interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation && self.map.elevation.options).resolution : 0;
+                var resolution = self.#displayElevation && self.#interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation && self.map.elevation.options).resolution : 0;
 
                 const endExport = async (features, opts) => {
 
@@ -180,11 +169,10 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
 
                     TC.Util.closeModal();
-                    addElevationAndInterpolation.apply(self, [features,
-                        {
-                            displayElevation: displayElevation,
-                            elevation: displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
-                        }]).then(
+                    self.#addElevationAndInterpolation(features, {
+                            displayElevation: self.#displayElevation,
+                            elevation: self.#displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
+                        }).then(
                             function (features) {
                                 const innerFileName = opts.fileName ||
                                     (opts.title ? opts.title.toLowerCase().replace(/ /g, '_') : 'download');
@@ -212,14 +200,14 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                                     }
                                 });
                             },
-                        function (error) {
-                            self.open(features, opts);
-                            if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
-                                TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
-                                return;
+                            function (error) {
+                                self.open(features, opts);
+                                if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                                    TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
+                                    return;
+                                }
+                                TC.error(self.getLocaleString('elevation.error'));
                             }
-                            TC.error(self.getLocaleString('elevation.error'));
-                        }
                         ).finally(function () {
                             li && li.removeWait(waitId);
                         });
@@ -227,7 +215,7 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
                 const format = e.target.dataset.format;
                 if (format === Consts.format.GPX) {
-                    if (hasPolygons.call(self)) {
+                    if (self.#hasPolygons()) {
                         TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'), function () {
                             endExport(self.getFeatures().filter(function (feature) {
                                 return !(feature instanceof Polygon) && !(feature instanceof MultiPolygon);
@@ -249,20 +237,12 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             const elevationCheckbox = modalBody.querySelector(self._selectors.ELEVATION_CHECKBOX);
 
             if (options.elevation) {
-                displayElevation = options.elevation.checked ? options.elevation.checked : displayElevation;
+                self.#displayElevation = options.elevation.checked ? options.elevation.checked : self.#displayElevation;
 
-                elevationCheckbox.checked = displayElevation;
+                elevationCheckbox.checked = self.#displayElevation;
 
                 if (interpolationPanel) {
-                    if (displayElevation) {
-                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
-                    } else {                        
-                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                        }                        
-                    }
-
-                    if (displayElevation && (hasLines.call(self) || hasPolygons.call(self)) && options.elevation.resolution) {
+                    if (self.#displayElevation) {
                         interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {
                         if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
@@ -270,10 +250,18 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                         }
                     }
 
-                    modalBody.querySelectorAll(self._selectors.INTERPOLATION_RADIO)[interpolation ? 1 : 0].checked = true;
-                    if (interpolation) {
+                    if (self.#displayElevation && (self.#hasLines() || self.#hasPolygons()) && options.elevation.resolution) {
+                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
+                    } else {
+                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
+                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
+                        }
+                    }
+
+                    modalBody.querySelectorAll(self._selectors.INTERPOLATION_RADIO)[self.#interpolation ? 1 : 0].checked = true;
+                    if (self.#interpolation) {
                         modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE).classList.remove(Consts.classes.HIDDEN);
-                        modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
+                        modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = self.#interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
                     }
                 }
             }
@@ -281,10 +269,10 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
             modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (_e) {
                 //self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
 
-                displayElevation = !displayElevation;
+                self.#displayElevation = !self.#displayElevation;
 
                 if (interpolationPanel) {
-                    if (displayElevation) {
+                    if (self.#displayElevation) {
                         interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {
                         if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
@@ -292,24 +280,24 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
                         }
                     }
 
-                    if (displayElevation && (hasLines.call(self) || hasPolygons.call(self))) {
+                    if (self.#displayElevation && (self.#hasLines() || self.#hasPolygons())) {
                         interpolationPanel.classList.remove(Consts.classes.HIDDEN);
                     } else {
                         if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
                             interpolationPanel.classList.add(Consts.classes.HIDDEN);
                         }
                     }
-                }               
-                
+                }
+
             }));
             modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (_e) {
                 const idDiv = modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE);
                 idDiv.classList.toggle(Consts.classes.HIDDEN);
-                interpolation = !interpolation;
-                if (interpolation) modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
+                self.#interpolation = !self.#interpolation;
+                if (self.#interpolation) modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = self.#interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
             }));
             modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_DISTANCE, function (e) {
-                interpolationDistance = e.target.value;
+                self.#interpolationDistance = e.target.value;
             }));
 
             let modalOptions = {
@@ -324,25 +312,33 @@ TC.inherit(TC.control.FeatureDownloadDialog, TC.Control);
 
             TC.Util.showModal(self.modal, modalOptions);
         });
-    };
+    }
 
-    ctlProto.setFeatures = function (features) {
+    close(_callback) {
+        const self = this;
+
+        if (self.modal && self.modal.parentElement) {
+            Util.closeModal();
+            self.modal.parentElement.removeChild(self.modal);
+        }
+    }
+
+    setFeatures(features) {
         this.features = Array.isArray(features) ? features : [features];
-    };
+    }
 
-    ctlProto.getFeatures = function () {
+    getFeatures() {
         return this.features;
-    };
+    }
 
-    ctlProto.setOptions = function (options) {
+    setOptions(options) {
         this.options = Object.assign(this.options, options);
-    };
+    }
 
-    ctlProto.getOptions = function () {
+    getOptions() {
         return this.options;
-    };
+    }
+}
 
-})();
-
-const FeatureDownloadDialog = TC.control.FeatureDownloadDialog;
+TC.control.FeatureDownloadDialog = FeatureDownloadDialog;
 export default FeatureDownloadDialog;

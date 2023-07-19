@@ -18,36 +18,31 @@ import FeatureInfoCommons from './FeatureInfoCommons';
 import filter from '../filter';
 
 TC.control = TC.control || {};
-TC.control.FeatureInfoCommons = FeatureInfoCommons;
 TC.filter = filter;
 
-(function () {
-    TC.control.GeometryFeatureInfo = function () {
-        var self = this;
-        TC.control.FeatureInfoCommons.apply(this, arguments);
+class GeometryFeatureInfo extends FeatureInfoCommons {
+    constructor() {
+        super(...arguments);
+        const self = this;
         self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;
-    };
+    }
 
-    TC.inherit(TC.control.GeometryFeatureInfo, TC.control.FeatureInfoCommons);
-
-    var ctlProto = TC.control.GeometryFeatureInfo.prototype;
-
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
-        const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
+        const result = super.register.call(self, map);
 
         self.on(Consts.event.CONTROLDEACTIVATE, function (_e) {
             self.wrap.cancelDraw();
         });
 
-        return result;
-    };
+        return await result;
+    }
 
-    ctlProto.callback = function (coords, _xy) {
-        var self = this;
+    callback(coords, _xy) {
+        const self = this;
         return new Promise(function (resolve, _reject) {
             if (self._drawToken) {
                 resolve();
@@ -76,7 +71,7 @@ TC.filter = filter;
                     xy: coords,
                     layer: self.filterLayer,
                     callback: function (feature) {
-                        self.wrap.getFeaturesByGeometry(feature).then(() => resolve());
+                        self.wrap.getFeaturesByGeometry(feature).then(resolve);
                     }
                 });
             }
@@ -84,16 +79,16 @@ TC.filter = filter;
                 resolve();
             }
         });
-    };
+    }
 
-    ctlProto.sendRequest = function (filter) {
+    sendRequest(filter) {
         return this.wrap.getFeaturesByGeometry(filter);
-    };
+    }
 
-    ctlProto.responseCallback = function (options) {
-        var self = this;
+    responseCallback(options) {
+        const self = this;
 
-        TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
+        super.responseCallback.call(self, options);
 
         if (self.filterFeature) {
             var services = options.services;
@@ -103,7 +98,7 @@ TC.filter = filter;
                 var service = services[i];
                 if (service.hasLimits) {
                     delete service.layers;
-                    service.hasLimits = service.hasLimits;
+                    //service.hasLimits = service.hasLimits;
                 }
                 else {
                     for (var j = 0; j < service.layers.length; j++) {
@@ -131,9 +126,8 @@ TC.filter = filter;
                 self.displayResults();
             });
         }
-    };
+    }
+}
 
-})();
-
-const GeometryFeatureInfo = TC.control.GeometryFeatureInfo;
+TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
 export default GeometryFeatureInfo;

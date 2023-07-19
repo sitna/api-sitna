@@ -20,505 +20,493 @@
   */
 
 import TC from '../../TC';
+import Util from '../Util';
 import Consts from '../Consts';
-import Control from '../Control';
 import MapInfo from './MapInfo';
 import Proxification from '../tool/Proxification';
 
 TC.control = TC.control || {};
-TC.Control = Control;
-TC.control.MapInfo = MapInfo;
 
-TC.control.PrintMap = function () {
-    var self = this;
-
-    TC.Control.apply(self, arguments);
+const ORIENTATION = {
+    PORTRAIT: 'portrait',
+    LANDSCAPE: 'landscape'
+};
+const PAGE_SIZE = {
+    A4: 'A4',
+    A3: 'A3'
 };
 
-TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
+/*
+    GLS:
+    La librería makePDF se basa en la librería PDFKit explicación sobre la unidad de medida que usa:
+    PDF points (72 per inch)
+    https://stackoverflow.com/questions/51540144/pdfkit-node-js-measurement-unit
+    https://www.ninjaunits.com/converters/pixels/points-pixels/
+    https://www.ninjaunits.com/converters/pixels/pixels-points/
 
-(function () {
-    var ctlProto = TC.control.PrintMap.prototype;
+    La clave es mantener las dimensiones del mapa en px enteros (canvas sólo admite px enteros), ajustando el layout que está en puntos y que sí admite decimales
+*/
 
-    ctlProto.CLASS = 'tc-ctl-prnmap';
-
-    const ORIENTATION = {
-        PORTRAIT: 'portrait',
-        LANDSCAPE: 'landscape'
-    };
-    const PAGE_SIZE = {
-        A4: 'A4',
-        A3: 'A3'
-    };
-
-    /*
-        GLS:
-        La librería makePDF se basa en la librería PDFKit explicación sobre la unidad de medida que usa:
-        PDF points (72 per inch)
-        https://stackoverflow.com/questions/51540144/pdfkit-node-js-measurement-unit
-        https://www.ninjaunits.com/converters/pixels/points-pixels/
-        https://www.ninjaunits.com/converters/pixels/pixels-points/
-
-        La clave es mantener las dimensiones del mapa en px enteros (canvas sólo admite px enteros), ajustando el layout que está en puntos y que sí admite decimales
-    */
-
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-portrait-a4 indicando el valor en px la sección del mapa   */
-    var a4_portrait = {
-        logoWidth: 60,
-        logoHeight: 30,
-        layoutPDF: {
-            pageSize: {
-                width: 595,
-                height: 842
-            },
-            pageMargins: [29.5, 14, 29.5, 22.5],
-            content: [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            /*width: 45,*/
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            width: 489,
-                            alignment: 'center',
-                            margin: [0, 10, 0, 0]
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 534,
-                                height: 775.5
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
-                }
-            ]
+/* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-portrait-a4 indicando el valor en px la sección del mapa   */
+const a4_portrait = {
+    logoWidth: 60,
+    logoHeight: 30,
+    layoutPDF: {
+        pageSize: {
+            width: 595,
+            height: 842
         },
-        reset: function () {
-            this.layoutPDF.content = [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            /*width: 45,*/
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            width: 489,
-                            alignment: 'center',
-                            margin: [0, 10, 0, 0]
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 534,
-                                height: 775.5
-                            }]
-                        ]
+        pageMargins: [29.5, 14, 29.5, 22.5],
+        content: [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        /*width: 45,*/
+                        margin: [0, 0, 0, 6]
                     },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
+                    { /* título */
+                        text: "",
+                        width: 489,
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0]
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
                     }
-                }
-            ];
-        }
-    };
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-landscape-a4 indicando el valor en px la sección del mapa   */
-    var a4_landscape = {
-        logoWidth: 60,
-        logoHeight: 30,
-        layoutPDF: {
-            pageSize: {
-                width: 842,
-                height: 595
+                ]
             },
-            pageMargins: [30, 14, 30, 22],
-            content: [
-                {
-                    columns: [
-                        { /* logo */
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
                             image: null,
-                            height: 22,
-                            /*width: 45,*/
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            alignment: 'center',
-                            margin: [0, 10, 0, 0],
-                            width: 600
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
+                            width: 534,
+                            height: 775.5
+                        }]
                     ]
                 },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 780,
-                                height: 528
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
                 }
-            ]
-        },
-        reset: function () {
-            this.layoutPDF.content = [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            /*width: 45,*/
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            alignment: 'center',
-                            margin: [0, 10, 0, 0],
-                            width: 600
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 780,
-                                height: 528
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
-                }
-            ];
-        }
-    };
-
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-portrait-a3 indicando el valor en px la sección del mapa   */
-    var a3_portrait = {
-        logoWidth: 60,
-        logoHeight: 30,
-        layoutPDF: {
-            pageSize: {
-                width: 841.89,
-                height: 1190.55
-            },
-            pageMargins: [29.954, 14, 29.954, 21.55],
-            content: [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            width: 45,
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            width: 489,
-                            margin: [0, 10, 0, 0],
-                            alignment: 'center'
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 780,
-                                height: 1125
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
-                }
-            ]
-        },
-        reset: function () {
-            this.layoutPDF.content = [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            width: 45,
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            width: 489,
-                            margin: [0, 10, 0, 0],
-                            alignment: 'center'
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 780,
-                                height: 1125
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
-                }
-            ];
-        }
-    };
-    /* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-landscape-a3 indicando el valor en px la sección del mapa   */
-    var a3_landscape = {
-        logoWidth: 60,
-        logoHeight: 30,
-        layoutPDF: {
-            pageSize: {
-                width: 1190.55,
-                height: 841.89
-            },
-            pageMargins: [28.775, 14, 28.775, 14.89],
-            content: [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            width: 45,
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            alignment: 'center',
-                            margin: [0, 10, 0, 0],
-                            width: 600
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 1131,
-                                height: 783
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
-                }
-            ]
-        },
-        reset: function () {
-            this.layoutPDF.content = [
-                {
-                    columns: [
-                        { /* logo */
-                            image: null,
-                            height: 22,
-                            width: 45,
-                            margin: [0, 0, 0, 6]
-                        },
-                        { /* título */
-                            text: "",
-                            alignment: 'center',
-                            margin: [0, 10, 0, 0],
-                            width: 600
-                        },
-                        { /* barra de escala */
-                            alignment: 'right',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ]
-                },
-                {
-                    table: {
-                        widths: ['*'],
-                        body: [
-                            [{ /* mapa */
-                                image: null,
-                                width: 1131,
-                                height: 783
-                            }]
-                        ]
-                    },
-                    layout: {
-                        paddingLeft: function (_i, _node) { return 0; },
-                        paddingRight: function (_i, _node) { return 0; },
-                        paddingTop: function (_i, _node) { return 0; },
-                        paddingBottom: function (_i, _node) { return 0; }
-                    }
-                }
-            ];
-        }
-    };
-
-    const getLayout = function (orientation, format) {
-        switch (orientation) {
-            case ORIENTATION.PORTRAIT: {
-                switch (format) {
-                    case PAGE_SIZE.A4: {
-                        return a4_portrait;
-                    }
-                    case PAGE_SIZE.A3: {
-                        return a3_portrait;
-                    }
-                    default:
-                }
-                break;
             }
-            case ORIENTATION.LANDSCAPE: {
-                switch (format) {
-                    case PAGE_SIZE.A4: {
-                        return a4_landscape;
+        ]
+    },
+    reset: function () {
+        this.layoutPDF.content = [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        /*width: 45,*/
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        width: 489,
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0]
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
                     }
-                    case PAGE_SIZE.A3: {
-                        return a3_landscape;
-                    }
-                    default:
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 534,
+                            height: 775.5
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
                 }
-                break;
             }
-            default:
-                return a4_portrait;
-        }
-    };
-
-    const getLogoColumn = function (layout) {
-        return layout.layoutPDF.content[0].columns[0];
-    };
-    const getTitleColumn = function (layout) {
-        return layout.layoutPDF.content[0].columns[1];
-    };
-    const getScaleBarColumn = function (layout) {
-        return layout.layoutPDF.content[0].columns[2];
-    };
-    const getMap = function (layout) {
-        return layout.layoutPDF.content[1].table.body[0][0];
-    };
-
-    const options = {
-        qrCode: {
-            sideLength: 85
-        }
-    };
-
-    const hasLegend = function () {
-        const self = this;
-
-        return self.map.workLayers.some(function (layer) {
-            return layer.type === Consts.layerType.WMS && layer.getVisibility();
-        });
-    };
-
-    const hasLegendToPrint = function () {
-        const self = this;
-
-        return self.map.workLayers.some(function (layer) {
-            if (layer.type === Consts.layerType.WMS && layer.getVisibility()) {
-                for (var i = 0; i < layer.names.length; i++) {
-                    if (layer.isVisibleByScale(layer.names[i])) {
-                        return true;
+        ];
+    }
+};
+/* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-landscape-a4 indicando el valor en px la sección del mapa   */
+const a4_landscape = {
+    logoWidth: 60,
+    logoHeight: 30,
+    layoutPDF: {
+        pageSize: {
+            width: 842,
+            height: 595
+        },
+        pageMargins: [30, 14, 30, 22],
+        content: [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        /*width: 45,*/
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0],
+                        width: 600
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
                     }
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 780,
+                            height: 528
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
                 }
-
-                return false;
             }
+        ]
+    },
+    reset: function () {
+        this.layoutPDF.content = [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        /*width: 45,*/
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0],
+                        width: 600
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
+                    }
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 780,
+                            height: 528
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
+                }
+            }
+        ];
+    }
+};
 
-            return false;
-        });
-    };
+/* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-portrait-a3 indicando el valor en px la sección del mapa   */
+const a3_portrait = {
+    logoWidth: 60,
+    logoHeight: 30,
+    layoutPDF: {
+        pageSize: {
+            width: 841.89,
+            height: 1190.55
+        },
+        pageMargins: [29.954, 14, 29.954, 21.55],
+        content: [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        width: 45,
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        width: 489,
+                        margin: [0, 10, 0, 0],
+                        alignment: 'center'
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
+                    }
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 780,
+                            height: 1125
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
+                }
+            }
+        ]
+    },
+    reset: function () {
+        this.layoutPDF.content = [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        width: 45,
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        width: 489,
+                        margin: [0, 10, 0, 0],
+                        alignment: 'center'
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
+                    }
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 780,
+                            height: 1125
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
+                }
+            }
+        ];
+    }
+};
+/* GLS: si se cambian los valores de los layout es necesario actualizar los valores de la clases CSS:  tc-ctl-prnmap-landscape-a3 indicando el valor en px la sección del mapa   */
+const a3_landscape = {
+    logoWidth: 60,
+    logoHeight: 30,
+    layoutPDF: {
+        pageSize: {
+            width: 1190.55,
+            height: 841.89
+        },
+        pageMargins: [28.775, 14, 28.775, 14.89],
+        content: [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        width: 45,
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0],
+                        width: 600
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
+                    }
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 1131,
+                            height: 783
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
+                }
+            }
+        ]
+    },
+    reset: function () {
+        this.layoutPDF.content = [
+            {
+                columns: [
+                    { /* logo */
+                        image: null,
+                        height: 22,
+                        width: 45,
+                        margin: [0, 0, 0, 6]
+                    },
+                    { /* título */
+                        text: "",
+                        alignment: 'center',
+                        margin: [0, 10, 0, 0],
+                        width: 600
+                    },
+                    { /* barra de escala */
+                        alignment: 'right',
+                        margin: [0, 10, 0, 0]
+                    }
+                ]
+            },
+            {
+                table: {
+                    widths: ['*'],
+                    body: [
+                        [{ /* mapa */
+                            image: null,
+                            width: 1131,
+                            height: 783
+                        }]
+                    ]
+                },
+                layout: {
+                    paddingLeft: function (_i, _node) { return 0; },
+                    paddingRight: function (_i, _node) { return 0; },
+                    paddingTop: function (_i, _node) { return 0; },
+                    paddingBottom: function (_i, _node) { return 0; }
+                }
+            }
+        ];
+    }
+};
 
-    ctlProto.register = function (map) {
+const getLayout = function (orientation, format) {
+    switch (orientation) {
+        case ORIENTATION.PORTRAIT: {
+            switch (format) {
+                case PAGE_SIZE.A4: {
+                    return a4_portrait;
+                }
+                case PAGE_SIZE.A3: {
+                    return a3_portrait;
+                }
+                default:
+            }
+            break;
+        }
+        case ORIENTATION.LANDSCAPE: {
+            switch (format) {
+                case PAGE_SIZE.A4: {
+                    return a4_landscape;
+                }
+                case PAGE_SIZE.A3: {
+                    return a3_landscape;
+                }
+                default:
+            }
+            break;
+        }
+        default:
+            return a4_portrait;
+    }
+};
+
+const getLogoColumn = function (layout) {
+    return layout.layoutPDF.content[0].columns[0];
+};
+const getTitleColumn = function (layout) {
+    return layout.layoutPDF.content[0].columns[1];
+};
+const getScaleBarColumn = function (layout) {
+    return layout.layoutPDF.content[0].columns[2];
+};
+const getMap = function (layout) {
+    return layout.layoutPDF.content[1].table.body[0][0];
+};
+
+const options = {
+    qrCode: {
+        sideLength: 85
+    }
+};
+
+class PrintMap extends MapInfo {
+    constructor() {
+        super(...arguments);
         const self = this;
-        const result = TC.control.MapInfo.prototype.register.call(self, map);
+        self.div.classList.add(self.CLASS);
+    }
+
+    getClassName() {
+        return 'tc-ctl-prnmap';
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-prnmap.mjs');
+        const viewTemplatePromise = import('../templates/tc-ctl-prnmap-view.mjs');
+        const toolsTemplatePromise = import('../templates/tc-ctl-prnmap-tools.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-view'] = (await viewTemplatePromise).default;
+        template[self.CLASS + '-tools'] = (await toolsTemplatePromise).default;
+        self.template = template;
+    }
+
+    render(callback) {
+        const self = this;
+        return self._set1stRenderPromise(super.renderData.call(self, { controlId: self.id }, callback));
+    }
+
+    register(map) {
+        const self = this;
+        const result = super.register.call(self, map);
 
         // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
         self.map.crossOrigin = 'anonymous';
@@ -563,13 +551,13 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 printBtn.disabled = false;
             });
 
-            if (hasLegend.call(self)) {
+            if (self.#hasLegend()) {
                 // GLS: controlamos si una capa deja de verse por la escala para resetear la leyenda                
                 self.map.on(Consts.event.ZOOM, manageLegendOnZoom);
             }
 
             const updateCanvas = function (printFormat) {
-                
+
                 if (printFormat) {
                     div.classList.add(printFormat);
                     /*
@@ -582,7 +570,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                     if (!Number.isInteger(bounding.height)) {
                         div.style.height = Math.round(bounding.height) + 'px';
                     }
-                    
+
                     const newWidth = `calc(50% - ${bounding.width / 2}px)`;
                     self._viewDiv.querySelector(`.${self.CLASS}-view-left`).style.width = newWidth;
                     self._viewDiv.querySelector(`.${self.CLASS}-view-right`).style.width = newWidth;
@@ -612,7 +600,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                             toastStyle.transformOrigin = '0% 100%';
                         }
                     }
-                    
+
                 }
                 if (!self.map.on3DView)
                     self.map.wrap.map.updateSize();
@@ -643,7 +631,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
                 layout.reset();
 
-                if (hasLegend.call(self)) {
+                if (self.#hasLegend()) {
                     self.map.off(Consts.event.ZOOM, manageLegendOnZoom);
                 }
 
@@ -664,7 +652,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             };
 
             if (!self._viewDiv) {
-                self._viewDiv = TC.Util.getDiv();
+                self._viewDiv = Util.getDiv();
                 document.body.appendChild(self._viewDiv);
 
                 self.getRenderedHtml(self.CLASS + '-view', null, function (html) {
@@ -705,42 +693,50 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         }));
 
         return result;
-    };
+    }
 
-    ctlProto.getContainer = function () {
+    #hasLegend() {
+        const self = this;
+
+        return self.map.workLayers.some(function (layer) {
+            return layer.type === Consts.layerType.WMS && layer.getVisibility();
+        });
+    }
+
+    #hasLegendToPrint() {
+        const self = this;
+
+        return self.map.workLayers.some(function (layer) {
+            if (layer.type === Consts.layerType.WMS && layer.getVisibility()) {
+                for (var i = 0; i < layer.names.length; i++) {
+                    if (layer.isVisibleByScale(layer.names[i])) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            return false;
+        });
+    }
+
+    getContainer() {
         return this.map.on3DView ? this.map.view3D.container : this.map.div
     }
 
-    ctlProto.loadTemplates = async function () {
+    async createPdf() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-prnmap.mjs');
-        const viewTemplatePromise = import('../templates/tc-ctl-prnmap-view.mjs');
-        const toolsTemplatePromise = import('../templates/tc-ctl-prnmap-tools.mjs');
-
-        const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-view'] = (await viewTemplatePromise).default;
-        template[self.CLASS + '-tools'] = (await toolsTemplatePromise).default;
-        self.template = template;
-    };
-
-    ctlProto.render = function (callback) {
-        const self = this;
-        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id }, callback));
-    };
-
-    ctlProto.createPdf = async function () {
-        var self = this;
 
         var loadingCtrl = self.map.getControlsByClass(TC.control.LoadingIndicator)[0];
-        var hasWait = loadingCtrl.addWait();        
+        var hasWait = loadingCtrl.addWait();
         await import("pdfmake/build/pdfmake");
         let pdfFonts = await import("pdfmake/build/vfs_fonts");
-        pdfMake.vfs = pdfFonts.pdfMake.vfs;        
+        pdfMake.vfs = pdfFonts.pdfMake.vfs;
         let result;
         var canvases = self.map.wrap.getCanvas();
-        self.canvas = TC.Util.mergeCanvases(canvases);
-        //self.canvas = TC.Util.mergeCanvases(self.map.wrap.getCanvas());
+        self.canvas = Util.mergeCanvases(canvases);
+        //self.canvas = Util.mergeCanvases(self.map.wrap.getCanvas());
         var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
         var printLayout = layout.layoutPDF;
 
@@ -751,7 +747,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             if (title) {
                 filename += title;
             } else {
-                var currentDate = TC.Util.getFormattedDate(new Date().toString(), true);
+                var currentDate = Util.getFormattedDate(new Date().toString(), true);
                 filename += currentDate;
             }
 
@@ -781,7 +777,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             };
 
             if (self.options.logo) {
-                return TC.Util.imgToDataUrl(self.options.logo).then(function (result) {
+                return Util.imgToDataUrl(self.options.logo).then(function (result) {
                     const canvas = result.canvas;
                     const dataUrl = result.dataUrl;
 
@@ -803,13 +799,13 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         };
         const getScaleBar = function () {
             var scaleBarColumn = getScaleBarColumn(layout);
-            const onError = function () {                
+            const onError = function () {
                 delete scaleBarColumn.image;
                 scaleBarColumn.text = "";
                 scaleBarColumn.width = "auto";
                 return scaleBarColumn;
             };
-            
+
             if (self.map.on3DView) {
                 scaleBarColumn.table = { widths: [0], body: [{ border: [false, false, false, false], text: "" }] };
                 //scaleBarColumn.table = {
@@ -828,13 +824,13 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         var styling = getComputedStyle(elem[0], null);
                         var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
                         var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
-                                                
+
                         scaleBarColumn.table = {
                             widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
                             body: [
                                 [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
                             ]
-                        };                            
+                        };
 
                         scaleBarColumn.layout = {
                             paddingLeft: function (_i, _node) { return 0; },
@@ -843,7 +839,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                             paddingBottom: function (_i, _node) { return 0; }
                         };
 
-                        
+
                     } else {
                         return onError();
                     }
@@ -853,14 +849,14 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
             }
             return scaleBarColumn;
 
-            
+
         };
         const formatCameraData = function () {
             const cameraData = self.map.view3D.getCameraData();
             return self.getLocaleString("printCameraCoords", {
-                x: TC.Util.formatCoord(cameraData.latitude, Consts.DEGREE_PRECISION),
-                y: TC.Util.formatCoord(cameraData.longitude, Consts.DEGREE_PRECISION),
-                z: TC.Util.formatCoord(cameraData.height, Consts.METER_PRECISION),
+                x: Util.formatCoord(cameraData.latitude, Consts.DEGREE_PRECISION),
+                y: Util.formatCoord(cameraData.longitude, Consts.DEGREE_PRECISION),
+                z: Util.formatCoord(cameraData.height, Consts.METER_PRECISION),
                 head: Math.round(cameraData.heading),
                 pitch: Math.round(cameraData.pitch),
             })
@@ -924,7 +920,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                                     const proxificationTool = new Proxification(TC.proxify, { allowedMixedContent: true });
                                     proxificationTool.fetchImage(src, { exportable: true }).then(function (img) {
                                         if (img.complete) {
-                                            var imageDetail = TC.Util.imgTagToDataUrl(img, 'image/png');
+                                            var imageDetail = Util.imgTagToDataUrl(img, 'image/png');
                                             layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas, height: img.height, width: img.width };
                                         } else {
                                             imageErrorHandling(src);
@@ -965,7 +961,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 Promise.all(_getLegendImages()).then(function () {
 
                     const getGroupTable = function (group, index) {
-                        var rows = [[{ text: group.title, fontSize:13, style: ["tablegroup"], margin: [0, index > 0 ? 10 : 0, 0, 2] }]];
+                        var rows = [[{ text: group.title, fontSize: 13, style: ["tablegroup"], margin: [0, index > 0 ? 10 : 0, 0, 2] }]];
                         var indentation = 10;
                         rows = rows.concat(group.layers.filter(function (item) {
                             return Object.prototype.hasOwnProperty.call(item, 'header') && item.header.trim().toLowerCase() !== group.title.trim().toLowerCase();
@@ -997,7 +993,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
                                 if (item.image) {
                                     itemIndex++;
-                                    var imageWidth = item.image.width* 0.75;//item.image.canvas.width / 2;
+                                    var imageWidth = item.image.width * 0.75;//item.image.canvas.width / 2;
                                     var imageHeight = item.image.height * 0.75;//(imageWidth * item.image.canvas.height / item.image.canvas.width);
 
                                     const dataLayer = [{
@@ -1090,7 +1086,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 qrTarget.innerHTML = '';
                 return self.makeQRCode(qrTarget, options.qrCode.sideLength).then(function (qrCodeBase64) {
                     if (qrCodeBase64) {
-                        return TC.Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, {width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
+                        return Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, { width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
                             return mapCanvas;
                         });
                     } else {
@@ -1131,7 +1127,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
 
             mapPlace.image = canvas.toDataURL();
 
-            if (hasLegendToPrint.call(self) && // GLS: validamos que haya capas visibles por escala 
+            if (self.#hasLegendToPrint() && // GLS: validamos que haya capas visibles por escala 
                 printLayout.content.length === 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
 
                 const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
@@ -1147,7 +1143,7 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                         bold: true
                     }
                 }
-                printLayout.defaultStyle={
+                printLayout.defaultStyle = {
                     alignment: 'left'
                 }
 
@@ -1159,9 +1155,9 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
                 createPDF(printLayout);
             }
         });
-    };
+    }
 
-    ctlProto.manageMaxLengthExceed = function (maxLengthExceed) {
+    manageMaxLengthExceed(maxLengthExceed) {
         const self = this;
         const alertElm = self.div.querySelector('.' + self.CLASS + '-alert');
         const checkboxQR = self.div.querySelector(`.${self.CLASS}-image-qr`);
@@ -1173,25 +1169,24 @@ TC.inherit(TC.control.PrintMap, TC.control.MapInfo);
         } else {
             alertElm.classList.add(Consts.classes.HIDDEN);
         }
-    };
+    }
 
-    ctlProto.generateLink = async function () {
+    async generateLink() {
         const self = this;
         const checkbox = self.div.querySelector(`.${self.CLASS}-div input.${self.CLASS}-image-qr`);
         const label = self.div.querySelector(`label.${self.CLASS}-image-qr-label`);
         checkbox.disabled = true;
         label.classList.add(Consts.classes.LOADING);
-        const result = await TC.control.MapInfo.prototype.generateLink.call(self);
+        const result = await MapInfo.prototype.generateLink.call(self);
         label.classList.remove(Consts.classes.LOADING);
         return result;
-    };
+    }
 
-    ctlProto.getToolsElement = function () {
+    getToolsElement() {
         const self = this;
         return self.getContainer().querySelector(`.${self.CLASS}-tools`);
-    };
+    }
+}
 
-})();
-
-const PrintMap = TC.control.PrintMap;
+TC.control.PrintMap = PrintMap;
 export default PrintMap;

@@ -2,45 +2,44 @@
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.NavBar = function () {
-    TC.Control.apply(this, arguments);
-};
+class NavBar extends Control {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
+    }
 
-TC.inherit(TC.control.NavBar, TC.Control);
+    getClassName() {
+        return 'tc-ctl-nav';
+    }
 
-(function () {
-    var ctlProto = TC.control.NavBar.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-nav';
-
-    ctlProto.render = function () {
-        var self = this;
+    render() {
+        const self = this;
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBar(self);
         }
         return self._set1stRenderPromise(Promise.resolve());
-    };
+    }
 
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
+        const superRegisterPromise = super.register.call(self, map);
         self.wrap.register(map);
 
         if (self.options.home === undefined || self.options.home) {
-            map.addControl('navBarHome');
-        }        
+            await map.addControl('navBarHome');
+        }
 
         //esta chama es para que la primera vez se ajuste la barrita de escala (debido a otra chama con el maxResolution, que es culpa de OL)
         map.loaded(function () {
             self.wrap.refresh();
-        });        
+        });
 
-        return result;
-    };
+        await superRegisterPromise;
+        return self;
+    }
+}
 
-})();
-
-const NavBar = TC.control.NavBar;
+TC.control.NavBar = NavBar;
 export default NavBar;

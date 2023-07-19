@@ -1,34 +1,32 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Cfg from '../Cfg';
+import Util from '../Util';
 import Scale from './Scale';
 
 TC.control = TC.control || {};
-TC.control.Scale = Scale;
 
-TC.control.ScaleSelector = function () {
-    var self = this;
+class ScaleSelector extends Scale {
+    scales = null;
 
-    TC.control.Scale.apply(self, arguments);
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
+    }
 
-    self.scales = null;
-};
+    getClassName() {
+        return 'tc-ctl-ss';
+    }
 
-TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
-
-(function () {
-    var ctlProto = TC.control.ScaleSelector.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-ss';
-
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-ss.mjs');
         self.template = module.default;
-    };
+    }
 
-    ctlProto.render = function (callback) {
-        var self = this;
+    render(callback) {
+        const self = this;
         return self._set1stRenderPromise(new Promise(function (resolve, reject) {
             if (self.map) {
                 if (!self.scales && self.map.options.resolutions) {
@@ -49,7 +47,7 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
                         self.div.querySelector('select').addEventListener('change', function () {
                             self.setScale(this.value);
                         });
-                        if (TC.Util.isFunction(callback)) {
+                        if (Util.isFunction(callback)) {
                             callback();
                         }
                         resolve();
@@ -68,16 +66,16 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
                 reject(Error('ScaleSelector no registrado'));
             }
         }));
-    };
+    }
 
-    /*
-    *  setScale: Sets the resolution of the map from a scale denominator and estimated screen DPI
-    *  Parameters: number, the scale denominator
-    *  Returns: number, the resolution
-    */
-    ctlProto.setScale = function (scale) {
-        var self = this;
-        var result = scale * .0254 / self.getDpi(Cfg.screenSize);
+/*
+ *  setScale: Sets the resolution of the map from a scale denominator and estimated screen DPI
+ *  Parameters: number, the scale denominator
+ *  Returns: number, the resolution
+ */
+    setScale(scale) {
+        const self = this;
+        let result = scale * .0254 / self.getDpi(Cfg.screenSize);
         if (window.devicePixelRatio) {
             result = result / window.devicePixelRatio;
         }
@@ -86,9 +84,10 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
         }
         self.map.wrap.setResolution(result);
         return result;
-    };
+    }
 
-})();
+}
 
-const ScaleSelector = TC.control.ScaleSelector;
+
+TC.control.ScaleSelector = ScaleSelector;
 export default ScaleSelector;

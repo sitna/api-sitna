@@ -16,7 +16,7 @@
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a las pulsaciones hechas en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {TC.control.MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
+  * @property {SITNA.control.MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si el valor de esta propiedad es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
@@ -74,15 +74,29 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
+import Control from '../Control';
 import FeatureInfoCommons from './FeatureInfoCommons';
 
 TC.control = TC.control || {};
-TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
-(function () {
-    TC.control.MultiFeatureInfo = function () {
-        var self = this;
-        TC.Control.apply(self, arguments);
+const mergeOptions = function (opt1, opt2) {
+    if (opt1) {
+        if (opt1 === true) {
+            opt1 = {};
+        }
+        return Util.extend(true, opt1, opt2);
+    }
+    return opt1;
+};
+
+class MultiFeatureInfo extends FeatureInfoCommons {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.remove(super.CLASS);
+        self.div.classList.add(self.CLASS);
+
         self.modes = self.options.modes || {};
         if (typeof self.modes[Consts.geom.POINT] === 'undefined') {
             self.modes[Consts.geom.POINT] = true;
@@ -97,32 +111,20 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         self.lastCtrlActive = null;
         self.popup = null;
         self.exportsState = false; // Los controles que exportan estado son los hijos
-    };
+    }
 
-    TC.inherit(TC.control.MultiFeatureInfo, TC.control.FeatureInfoCommons);
+    getClassName() {
+        return 'tc-ctl-m-finfo';
+    }
 
-    var ctlProto = TC.control.MultiFeatureInfo.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-m-finfo';
-
-    const mergeOptions = function (opt1, opt2) {
-        if (opt1) {
-            if (opt1 === true) {
-                opt1 = {};
-            }
-            return TC.Util.extend(true, opt1, opt2);
-        }
-        return opt1;
-    };
-
-    ctlProto.register = async function (map) {
+    async register(map) {
         const self = this;
 
         self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
             input.checked = false;
         });
 
-        const ctlPromises = [TC.Control.prototype.register.call(self, map)];
+        const ctlPromises = [Control.prototype.register.call(self, map)];
         const styles = self.options.styles || {};
         const pointMode = self.modes[Consts.geom.POINT];
         const polylineMode = self.modes[Consts.geom.POLYLINE];
@@ -188,15 +190,15 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         }
         self.updateUI();
         return self;
-    };
+    }
 
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-m-finfo.mjs');
         self.template = module.default;
-    };
+    }
 
-    ctlProto.render = function (callback) {
+    render(callback) {
         const self = this;
         var renderData = { controlId: self.id };
         if (self.modes[Consts.geom.POINT]) {
@@ -256,7 +258,13 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                     }
                     downloadDialog.open(Array.prototype.concat.apply([], self.featureInfoControls.map(ctl => ctl.resultsLayer.features)), options);
                 }, { passive: true });
+                self.div.querySelector(`.${self.CLASS}-btn-zoom`).addEventListener(Consts.event.CLICK, function (_e) {
+                    var features = self.featureInfoControls.reduce((i, a) => {
+                        return i.concat(a.resultsLayer.features);
+                    }, [])
+                    self.map.zoomToFeatures(features);
 
+                }, { passive: true });
                 self.map
                     //.on(Consts.event.FEATUREINFO, function () {
                     //    delFeaturesBtn.disabled = false;
@@ -277,24 +285,25 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                         }
                     });
 
-                if (TC.Util.isFunction(callback)) {
+                if (Util.isFunction(callback)) {
                     callback();
                 }
             }));
-    };
+    }
 
-    ctlProto.activate = function () {
-        var self = this;
-        if (self.lastCtrlActive)
+    activate() {
+        const self = this;
+        if (self.lastCtrlActive) {
             self.lastCtrlActive.activate();
-    };
+        }
+    }
 
-    ctlProto.deactivate = function () {
-        var self = this;
+    deactivate() {
+        const self = this;
         self.lastCtrlActive.deactivate(false);
-    };
+    }
 
-    ctlProto.updateUI = function () {
+    updateUI() {
         const self = this;
         self.renderPromise().then(function () {
             const enabled = self.map.workLayers.some(l => l.type === Consts.layerType.WMS && l.getVisibility());
@@ -334,6 +343,10 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
             dlFeaturesBtn.classList.toggle(Consts.classes.HIDDEN, !persistentHighlights);
             dlFeaturesBtn.disabled = featuresUnavailable;
 
+            const zoomFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-zoom`);
+            zoomFeaturesBtn.classList.toggle(Consts.classes.HIDDEN, !persistentHighlights);
+            zoomFeaturesBtn.disabled = featuresUnavailable;
+
             // Hack para compensar bug de Edge: no se actualiza el estilo al cambiar el estado del radio.
             const displayValue = self.div.style.display;
             self.div.style.display = 'none';
@@ -344,9 +357,8 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
                 self.div.style.removeProperty('display');
             }
         });
-    };
+    }
+}
 
-})();
-
-const MultiFeatureInfo = TC.control.MultiFeatureInfo;
+TC.control.MultiFeatureInfo = MultiFeatureInfo;
 export default MultiFeatureInfo;
