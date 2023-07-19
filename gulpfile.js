@@ -1,4 +1,5 @@
-﻿var gulp = require('gulp'),
+﻿/// <binding ProjectOpened='startDevServer' />
+var gulp = require('gulp'),
     del = require('del'),
     eslint = require('gulp-eslint-new'),
     //convertEncoding = require('gulp-convert-encoding'),
@@ -107,10 +108,10 @@ function copyOnlineLibraries(cb) {
     });
 }
 
-function copyOfflineLibraries(cb) {
-    fs.mkdirSync(sitnaBuild.targetPath + 'lib/wkx', { recursive: true });
-    fs.copyFile('node_modules/wkx/dist/wkx.min.js', sitnaBuild.targetPath + 'lib/wkx/wkx.min.js', cb);
-}
+//function copyOfflineLibraries(cb) {
+//    fs.mkdirSync(sitnaBuild.targetPath + 'lib/wkx', { recursive: true });
+//    fs.copyFile('node_modules/wkx/dist/wkx.min.js', sitnaBuild.targetPath + 'lib/wkx/wkx.min.js', cb);
+//}
 
 const spawnProcess = function (cmd, args, cb) {
     const ls = spawn(path.resolve('./node_modules/.bin/' + cmd), args);
@@ -176,7 +177,7 @@ function resources() {
         '!node_modules/**/*',
         '!obj/**/*',
         '!Properties/**/*',
-        '!TC/**/*.js',  
+        '!TC/**/*.js',
         '!SITNA/**/*.js',
         '!TC/templates/**/*',
         '!workers/**/*.js',
@@ -418,6 +419,37 @@ function jsonValidate() {
         .pipe(jsonlint.failOnError());
 }
 
+function textsValidate(cb) {
+    const es = JSON.parse(fs.readFileSync('resources/es-ES.json', { encoding: 'utf8' }));
+    const eu = JSON.parse(fs.readFileSync('resources/eu-ES.json', { encoding: 'utf8' }));
+    const en = JSON.parse(fs.readFileSync('resources/en-US.json', { encoding: 'utf8' }));
+    for (var esKey in es) {
+        if (!Object.prototype.hasOwnProperty.call(eu, esKey)) {
+            throw 'eu-ES no tiene la clave ' + esKey;
+        }
+        if (!Object.prototype.hasOwnProperty.call(en, esKey)) {
+            throw 'en-US no tiene la clave ' + esKey;
+        }
+    }
+    for (var euKey in eu) {
+        if (!Object.prototype.hasOwnProperty.call(es, euKey)) {
+            throw 'es-ES no tiene la clave ' + euKey;
+        }
+        if (!Object.prototype.hasOwnProperty.call(en, euKey)) {
+            throw 'en-US no tiene la clave ' + euKey;
+        }
+    }
+    for (var enKey in en) {
+        if (!Object.prototype.hasOwnProperty.call(es, enKey)) {
+            throw 'es-ES no tiene la clave ' + enKey;
+        }
+        if (!Object.prototype.hasOwnProperty.call(eu, enKey)) {
+            throw 'eu-ES no tiene la clave ' + enKey;
+        }
+    }
+    cb();
+}
+
 function lint() {
     return gulp.
         src([
@@ -430,7 +462,7 @@ function lint() {
         .pipe(eslint.formatEach());
 }
 
-function clean (cb) {
+function clean(cb) {
     del([
         sitnaBuild.targetPath + '**/*',
         '!' + sitnaBuild.targetPath
@@ -441,7 +473,7 @@ function unitTests(cb) {
     exec(path.resolve('test/unit/browser/runner.html'), cb);
 }
 
-function e2eTests () {
+function e2eTests() {
     return gulp.src('test/endToEnd/test.js').pipe(casperJs());
 }
 
@@ -473,7 +505,7 @@ function docsite(cb) {
 
 function docfiles() {
     return gulp.src(['./batch/jsdoc/img/*'])
-        .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/img'));    
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/img'));
 }
 
 function docCSS() {
@@ -505,7 +537,7 @@ function generateManifest(cb) {
                     !r.startsWith(sitnaBuild.targetUrl + 'workers') &&
                     !r.endsWith('.map') &&
                     (!r.startsWith(sitnaBuild.targetUrl + 'layout') || r.startsWith(sitnaBuild.targetUrl + 'layout/responsive'));
-        });
+            });
         lines.unshift('');
         lines.unshift('CACHE:');
         lines.unshift('');
@@ -559,6 +591,7 @@ const noTests = gulp.series(
     //bundleOLDebug,
     //bundleOLRelease,    
     jsonValidate,
+    textsValidate,
     //bundleCesiumDebug,
     //bundleCesiumRelease,
     baseCss,
@@ -567,7 +600,7 @@ const noTests = gulp.series(
     componentCss,
     layoutCss,
     resources,
-    copyOfflineLibraries,
+    //copyOfflineLibraries,
     offlineScripts,
     webpackApi,
     generateManifest,
