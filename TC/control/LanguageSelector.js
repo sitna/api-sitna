@@ -13,9 +13,12 @@ class LanguageOption extends HTMLElement {
 
         const self = this;
         self.CLASS = 'tc-ctl-lang-link';
-        self.#link = document.createElement('a');
-        self.#link.classList.add(self.CLASS);
-        self.appendChild(self.#link);
+        self.#link = self.querySelector(`a.${self.CLASS}`);
+        if (!self.#link) {
+            self.#link = document.createElement('a');
+            self.#link.classList.add(self.CLASS);
+            self.appendChild(self.#link);
+        }
 
         if (options) {
             self.fullCode = options.fullCode;
