@@ -4,11 +4,10 @@ import Cfg from '../Cfg';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
 Consts.classes.PRINTABLE = 'tc-printable';
 
-TC.control.Print = function (options)
+const Print = function (options)
 {
     const self = this;
     self.options = options || {};
@@ -24,10 +23,10 @@ TC.control.Print = function (options)
     }
 };
 
-TC.inherit(TC.control.Print, TC.Control);
+TC.inherit(Print, Control);
 
 (function () {
-    const ctlProto = TC.control.Print.prototype;
+    const ctlProto = Print.prototype;
 
     ctlProto.CLASS = 'tc-ctl-print';
 
@@ -81,7 +80,7 @@ TC.inherit(TC.control.Print, TC.Control);
     ctlProto.renderData = async function (data, callback) {
         const self = this;
         if (self.div) {
-            await TC.Control.prototype.renderData.call(self, data, callback);
+            await Control.prototype.renderData.call(self, data, callback);
             return;
         }
         const target = self.getRenderTarget();
@@ -99,5 +98,5 @@ TC.inherit(TC.control.Print, TC.Control);
 
 })();
 
-const Print = TC.control.Print;
+TC.control.Print = Print;
 export default Print;

@@ -4,18 +4,17 @@ import Control from '../Control';
 import Util from '../Util';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.FullScreen = function () {
+const FullScreen = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 };
 
-TC.inherit(TC.control.FullScreen, TC.Control);
+TC.inherit(FullScreen, Control);
 
 (function () {
-    var ctlProto = TC.control.FullScreen.prototype;
+    var ctlProto = FullScreen.prototype;
 
     ctlProto.CLASS = 'tc-ctl-fscreen';
 
@@ -88,7 +87,7 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
     ctlProto.register = function (map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         result.then(function () {
             const btn = self.div.querySelector('.' + self.CLASS + '-btn');
@@ -178,5 +177,5 @@ TC.inherit(TC.control.FullScreen, TC.Control);
 
 })();
 
-const FullScreen = TC.control.FullScreen;
+TC.control.FullScreen = FullScreen;
 export default FullScreen;

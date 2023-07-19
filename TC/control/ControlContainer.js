@@ -2,12 +2,11 @@
 import Container from './Container';
 
 TC.control = TC.control || {};
-TC.control.Container = Container;
 
-TC.control.ControlContainer = function () {
+const ControlContainer = function () {
     var self = this;
 
-    TC.control.Container.apply(self, arguments);
+    Container.apply(self, arguments);
 
     // GLS: 20/01/2020 código compatibilidad hacia atrás
     if (!Array.isArray(self.controlOptions)) {
@@ -30,10 +29,10 @@ TC.control.ControlContainer = function () {
     }
 };
 
-TC.inherit(TC.control.ControlContainer, TC.control.Container);
+TC.inherit(ControlContainer, Container);
 
 (function () {
-    var ctlProto = TC.control.ControlContainer.prototype;
+    var ctlProto = ControlContainer.prototype;
 
     ctlProto.CLASS = 'tc-ctl-cctr';
     ctlProto.POSITION = {
@@ -117,5 +116,5 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
     };
 })();
 
-const ControlContainer = TC.control.ControlContainer;
+TC.control.ControlContainer = ControlContainer;
 export default ControlContainer;

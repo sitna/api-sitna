@@ -10,21 +10,20 @@ import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Geometry from '../Geometry';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.Elevation = function () {
+const Elevation = function () {
     const self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 
     self.displayElevation = true;
     self.resultsPanel = null;
 };
 
-TC.inherit(TC.control.Elevation, TC.Control);
+TC.inherit(Elevation, Control);
 
 (function () {
-    const ctlProto = TC.control.Elevation.prototype;
+    const ctlProto = Elevation.prototype;
 
     ctlProto.CLASS = 'tc-ctl-elev';
 
@@ -73,7 +72,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
 
     ctlProto.register = async function (map) {
         const self = this;
-        await TC.Control.prototype.register.call(self, map);
+        await Control.prototype.register.call(self, map);
 
         map
             .on(Consts.event.FEATUREMODIFY + ' ' + Consts.event.FEATUREREMOVE, function (e) {
@@ -104,7 +103,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
             elevation: self.elevation,
             map: self.map
         };
-        const ctl = await TC.Control.prototype.getElevationTool.call(proxyObj);
+        const ctl = await Control.prototype.getElevationTool.call(proxyObj);
         self.elevation = ctl;
         return ctl;
     };
@@ -525,5 +524,5 @@ TC.inherit(TC.control.Elevation, TC.Control);
     };
 })();
 
-const Elevation = TC.control.Elevation;
+TC.control.Elevation = Elevation;
 export default Elevation;

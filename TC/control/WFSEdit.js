@@ -49,8 +49,11 @@
 import localforage from 'localforage';
 import TC from '../../TC';
 import Consts from '../Consts';
+import Control from '../Control';
 import SWCacheClient from './SWCacheClient';
+import Edit from './Edit';
 import Geometry from '../Geometry';
+import Layer from '../../SITNA/layer/Layer';
 import Vector from '../../SITNA/layer/Vector';
 import filter from '../filter';
 import Toggle from '../../SITNA/ui/Toggle';
@@ -62,17 +65,14 @@ import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 
 TC.control = TC.control || {};
-TC.control.SWCacheClient = SWCacheClient;
 TC.Geometry = Geometry;
-TC.layer = TC.layer || {};
-TC.layer.Vector = Vector;
 TC.filter = filter;
 
 
-TC.control.WFSEdit = function () {
+const WFSEdit = function () {
     const self = this;
 
-    TC.control.SWCacheClient.apply(this, arguments);
+    SWCacheClient.apply(this, arguments);
     self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || false;
 
     self._classSelector = '.' + self.CLASS;
@@ -112,7 +112,7 @@ TC.control.WFSEdit = function () {
     };
 };
 
-TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
+TC.inherit(WFSEdit, SWCacheClient);
 
 (function () {
     var newFeatureIdNumber = 0;
@@ -249,7 +249,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
         return layer.getPath ? layer.getPath().join(' • ') : layer.title || layer.id;
     };
 
-    const ctlProto = TC.control.WFSEdit.prototype;
+    const ctlProto = WFSEdit.prototype;
 
     ctlProto.CLASS = 'tc-ctl-wfsedit';
 
@@ -261,7 +261,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
     ctlProto.register = async function (map) {
         const self = this;
 
-        await TC.control.SWCacheClient.prototype.register.call(self, map);
+        await SWCacheClient.prototype.register.call(self, map);
 
         window.addEventListener('online', function () {
             setSyncState(self);
@@ -503,7 +503,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                 }
             }
         }
-        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, {
+        return self._set1stRenderPromise(Control.prototype.renderData.call(self, {
             layers: editLayers,
             showOriginalFeatures: self.showsOriginalFeatures,
             highlightChanges: self.highlightsAdded || self.highlightsModified || self.highlightsRemoved,
@@ -698,7 +698,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
             const selector = self.div.querySelector(self._classSelector + '-layer-sel');
 
             layer = map.getLayer(layer);
-            const mapLayer = map.workLayers.filter(l => l === layer)[0];
+            const mapLayer = map.workLayers.find(l => l === layer);
 
             const setNewLayer = function () {
                 if (mapLayer) {
@@ -970,26 +970,26 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             setEditState(self, true);
                             setChangedState(self);
 
-                            const modes = [TC.control.Edit.mode.MODIFY, TC.control.Edit.mode.OTHER];
+                            const modes = [Edit.mode.MODIFY, Edit.mode.OTHER];
                             switch (layerEditData.geometryType) {
                                 case Consts.geom.POINT:
-                                    modes.push(TC.control.Edit.mode.ADDPOINT);
+                                    modes.push(Edit.mode.ADDPOINT);
                                     break;
                                 case Consts.geom.POLYLINE:
                                 case Consts.geom.MULTIPOLYLINE:
-                                    modes.push(TC.control.Edit.mode.ADDLINE);
-                                    //modes.push(TC.control.Edit.mode.CUT);
+                                    modes.push(Edit.mode.ADDLINE);
+                                    //modes.push(Edit.mode.CUT);
                                     break;
                                 case Consts.geom.POLYGON:
                                 case Consts.geom.MULTIPOLYGON:
-                                    modes.push(TC.control.Edit.mode.ADDPOLYGON);
-                                    //modes.push(TC.control.Edit.mode.CUT);
+                                    modes.push(Edit.mode.ADDPOLYGON);
+                                    //modes.push(Edit.mode.CUT);
                                     break;
                                 default:
                                     break;
                             }
                             editControl.constrainModes(modes);
-                            editControl.mode = TC.control.Edit.mode.MODIFY;
+                            editControl.mode = Edit.mode.MODIFY;
 
                             self._addAuxLayersToMap()
                                 .then(() => resolve())
@@ -1002,7 +1002,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         self.getEditControl().then(function (editControl) {
                             editControl.activate();
                             setEditState(self, true);
-                            editControl.mode = TC.control.Edit.mode.MODIFY;
+                            editControl.mode = Edit.mode.MODIFY;
                             resolve();
                         });
                     }
@@ -1087,7 +1087,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                             styles: self.styles,
                             stealth: true
                         };
-                        layer.wfsLayer = new TC.layer.Vector(wfsLayerOptions);
+                        layer.wfsLayer = new Vector(wfsLayerOptions);
                         layer.wfsLayer.wmsLayer = layer;
                         return layer.wfsLayer;
                     }
@@ -1161,7 +1161,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
                         var beforeEditLayer = layerEditData.beforeEditLayer;
                         if (!beforeEditLayer) {
-                            beforeEditLayer = layerEditData.beforeEditLayer = new TC.layer.Vector(TC.Util.extend({}, editableLayer.options, {
+                            beforeEditLayer = layerEditData.beforeEditLayer = new Vector(TC.Util.extend({}, editableLayer.options, {
                                 id: self.getUID(),
                                 title: `${baseTitle} - ${self.getLocaleString('dataBeforeEdits')}`,
                                 readOnly: true,
@@ -1174,7 +1174,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         let aflIsOld = true;
                         if (!addedFeaturesLayer) {
                             aflIsOld = false;
-                            addedFeaturesLayer = layerEditData.addedFeaturesLayer = new TC.layer.Vector({
+                            addedFeaturesLayer = layerEditData.addedFeaturesLayer = new Vector({
                                 id: self.getUID(),
                                 title: `${baseTitle} - ${self.getLocaleString('addedFeatures')}`,
                                 owner: self,
@@ -1187,7 +1187,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         let mflIsOld = true;
                         if (!modifiedFeaturesLayer) {
                             mflIsOld = false;
-                            modifiedFeaturesLayer = layerEditData.modifiedFeaturesLayer = new TC.layer.Vector({
+                            modifiedFeaturesLayer = layerEditData.modifiedFeaturesLayer = new Vector({
                                 id: self.getUID(),
                                 title: `${baseTitle} - ${self.getLocaleString('modifiedFeatures')}`,
                                 owner: self,
@@ -1200,7 +1200,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                         let rflIsOld = true;
                         if (!removedFeaturesLayer) {
                             rflIsOld = false;
-                            removedFeaturesLayer = layerEditData.removedFeaturesLayer = new TC.layer.Vector({
+                            removedFeaturesLayer = layerEditData.removedFeaturesLayer = new Vector({
                                 id: self.getUID(),
                                 title: `${baseTitle} - ${self.getLocaleString('removedFeatures')}`,
                                 owner: self,
@@ -1322,7 +1322,7 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
                     };
 
                     if (editableLayer.type === Consts.layerType.WFS) {
-                        if (editableLayer.state === TC.Layer.state.IDLE) {
+                        if (editableLayer.state === Layer.state.IDLE) {
                             endProcess();
                         }
                         else {
@@ -1561,5 +1561,5 @@ TC.inherit(TC.control.WFSEdit, TC.control.SWCacheClient);
 
 })();
 
-const WFSEdit = TC.control.WFSEdit;
+TC.control.WFSEdit = WFSEdit;
 export default WFSEdit;

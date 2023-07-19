@@ -3,16 +3,15 @@ import Consts from '../Consts';
 import MapContents from './MapContents';
 
 TC.control = TC.control || {};
-TC.control.MapContents = MapContents;
 
-TC.control.Legend = function () {
-    TC.control.MapContents.apply(this, arguments);
+const Legend = function () {
+    MapContents.apply(this, arguments);
 };
 
-TC.inherit(TC.control.Legend, TC.control.MapContents);
+TC.inherit(Legend, MapContents);
 
 (function () {
-    var ctlProto = TC.control.Legend.prototype;
+    var ctlProto = Legend.prototype;
 
     ctlProto.CLASS = 'tc-ctl-legend';
 
@@ -30,7 +29,7 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
             }
         });
 
-        return TC.control.MapContents.prototype.register.call(self, map);
+        return MapContents.prototype.register.call(self, map);
     };
 
     ctlProto.loadTemplates = async function () {
@@ -194,7 +193,7 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
 
     ctlProto.removeLayer = function (layer) {
         if (!layer.isBase) {
-            TC.control.MapContents.prototype.removeLayer.call(this, layer);
+            MapContents.prototype.removeLayer.call(this, layer);
         }
     };
 
@@ -213,5 +212,5 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     };
 })();
 
-const Legend = TC.control.Legend;
+TC.control.Legend = Legend;
 export default Legend;

@@ -38,20 +38,19 @@ import Consts from '../Consts';
 import Container from './Container';
 
 TC.control = TC.control || {};
-TC.control.Container = Container;
 
-TC.control.TabContainer = function () {
+const TabContainer = function () {
     const self = this;
 
-    TC.control.Container.apply(self, arguments);
+    Container.apply(self, arguments);
 
     self._classSelector = '.' + self.CLASS;
 };
 
-TC.inherit(TC.control.TabContainer, TC.control.Container);
+TC.inherit(TabContainer, Container);
 
 (function () {
-    var ctlProto = TC.control.TabContainer.prototype;
+    var ctlProto = TabContainer.prototype;
 
     ctlProto.CLASS = 'tc-ctl-tctr';
 
@@ -183,5 +182,5 @@ TC.inherit(TC.control.TabContainer, TC.control.Container);
     };
 })();
 
-const TabContainer = TC.control.TabContainer;
+TC.control.TabContainer = TabContainer;
 export default TabContainer;

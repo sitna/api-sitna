@@ -4,25 +4,24 @@ import Control from '../Control';
 import Proxification from '../tool/Proxification';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.MapInfo = function () {
+const MapInfo = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 };
 
-TC.inherit(TC.control.MapInfo, TC.Control);
+TC.inherit(MapInfo, Control);
 
 (function () {
-    var ctlProto = TC.control.MapInfo.prototype;
+    var ctlProto = MapInfo.prototype;
 
     ctlProto.CLASS = 'tc-ctl-mi';
 
     ctlProto.register = function (map) {
         const self = this;
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         self.QR_MAX_URL_LENGTH = 150;
         self.SHORTEN_URL_LENGTH = 16000;
@@ -348,5 +347,5 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
 })();
 
-const MapInfo = TC.control.MapInfo;
+TC.control.MapInfo = MapInfo;
 export default MapInfo;

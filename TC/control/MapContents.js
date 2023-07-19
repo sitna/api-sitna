@@ -1,22 +1,22 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
+import Proxification from '../tool/Proxification';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.MapContents = function () {
+const MapContents = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 
     self.layerTrees = {};
 };
 
-TC.inherit(TC.control.MapContents, TC.Control);
+TC.inherit(MapContents, Control);
 
 (function () {
-    var ctlProto = TC.control.MapContents.prototype;
+    var ctlProto = MapContents.prototype;
 
     ctlProto.CLASS = 'tc-ctl-mc';
 
@@ -32,7 +32,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
 
     ctlProto.register = async function (map) {
         const self = this;
-        await Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]);
+        await Promise.all([Control.prototype.register.call(self, map), self.renderPromise()]);
         for (var i = 0, len = map.layers.length; i < len; i++) {
             self.updateLayerTree(map.layers[i]);
         }
@@ -179,7 +179,7 @@ TC.inherit(TC.control.MapContents, TC.Control);
         if (!img.getAttribute('src')) {
             var imgSrc = img.dataset.img;
 
-            const proxificationTool = new TC.tool.Proxification(TC.proxify);
+            const proxificationTool = new Proxification(TC.proxify);
 
             if (layer && layer.options.method && layer.options.method === "POST") {
                 layer.getLegendGraphicImage()
@@ -245,5 +245,5 @@ TC.inherit(TC.control.MapContents, TC.Control);
 
 })();
 
-const MapContents = TC.control.MapContents;
+TC.control.MapContents = MapContents;
 export default MapContents;

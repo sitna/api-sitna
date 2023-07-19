@@ -1,5 +1,7 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
+import Control from '../Control';
 import MapContents from './MapContents';
 import Raster from '../../SITNA/layer/Raster';
 import Vector from '../../SITNA/layer/Vector';
@@ -22,7 +24,7 @@ TC.inherit(TOC, MapContents);
 
     ctlProto.register = function (map) {
         const self = this;
-        const result = TC.control.MapContents.prototype.register.call(self, map);
+        const result = MapContents.prototype.register.call(self, map);
 
         map.on(Consts.event.EXTERNALSERVICEADDED, function (e) {
             self.onExternalServiceAdded(e);
@@ -326,7 +328,7 @@ TC.inherit(TOC, MapContents);
     ctlProto.render = function (callback) {
         const self = this;
 
-        return TC.Control.prototype.render.call(self, function () {
+        return Control.prototype.render.call(self, function () {
 
             var controlOptions = self.options.controls || [];
 
@@ -334,10 +336,10 @@ TC.inherit(TOC, MapContents);
                 var ctl = controlOptions[0];
                 var newDiv = document.createElement("div");
                 self.div.appendChild(newDiv);
-                self.map.addControl(ctl.name, TC.Util.extend({ 'div': newDiv }, ctl.options));
+                self.map.addControl(ctl.name, Util.extend({ 'div': newDiv }, ctl.options));
             }
 
-            if (TC.Util.isFunction(callback)) {
+            if (Util.isFunction(callback)) {
                 callback();
             }
         });

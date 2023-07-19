@@ -1,6 +1,7 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
+import Layer from '../../SITNA/layer/Layer';
 
 TC.control = TC.control || {};
 TC.Control = Control;
@@ -25,7 +26,7 @@ class Attribution extends Control {
 
     register(map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         self.apiAttribution = self.map.options.attribution || self.apiAttribution;
 
@@ -77,7 +78,7 @@ class Attribution extends Control {
                     return true;
                 };
 
-                if (obj instanceof TC.Layer ? checkRemoveData() : true) {
+                if (obj instanceof Layer ? checkRemoveData() : true) {
                     // TODO: sanitizer
                     var attr = obj.getAttribution();
 

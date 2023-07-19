@@ -3,7 +3,6 @@ import Consts from '../Consts';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
 Consts.event.POPUP = Consts.event.POPUP || 'popup.tc';
 Consts.event.POPUPHIDE = Consts.event.POPUPHIDE || 'popuphide.tc';
@@ -11,26 +10,26 @@ Consts.classes.DRAG = Consts.classes.DRAG || 'tc-drag';
 Consts.classes.DRAGGED = Consts.classes.DRAGGED || 'tc-dragged';
 Consts.classes.DRAGGABLE = Consts.classes.DRAGGABLE || 'tc-draggable';
 
-TC.control.Popup = function () {
+const Popup = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
     self.currentFeature = null;
     //self.wrap = { popup: null };    
     self.wrap = new TC.wrap.control.Popup(self);
 };
 
-TC.inherit(TC.control.Popup, TC.Control);
+TC.inherit(Popup, Control);
 
 (function () {
-    var ctlProto = TC.control.Popup.prototype;
+    var ctlProto = Popup.prototype;
 
     ctlProto.CLASS = 'tc-ctl-popup';
 
     ctlProto.render = function (callback) {
         const self = this;
         return self._set1stRenderPromise(new Promise(function (resolve, reject) {
-            TC.Control.prototype.renderData.call(self, {
+            Control.prototype.renderData.call(self, {
                 closeButton: self.options.closeButton || self.options.closeButton === undefined,
                 shareButton: self.options.share
             })
@@ -59,7 +58,7 @@ TC.inherit(TC.control.Popup, TC.Control);
 
     ctlProto.register = async function (map) {
         const self = this;
-        await TC.Control.prototype.register.call(self, map);
+        await Control.prototype.register.call(self, map);
         await self.renderPromise();
         map.on(Consts.event.VIEWCHANGE, function () {
             if (map.view === Consts.view.PRINTING) {
@@ -218,5 +217,5 @@ TC.inherit(TC.control.Popup, TC.Control);
 
 })();
 
-const Popup = TC.control.Popup;
+TC.control.Popup = Popup;
 export default Popup;

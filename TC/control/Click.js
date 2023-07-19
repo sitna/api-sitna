@@ -34,13 +34,12 @@ import wrap from '../ol/ol';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 TC.wrap = wrap;
 
-TC.control.Click = function () {
+const Click = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 
     if (self.options && self.options.callback) {
         self.callback = self.options.callback;
@@ -49,29 +48,29 @@ TC.control.Click = function () {
     self.wrap = new TC.wrap.control.Click(self);
 };
 
-TC.inherit(TC.control.Click, TC.Control);
+TC.inherit(Click, Control);
 
 (function () {
-    var ctlProto = TC.control.Click.prototype;
+    var ctlProto = Click.prototype;
 
     ctlProto.CLASS = 'tc-ctl-click';
 
     ctlProto.register = function (map) {
         var self = this;
         self.wrap.register(map);
-        return TC.Control.prototype.register.call(self, map);
+        return Control.prototype.register.call(self, map);
     };
 
     ctlProto.activate = function () {
         var self = this;
-        TC.Control.prototype.activate.call(self);
+        Control.prototype.activate.call(self);
         self.wrap.activate();
     };
 
     ctlProto.deactivate = function () {
         var self = this;
         self.wrap.deactivate();
-        TC.Control.prototype.deactivate.call(self);
+        Control.prototype.deactivate.call(self);
     };
 
     ctlProto.callback = function (coord, point) {
@@ -79,5 +78,5 @@ TC.inherit(TC.control.Click, TC.Control);
     };
 })();
 
-const Click = TC.control.Click;
+TC.control.Click = Click;
 export default Click;
