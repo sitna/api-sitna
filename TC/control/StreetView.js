@@ -37,7 +37,19 @@ import Cfg from '../Cfg';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
+
+const StreetView = function () {
+    var self = this;
+    self._sv = null;
+    self._mapActiveControl = null;
+
+    Control.apply(self, arguments);
+
+    self.viewDiv = null;
+    self._startLonLat = null;
+};
+
+TC.inherit(StreetView, Control);
 
 (function () {
     Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
@@ -45,20 +57,7 @@ TC.Control = Control;
     Cfg.proxyExceptions = Cfg.proxyExceptions || [];
     Cfg.proxyExceptions.push(Consts.url.GOOGLEMAPS);
 
-    TC.control.StreetView = function () {
-        var self = this;
-        self._sv = null;
-        self._mapActiveControl = null;
-
-        TC.Control.apply(self, arguments);
-
-        self.viewDiv = null;
-        self._startLonLat = null;
-    };
-
-    TC.inherit(TC.control.StreetView, TC.Control);
-
-    var ctlProto = TC.control.StreetView.prototype;
+    var ctlProto = StreetView.prototype;
 
     ctlProto.CLASS = 'tc-ctl-sv';
 
@@ -150,7 +149,7 @@ TC.Control = Control;
             }
         }
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         self.mapDiv = self.map.div;
 
@@ -287,12 +286,11 @@ TC.Control = Control;
 
     ctlProto.callback = function (coords) {
         var self = this;
-        var geogCrs = 'EPSG:4326';
-        const mapCrs = self.map.on3DView ? self.map.view3D.crs : self.map.crs;
+        var geogCrs = 'EPSG:4326';        
         var ondrop = function (feature) {
             if (self._sv) {
                 var bounds = feature.getBounds();
-                const lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], mapCrs, geogCrs);
+                const lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
                 self._sv.setPosition({ lng: lonLat[0], lat: lonLat[1] });
             }
         };
@@ -300,7 +298,7 @@ TC.Control = Control;
         var ondrag = function (feature) {
             if (self._sv) {
                 var bounds = feature.getBounds();
-                self._startLonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], mapCrs, geogCrs);
+                self._startLonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
             }
         };
 
@@ -319,7 +317,7 @@ TC.Control = Control;
             var heading;
             if (sv) {
                 var latLon = sv.getPosition();
-                xy = TC.Util.reproject([latLon.lng(), latLon.lat()], geogCrs, mapCrs);
+                xy = TC.Util.reproject([latLon.lng(), latLon.lat()], geogCrs, self.map.getCrs());
                 heading = sv.getPov().heading;
             }
             else {
@@ -375,7 +373,7 @@ TC.Control = Control;
                 }
             }
             else {
-                self.ThreeDMarker.setImage(Math.random() * 1000, TC.Util.getBackgroundUrlFromCss(cssClass));
+                self.ThreeDMarker?.setImage(Math.random() * 1000, TC.Util.getBackgroundUrlFromCss(cssClass));
             }
 
         }
@@ -388,7 +386,7 @@ TC.Control = Control;
                 if (window.google) {
                     setMarker();
                     const view = self.viewDiv;
-                    const lonLat = TC.Util.reproject(coords, mapCrs, geogCrs);
+                    const lonLat = TC.Util.reproject(coords, self.map.getCrs(), geogCrs);
                     const mapsLonLat = new google.maps.LatLng(lonLat[1], lonLat[0]);
 
                     // Comprobamos si hay datos de SV en el sitio elegido.
@@ -450,7 +448,7 @@ TC.Control = Control;
                                         google.maps.event.addListener(self._sv, 'position_changed', function () {
                                             setMarker(self._sv, view.classList.contains(Consts.classes.VISIBLE));
                                         });
-                                        const managePOVChange = function () {
+                                        self.managePOVChange = function () {
                                             var heading
                                             if (self.map.on3DView)
                                                 heading = (self._sv.getPov().heading || 360) - self.map.view3D.getCameraData().heading
@@ -459,8 +457,8 @@ TC.Control = Control;
                                             }
                                             changeMarker('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16);
                                         }
-                                        self.map.on(Consts.event.CAMERACHANGE, managePOVChange);
-                                        google.maps.event.addListener(self._sv, 'pov_changed', managePOVChange);
+                                        self.map.on(Consts.event.CAMERACHANGE, self.managePOVChange);
+                                        google.maps.event.addListener(self._sv, 'pov_changed', self.managePOVChange);
                                         google.maps.event.addListener(self._sv, 'status_changed', function () {
                                             var svStatus = self._sv.getStatus();
 
@@ -553,6 +551,7 @@ TC.Control = Control;
             const resizeEvent = document.createEvent('HTMLEvents');
             resizeEvent.initEvent('resize', false, false);
             mapDiv.dispatchEvent(resizeEvent); // Para evitar que salga borroso el mapa tras cerrar SV.
+            self.map.off(Consts.event.CAMERACHANGE, self.managePOVChange);
         };
         const transitionend = 'transitionend';
         const onTransitionend = function (e) {
@@ -589,5 +588,5 @@ TC.Control = Control;
     };
 })();
 
-const StreetView = TC.control.StreetView;
+TC.control.StreetView = StreetView;
 export default StreetView;
