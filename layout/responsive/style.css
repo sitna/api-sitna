@@ -178,120 +178,120 @@
     --tab-inner-border-radius: 0;
 }
 
-input[type=range] {
+.tc-ctl input[type=range] {
     -webkit-appearance: none;
     -moz-appearance: none;
     margin: 0;
     width: 100%;
 }
 
-    input[type=range]:active {
+    .tc-ctl input[type=range]:active {
         padding: 0;
     }
 
-input[type=range]:focus {
-    outline: none;
-}
+    .tc-ctl input[type=range]:focus {
+        outline: none;
+    }
 
-input[type=range]::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 12px;
-    cursor: pointer;
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), inset 0 0 2px rgba(0,0,0,0.1);
-    background: linear-gradient(to right, rgba(204,0,0,0), var(--main-hl-color));
-    border-radius: 0.2em;
-    border: 0;
-}
+    .tc-ctl input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 12px;
+        cursor: pointer;
+        box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2), inset 0 0 2px rgba(0,0,0,0.1);
+        background: linear-gradient(to right, rgba(204,0,0,0), var(--main-hl-color));
+        border-radius: 0.2em;
+        border: 0;
+    }
 
-input[type=range]:disabled::-webkit-slider-runnable-track {
-    background: var(--btn-disabled-bg-color);
-    cursor: default;
-}
+    .tc-ctl input[type=range]:disabled::-webkit-slider-runnable-track {
+        background: var(--btn-disabled-bg-color);
+        cursor: default;
+    }
 
-input[type=range]::-webkit-slider-thumb {
-    border: 0;
-    height: 20px;
-    width: 20px;
-    max-width: 50%;
-    border-radius: var(--border-radius);
-    background: #666;
-    cursor: pointer;
-    -webkit-appearance: none;
-    margin-top: -4px;
-}
+    .tc-ctl input[type=range]::-webkit-slider-thumb {
+        border: 0;
+        height: 20px;
+        width: 20px;
+        max-width: 50%;
+        border-radius: var(--border-radius);
+        background: #666;
+        cursor: pointer;
+        -webkit-appearance: none;
+        margin-top: -4px;
+    }
 
-input[type=range]:disabled::-webkit-slider-thumb {
-    background: transparent;
-    cursor: default;
-}
+    .tc-ctl input[type=range]:disabled::-webkit-slider-thumb {
+        background: transparent;
+        cursor: default;
+    }
 
-input[type=range]:focus::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, rgba(204,0,0,0), var(--main-hl-color));
-}
+    .tc-ctl input[type=range]:focus::-webkit-slider-runnable-track {
+        background: linear-gradient(to right, rgba(204,0,0,0), var(--main-hl-color));
+    }
 
-input[type=range]::-moz-range-track {
-    width: 100%;
-    height: 12px;
-    cursor: pointer;
-    box-shadow: inset 1px 1px 1px rgba(0,0,0,0.2), inset 0 0 1px rgba(0,0,0,0.1);
-    background: linear-gradient(to right, rgba(204,0,0,0), var(--main-hl-color));
-    border-radius: 0.2em;
-    border: 0;
-}
+    .tc-ctl input[type=range]::-moz-range-track {
+        width: 100%;
+        height: 12px;
+        cursor: pointer;
+        box-shadow: inset 1px 1px 1px rgba(0,0,0,0.2), inset 0 0 1px rgba(0,0,0,0.1);
+        background: linear-gradient(to right, rgba(204,0,0,0), var(--main-hl-color));
+        border-radius: 0.2em;
+        border: 0;
+    }
 
-input[type=range]:disabled::-moz-range-track {
-    background: var(--btn-disabled-bg-color);
-    cursor: default;
-}
+    .tc-ctl input[type=range]:disabled::-moz-range-track {
+        background: var(--btn-disabled-bg-color);
+        cursor: default;
+    }
 
-input[type=range]::-moz-range-thumb {
-    border: 0;
-    height: 20px;
-    width: 20px;
-    max-width: 50%;
-    border-radius: var(--border-radius);
-    background: #666;
-    cursor: pointer;
-}
+    .tc-ctl input[type=range]::-moz-range-thumb {
+        border: 0;
+        height: 20px;
+        width: 20px;
+        max-width: 50%;
+        border-radius: var(--border-radius);
+        background: #666;
+        cursor: pointer;
+    }
 
-input[type=range]:disabled::-moz-range-thumb {
-    background: transparent;
-    cursor: default;
-}
+    .tc-ctl input[type=range]:disabled::-moz-range-thumb {
+        background: transparent;
+        cursor: default;
+    }
 
 
-input[type=range]::-ms-track {
-    width: 100%;
-    height: 12px;
-    background: linear-gradient(to right, rgba(204,0,0,0), #c00);
-    border: 0;
-    color: transparent;
-    cursor: pointer;
-    border-radius: 0.3em;
-}
+    .tc-ctl input[type=range]::-ms-track {
+        width: 100%;
+        height: 12px;
+        background: linear-gradient(to right, rgba(204,0,0,0), #c00);
+        border: 0;
+        color: transparent;
+        cursor: pointer;
+        border-radius: 0.3em;
+    }
 
-input[type=range]::-ms-fill-lower {
-    background: transparent;
-    box-shadow: inset 1px 1px 1px rgba(0,0,0,0.2), inset 0 0 1px rgba(0,0,0,0.1);
-    border-radius: 0.3em;
-}
+    .tc-ctl input[type=range]::-ms-fill-lower {
+        background: transparent;
+        box-shadow: inset 1px 1px 1px rgba(0,0,0,0.2), inset 0 0 1px rgba(0,0,0,0.1);
+        border-radius: 0.3em;
+    }
 
-input[type=range]::-ms-fill-upper {
-    background: transparent;
-    box-shadow: inset 1px 1px 1px rgba(0,0,0,0.2), inset 0 0 1px rgba(0,0,0,0.1);
-    border-radius: 0.3em;
-}
+    .tc-ctl input[type=range]::-ms-fill-upper {
+        background: transparent;
+        box-shadow: inset 1px 1px 1px rgba(0,0,0,0.2), inset 0 0 1px rgba(0,0,0,0.1);
+        border-radius: 0.3em;
+    }
 
-input[type=range]::-ms-thumb {
-    border: 0;
-    margin: 1px 0;
-    height: 20px;
-    width: 20px;
-    max-width: 50%;
-    border-radius: 0.3em;
-    background: #666;
-    cursor: pointer;
-}
+    .tc-ctl input[type=range]::-ms-thumb {
+        border: 0;
+        margin: 1px 0;
+        height: 20px;
+        width: 20px;
+        max-width: 50%;
+        border-radius: 0.3em;
+        background: #666;
+        cursor: pointer;
+    }
 
 /*html, body {
     width: 100%;
@@ -1918,6 +1918,12 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     max-width: 100%;
 }
 
+
+.tc-ctl-wfsquery-geom-draw {
+    min-width: auto;
+    width: 100%;
+}
+
 @media screen and (min-width: 380px) {
     /* A Carlos no le gusta como quedaba el perfil en iframe */
     .tc-map div.tc-ctl-cctr div.tc-ctl.tc-ctl-rpanel div.tc-ctl-rpanel-grp {
@@ -1928,6 +1934,9 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         max-width: 60vw;
     }
 
+        .tc-ctl-rpanel-main, .tc-ctl-rpanel-table.tc-ctl-wfsquery-geom-draw {
+            min-width: 12em;
+        }
 
     .tc-map div.tc-ctl-cctr div.tc-ctl.tc-ctl-rpanel div.tc-ctl-rpanel-heading {
         border-top-right-radius: 0.2em;
@@ -2665,33 +2674,33 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         margin-right: 0.7em;
     }
 
-    input[type=range]::-webkit-slider-runnable-track {
+    .tc-ctl input[type=range]::-webkit-slider-runnable-track {
         height: 8px;
     }
 
-    input[type=range]::-webkit-slider-thumb {
-        height: 8px;
-        width: 3em;
-        max-width: 50%;
-        margin-top: auto;
-    }
-
-    input[type=range]::-moz-range-track {
-        height: 8px;
-    }
-
-    input[type=range]::-moz-range-thumb {
+    .tc-ctl input[type=range]::-webkit-slider-thumb {
         height: 8px;
         width: 3em;
         max-width: 50%;
         margin-top: auto;
     }
 
-    input[type=range]::-ms-track {
+    .tc-ctl input[type=range]::-moz-range-track {
         height: 8px;
     }
 
-    input[type=range]::-ms-thumb {
+    .tc-ctl input[type=range]::-moz-range-thumb {
+        height: 8px;
+        width: 3em;
+        max-width: 50%;
+        margin-top: auto;
+    }
+
+    .tc-ctl input[type=range]::-ms-track {
+        height: 8px;
+    }
+
+    .tc-ctl input[type=range]::-ms-thumb {
         height: 8px;
         width: 3em;
         max-width: 50%;
