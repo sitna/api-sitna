@@ -2,9 +2,13 @@
 import Consts from '../Consts';
 import Control from '../Control';
 import Point from '../../SITNA/feature/Point';
+/*import mainTemplate from '../templates/tc-ctl-rpanel.mjs';
+import tableTemplate from '../templates/tc-ctl-rpanel-table.mjs';
+import chartTemplate from '../templates/tc-ctl-rpanel-chart.mjs';*/
+import itemToolContainer from './itemToolContainer';
+import Button from '../../SITNA/ui/Button';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
 Consts.event.DRAWCHART = 'drawchart.tc';
 Consts.event.DRAWTABLE = 'drawtable.tc';
@@ -13,10 +17,10 @@ Consts.event.RESULTSPANELMAX = 'resultspanelmax.tc';
 Consts.event.RESULTSPANELCLOSE = 'resultspanelclose.tc';
 Consts.event.RESULTSPANELRESIZE = 'resultspanelresize.tc';
 
-TC.control.ResultsPanel = function () {
+const ResultsPanel = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 
     self.wrap = new TC.wrap.control.ResultsPanel(self);
 
@@ -30,6 +34,8 @@ TC.control.ResultsPanel = function () {
     };
 
     self.content = self.contentType.TABLE;
+
+    self._toolContainerSelector = `.${self.CLASS}-tools`;
 
     if (TC.Util.isEmptyObject(self.options)) {
         self.options = { content: "table" };
@@ -54,11 +60,11 @@ TC.control.ResultsPanel = function () {
     }
 };
 
-TC.inherit(TC.control.ResultsPanel, TC.Control);
+TC.inherit(ResultsPanel, Control);
 
 (function () {
 
-    const ctlProto = TC.control.ResultsPanel.prototype;
+    const ctlProto = ResultsPanel.prototype;
 
     ctlProto.CLASS = 'tc-ctl-rpanel';
 
@@ -155,12 +161,34 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         self.template = template;
     };
 
+    const _addItemTool = function (classNamePartial, localeKey, actionFn) {
+        const self = this;
+        self.addItemTool({
+            renderFn: function (container) {
+                //<sitna-button variant="minimal" icon-text="&#xe917;" class="tc-ctl-rpanel-btn-zoom" hidden text="{{i18n "shareQuery"}}"></sitna-button>
+                const className = self.CLASS + classNamePartial;
+                let button = container.querySelector('sitna-button.' + className);
+                if (button) {
+                    button.remove();
+                    button = null;
+                }
+                const text = self.getLocaleString(localeKey);
+                button = new Button();
+                button.variant = Button.variant.MINIMAL;
+                button.text = text;
+                button.classList.add(className);
+                return button;
+            },            
+            actionFn: actionFn
+        });
+    }
+
     ctlProto.render = function (callback) {
         const self = this;
 
         self.div.classList.add(Consts.classes.HIDDEN);
 
-        return TC.Control.prototype.render.call(self, function () {
+        return Control.prototype.render.call(self, function () {
 
             /* --- LEGACY --- */
             self.mainTitleElm = self.div.querySelector('.tc-ctl-rpanel-title-text') ||
@@ -196,35 +224,26 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             self.maximizeButton.addEventListener('click', function () {
                 self.maximize();
             });
-
+            //<sitna-button variant="minimal" class="tc-ctl-rpanel-btn-csv" hidden text="{{i18n "export.excel"}}"></sitna-button>
             if (self.save) {
-                /* --- LEGACY --- */
-                self.saveButton = self.div.querySelector('.tc-ctl-rpanel-btn-csv') ||
-                    self.div.querySelector('.prcollapsed-slide-submenu-csv');
-                self.saveButton.addEventListener('click', function () {
+                _addItemTool.apply(self, ['-btn-csv', 'export.excel', function () {
                     self.exportToExcel();
-                });
-                self.saveButton.removeAttribute('hidden');
+                }]);
             }
+            
             if (self.options.download && self.options.content === "table") {
-                /* --- LEGACY --- */
-                self.downloadButton = self.div.querySelector('.tc-ctl-rpanel-btn-dwn') ||
-                    self.div.querySelector('.prcollapsed-slide-submenu-dwn');
-                self.downloadButton.addEventListener('click', function () {
+                _addItemTool.apply(self,['-btn-dwn', 'download', function () {
                     if (TC.Util.isFunction(self.options.download)) {
                         self.options.download.apply(self, []);
                     }
-                });
-                self.downloadButton.removeAttribute('hidden');
+                }]);
             }
             if (self.options.share) {
-                self.shareButton = self.div.querySelector('.' + self.CLASS + "-btn-share");
-                self.shareButton.addEventListener('click', function () {
+                _addItemTool.apply(self, ['-btn-share', 'shareQuery', function () {
                     if (self.caller) {
                         self.caller.showShareDialog();
                     }
-                });
-                self.shareButton.removeAttribute('hidden');
+                }]);
             }
             if (self.content) {
                 self.content = self.content;
@@ -395,7 +414,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.getResultsPanelFromElement = function (element) {
         const self = this;
 
-        let resultsPanels = self.map.getControlsByClass(TC.control.ResultsPanel);
+        let resultsPanels = self.map.getControlsByClass(ResultsPanel);
         for (var i = 0; i < resultsPanels.length; i++) {
             if (resultsPanels[i].div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`) === element) {
                 return resultsPanels[i];
@@ -491,7 +510,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             if (resizable) {
                 resizable.style = "";
             }
-
             self.map.trigger(Consts.event.RESULTSPANELCLOSE, { control: self, feature: self.currentFeature });
 
             //URI: Resetear el bottom de los paneles 
@@ -507,7 +525,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         self.div.classList.remove(Consts.classes.HIDDEN);
 
         // Cerramos el resto de los perfiles
-        self.map.getControlsByClass(TC.control.ResultsPanel)
+        self.map.getControlsByClass(ResultsPanel)
             .filter(function (ctl) {
                 return ctl !== self;
             })
@@ -550,6 +568,9 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         const div = options.div;
         let locale = TC.Util.getMapLocale(self.map);
 
+        const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
+        self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
+
         var templateData = {
             upHill: data.upHill ? data.upHill.toLocaleString(locale) : '0',
             downHill: data.downHill ? data.downHill.toLocaleString(locale) : '0'
@@ -570,6 +591,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                 max: formatYAxis(data.secondaryElevationProfileChartData[0].max, locale)
             };
         }
+
         self.getRenderedHtml(ctlProto.CLASS + '-chart', templateData, function (out) {
 
             div.innerHTML = out;
@@ -740,7 +762,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     const closeOpenedTableResultsPanel = function () {
         const self = this;
 
-        self.map.getControlsByClass(TC.control.ResultsPanel)
+        self.map.getControlsByClass(ResultsPanel)
             .filter(function (ctl) {
                 return ctl !== self && ctl.isVisible();
             })
@@ -842,10 +864,14 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
                         }
                         closeOpenedTableResultsPanel.call(self);
 
+                        const titleBar=self.div.querySelector('.tc-ctl-rpanel-title');
+                        self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
+
                         self.map.trigger(Consts.event.DRAWTABLE, { control: self });
                         if (scrollPosition) {
                             table.scrollLeft = scrollPosition;
                         }
+
                     });
                 };
                 _sort(self.tableData);
@@ -862,7 +888,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
         add: function (currentPanel) {
             const pbody = currentPanel.div.querySelector(".tc-ctl-rpanel-sidebar-body");
             pbody.style.bottom = "";
-            const bottom = currentPanel.map.getControlsByClass(TC.control.ResultsPanel)
+            const bottom = currentPanel.map.getControlsByClass(ResultsPanel)
                 .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
                 .filter(panel => pbody.colliding(panel.div.querySelector(".tc-ctl-rpanel-sidebar-body"))).reduce((prevVal, currVal) => {
                     return prevVal + currVal.div.querySelector(".tc-ctl-rpanel-sidebar-body").clientHeight
@@ -870,7 +896,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             if (bottom) pbody.style.bottom = bottom + "px";
         },
         remove: function (currentPanel) {
-            currentPanel.map.getControlsByClass(TC.control.ResultsPanel)
+            currentPanel.map.getControlsByClass(ResultsPanel)
                 .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
                 .forEach((panel) => {
                     panel.div.querySelector(".tc-ctl-rpanel-sidebar-body").style.bottom = "";
@@ -891,6 +917,8 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
             if (clientRect && clientRect.width > 100) {
                 window.cancelAnimationFrame(this.requestIsRendered);
 
+                const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
+                self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
                 //closeOpenedTableResultsPanel.call(self);
                 this.map.trigger(Consts.event.DRAWTABLE, { control: self });
             }
@@ -1421,7 +1449,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     ctlProto.register = function (map) {
         const self = this;
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         self.wrap.register(map);
 
@@ -1463,7 +1491,7 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
 
         //map.on(Consts.event.VIEWCHANGE, function () {
 
-        //    map.getControlsByClass(TC.control.ResultsPanel).filter(function (ctl) {
+        //    map.getControlsByClass(ResultsPanel).filter(function (ctl) {
         //        return ctl.options.content !== "chart" && ($(ctl.div).find('.' + ctl.CLASS + '-info:visible').length === 1 || $(ctl.div).find('.' + ctl.CLASS + '-table:visible').length === 1);
         //    }).forEach(function (ctl) {
         //        ctl.close();
@@ -1508,5 +1536,6 @@ TC.inherit(TC.control.ResultsPanel, TC.Control);
     };
 })();
 
-const ResultsPanel = TC.control.ResultsPanel;
+TC.control.ResultsPanel = ResultsPanel;
+TC.mix(ResultsPanel, itemToolContainer);
 export default ResultsPanel;
