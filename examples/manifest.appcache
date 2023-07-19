@@ -8,7 +8,7 @@ examples.js
 ../
 ../TC/css/tcmap.css
 ../TC/resources/es-ES.json
-../TC/config/browser-versions.js
+../config/browser-versions.js
 ../layout/responsive/style.css
 ../TC/workers/tc-caps-web-worker.js
 ../TC/css/fonts/sitna.woff
