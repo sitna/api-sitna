@@ -501,6 +501,7 @@ class FeatureTools extends Control {
                 let layerState;
                 const featureToShare = self.toShare.feature.clone();
                 featureToShare.showsPopup = true;
+                featureToShare.autoPopup = true;
                 layerState = self.toShare.feature.layer.exportState({
                     features: [featureToShare]
                 });
