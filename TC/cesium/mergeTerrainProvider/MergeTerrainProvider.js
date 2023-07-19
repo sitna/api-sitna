@@ -1,56 +1,54 @@
 /* MergeTerrainProvider */
-(function () {
-    console.log(1);
-    /* d3-polygon: para validar si un punto está dentro de la cobertura de Navarra */
-    // https://d3js.org/d3-polygon/ Version 1.0.3. Copyright 2017 Mike Bostock.
-    !function (n, r) { "object" == typeof exports && "undefined" != typeof module ? r(exports) : "function" == typeof define && define.amd ? define(["exports"], r) : r(n.d3 = n.d3 || {}) }(this, function (n) { "use strict"; function r(n, r) { return n[0] - r[0] || n[1] - r[1] } function e(n) { for (var r = n.length, e = [0, 1], t = 2, o = 2; o < r; ++o) { for (; t > 1 && f(n[e[t - 2]], n[e[t - 1]], n[o]) <= 0;)--t; e[t++] = o } return e.slice(0, t) } var t = function (n) { for (var r, e = -1, t = n.length, o = n[t - 1], f = 0; ++e < t;) r = o, o = n[e], f += r[1] * o[0] - r[0] * o[1]; return f / 2 }, o = function (n) { for (var r, e, t = -1, o = n.length, f = 0, u = 0, l = n[o - 1], i = 0; ++t < o;) r = l, l = n[t], i += e = r[0] * l[1] - l[0] * r[1], f += (r[0] + l[0]) * e, u += (r[1] + l[1]) * e; return i *= 3, [f / i, u / i] }, f = function (n, r, e) { return (r[0] - n[0]) * (e[1] - n[1]) - (r[1] - n[1]) * (e[0] - n[0]) }, u = function (n) { if ((o = n.length) < 3) return null; var t, o, f = new Array(o), u = new Array(o); for (t = 0; t < o; ++t) f[t] = [+n[t][0], +n[t][1], t]; for (f.sort(r), t = 0; t < o; ++t) u[t] = [f[t][0], -f[t][1]]; var l = e(f), i = e(u), g = i[0] === l[0], a = i[i.length - 1] === l[l.length - 1], c = []; for (t = l.length - 1; t >= 0; --t) c.push(n[f[l[t]][2]]); for (t = +g; t < i.length - a; ++t) c.push(n[f[i[t]][2]]); return c }, l = function (n, r) { for (var e, t, o = n.length, f = n[o - 1], u = r[0], l = r[1], i = f[0], g = f[1], a = !1, c = 0; c < o; ++c) f = n[c], e = f[0], t = f[1], t > l != g > l && u < (i - e) * (l - t) / (g - t) + e && (a = !a), i = e, g = t; return a }, i = function (n) { for (var r, e, t = -1, o = n.length, f = n[o - 1], u = f[0], l = f[1], i = 0; ++t < o;) r = u, e = l, f = n[t], u = f[0], l = f[1], r -= u, e -= l, i += Math.sqrt(r * r + e * e); return i }; n.polygonArea = t, n.polygonCentroid = o, n.polygonHull = u, n.polygonContains = l, n.polygonLength = i, Object.defineProperty(n, "__esModule", { value: !0 }) });
 
-    function MergeTerrainProvider(options, view, fallbackOptions) {
+import * as D3 from 'd3-polygon';
 
-        this.noDataValue = options.noDataValue;
-        this.view = view;
+const MergeTerrainProvider = function (options, view, fallbackOptions) {
 
-        this.commutingProvidersReady = false;
-        this.commutingProvidersPromises = cesium.when.defer();
+    this.noDataValue = options.noDataValue;
+    this.view = view;
 
-        this.surfaceHasTilesToRender = cesium.when.defer();
-        this.surfaceTilesToRender = 0;
+    this.commutingProvidersReady = false;
+    this.commutingProvidersPromises = cesium.when.defer();
 
-        this.fallback = fallbackOptions.fallback || [];
-        this.fallbackProvider = [];
+    this.surfaceHasTilesToRender = cesium.when.defer();
+    this.surfaceTilesToRender = 0;
 
-        this.fallbackProvider = this.fallback.map(function (options, index) {
-            if (options.type === "WMTS" || (!options.type && options.url.indexOf("WMTS") >= 0)) {
-                return new cesium.WMTSTerrainProvider(options, view);
-            }
-            else
-                return new cesium.WCSTerrainProvider(options, view);
-        });
+    this.fallback = fallbackOptions.fallback || [];
+    this.fallbackProvider = [];
 
-        this.defaultFallbackProvider = new cesium.EllipsoidTerrainProvider();
-
-        this.attributions = {};
-
-        if (options.attributions) {
-            this.attributions = options.attributions;
-            this.view.map.trigger(SITNA.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this });
+    this.fallbackProvider = this.fallback.map(function (options, index) {
+        if (options.type === "WMTS" || (!options.type && options.url.indexOf("WMTS") >= 0)) {
+            return new cesium.WMTSTerrainProvider(options, view);
         }
+        else
+            return new cesium.WCSTerrainProvider(options, view);
+    });
 
-        if (!(options.url instanceof cesium.Resource)) {
-            options.url = new cesium.Resource({
-                url: options.url.trim()
-            });
-        }
+    this.defaultFallbackProvider = new cesium.EllipsoidTerrainProvider();
 
-        cesium.CesiumTerrainProvider.call(this, options);
+    this.attributions = {};
 
-        this.boundaries = Array.isArray(fallbackOptions.boundaries) ? fallbackOptions.boundaries : [fallbackOptions.boundaries];
-
-        cesium.when.all([this._readyPromise, this.fallbackProvider[0].readyPromise, this.surfaceHasTilesToRender], function () {
-            this.commutingProvidersReady = true;
-            this.commutingProvidersPromises.resolve();
-        }.bind(this))
+    if (options.attributions) {
+        this.attributions = options.attributions;
+        this.view.map.trigger(SITNA.Consts.event.TERRAINPROVIDERADD, { terrainProvider: this });
     }
+
+    if (!(options.url instanceof cesium.Resource)) {
+        options.url = new cesium.Resource({
+            url: options.url.trim()
+        });
+    }
+
+    cesium.CesiumTerrainProvider.call(this, options);
+
+    this.boundaries = Array.isArray(fallbackOptions.boundaries) ? fallbackOptions.boundaries : [fallbackOptions.boundaries];
+
+    cesium.when.all([this._readyPromise, this.fallbackProvider[0].readyPromise, this.surfaceHasTilesToRender], function () {
+        this.commutingProvidersReady = true;
+        this.commutingProvidersPromises.resolve();
+    }.bind(this))
+};
+(function () { 
 
     MergeTerrainProvider.prototype = Object.create(cesium.CesiumTerrainProvider.prototype, {
         fallback: { /* array con las opciones de los servicios WCS */
@@ -84,25 +82,31 @@
     });
     MergeTerrainProvider.prototype.constructor = MergeTerrainProvider;
 
-    var loadPolygonContains = function () {
-        // https://d3js.org/d3-polygon/ Version 1.0.3. Copyright 2017 Mike Bostock.
-        !function (n, r) { "object" == typeof exports && "undefined" != typeof module ? r(exports) : "function" == typeof define && define.amd ? define(["exports"], r) : r(n.d3 = n.d3 || {}) }(this, function (n) { "use strict"; function r(n, r) { return n[0] - r[0] || n[1] - r[1] } function e(n) { for (var r = n.length, e = [0, 1], t = 2, o = 2; o < r; ++o) { for (; t > 1 && f(n[e[t - 2]], n[e[t - 1]], n[o]) <= 0;)--t; e[t++] = o } return e.slice(0, t) } var t = function (n) { for (var r, e = -1, t = n.length, o = n[t - 1], f = 0; ++e < t;) r = o, o = n[e], f += r[1] * o[0] - r[0] * o[1]; return f / 2 }, o = function (n) { for (var r, e, t = -1, o = n.length, f = 0, u = 0, l = n[o - 1], i = 0; ++t < o;) r = l, l = n[t], i += e = r[0] * l[1] - l[0] * r[1], f += (r[0] + l[0]) * e, u += (r[1] + l[1]) * e; return i *= 3, [f / i, u / i] }, f = function (n, r, e) { return (r[0] - n[0]) * (e[1] - n[1]) - (r[1] - n[1]) * (e[0] - n[0]) }, u = function (n) { if ((o = n.length) < 3) return null; var t, o, f = new Array(o), u = new Array(o); for (t = 0; t < o; ++t) f[t] = [+n[t][0], +n[t][1], t]; for (f.sort(r), t = 0; t < o; ++t) u[t] = [f[t][0], -f[t][1]]; var l = e(f), i = e(u), g = i[0] === l[0], a = i[i.length - 1] === l[l.length - 1], c = []; for (t = l.length - 1; t >= 0; --t) c.push(n[f[l[t]][2]]); for (t = +g; t < i.length - a; ++t) c.push(n[f[i[t]][2]]); return c }, l = function (n, r) { for (var e, t, o = n.length, f = n[o - 1], u = r[0], l = r[1], i = f[0], g = f[1], a = !1, c = 0; c < o; ++c) f = n[c], e = f[0], t = f[1], t > l != g > l && u < (i - e) * (l - t) / (g - t) + e && (a = !a), i = e, g = t; return a }, i = function (n) { for (var r, e, t = -1, o = n.length, f = n[o - 1], u = f[0], l = f[1], i = 0; ++t < o;) r = u, e = l, f = n[t], u = f[0], l = f[1], r -= u, e -= l, i += Math.sqrt(r * r + e * e); return i }; n.polygonArea = t, n.polygonCentroid = o, n.polygonHull = u, n.polygonContains = l, n.polygonLength = i, Object.defineProperty(n, "__esModule", { value: !0 }) });
-    };
+    //MergeTerrainProvider.prototype.loadPolygonContains = function () {
+    //    return new Promise(async function (resolve) {
+    //        if (!D3) {
+    //            D3 = await import('d3-polygon');
+    //        }
+    //        resolve(D3);
+    //    })        
+    //};
 
     MergeTerrainProvider.prototype.isPointInDefaultBoundaries = function (cartographic) {
         var self = this;
+        if (!self.boundaries.length)
+            return true;
         return self.isPointInBoundaries(cartographic, self.boundaries[0]);
     };
 
     MergeTerrainProvider.prototype.isInDefaultBoundaries = function (x, y, level) {
         var self = this;
+        if (!self.boundaries.length)
+            return true;
         return self.isInBoundaries(x, y, level, self.boundaries[0]);
     };
     MergeTerrainProvider.prototype.isPointInBoundaries = function (cartographic, boundaries) {
-        if (!d3.polygonContains) {
-            loadPolygonContains();
-        }
-        return boundaries.some((bound) => d3.polygonContains(bound, [cesium.Math.toDegrees(cartographic.longitude), cesium.Math.toDegrees(cartographic.latitude)])) ;
+        
+        return boundaries.some((bound) => D3.polygonContains(bound, [cesium.Math.toDegrees(cartographic.longitude), cesium.Math.toDegrees(cartographic.latitude)]));
     };
     MergeTerrainProvider.prototype.isInBoundaries = function (x, y, level, boundaries) {
         var self = this;
@@ -225,7 +229,7 @@
         cesium.Rectangle.southeast(rectangle),
         cesium.Rectangle.southwest(rectangle)];
 
-        if (toCheck.filter(function (position) { return !this.isPointInDefaultBoundaries(position); }.bind(this)).length === 0) {
+        if (toCheck.filter(async function (position) { return await !this.isPointInDefaultBoundaries(position); }.bind(this)).length === 0) {
             return cesium.sampleTerrainMostDetailed(this, positions);
         } else {
             return this.fallbackProvider[0].sampleTerrainMostDetailed(positions);
@@ -1326,11 +1330,14 @@
         createDB: function () {
 
             // In the following line, you should include the prefixes of implementations you want to test.
-            window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+            if (!window.indexedDB)
+                window.indexedDB = window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
             // DON'T use "var indexedDB = ..." if you're not in a function.
             // Moreover, you may need references to some window.IDB* objects:
-            window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
-            window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+            if (!window.IDBTransaction)
+                window.IDBTransaction = window.webkitIDBTransaction || window.msIDBTransaction;
+            if (!window.IDBKeyRange)
+                window.IDBKeyRange = window.webkitIDBKeyRange || window.msIDBKeyRange;
             if (!window.indexedDB) {
                 window.alert("Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available.");
             }
@@ -3357,3 +3364,4 @@
     }
 
 })();
+export default MergeTerrainProvider;
