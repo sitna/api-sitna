@@ -13,8 +13,11 @@
         {{i18n "addText"}}
     </button>
 </div>
-<div class="tc-ctl-mod-style tc-hidden">
-    <input type="text" class="tc-ctl-mod-txt tc-textbox" placeholder="{{i18n "writeTextForSketch"}}" style="font-size:{{fontSize}}pt;font-color:{{fontColor}};text-shadow: 0 0 {{labelOutlineWidth}}px {{labelOutlineColor}};" />
+<div class="tc-ctl-mod-style{{#unless stylable}} tc-hidden{{/unless}}">
+    <sitna-feature-styler></sitna-feature-styler>
+</div>
+<div class="tc-ctl-mod-style-label tc-hidden">
+    <input type="text" class="tc-ctl-mod-txt tc-textbox" placeholder="{{i18n "writeTextForFeature"}}" style="font-size:{{fontSize}}pt;font-color:{{fontColor}};text-shadow: 0 0 {{labelOutlineWidth}}px {{labelOutlineColor}};" />
     {{i18n "textColor"}}
     <input type="color" class="tc-ctl-mod-fnt-c" value="{{fontColor}}" />
     {{i18n "fontSize"}}
