@@ -45,12 +45,11 @@ import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 
 
 TC.control = TC.control || {};
-TC.control.Measure = Measure;
 
-TC.control.DrawMeasureModify = function () {
+const DrawMeasureModify = function () {
     var self = this;
 
-    TC.control.Measure.apply(self, arguments);
+    Measure.apply(self, arguments);
 
     self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
     if (window.$) {
@@ -79,10 +78,10 @@ TC.control.DrawMeasureModify = function () {
 
 };
 
-TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
+TC.inherit(DrawMeasureModify, Measure);
 
 (function () {
-    var ctlProto = TC.control.DrawMeasureModify.prototype;
+    var ctlProto = DrawMeasureModify.prototype;
 
     ctlProto.CLASS = 'tc-ctl-dmm';
 
@@ -97,7 +96,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.render = function (callback) {
         const self = this;
-        const promise = self._set1stRenderPromise(TC.control.Measure.prototype.render.call(self, function () {
+        const promise = self._set1stRenderPromise(Measure.prototype.render.call(self, function () {
             self.pointMeasurementControl = self.div.querySelector('sitna-measurement[mode="point"]');
             self.pointMeasurementControl.containerControl = self;
             self._clearBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr');
@@ -134,7 +133,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.register = async function (map) {
         const self = this;
-        await TC.control.Measure.prototype.register.call(self, map);
+        await Measure.prototype.register.call(self, map);
         const modifyId = self.getUID();
         const pointDrawControlId = self.getUID();
 
@@ -149,6 +148,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         self.modify = modify;
         modify.containerControl = self;
         modify.id = modifyId;
+        modify.snapping = self.snapping;
         modify.setLayer(layer);
         modify
             .on(Consts.event.FEATURESSELECT, function (e) {
@@ -163,7 +163,6 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 });
             })
             .on(Consts.event.FEATURESUNSELECT, function (_e) {
-                const features = self.modify.getSelectedFeatures();                
                 self.getElevationControl().then(function (ctl) {
                     ctl.resetElevationProfile();
                     if (ctl.resultsPanel) {
@@ -225,7 +224,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                     });
                 }
             })
-            .on(Consts.event.POPUP, function (e) {
+            .on(Consts.event.POPUP + ' ' + Consts.event.DRAWTABLE, function (e) {
                 // En líneas queremos mostrar el perfil en vez del popup
                 const feature = e.control.currentFeature;
                 if (feature instanceof Polyline && self.layer.features.indexOf(feature) >= 0) {
@@ -341,6 +340,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
         pointDrawControl.containerControl = self;
         pointDrawControl.id = pointDrawControlId;
+        pointDrawControl.snapping = self.snapping;
         pointDrawControl.setLayer(self.layer);
         self.drawControls.push(pointDrawControl);
         self.pointDrawControl = pointDrawControl;
@@ -436,30 +436,23 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         if (self.modify) {
             self.modify.div.classList.remove(Consts.classes.COLLAPSED);
         }
-        return TC.control.Measure.prototype.displayMode.call(self, mode);
+        return Measure.prototype.displayMode.call(self, mode);
     };
 
     ctlProto.displayFeatureMode = function (feature) {
         const self = this;
         if (feature) {
             self.displayMeasurements(self.getFeatureMeasurementData(feature));
-            const style = feature._originalStyle || feature.getStyle();
             switch (true) {
                 case feature instanceof Polygon:
                 case feature instanceof MultiPolygon:
                     self.displayMode(Consts.geom.POLYGON);
-                    self.polygonDrawControl
-                        .setStrokeColorWatch(style.strokeColor)
-                        .setStrokeWidthWatch(style.strokeWidth)
-                        .setFillColorWatch(style.fillColor)
-                        .setFillOpacityWatch((style.fillOpacity || 0) * 100);
+                    self.polygonDrawControl.setFeature(feature);
                     break;
                 case feature instanceof Polyline:
                 case feature instanceof MultiPolyline:
                     self.displayMode(Consts.geom.POLYLINE);
-                    self.lineDrawControl
-                        .setStrokeColorWatch(style.strokeColor)
-                        .setStrokeWidthWatch(style.strokeWidth);
+                    self.lineDrawControl.setFeature(feature);
                     if (self.elevationProfileActive) {
                         self.getElevationControl().then(ctl => ctl.displayElevationProfile(feature));
                     }
@@ -467,18 +460,11 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
                 case feature instanceof Point:
                 case feature instanceof MultiPoint:
                     self.displayMode(Consts.geom.POINT);
-                    self.pointDrawControl
-                        .setStrokeColorWatch(style.strokeColor)
-                        .setStrokeWidthWatch(style.strokeWidth)
-                        .setFillColorWatch(style.fillColor)
-                        .setFillOpacityWatch((style.fillOpacity || 0) * 100);
+                    self.pointDrawControl.setFeature(feature);
                     break;
                 default:
                     break;
             }
-            self.modify
-                .setFontColorWatch(style.fontColor)
-                .setFontSizeWatch(style.fontSize);
         }
     };
 
@@ -487,12 +473,12 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
         if (mode === Consts.geom.POINT) {
             self.getPointDrawControl().then(function (ctl) {
                 ctl.activate();
-                TC.control.Measure.prototype.setMode.call(self, mode);
+                Measure.prototype.setMode.call(self, mode);
                 cancelDraw.apply(self);
             });
         }
         else {
-            TC.control.Measure.prototype.setMode.call(self, mode);
+            Measure.prototype.setMode.call(self, mode);
             cancelDraw.apply(self);            
         }
         
@@ -514,7 +500,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.setLayer = async function (layer) {
         const self = this;
-        await TC.control.Measure.prototype.setLayer.call(self, layer);
+        await Measure.prototype.setLayer.call(self, layer);
         for await (const control of [self.getPointDrawControl(), self.getModifyControl()]) {
             control.setLayer(self.layer);
         }
@@ -581,7 +567,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.displayMeasurements = function (options) {
         const self = this;
-        TC.control.Measure.prototype.displayMeasurements.call(self, options);
+        Measure.prototype.displayMeasurements.call(self, options);
         options = options || {};
         if (options.coordinates) {
             self.pointMeasurementControl.displayMeasurement(options);
@@ -591,7 +577,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
     ctlProto.resetValues = function () {
         const self = this;
-        TC.control.Measure.prototype.resetValues.call(self);
+        Measure.prototype.resetValues.call(self);
         self.getPointMeasurementControl().then(ctl => ctl.clearMeasurement());
         return self;
     };
@@ -657,7 +643,23 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
             self.modify.getSelectedFeatures().forEach(function (feature) {
                 if (feature instanceof featureCtor) {
                     const styleOptions = {};
-                    styleOptions[e.property] = e.value;
+                    if (e.strokeWidth)
+                        styleOptions["strokeWidth"] = e.strokeWidth;
+                    if (e.strokeColor)
+                        styleOptions["strokeColor"] = e.strokeColor;
+                    if (e.fillColor)
+                        styleOptions["fillColor"] = e.fillColor;
+                    if (e.fillOpacity)
+                        styleOptions["fillOpacity"] = e.fillOpacity;
+                    if (e.fontColor)
+                        styleOptions["fontColor"] = e.fontColor;
+                    if (e.fontSize)
+                        styleOptions["fontSize"] = e.fontSize;
+                    if (e.labelOutlineColor)
+                        styleOptions["labelOutlineColor"] = e.labelOutlineColor;
+                    if (e.labelOutlineWidth)
+                        styleOptions["labelOutlineWidth"] = e.labelOutlineWidth;
+
                     //feature._originalStyle[e.property] = e.value;
                     feature.setStyle(styleOptions);
                     //clearTimeout(feature._selectionStyleTimeout);
@@ -727,7 +729,7 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
     ctlProto.getPointDrawControl = async function () {
         const self = this;
         await self.renderPromise();
-        return self.div.querySelector('.' + TC.control.Measure.prototype.CLASS + '-pt sitna-draw');
+        return self.div.querySelector('.' + Measure.prototype.CLASS + '-pt sitna-draw');
     };
 
     ctlProto.getModifyControl = async function () {
@@ -757,5 +759,5 @@ TC.inherit(TC.control.DrawMeasureModify, TC.control.Measure);
 
 })();
 
-const DrawMeasureModify = TC.control.DrawMeasureModify;
+TC.control.DrawMeasureModify = DrawMeasureModify;
 export default DrawMeasureModify;
