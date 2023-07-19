@@ -3,62 +3,58 @@ import Consts from '../Consts';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
+
+const ProjectionSelector = function () {
+    const self = this;
+
+    Control.apply(self, arguments);
+
+    self._cssClasses = {
+        LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
+        CRS_DIALOG: self.CLASS + '-crs-dialog',
+        CRS_LIST: self.CLASS + '-crs-list',
+        CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
+        CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code',
+        CHANGE: self.CLASS + '-change',
+        NO_CHANGE: self.CLASS + '-no-change'
+    };
+
+    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
+    if (!self.options.dialogDiv) {
+        document.body.appendChild(self._dialogDiv);
+    }
+
+    self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self._cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
+        const crs = e.target.dataset.crsCode;
+        if (crs) {
+            self.setProjection({
+                crs: crs,
+                allowFallbackLayer: true
+            });
+        }
+    }), { passive: true });
+
+    self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
+        self.loadFallbackProjections();
+    }), { passive: true });
+};
+
+TC.inherit(ProjectionSelector, Control);
 
 (function () {
 
-    TC.control.ProjectionSelector = function () {
-        const self = this;
-
-        TC.Control.apply(self, arguments);
-
-        self._cssClasses = {
-            LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
-            CRS_DIALOG: self.CLASS + '-crs-dialog',
-            CRS_LIST: self.CLASS + '-crs-list',
-            CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
-            CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code',
-            CHANGE: self.CLASS + '-change',
-            NO_CHANGE: self.CLASS + '-no-change'
-        };
-
-        self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-        if (window.$) {
-            self._$dialogDiv = $(self._dialogDiv);
-        }
-        if (!self.options.dialogDiv) {
-            document.body.appendChild(self._dialogDiv);
-        }
-
-        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self._cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
-            const crs = e.target.dataset.crsCode;
-            if (crs) {
-                self.setProjection({
-                    crs: crs,
-                    allowFallbackLayer: true
-                });
-            }
-        }), { passive: true });
-
-        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
-            self.loadFallbackProjections();
-        }), { passive: true });
-    };
-
-    TC.inherit(TC.control.ProjectionSelector, TC.Control);
-
-    const ctlProto = TC.control.ProjectionSelector.prototype;
+    const ctlProto = ProjectionSelector.prototype;
 
     ctlProto.CLASS = 'tc-ctl-projs';
 
-    ctlProto.render = function (callback) {
+    ctlProto.render = async function (callback) {
         const self = this;
-        const result = TC.Control.prototype.render.call(self, callback);
+        await Control.prototype.render.call(self, callback);
 
-        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self._dialogDiv.innerHTML = html;
-        });
-        return result;
+        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
     };
 
     ctlProto.getAvailableCRS = function (options) {
@@ -81,7 +77,7 @@ TC.Control = Control;
             var blCRSList = [];
 
             options = options || {};
-            
+
             if (blFirstOption.isRaster()) {
                 blCRSList = blFirstOption.getCompatibleCRS();
                 crsList = self.getAvailableCRS(TC.Util.extend(options, {}));
@@ -216,5 +212,5 @@ TC.Control = Control;
 
 })();
 
-const ProjectionSelector = TC.control.ProjectionSelector;
+TC.control.ProjectionSelector = ProjectionSelector;
 export default ProjectionSelector;

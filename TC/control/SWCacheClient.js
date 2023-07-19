@@ -3,20 +3,19 @@ import Consts from '../Consts';
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
+
+const SWCacheClient = function () {
+    const self = this;
+    Control.apply(this, arguments);
+    self.serviceWorkerEnabled = false;
+    self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || true;
+};
+
+TC.inherit(SWCacheClient, Control);
 
 (function () {
 
-    TC.control.SWCacheClient = function () {
-        const self = this;
-        TC.Control.apply(this, arguments);
-        self.serviceWorkerEnabled = false;
-        self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || true;
-    };
-
-    TC.inherit(TC.control.SWCacheClient, TC.Control);
-
-    var ctlProto = TC.control.SWCacheClient.prototype;
+    var ctlProto = SWCacheClient.prototype;
 
     ctlProto.CLASS = 'tc-ctl-swcc';
     ctlProto.SW_URL = 'tc-cb-service-worker.js';
@@ -24,7 +23,7 @@ TC.Control = Control;
     ctlProto.register = function (map) {
         const self = this;
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         // Si el navegador es compatible, añadimos el service worker.
         self._swPromise = new Promise(function (resolve, reject) {
@@ -151,5 +150,5 @@ TC.Control = Control;
 
 })();
 
-const SWCacheClient = TC.control.SWCacheClient;
+TC.control.SWCacheClient = SWCacheClient;
 export default SWCacheClient;

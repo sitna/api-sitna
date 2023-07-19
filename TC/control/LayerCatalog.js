@@ -59,41 +59,42 @@
 import TC from '../../TC';
 import Consts from '../Consts';
 import ProjectionSelector from './ProjectionSelector';
+import Layer from '../../SITNA/layer/Layer';
+import Raster from '../../SITNA/layer/Raster';
 import autocomplete from '../ui/autocomplete';
 
 TC.control = TC.control || {};
 TC.UI = TC.UI || {};
 TC.UI.autocomplete = autocomplete;
-TC.control.ProjectionSelector = ProjectionSelector;
+
+const LayerCatalog = function () {
+    var self = this;
+
+    self.layers = [];
+    self.searchInit = false;
+
+    ProjectionSelector.apply(self, arguments);
+
+    self._selectors = {
+        LAYER_ROOT: 'div.' + self.CLASS + '-tree > ul.' + self.CLASS + '-branch > li.' + self.CLASS + '-node'
+    };
+
+    if (!Consts.classes.SELECTABLE) {
+        Consts.classes.SELECTABLE = 'tc-selectable';
+    }
+    if (!Consts.classes.INCOMPATIBLE) {
+        Consts.classes.INCOMPATIBLE = 'tc-incompatible';
+    }
+    if (!Consts.classes.ACTIVE) {
+        Consts.classes.ACTIVE = 'tc-active';
+    }
+};
+
+TC.inherit(LayerCatalog, ProjectionSelector);
 
 (function () {
 
-    TC.control.LayerCatalog = function () {
-        var self = this;
-
-        self.layers = [];
-        self.searchInit = false;
-
-        TC.control.ProjectionSelector.apply(self, arguments);
-
-        self._selectors = {
-            LAYER_ROOT: 'div.' + self.CLASS + '-tree > ul.' + self.CLASS + '-branch > li.' + self.CLASS + '-node'
-        };
-
-        if (!Consts.classes.SELECTABLE) {
-            Consts.classes.SELECTABLE = 'tc-selectable';
-        }
-        if (!Consts.classes.INCOMPATIBLE) {
-            Consts.classes.INCOMPATIBLE = 'tc-incompatible';
-        }
-        if (!Consts.classes.ACTIVE) {
-            Consts.classes.ACTIVE = 'tc-active';
-        }
-    };
-
-    TC.inherit(TC.control.LayerCatalog, TC.control.ProjectionSelector);
-
-    var ctlProto = TC.control.LayerCatalog.prototype;
+    var ctlProto = LayerCatalog.prototype;
 
     ctlProto.CLASS = 'tc-ctl-lcat';
 
@@ -111,10 +112,10 @@ TC.control.ProjectionSelector = ProjectionSelector;
 
     var SEARCH_MIN_LENGTH = 3;
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
 
-        const result = TC.control.ProjectionSelector.prototype.register.call(self, map);
+        await ProjectionSelector.prototype.register.call(self, map);
 
         const load = function (resolve, _reject) {
             if (Array.isArray(self.options.layers)) {
@@ -125,7 +126,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
                             layer.id = TC.getUID();
                         }                        
                         if (TC.Util.isPlainObject(layer)) {
-                            layer = new TC.layer.Raster(layer);
+                            layer = new Raster(layer);
                         }                        
                         self.layers.push(layer);
                     }
@@ -148,7 +149,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
             };
 
             map.loaded(function () {
-                if (!map.baseLayer.state || map.baseLayer.state === TC.Layer.state.IDLE) {
+                if (!map.baseLayer.state || map.baseLayer.state === Layer.state.IDLE) {
                     load(resolve, reject);
                 }
                 else {
@@ -235,7 +236,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
 
                                 self.layersToSetChecked.push(layer);
                             } else {
-                                self.addLayer(new TC.layer.Raster({
+                                self.addLayer(new Raster({
                                     url: layer.options.url,
                                     type: layer.type,
                                     layerNames: [],
@@ -289,7 +290,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
                 self.update();
             });
 
-        return result;
+        return self;
     };
 
     const onCollapseButtonClick = function (e) {
@@ -304,7 +305,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
     };
 
     const onSpanClick = function (e, ctl, getLayerObject) {
-        const li = e.target.parentNode;
+        const li = e.target.closest("li");
         if (!li.classList.contains(Consts.classes.LOADING) && !li.classList.contains(Consts.classes.CHECKED)) {
             e.preventDefault;
 
@@ -456,7 +457,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
                 self.getRenderedHtml(self.CLASS + '-results', data.results).then(function (out) {
                     //URI: Expresión regular que busca la cadena de filtrado pero distinguiend si se trata de un titulo de capa es decier está entre
                     //caracteres > y < y no se trada de un atributo data
-                    const cojoExpRegular = new RegExp('(?<pre>[\\;|\\>][\\w\\s\\\\r\\\\n\\t\\\\(À-ÿ]*)(?<match>' + TC.Util.patternFn(self.textInput.value) + ')(?<post>[\\w\\s\\\\r\\n\\t\\\\À-ÿ)]*[\\<|\\&])', 'gi')
+                    const cojoExpRegular = new RegExp('(?<pre>[\\;|\\>][\\w\\s\\\\r\\\\n\\t\\(\\)\\.\\:\\\\(À-ÿ]*)(?<match>' + TC.Util.patternFn(self.textInput.value) + ')(?<post>[\\w\\s\\\\r\\n\\t\\(\\)\\.\\:\\\\À-ÿ)]*[\\<|\\&])', 'gi');
                     container.innerHTML = ret = out.replace(cojoExpRegular,"$<pre><strong>$<match></strong>$<post>");
                     // Marcamos el botón "i" correspondiente si el panel de info está abierto
                     const visibleInfoPane = self.div.querySelector(`.${self.CLASS}-info`);
@@ -1056,7 +1057,7 @@ TC.control.ProjectionSelector = ProjectionSelector;
         layerOptions.layerNames = [layerName];
         layerOptions.title = layer.title;
         layerOptions.hideTree = true;
-        const newLayer = new TC.layer.Raster(layerOptions);
+        const newLayer = new Raster(layerOptions);
         if (newLayer.isCompatible(self.map.crs)) {
             self.map.addLayer(layerOptions);
         }
@@ -1098,10 +1099,10 @@ TC.control.ProjectionSelector = ProjectionSelector;
     ctlProto.showProjectionChangeDialog = function (options) {
         const self = this;
         self._layerToAdd = options.layer;
-        TC.control.ProjectionSelector.prototype.showProjectionChangeDialog.call(self, options);
+        ProjectionSelector.prototype.showProjectionChangeDialog.call(self, options);
     };
 
 })();
 
-const LayerCatalog = TC.control.LayerCatalog;
+TC.control.LayerCatalog = LayerCatalog;
 export default LayerCatalog;

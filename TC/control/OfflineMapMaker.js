@@ -46,7 +46,7 @@
   * ../
   * ../css/tcmap.css
   * ../resources/es-ES.json
-  * ../TC/config/browser-versions.js
+  * ../config/browser-versions.js
   * ../layout/responsive/style.css
   * ../css/fonts/sitna.woff
   * ../css/fonts/mapskin.woff
@@ -66,11 +66,191 @@
 import TC from '../../TC';
 import Consts from '../Consts';
 import Cfg from '../Cfg';
+import Control from '../Control';
 import SWCacheClient from './SWCacheClient';
 import md5 from 'md5';
 
 TC.control = TC.control || {};
-TC.control.SWCacheClient = SWCacheClient;
+
+const getExtentFromString = function (str) {
+    return decodeURIComponent(str).split(',').map(function (elm) {
+        return parseFloat(elm);
+    });
+};
+
+const OfflineMapMaker = function () {
+    var self = this;
+
+    SWCacheClient.apply(this, arguments);
+
+    var cs = self._classSelector = '.' + self.CLASS;
+    self._selectors = {
+        DRAW: cs + '-draw',
+        DRAWING: cs + '-drawing',
+        PROGRESS: cs + '-progress',
+        NEW: cs + '-new',
+        LIST: cs + '-list',
+        LISTITEM: cs + '-list > li',
+        OKBTN: cs + '-btn-ok',
+        NEWBTN: cs + '-btn-new',
+        SAVEBTN: '.tc-btn-save',
+        CANCELBTN: '.tc-btn-cancel',
+        EDITBTN: '.tc-btn-edit',
+        VIEWBTN: '.tc-btn-view',
+        DELETEBTN: '.tc-btn-delete',
+        TILECOUNT: cs + '-tile-count',
+        NAMETB: cs + '-txt-name',
+        TEXTBOX: 'input.tc-textbox',
+        EXIT: cs + '-link-exit',
+        OFFPANEL: cs + '-off-panel',
+        RESOLUTIONPANEL: cs + '-res-panel',
+        BLLIST: cs + '-bl-list',
+        BLLISTITEM: cs + '-bl-list > li',
+        BLLISTTEXT: cs + '-bl-panel-txt',
+        RNGMAXRES: cs + '-rng-maxres',
+        SEARCH: cs + '-map-available-srch',
+        EMPTYLIST: cs + '-map-available-empty',
+        OFFLINEHIDDEN: '[data-no-cb]'
+    };
+
+    self.storedMaps = [];
+
+    const mapDefString = TC.Util.getParameterByName(self.MAP_DEFINITION_PARAM_NAME);
+    const extentString = TC.Util.getParameterByName(self.MAP_EXTENT_PARAM_NAME);
+    self.mapIsOffline = !!mapDefString;
+    if (mapDefString) {
+        self.currentMapDefinition = JSON.parse(window.atob(decodeURIComponent(mapDefString)));
+    }
+    if (extentString) {
+        self.currentMapExtent = getExtentFromString(extentString);
+    }
+
+    // Comprobación de disponibilidad de localStorage
+    try {
+        self.localStorage = window.localStorage;
+        const key = "__delete_me__";
+        self.localStorage.setItem(key, key);
+        self.localStorage.removeItem(key);
+    }
+    catch (e) {
+        self.localStorage = null;
+        TC.error(self.getLocaleString('couldNotAccessLocalStorage'));
+    }
+
+    // Carga de mapas guardados
+    if (self.localStorage) {
+        for (var i = 0, len = self.localStorage.length; i < len; i++) {
+            var key = self.localStorage.key(i);
+            if (key.indexOf(self.LOCAL_STORAGE_KEY_PREFIX) === 0 && key !== self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash') {
+                // Es un nombre de mapa y no es el hash de integridad de la cache root
+                var values = self.localStorage.getItem(key).split(" ");
+                var extent = getExtentFromString(values.shift());
+                var name = values.join(" ");
+                var map = {
+                    name: name,
+                    extent: extent,
+                    url: decodeURIComponent(key.substr(self.LOCAL_STORAGE_KEY_PREFIX.length))
+                };
+                self.storedMaps.push(map);
+            }
+        }
+        self.storedMaps.sort(function (a, b) {
+            if (a.name > b.name) {
+                return 1;
+            }
+            if (a.name < b.name) {
+                return -1;
+            }
+            return 0;
+        });
+    }
+
+    var options = TC.Util.extend({}, arguments.length > 1 ? arguments[1] : arguments[0]);
+    self._dialogDiv = TC.Util.getDiv(options.dialogDiv);
+    if (window.$) {
+        self._$dialogDiv = $(self._dialogDiv);
+    }
+    if (!options.dialogDiv) {
+        document.body.appendChild(self._dialogDiv);
+    }
+
+    if (self.mapIsOffline) {
+        document.querySelectorAll(self._selectors.OFFLINEHIDDEN).forEach(function (elm) {
+            elm.classList.add(Consts.classes.HIDDEN);
+        });
+    }
+
+    Control.apply(self, arguments);
+    self.wrap = new TC.wrap.control.OfflineMapMaker(self);
+
+    self.isDownloading = false;
+    self.baseLayers = [];
+
+    self.options.averageTileSize = self.options.averageTileSize || Cfg.averageTileSize;
+    self.requestSchemas = [];
+    self.minResolution = 0;
+    self.currentMap = null;
+
+    self._loadedCount = 0;
+
+    // Actualización del enlace al modo online
+    // Parche para detectar cambios en el hash. Lo usamos para actualizar los enlaces a los idiomas
+    var pushState = history.pushState;
+    history.pushState = function (_state) {
+        var result;
+        //if (typeof history.onpushstate == "function") {
+        //    history.onpushstate({ state: state });
+        //}
+        result = pushState.apply(history, arguments);
+        if (self._offlineMapHintDiv) {
+            self._offlineMapHintDiv.querySelector(self._selectors.EXIT).setAttribute('href', self.getOnlineMapUrl());
+        }
+        return result;
+    };
+
+    // Detección de estado de conexión
+    var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+    const onlineHandler = function () {
+        if (self._offlineMapHintDiv) {
+            const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
+            panel.classList.remove(
+                Consts.classes.CONNECTION_OFFLINE,
+                Consts.classes.CONNECTION_MOBILE,
+                Consts.classes.CONNECTION_WIFI);
+
+            var type = connection.type;
+            switch (type) {
+                case 1:
+                case 2:
+                case undefined:
+                    panel.classList.add(Consts.classes.CONNECTION_WIFI);
+                    break;
+                default:
+                    panel.classList.add(Consts.classes.CONNECTION_MOBILE);
+                    break;
+            }
+        }
+    };
+    const offlineHandler = function () {
+        if (self._offlineMapHintDiv) {
+            const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
+            panel.classList.add(Consts.classes.CONNECTION_OFFLINE);
+            panel.classList.remove(Consts.classes.CONNECTION_MOBILE, Consts.classes.CONNECTION_WIFI);
+        }
+    };
+    if (connection.addEventListener) {
+        connection.addEventListener('typechange', onlineHandler);
+    }
+    window.addEventListener('online', onlineHandler);
+    window.addEventListener('offline', offlineHandler);
+    self.renderPromise().then(() => {
+        if (!navigator.onLine) {
+            offlineHandler();
+        }
+    });
+};
+
+TC.inherit(OfflineMapMaker, SWCacheClient);
 
 (function () {
 
@@ -113,181 +293,7 @@ TC.control.SWCacheClient = SWCacheClient;
         };
     };
 
-    TC.control.OfflineMapMaker = function () {
-        var self = this;
-
-        TC.control.SWCacheClient.apply(this, arguments);
-
-        var cs = self._classSelector = '.' + self.CLASS;
-        self._selectors = {
-            DRAW: cs + '-draw',
-            DRAWING: cs + '-drawing',
-            PROGRESS: cs + '-progress',
-            NEW: cs + '-new',
-            LIST: cs + '-list',
-            LISTITEM: cs + '-list > li',
-            OKBTN: cs + '-btn-ok',
-            NEWBTN: cs + '-btn-new',
-            SAVEBTN: '.tc-btn-save',
-            CANCELBTN: '.tc-btn-cancel',
-            EDITBTN: '.tc-btn-edit',
-            VIEWBTN: '.tc-btn-view',
-            DELETEBTN: '.tc-btn-delete',
-            TILECOUNT: cs + '-tile-count',
-            NAMETB: cs + '-txt-name',
-            TEXTBOX: 'input.tc-textbox',
-            EXIT: cs + '-link-exit',
-            OFFPANEL: cs + '-off-panel',
-            RESOLUTIONPANEL: cs + '-res-panel',
-            BLLIST: cs + '-bl-list',
-            BLLISTITEM: cs + '-bl-list > li',
-            BLLISTTEXT: cs + '-bl-panel-txt',
-            RNGMAXRES: cs + '-rng-maxres',
-            SEARCH: cs + '-map-available-srch',
-            EMPTYLIST: cs + '-map-available-empty',
-            OFFLINEHIDDEN: '[data-no-cb]'
-        };
-
-        self.storedMaps = [];
-
-        const mapDefString = TC.Util.getParameterByName(self.MAP_DEFINITION_PARAM_NAME);
-        const extentString = TC.Util.getParameterByName(self.MAP_EXTENT_PARAM_NAME);
-        self.mapIsOffline = !!mapDefString;
-        if (mapDefString) {
-            self.currentMapDefinition = JSON.parse(window.atob(decodeURIComponent(mapDefString)));
-        }
-        if (extentString) {
-            self.currentMapExtent = getExtentFromString(extentString);
-        }
-
-        // Comprobación de disponibilidad de localStorage
-        try {
-            self.localStorage = window.localStorage;
-            const key = "__delete_me__";
-            self.localStorage.setItem(key, key);
-            self.localStorage.removeItem(key);
-        }
-        catch (e) {
-            self.localStorage = null;
-            TC.error(self.getLocaleString('couldNotAccessLocalStorage'));
-        }
-
-        // Carga de mapas guardados
-        if (self.localStorage) {
-            for (var i = 0, len = self.localStorage.length; i < len; i++) {
-                var key = self.localStorage.key(i);
-                if (key.indexOf(self.LOCAL_STORAGE_KEY_PREFIX) === 0 && key !== self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash') {
-                    // Es un nombre de mapa y no es el hash de integridad de la cache root
-                    var values = self.localStorage.getItem(key).split(" ");
-                    var extent = getExtentFromString(values.shift());
-                    var name = values.join(" ");
-                    var map = {
-                        name: name,
-                        extent: extent,
-                        url: decodeURIComponent(key.substr(self.LOCAL_STORAGE_KEY_PREFIX.length))
-                    };
-                    self.storedMaps.push(map);
-                }
-            }
-            self.storedMaps.sort(function (a, b) {
-                if (a.name > b.name) {
-                    return 1;
-                }
-                if (a.name < b.name) {
-                    return -1;
-                }
-                return 0;
-            });
-        }
-
-        var options = TC.Util.extend({}, arguments.length > 1 ? arguments[1] : arguments[0]);
-        self._dialogDiv = TC.Util.getDiv(options.dialogDiv);
-        if (window.$) {
-            self._$dialogDiv = $(self._dialogDiv);
-        }
-        if (!options.dialogDiv) {
-            document.body.appendChild(self._dialogDiv);
-        }
-
-        if (self.mapIsOffline) {
-            document.querySelectorAll(self._selectors.OFFLINEHIDDEN).forEach(function (elm) {
-                elm.classList.add(Consts.classes.HIDDEN);
-            });
-        }
-
-        TC.Control.apply(self, arguments);
-        self.wrap = new TC.wrap.control.OfflineMapMaker(self);
-
-        self.isDownloading = false;
-        self.baseLayers = [];
-
-        self.options.averageTileSize = self.options.averageTileSize || Cfg.averageTileSize;
-        self.requestSchemas = [];
-        self.minResolution = 0;
-        self.currentMap = null;
-
-        self._loadedCount = 0;
-
-        // Actualización del enlace al modo online
-        // Parche para detectar cambios en el hash. Lo usamos para actualizar los enlaces a los idiomas
-        var pushState = history.pushState;
-        history.pushState = function (_state) {
-            var result;
-            //if (typeof history.onpushstate == "function") {
-            //    history.onpushstate({ state: state });
-            //}
-            result = pushState.apply(history, arguments);
-            if (self._offlineMapHintDiv) {
-                self._offlineMapHintDiv.querySelector(self._selectors.EXIT).setAttribute('href', self.getOnlineMapUrl());
-            }
-            return result;
-        };
-
-        // Detección de estado de conexión
-        var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
-        const onlineHandler = function () {
-            if (self._offlineMapHintDiv) {
-                const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
-                panel.classList.remove(
-                    Consts.classes.CONNECTION_OFFLINE,
-                    Consts.classes.CONNECTION_MOBILE,
-                    Consts.classes.CONNECTION_WIFI);
-
-                var type = connection.type;
-                switch (type) {
-                    case 1:
-                    case 2:
-                    case undefined:
-                        panel.classList.add(Consts.classes.CONNECTION_WIFI);
-                        break;
-                    default:
-                        panel.classList.add(Consts.classes.CONNECTION_MOBILE);
-                        break;
-                }
-            }
-        };
-        const offlineHandler = function () {
-            if (self._offlineMapHintDiv) {
-                const panel = self._offlineMapHintDiv.querySelector(self._selectors.OFFPANEL);
-                panel.classList.add(Consts.classes.CONNECTION_OFFLINE);
-                panel.classList.remove(Consts.classes.CONNECTION_MOBILE, Consts.classes.CONNECTION_WIFI);
-            }
-        };
-        if (connection.addEventListener) {
-            connection.addEventListener('typechange', onlineHandler);
-        }
-        window.addEventListener('online', onlineHandler);
-        window.addEventListener('offline', offlineHandler);
-        self.renderPromise().then(() => {
-            if (!navigator.onLine) {
-                offlineHandler();
-            }
-        });
-    };
-
-    TC.inherit(TC.control.OfflineMapMaker, TC.control.SWCacheClient);
-
-    var ctlProto = TC.control.OfflineMapMaker.prototype;
+    var ctlProto = OfflineMapMaker.prototype;
 
     ctlProto.CLASS = 'tc-ctl-omm';
     ctlProto.MAP_DEFINITION_PARAM_NAME = "map-def";
@@ -334,12 +340,6 @@ TC.control.SWCacheClient = SWCacheClient;
     Consts.event.MAPCACHEDELETE = Consts.event.MAPCACHEDELETE || 'mapcachedelete.tc';
     Consts.event.MAPCACHEPROGRESS = Consts.event.MAPCACHEPROGRESS || 'mapcacheprogress.tc';
     Consts.event.MAPCACHEERROR = Consts.event.MAPCACHEERROR || 'mapcacheerror.tc';
-
-    const getExtentFromString = function (str) {
-        return decodeURIComponent(str).split(',').map(function (elm) {
-            return parseFloat(elm);
-        });
-    };
 
     const setDownloadingState = function (ctl) {
         ctl._state = ctl._states.DOWNLOADING;
@@ -460,9 +460,9 @@ TC.control.SWCacheClient = SWCacheClient;
     const updateThumbnails = function (ctl) {
         ctl._dialogDiv.querySelectorAll(ctl._classSelector + '-bl-node input[type=checkbox]').forEach(function (cb, _idx) {
             if (cb.checked) {
-                var schema = ctl.requestSchemas.filter(function (elm) {
+                var schema = ctl.requestSchemas.find(function (elm) {
                     return elm.layerId === cb.value;
-                })[0];
+                });
                 if (schema) {
                     var tml = findTileMatrixLimits(schema, ctl.minResolution);
                     if (tml) {
@@ -838,7 +838,7 @@ TC.control.SWCacheClient = SWCacheClient;
     ctlProto.register = async function (map) {
         const self = this;
 
-        const swCacheClientPromise = TC.control.SWCacheClient.prototype.register.call(self, map);
+        const swCacheClientPromise = SWCacheClient.prototype.register.call(self, map);
 
         self.getServiceWorker().then(
             function () {
@@ -1547,7 +1547,7 @@ TC.control.SWCacheClient = SWCacheClient;
 
     ctlProto.findStoredMap = function (options) {
         var self = this;
-        return self.storedMaps.filter(function (elm) {
+        return self.storedMaps.find(function (elm) {
             var result = true;
             if (options.name && options.name !== elm.name) {
                 result = false;
@@ -1556,7 +1556,7 @@ TC.control.SWCacheClient = SWCacheClient;
                 result = false;
             }
             return result;
-        })[0];
+        });
     };
 
     ctlProto.showDownloadProgress = function (current, total) {
@@ -1629,5 +1629,5 @@ TC.control.SWCacheClient = SWCacheClient;
 
 })();
 
-const OfflineMapMaker = TC.control.OfflineMapMaker;
+TC.control.OfflineMapMaker = OfflineMapMaker;
 export default OfflineMapMaker;

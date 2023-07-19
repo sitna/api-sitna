@@ -38,21 +38,21 @@ import FeatureInfoCommons from './FeatureInfoCommons';
 import md5 from 'md5';
 
 TC.control = TC.control || {};
-TC.control.FeatureInfoCommons = FeatureInfoCommons;
+
+const FeatureInfo = function () {
+    var self = this;
+    FeatureInfoCommons.apply(this, arguments);
+    self.wrap = new TC.wrap.control.FeatureInfo(self);
+
+    Consts.classes.FROMLEFT = 'tc-fromleft';
+    Consts.classes.FROMRIGHT = 'tc-fromright';
+};
+
+TC.inherit(FeatureInfo, FeatureInfoCommons);
 
 (function () {
-    TC.control.FeatureInfo = function () {
-        var self = this;
-        TC.control.FeatureInfoCommons.apply(this, arguments);
-        self.wrap = new TC.wrap.control.FeatureInfo(self);
 
-        Consts.classes.FROMLEFT = 'tc-fromleft';
-        Consts.classes.FROMRIGHT = 'tc-fromright';
-    };
-
-    TC.inherit(TC.control.FeatureInfo, TC.control.FeatureInfoCommons);
-
-    var ctlProto = TC.control.FeatureInfo.prototype;
+    var ctlProto = FeatureInfo.prototype;
 
     var roundCoordinates = function roundCoordinates(obj, precision) {
         var result;
@@ -73,7 +73,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
     ctlProto.register = async function (map) {
         const self = this;
-        const ctl = await TC.control.FeatureInfoCommons.prototype.register.call(self, map);
+        const ctl = await FeatureInfoCommons.prototype.register.call(self, map);
         // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
         document.createElement('div').appendChild(self.div);
         return ctl;
@@ -159,7 +159,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
     ctlProto.responseCallback = function (options) {
         const self = this;
 
-        TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
+        FeatureInfoCommons.prototype.responseCallback.call(self, options);
         if (self.filterFeature) {
             var services = options.services;
 
@@ -253,7 +253,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
     ctlProto.displayResultsCallback = function () {
         const self = this;
-        TC.control.FeatureInfoCommons.prototype.displayResultsCallback.call(self);
+        FeatureInfoCommons.prototype.displayResultsCallback.call(self);
 
         if (self.elevationRequest) {
             const ctl = self.getDisplayControl();
@@ -365,7 +365,7 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
 
     ctlProto.exportQuery = function () {
         const self = this;
-        const result = TC.control.FeatureInfoCommons.prototype.exportQuery.call(self);
+        const result = FeatureInfoCommons.prototype.exportQuery.call(self);
         result.res = self.queryResolution;
         return result;
     };
@@ -374,11 +374,11 @@ TC.control.FeatureInfoCommons = FeatureInfoCommons;
         const self = this;
         if (query.filter) {
             self.map.setResolution(query.res)
-                .then(() => TC.control.FeatureInfoCommons.prototype.importQuery.call(self, query));
+                .then(() => FeatureInfoCommons.prototype.importQuery.call(self, query));
         }
     };
 
 })();
 
-const FeatureInfo = TC.control.FeatureInfo;
+TC.control.FeatureInfo = FeatureInfo;
 export default FeatureInfo;

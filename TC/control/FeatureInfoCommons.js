@@ -1,6 +1,7 @@
 ﻿
 import TC from '../../TC';
 import Consts from '../Consts';
+import Control from '../Control';
 import Click from './Click';
 import Print from './Print';
 import infoShare from './infoShare';
@@ -8,9 +9,6 @@ import Feature from '../../SITNA/feature/Feature';
 import Point from '../../SITNA/feature/Point';
 
 TC.control = TC.control || {};
-TC.control.Click = Click;
-TC.control.Print = Print;
-TC.control.infoShare = infoShare;
 
 Consts.event.POPUP = Consts.event.POPUP || 'popup.tc';
 Consts.event.POPUPHIDE = Consts.event.POPUPHIDE || 'popuphide.tc';
@@ -20,9 +18,9 @@ Consts.event.RESULTSPANELCLOSE = Consts.event.RESULTSPANELCLOSE || 'resultspanel
 Consts.event.FEATUREHIGHLIGHT = 'featurehighlight.tc';
 Consts.event.FEATUREDOWNPLAY = 'featuredownplay.tc';
 
-TC.control.FeatureInfoCommons = function () {
+const FeatureInfoCommons = function () {
     const self = this;
-    TC.control.Click.apply(self, arguments);
+    Click.apply(self, arguments);
 
     self._selectors = {
         LIST_ITEM: `ul.${self.CLASS}-features li`,
@@ -62,10 +60,10 @@ TC.control.FeatureInfoCommons = function () {
             }, 0) : 0;
     };
 
-    TC.inherit(TC.control.FeatureInfoCommons, TC.control.Click);
-    TC.mix(TC.control.FeatureInfoCommons, TC.control.infoShare);
+    TC.inherit(FeatureInfoCommons, Click);
+    TC.mix(FeatureInfoCommons, infoShare);
 
-    var ctlProto = TC.control.FeatureInfoCommons.prototype;
+    var ctlProto = FeatureInfoCommons.prototype;
 
     ctlProto.CLASS = 'tc-ctl-finfo';
 
@@ -105,7 +103,7 @@ TC.control.FeatureInfoCommons = function () {
     ctlProto.register = async function (map) {
         const self = this;
 
-        const clickRegisterPromise = TC.control.Click.prototype.register.call(self, map);
+        const clickRegisterPromise = Click.prototype.register.call(self, map);
         self._createLayers();
 
         map.loaded(function () {
@@ -117,11 +115,11 @@ TC.control.FeatureInfoCommons = function () {
         });
 
         map
-            .on(Consts.event.POPUPHIDE + ' ' + Consts.event.RESULTSPANELCLOSE, function (e) {                
+            .on(Consts.event.POPUPHIDE + ' ' + Consts.event.RESULTSPANELCLOSE, function (e) {  
                 self?.highlightedFeature?.toggleSelectedStyle(false);
                 if (e.control === self.getDisplayControl() && self.resultsLayer) {                                        
                     if (self.highlightedFeature && !self.options.persistentHighlights) {
-                        self.downplayFeature(self.highlightedFeature);                        
+                        self.downplayFeature(self.highlightedFeature);
                         self.highlightedFeature = null;
                     }
                     if (!self.querying && e.feature) {
@@ -269,7 +267,7 @@ TC.control.FeatureInfoCommons = function () {
                     if (infoService) {
                         const historyService = self._infoHistory[url];
                         for (let name in historyService) {
-                            const infoLayer = infoService.layers.filter(l => l.name === name)[0];
+                            const infoLayer = infoService.layers.find(l => l.name === name);
                             if (infoLayer) {
                                 const historyLayer = historyService[name];
                                 historyLayer.forEach(function (feature) {
@@ -1053,7 +1051,7 @@ TC.control.FeatureInfoCommons = function () {
         if (self.wrap) {
             self.wrap.activate();
         }
-        TC.Control.prototype.activate.call(self);
+        Control.prototype.activate.call(self);
     };
 
     ctlProto.deactivate = function (stopChain) {
@@ -1071,7 +1069,7 @@ TC.control.FeatureInfoCommons = function () {
         if (self.wrap) {
             self.wrap.deactivate();
         }
-        TC.Control.prototype.deactivate.call(self, stopChain);
+        Control.prototype.deactivate.call(self, stopChain);
     };
 
     ctlProto.exportState = function () {
@@ -1163,7 +1161,7 @@ TC.control.FeatureInfoCommons = function () {
         const resultsContainer = self.getMenuTarget({ control: displayControl });
 
         // Añadimos botón de imprimir
-        const printBtn = resultsContainer.querySelector('.' + TC.control.Print.prototype.CLASS + '-btn');
+        const printBtn = resultsContainer.querySelector('.' + Print.prototype.CLASS + '-btn');
         if (printBtn) {
             // Si no hay datos porque el popup es de un GFI sin éxito y no es de una feature resaltada borramos impresora
             if (!self.lastFeatureCount && (!displayControl.currentFeature || displayControl.currentFeature.showsPopup !== true)) {
@@ -1191,7 +1189,7 @@ TC.control.FeatureInfoCommons = function () {
 
             // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
             if (self.lastFeatureCount || displayControl.currentFeature && displayControl.currentFeature.showsPopup === true) {
-                new TC.control.Print({
+                new Print({
                     target: resultsContainer,
                     printableElement: self.getDisplayTarget({ control: displayControl }),
                     title: printTitle
@@ -1199,7 +1197,7 @@ TC.control.FeatureInfoCommons = function () {
             }
         }
 
-        TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(displayControl.getContainerElement());
+        FeatureInfoCommons.addSpecialAttributeEventListeners(displayControl.getContainerElement());
 
     };
 
@@ -1239,7 +1237,7 @@ TC.control.FeatureInfoCommons = function () {
     ctlProto.showShareDialog = function (dialogDiv) {
         const self = this;
         self.toShare = self.exportQuery();
-        return TC.control.infoShare.showShareDialog.call(self, dialogDiv);
+        return infoShare.showShareDialog.call(self, dialogDiv);
     };
 
     ctlProto.exportQuery = function () {
@@ -1284,25 +1282,25 @@ TC.control.FeatureInfoCommons = function () {
         }
     };
 
-    const staticMethodMock = {};
+    const staticMethodMock = { CLASS: ctlProto.CLASS };
 
-    TC.control.FeatureInfoCommons.renderFeatureAttributeTable = function (options) {
+    FeatureInfoCommons.renderFeatureAttributeTable = async function (options) {
         if (!staticMethodMock.template) {
-            staticMethodMock.template = TC.Util.extend({}, ctlProto.template);
+            await ctlProto.loadTemplates.call(staticMethodMock);
         }
-        return ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-attr', options);
+        return await ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-attr', options);
     };
 
-    TC.control.FeatureInfoCommons.renderFeatureAttribute = function (options) {
+    FeatureInfoCommons.renderFeatureAttribute = async function (options) {
         if (!staticMethodMock.template) {
-            staticMethodMock.template = TC.Util.extend({}, ctlProto.template);
+            await ctlProto.loadTemplates.call(staticMethodMock);
         }
-        return ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-attr-val', options);
+        return await ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-attr-val', options);
     };
 
-    TC.control.FeatureInfoCommons.showImageDialog = async function (img) {
+    FeatureInfoCommons.showImageDialog = async function (img) {
         if (!staticMethodMock.template) {
-            staticMethodMock.template = TC.Util.extend({}, ctlProto.template);
+            await ctlProto.loadTemplates.call(staticMethodMock);
         }
         const html = await ctlProto.getRenderedHtml.call(staticMethodMock, ctlProto.CLASS + '-dialog', {
             src: img.getAttribute('src')
@@ -1319,10 +1317,10 @@ TC.control.FeatureInfoCommons = function () {
         return container;
     };
 
-    TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners = function (container) {
+    FeatureInfoCommons.addSpecialAttributeEventListeners = function (container) {
         container.querySelectorAll('img.tc-img-attr').forEach(function (img) {
             img.addEventListener(Consts.event.CLICK, function (e) {
-                setTimeout(() => TC.control.FeatureInfoCommons.showImageDialog(e.target), 50);
+                setTimeout(() => FeatureInfoCommons.showImageDialog(e.target), 50);
                 e.stopPropagation(); // No queremos zoom si pulsamos en una imagen
             }, { passive: true });
         });
@@ -1330,5 +1328,5 @@ TC.control.FeatureInfoCommons = function () {
 
 })();
 
-const FeatureInfoCommons = TC.control.FeatureInfoCommons;
+TC.control.FeatureInfoCommons = FeatureInfoCommons;
 export default FeatureInfoCommons;
