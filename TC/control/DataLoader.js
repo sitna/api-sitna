@@ -94,45 +94,33 @@ import TC from '../../TC';
 import TabContainer from './TabContainer';
 
 TC.control = TC.control || {};
-TC.control.TabContainer = TabContainer;
 
-TC.control.DataLoader = function () {
-    const self = this;
+class DataLoader extends TabContainer {
+    constructor() {
+        super(...arguments);
+        const self = this;
 
-    TC.control.TabContainer.apply(self, arguments);
+        self.controlOptions = [
+            {
+                title: 'addWMS',
+                externalWMS: { suggestions: self.options.wmsSuggestions }
+            },
+            {
+                fileImport: { enableDragAndDrop: self.options.enableDragAndDrop }
+            }
+        ];
+        self.defaultSelection = 0;
+    }
 
-    const fileControlConfig = {};
-    const fileControlOptions = {
-        enableDragAndDrop: self.options.enableDragAndDrop
-    };
-    const fileControlName = self.options.enableFileEditing ? 'fileEdit' : 'fileImport';
-    fileControlConfig[fileControlName] = fileControlOptions;
-
-    self.controlOptions = [
-        {
-            title: 'addWMS',
-            externalWMS: { suggestions: self.options.wmsSuggestions }            
-        },
-        fileControlConfig
-    ];
-    self.defaultSelection = 0;
-};
-
-TC.inherit(TC.control.DataLoader, TC.control.TabContainer);
-
-(function () {
-    const ctlProto = TC.control.DataLoader.prototype;
-
-    ctlProto.register = async function (map) {
+    async register(map) {
         const self = this;
         self.map = map;
         self.title = self.getLocaleString('addMaps');
-        const ctl = await TC.control.TabContainer.prototype.register.call(self, map);
+        const ctl = await super.register.call(self, map);
         ctl.div.classList.add(self.CLASS + '-datldr');
         return ctl;
-    };
+    }
+}
 
-})();
-
-const DataLoader = TC.control.DataLoader;
+TC.control.DataLoader = DataLoader;
 export default DataLoader;
