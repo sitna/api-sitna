@@ -1,9 +1,21 @@
+### [4.1.0](https://github.com/sitna/api-sitna/releases/tag/v4.0.2)
+- Añadida herramienta para modificar una consulta ejecutada o compartida (WFS).
+- Añadida herramienta para volver a centrar los resultados de una consulta (WFS).
+- Añadida herramienta para centrar todos los resultados de selecciones previas por punto, línea o recinto.
+- Añadida herramienta para borrar todas las rutas cargadas previamente.
+- Nuevo formato soportado para la carga y descarga local de archivos (WKB).
+- Corrección de errores.
+
+### [4.0.1](https://github.com/sitna/api-sitna/releases/tag/v4.0.1)
+- Corrección de errores que impedían la instalación correcta del paquete npm.
+
 ### [4.0.0](https://github.com/sitna/api-sitna/releases/tag/v4.0.0)
 - Añadido espacio de nombres {@link SITNA.feature} con las clases que representan entidades geográficas.
 - Añadido espacio de nombres {@link SITNA.layer} con las clases que representan capas del mapa.
 - Añadida herramienta para eliminar vértices de entidades geográficas dibujadas previamente.
 - Añadidas las capas OpenTopoMap y ortofoto 2022 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
 - Añadido operador "no es igual a" para cadenas en el [control de consultas WFS]{@linkplain SITNA.control.WFSQueryOptions}.
+- Añadida capacidad de ser instalada como paquete npm.
 - Cambios de clases CSS para paliar interferencias con CSS de terceros.
 - Corrección de errores.
 

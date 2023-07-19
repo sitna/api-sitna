@@ -455,11 +455,11 @@ Expresión regular:
 
     // Cuando esté todo cargado proceder a trabajar con el mapa.
     map.loaded(function () {
-        // Añadir un marcador con un atributo con un enlace a GeoPamplona.
+        // Añadir un marcador con un atributo con un enlace a su ficha catastral.
         map.addMarker([610818, 4741558], {
             showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
             data: {
-                "Información de edificio__embed_300_200": "https://tinyurl.com/y3kaaxz7"
+                "Información catastral__embed_640_200": "https://catastro.navarra.es/ref_catastral/unidades.aspx?C=201&PO=1&PA=1"
             }
         });
 		// Centrar el mapa en el marcador.
@@ -510,11 +510,11 @@ Expresión regular:
 
     // Cuando esté todo cargado proceder a trabajar con el mapa.
     map.loaded(function () {
-        // Añadir un marcador con un atributo con un enlace a GeoPamplona.
+        // Añadir un marcador con un atributo con un enlace a su ficha catastral.
         map.addMarker([610818, 4741558], {
             showPopup: true, // Hacemos que la tabla de atributos se muestre automáticamente
             data: {
-                "Información de edificio": "embed_300_200__https://tinyurl.com/y3kaaxz7"
+                "Información catastral": "embed_640_200__https://catastro.navarra.es/ref_catastral/unidades.aspx?C=201&PO=1&PA=1"
             }
         });
 		// Centrar el mapa en el marcador.
