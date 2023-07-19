@@ -36,6 +36,7 @@ import {
     , GeometryInstance
     , Globe
     , GroundPrimitive
+    , HeadingPitchRange
     , HeightReference
     , HeightmapTerrainData
     , HorizontalOrigin
@@ -50,6 +51,7 @@ import {
     , PinBuilder
     , PolygonGeometry
     , PolygonHierarchy
+    , PolygonPipeline
     , PolylineDashMaterialProperty
     , Property
     , Quaternion
@@ -84,6 +86,8 @@ import {
     , VERSION
 
 } from 'cesium';
+
+
 
 const cesium = {
 
@@ -121,6 +125,7 @@ const cesium = {
     , GeometryInstance
     , Globe
     , GroundPrimitive
+    , HeadingPitchRange
     , HeightReference
     , HeightmapTerrainData
     , HorizontalOrigin
@@ -135,6 +140,7 @@ const cesium = {
     , PinBuilder
     , PolygonGeometry
     , PolygonHierarchy
+    , PolygonPipeline
     , PolylineDashMaterialProperty
     , Property
     , Quaternion
@@ -173,7 +179,10 @@ const TOO_MANY_PARALLEL_REQUESTS = "Too many parallel requests, so postpone load
 window.cesium = cesium;
 
 if (!cesium.WCSTerrainProvider) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/cesium/mergeTerrainProvider/MergeTerrainProvider');
+    //TC.syncLoadJS(TC.apiLocation + 'TC/cesium/mergeTerrainProvider/MergeTerrainProvider');
+    import('./mergeTerrainProvider/MergeTerrainProvider').then(function (MergeTerrainProvider) {
+        cesium.MergeTerrainProvider = MergeTerrainProvider.default;
+    })
 }
 
 /* sobrescribimos y extendemos lo necesario para que todas las peticiones pasen por el algoritmo de proxificación */
