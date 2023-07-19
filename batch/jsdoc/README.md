@@ -47,18 +47,19 @@ npm install api-sitna
 ### Definir la URL de base
 La API SITNA carga en tiempo de ejecución un conjunto de recursos. Por eso es necesario indicarle la ubicación de esos archivos.
 Esto se consigue definiendo una variable global `SITNA_BASE_URL` que contiene la URL de la carpeta donde vamos a 
-ubicar dichos recursos. Es importante que esta variable se definirsa antes de importar cualquier clase de la API SITNA.
+ubicar dichos recursos. Es importante que esta variable se defina antes de importar cualquier clase de la API SITNA.
 ``` javascript
 window.SITNA_BASE_URL = '/js/api-sitna/'; // URL de una carpeta de nuestro proyecto
 ```
 
 Por último hay que añadir los archivos que se cargan en tiempo de ejecución. Para ello abre a la carpeta 
-`node_modules/api-sitna` de tu proyecto y copia las carpetas `css`, `layout`, `lib`, `resources` y `wmts` a la carpeta
+`node_modules/api-sitna` de tu proyecto y copia las carpetas `config`, `css`, `layout`, `lib`, `resources` y `wmts` a la carpeta
 definida por `SITNA_BASE_URL`. Si seguimos el ejemplo, en la carpeta del proyecto debería estar el siguiente
 árbol de carpetas:
 
 - js
   * api-sitna
+    + config
     + css
     + layout
     + lib
@@ -99,6 +100,7 @@ module.exports = {
         // Copia los recursos necesarios a la carpeta de publicación
         new CopyWebpackPlugin({ 
             patterns: [
+                { from: path.join(apiSitnaSource, 'config'), to: 'config' },
                 { from: path.join(apiSitnaSource, 'css'), to: 'css' },
                 { from: path.join(apiSitnaSource, 'layout'), to: 'layout' },
                 { from: path.join(apiSitnaSource, 'lib'), to: 'lib' },
