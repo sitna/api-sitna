@@ -8,6 +8,7 @@ import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import './FeatureStyler';
 
 TC.control = TC.control || {};
 
@@ -102,7 +103,8 @@ class Modify extends WebComponentControl {
     #textBtn;
     #textInput;
     #fontColorPicker;
-    #styleSection;
+    #labelSection;
+    #styler;
     #fontSizeSelector;
     #layerPromise;
 
@@ -118,19 +120,12 @@ class Modify extends WebComponentControl {
         self.wrap = new TC.wrap.control.Modify(self);
         self
             .initProperty('mode')
-            .initProperty('snapping');
-
-        self.styles = TC.Util.extend(true, Cfg.styles.selection, self.options.styles);
-        self.styles.text = self.styles.text || {
-            fontSize: self.styles.line.fontSize,
-            fontColor: self.styles.line.fontColor,
-            labelOutlineColor: self.styles.line.labelOutlineColor,
-            labelOutlineWidth: self.styles.line.labelOutlineWidth
-        };
+            .initProperty('snapping')
+            .initProperty('stylable');
     }
 
     static get observedAttributes() {
-        return ['mode'];
+        return ['mode', 'stylable'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -138,6 +133,9 @@ class Modify extends WebComponentControl {
             return;
         }
         const self = this;
+        if (name === 'stylable') {
+            self.#onStylableChange();
+        }
         if (name === 'mode') {
             self.#onModeChange();
         }
@@ -173,6 +171,25 @@ class Modify extends WebComponentControl {
         self.#setVertexDeleteModeState(self.getSelectedFeatures());
     }
 
+    get stylable() {
+        return this.hasAttribute('stylable');
+    }
+
+    set stylable(value) {
+        this.toggleAttribute('stylable', !!value);
+    }
+
+    #onStylableChange() {
+        const self = this;
+        self.#getStylingElement()?.classList
+            .toggle(Consts.classes.HIDDEN, !(self.stylable && self.getSelectedFeatures().length));
+    }
+
+    #getStylingElement() {
+        const self = this;
+        return self.querySelector(`.${self.CLASS}-style`);
+    }
+
     #setFeatureSelectedState(features) {
         const self = this;
         self.#deleteBtn.disabled = features.length === 0;
@@ -181,6 +198,8 @@ class Modify extends WebComponentControl {
         self.#joinBtn.disabled = features.length < 2;
         self.#splitBtn.disabled = !features.some(complexGeometryFilter);
         self.displayLabelText();
+        self.#onStylableChange();
+        self.getStyler().then(styler => styler.setFeature(features[0]));
     }
 
     #setVertexDeleteModeState(features) {
@@ -193,7 +212,17 @@ class Modify extends WebComponentControl {
 
     register(map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
+
+        self.styles = TC.Util.extend(true, {}, Cfg.styles.selection, map.options.styles?.selection, self.options.styles);
+        self.styles.snapping = TC.Util.extend(true, {}, Cfg.styles.snapping, map.options.styles?.snapping, self.options.styles?.snapping);
+        self.styles.text = self.styles.text || {
+            fontSize: self.styles.line.fontSize,
+            fontColor: self.styles.line.fontColor,
+            labelOutlineColor: self.styles.line.labelOutlineColor,
+            labelOutlineWidth: self.styles.line.labelOutlineWidth
+        };
+
+        const result = super.register.call(self, map);
         if (self.options.layer) {
             self.setLayer(self.options.layer);
         }
@@ -314,7 +343,7 @@ class Modify extends WebComponentControl {
             self.#textInput.addEventListener('input', function (e) {
                 self.labelFeatures(e.target.value);
             });
-            self.#styleSection = self.querySelector('.' + self.CLASS + '-style');
+            self.#labelSection = self.querySelector('.' + self.CLASS + '-style-label');
 
             self.#fontColorPicker = self.querySelector(self.#classSelector + '-fnt-c');
             self.#fontColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
@@ -328,16 +357,27 @@ class Modify extends WebComponentControl {
 
             self.#attributesSection = self.querySelector('.' + self.CLASS + '-attr');
 
+            self.getStyler().then(styler => styler.addEventListener(Consts.event.STYLECHANGE, e => {
+                self.getSelectedFeatures().forEach(f => {
+                    const newData = {};
+                    newData[e.detail.property] = e.detail.value;
+                    const newStyle = Object.assign({}, f.getStyle(), newData);
+                    f.setStyle(newStyle);
+                });
+            }));
+
             if (TC.Util.isFunction(callback)) {
                 callback();
             }
         };
 
+        const styles = self.styles || {};
         const renderObject = {
-            fontSize: self.styles.text.fontSize,
-            fontColor: self.styles.text.fontColor,
-            labelOutlineColor: self.styles.text.labelOutlineColor,
-            labelOutlineWidth: self.styles.text.labelOutlineWidth
+            stylable: self.stylable,
+            fontSize: styles.text?.fontSize,
+            fontColor: styles.text?.fontColor,
+            labelOutlineColor: styles.text?.labelOutlineColor,
+            labelOutlineWidth: styles.text?.labelOutlineWidth
         };
 
         return self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
@@ -346,25 +386,25 @@ class Modify extends WebComponentControl {
     activate() {
         const self = this;
         self.#selectBtn.classList.add(Consts.classes.ACTIVE);
-        TC.Control.prototype.activate.call(self);
+        super.activate.call(self);
         self.wrap.activate(self.mode);
         self.#setVertexDeleteModeState(self.getSelectedFeatures());
     }
 
     deactivate() {
         const self = this;
-        TC.Control.prototype.deactivate.call(self);
+        super.deactivate.call(self);
         if (self.#selectBtn) {
             self.#setFeatureSelectedState([]);
-        }
-        if (self.wrap) {
-            self.wrap.deactivate();
         }
         if (self.#selectBtn) {
             self.#selectBtn.classList.remove(Consts.classes.ACTIVE);
             if (self.layer) {
                 self.unselectFeatures(self.getSelectedFeatures());
             }
+        }
+        if (self.wrap) {
+            self.wrap.deactivate();
         }
         self.mode = Modify.mode.SELECT;
     }
@@ -430,6 +470,9 @@ class Modify extends WebComponentControl {
                     });
                 }
                 else {
+                    if (!layer && self.isActive) {
+                        self.deactivate();
+                    }
                     self.layer = layer;
                     resolve(self.layer);
                 }
@@ -519,11 +562,11 @@ class Modify extends WebComponentControl {
         self.textActive = active;
         if (active) {
             self.#textBtn.classList.add(Consts.classes.ACTIVE, active);
-            self.#styleSection.classList.remove(Consts.classes.HIDDEN);
+            self.#labelSection.classList.remove(Consts.classes.HIDDEN);
         }
         else {
             self.#textBtn.classList.remove(Consts.classes.ACTIVE, active);
-            self.#styleSection.classList.add(Consts.classes.HIDDEN);
+            self.#labelSection.classList.add(Consts.classes.HIDDEN);
         }
         self.displayLabelText();
         return self;
@@ -662,6 +705,13 @@ class Modify extends WebComponentControl {
 
     getAttributeDisplayTarget() {
         return this.#attributesSection;
+    }
+
+    async getStyler() {
+        const self = this;
+        await self.renderPromise();
+        self.#styler = self.querySelector('sitna-feature-styler');
+        return self.#styler;
     }
 
     displayAttributes() {
