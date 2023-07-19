@@ -8,14 +8,10 @@ module.exports = {
     resolve: {
         fallback: {
             buffer: require.resolve('buffer/'),
-            assert: false
+            assert: false,
+            util: require.resolve('./util-fallback.js')
         }
     },
-    plugins: [
-        new webpack.IgnorePlugin({
-            resourceRegExp: /wkx/
-        })
-    ],
     module: {
         rules: [
             {
@@ -62,6 +58,11 @@ module.exports = {
         ]
     },
     ignoreWarnings: [/Failed to parse source map/],
+    plugins: [
+        new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        })
+    ],
     optimization: {
         minimizer: [new TerserPlugin({
             extractComments: false
