@@ -14,7 +14,7 @@ TC.Util = Util;
  * [SITNA.Consts.layer.IDENA_CARTO]{@link SITNA.Consts}] - Lista con cualquier combinación de objetos de definición de capa o de identificadores de capas de la API SITNA
  * (miembros de [SITNA.Consts.layer]{@link SITNA.Consts}) para incluir dichas capas como mapas de fondo.
  * @property {SITNA.control.MapControlOptions} [controls] - Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.     
- * @property {string} [crossOrigin] - Valor del atributo `crossorigin` de las imágenes del mapa para habilitar CORS Es necesario establecer esta opción para poder utilizar el método {@link SITNA.Map#exportImage}.
+ * @property {string} [crossOrigin] - Valor del atributo `crossorigin` de las imágenes del mapa para habilitar CORS. Es necesario establecer esta opción para poder utilizar el método {@link SITNA.Map#exportImage}.
  *
  * Los valores soportados son `anonymous` y `use-credentials`. Para más información, consulte [la documentación de MDN Web Docs](https://developer.mozilla.org/es/docs/Web/HTML/CORS_enabled_image).
  * @property {string} [crs=["EPSG:25830"]{@link https://epsg.io/25830}] - Código EPSG del sistema de referencia de coordenadas del mapa.
@@ -98,7 +98,7 @@ const Defaults = (function () {
 
         view: Consts.view.DEFAULT,
 
-        screenSize: 20,
+        screenSize: 27,
         pixelTolerance: 10, // Used in GFI requests
         maxResolutionError: 0.01, // Max error ratio to consider two resolutions equivalent
 
@@ -120,6 +120,21 @@ const Defaults = (function () {
                 hideTree: true,
                 thumbnail: TC.apiLocation + 'css/img/thumb-basemap.png',
                 fallbackLayer: Consts.layer.IDENA_DYNBASEMAP,
+                overviewMapLayer: Consts.layer.IDENA_BASEMAP
+            },
+            {
+                id: Consts.layer.IDENA_BASEMAP_GREY,
+                title: 'Mapa base gris',
+                type: Consts.layerType.WMTS,
+                url: '//idena.navarra.es/ogc/wmts/',
+                matrixSet: 'epsg25830extended',
+                layerNames: 'mapaBaseGris',
+                encoding: Consts.WMTSEncoding.RESTFUL,
+                format: 'image/png',
+                isDefault: false,
+                hideTree: true,
+                thumbnail: TC.apiLocation + 'css/img/thumb-basemap-grey.png',
+                fallbackLayer: Consts.layer.IDENA_DYNBASEMAP_GREY,
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
             {
@@ -288,6 +303,21 @@ const Defaults = (function () {
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
             {
+                id: Consts.layer.IDENA_PAMPLONA_CARTO,
+                title: 'Cartografía topográfica Pamplona',
+                type: Consts.layerType.WMTS,
+                url: '//idena.navarra.es/ogc/wmts/',
+                matrixSet: 'epsg25830deep',
+                layerNames: 'mapaTopograficoPamplona',
+                encoding: Consts.WMTSEncoding.RESTFUL,
+                format: 'image/png',
+                isDefault: false,
+                hideTree: true,
+                thumbnail: TC.apiLocation + 'css/img/thumb-topo-pamplona.jpg',
+                fallbackLayer: Consts.layer.IDENA_PAMPLONA_DYNCARTO,
+                overviewMapLayer: Consts.layer.IDENA_BASEMAP
+            },
+            {
                 id: Consts.layer.IDENA_CADASTER,
                 title: 'Catastro',
                 type: Consts.layerType.WMS,
@@ -333,6 +363,18 @@ const Defaults = (function () {
                 isDefault: false,
                 hideTree: true,
                 thumbnail: TC.apiLocation + 'css/img/thumb-basemap.png',
+                overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
+            },
+            {
+                id: Consts.layer.IDENA_DYNBASEMAP_GREY,
+                title: 'Mapa base gris',
+                type: Consts.layerType.WMS,
+                url: '//idena.navarra.es/ogc/wms',
+                layerNames: 'mapaBaseGris,regionesFronterizas',
+                format: 'image/jpeg',
+                isDefault: false,
+                hideTree: true,
+                thumbnail: TC.apiLocation + 'css/img/thumb-basemap-grey.png',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -465,6 +507,18 @@ const Defaults = (function () {
                 isDefault: false,
                 hideTree: true,
                 thumbnail: TC.apiLocation + 'css/img/thumb-bta.png',
+                overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
+            },
+            {
+                id: Consts.layer.IDENA_PAMPLONA_DYNCARTO,
+                title: 'Cartografía topográfica Pamplona',
+                type: Consts.layerType.WMS,
+                url: '//idena.navarra.es/ogc/wms',
+                layerNames: 'MTNa05_BTU_201',
+                format: 'image/jpeg',
+                isDefault: false,
+                hideTree: true,
+                thumbnail: TC.apiLocation + 'css/img/thumb-topo-pamplona.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -1186,6 +1240,21 @@ const Defaults = (function () {
                     fillOpacity: .3,
                     labelOutlineWidth: 2,
                     labelOutlineColor: '#ffffff',
+                    fontColor: '#000000',
+                    fontSize: 10,
+                    zIndex: 1
+                }
+            },
+            snapping: {
+                point: {
+                    fillColor: '#00ffff',
+                    fillOpacity: 0.3,
+                    strokeColor: '#00ffff',
+                    strokeWidth: 2,
+                    radius: 6,
+                    labelOutlineWidth: 2,
+                    labelOutlineColor: '#ffffff',
+                    labelOffset: [0, -16],
                     fontColor: '#000000',
                     fontSize: 10,
                     zIndex: 1
