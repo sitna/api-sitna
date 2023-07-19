@@ -60,6 +60,11 @@ class FileImport extends WebComponentControl {
             },
             {
                 accept: {
+                    'text/plain': ['.' + Consts.format.WKB]
+                }
+            },
+            {
+                accept: {
                     [Consts.mimeType.ZIP]: ['.zip']
                 }
             },
@@ -291,6 +296,9 @@ class FileImport extends WebComponentControl {
             .on(Consts.event.FEATURESIMPORTWARN, function (e) {
                 self.map.toast(self.getLocaleString("fileImport.geomEmpty", { fileName: e.file.name }), { type: Consts.msgType.WARNING });
             })
+            .on(Consts.event.RECENTFILEADD, function (_e) {
+                self.renderRecentFileList();
+            })
             .on(Consts.event.LAYERADD, function (e) {
                 self.loadLayersFromFile([e.layer]);
             })
@@ -341,7 +349,7 @@ class FileImport extends WebComponentControl {
                     form.insertAdjacentElement('afterend', input);
                     parent.removeChild(form);
 
-                    if (TC.Util.isFunction(window.showOpenFilePicker)) {
+                    if (Util.isFunction(window.showOpenFilePicker)) {
                         e.preventDefault();
                         let fileHandles;
                         try {
@@ -594,7 +602,6 @@ class FileImport extends WebComponentControl {
     async addRecentFileEntry(newEntry) {
         const self = this;
         await self.map.addRecentFileEntry(newEntry);
-        self.renderRecentFileList();
     }
 
     async removeRecentFileEntry(index) {
@@ -614,8 +621,8 @@ class FileImport extends WebComponentControl {
         const list = self.querySelector('.tc-ctl-file-recent');
         if (list) {
             const buttonText = self.getLocaleString('removeFromList');
-            const entries = await (fileList ? Promise.resolve(fileList) : self.map?.loadRecentFiles() || []);
-            list.replaceChildren();
+            const entries = await (fileList ? Promise.resolve(fileList) : (self.map && self.map.loadRecentFiles()) || []);
+            list.replaceChildren ? list.replaceChildren() : list.innerHTML="";
             if (entries.length) {
                 const li = document.createElement('li');
                 const header = document.createElement('h3');
@@ -685,4 +692,5 @@ class FileImport extends WebComponentControl {
 TC.mix(FileImport, layerOwner);
 
 customElements.get(elementName) || customElements.define(elementName, FileImport);
+TC.control.FileImport = FileImport;
 export default FileImport;
