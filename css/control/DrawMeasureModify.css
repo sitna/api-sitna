@@ -132,3 +132,7 @@
     .tc-ctl-dmm .tc-ctl-mod-style.tc-hidden {
         display: none;
     }
+
+.tc-ctl-dmm .tc-ctl-mod sitna-feature-styler {
+    display: none;
+}

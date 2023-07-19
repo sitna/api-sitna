@@ -486,30 +486,30 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         flex-basis: 100%
     }
 
-    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label, .tc-ctl-wfsquery.tc-ctl-wfsquery-date label {
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery label {
         flex-basis: 29%;
     }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(1), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(1) {
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery label:nth-of-type(1) {
             margin-bottom: 1px;
             border-bottom-left-radius: 0
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(2), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(2) {
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery label:nth-of-type(2) {
             margin-bottom: 1px
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(3), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(3) {
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery label:nth-of-type(3) {
             margin-bottom: 1px;
             border-top-right-radius: 0.3em
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(4), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(4) {
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery label:nth-of-type(4) {
             margin-left: 0px;
             border-bottom-left-radius: 0.3em
         }
 
-        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery.tc-ctl-wfsquery-numeric label:nth-of-type(6), .tc-ctl-wfsquery.tc-ctl-wfsquery-date label:nth-of-type(6) {
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery label:nth-of-type(6) {
             border-top-right-radius: 0
         }
 }
@@ -887,6 +887,15 @@ div.tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
 
 .tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .tc-ctl-rpanel-table tr.tc-selectable > td > table > tbody > tr > th {
     margin-right: 0.3em;
+}
+
+.tc-ctl-wfsquery-geom-draw {
+    padding: 1em;
+    min-width: 20em;
+}
+
+.tc-ctl-wfsquery-geom-draw sitna-draw {
+    display: block;
 }
 
 .tc-ctl-wfsquery-geom-draw.tc-hidden, .tc-ctl-wfsquery-geom-btn.tc-hidden {

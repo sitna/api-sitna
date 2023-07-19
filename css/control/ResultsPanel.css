@@ -674,6 +674,7 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
 
 .tc-ctl-rpanel-main > .tc-ctl-rpanel-heading > h4 sitna-button {
     margin: 0.3em 0.2em 0.2em 0.2em;
+    direction:ltr;
 }
 
 .tc-ctl-rpanel-heading {
@@ -762,6 +763,11 @@ div.tc-ctl-rpanel-heading-samehw {
 
 .tc-ctl-rpanel .tc-ctl-rpanel-title {
     font-size: 14px;
+}
+
+.tc-ctl-rpanel .tc-ctl-rpanel-tools {
+    direction: rtl;
+    display: flex;
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
@@ -951,6 +957,9 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
     flex: 1 1 auto;
     margin-left: 0;
     max-height: 2em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .tc-ctl-rpanel .tc-ctl-finfo-coords {

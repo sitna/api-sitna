@@ -100,6 +100,10 @@
     display: none;
 }
 
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-style-label.tc-hidden {
+    display: none;
+}
+
 .tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-attr {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);

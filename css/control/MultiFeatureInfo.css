@@ -100,6 +100,11 @@
     content: var(--icon-delete);
 }
 
+.tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-zoom:before {
+    font-family: var(--icon-font-family);
+    content: '\e917';
+}
+
 @media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height: 40em) {
     .tc-map .tc-ctl-m-finfo-select .tc-icon-btn {
         padding: 1px 0px 1px 3px;

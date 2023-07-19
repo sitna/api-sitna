@@ -4,9 +4,17 @@
     gap: 0.2em;
 }
 
-.tc-ctl-mod-style {
+.tc-ctl-mod-style-label {
+    margin-bottom: 0.5em;
     text-align: center;
+    transition: all linear 0.3s;
 }
+
+    .tc-ctl-mod-style-label.tc-hidden {
+        padding-top: 0;
+        display: block;
+        height: 0;
+    }
 
 .tc-ctl-mod .tc-ctl-mod-txt {
     width: 100%;
