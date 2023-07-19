@@ -1,6 +1,21 @@
 ﻿import TC from '../TC';
 TC.filter = {};
 
+TC.filter.Operators = [
+    "PropertyIsEqualTo",
+    "PropertyIsGreaterThan",
+    "PropertyIsGreaterThanOrEqualTo",
+    "PropertyIsLessThan",
+    "PropertyIsLessThanOrEqualTo",
+    "PropertyIsNotEqualTo",
+    "PropertyIsLike",
+    "PropertyIsNull",
+    "PropertyIsBetween",
+    "Within",
+    "Intersects",
+    "Bbox"
+]
+
 TC.filter.Filter = function (tagName) {
     this.tagName_ = tagName;
     
@@ -13,8 +28,10 @@ TC.filter.Filter = function (tagName) {
     this._wfs2NSURL = "http://www.opengis.net/fes/2.0";
     this._wfs2FieldTitle = "ValueReference";
     this._escapeAttrName = "escape";
-    this._wfs2EscapeAttrName = "escapeChar";
+    this._wfs2EscapeAttrName = "escapeChar";    
 };
+
+
 
 TC.filter.Filter.prototype.getTagName = function () {
     return this.tagName_;
@@ -251,11 +268,11 @@ TC.inherit(TC.filter.Comparison, TC.filter.Filter);
 TC.filter.Comparison.prototype.write = function () {
     var values = '';
     //isbetween
-    if (this.lowerBoundary && this.upperBoundary)
+    if (this.LowerBoundary && this.UpperBoundary)
         values = '<{prefix}:LowerBoundary><{prefix}:Literal>{LowerBoundary}</{prefix}:Literal></{prefix}:LowerBoundary><{prefix}:UpperBoundary><{prefix}:Literal>{UpperBoundary}</{prefix}:Literal></{prefix}:UpperBoundary>'.format({
             prefix:this._defaultPrefixNS,
-            LowerBoundary: this.lowerBoundary,
-            UpperBoundary: this.upperBoundary
+            LowerBoundary: this.LowerBoundary,
+            UpperBoundary: this.UpperBoundary
         });
     if (this.pattern)
         values = '<{prefix}:Literal><![CDATA[{Pattern}]]></{prefix}:Literal>'.format({
@@ -364,8 +381,8 @@ TC.inherit(TC.filter.IsNull, TC.filter.Comparison);
 
 TC.filter.IsBetween = function (propertyName, lowerBoundary, upperBoundary) {
     TC.filter.Comparison.call(this, 'PropertyIsBetween', propertyName);
-    this.lowerBoundary = lowerBoundary;
-    this.upperBoundary = upperBoundary;
+    this.LowerBoundary = lowerBoundary;
+    this.UpperBoundary = upperBoundary;
 };
 TC.inherit(TC.filter.IsBetween, TC.filter.Comparison);
 
@@ -374,6 +391,100 @@ TC.filter.Function = function (functionName, params) {
     this.params = params
 };
 TC.inherit(TC.filter.Function, TC.filter.Filter);
+
+TC.filter.Filter.fromText = function (gml) {
+    //var cntrtr = function (node) {
+    //    const tagName = node.tagName;
+    //    const filter = fnc(tagName.substring(tagName.indexOf(":") + 1));
+    //    filter._defaultNSURL = tagName.substring(0, tagName.indexOf(":"));
+    //    return filter;
+    //}
+    var fnc = (node) => {
+        const filterType = node.tagName.substring(node.tagName.indexOf(":") + 1);
+        var filter;
+        
+        switch (filterType) {
+            case "PropertyIsEqualTo":
+                filter = new TC.filter.EqualTo();
+                break;
+            case "PropertyIsGreaterThan":
+                filter = new TC.filter.GreaterThan();
+                break;
+            case "PropertyIsGreaterThanOrEqualTo":
+                filter = new TC.filter.GreaterThanOrEqualTo();
+                break;
+            case "PropertyIsLessThan":
+                filter = new TC.filter.LessThan();
+                break;
+            case "PropertyIsLessThanOrEqualTo":
+                filter = new TC.filter.LessThanOrEqualTo();
+                break;
+            case "PropertyIsNotEqualTo":
+                filter = new TC.filter.NotEqualTo();
+                break;
+            case "PropertyIsLike":
+                filter = new TC.filter.IsLike();
+                break;
+            case "PropertyIsNull":
+                filter = new TC.filter.IsNull();
+                break;
+            case "PropertyIsBetween":
+                filter = new TC.filter.IsBetween();
+                break;
+            default:
+                filter = new TC.filter[filterType]();
+        }
+
+        const propertyName = node.querySelector(filter._fieldTitle + "," + filter._wfs2FieldTitle)?.innerHTML;
+        const propertyValue = node.querySelector("Literal")?.innerHTML;
+        filter._defaultNSURL = node.tagName.substring(0, tagName.indexOf(":"));
+
+        if (propertyName)
+            filter.propertyName = propertyName;
+        if (filter instanceof TC.filter.IsLike) {
+            filter.pattern = propertyValue;
+        }
+        if (filter instanceof TC.filter.IsBetween) {
+            filter.LowerBoundary = node.querySelector("LowerBoundary > Literal")?.innerHTML;
+            filter.UpperBoundary = node.querySelector("UpperBoundary > Literal")?.innerHTML;
+        }
+        if (filter instanceof TC.filter.ComparisonBinary) {
+            filter.expression = propertyValue;
+        }
+        if (filter instanceof TC.filter.Spatial) {
+            const coordinates = node.childNodes[1].textContent.split(" ").reduce((vi, va, index, array) =>
+            {
+                if (index % 2 === 1)
+                    vi.push([
+                        parseFloat(array[index - 1]),
+                        parseFloat(va)
+                    ]);
+                return vi;
+            }, [])
+            switch (node.childNodes[1].tagName.substr(4)) {
+                case "Polygon":
+                    filter.geometry = new SITNA.feature.Polygon(coordinates);
+                    break;
+                case "LineString":
+                    filter.geometry = new SITNA.feature.Polyline(coordinates);
+                    break;
+                //TODO: El resto...
+            }
+        }
+
+        filter.conditions = Array.from(node.childNodes).filter((c) => 
+            TC.filter.Operators.includes(c.tagName.substring(c.tagName.indexOf(":") + 1))
+        ).reduce(function (vi, va) {
+            vi.push(fnc(va)); return vi;
+        }, []);
+        return filter;
+    };
+    var doc = new DOMParser().parseFromString(gml, "application/xml");
+    const tagName = doc.firstElementChild.firstElementChild.tagName;    
+    const filter = fnc(doc.firstElementChild.firstElementChild);            
+    
+    return filter;
+}
 
 TC.filter.Function.prototype.write = function () {
     var values = '';
