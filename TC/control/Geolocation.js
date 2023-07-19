@@ -37,8 +37,6 @@ import Marker from '../../SITNA/feature/Marker';
 import md5 from 'md5';
 
 TC.control = TC.control || {};
-TC.control.infoShare = infoShare;
-TC.Control = Control;
 
 Consts.event.TOOLSCLOSE = Consts.event.TOOLSCLOSE || 'toolsclose.tc';
 Consts.event.TOOLSOPEN = Consts.event.TOOLSOPEN || 'toolsopen.tc';
@@ -58,7 +56,7 @@ const zoomHandler = function () {
     if (!lastMapCenter || (lastMapCenter[0] !== this.getCenter()[0] && lastMapCenter[1] !== this.getCenter()[1])) {
         lastMapCenter = this.getCenter();
         if (!followingZoom) {
-            this.getControlsByClass(TC.control.Geolocation)[0].setFollowing(false);
+            this.getControlsByClass(Geolocation)[0].setFollowing(false);
         }
     }
 };
@@ -112,9 +110,10 @@ class Geolocation extends Control {
         },
         selector: {
             //SIMULATE: '.tc-btn-simulate',
-            DRAW: '.tc-draw',
+            ACTIVATOR: 'sitna-button[variant="link"]',
             EDIT: '.tc-btn-edit',
             DELETE: '.tc-btn-delete',
+            DELETEALL: '.tc-btn-delete-all',
             SAVE: '.tc-btn-save',
             CANCEL: '.tc-btn-cancel',
             EXPORT: '.tc-btn-export',
@@ -145,8 +144,9 @@ class Geolocation extends Control {
             IMPORTEDTRACK: 'importedtrack.tc.geolocation'
         },
         supportedFileExtensions: [
+            '.gpx',
             '.kml',
-            '.gpx'
+            '.kmz'
         ],
         layer: {
             GPS: "gps",
@@ -219,6 +219,10 @@ class Geolocation extends Control {
         self.wrap = new TC.wrap.control.Geolocation(self);
         self.wrap.register(map);
 
+        if (self.options.fileEditing) {
+            await map.addControl('fileEdit', { caller: self, snapping: true });
+        }
+
         map._bufferFeatures = [];
 
         self.hillDeltaThreshold = self.options && self.options.hillDeltaThreshold ||
@@ -239,43 +243,36 @@ class Geolocation extends Control {
             owner: self,
             stealth: true,
             title: 'Posicionar.Geotracking',
-            styles: {
-                point: {
-                    radius: 3,
-                    fillColor: "#00ced1",
-                    fillOpacity: function () {
-                        return this.track.renderTrack.checked ? 1 : 0;
-                    }.bind(self),
-                    strokeColor: "#ffffff",
-                    fontColor: "#00ced1",
-                    labelOutlineColor: "#ffffff",
-                    labelOutlineWidth: 1,
-                    label: function (feature) {
-                        var name = feature.getData().name;
-                        if (name && (name + '').trim().length > 0) {
-                            name = (name + '').trim().toLowerCase();
-                        } else {
-                            name = '';
-                        }
-
-                        return name;
-                    }
-                },
-                line: [
-                    {
-                        strokeOpacity: function () {
-                            return this.track.renderTrack.checked ? 1 : 0;
-                        }.bind(self),
-                        strokeWidth: 8,
-                        strokeColor: "#ffffff"
+            styles: function (feature) {
+                let name = feature.getData().name;
+                if (name && (name + '').trim().length > 0) {
+                    name = (name + '').trim().toLowerCase();
+                } else {
+                    name = '';
+                }
+                return {
+                    point: {
+                        radius: 6,
+                        fillColor: "#00ced1",
+                        fillOpacity: self.track.renderTrack.checked ? 1 : 0,
+                        strokeColor: "#ffffff",
+                        fontColor: "#00ced1",
+                        labelOutlineColor: "#ffffff",
+                        labelOutlineWidth: 1,
+                        label: name
                     },
-                    {
-                        strokeOpacity: function () {
-                            return this.track.renderTrack.checked ? 1 : 0;
-                        }.bind(self),
-                        strokeWidth: 4,
-                        strokeColor: "#00ced1"
-                    }]
+                    line: [
+                        {
+                            strokeOpacity: self.track.renderTrack.checked ? 1 : 0,
+                            strokeWidth: 8,
+                            strokeColor: "#ffffff"
+                        },
+                        {
+                            strokeOpacity: self.track.renderTrack.checked ? 1 : 0,
+                            strokeWidth: 4,
+                            strokeColor: "#00ced1"
+                        }]
+                }
             }
         });
         const trackLayerPromise = map.addLayer({
@@ -290,32 +287,27 @@ class Geolocation extends Control {
                     strokeColor: "#C52737"
                 },
                 point: {
-                    radius: function (feature) {
-                        const name = feature?.getData()?.name;
-                        if (name && (name + '').trim().length > 0) {
-                            return 3;
-                        } else {
-                            return 6;
-                        }
-                    },
+                    radius: 6,
                     fillColor: "#C52737",
+                    fillOpacity: 0.5,
                     strokeColor: "#27C537",
+                    strokeWidth: 2,
                     fontColor: "#C52737",
                     fontSize: 10,
                     labelOutlineColor: "#ffffff",
                     labelOutlineWidth: 2,
-                    label: function (feature) {
-                        let name = feature?.getData()?.name;
-                        if (name && (name + '').trim().length > 0) {
-                            name = (name + '').trim().toLowerCase();
-                        } else {
-                            name = '';
-                        }
-
-                        return name;
-                    }
+                    labelOffset: [0, -12],
+                    label: '${name}'
                 }
             }
+        });
+
+        const endPointLayerPromise = map.addLayer({
+            id: self.getUID(),
+            type: Consts.layerType.VECTOR,
+            owner: self,
+            stealth: true,
+            title: 'Posicionar.Extremos'
         });
 
         map.on(Consts.event.FEATURESIMPORT, function (e) {
@@ -356,10 +348,12 @@ class Geolocation extends Control {
                     if (/.kml$/g.test(fileName.toLowerCase()) && self.trackLayer) {
                         if (self.trackLayer.styles) {
                             self.trackLayer.features.forEach(function (feature) {
-                                if (feature instanceof Point && self.trackLayer.styles.point) {
-                                    feature.setStyle(self.trackLayer.styles.point);
-                                } else if (isAnyLine(feature) && self.trackLayer.styles.line) {
-                                    feature.setStyle(self.trackLayer.styles.line);
+                                if (!feature.getStyle()) {
+                                    if (feature instanceof Point && self.trackLayer.styles.point) {
+                                        feature.setStyle(self.trackLayer.styles.point);
+                                    } else if (isAnyLine(feature) && self.trackLayer.styles.line) {
+                                        feature.setStyle(self.trackLayer.styles.line);
+                                    }
                                 }
                             });
                         }
@@ -448,6 +442,7 @@ class Geolocation extends Control {
         self.gpsLayer = await gpsLayerPromise;
         self.geotrackingLayer = await geotrackingLayerPromise;
         self.trackLayer = await trackLayerPromise;
+        self.endPointLayer = await endPointLayerPromise;
 
         const newPosition = self.map.layers.indexOf(self.trackLayer);
         self.map.insertLayer(self.gpsLayer, newPosition)
@@ -477,25 +472,29 @@ class Geolocation extends Control {
 
     async render(callback) {
         const self = this;
-        await self._set1stRenderPromise(self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self.#dialogDiv.innerHTML = html;
-        }));
+
+        self.#dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
         await self.getDownloadDialog();
         self._downloadDialog.caller = self;
-        await self.getRenderedHtml(self.CLASS + '-ext-dldlog', { controlId: self.id }, function (html) {
-            var template = document.createElement('template');
-            template.innerHTML = html;
-            self._downloadDialogExtNode = template.content ? template.content.firstChild : template.firstChild;
-            self.getRenderedHtml(self.CLASS + '-share-dialog', {}, function (html) {
-                self.#shareDialogDiv.innerHTML = html;
-                return self.renderData({ controlId: self.id }, callback);
+        const template = document.createElement('template');
+        template.innerHTML = await self.getRenderedHtml(self.CLASS + '-ext-dldlog', { controlId: self.id });
+        self._downloadDialogExtNode = template.content ? template.content.firstChild : template.firstChild;
+        self.#shareDialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-share-dialog', {});
+
+        return await self._set1stRenderPromise(self.renderData({ controlId: self.id }, function () {
+            self.div.querySelector(self.const.selector.DELETEALL).addEventListener("click", function (e) {
+                self.removeAllTracks(e.target);
+                e.stopPropagation();
             });
-        });
+            if (Util.isFunction(callback)) {
+                callback();
+            }
+        }));
     }
 
     #getDownloadFileName = function (elem) {
         const self = this;
-        var filename = elem.querySelector('span').textContent;
+        var filename = elem.querySelector(self.const.selector.ACTIVATOR).text;
         var regex = new RegExp(self.const.supportedFileExtensions.join('|'), 'gi');
         return filename.replace(regex, '') + "_" + Util.getFormattedDate(new Date(), true);
     }
@@ -542,9 +541,9 @@ class Geolocation extends Control {
             self.elevationControl._decorateChartPanel = function () {
                 this.resultsPanel.setCurrentFeature = function (_feature) {
                     const that = this;
-                    that.currentFeature = self.trackLayer.features.filter((feature) => {
+                    that.currentFeature = self.trackLayer.features.find((feature) => {
                         return !(feature instanceof Marker) && !(feature instanceof Point);
-                    })[0];
+                    });
                     const selectedTrackItem = self.getSelectedTrackItem();
                     if (selectedTrackItem && that.currentFeature) {
                         that.currentFeature.uid = selectedTrackItem.dataset.uid;
@@ -600,17 +599,13 @@ class Geolocation extends Control {
         const self = this;
         let trackUid = options.uid;
         if (trackUid) {
-            const storageData = self.availableTracks.find(function (saved) {
+            const availableTracks = await self.getAvailableTracks();
+            const storageData = availableTracks.find(function (saved) {
                 return saved.uid.toString() === trackUid.toString();
             }).data;
 
             const storageFeatures = new ol.format.GeoJSON().readFeatures(storageData);
-            const promises = new Array(storageFeatures.length);
-            storageFeatures.forEach(function (f, idx) {
-                promises[idx] = TC.wrap.Feature.createFeature(f);
-            });
-
-            const tcFeatures = await Promise.all(promises);
+            const tcFeatures = storageFeatures.map(f => TC.wrap.Feature.createFeature(f));
             let features = tcFeatures.map(function (f) {
                 const fObj = {};
                 switch (true) {
@@ -667,10 +662,10 @@ class Geolocation extends Control {
                         const shareDialog = self.#shareDialogDiv.querySelector('.' + self.CLASS + '-share-dialog');
                         Util.showModal(shareDialog, {
                             openCallback: function () {
-                                return TC.control.infoShare.onShowShareDialog.call(self);
+                                return infoShare.onShowShareDialog.call(self);
                             },
                             closeCallback: function () {
-                                TC.control.infoShare.onCloseShareDialog.call(self);
+                                infoShare.onCloseShareDialog.call(self);
                             }
                         });
 
@@ -959,36 +954,52 @@ class Geolocation extends Control {
 
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 self.track.trackImportFile.disabled = false;
-                // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
-                self.track.trackImportFile.addEventListener(Consts.event.CLICK, function (_e) {
+                self.track.trackImportFile.addEventListener(Consts.event.CLICK, async function (e) {
+                    if (Util.isFunction(window.showOpenFilePicker)) {
+                        // Gestión vía File System Access API
+                        e.preventDefault();
+                        let fileHandles;
+                        try {
+                            fileHandles = await window.showOpenFilePicker({
+                                types: self.const.supportedFileExtensions.map(txt => {
+                                    const result = {
+                                        accept: {}
+                                    };
+                                    result.accept[Consts.mimeType[txt.substr(1).toUpperCase()]] = [txt];
+                                    return result;
+                                })
+                            });
+                        }
+                        catch (e) {
+                            if (e instanceof DOMException && window.parent !== window) {
+                                // No se permite ejecutar showOpenFilePicker si estamos en un frame con CORS
+                                let messageText = self.getLocaleString('cannotOpenFileIfEmbedded');
+                                self.map.toast(messageText, { type: Consts.msgType.WARNING });
+                            }
+                            else if (e.name !== 'AbortError') {
+                                throw e;
+                            }
+                        }
+                        if (fileHandles) {
+                            self.loadFile(fileHandles[0], { control: self });
+                        }
+                    }
+
+                    // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
                     // Envolvemos el input en un form
                     const input = this;
                     const form = document.createElement('form');
                     const parent = input.parentElement;
                     parent.insertBefore(form, input);
                     form.appendChild(input);
-                    form.reset();
+                    //form.reset();
                     // Desenvolvemos el input del form
                     form.insertAdjacentElement('afterend', input);
                     parent.removeChild(form);
-                }, { passive: true });
-
-                const _layerError = function () {
-                    self.map.off(Consts.event.LAYERERROR, _layerError);
-                    self.clearFileInput(self.track.trackImportFile);
-
-                    TC.alert(self.getLocaleString("geo.trk.upload.error3"));
-                };
+                });
 
                 self.track.trackImportFile.addEventListener('change', function (e) {
-                    if (!self._cleaning) { // Valido que el evento import no lo provoco yo al limpiar el fileinput (al limpiar se lanza el change)                        
-                        self.clear(self.const.layer.TRACK);
-
-                        if (self.map) {
-                            self.map.on(Consts.event.LAYERERROR, _layerError);
-                            self.map.wrap.loadFiles(e.target.files, { control: self });
-                        }
-                    }
+                    self.loadFile(e.target.files[0]);
                 });
             } else {
                 console.log('no es posible la importación');
@@ -1022,7 +1033,7 @@ class Geolocation extends Control {
                     searchIcon.style.visibility = 'hidden';
                     var r = new RegExp(searchTerm, 'i');
                     trackLis.forEach(function (li) {
-                        li.style.display = r.test(li.querySelector('span').textContent) ? '' : 'none';
+                        li.style.display = r.test(li.querySelector(self.const.selector.ACTIVATOR).text) ? '' : 'none';
                     });
 
                     if (!trackLis.some(function (li) {
@@ -1055,21 +1066,21 @@ class Geolocation extends Control {
                 }
 
                 const input = elm.querySelector('input');
-                const span = elm.querySelector('span');
+                const btn = elm.querySelector(self.const.selector.ACTIVATOR);
 
                 if (edit) {
 
                     input.classList.remove(Consts.classes.HIDDEN);
                     input.focus();
-                    input.value = span.textContent;
-                    span.classList.add(Consts.classes.HIDDEN);
+                    input.value = btn.text;
+                    btn.classList.add(Consts.classes.HIDDEN);
                     elm.dataset.title = elm.title;
                     elm.title = "";
 
                     //elm.querySelector(sel.SIMULATE).classList.add(Consts.classes.HIDDEN);
                     elm.querySelector(sel.EDIT).classList.add(Consts.classes.HIDDEN);
                     elm.querySelector(sel.DELETE).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.DRAW).classList.add(Consts.classes.HIDDEN);
+                    elm.querySelector(sel.ACTIVATOR).classList.add(Consts.classes.HIDDEN);
                     elm.querySelector(sel.EXPORT).classList.add(Consts.classes.HIDDEN);
                     elm.querySelector(sel.SHARE).classList.add(Consts.classes.HIDDEN);
 
@@ -1078,14 +1089,14 @@ class Geolocation extends Control {
                 } else {
 
                     input.classList.add(Consts.classes.HIDDEN);
-                    span.classList.remove(Consts.classes.HIDDEN);
+                    btn.classList.remove(Consts.classes.HIDDEN);
                     elm.title = elm.dataset.title;
                     delete elm.dataset.title;
 
                     //elm.querySelector(sel.SIMULATE).classList.remove(Consts.classes.HIDDEN);
                     elm.querySelector(sel.EDIT).classList.remove(Consts.classes.HIDDEN);
                     elm.querySelector(sel.DELETE).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.DRAW).classList.remove(Consts.classes.HIDDEN);
+                    elm.querySelector(sel.ACTIVATOR).classList.remove(Consts.classes.HIDDEN);
                     elm.querySelector(sel.EXPORT).classList.remove(Consts.classes.HIDDEN);
                     elm.querySelector(sel.SHARE).classList.remove(Consts.classes.HIDDEN);
 
@@ -1115,7 +1126,7 @@ class Geolocation extends Control {
             //        self.getLoadingIndicator().removeWait(wait);
             //    });
             //}));
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.DRAW, function (e) {
+            list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.ACTIVATOR, function (e) {
                 var wait = self.getLoadingIndicator().addWait();
 
                 drawTrack(self, e.target).then(function () {
@@ -1126,7 +1137,7 @@ class Geolocation extends Control {
             self.on(self.const.event.IMPORTEDTRACK, function (e) {
                 if (!self.isDisabled) {
                     const listElement = self.track.trackList.querySelector('li[data-id="' + e.index + '"]');
-                    drawTrack(self, listElement.querySelector(sel.DRAW)).then(function () {
+                    drawTrack(self, listElement.querySelector(sel.ACTIVATOR)).then(function () {
                         if (self.loadingState) {
                             delete self.loadingState;
                             delete self.toShare;
@@ -1179,7 +1190,7 @@ class Geolocation extends Control {
 
                             self.clear(self.const.layer.TRACK);
 
-                            btnDraw.setAttribute('title', btnDraw.textContent);
+                            btnDraw.removeAttribute('title');
                             //
                         }
                         else if (self.getSelectedTrackItem()) { // GLS: si hay elemento seleccionado actuamos
@@ -1236,7 +1247,11 @@ class Geolocation extends Control {
                 editName(true, e.target);
             }));
             list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.DELETE}`, function (e) {
-                self.removeTrack(getParentListElement(e.target));
+                self.removeTrack(getParentListElement(e.target)).then(function (deleted) {
+                    if (deleted && !self.availableTracks.length) {
+                        self.div.querySelector(self.const.selector.DELETEALL).disabled=true;
+                    }
+                })
             }));
             list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.SAVE}`, function (e) {
                 const li = getParentListElement(e.target);
@@ -1396,9 +1411,7 @@ class Geolocation extends Control {
 
     #getCurrentPoints = function () {
         return this.trackLayer.features
-            .filter(function (feat) { // filtrando por Point se cuelan los Marker
-                return !(feat instanceof Marker) && !isAnyLine(feat);
-            });
+            .filter(feat => feat instanceof Point);
     }
 
     async #setTrackToShare(li) {
@@ -1406,7 +1419,7 @@ class Geolocation extends Control {
         await self.getShareDialog(self.#shareDialogDiv);
         const features = await self.#prepareFeaturesToShare({ uid: li.dataset.uid, setFeaturesToShare: false });
         self.toShare = {
-            trackName: li.querySelector('span').innerHTML,
+            trackName: li.querySelector(self.const.selector.ACTIVATOR).text,
             features: features
         };
     }
@@ -1508,10 +1521,10 @@ class Geolocation extends Control {
 
     renderInfoNewPosition = function (d) {
         const self = this;
-        
+
         self.getRenderedHtml(self.CLASS + '-tracking-toast', self.#setFormatInfoNewPosition(d.pd), function (html) {
             self.getTrackInfoPanel().then(function (infoPanel) {
-                if (!infoPanel.isMinimized()) {                    
+                if (!infoPanel.isMinimized()) {
                     infoPanel.renderPromise().then(function () {
                         infoPanel.options.collidingPriority = infoPanel.COLLIDING_PRIORITY.IGNORE;
                         infoPanel.open(html);
@@ -1519,7 +1532,7 @@ class Geolocation extends Control {
                 }
             });
         });
-        
+
     }
 
     #updateGeotrackingToolsState() {
@@ -1938,7 +1951,7 @@ class Geolocation extends Control {
 
             self.map.off(Consts.event.ZOOM, zoomHandler)
 
-            //TC.Control.prototype.deactivate.call(self);
+            //Control.prototype.deactivate.call(self);
 
             return true;
         };
@@ -2081,9 +2094,12 @@ class Geolocation extends Control {
                     self.track.trackList.appendChild(newLi);
                     newLi.querySelector(self.const.selector.VISIBILITY).addEventListener('change', function (e) {
                         self.trackLayer.setVisibility(e.target.checked);
+                        self.endPointLayer.setVisibility(e.target.checked);
                     });
                 }
             }
+
+            self.div.querySelector(self.const.selector.DELETEALL).disabled=false;
 
             if (selectedTrackId) {
                 self.setSelectedTrack(self.track.trackList.querySelector('li[data-uid="' + selectedTrackId + '"]'));
@@ -2314,8 +2330,9 @@ class Geolocation extends Control {
                         return longLayout && isAnyLine(f);
                     });
 
-                    if (features.length > 0) {
-                        let line = features[0];
+                    let line = options?.feature || features[0];
+
+                    if (line) {
                         let time = {};
                         if (hasTime) {
                             let diff = 0;
@@ -2333,7 +2350,7 @@ class Geolocation extends Control {
                             };
                         }
 
-                        let options = {
+                        let elevOptions = {
                             originalElevation: true,
                             onlyOriginalElevation: !self.options.displayElevation ? true : false,
                             ignoreCaching: true,
@@ -2365,7 +2382,7 @@ class Geolocation extends Control {
                                 });
                             }
                         };
-                        elevCtl.displayElevationProfile(line, options);
+                        elevCtl.displayElevationProfile(line, elevOptions);
                     } else {
                         throw Error('No features have compatible geometry layout');
                     }
@@ -2400,6 +2417,7 @@ class Geolocation extends Control {
         if (layerType === self.const.layer.TRACK) {
 
             self.trackLayer.clearFeatures();
+            self.endPointLayer.clearFeatures();
             self.#startMarker = null;
             self.#finishMarker = null;
             delete self.trackLayer._fileHandle;
@@ -2426,12 +2444,34 @@ class Geolocation extends Control {
                 delete self.toShare;
             }
 
-            //TC.Control.prototype.deactivate.call(self);
+            //Control.prototype.deactivate.call(self);
 
         } else {
             self.geotrackingLayer.clearFeatures();
             self.gpsLayer.clearFeatures();
         }
+    }
+
+    #onLayerError() {
+        const self = this;
+        self.map.off(Consts.event.LAYERERROR, self.#onLayerError);
+        self.clearFileInput(self.track.trackImportFile);
+
+        TC.alert(self.getLocaleString("geo.trk.upload.error3"));
+    };
+
+
+    loadFile(file) {
+        const self = this;
+        if (!self._cleaning) { // Valido que el evento import no lo provoco yo al limpiar el fileinput (al limpiar se lanza el change)
+            self.clear(self.const.layer.TRACK);
+
+            if (self.map) {
+                self.map.on(Consts.event.LAYERERROR, self.#onLayerError);
+                self.map.wrap.loadFiles([file], { control: self });
+            }
+        }
+        return self;
     }
 
     async saveTrack(options) {
@@ -2466,6 +2506,15 @@ class Geolocation extends Control {
             let newTrack;
             if (options.uid) {
                 newTrack = tracks.find(t => t.uid == options.uid);
+            }
+            else if (options.fileHandle) {
+                for (var i = 0, ii = tracks.length; i < ii; i++) {
+                    const sameEntry = await options.fileHandle.isSameEntry(tracks[i].fileHandle);
+                    if (sameEntry) {
+                        newTrack = tracks[i];
+                        break;
+                    }
+                }
             }
             if (!newTrack) {
                 mustAdd = true;
@@ -2668,6 +2717,16 @@ class Geolocation extends Control {
         });
     }
 
+    removeAllTracks = function (button) {
+        const self = this;
+        TC.confirm(self.getLocaleString('geo.trk.delete.all.alert'), function () {
+            self.div.querySelectorAll(`.${self.CLASS}-track-available-lst li[data-id]`).forEach(function (li) {
+                self.removeTrack(li, { silent: true });
+                button.disabled = true;
+            })         
+        });
+    };
+
     setSelectedTrack = function (li) {
         const self = this;
 
@@ -2675,14 +2734,14 @@ class Geolocation extends Control {
             self.activate();
         }
 
-        self.track.trackList.querySelectorAll('li[data-id] > span').forEach(function (span) {
-            span.setAttribute('title', span.textContent);
-        });
         self.track.trackList.querySelectorAll('li').forEach(function (li) {
             li.classList.remove(Consts.classes.CHECKED);
+            li.querySelector(self.const.selector.ACTIVATOR)?.removeAttribute('title');
         });
 
         li.classList.add(Consts.classes.CHECKED);
+
+        const btn = li.querySelector(self.const.selector.ACTIVATOR);
 
         const transitionEvent = function (_event) {
             li.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -2690,8 +2749,8 @@ class Geolocation extends Control {
         };
         li.addEventListener("transitionend", transitionEvent, false);
 
-        li.setAttribute('title', self.getLocaleString("tr.lst.clear") + " " + li.querySelector('span').textContent);
-        li.querySelector(self.const.selector.DRAW).setAttribute('title', li.getAttribute('title'));
+        li.setAttribute('title', self.getLocaleString("tr.lst.clear") + " " + btn.text);
+        btn.setAttribute('title', li.getAttribute('title'));
 
         if (!self.loadingState) {
             delete self.toShare;
@@ -2716,14 +2775,14 @@ class Geolocation extends Control {
 
             selected.classList.remove(Consts.classes.CHECKED);
             selected.setAttribute('title', selected.textContent);
-            selected.querySelector(self.const.selector.DRAW).setAttribute('title', selected.getAttribute('title'));
+            selected.querySelector(self.const.selector.ACTIVATOR).removeAttribute('title');
 
             delete self.toShare;
         }
-    }    
+    }
 
     clearSelection() {
-        
+
         self.wrap.deactivateSnapping();
         var selected = self.getSelectedTrackItem();
         if (selected) {
@@ -2782,8 +2841,10 @@ class Geolocation extends Control {
         var showFeatures = self.trackLayer.features;
         if (showFeatures && showFeatures.length > 0) {
 
+            showFeatures.forEach(f => {
+                f.showsPopup = (f instanceof Point);
+            });
             const lineFeature = showFeatures.find(function (feature) {
-                feature.showsPopup = false;
                 if (isAnyLine(feature)) {
                     return true;
                 }
@@ -2806,8 +2867,10 @@ class Geolocation extends Control {
                         self.#startMarker.setCoordinates(markerCoords);
                     }
                     else {
-                        self.#startMarker = await self.trackLayer.addMarker(markerCoords, {
+                        self.#startMarker = await self.endPointLayer.addMarker(markerCoords, {
                             showsPopup: false,
+                            width: 32,
+                            height: 32,
                             cssClass: self.CLASS + '-track-marker-icon-end',
                             anchor: [0.5, 1],
                             noExport: true
@@ -2821,8 +2884,10 @@ class Geolocation extends Control {
                         self.#finishMarker.setCoordinates(markerCoords);
                     }
                     else {
-                        self.#finishMarker = await self.trackLayer.addMarker(markerCoords, {
+                        self.#finishMarker = await self.endPointLayer.addMarker(markerCoords, {
                             showsPopup: false,
+                            width: 32,
+                            height: 32,
                             cssClass: self.CLASS + '-track-marker-icon',
                             anchor: [0.5, 1],
                             noExport: true
@@ -2832,11 +2897,11 @@ class Geolocation extends Control {
             }
             else {
                 if (self.#startMarker) {
-                    self.trackLayer.removeFeature(self.#startMarker);
+                    self.endPointLayer.removeFeature(self.#startMarker);
                     self.#startMarker = null;
                 }
                 if (self.#finishMarker) {
-                    self.trackLayer.removeFeature(self.#finishMarker);
+                    self.endPointLayer.removeFeature(self.#finishMarker);
                     self.#finishMarker = null;
                 }
             }
@@ -2939,7 +3004,7 @@ class Geolocation extends Control {
 
                 const selectedTrackItem = self.getSelectedTrackItem();
                 if (selectedTrackItem) {
-                    clonedToShare.trackName = selectedTrackItem.querySelector('span').innerHTML;
+                    clonedToShare.trackName = selectedTrackItem.querySelector(self.const.selector.ACTIVATOR).text;
                 }
                 state.trackResult = JSON.stringify(clonedToShare);
             } else { // compartir desde lista de rutas                
