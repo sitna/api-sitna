@@ -1,7 +1,7 @@
 # Hoja de ruta
 *Read this in [English](./roadmap.md).*
 
-Mejoras planeadas a día de 17/08/2023:
+Mejoras planeadas a día de 07/08/2023:
 1.	~~Eliminación de la dependencia de jQuery.~~ :heavy_minus_sign: :two::zero::zero:
 2.	~~Eliminación de la dependencia de Modernizr.~~ :heavy_minus_sign: :two::zero::zero:
 3.	~~Migración a OpenLayers 5.~~ :arrow_up: :two::zero::zero:
