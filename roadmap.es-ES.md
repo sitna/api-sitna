@@ -61,14 +61,4 @@ Mejoras planeadas a día de 07/08/2023:
 57. Disponibilidad de las constricciones de acceso al servicio junto a la acreditación. ✨
 58. Enlace al texto descriptivo de los servicios WMS en la lista de capas disponibles. ✨
 
-:two::zero::zero: Mejora añadida en la [versión 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
-
-:two::one::zero: Mejora añadida en la [versión 2.1.0](https://github.com/sitna/api-sitna/releases/tag/v2.1.0).
-
-:two::two::zero: Mejora añadida en la [versión 2.2.0](https://github.com/sitna/api-sitna/releases/tag/v2.2.0).
-
-:three::zero::zero: Mejora añadida en la [versión 3.0.0](https://github.com/sitna/api-sitna/releases/tag/v3.0.0).
-
-:four::zero::zero: Mejora añadida en la [versión 4.0.0](https://github.com/sitna/api-sitna/releases/tag/v4.0.0).
-
-:four::one::zero: Mejora añadida en la [versión 4.1.0](https://github.com/sitna/api-sitna/releases/tag/v4.1.0).
+:hash::hash::hash: Mejora añadida en la versión \#.\#.\#
