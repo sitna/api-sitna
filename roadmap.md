@@ -61,14 +61,4 @@ Planned upgrades as on 08/07/2023:
 57. Service access constraints availability with attributions. ✨
 58. Links to WMS service abstracts at available layer catalog. ✨
 
-:two::zero::zero: Upgrade fulfilled with [version 2.0.0](https://github.com/sitna/api-sitna/releases/tag/v2.0.0).
-
-:two::one::zero: Upgrade fulfilled with [version 2.1.0](https://github.com/sitna/api-sitna/releases/tag/v2.1.0).
-
-:two::two::zero: Upgrade fulfilled with [version 2.2.0](https://github.com/sitna/api-sitna/releases/tag/v2.2.0).
-
-:three::zero::zero: Upgrade fulfilled with [version 3.0.0](https://github.com/sitna/api-sitna/releases/tag/v3.0.0).
-
-:four::zero::zero: Upgrade fulfilled with [version 4.0.0](https://github.com/sitna/api-sitna/releases/tag/v4.0.0).
-
-:four::one::zero: Upgrade fulfilled with [version 4.1.0](https://github.com/sitna/api-sitna/releases/tag/v4.1.0).
+:hash::hash::hash: Upgrade fulfilled with version \#.\#.\#
