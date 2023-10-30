@@ -49,5 +49,5 @@
   * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Events on Public Roads. Pamplona Police Department")
 
 * Other developments:
-  * [SITMUN viewer](https://sitmun.github.io/sitmun-viewer-app/public/map/1/2)
+  * [Visualizador SITMUN](https://sitmun.github.io/sitmun-viewer-app/public/map/1/2)
   * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)
