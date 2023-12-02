@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 3.0.1
+ * @version 4.1.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -11,36 +11,66 @@ import Util from './TC/Util';
 import Consts from './TC/Consts';
 import i18n from './TC/i18n';
 import SitnaMap from './SITNA/Map';
+import Feature from './SITNA/feature/Feature';
+import Point from './SITNA/feature/Point';
+import MultiPoint from './SITNA/feature/MultiPoint';
 import Marker from './SITNA/feature/Marker';
+import MultiMarker from './SITNA/feature/MultiMarker';
+import Polyline from './SITNA/feature/Polyline';
+import MultiPolyline from './SITNA/feature/MultiPolyline';
+import Polygon from './SITNA/feature/Polygon';
+import MultiPolygon from './SITNA/feature/MultiPolygon';
+import Circle from './SITNA/feature/Circle';
+import Layer from './SITNA/layer/Layer';
+import Raster from './SITNA/layer/Raster';
+import Vector from './SITNA/layer/Vector';
+import './TC/tool/ExcelExport';
+import './TC/tool/Proxification';
 import Map from './TC/Map';
-import { Cfg } from './TC/Cfg';
-import Proxification from './TC/tool/Proxification';
+import Cfg from './TC/Cfg';
 import wrap from './TC/wrap';
 import { JL } from 'jsnlog';
-// Importación de web components para que puedan ser registrados como marcado
-import FileEdit from './TC/control/FileEdit';
-import LanguageSelector from './TC/control/LanguageSelector';
+// Importamos para precargar estilos y evitar FOUC
+import './SITNA/ui/Button';
+import './SITNA/ui/Toggle';
+import './SITNA/ui/Tab';
 
 TC.isDebug = true;
 
+const layer = {};
+layer.Layer = Layer;
+layer.Raster = Raster;
+layer.Vector = Vector;
+
+const feature = {};
+feature.Feature = Feature;
+feature.Point = Point;
+feature.MultiPoint = MultiPoint;
+feature.Marker = Marker;
+feature.MultiMarker = MultiMarker;
+feature.Polyline = Polyline;
+feature.MultiPolyline = MultiPolyline;
+feature.Polygon = Polygon;
+feature.MultiPolygon = MultiPolygon;
+feature.Circle = Circle;
+
+const tool = TC.tool || {};
+
+TC.feature = feature;
+TC.layer = layer;
+TC.tool = tool;
 TC.Util = Util;
 TC.Consts = Consts;
 TC.i18n = i18n;
 TC.Cfg = Cfg;
 TC.Map = Map;
 TC.wrap = wrap;
-TC.tool = {
-    Proxification: Proxification
-};
 globalThis.TC = TC;
 //window.JL = JL;
-var SITNA = SITNA || {};
-SITNA.feature = SITNA.feature || {};
-SITNA.feature.Marker = Marker;
 
-TC.version = '3.0.1';
+TC.version = '4.1.0';
 
-TC.loadCSS(TC.apiLocation + 'TC/css/tcmap.css');
+TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
 // Precargamos el CRS por defecto
 TC.loadProjDef({ crs: 'EPSG:25830', name: 'ETRS89 / UTM zone 30N', def: '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs' });
@@ -56,9 +86,6 @@ TC.loadProjDef({ crs: 'EPSG:25828', name: 'ETRS89 / UTM zone 28N', def: '+proj=u
 TC.loadProjDef({ crs: 'EPSG:25829', name: 'ETRS89 / UTM zone 29N', def: '+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
 TC.loadProjDef({ crs: 'EPSG:25831', name: 'ETRS89 / UTM zone 31N', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
 
-TC.loadJS(!TC.browserFeatures.urlParser(), TC.apiLocation + TC.Consts.url.URL_POLYFILL, function () { });
-
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // Completamos los datos de versión
@@ -70,45 +97,54 @@ document.addEventListener('DOMContentLoaded', function () {
 
     TC.browser = TC.Util.getBrowser();
 
-    TC.loadJS(!TC.Cfg.acceptedBrowserVersions, TC.apiLocation + 'TC/config/browser-versions.js', function (result) {
-        TC._isSupported = true;
-        var versions = TC.Cfg.acceptedBrowserVersions;
+    fetch(TC.apiLocation + 'config/browser-versions.json')
+        .then(r => {
+            if (r.ok) {
+                return r.json();
+            }
+            return Promise.resolve([]);
+        })
+        .then(browserVersions => {
+            TC._isSupported = true;
+            TC.Cfg.acceptedBrowserVersions = browserVersions;
 
-        var match = versions.filter(function (item) {
-            return item.name.toLowerCase() === TC.browser.name.toLowerCase();
-        });
+            const match = browserVersions.find(item => item.name.toLowerCase() === TC.browser.name.toLowerCase());
 
-        // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
-        if (match.length > 0 && match[0].expired) {
-            TC.Cfg.loggingErrorsEnabled = false;
-        } else {
-            if (match.length > 0 && !isNaN(match[0].version)) {
-                if (TC.browser.version < match[0].version) {
-                    TC._isSupported = false;
+            // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
+            if (match && match.expired) {
+                TC.Cfg.loggingErrorsEnabled = false;
+            } else {
+                if (match && !isNaN(match.version)) {
+                    if (TC.browser.version < match.version) {
+                        TC._isSupported = false;
+                    }
+                }
+
+                if (TC.Cfg.oldBrowserAlert && !TC._isSupported) {
+                    TC.Cfg.loggingErrorsEnabled = false;
+                    // Timeout para evitar pedir el mapa antes de que se instancie
+                    setTimeout(() => {
+                        const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
+
+                        TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
+                            TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), Consts.msgErrorMode.TOAST);
+                        });
+                    }, 500);
                 }
             }
+        });
 
-            if (TC.Cfg.oldBrowserAlert && !TC._isSupported) {
-                TC.Cfg.loggingErrorsEnabled = false;
-                const mapObj = TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
-
-                TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
-                    TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), TC.Consts.msgErrorMode.TOAST);
-                });
-            }
-        }
-    });
 
     if (/ip(ad|hone|od)/i.test(navigator.userAgent)) {
         // En iOS, el primer click es un mouseover, por eso usamos touchstart como sustituto.
-        TC.Consts.event.CLICK = "touchstart";
+        Consts.event.CLICK = "touchstart";
     }
 
     // Gestión de errores
     if (TC.Cfg.loggingErrorsEnabled) {
 
         JL.setOptions({
-            defaultAjaxUrl: TC.Consts.url.ERROR_LOGGER.includes('//localhost') ? '' : TC.Consts.url.ERROR_LOGGER
+            defaultAjaxUrl: Consts.url.ERROR_LOGGER.includes('//localhost') ? '' : Consts.url.ERROR_LOGGER
         });
 
         const onError = (function () {
@@ -117,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var mapObj;
 
             return function (e) {
-                mapObj = mapObj || TC.Map.get(document.querySelector('.' + TC.Consts.classes.MAP));
+                mapObj = mapObj || TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
 
                 if (!mapObj) {
                     return false;
@@ -153,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // 13/03/2020 añadimos el estado de los controles a la URL que se enviará por correo
                     const endProcess = function (appUrl) {
-                        var msg = apiError ? TC.Consts.text.API_ERROR : TC.Consts.text.APP_ERROR;
+                        var msg = apiError ? Consts.text.API_ERROR : Consts.text.APP_ERROR;
                         JL("onerrorLogger").fatalException({
                             "msg": msg,
                             "errorMsg": errorMsg,
@@ -190,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         var DEFAULT_CONTACT_EMAIL = "webmaster@itracasa.es";
                         TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale)
                             .then(function () {
-                                TC.error(TC.Util.getLocaleString(mapObj.options.locale, "genericError") + (mapObj.options.contactEmail || DEFAULT_CONTACT_EMAIL), { type: TC.Consts.msgType.ERROR });
+                                TC.error(TC.Util.getLocaleString(mapObj.options.locale, "genericError") + (mapObj.options.contactEmail || DEFAULT_CONTACT_EMAIL), { type: Consts.msgType.ERROR });
                             });
                     }
                 }
@@ -209,10 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * @namespace SITNA
  */
 
-SITNA.Map = SitnaMap;
+Cfg.layout = TC.apiLocation + 'layout/responsive';
 
-Cfg.layout = TC.apiLocation + 'TC/layout/responsive';
-
-const feature = SITNA.feature;
-export { Cfg, SitnaMap as Map, Consts, feature };
+export { Cfg, SitnaMap as Map, Consts, feature, layer, tool };
 

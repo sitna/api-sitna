@@ -25,6 +25,7 @@
     </div>
     <div class="tc-ctl-wfsquery tc-ctl-wfsquery-text tc-hidden">
         <input type="radio" id="{{controlId}}-cond-8" name="{{controlId}}-condition" value="eq" /><label for="{{controlId}}-cond-8" class="tc-ctl-btn tc-ctl-wfsquery-cond">{{i18n operators.eq.key}}</label>
+        <input type="radio" id="{{controlId}}-cond-7" name="{{controlId}}-condition" value="neq" /><label for="{{controlId}}-cond-7" class="tc-ctl-btn tc-ctl-wfsquery-cond">{{i18n operators.neq.key}}</label>
         <input type="radio" id="{{controlId}}-cond-9" name="{{controlId}}-condition" value="contains" /><label for="{{controlId}}-cond-9" class="tc-ctl-btn tc-ctl-wfsquery-cond">{{i18n operators.contains.key}}</label>
         <input type="radio" id="{{controlId}}-cond-10" name="{{controlId}}-condition" value="starts" /><label for="{{controlId}}-cond-10" class="tc-ctl-btn tc-ctl-wfsquery-cond">{{i18n operators.starts.key}}</label>
         <input type="radio" id="{{controlId}}-cond-11" name="{{controlId}}-condition" value="ends" /><label for="{{controlId}}-cond-11" class="tc-ctl-btn tc-ctl-wfsquery-cond">{{i18n operators.ends.key}}</label>
@@ -52,7 +53,7 @@
         </div>
         <div class="tc-ctl-wfsquery-geomtype">
             <button type="button" class="tc-ctl-btn tc-ctl-wfsquery-geomtype-box-btn" name="geometry" value="rectangle">{{i18n "box"}}</button>
-            <button type="button" class="tc-ctl-btn tc-ctl-wfsquery-geomtype-line-btn" name="geometry" value="line">{{i18n "line"}}</button>
+            <button type="button" class="tc-ctl-btn tc-ctl-wfsquery-geomtype-line-btn" name="geometry" value="polyline">{{i18n "line"}}</button>
             <button type="button" class="tc-ctl-btn tc-ctl-wfsquery-geomtype-polygon-btn" name="geometry" value="polygon">{{i18n "polygon"}}</button>
         </div>
         <div class="tc-ctl-wfsquery-key">

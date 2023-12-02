@@ -3,29 +3,25 @@ import Consts from '../Consts';
 import Control from '../Control';
 import Proxification from '../tool/Proxification';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.Control = Control;
-TC.tool = TC.tool || {};
-TC.tool.Proxification = Proxification;
 
-TC.control.MapInfo = function () {
+const MapInfo = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 };
 
-TC.inherit(TC.control.MapInfo, TC.Control);
+TC.inherit(MapInfo, Control);
 
 (function () {
-    var ctlProto = TC.control.MapInfo.prototype;
+    var ctlProto = MapInfo.prototype;
 
     ctlProto.CLASS = 'tc-ctl-mi';
 
     ctlProto.register = function (map) {
         const self = this;
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
         self.QR_MAX_URL_LENGTH = 150;
         self.SHORTEN_URL_LENGTH = 16000;
@@ -84,7 +80,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
             self.map.addLayer({
                 id: self.getUID(),
                 owner: self,
-                type: TC.Consts.layerType.VECTOR,
+                type: Consts.layerType.VECTOR,
                 title: self.getLocaleString('foi'),
                 stealth: true
             }).then(function (layer) {
@@ -142,11 +138,11 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         var hashState = await self.map.getMapState({ extraStates: extraStates, cacheResult: self.includeControls });
 
         var url = currentUrl.concat("#", hashState);
-        self.manageMaxLengthExceed({ browser: url.length > TC.Consts.URL_MAX_LENGTH, qr: url.length > self.SHORTEN_URL_LENGTH });
+        self.manageMaxLengthExceed({ browser: url.length > Consts.URL_MAX_LENGTH, qr: url.length > self.SHORTEN_URL_LENGTH });
         return url;
     };
 
-    ctlProto.shortenedLink = function () {
+    ctlProto.shortenedLink = async function () {
         const self = this;
         var wait;
 
@@ -169,95 +165,68 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const shortenUrl = function (url) {
             var shortenServiceUrl = "https://tinyurl.com/api-create.php";
 
-            if (!TC.tool || !TC.tool.Proxification) {
-                TC.syncLoadJS(TC.apiLocation + 'TC/tool/Proxification');
-            }
-
             var data = new FormData();
             data.append("url", url);
 
-            var toolProxification = new TC.tool.Proxification(TC.proxify, { allowedMixedContent: false });
-            return toolProxification.fetch(shortenServiceUrl, {
+            const proxificationTool = new Proxification(TC.proxify, { allowedMixedContent: false });
+            return proxificationTool.fetch(shortenServiceUrl, {
                 type: 'POST',
                 data: data
             }).then(function (data) {
                 return data;
-            }).catch(function (error) {
+            }).catch(function (_error) {
                 return null;
             });
         };
 
-        return new Promise(function (resolve, reject) {
-            const onError = function () {
-                self.map.toast(self.getLocaleString("urlTooLongForShortener"), { type: TC.Consts.msgType.ERROR });
+        const onError = function () {
+            self.map.toast(self.getLocaleString("urlTooLongForShortener"), { type: Consts.msgType.ERROR });
+            self.map.getLoadingIndicator().removeWait(wait);
+            return "";
+        };
+
+        const url = await self.generateLink();
+        if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
+
+            wait = self.map.getLoadingIndicator().addWait();
+
+            const response = await shortenUrl(url);
+            if (response && response.responseText) {
                 self.map.getLoadingIndicator().removeWait(wait);
-                resolve("");
-            };
-            self.generateLink().then(url => {
-                if (url.length > self.QR_MAX_URL_LENGTH && url.length < self.SHORTEN_URL_LENGTH) {
+                return response.responseText.replace('http://', 'https://');
+            } else {
+                return onError();
+            }
+        } else {
+            if (url.length >= self.SHORTEN_URL_LENGTH) {
+                return onError();
+            }
 
-                    wait = self.map.getLoadingIndicator().addWait();
-
-                    shortenUrl(url).then(function (response) {
-                        if (response && response.responseText) {
-                            self.map.getLoadingIndicator().removeWait(wait);
-                            resolve(response.responseText.replace('http://', 'https://'));
-                        } else {
-                            onError();
-                        }
-                    }, onError);
-                } else {
-                    if (url.length >= self.SHORTEN_URL_LENGTH) {
-                        onError();
-                    }
-
-                    resolve("");
-                }
-            });
-        });
+            return "";
+        }
     };
 
-    ctlProto.makeQRCode = function (codeContainer, width, height) {
+    ctlProto.makeQRCode = async function (codeContainer, width) {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            TC.loadJS(
-                typeof window.QRCode === 'undefined',
-                [TC.apiLocation + 'lib/qrcode/qrcode.min.js'],
-                function () {
-                    self.shortenedLink().then(function (url) {
-                        url = url || "";
-                        if (url.length > 0) {
-                            var options = {
-                                text: url
-                            };
+        const modulePromise = import('qrcode');
+        const url = await self.shortenedLink() || '';
+        if (url.length > 0) {
+            const options = {
+                text: url,
+                margin: 2
+            };
 
-                            if (width && height) {
-                                options.width = width;
-                                options.height = height;
-                            }
+            if (width) {
+                options.width = width;
+            }
 
-                            var config = { attributes: true, childList: true, subtree: true };
-                            var observer = new MutationObserver(function (mutationsList, observer) {
-                                var srcMutation = mutationsList.filter(function (mutation) {
-                                    return mutation.type === "attributes";
-                                }).filter(function (mutation) {
-                                    return mutation.attributeName.indexOf('src') > -1;
-                                });
-
-                                if (srcMutation.length > 0) {
-                                    observer.disconnect();
-                                    resolve(srcMutation[0].target.src);
-                                }
-                            });
-                            codeContainer.innerHTML = '';
-                            observer.observe(codeContainer, config);
-                            new QRCode(codeContainer, options);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
-        });
+            codeContainer.innerHTML = '';
+            const img = document.createElement('img');
+            const QRCode = (await modulePromise).default;
+            img.src = await QRCode.toDataURL(url, options);
+            codeContainer.appendChild(img);
+            return img.src;
+        }
     };
 
     ctlProto.drawScaleBarIntoCanvas = function (options) {
@@ -357,7 +326,7 @@ TC.inherit(TC.control.MapInfo, TC.Control);
         const self = this;
         if (!self.registeredListeners) {
             let handlerTimeout;
-            const handler = function (e) {
+            const handler = function (_e) {
                 clearTimeout(handlerTimeout);
                 // generateLink puede ser tardar mucho, así que no lo llamamos innecesariamente cuando se están cargando varias features
                 handlerTimeout = setTimeout(function () {
@@ -367,10 +336,10 @@ TC.inherit(TC.control.MapInfo, TC.Control);
                     });
                 }, 100);
             };
-            self.map.on(TC.Consts.event.LAYERADD, handler)
-                .on(TC.Consts.event.LAYERREMOVE, handler)
-                .on(TC.Consts.event.FEATUREADD, handler)
-                .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, handler);
+            self.map.on(Consts.event.LAYERADD, handler)
+                .on(Consts.event.LAYERREMOVE, handler)
+                .on(Consts.event.FEATUREADD, handler)
+                .on(Consts.event.FEATUREREMOVE + ' ' + Consts.event.FEATURESCLEAR, handler);
 
             self.registeredListeners = true;
         }
@@ -378,5 +347,5 @@ TC.inherit(TC.control.MapInfo, TC.Control);
 
 })();
 
-const MapInfo = TC.control.MapInfo;
+TC.control.MapInfo = MapInfo;
 export default MapInfo;

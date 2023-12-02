@@ -1,0 +1,205 @@
+﻿
+.tc-ctl-share-select {
+    padding-top: 0.5em;
+    margin-bottom: 0.8em;
+    display: flex;
+    width: 100%;
+}
+
+    .tc-ctl-share-select sitna-tab {
+        width: 50%;
+    }
+
+
+        .tc-ctl-share-select sitna-tab:before {
+            padding-right: 0.5em;
+        }
+
+        .tc-ctl-share-select sitna-tab.tc-ctl-share-select-url:before {
+            content: '\e92d';
+        }
+
+        .tc-ctl-share-select sitna-tab.tc-ctl-share-select-iframe:before {
+            content: '\e92e';
+        }
+
+.tc-ctl-share h2 {
+    clear: both;
+}
+
+.tc-ctl-share .tc-ctl-share-url-box.tc-hidden {
+    display: none;
+}
+
+div.tc-ctl-share-url-box {
+    margin: 6px -3px 6px 0;
+    min-width: 300px;
+}
+
+.tc-ctl-share input[type='text'] {
+    width: 100%;
+}
+
+.tc-ctl-share .tc-ctl-share-url-box .tc-textbox {
+    font-size: 1em;
+    border-right: 0;
+    position: relative;
+    background-color: var(--input-disabled-bg-color);
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    width: calc(52.3% - 0.4em);
+    height: 2em;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    float: left;
+}
+
+.tc-ctl-share .tc-ctl-share-url-box.tc-iframe .tc-textbox {
+    width: calc(76% - 0.2em);
+}
+
+.tc-ctl-share .tc-ctl-share-url-box .tc-button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    height: 2em;
+    width: 24%;
+    font-size: 1em;
+    border-left: 0;
+    padding: 0;
+}
+
+    .tc-ctl-share .tc-ctl-share-url-box .tc-button:first-of-type {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        margin-right: 0.1em;
+        float: left;
+    }
+
+    .tc-ctl-share .tc-ctl-share-url-box .tc-button.tc-loading {
+        position: relative;
+    }
+
+        .tc-ctl-share .tc-ctl-share-url-box .tc-button.tc-loading:after {
+            position: absolute;
+            font-size: 85%;
+            font-family: var(--icon-font-family);
+            content: var(--icon-spinner);
+            left: auto;
+            right: 2px;
+            margin-top: 2px;
+            display: inline-block;
+            animation: spin 2s infinite linear;
+            -webkit-animation: spin 2s infinite linear;
+        }
+
+.tc-ctl-share .tc-ctl-share-alert.tc-loading {
+    position: relative;
+}
+    .tc-ctl-share .tc-ctl-share-alert.tc-loading p {
+        visibility: hidden;
+    }
+
+    .tc-ctl-share .tc-ctl-share-alert.tc-loading:after {
+        position: absolute;
+        font-size: 85%;
+        font-family: var(--icon-font-family);
+        content: var(--icon-spinner);
+        left: 50%;
+        top: 50%;
+        right: auto;
+        display: inline-block;
+        animation: spin 2s infinite linear;
+        -webkit-animation: spin 2s infinite linear;
+    }
+
+
+.tc-ctl-share .tc-ctl-share-url-box.tc-iframe .tc-button:first-of-type {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    margin-right: 0;
+    float: none;
+}
+
+.tc-ctl-share .tc-ctl-share-icons {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+.tc-ctl-share .tc-ctl-share-icons.tc-loading:before {
+    position: absolute;
+    font-family: var(--icon-font-family);
+    content: var(--icon-spinner);
+    color: var(--title-color);
+    font-size: 1.2em;
+    display: inline-block;
+    animation: spin 2s infinite linear;
+    -webkit-animation: spin 2s infinite linear;
+}
+
+.tc-ctl-share .tc-ctl-share-icons.tc-loading * {
+    visibility: hidden;
+}
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button {
+    background-color: var(--title-color);
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    -webkit-mask-position: center;
+}
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button:hover {
+    background-color: var(--main-hl-color);
+}
+
+    .tc-ctl-share .tc-ctl-share-icons sitna-button[disabled] {
+        background-color: var(--glyph-disabled-color);
+    }
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-email {
+    mask-image: url(../img/icon-email.svg);
+    -webkit-mask-image: url(../img/icon-email.svg);
+}
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-qr {
+    mask-image: url(../img/icon-qr-code.svg);
+    -webkit-mask-image: url(../img/icon-qr-code.svg);
+}
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-facebook {
+    mask-image: url(../img/icon-facebook.svg);
+    -webkit-mask-image: url(../img/icon-facebook.svg);
+}
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-twitter {
+    mask-image: url(../img/icon-twitter.svg);
+    -webkit-mask-image: url(../img/icon-twitter.svg);
+}
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-whatsapp {
+    mask-image: url(../img/icon-whatsapp.svg);
+    -webkit-mask-image: url(../img/icon-whatsapp.svg);
+}
+    .tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-whatsapp.tc-hidden {
+        display: none;
+    }
+
+.tc-ctl-share .tc-ctl-share-icons sitna-button.tc-ctl-share-btn-bookmark {
+    mask-image: url(../img/icon-star-filled.svg);
+    -webkit-mask-image: url(../img/icon-star-filled.svg);
+}
+
+/*.tc-ctl-share div.tc-ctl-share-qr-dialog {
+    top: 20%;
+}*/
+
+.tc-ctl-share div#qrcode img {
+    margin: auto;
+}
+
+div.tc-ctl-share-qr-dialog.tc-modal .tc-ctl-share-qrcode img {
+    display: initial !important; /* no hay más remedio que indicar el important, es un estilo en línea que añade la librería de QR*/
+}

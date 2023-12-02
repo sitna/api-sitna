@@ -1,0 +1,63 @@
+﻿.tc-ctl-meas .tc-hidden {
+    display: none;
+}
+
+.tc-ctl-meas-select {
+    padding-top: 0.5em;
+    margin-bottom: 0.8em;
+    display: flex;
+    display: flex;
+    width: 100%;
+}
+
+    .tc-ctl-meas-select sitna-tab {
+        width: 50%;
+    }
+
+        .tc-ctl-meas-select sitna-tab.tc-ctl-meas-select-mode-polyline:before {
+            content: '\e90b';
+        }
+
+        .tc-ctl-meas-select sitna-tab.tc-ctl-meas-select-mode-polygon:before {
+            content: '\e90c';
+        }
+
+    .tc-ctl-meas .tc-ctl-meas-select.tc-hidden {
+        margin-top: 0.5em;
+    }
+
+.tc-ctl-meas-txt {
+    margin: 0.5em 0 0.5em 0;
+}
+
+.tc-ctl-meas-prof-btn {
+    position: absolute;
+    right: 0;
+    border: 0;
+    background-color: transparent;
+    color: #666;
+    text-indent: -1000vw;
+    width: 2em;
+}
+
+    .tc-ctl-meas-prof-btn.tc-active {
+        color: var(--main-hl-color);
+    }
+
+    .tc-ctl-meas-prof-btn:before {
+        position: absolute;
+        font-family: var(--icon-font-family);
+        content: var(--icon-profile);
+        text-indent: 0;
+        left: 0;
+        width: 2em;
+        text-align: center;
+    }
+
+label .tc-ctl-meas-btn-len {
+    margin-right: 0;
+}
+
+label.tc-ctl-meas-btn-area {
+    margin-left: 0;
+}

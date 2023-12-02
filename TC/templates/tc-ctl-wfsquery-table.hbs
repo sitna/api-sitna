@@ -1,4 +1,4 @@
-<table class="table">
+<table class="tc-table">
     <thead>
         {{#each columns}}
         {{#unless (startsWith this "h3_")}}
@@ -17,7 +17,7 @@
             {{#unless (eq @key 'index')}}
             {{#unless (startsWith @key "h3_")}}
             {{#unless (startsWith @key "h4_")}}
-            <td class="{{lowerCase @key}}">
+            <td>
                 {{> tc-ctl-finfo-attr-val name=@key value=. }}
             </td>
             {{/unless}}

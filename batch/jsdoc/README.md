@@ -36,3 +36,82 @@ correspondiente y descomprimir el contenido en una carpeta accesible para la apl
 Para las versiones a partir de la **3.0.0**, el archivo que hay que enlazar desde la aplicación es `sitna.js`.
 En las versiones desde la **1.3.0** hasta la **2.2.1**, este archivo debe ser `sitna.ol.min.js`.
 En versiones anteriores a la **1.3.0** el archivo es `sitna.ol3.min.js`.
+
+## Instalar la API SITNA mediante npm
+La API SITNA está también disponible como paquete de Node.js. Para añadirlo, abre una consola de comandos en la carpeta 
+donde está el archivo package.json de tu proyecto y ejecuta el siguiente comando:
+```
+npm install api-sitna
+```
+
+### Definir la URL de base
+La API SITNA carga en tiempo de ejecución un conjunto de recursos. Por eso es necesario indicarle la ubicación de esos archivos.
+Esto se consigue definiendo una variable global `SITNA_BASE_URL` que contiene la URL de la carpeta donde vamos a 
+ubicar dichos recursos. Es importante que esta variable se defina antes de importar cualquier clase de la API SITNA.
+``` javascript
+window.SITNA_BASE_URL = '/js/api-sitna/'; // URL de una carpeta de nuestro proyecto
+```
+
+Por último hay que añadir los archivos que se cargan en tiempo de ejecución. Para ello abre a la carpeta 
+`node_modules/api-sitna` de tu proyecto y copia las carpetas `config`, `css`, `layout`, `lib`, `resources` y `wmts` a la carpeta
+definida por `SITNA_BASE_URL`. Si seguimos el ejemplo, en la carpeta del proyecto debería estar el siguiente
+árbol de carpetas:
+
+- js
+  * api-sitna
+    + config
+    + css
+    + layout
+    + lib
+    + resources
+    + wmts
+
+Ahora ya se puede importar los objetos de la API SITNA desde la aplicación:
+``` javascript
+import SitnaMap from 'api-sitna';
+var map = new SitnaMap("mapa");
+```
+
+### Cómo configurar Webpack
+Si se utiliza Webpack para generar el código de la aplicación, se pueden automatizar las tareas descritas en el punto 
+anterior mediante los plugins [DefinePlugin](https://webpack.js.org/plugins/define-plugin/) y 
+[CopyWebpackPlugin](https://webpack.js.org/plugins/copy-webpack-plugin/). 
+A continuación se muestra un ejemplo de archivo de configuración que se puede utilizar para 
+empaquetar una aplicación que use la API SITNA:
+``` javascript
+const webpack = require('webpack');
+const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const apiSitnaSource = 'node_modules/api-sitna';
+
+module.exports = {
+    resolve: {
+        // Para evitar errores "Module not found" durante el empaquetamiento
+        fallback: {
+            assert: false,
+            util: false
+        }
+    },
+    plugins: [
+        // Define la ruta base de la API SITNA para la carga de recursos
+        new webpack.DefinePlugin({
+            SITNA_BASE_URL: JSON.stringify('/js/api-sitna/')
+        }),
+        // Copia los recursos necesarios a la carpeta de publicación
+        new CopyWebpackPlugin({ 
+            patterns: [
+                { from: path.join(apiSitnaSource, 'config'), to: 'config' },
+                { from: path.join(apiSitnaSource, 'css'), to: 'css' },
+                { from: path.join(apiSitnaSource, 'layout'), to: 'layout' },
+                { from: path.join(apiSitnaSource, 'lib'), to: 'lib' },
+                { from: path.join(apiSitnaSource, 'resources'), to: 'resources' },
+                { from: path.join(apiSitnaSource, 'wmts'), to: 'wmts' }
+            ]
+        })
+    ],
+    output: {
+        filename: 'main.js',
+        path: path.resolve(__dirname, 'js/api-sitna')
+    }
+};
+```

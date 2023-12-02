@@ -1,133 +1,234 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
-import Control from '../Control';
+import Cfg from '../Cfg';
+import WebComponentControl from './WebComponentControl';
+import Point from '../../SITNA/feature/Point';
+import MultiPoint from '../../SITNA/feature/MultiPoint';
+import Polyline from '../../SITNA/feature/Polyline';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+import Polygon from '../../SITNA/feature/Polygon';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import './FeatureStyler';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.Consts.event.BEFOREFEATUREMODIFY = "beforefeaturemodify.tc";
-TC.Consts.event.FEATUREMODIFY = "featuremodify.tc";
-TC.Consts.event.FEATURESSELECT = "featuresselect.tc";
-TC.Consts.event.FEATURESUNSELECT = "featuresunselect.tc";
-TC.Consts.event.CHANGE = 'change';
+Consts.event.BEFOREFEATUREMODIFY = "beforefeaturemodify.tc";
+Consts.event.FEATUREMODIFY = "featuremodify.tc";
+Consts.event.FEATURESSELECT = "featuresselect.tc";
+Consts.event.FEATURESUNSELECT = "featuresunselect.tc";
+Consts.event.CHANGE = 'change';
 
-TC.control.Modify = function () {
-    const self = this;
+//const styleFunction = function (feature, mapStyles) {
+//    var result;
+//    switch (true) {
+//        case feature instanceof Polygon:
+//        case feature instanceof MultiPolygon:
+//            result = TC.Util.extend({}, mapStyles.polygon);
+//            break;
+//        case feature instanceof Point:
+//        case feature instanceof MultiPoint:
+//            result = TC.Util.extend({}, mapStyles.point);
+//            break;
+//        default:
+//            result = TC.Util.extend({}, mapStyles.line);
+//            break;
+//    }
+//    const style = feature.getStyle();
+//    if (style.label) {
+//        result.label = style.label;
+//        result.fontSize = style.fontSize;
+//        result.fontColor = style.fontColor;
+//        result.labelOutlineColor = style.labelOutlineColor;
+//        result.labelOutlineWidth = style.labelOutlineWidth;
+//    }
+//    return result;
+//};
 
-    TC.Control.apply(self, arguments);
+//const setFeatureSelectedStyle = function (ctl, features) {
+//    const mapStyles = ctl.map.options.styles.selection;
+//    features.forEach(function (feature) {
+//        feature._originalStyle = TC.Util.extend({}, feature.getStyle());
+//        feature.setStyle(ctl.styleFunction(feature));
+//    });
+//};
 
-    if (!TC.browserFeatures.inputTypeColor() && !window.CP) {
-        TC.loadCSS(TC.apiLocation + 'lib/color-picker/color-picker.min.css');
-        TC.syncLoadJS(TC.apiLocation + 'lib/color-picker/color-picker.min.js');
+//const setFeatureUnselectedStyle = function (ctl, features) {
+//    features.forEach(function (feature) {
+//        if (feature._originalStyle) {
+//            const style = feature.getStyle();
+//            if (style.label) {
+//                const originalStyle = feature._originalStyle;
+//                originalStyle.label = style.label;
+//                originalStyle.fontSize = style.fontSize;
+//                originalStyle.fontColor = style.fontColor;
+//                originalStyle.labelOutlineColor = style.labelOutlineColor;
+//                originalStyle.labelOutlineWidth = style.labelOutlineWidth;
+//            }
+//            feature.setStyle(feature._originalStyle);
+//            feature._originalStyle = undefined;
+//        }
+//    })
+//};
+
+const complexGeometryFilter = function (elm) {
+    var result = false;
+    if (elm instanceof MultiPolygon || elm instanceof MultiPolyline) {
+        if (elm.geometry.length > 1) {
+            result = true;
+        }
     }
-
-    self.styles = TC.Util.extend(true, TC.Cfg.styles.selection, self.options.styles);
-    self.styles.text = self.styles.text || {
-        fontSize: self.styles.line.fontSize,
-        fontColor: self.styles.line.fontColor,
-        labelOutlineColor: self.styles.line.labelOutlineColor,
-        labelOutlineWidth: self.styles.line.labelOutlineWidth
-    };
-
-    self._classSelector = '.' + self.CLASS;
-
-    self.wrap = new TC.wrap.control.Modify(self);
-    self.snapping = (typeof self.options.snapping === 'boolean') ? self.options.snapping : true;
+    return result;
 };
 
-TC.inherit(TC.control.Modify, TC.Control);
+const vertexGeometryFilter = function (elm) {
+    return elm instanceof Polygon ||
+        elm instanceof Polyline ||
+        elm instanceof MultiPolygon ||
+        elm instanceof MultiPolyline;
+};
 
-(function () {
+const className = 'tc-ctl-mod';
+const elementName = 'sitna-modify';
 
-    var ctlProto = TC.control.Modify.prototype;
+class Modify extends WebComponentControl {
+    CLASS = className;
+    #classSelector = '.' + className;
+    #deleteBtn;
+    #selectBtn;
+    #deleteVertexBtn;
+    #editAttrBtn;
+    #attributesSection;
+    #joinBtn;
+    #splitBtn;
+    #textBtn;
+    #textInput;
+    #fontColorPicker;
+    #labelSection;
+    #styler;
+    #fontSizeSelector;
+    #layerPromise;
 
-    ctlProto.CLASS = 'tc-ctl-mod';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-mod.hbs";
-    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-mod-attr.hbs";
-
-    const setFeatureSelectedState = function (ctl, features) {
-        ctl._deleteBtn.disabled = features.length === 0;
-        ctl._editAttrBtn.disabled = features.length !== 1;
-        ctl._joinBtn.disabled = features.length < 2;
-        ctl._splitBtn.disabled = features.filter(complexGeometryFilter).length === 0;
-        ctl.displayLabelText();
+    static mode = {
+        SELECT: 'select',
+        VERTEX_DELETE: 'vertex_delete'
     };
 
-    //const styleFunction = function (feature, mapStyles) {
-    //    var result;
-    //    switch (true) {
-    //        case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-    //        case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-    //            result = TC.Util.extend({}, mapStyles.polygon);
-    //            break;
-    //        case TC.feature.Point && feature instanceof TC.feature.Point:
-    //        case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
-    //            result = TC.Util.extend({}, mapStyles.point);
-    //            break;
-    //        default:
-    //            result = TC.Util.extend({}, mapStyles.line);
-    //            break;
-    //    }
-    //    const style = feature.getStyle();
-    //    if (style.label) {
-    //        result.label = style.label;
-    //        result.fontSize = style.fontSize;
-    //        result.fontColor = style.fontColor;
-    //        result.labelOutlineColor = style.labelOutlineColor;
-    //        result.labelOutlineWidth = style.labelOutlineWidth;
-    //    }
-    //    return result;
-    //};
-
-    //const setFeatureSelectedStyle = function (ctl, features) {
-    //    const mapStyles = ctl.map.options.styles.selection;
-    //    features.forEach(function (feature) {
-    //        feature._originalStyle = TC.Util.extend({}, feature.getStyle());
-    //        feature.setStyle(ctl.styleFunction(feature));
-    //    });
-    //};
-
-    //const setFeatureUnselectedStyle = function (ctl, features) {
-    //    features.forEach(function (feature) {
-    //        if (feature._originalStyle) {
-    //            const style = feature.getStyle();
-    //            if (style.label) {
-    //                const originalStyle = feature._originalStyle;
-    //                originalStyle.label = style.label;
-    //                originalStyle.fontSize = style.fontSize;
-    //                originalStyle.fontColor = style.fontColor;
-    //                originalStyle.labelOutlineColor = style.labelOutlineColor;
-    //                originalStyle.labelOutlineWidth = style.labelOutlineWidth;
-    //            }
-    //            feature.setStyle(feature._originalStyle);
-    //            feature._originalStyle = undefined;
-    //        }
-    //    })
-    //};
-
-    const complexGeometryFilter = function (elm) {
-        var result = false;
-        if ((TC.feature.MultiPolygon && elm instanceof TC.feature.MultiPolygon) ||
-            (TC.feature.MultiPolyline && elm instanceof TC.feature.MultiPolyline)) {
-            if (elm.geometry.length > 1) {
-                result = true;
-            }
-        }
-        return result;
-    };
-
-    ctlProto.register = function (map) {
+    constructor() {
+        super(...arguments);
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
+
+        self.wrap = new TC.wrap.control.Modify(self);
+        self
+            .initProperty('mode')
+            .initProperty('snapping')
+            .initProperty('stylable');
+    }
+
+    static get observedAttributes() {
+        return ['mode', 'stylable'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) {
+            return;
+        }
+        const self = this;
+        if (name === 'stylable') {
+            self.#onStylableChange();
+        }
+        if (name === 'mode') {
+            self.#onModeChange();
+        }
+    }
+
+    getClassName() {
+        return className;
+    }
+
+    get snapping() {
+        return this.hasAttribute('snapping');
+    }
+
+    set snapping(value) {
+        this.toggleAttribute('snapping', !!value);
+    }
+
+    get mode() {
+        const self = this;
+        if (self.hasAttribute('mode')) {
+            return self.getAttribute('mode');
+        }
+        return Modify.mode.SELECT;
+    }
+
+    set mode(value) {
+        this.setAttribute('mode', value || Modify.mode.SELECT);
+    }
+
+    async #onModeChange() {
+        const self = this;
+        await self.renderPromise();
+        self.#setVertexDeleteModeState(self.getSelectedFeatures());
+    }
+
+    get stylable() {
+        return this.hasAttribute('stylable');
+    }
+
+    set stylable(value) {
+        this.toggleAttribute('stylable', !!value);
+    }
+
+    #onStylableChange() {
+        const self = this;
+        self.#getStylingElement()?.classList
+            .toggle(Consts.classes.HIDDEN, !(self.stylable && self.getSelectedFeatures().length));
+    }
+
+    #getStylingElement() {
+        const self = this;
+        return self.querySelector(`.${self.CLASS}-style`);
+    }
+
+    #setFeatureSelectedState(features) {
+        const self = this;
+        self.#deleteBtn.disabled = features.length === 0;
+        self.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
+        self.#editAttrBtn.disabled = features.length !== 1;
+        self.#joinBtn.disabled = features.length < 2;
+        self.#splitBtn.disabled = !features.some(complexGeometryFilter);
+        self.displayLabelText();
+        self.#onStylableChange();
+        self.getStyler().then(styler => styler.setFeature(features[0]));
+    }
+
+    #setVertexDeleteModeState(features) {
+        const self = this;
+        self.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
+        const mode = self.mode;
+        self.#deleteVertexBtn.classList.toggle(Consts.classes.ACTIVE, mode === Modify.mode.VERTEX_DELETE);
+        self.#selectBtn.classList.toggle(Consts.classes.ACTIVE, mode !== Modify.mode.VERTEX_DELETE);
+    }
+
+    register(map) {
+        const self = this;
+
+        self.styles = TC.Util.extend(true, {}, Cfg.styles.selection, map.options.styles?.selection, self.options.styles);
+        self.styles.snapping = TC.Util.extend(true, {}, Cfg.styles.snapping, map.options.styles?.snapping, self.options.styles?.snapping);
+        self.styles.text = self.styles.text || {
+            fontSize: self.styles.line.fontSize,
+            fontColor: self.styles.line.fontColor,
+            labelOutlineColor: self.styles.line.labelOutlineColor,
+            labelOutlineWidth: self.styles.line.labelOutlineWidth
+        };
+
+        const result = super.register.call(self, map);
         if (self.options.layer) {
             self.setLayer(self.options.layer);
         }
 
         map
-            .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
+            .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
                 Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
                     const layer = objects[0];
                     if (e.layer === layer) {
@@ -135,7 +236,7 @@ TC.inherit(TC.control.Modify, TC.Control);
                     }
                 });
             })
-            .on(TC.Consts.event.FEATUREREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
+            .on(Consts.event.FEATUREREMOVE + ' ' + Consts.event.FEATURESCLEAR, function (e) {
                 const layer = e.layer;
                 const feature = e.feature;
                 Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
@@ -146,7 +247,7 @@ TC.inherit(TC.control.Modify, TC.Control);
                         else {
                             self.unselectFeatures();
                         }
-                        setFeatureSelectedState(self, self.getSelectedFeatures());
+                        self.#setFeatureSelectedState(self.getSelectedFeatures());
                         if (layer.features.length === 0) {
                             self.setSelectableState(false);
                             self.setTextMode(false);
@@ -154,18 +255,18 @@ TC.inherit(TC.control.Modify, TC.Control);
                     }
                 });
             })
-            .on(TC.Consts.event.LAYERUPDATE, function (e) {
+            .on(Consts.event.LAYERUPDATE, function (e) {
                 const layer = e.layer;
                 Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
                     if (layer === objects[0]) {
-                        setFeatureSelectedState(self, self.getSelectedFeatures());
+                        self.#setFeatureSelectedState(self.getSelectedFeatures());
                     }
                 });
             });
 
-        self.on(TC.Consts.event.FEATURESSELECT + ' ' + TC.Consts.event.FEATURESUNSELECT, function () {
+        self.on(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, function () {
             const selectedFeatures = self.getSelectedFeatures();
-            setFeatureSelectedState(self, selectedFeatures);
+            self.#setFeatureSelectedState(selectedFeatures);
             const unselectedFeatures = self.layer.features.filter(function (feature) {
                 return selectedFeatures.indexOf(feature) < 0;
             });
@@ -176,7 +277,7 @@ TC.inherit(TC.control.Modify, TC.Control);
                 feature.toggleSelectedStyle(true);
             });
 
-            if (!self.getAttributeDisplayTarget().classList.contains(TC.Consts.classes.HIDDEN)) {
+            if (!self.getAttributeDisplayTarget().classList.contains(Consts.classes.HIDDEN)) {
                 self.displayAttributes();
             }
             if (!selectedFeatures.length) {
@@ -185,150 +286,153 @@ TC.inherit(TC.control.Modify, TC.Control);
         });
 
         return result;
-    };
+    }
 
-    ctlProto.render = function (callback) {
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-mod.mjs');
+        const attributesTemplatePromise = import('../templates/tc-ctl-mod-attr.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
+        self.template = template;
+    }
+
+    render(callback) {
         const self = this;
 
         const renderCallback = function () {
-            self._selectBtn = self.div.querySelector('.' + self.CLASS + '-btn-select');
-            self._selectBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+            self.#selectBtn = self.querySelector('.' + self.CLASS + '-btn-select');
+            self.#selectBtn.addEventListener(Consts.event.CLICK, function (e) {
                 if (!e.target.disabled) {
                     if (self.isActive) {
-                        self.deactivate();
+                        if (self.mode !== Modify.mode.VERTEX_DELETE) {
+                            self.deactivate();
+                        }
+                        else {
+                            self.setMode(Modify.mode.SELECT, true);
+                        }
                     }
                     else {
                         self.activate();
                     }
                 }
             }, { passive: true });
-            self._deleteBtn = self.div.querySelector('.' + self.CLASS + '-btn-delete');
-            self._deleteBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#deleteBtn = self.querySelector('.' + self.CLASS + '-btn-delete');
+            self.#deleteBtn.addEventListener(Consts.event.CLICK, function () {
                 self.deleteSelectedFeatures();
             }, { passive: true });
-            self._textBtn = self.div.querySelector('.' + self.CLASS + '-btn-text');
-            self._textBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#deleteVertexBtn = self.querySelector('.' + self.CLASS + '-btn-del-vertex');
+            self.#deleteVertexBtn.addEventListener(Consts.event.CLICK, function () {
+                const newMode = self.mode === Modify.mode.VERTEX_DELETE ?
+                    Modify.mode.SELECT : Modify.mode.VERTEX_DELETE;
+                self.setMode(newMode, true);
+            }, { passive: true });
+            self.#textBtn = self.querySelector('.' + self.CLASS + '-btn-text');
+            self.#textBtn.addEventListener(Consts.event.CLICK, function () {
                 self.setTextMode(!self.textActive);
             }, { passive: true });
-            self._joinBtn = self.div.querySelector('.' + self.CLASS + '-btn-join');
-            self._splitBtn = self.div.querySelector('.' + self.CLASS + '-btn-split');
-            self._editAttrBtn = self.div.querySelector('.' + self.CLASS + '-btn-attr');
-            self._editAttrBtn.addEventListener(TC.Consts.event.CLICK, function () {
+            self.#joinBtn = self.querySelector('.' + self.CLASS + '-btn-join');
+            self.#splitBtn = self.querySelector('.' + self.CLASS + '-btn-split');
+            self.#editAttrBtn = self.querySelector('.' + self.CLASS + '-btn-attr');
+            self.#editAttrBtn.addEventListener(Consts.event.CLICK, function () {
                 self.toggleAttributes();
             }, { passive: true });
-            self._textInput = self.div.querySelector('input.' + self.CLASS + '-txt');
-            self._textInput.addEventListener('input', function (e) {
+            self.#textInput = self.querySelector('input.' + self.CLASS + '-txt');
+            self.#textInput.addEventListener('input', function (e) {
                 self.labelFeatures(e.target.value);
             });
-            self._styleSection = self.div.querySelector('.' + self.CLASS + '-style');
+            self.#labelSection = self.querySelector('.' + self.CLASS + '-style-label');
 
-            self._fontColorPicker = self.div.querySelector(self._classSelector + '-fnt-c');
-            self._fontColorPicker.addEventListener(TC.Consts.event.CHANGE, function (e) {
+            self.#fontColorPicker = self.querySelector(self.#classSelector + '-fnt-c');
+            self.#fontColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
                 self.setFontColor(e.target.value);
             });
 
-            self._fontSizeSelector = self.div.querySelector('.' + self.CLASS + '-fnt-s');
-            self._fontSizeSelector.addEventListener(TC.Consts.event.CHANGE, function (e) {
+            self.#fontSizeSelector = self.querySelector('.' + self.CLASS + '-fnt-s');
+            self.#fontSizeSelector.addEventListener(Consts.event.CHANGE, function (e) {
                 self.setFontSize(e.target.value);
             });
 
-            self._attributesSection = self.div.querySelector('.' + self.CLASS + '-attr');
+            self.#attributesSection = self.querySelector('.' + self.CLASS + '-attr');
+
+            self.getStyler().then(styler => styler.addEventListener(Consts.event.STYLECHANGE, e => {
+                self.getSelectedFeatures().forEach(f => {
+                    const newData = {};
+                    newData[e.detail.property] = e.detail.value;
+                    const newStyle = Object.assign({}, f.getStyle(), newData);
+                    f.setStyle(newStyle);
+                });
+            }));
 
             if (TC.Util.isFunction(callback)) {
                 callback();
             }
         };
 
+        const styles = self.styles || {};
         const renderObject = {
-            fontSize: self.styles.text.fontSize,
-            fontColor: self.styles.text.fontColor,
-            labelOutlineColor: self.styles.text.labelOutlineColor,
-            labelOutlineWidth: self.styles.text.labelOutlineWidth
+            stylable: self.stylable,
+            fontSize: styles.text?.fontSize,
+            fontColor: styles.text?.fontColor,
+            labelOutlineColor: styles.text?.labelOutlineColor,
+            labelOutlineWidth: styles.text?.labelOutlineWidth
         };
 
-        var promise;
-        if (TC.browserFeatures.inputTypeColor()) {
-            promise = self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
-        }
-        else {
-            // El navegador no soporta input[type=color], usamos polyfill
-            promise = self._set1stRenderPromise(self.renderData(renderObject, function () {
-                const input = self.div.querySelector('input[type=color]');
-                input.style.backgroundColor = input.value;
-                input.style.color = 'transparent';
-                const picker = new CP(input, 'click', document.body);
+        return self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
+    }
 
-                input.onclick = function (e) {
-                    e.preventDefault();
-                };
-
-                // Evitamos que salga el teclado virtual en iOS
-                input.onfocus = function (_e) {
-                    this.blur();
-                };
-
-                input.onchange = function (_e) {
-                    this.style.backgroundColor = this.value;
-                };
-                self.map.loaded(function () {
-                    picker.on("change", function (color) {
-                        self.setFontColor('#' + color);
-                    });
-                });
-
-                renderCallback();
-            }));
-        }
-        return promise;
-    };
-
-    ctlProto.activate = function () {
+    activate() {
         const self = this;
-        self._selectBtn.classList.add(TC.Consts.classes.ACTIVE);
-        TC.Control.prototype.activate.call(self);
+        self.#selectBtn.classList.add(Consts.classes.ACTIVE);
+        super.activate.call(self);
         self.wrap.activate(self.mode);
-    };
+        self.#setVertexDeleteModeState(self.getSelectedFeatures());
+    }
 
-    ctlProto.deactivate = function () {
+    deactivate() {
         const self = this;
-        TC.Control.prototype.deactivate.call(self);
-        if (self._selectBtn) {
-            setFeatureSelectedState(self, []);
+        super.deactivate.call(self);
+        if (self.#selectBtn) {
+            self.#setFeatureSelectedState([]);
         }
-        if (self.wrap) {
-            self.wrap.deactivate();
-        }
-        if (self._selectBtn) {
-            self._selectBtn.classList.remove(TC.Consts.classes.ACTIVE);
+        if (self.#selectBtn) {
+            self.#selectBtn.classList.remove(Consts.classes.ACTIVE);
             if (self.layer) {
                 self.unselectFeatures(self.getSelectedFeatures());
             }
         }
-    };
+        if (self.wrap) {
+            self.wrap.deactivate();
+        }
+        self.mode = Modify.mode.SELECT;
+    }
 
-    ctlProto.clear = function () {
+    clear() {
         const self = this;
         if (self.layer) {
             self.layer.clearFatures();
         }
         return self;
-    };
+    }
 
-    ctlProto.isExclusive = function () {
+    isExclusive() {
         return true;
-    };
+    }
 
-    ctlProto.end = function () {
+    end() {
         const self = this;
         self.wrap.end();
         return self;
-    };
+    }
 
-    ctlProto.setMode = function (mode, activate) {
+    setMode(mode, activate) {
         const self = this;
 
-        if (mode)
+        if (mode) {
             self.mode = mode;
+        }
 
         if (activate && mode) {
             if (self.layer) {
@@ -340,9 +444,9 @@ TC.inherit(TC.control.Modify, TC.Control);
             self.deactivate();
         }
         return self;
-    };
+    }
 
-    ctlProto.getLayer = function () {
+    getLayer() {
         var self = this;
         // Se ha instanciado un control sin capa asociada
         if (self.options && typeof self.options.layer === 'boolean' && !self.options.layer) {
@@ -351,14 +455,14 @@ TC.inherit(TC.control.Modify, TC.Control);
         if (self.layer) {
             return Promise.resolve(self.layer);
         }
-        return self._layerPromise;
-    };
+        return self.#layerPromise;
+    }
 
-    ctlProto.setLayer = function (layer) {
+    setLayer(layer) {
         const self = this;
         if (self.map) {
             self.setSelectedFeatures([]);
-            self._layerPromise = new Promise(function (resolve, _reject) {
+            self.#layerPromise = new Promise(function (resolve, _reject) {
                 if (typeof (layer) === "string") {
                     self.map.loaded(function () {
                         self.layer = self.map.getLayer(layer);
@@ -366,73 +470,76 @@ TC.inherit(TC.control.Modify, TC.Control);
                     });
                 }
                 else {
+                    if (!layer && self.isActive) {
+                        self.deactivate();
+                    }
                     self.layer = layer;
                     resolve(self.layer);
                 }
             });
-            Promise.all([self._layerPromise, self.renderPromise()]).then(function (objs) {
+            Promise.all([self.#layerPromise, self.renderPromise()]).then(function (objs) {
                 const layer = objs[0];
                 self.setSelectableState(layer && layer.features.length > 0);
             });
         }
-    };
+    }
 
-    ctlProto.setSelectableState = function (active) {
+    setSelectableState(active) {
         const self = this;
-        self._selectBtn.disabled = !active;
-        self._textBtn.disabled = !active;
-    };
+        self.#selectBtn.disabled = !active;
+        self.#textBtn.disabled = !active;
+    }
 
-    ctlProto.getSelectedFeatures = function () {
+    getSelectedFeatures() {
         return this.wrap.getSelectedFeatures();
-    };
+    }
 
-    ctlProto.setSelectedFeatures = function (features) {
+    setSelectedFeatures(features) {
         const self = this;
         const result = self.wrap.setSelectedFeatures(features);
         self.displayLabelText();
         return result;
-    };
+    }
 
-    ctlProto.getActiveFeatures = function () {
+    getActiveFeatures() {
         const self = this;
         const result = self.getSelectedFeatures();
         if (!result.length && self.layer.features.length) {
             result.push(self.layer.features[self.layer.features.length - 1]);
         }
         return result;
-    };
+    }
 
-    ctlProto.unselectFeatures = function (features) {
+    unselectFeatures(features) {
         features = features || [];
         this.wrap.unselectFeatures(features.map(function (feat) {
             return feat.wrap.feature;
         }));
         return this;
-    };
+    }
 
-    ctlProto.deleteSelectedFeatures = function () {
+    deleteSelectedFeatures() {
         const self = this;
         const features = self.getSelectedFeatures();
         self.wrap.unselectFeatures(features);
         features.forEach(function (feature) {
             self.layer.removeFeature(feature);
-            self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
+            self.trigger(Consts.event.FEATUREREMOVE, { feature: feature });
         });
         return self;
-    };
+    }
 
-    ctlProto.styleFunction = function (feature, _resolution) {
+    styleFunction(feature, _resolution) {
         const self = this;
         var result;
         const mapStyles = self.map.options.styles.selection;
         switch (true) {
-            case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-            case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
+            case feature instanceof Polygon:
+            case feature instanceof MultiPolygon:
                 result = TC.Util.extend({}, mapStyles.polygon);
                 break;
-            case TC.feature.Point && feature instanceof TC.feature.Point:
-            case TC.feature.MultiPoint && feature instanceof TC.feature.MultiPoint:
+            case feature instanceof Point:
+            case feature instanceof MultiPoint:
                 result = TC.Util.extend({}, mapStyles.point);
                 break;
             default:
@@ -448,24 +555,24 @@ TC.inherit(TC.control.Modify, TC.Control);
             result.labelOutlineWidth = style.labelOutlineWidth;
         }
         return result;
-    };
+    }
 
-    ctlProto.setTextMode = function (active) {
+    setTextMode(active) {
         const self = this;
         self.textActive = active;
         if (active) {
-            self._textBtn.classList.add(TC.Consts.classes.ACTIVE, active);
-            self._styleSection.classList.remove(TC.Consts.classes.HIDDEN);
+            self.#textBtn.classList.add(Consts.classes.ACTIVE, active);
+            self.#labelSection.classList.remove(Consts.classes.HIDDEN);
         }
         else {
-            self._textBtn.classList.remove(TC.Consts.classes.ACTIVE, active);
-            self._styleSection.classList.add(TC.Consts.classes.HIDDEN);
+            self.#textBtn.classList.remove(Consts.classes.ACTIVE, active);
+            self.#labelSection.classList.add(Consts.classes.HIDDEN);
         }
         self.displayLabelText();
         return self;
-    };
+    }
 
-    ctlProto.setFontColorWatch = function (color, outlineColor) {
+    setFontColorWatch(color, outlineColor) {
         const self = this;
         if (color === undefined) {
             color = self.styles.text.fontColor;
@@ -473,18 +580,18 @@ TC.inherit(TC.control.Modify, TC.Control);
         color = TC.Util.colorArrayToString(color);
         outlineColor = outlineColor || self.getLabelOutlineColor(color);
         self.renderPromise().then(function () {
-            self._fontColorPicker.value = color;
-            self._textInput.style.color = color;
-            self._textInput.style.textShadow = '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor;
+            self.#fontColorPicker.value = color;
+            self.#textInput.style.color = color;
+            self.#textInput.style.textShadow = '0 0 ' + self.styles.text.labelOutlineWidth + 'px ' + outlineColor;
             if (!TC.browserFeatures.inputTypeColor()) {
-                self._fontColorPicker.style.backgroundColor = color;
-                self._fontColorPicker.blur();
+                self.#fontColorPicker.style.backgroundColor = color;
+                self.#fontColorPicker.blur();
             }
         });
         return self;
-    };
+    }
 
-    ctlProto.setFontColor = function (color) {
+    setFontColor(color) {
         const self = this;
         self.styles.text.fontColor = color;
         self.styles.text.labelOutlineColor = self.getLabelOutlineColor(color);
@@ -497,40 +604,42 @@ TC.inherit(TC.control.Modify, TC.Control);
             feature.setStyle(style);
         });
         return self;
-    };
+    }
 
-    ctlProto.setFontSizeWatch = function (size) {
+    setFontSizeWatch(size) {
         const self = this;
         if (size === undefined) {
             size = self.styles.text.fontSize;
         }
         const sizeValue = parseInt(size);
-        if (sizeValue !== Number.NaN) {
+        if (!Number.isNaN(sizeValue)) {
             self.renderPromise().then(function () {
-                self._fontSizeSelector.value = sizeValue;
-                self._textInput.style.fontSize = sizeValue + 'pt';
+                self.#fontSizeSelector.value = sizeValue;
+                self.#textInput.style.fontSize = sizeValue + 'pt';
             });
         }
         return self;
-    };
+    }
 
-    ctlProto.setFontSize = function (size) {
+    setFontSize(size) {
         const self = this;
         const sizeValue = parseInt(size);
-        if (sizeValue !== Number.NaN) {
+        if (!Number.isNaN(sizeValue)) {
             self.styles.text.fontSize = sizeValue;
             self.setFontSizeWatch(sizeValue);
             const features = self.getActiveFeatures();
             features.forEach(function (feature) {
                 const style = feature.getStyle();
                 style.fontSize = sizeValue;
+                if (style.font)
+                    style.font = style.font.replace(/^\d+/, sizeValue);
                 feature.setStyle(style);
             });
         }
         return self;
-    };
+    }
 
-    ctlProto.getLabelOutlineColor = function (fontColor) {
+    getLabelOutlineColor(fontColor) {
         if (fontColor) {
             fontColor = TC.Util.colorArrayToString(fontColor);
             const matchForShort = fontColor.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
@@ -546,9 +655,9 @@ TC.inherit(TC.control.Modify, TC.Control);
             }
         }
         return '#ffffff';
-    };
+    }
 
-    ctlProto.displayLabelText = function () {
+    displayLabelText() {
         const self = this;
         const features = self.getSelectedFeatures();
         var text;
@@ -570,12 +679,12 @@ TC.inherit(TC.control.Modify, TC.Control);
             self
                 .setFontSizeWatch(size)
                 .setFontColorWatch(color)
-                ._textInput.value = text || '';
+                .#textInput.value = text || '';
         });
         return self;
-    };
+    }
 
-    ctlProto.labelFeatures = function (text) {
+    labelFeatures(text) {
         const self = this;
         const features = self.getActiveFeatures();
         if (features.length) {
@@ -592,13 +701,20 @@ TC.inherit(TC.control.Modify, TC.Control);
             });
         }
         return self;
-    };
+    }
 
-    ctlProto.getAttributeDisplayTarget = function () {
-        return this._attributesSection;
-    };
+    getAttributeDisplayTarget() {
+        return this.#attributesSection;
+    }
 
-    ctlProto.displayAttributes = function () {
+    async getStyler() {
+        const self = this;
+        await self.renderPromise();
+        self.#styler = self.querySelector('sitna-feature-styler');
+        return self.#styler;
+    }
+
+    displayAttributes() {
         const self = this;
         const selectedFeatures = self.getSelectedFeatures();
         const feature = selectedFeatures[selectedFeatures.length - 1];
@@ -606,37 +722,37 @@ TC.inherit(TC.control.Modify, TC.Control);
             self.getRenderedHtml(self.CLASS + '-attr', { data: feature.getData() }, function (html) {
                 const attributesSection = self.getAttributeDisplayTarget();
                 attributesSection.innerHTML = html;
-                attributesSection.classList.remove(TC.Consts.classes.HIDDEN);
-                self._editAttrBtn.classList.add(TC.Consts.classes.ACTIVE);
+                attributesSection.classList.remove(Consts.classes.HIDDEN);
+                self.#editAttrBtn.classList.add(Consts.classes.ACTIVE);
 
-                attributesSection.querySelector(`${self.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (e) {
+                attributesSection.querySelector(`${self.CLASS}-btn-attr-ok`).addEventListener(Consts.event.CLICK, function (_e) {
                     self._onAttrOK();
                 }, { passive: true });
 
-                attributesSection.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function () {
+                attributesSection.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(Consts.event.CLICK, function () {
                     self.closeAttributes();
                 }, { passive: true });
             });
         }
-    };
+    }
 
-    ctlProto.closeAttributes = function () {
+    closeAttributes() {
         const self = this;
-        self._attributesSection.classList.add(TC.Consts.classes.HIDDEN);
-        self._editAttrBtn.classList.remove(TC.Consts.classes.ACTIVE);
-    };
+        self.#attributesSection?.classList.add(Consts.classes.HIDDEN);
+        self.#editAttrBtn?.classList.remove(Consts.classes.ACTIVE);
+    }
 
-    ctlProto.toggleAttributes = function () {
+    toggleAttributes() {
         const self = this;
-        if (self._editAttrBtn.classList.toggle(TC.Consts.classes.ACTIVE)) {
+        if (self.#editAttrBtn.classList.toggle(Consts.classes.ACTIVE)) {
             self.displayAttributes();
         }
         else {
             self.closeAttributes();
         }
-    };
+    }
 
-    ctlProto._onAttrOK = function () {
+    _onAttrOK() {
         const self = this;
         const feature = self.getSelectedFeatures()[0];
         if (feature) {
@@ -645,16 +761,16 @@ TC.inherit(TC.control.Modify, TC.Control);
                 data[input.getAttribute('name')] = input.value;
             });
             feature.setData(data);
-            self.trigger(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
+            self.trigger(Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
             self.closeAttributes();
         }
-    };
+    }
 
-    ctlProto.joinFeatures = function (features) {
+    joinFeatures(features) {
         const self = this;
-        if (self.geometryType === TC.Consts.geom.MULTIPOLYLINE ||
-            self.geometryType === TC.Consts.geom.MULTIPOLYGON ||
-            self.geometryType === TC.Consts.geom.MULTIPOINT) {
+        if (self.geometryType === Consts.geom.MULTIPOLYLINE ||
+            self.geometryType === Consts.geom.MULTIPOLYGON ||
+            self.geometryType === Consts.geom.MULTIPOINT) {
             self._joinedFeatureAttributes = [];
             let newFeature;
             if (features.length > 1) {
@@ -669,19 +785,19 @@ TC.inherit(TC.control.Modify, TC.Control);
                 for (var i = 0, len = features.length; i < len; i++) {
                     var feature = features[i];
                     self.layer.removeFeature(feature);
-                    self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
+                    self.trigger(Consts.event.FEATUREREMOVE, { feature: feature });
                 }
                 self.layer.addFeature(newFeature).then(function (feat) {
                     self.setSelectedFeatures([newFeature]);
-                    self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
+                    self.trigger(Consts.event.FEATUREADD, { feature: feat });
                     feat.showPopup(self.attributeEditor);
                 });
             }
-            setFeatureSelectedState(self, [newFeature]);
+            self.#setFeatureSelectedState([newFeature]);
         }
-    };
+    }
+}
 
-})();
-
-const Modify = TC.control.Modify;
+customElements.get(elementName) || customElements.define(elementName, Modify);
+TC.control.Modify = Modify;
 export default Modify;

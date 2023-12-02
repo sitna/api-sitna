@@ -2,45 +2,42 @@
 import Consts from '../Consts';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.NavBarHome = function () {
-    TC.Control.apply(this, arguments);
-};
+class NavBarHome extends Control {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
+    }
 
-TC.inherit(TC.control.NavBarHome, TC.Control);
+    getClassName() {
+        return 'tc-ctl-nav-home';
+    }
 
-(function () {
-    var ctlProto = TC.control.NavBarHome.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-nav-home';
-
-    ctlProto.render = function () {
-        var self = this;
+    render() {
+        const self = this;
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBarHome(self);
         }
         return Promise.resolve();
-    };
+    }
 
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
-        self.wrap.register(map);        
+        await super.register.call(self, map);
+        self.wrap.register(map);
 
-        map.on(TC.Consts.event.PROJECTIONCHANGE, function (e) {
+        map.on(Consts.event.PROJECTIONCHANGE, function (e) {
             const crs = e.newCrs;
-            var bottomLeft = TC.Util.reproject([map.options.initialExtent[0], map.options.initialExtent[1]], map.options.crs, crs);
-            var topRight = TC.Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, crs);
+            const bottomLeft = TC.Util.reproject([map.options.initialExtent[0], map.options.initialExtent[1]], map.options.crs, crs);
+            const topRight = TC.Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, crs);
             self.wrap.setInitialExtent([bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]]);
         });
 
-        return result;
-    };
+        return self;
+    }
+}
 
-})();
-
-const NavBarHome = TC.control.NavBarHome;
+TC.control.NavBarHome = NavBarHome;
 export default NavBarHome;

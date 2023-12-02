@@ -7,13 +7,18 @@ describe('Tests de TC.control.Draw', function () {
         TC.Cfg.proxy = "proxy/proxy.ashx?";
     }
 
-    // No se puede llamar a render sin mapa en este control
+    describe('render', function () {
+        it("debe establecer la propiedad _firstRender", async function () {
+            const ctl = await TC.Control.create('Draw', { div: addControlDiv() });
+            ctl.render();
+            expect(ctl._firstRender).to.be.an.instanceof(Promise);
+        });
+    });
 
-    //describe('render', function () {
-    //    it("debe establecer la propiedad _firstRender", async function () {
-    //        var ctl = await TC.Control.create('Draw', { div: 'ctl-container' });
-    //        ctl.render();
-    //        expect(ctl._firstRender).to.be.an.instanceof(Promise);
-    //    });
-    //});
+    describe('mode', function () {
+        it("debe devolver por defecto POLYLINE", async function () {
+            const ctl = await TC.Control.create('Draw', { div: addControlDiv() });
+            expect(ctl.mode).to.equal(SITNA.Consts.geom.POLYLINE);
+        });
+    });
 });

@@ -3,87 +3,110 @@ import Consts from '../Consts';
 import Control from '../Control';
 import infoShare from './infoShare';
 import Print from './Print';
+import Point from '../../SITNA/feature/Point';
+import Polyline from '../../SITNA/feature/Polyline';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 
 TC.control = TC.control || {};
 TC.control.infoShare = infoShare;
 TC.control.Print = Print;
 TC.Control = Control;
-TC.Consts = Consts;
 
-TC.Consts.event.POPUP = TC.Consts.event.POPUP || 'popup.tc';
-TC.Consts.event.POPUPHIDE = TC.Consts.event.POPUPHIDE || 'popuphide.tc';
-TC.Consts.event.DRAWCHART = TC.Consts.event.DRAWCHART || 'drawchart.tc';
-TC.Consts.event.DRAWTABLE = TC.Consts.event.DRAWTABLE || 'drawtable.tc';
-TC.Consts.event.DIALOG = TC.Consts.event.DIALOG || 'dialog.tc';
-TC.Consts.event.FEATUREHIGHLIGHT = TC.Consts.event.FEATUREHIGHLIGHT || 'featurehighlight.tc';
-TC.Consts.event.FEATUREDOWNPLAY = TC.Consts.event.FEATUREDOWNPLAY || 'featuredownplay.tc';
+Consts.event.POPUP = Consts.event.POPUP || 'popup.tc';
+Consts.event.POPUPHIDE = Consts.event.POPUPHIDE || 'popuphide.tc';
+Consts.event.DRAWCHART = Consts.event.DRAWCHART || 'drawchart.tc';
+Consts.event.DRAWTABLE = Consts.event.DRAWTABLE || 'drawtable.tc';
+Consts.event.DIALOG = Consts.event.DIALOG || 'dialog.tc';
+Consts.event.FEATUREHIGHLIGHT = Consts.event.FEATUREHIGHLIGHT || 'featurehighlight.tc';
+Consts.event.FEATUREDOWNPLAY = Consts.event.FEATUREDOWNPLAY || 'featuredownplay.tc';
 
-TC.control.FeatureTools = function() {
-    const self = this;
-
-    TC.Control.apply(self, arguments);
-
-    self.exportsState = true;
-    const cs = self._classSelector = '.' + self.CLASS;
-    self._selectors = {
-        ELEVATION_CHECKBOX: cs + '-dialog-elev input[type=checkbox]',
-        INTERPOLATION_RADIO: 'input[type=radio][name=finfo-ip-coords]',
-        INTERPOLATION_DISTANCE: cs + '-dialog-ip-m'
-    };
-
-    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-    if (window.$) {
-        self._$dialogDiv = $(self._dialogDiv);
+const getSingleClusteredFeature = function (feature) {
+    if (feature && Array.isArray(feature.features)) {
+        if (feature.features.length === 1) {
+            return feature.features[0];
+        }
+        return null;
     }
-    if (!self.options.dialogDiv) {
-        document.body.appendChild(self._dialogDiv);
-    }
+    return feature;
 };
 
-TC.inherit(TC.control.FeatureTools, TC.Control);
-TC.mix(TC.control.FeatureTools, TC.control.infoShare);
+const getClusteredFeatures = function (feature) {
+    if (feature) {
+        if (Array.isArray(feature.features)) {
+            return feature.features;
+        }
+        return [feature];
+    }
+    return [];
+};
 
-(function() {
-    var ctlProto = TC.control.FeatureTools.prototype;
+class FeatureTools extends Control {
+    TITLE_SEPARATOR = ' › ';
+    FILE_TITLE_SEPARATOR = '__';
+    #selectors;
+    #classSelector;
+    _dialogDiv;
+    _parentCtl;
 
-    ctlProto.CLASS = 'tc-ctl-ftools';
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
 
-    ctlProto.TITLE_SEPARATOR = ' › ';
-    ctlProto.FILE_TITLE_SEPARATOR = '__';
+        self.exportsState = true;
+        const cs = self.#classSelector = '.' + self.CLASS;
+        self.#selectors = {
+            ELEVATION_CHECKBOX: cs + '-dialog-elev input[type=checkbox]',
+            INTERPOLATION_RADIO: 'input[type=radio][name=finfo-ip-coords]',
+            INTERPOLATION_DISTANCE: cs + '-dialog-ip-m'
+        };
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-ftools.hbs";
-    ctlProto.template[ctlProto.CLASS + '-dialog'] = TC.apiLocation + "TC/templates/tc-ctl-ftools-dialog.hbs";
+        self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+        if (!self.options.dialogDiv) {
+            document.body.appendChild(self._dialogDiv);
+        }
+    }
 
-    ctlProto.register = function(map) {
+    getClassName() {
+        return 'tc-ctl-ftools';
+    }
+
+    async register(map) {
         const self = this;
         map
-            .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE + ' ' + TC.Consts.event.DRAWCHART, function(e) {
+            .on(Consts.event.POPUP + ' ' + Consts.event.DRAWTABLE + ' ' + Consts.event.DRAWCHART, function (e) {
                 const control = e.control;
                 if (control.caller || control.currentFeature) {
                     self.addUI(control);
                 }
                 // TODO: ¿Y si miramos si la feature del control ya está asociada a otro control abierto para decir si decoramos o no?
             })
-            .on(TC.Consts.event.FEATUREHIGHLIGHT, function(e) {
+            .on(Consts.event.FEATUREHIGHLIGHT, function (e) {
                 self.addUI(e.control.getDisplayControl());
+                e.feature.toggleSelectedStyle(true);
             })
-            .on(TC.Consts.event.FEATUREDOWNPLAY, function(e) {
+            .on(Consts.event.FEATUREDOWNPLAY, function (e) {
                 self.updateUI(e.control.getDisplayControl());
+                e.feature.toggleSelectedStyle(false);
             });
 
-        return new Promise(function(resolve, reject) {
-            Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]).then(function() {
-                self.getShareDialog().then(function() {
-                    resolve(self);
-                }).catch(function(err) {
-                    reject(err instanceof Error ? err : Error(err));
-                });
-            });
-        });
-    };
+        await Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]);
+        await self.getShareDialog();
+        return self;
+    }
 
-    ctlProto.render = function() {
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-ftools.mjs');
+        const dialogTemplatePromise = import('../templates/tc-ctl-ftools-dialog.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        self.template = template;
+    }
+
+    render() {
         const self = this;
 
         return self._set1stRenderPromise(Promise.all([
@@ -91,17 +114,18 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             self.getRenderedHtml(self.CLASS + '-dialog', {
                 checkboxId: self.getUID(),
                 elevation: self.options.displayElevation
-            }, function(html) {
+            }, function (html) {
                 self._dialogDiv.innerHTML = html;
             })
         ]));
-    };
+    }
 
-    ctlProto.addUI = function(ctl) {
+    addUI(ctl) {
         const self = this;
+        self._parentCtl = ctl;
         const menuContainer = ctl.getMenuElement();
         // Nos aseguramos de que el se decora el control una sola vez
-        const menuIsMissing = function() {
+        const menuIsMissing = function () {
             return menuContainer && !menuContainer.querySelector('.' + self.CLASS);
         };
 
@@ -134,9 +158,9 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
 
                                 self.updateUI(ctl);
 
-                                self._setToolButtonHandlers(ctl);
+                                self.#setToolButtonHandlers(ctl);
 
-                                self._decorateDisplay(ctl);
+                                self.#decorateDisplay(ctl);
                             }
                         });
                     }
@@ -146,16 +170,16 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                 self.updateUI(ctl);
             }
         }
-    };
+    }
 
-    ctlProto._decorateDisplay = function(displayControl) {
+    #decorateDisplay(displayControl) {
         const self = this;
 
-        displayControl.getContainerElement().querySelectorAll('table.tc-attr').forEach(function(attributeTable) {
+        displayControl.getContainerElement().querySelectorAll('table.tc-attr').forEach(function (attributeTable) {
             if (!displayControl.caller && displayControl.currentFeature) { // Si es un popup/panel propio de la feature
 
                 // Añadimos un zoom a la feature al pulsar en la tabla
-                attributeTable.addEventListener(TC.Consts.event.CLICK, function(_e) {
+                attributeTable.addEventListener(Consts.event.CLICK, function (_e) {
                     self.zoomToFeatures([self.getCurrentFeature(displayControl)]);
                 }, { passive: true });
 
@@ -163,17 +187,17 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                 attributeTable.setAttribute('title', self.getLocaleString('clickToCenter'));
             }
 
-            attributeTable.querySelectorAll('a, label, input, video, audio').forEach(function(a) {
-                a.addEventListener(TC.Consts.event.CLICK, function(e) {
+            attributeTable.querySelectorAll('a, label, input, video, audio').forEach(function (a) {
+                a.addEventListener(Consts.event.CLICK, function (e) {
                     e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
                 }, { passive: true });
             });
         });
-        const table = displayControl.getContainerElement().querySelector(".prpanel-body > table");
+        const table = displayControl.getContainerElement().querySelector(`.${displayControl.CLASS}-body > table`);
         if (table) table.parentElement.classList.add(self.CLASS + '-zoom');
-    };
+    }
 
-    ctlProto.updateUI = function(ctl) {
+    updateUI(ctl) {
         const self = this;
         const uiDiv = ctl.getMenuElement().querySelector('.' + self.CLASS);
         const currentFeature = self.getCurrentFeature(ctl);
@@ -190,22 +214,23 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
 
                 const isCluster = !!currentFeature.layer.cluster && currentFeature.features.length > 1;
                 const shareBtn = uiDiv.querySelector(`.${self.CLASS}-share-btn`);
-                shareBtn && shareBtn.classList.toggle(TC.Consts.classes.HIDDEN, isCluster);
-                uiDiv.querySelector(`.${self.CLASS}-dl-btn`).classList.toggle(TC.Consts.classes.HIDDEN, isCluster);
-                uiDiv.querySelector(`.${self.CLASS}-del-btn`).classList.toggle(TC.Consts.classes.HIDDEN, isCluster);
+                shareBtn && shareBtn.classList.toggle(Consts.classes.HIDDEN, isCluster);
+                uiDiv.querySelector(`.${self.CLASS}-dl-btn`).classList.toggle(Consts.classes.HIDDEN, isCluster);
+                uiDiv.querySelector(`.${self.CLASS}-del-btn`).classList.toggle(Consts.classes.HIDDEN, isCluster);
 
-                self.getElevationTool().then(function(tool) {
+                self.getElevationTool().then(function (tool) {
                     const profileBtn = uiDiv.querySelector(`.${self.CLASS}-prof-btn`);
                     if (profileBtn) {
-                        profileBtn.classList.toggle(TC.Consts.classes.HIDDEN,
+                        profileBtn.classList.toggle(Consts.classes.HIDDEN,
                             !tool ||
-                            !(TC.feature.Polyline && currentFeature instanceof TC.feature.Polyline ||
-                            TC.feature.MultiPolyline && currentFeature instanceof TC.feature.MultiPolyline) ||
+                            !(currentFeature instanceof Polyline || currentFeature instanceof MultiPolyline) ||
                             !!ctl.chart);
                     }
                     const elevBtn = uiDiv.querySelector(`.${self.CLASS}-elev-btn`);
                     if (elevBtn) {
-                        elevBtn.classList.toggle(TC.Consts.classes.HIDDEN, !tool || !(currentFeature instanceof TC.feature.Point) || isCluster);
+                        elevBtn.classList.toggle(Consts.classes.HIDDEN, !tool ||
+                            !(currentFeature instanceof Point) ||
+                            isCluster);
                     }
                 });
             }
@@ -218,46 +243,26 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             self.printControl.title = currentFeature.id;
         }
         if (uiDiv) {
-            uiDiv.classList.remove(TC.Consts.classes.ACTIVE);
-            setTimeout(function() {
-                uiDiv.classList.toggle(TC.Consts.classes.ACTIVE, !!isActive);
+            uiDiv.classList.remove(Consts.classes.ACTIVE);
+            setTimeout(function () {
+                uiDiv.classList.toggle(Consts.classes.ACTIVE, !!isActive);
             }, 100);
         }
-    };
+    }
 
-    const getSingleClusteredFeature = function (feature) {
-        if (feature && Array.isArray(feature.features)) {
-            if (feature.features.length === 1) {
-                return feature.features[0];
-            }
-            return null;
-        }
-        return feature;
-    };
-
-    const getClusteredFeatures = function (feature) {
-        if (feature) {
-            if (Array.isArray(feature.features)) {
-                return feature.features;
-            }
-            return [feature];
-        }
-        return [];
-    };
-
-    ctlProto.onDownloadButtonClick = function (e) {
-        const self = this;
-        let feature = getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement));
-        if (feature) {
-            self.showDownloadDialog(feature);
-        }
-    };
-
-    ctlProto.onShareButtonClick = function (e) {
+    onDownloadButtonClick(e) {
         const self = this;
         const feature = getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement));
         if (feature) {
-            prepareFeatureToShare(self, { feature: feature }).then(async function (f) {
+            self.showDownloadDialog(feature);
+        }
+    }
+
+    onShareButtonClick(e) {
+        const self = this;
+        const feature = getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement));
+        if (feature) {
+            self.#prepareFeatureToShare({ feature: feature }).then(async function (f) {
                 self.toShare = {
                     feature: f
                 };
@@ -265,24 +270,24 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                 self.showShareDialog();
             });
         } else {
-            throw "FeatureTools: there is not a feature to share";
+            throw Error("FeatureTools: there is no feature to share");
         }
-    };
+    }
 
-    ctlProto.onZoomButtonClick = function (e) {
+    onZoomButtonClick(e) {
         const self = this;
         const features = getClusteredFeatures(self.getFeatureFromElement(e.target.parentElement));
         if (features.length) {
             self.zoomToFeatures(features);
         }
-    };
+    }
 
-    ctlProto.onDeleteButtonClick = function (e) {
+    onDeleteButtonClick(e) {
         const self = this;
         self.removeFeature(self.getFeatureFromElement(e.target.parentElement));
-    };
+    }
 
-    ctlProto.onProfileButtonClick = function (e) {
+    onProfileButtonClick(e) {
         const self = this;
         const feature = getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement));
         const depOptions = {};
@@ -304,40 +309,40 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                 }
             });
         }
-    };
+    }
 
-    ctlProto.onElevationButtonClick = function (e) {
+    onElevationButtonClick(e) {
         const self = this;
         self.getElevationControl().then(elevCtl => elevCtl &&
             elevCtl.displayElevationValue(getSingleClusteredFeature(self.getFeatureFromElement(e.target.parentElement)), {
                 ignoreCache: true
             }));
-    };
+    }
 
-    ctlProto._setToolButtonHandlers = function(ctl) {
+    #setToolButtonHandlers(ctl) {
         const self = this;
 
         const container = ctl.getMenuElement();
 
         // Evento para mostrar diálogo modal de descarga
-        container.querySelector('.' + self.CLASS + '-dl-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-dl-btn').addEventListener(Consts.event.CLICK, function (e) {
             self.onDownloadButtonClick(e);
         }, { passive: true });
 
         // Evento para mostrar diálogo modal de compartir
-        container.querySelector('.' + self.CLASS + '-share-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-share-btn').addEventListener(Consts.event.CLICK, function (e) {
             self.onShareButtonClick(e);
         }, { passive: true });
 
         // Evento para hacer zoom
-        container.querySelector('.' + self.CLASS + '-zoom-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-zoom-btn').addEventListener(Consts.event.CLICK, function (e) {
             self.onZoomButtonClick(e);
         }, { passive: true });
 
         // Evento para hacer ver perfil
         const profileBtn = container.querySelector(`.${self.CLASS}-prof-btn`);
         if (profileBtn) {
-            profileBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+            profileBtn.addEventListener(Consts.event.CLICK, function (e) {
                 self.onProfileButtonClick(e);
             }, { passive: true });
         }
@@ -345,18 +350,18 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
         // Evento para hacer ver elevación
         const elevBtn = container.querySelector(`.${self.CLASS}-elev-btn`);
         if (elevBtn) {
-            elevBtn.addEventListener(TC.Consts.event.CLICK, function (e) {
+            elevBtn.addEventListener(Consts.event.CLICK, function (e) {
                 self.onElevationButtonClick(e);
             }, { passive: true });
         }
 
         // Evento para borrar la feature
-        container.querySelector('.' + self.CLASS + '-del-btn').addEventListener(TC.Consts.event.CLICK, function (e) {
+        container.querySelector('.' + self.CLASS + '-del-btn').addEventListener(Consts.event.CLICK, function (e) {
             self.onDeleteButtonClick(e);
         }, { passive: true });
-    };
+    }
 
-    ctlProto.getElevationControl = async function() {
+    async getElevationControl() {
         const self = this;
         if (!self.options.displayElevation) {
             return null;
@@ -365,16 +370,16 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             self.elevationControl = await self.map.addControl('elevation', self.options.displayElevation);
         }
         return self.elevationControl;
-    };
+    }
 
-    ctlProto.showDownloadDialog = async function(feature) {
+    async showDownloadDialog(feature) {
         const self = this;
 
         const downloadDialog = await self.getDownloadDialog();
 
         var options = {
             title: self.getLocaleString("feature") + " - " + self.getLocaleString("download"),
-            fileName: self._getFeatureFilename(feature)
+            fileName: self.#getFeatureFilename(feature)
         };
 
         if (self.map.elevation || self.options.displayElevation) {
@@ -383,135 +388,107 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             });
         }
 
-        options.openCallback = function() {
-            self.map.trigger(TC.Consts.event.DIALOG, { control: downloadDialog, action: "download" });
+        options.openCallback = function () {
+            self.map.trigger(Consts.event.DIALOG, { control: downloadDialog, action: "download" });
         };
 
         downloadDialog.open(feature, options);
-    };
+    }
 
-    ctlProto.getCurrentFeature = function(ctl) {
-        return ctl &&
-            (ctl.caller && ctl.caller.highlightedFeature || ctl.currentFeature);
-    };
+    getCurrentFeature(ctl) {
+        return ctl?.caller?.highlightedFeature || ctl?.currentFeature;
+    }
 
-    ctlProto.getFeatureFromElement = function (elm) {
+    getFeatureFromElement(elm) {
         const self = this;
         const layer = self.map.getLayer(elm.dataset.layerId);
         if (layer) {
             return layer.getFeatureById(elm.dataset.featureId);
         }
         return null;
-    };
+    }
 
-    ctlProto.zoomToFeatures = function(features) {
+    zoomToFeatures(features) {
         const self = this;
         if (self.map) {
             self.map.zoomToFeatures(features, { animate: true });
         }
-    };
+    }
 
-    ctlProto.removeFeature = function(feature) {
+    removeFeature(feature) {
         const self = this;
         const removeFeature = function () {
             if (feature && feature.layer) {
                 feature.layer.removeFeature(feature);
             }
         };
-        const closeDisplay = function() {
-            const filterFn = ctl => ctl.caller && ctl.caller.highlightedFeature === feature && ctl.isVisible();
-            const popups = self.map.getControlsByClass(TC.control.Popup);
-            popups
-                .filter(filterFn)
-                .forEach(pu => pu.hide());
-
-            const panels = self.map.getControlsByClass(TC.control.ResultsPanel);
-            panels
-                .filter(filterFn)
-                .forEach(p => p.close());
-        };
-        // No pedimos confirmación para borrar si es un resalte de GFI.
+                // No pedimos confirmación para borrar si es un resalte de GFI.
         if (feature && feature.layer && feature.layer.owner && feature.layer === feature.layer.owner.resultsLayer) {
             removeFeature();
-            closeDisplay();
+            //closeDisplay();
+            if (self._parentCtl?.caller?.removeFeature) self._parentCtl?.caller?.removeFeature(feature);
         }
         else {
-            TC.confirm(self.getLocaleString('deleteFeature.confirm'), function() {
+            TC.confirm(self.getLocaleString('deleteFeature.confirm'), function () {
                 removeFeature();
-                closeDisplay();
+                //closeDisplay();
+                if (self._parentCtl?.caller?.removeFeature)self._parentCtl?.caller?.removeFeature(feature);
             });
         }
-    };
+    }
 
-    const prepareFeatureToShare = function(ctl, options) {
+    async #prepareFeatureToShare(options) {
+        const self = this;
         options = options || {};
-        return new Promise(function(resolve, reject) {
-            const currentFeature = options.feature;
-            if (currentFeature) {
-                const feature = currentFeature.clone();
-                feature.setId(currentFeature.id);
-                feature.layer = currentFeature.layer;
-                if (options.elevation) {
-                    var mustGetElevations = true;
-                    if (!options.elevation.resolution && feature.getGeometryStride() > 2) {
-                        mustGetElevations = false;
-                    }
-                    if (mustGetElevations) {
-                        const elevOptions = {
-                            crs: ctl.map.crs,
-                            features: [feature],
-                            maxCoordQuantity: ctl.options.displayElevation && ctl.options.displayElevation.maxCoordQuantity,
-                            resolution: options.elevation.resolution,
-                            sampleNumber: 0 // No queremos determinar el número de muestras
-                        };
-                        ctl.getElevationTool().then(function(tool) {
-                            tool.setGeometry(elevOptions).then(
-                                function(features) {
-                                    resolve(features[0]);
-                                },
-                                function(error) {
-                                    reject(error instanceof Error ? error : Error(error));
-                                }
-                            );
-                        });
-                    }
-                    else {
-                        resolve(feature);
-                    }
+        const currentFeature = options.feature;
+        if (currentFeature) {
+            const feature = currentFeature.clone();
+            feature.setId(currentFeature.id);
+            feature.layer = currentFeature.layer;
+            if (options.elevation) {
+                var mustGetElevations = true;
+                if (!options.elevation.resolution && feature.getGeometryStride() > 2) {
+                    mustGetElevations = false;
+                }
+                if (mustGetElevations) {
+                    const elevOptions = {
+                        crs: self.map.crs,
+                        features: [feature],
+                        maxCoordQuantity: self.options.displayElevation?.maxCoordQuantity,
+                        resolution: options.elevation.resolution,
+                        sampleNumber: 0 // No queremos determinar el número de muestras
+                    };
+                    const tool = await self.getElevationTool();
+                    const features = await tool.setGeometry(elevOptions);
+                    return features[0];
                 }
                 else {
-                    const coordsArray = feature.getCoordsArray();
-                    const firstCoord = coordsArray[0];
-                    if (firstCoord && firstCoord.length > 2) {
-                        coordsArray.forEach(function(coord) {
-                            coord.length = 2;
-                        });
-                        feature.setCoords(feature.geometry);
-                    }
-                    resolve(feature);
+                    return feature;
                 }
             }
             else {
-                resolve(null);
+                feature.removeZ();
+                return feature;
             }
-        });
-    };
+        }
+        return null;
+    }
 
-    ctlProto.getFeatureTitle = function(feature) {
+    getFeatureTitle(feature) {
         var result = "";
         if (feature) {
             result = feature.id;
         }
         return result;
-    };
+    }
 
-    ctlProto._getFeatureFilename = function(feature) {
+    #getFeatureFilename(feature) {
         const self = this;
         const layerTitle = self.getFeatureTitle(feature).toString().replace(new RegExp(self.TITLE_SEPARATOR, 'g'), self.FILE_TITLE_SEPARATOR) || self.getLocaleString('feature');
         return layerTitle.toLowerCase().replace(/\s/gi, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
-    };
+    }
 
-    ctlProto.exportState = function() {
+    exportState() {
         const self = this;
 
         if (self.toShare) {
@@ -524,6 +501,7 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
                 let layerState;
                 const featureToShare = self.toShare.feature.clone();
                 featureToShare.showsPopup = true;
+                featureToShare.autoPopup = true;
                 layerState = self.toShare.feature.layer.exportState({
                     features: [featureToShare]
                 });
@@ -545,9 +523,9 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
 
         }
         return null;
-    };
+    }
 
-    ctlProto.importState = function(state) {
+    importState(state) {
         const self = this;
         if (self.map && state.features && state.features.length) {
             self.toShare = {
@@ -559,21 +537,22 @@ TC.mix(TC.control.FeatureTools, TC.control.infoShare);
             self.map.addLayer({
                 id: self.getUID(),
                 owner: self,
-                type: TC.Consts.layerType.VECTOR,
+                type: Consts.layerType.VECTOR,
                 title: self.getLocaleString('foi'),
                 stealth: true
-            }).then(function(layer) {
+            }).then(function (layer) {
                 self.sharedFeaturesLayer = layer;
-                layer.importState({ features: state.features, crs: state.crs }).then(function() {
+                layer.importState({ features: state.features, crs: state.crs }).then(function () {
                     if (state.doZoom) {
                         self.map.zoomToFeatures(layer.features);
                     }
                 });
             });
         }
-    };
+    }
+}
 
-})();
+TC.mix(FeatureTools, infoShare);
 
-const FeatureTools = TC.control.FeatureTools;
+TC.control.FeatureTools = FeatureTools;
 export default FeatureTools;

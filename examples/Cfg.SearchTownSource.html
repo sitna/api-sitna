@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/global.html#UrbanAreaSearchOptions">UrbanAreaSearchOptions</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.UrbanAreaSearchOptions">UrbanAreaSearchOptions</a>.</p>
         <p>Establecer configuración de un origen de datos distinto en la búsqueda de cascos urbanos.</p>
     </div>
     <script src="../"></script>
@@ -31,7 +31,7 @@
                             firstQueryWord: ['ENTINOAC', 'ENTIDAD'] // Campos en los que buscar el nombre de casco urbano.
                         },
                         suggestionListHead: { //  Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-                            label: "search.list.urban", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Casco urbano.
+                            labelKey: "search.list.urban", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Casco urbano.
                             color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
                         },  // El resultado de la configuración anterior será: '#FEBA1E'.
                         outputProperties: ['MUNICIPIO', 'ENTIDAD'], // Colección con el nombre del campo a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias. 

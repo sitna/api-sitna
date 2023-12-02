@@ -1,18 +1,19 @@
 ﻿/**
   * Opciones básicas de vista.  
   * @_typedef ViewOptions  
-  * @_see ThreeDViewOptions  
+  * @_see SITNA.ThreeDViewOptions
   * @_property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.   
   */
 
 /**
   * Configuración adicional necesaria del control 3D en el mapa. Se define el elemento del DOM en el cual se renderizará la vista 3D.
   * @typedef ThreeDViewOptions
+  * @memberof SITNA
   * @_extends ViewOptions
-  * @see MapViewOptions
+  * @see SITNA.MapViewOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.  
   *
-  * @example <caption>Definición objeto ThreeDViewOptions</caption> {@lang javascript}
+  * @example <caption>Definición de objeto SITNA.ThreeDViewOptions</caption> {@lang javascript}
   *     {  
   *         div: "IDElementoDOM"
   *     }
@@ -62,41 +63,31 @@
 import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
-import ThreeD from '../view/ThreeD';
+import ThreeDView from '../view/ThreeD';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.view = TC.view || {};
-TC.view.ThreeD = ThreeD;
-TC.Control = Control;
+TC.view.ThreeD = ThreeDView;
+
+const ThreeD = function () {
+    Control.apply(this, arguments);
+};
+
+TC.inherit(ThreeD, Control);
 
 (function () {
 
-    TC.control.ThreeD = function () {
-        var self = this;
-
-        TC.Control.apply(self, arguments);
-    };
-
-    TC.inherit(TC.control.ThreeD, TC.Control);
-
-    var ctlProto = TC.control.ThreeD.prototype;
+    var ctlProto = ThreeD.prototype;
 
     ctlProto.CLASS = 'tc-ctl-3d';
-    ctlProto.classes = {
-        BETA: 'tc-beta-button',
-        BTNACTIVE: 'active'
-    };
-
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-3d.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
-        map.on(TC.Consts.event.VIEWCHANGE, function (e) {
-            if (e.view === TC.Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
+        map.on(Consts.event.VIEWCHANGE, function (e) {
+            if (e.view === Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
                 self.activate();
             }
         });
@@ -104,13 +95,19 @@ TC.Control = Control;
         return result;
     };
 
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-3d.mjs');
+        self.template = module.default;
+    };
+
     ctlProto.renderData = function (data, callback) {
         const self = this;
 
-        return TC.Control.prototype.renderData.call(self, data, function () {
+        return Control.prototype.renderData.call(self, data, function () {
             self.button = self.div.querySelector('.' + self.CLASS + '-btn');
 
-            self.button.addEventListener(TC.Consts.event.CLICK, function () {
+            self.button.addEventListener(Consts.event.CLICK, function () {
 
                 if (self.button.disabled) {
                     return;
@@ -125,7 +122,7 @@ TC.Control = Control;
                         callback: function () {
                             self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
-                            self.button.classList.remove(self.classes.BTNACTIVE);
+                            self.button.classList.remove(Consts.classes.CHECKED);
 
                             self.button.disabled = false;
                         }
@@ -150,9 +147,8 @@ TC.Control = Control;
 
         const manageButton = function () {
             self.button.setAttribute('title', self.getLocaleString('threed.two.tip'));
-            self.button.classList.remove(self.classes.BETA);
 
-            self.button.classList.add(self.classes.BTNACTIVE);
+            self.button.classList.add(Consts.classes.CHECKED);
         };
 
         const removeDisabled = function () {
@@ -165,13 +161,13 @@ TC.Control = Control;
 
         manageButton();
 
-        //TC.Control.prototype.activate.call(self);
+        //Control.prototype.activate.call(self);
     };
 
     ctlProto.deactivate = function () {
         var self = this;
 
-        TC.Control.prototype.deactivate.call(self);
+        Control.prototype.deactivate.call(self);
     };
 
     ctlProto.browserSupportWebGL = function () {
@@ -224,7 +220,7 @@ TC.Control = Control;
             if (result === "slow" || !result) {
                 var warning = result === "slow" ? "threed.slowSupport.supported" : "threed.not.supported";
                 self.map.toast(self.getLocaleString(warning), {
-                    type: TC.Consts.msgType.WARNING,
+                    type: Consts.msgType.WARNING,
                     duration: 10000
                 });
             }
@@ -235,5 +231,5 @@ TC.Control = Control;
 
 })();
 
-const ThreeDControl = TC.control.ThreeD;
-export default ThreeDControl;
+TC.control.ThreeD = ThreeD;
+export default ThreeD;

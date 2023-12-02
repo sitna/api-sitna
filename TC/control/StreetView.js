@@ -2,8 +2,9 @@
 /**
   * Opciones de control de StreetView.
   * @typedef StreetViewOptions
-  * @extends ControlOptions
-  * @see MapControlOptions
+  * @extends SITNA.control.ControlOptions
+  * @memberof SITNA.control
+  * @see SITNA.control.MapControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {string} [googleMapsKey] - El control de StreetView hace uso de la API de Google Maps para funcionar. 
   * Esta propiedad establece la clave de uso asociada al sitio donde está alojada la aplicación que usa la API SITNA. 
@@ -32,48 +33,44 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.Control = Control;
+
+const StreetView = function () {
+    var self = this;
+    self._sv = null;
+    self._mapActiveControl = null;
+
+    Control.apply(self, arguments);
+
+    self.viewDiv = null;
+    self._startLonLat = null;
+};
+
+TC.inherit(StreetView, Control);
 
 (function () {
-    TC.Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
-    var gMapsUrl = TC.Consts.url.GOOGLEMAPS;
-    TC.Cfg.proxyExceptions = TC.Cfg.proxyExceptions || [];
-    TC.Cfg.proxyExceptions.push(TC.Consts.url.GOOGLEMAPS);
+    Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
+    var gMapsUrl = Consts.url.GOOGLEMAPS;
+    Cfg.proxyExceptions = Cfg.proxyExceptions || [];
+    Cfg.proxyExceptions.push(Consts.url.GOOGLEMAPS);
 
-    TC.control.StreetView = function () {
-        var self = this;
-        self._sv = null;
-        self._mapActiveControl = null;
-
-        TC.Control.apply(self, arguments);
-
-        self.viewDiv = null;
-        self._startLonLat = null;
-    };
-
-    TC.inherit(TC.control.StreetView, TC.Control);
-
-    var ctlProto = TC.control.StreetView.prototype;
+    var ctlProto = StreetView.prototype;
 
     ctlProto.CLASS = 'tc-ctl-sv';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-sv.hbs";
-    ctlProto.template[ctlProto.CLASS + '-view'] = TC.apiLocation + "TC/templates/tc-ctl-sv-view.hbs";
 
     const dispatchCanvasResize = function () {
         var event = document.createEvent('HTMLEvents');
         event.initEvent('resize', true, false);
-        this.map.div.querySelector('canvas').dispatchEvent(event);
+        const elm = this.map.div.querySelector('canvas') || window;
+        elm.dispatchEvent(event);
     };
 
     var preset = function (ctl) {
-        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.add(TC.Consts.classes.CHECKED);
-        ctl.map.div.classList.add(ctl.CLASS + '-active');
+        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.add(Consts.classes.CHECKED);
+        ctl.mapDiv.classList.add(ctl.CLASS + '-active');
     };
 
     var reset = function (ctl) {
@@ -90,11 +87,15 @@ TC.Control = Control;
             dispatchCanvasResize.call(ctl);
         }, 1000);
 
-
-        ctl.layer.clearFeatures();
-        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.remove(TC.Consts.classes.CHECKED);
-        ctl.div.querySelector('.' + ctl.CLASS + '-drag').classList.remove(TC.Consts.classes.HIDDEN);
-        ctl.map.div.classList.remove(ctl.CLASS + '-active');
+        if (ctl.map.on3DView && ctl.ThreeDMarker) {
+            ctl.ThreeDMarker.show = false;
+            ctl.map.view3D.getScene().requestRender();
+        }
+        else
+            ctl.layer.clearFeatures();
+        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
+        ctl.div.querySelector('.' + ctl.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
+        ctl.mapDiv.classList.remove(ctl.CLASS + '-active');
         ctl._startLonLat = null;
     };
 
@@ -105,7 +106,7 @@ TC.Control = Control;
 
         var btnRect = btn.getBoundingClientRect();
         var dragRect = drag.getBoundingClientRect();
-        drag.classList.add(TC.Consts.classes.HIDDEN);
+        drag.classList.add(Consts.classes.HIDDEN);
         if (dragRect.top < btnRect.top || dragRect.top > btnRect.bottom ||
             dragRect.left < btnRect.left || dragRect.left > btnRect.right) {
             // Hemos soltado fuera del botón: activar StreetView
@@ -113,20 +114,22 @@ TC.Control = Control;
             // Precarga de marcadores
             var extent = ctl.map.getExtent();
             var xy = [extent[2], extent[3]];
-            for (var i = 0; i < 16; i++) {
-                ctl.layer.addMarker(xy, {
-                    cssClass: 'tc-marker-sv-' + i,
-                    width: 48,
-                    height: 48,
-                    anchor: [0, 1]
-                });
-            }
+            if (!ctl.map.on3DView)
+                for (var i = 0; i < 16; i++) {
+                    ctl.layer.addMarker(xy, {
+                        id: 'pegman',
+                        cssClass: 'tc-marker-sv-' + i,
+                        width: 48,
+                        height: 48,
+                        anchor: [0, 1]
+                    });
+                }
             /////////////////////
             // Activamos StreetView
-            var mapRect = ctl.map.div.getBoundingClientRect();
-            var xpos = (dragRect.left * window.devicePixelRatio + dragRect.right * window.devicePixelRatio) / 2 - mapRect.left * window.devicePixelRatio;
-            var ypos = dragRect.bottom * window.devicePixelRatio - mapRect.top * window.devicePixelRatio;
-            var coords = ctl.map.wrap.getCoordinateFromPixel([xpos, ypos]);
+            var mapRect = ctl.mapDiv.getBoundingClientRect();
+            var xpos = (dragRect.left + dragRect.right) / 2 - mapRect.left;
+            var ypos = dragRect.bottom - mapRect.top;
+            var coords = ctl.getCoordinateFromPixel([xpos, ypos]);
             ctl.callback(coords);
         }
         else {
@@ -140,24 +143,34 @@ TC.Control = Control;
 
         if (!self.viewDiv) {
             self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
-            self.viewDiv.classList.add(self.CLASS + '-view', TC.Consts.classes.HIDDEN);
+            self.viewDiv.classList.add(self.CLASS + '-view', Consts.classes.HIDDEN);
             if (!self.options.viewDiv) {
                 map.div.insertAdjacentElement('beforebegin', self.viewDiv);
             }
         }
 
-        const result = TC.Control.prototype.register.call(self, map);
+        const result = Control.prototype.register.call(self, map);
 
+        self.mapDiv = self.map.div;
+
+        self.getCoordinateFromPixel = self.map.wrap.getCoordinateFromPixel;
+        //ahora google pide en la url de google maps una función función global que se llamará una vez que la API de Maps JavaScript se cargue por completo.
+        let fnCallBackSV = "SV_" + (Math.random() + 1).toString(36).substring(7);
+
+        window[fnCallBackSV] = function () {
+            delete window[fnCallBackSV];
+        }
         const googleMapsKey = self.options.googleMapsKey || map.options.googleMapsKey;
         if (googleMapsKey) {
-            gMapsUrl += '&key=' + googleMapsKey;
+            gMapsUrl += '&key=' + googleMapsKey + "&callback=" + fnCallBackSV;
         }
 
         self.layer = null;
+        self.ThreeDMarker = null;
         var layerId = self.getUID();
         for (var i = 0; i < map.workLayers.length; i++) {
             var layer = map.workLayers[i];
-            if (layer.type === TC.Consts.layerType.VECTOR && layer.id === layerId) {
+            if (layer.type === Consts.layerType.VECTOR && layer.id === layerId) {
                 self.layer = layer;
                 break;
             }
@@ -168,7 +181,7 @@ TC.Control = Control;
                     id: layerId,
                     owner: self,
                     stealth: true,
-                    type: TC.Consts.layerType.VECTOR
+                    type: Consts.layerType.VECTOR
                 }).then(function (layer) {
                     self.layer = layer;
                 });
@@ -176,25 +189,22 @@ TC.Control = Control;
         }
 
         self.renderPromise().then(function () {
-            TC.loadJS(
-                !window.Draggabilly,
-                [TC.apiLocation + TC.Consts.url.DRAGGABILLY],
-                function () {
-                    const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
-                        containment: self.map.div
-                    });
-                    drag.on('dragStart', function (_e) {
-                        preset(self);
-                    });
-                    drag.on('dragEnd', function (_e) {
-                        resolve(self);
-                        drag.setPosition(0, 0);
-                    });
-                }
-            );
+            import("draggabilly").then(function (module) {
+                const Draggabilly = module.default;
+                const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
+                    containment: (self.getMapDiv && self.mapDiv) || self.map.div
+                });
+                drag.on('dragStart', function (_e) {
+                    preset(self);
+                });
+                drag.on('dragEnd', function (_e) {
+                    resolve(self);
+                    drag.setPosition(0, 0);
+                });
+            });
 
             const view = self.viewDiv;
-            view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(TC.Consts.event.CLICK, function (e) {
+            view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(Consts.event.CLICK, function (e) {
                 e.stopPropagation();
                 self.closeView();
             }, { passive: true });
@@ -203,10 +213,40 @@ TC.Control = Control;
                 TC.error("Error de renderizado StreetView");
             });
 
+        map.on(Consts.event.VIEWCHANGE, function (e) {
+            const view = e.view;
+
+            if (view === Consts.view.THREED) {
+                self.mapDiv = this.view3D.container;
+                self.getCoordinateFromPixel = (coords) => {
+                    const _coords = this.view3D.Coordinates2DTo3D(coords);
+                    return [_coords.lon, _coords.lat];
+                }
+
+            } else if (view === Consts.view.DEFAULT) {
+                self.mapDiv = this.div;
+                self.getCoordinateFromPixel = self.map.wrap.getCoordinateFromPixel;
+            }
+        });
+        map.on(Consts.event.THREED_DRAG, function (e) {
+            if (e.pickedFeature === self.ThreeDMarker) {
+                self._startLonLat = e.oldCoords;
+                self._sv.setPosition({ lng: e.newCoords[0], lat: e.newCoords[1] });
+            }
+        })
         return result;
     };
 
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-sv.mjs');
+        const viewTemplatePromise = import('../templates/tc-ctl-sv-view.mjs');
 
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-view'] = (await viewTemplatePromise).default;
+        self.template = template;
+    };
 
     ctlProto.render = function () {
         const self = this;
@@ -246,12 +286,11 @@ TC.Control = Control;
 
     ctlProto.callback = function (coords) {
         var self = this;
-        var geogCrs = 'EPSG:4326';
-
+        var geogCrs = 'EPSG:4326';        
         var ondrop = function (feature) {
             if (self._sv) {
                 var bounds = feature.getBounds();
-                const lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);
+                const lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
                 self._sv.setPosition({ lng: lonLat[0], lat: lonLat[1] });
             }
         };
@@ -259,7 +298,7 @@ TC.Control = Control;
         var ondrag = function (feature) {
             if (self._sv) {
                 var bounds = feature.getBounds();
-                self._startLonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.crs, geogCrs);
+                self._startLonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
             }
         };
 
@@ -268,41 +307,54 @@ TC.Control = Control;
             waitId = li.addWait(waitId);
         }
 
-        const mapDiv = self.map.div;
+        const mapDiv = self.mapDiv;
 
         var setMarker = function (sv, center) {
+
             self.layer.clearFeatures();
 
             var xy;
             var heading;
             if (sv) {
                 var latLon = sv.getPosition();
-                xy = TC.Util.reproject([latLon.lng(), latLon.lat()], geogCrs, self.map.crs);
+                xy = TC.Util.reproject([latLon.lng(), latLon.lat()], geogCrs, self.map.getCrs());
                 heading = sv.getPov().heading;
             }
             else {
                 xy = coords;
                 heading = 0;
             }
-            self.map.addMarker(xy, {
-                cssClass: 'tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16,
-                width: 48,
-                height: 48,
-                anchor: [0.4791666666666667, 0.7083333333333333],
-                layer: self.layer,
-                showsPopup: false
-            });
-            Promise.all(self.map._markerPromises).then(function () {
-                // Para poder arrastrar a pegman                
-                self.layer.wrap.setDraggable(true, ondrop, ondrag);
-            });
+            if (self.map.on3DView) {
+                self.ThreeDMarker = self.map.view3D.setMarker(xy,
+                    TC.Util.getBackgroundUrlFromCss('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16),
+                    self.ThreeDMarker);
+
+            }
+            else {
+                self.map.addMarker(xy, {
+                    cssClass: 'tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16,
+                    width: 48,
+                    height: 48,
+                    anchor: [0.4791666666666667, 0.7083333333333333],
+                    layer: self.layer,
+                    showsPopup: false
+                });
+                Promise.all(self.map._markerPromises).then(function () {
+                    // Para poder arrastrar a pegman                
+                    self.layer.wrap.setDraggable(true, ondrop, ondrag);
+                });
+            }
 
             if (center) {
                 var setCenter = function () {
-                    self.map.setCenter(xy);
+                    if (!self.map.on3DView)
+                        self.map.setCenter(xy);
+                    else {
+                        self.map.view3D.setCenter(xy);
+                    }
                 };
                 // Esperamos a que el mapa esté colapsado para centrarnos: ahorramos ancho de banda
-                if (mapDiv.classList.contains(TC.Consts.classes.COLLAPSED)) {
+                if (mapDiv.classList.contains(Consts.classes.COLLAPSED)) {
                     setCenter();
                 }
                 else {
@@ -310,6 +362,21 @@ TC.Control = Control;
                 }
             }
         };
+        var changeMarker = function (cssClass) {
+            if (!self.map.on3DView) {
+                if (self.layer.features && self.layer.features.length > 0) {
+                    var pegmanMarker = self.layer.features[0];
+                    delete pegmanMarker.options.url;
+                    pegmanMarker.options.cssClass = cssClass
+                    //pegmanMarker.options.cssClass = 'tc-marker-sv-' + (Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16;
+                    pegmanMarker.setStyle(pegmanMarker.options);
+                }
+            }
+            else {
+                self.ThreeDMarker?.setImage(Math.random() * 1000, TC.Util.getBackgroundUrlFromCss(cssClass));
+            }
+
+        }
 
         TC.loadJS(
             !window.google || !google.maps,
@@ -317,11 +384,9 @@ TC.Control = Control;
             function () {
 
                 if (window.google) {
-
                     setMarker();
-
                     const view = self.viewDiv;
-                    const lonLat = TC.Util.reproject(coords, self.map.crs, geogCrs);
+                    const lonLat = TC.Util.reproject(coords, self.map.getCrs(), geogCrs);
                     const mapsLonLat = new google.maps.LatLng(lonLat[1], lonLat[0]);
 
                     // Comprobamos si hay datos de SV en el sitio elegido.
@@ -381,17 +446,19 @@ TC.Control = Control;
                                     if (!self._sv) {
                                         self._sv = new google.maps.StreetViewPanorama(view, svOptions);
                                         google.maps.event.addListener(self._sv, 'position_changed', function () {
-                                            setMarker(self._sv, view.classList.contains(TC.Consts.classes.VISIBLE));
+                                            setMarker(self._sv, view.classList.contains(Consts.classes.VISIBLE));
                                         });
-                                        google.maps.event.addListener(self._sv, 'pov_changed', function () {
-                                            if (self.layer.features && self.layer.features.length > 0) {
-                                                var pegmanMarker = self.layer.features[0];
-
-                                                delete pegmanMarker.options.url;
-                                                pegmanMarker.options.cssClass = 'tc-marker-sv-' + (Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16;
-                                                pegmanMarker.setStyle(pegmanMarker.options);
+                                        self.managePOVChange = function () {
+                                            var heading
+                                            if (self.map.on3DView)
+                                                heading = (self._sv.getPov().heading || 360) - self.map.view3D.getCameraData().heading
+                                            else {
+                                                heading = self._sv.getPov().heading;
                                             }
-                                        });
+                                            changeMarker('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16);
+                                        }
+                                        self.map.on(Consts.event.CAMERACHANGE, self.managePOVChange);
+                                        google.maps.event.addListener(self._sv, 'pov_changed', self.managePOVChange);
                                         google.maps.event.addListener(self._sv, 'status_changed', function () {
                                             var svStatus = self._sv.getStatus();
 
@@ -419,18 +486,28 @@ TC.Control = Control;
                             self._transitioning = true;
                             view.addEventListener('transitionend', onTransitionend);
 
-                            if (!self.options.viewDiv) {
+                            if (!self.options.viewDiv || !mapDiv.classList.contains(Consts.classes.FULL_SCREEN)) {
                                 // No había definida una vista. Para hacer el control compatible con mapas incrustados,
                                 // en este caso a la vista nueva le asignamos el tamaño del mapa.
                                 const mapRect = mapDiv.getBoundingClientRect();
                                 self.viewDiv.style.height = mapRect.height + 'px';
                                 self.viewDiv.style.width = mapRect.width + 'px';
                             }
-                            mapDiv.classList.add(TC.Consts.classes.COLLAPSED);
+                            const zIndexMap = parseInt(window.getComputedStyle(mapDiv).zIndex, 10);
+
+                            mapDiv.classList.add(Consts.classes.COLLAPSED);
+                            mapDiv.style.width = self.options.ovmapW || "25vh";
+                            mapDiv.style.height = self.options.ovmapH || "25vh";
+                            if (self.map.on3DView)//si es en modo 3d se oculta el mapa 2D para que no interfiera
+                                self.map.div.style.display = "none"
                             view.style.left = '';
                             view.style.top = '';
-                            view.classList.remove(TC.Consts.classes.HIDDEN);
-                            view.classList.add(TC.Consts.classes.VISIBLE);
+                            view.classList.remove(Consts.classes.HIDDEN);
+                            view.classList.add(Consts.classes.VISIBLE);
+
+                            const zIndexView = parseInt(window.getComputedStyle(view).zIndex, 10);
+                            if (zIndexMap <= zIndexView)
+                                mapDiv.style.zIndex = (zIndexView + 1)
 
 
                             // Por si no salta transitionend
@@ -463,14 +540,18 @@ TC.Control = Control;
 
     ctlProto.closeView = function () {
         const self = this;
-        const mapDiv = self.map.div;
+        const mapDiv = self.mapDiv;
         const view = self.viewDiv;
 
         const endProcess = function () {
-            mapDiv.classList.remove(TC.Consts.classes.COLLAPSED);
+            mapDiv.classList.remove(Consts.classes.COLLAPSED);
+            mapDiv.style.width = mapDiv.style.height = mapDiv.style.zIndex = "";
+            if (self.map.on3DView)//si es en modo 3d se oculta el mapa 2D para que no interfiera
+                self.map.div.style.display = '';
             const resizeEvent = document.createEvent('HTMLEvents');
             resizeEvent.initEvent('resize', false, false);
             mapDiv.dispatchEvent(resizeEvent); // Para evitar que salga borroso el mapa tras cerrar SV.
+            self.map.off(Consts.event.CAMERACHANGE, self.managePOVChange);
         };
         const transitionend = 'transitionend';
         const onTransitionend = function (e) {
@@ -489,9 +570,10 @@ TC.Control = Control;
             self.viewDiv.style.removeProperty('height');
             self.viewDiv.style.removeProperty('width');
         }
-        view.classList.add(TC.Consts.classes.HIDDEN);
-        view.classList.remove(TC.Consts.classes.VISIBLE);
-        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(TC.Consts.classes.HIDDEN);
+        view.classList.add(Consts.classes.HIDDEN);
+        view.classList.remove(Consts.classes.VISIBLE);
+        view.style.height = view.style.width = "";
+        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
         self.layer.wrap.setDraggable(false);
         reset(self);
         self._sv.setVisible(false);
@@ -506,5 +588,5 @@ TC.Control = Control;
     };
 })();
 
-const StreetView = TC.control.StreetView;
+TC.control.StreetView = StreetView;
 export default StreetView;

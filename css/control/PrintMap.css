@@ -1,0 +1,179 @@
+﻿
+div.tc-ctl-prnmap-txt {
+    margin-top: 5px;
+}
+
+div.tc-ctl-prnmap-cnt {
+    width: 97%;
+}
+
+    div.tc-ctl-prnmap-cnt label {
+        width: 25%;
+    }
+
+    div.tc-ctl-prnmap-cnt input[type="text"], div.tc-ctl-prnmap-cnt select.tc-combo {
+        width: 75%;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+div.tc-ctl-prnmap-txt label {
+    line-height: 2em;
+}
+
+div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
+    /*float: right;*/
+}
+
+.tc-ctl-prnmap-view {
+    top: 0;
+    left: 0;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 10011;
+    background-color: #525659;
+    transition: all .2s ease;
+    overflow-x: auto;
+}
+
+.tc-ctl-prnmap-view-right {
+    left: auto;
+    right: 0;
+}
+
+.tc-ctl-prnmap-printing .tc-ctl-prnmap-tools {
+    position: fixed;
+    top: 0;
+    right: 0.5em;
+    width: 2em;
+    height: 1em;
+    text-align: right;
+    padding-right: 0.1em;
+    line-height: 1em;
+    font-size: 2em;
+    z-index: 100000;
+    cursor: pointer;
+    padding-top: 0.15em;
+    background-color: #fff;
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+}
+
+.tc-ctl-prnmap-btn-close {
+}
+
+.tc-ctl-prnmap-printing .tc-ctl-prnmap-btn-close:after {
+    font-family: 'FontAwesome';
+    content: '\f00d';
+}
+
+.tc-map.tc-ctl-prnmap-printing, .tc-map-3d.tc-ctl-prnmap-printing {
+    z-index: 100000;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    border: 1px solid;
+    box-sizing: content-box;
+}
+
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a4, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a4 {
+        /* ya hemos restado los márgenes y demás */
+        width: 712px;
+        height: 1034px;
+        /*width: 535, -> 534pt 712px 
+          height: 753.5 -> 753pt - >775.5 1034px*/
+    }
+
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a4, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a4 {
+        /* ya hemos restado los márgenes y demás */
+        width: 1040px;
+        height: 704px;
+        /*width: 780pt -> 1,040px 
+          height: 528pt -> 704px */
+    }
+
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a3, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-portrait-a3 {
+        /* ya hemos restado los márgenes y demás */
+        width: 1040px;
+        height: 1500px;
+        /*width: 780pt -> 1,040px 
+          height: 1125pt -> 1500px */
+    }
+
+    .tc-map.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a3, .tc-map-3d.tc-ctl-prnmap-printing.tc-ctl-prnmap-landscape-a3 {
+        /* ya hemos restado los márgenes y demás */
+        width: 1508px;
+        height: 1044px;
+        /*width: 1131pt -> 1508px 
+          height: 783pt -> 1044px */
+    }
+
+    .tc-map.tc-ctl-prnmap-printing .ol-viewport, .tc-map-3d.tc-ctl-prnmap-printing .ol-viewport {
+        z-index: 100000;
+    }
+
+    .tc-map.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)),
+    .tc-map-3d.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)) {
+        visibility: hidden;
+    }
+
+.tc-map.tc-ctl-prnmap-printing .tc-ctl-coords {
+    display: none;
+}
+
+
+    .tc-map.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode, .tc-map-3d.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode {
+        position: absolute;
+        right: 0px;
+        bottom: 0px;
+        z-index: 100000;
+    }
+
+.tc-ctl-prnmap-btn-pdf {
+    position: absolute;
+    width: 1em;
+}
+
+    .tc-ctl-prnmap-btn-pdf:before {
+        font-family: 'FontAwesome';
+        content: '\f019';
+        font-size: 0.9em;
+    }
+
+.tc-ctl-prnmap-btn:before {
+    color: #fff;
+    font-size: 1em;
+    font-family: mapskin;
+    content: '\e0ce';
+    margin-right: 0.5em;
+}
+
+
+.tc-ctl-prnmap-cnt-btn {
+    text-align: right;
+}
+
+.tc-ctl-prnmap-cnt > label.tc-ctl-prnmap-image-qr-label {
+    line-height: 2em;
+    font-weight: normal;
+    text-align: left;
+    width: 50%;
+    float: left;
+}
+
+.tc-ctl-prnmap-cnt label.tc-loading:after {
+    font-family: var(--icon-font-family);
+    content: var(--icon-spinner);
+    display: inline-block;
+    margin-left: 0.5em;
+    animation: spin 2s infinite linear;
+    -webkit-animation: spin 2s infinite linear;
+}
+
+.tc-map.tc-collapsed .tc-ctl-prnmap-tools {
+    display: none;
+}

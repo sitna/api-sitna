@@ -1,0 +1,9 @@
+﻿.tc-ctl-tctr-datldr sitna-tab:first-of-type::before {
+    font-family: mapskin;
+    content: '\e03d';
+}
+
+.tc-ctl-tctr-datldr sitna-tab:last-of-type::before {
+    font-family: mapskin;
+    content: '\e056';
+}

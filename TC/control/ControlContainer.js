@@ -2,12 +2,11 @@
 import Container from './Container';
 
 TC.control = TC.control || {};
-TC.control.Container = Container;
 
-TC.control.ControlContainer = function () {
+const ControlContainer = function () {
     var self = this;
 
-    TC.control.Container.apply(self, arguments);
+    Container.apply(self, arguments);
 
     // GLS: 20/01/2020 código compatibilidad hacia atrás
     if (!Array.isArray(self.controlOptions)) {
@@ -30,10 +29,10 @@ TC.control.ControlContainer = function () {
     }
 };
 
-TC.inherit(TC.control.ControlContainer, TC.control.Container);
+TC.inherit(ControlContainer, Container);
 
 (function () {
-    var ctlProto = TC.control.ControlContainer.prototype;
+    var ctlProto = ControlContainer.prototype;
 
     ctlProto.CLASS = 'tc-ctl-cctr';
     ctlProto.POSITION = {
@@ -44,34 +43,34 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
     // GLS: 20/01/2020 código compatibilidad hacia atrás
     ctlProto.SIDE = ctlProto.POSITION;
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-cctr.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-cctr-node.hbs";
-
-    ctlProto.onRender = function () {
+    ctlProto.onRender = async function () {
         const self = this;
 
-        return new Promise(function (resolve, _reject) {
-            for (var i = 0, len = self.controlOptions.length; i < len; i++) {
-                var ctl = self.controlOptions[i];
-
-                var ctlName = Object.keys(ctl).filter((key) => {
-                    return ["position", "index"].indexOf(key) < 0;
-                })[0];
-                self._ctlPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
-                    id: self.uids[i],
-                    div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
-                }, ctl[ctlName]));
-            }
-
-            Promise.all(self._ctlPromises).then(function () {
-                for (var i = 0, len = arguments.length; i < len; i++) {
-                    var ctl = arguments[i];
-                    ctl.containerControl = self;
-                }
-                resolve(self);
-            });
+        self.controlOptions.forEach(function addCtl(ctl, i) {
+            const ctlName = Object.keys(ctl).find(key => ["position", "index"].indexOf(key) < 0);
+            self._ctlPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
+                id: self.uids[i],
+                div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
+            }, ctl[ctlName]));
         });
+
+        await Promise.all(self._ctlPromises);
+        for (var i = 0, len = arguments.length; i < len; i++) {
+            var ctl = arguments[i];
+            ctl.containerControl = self;
+        }
+        return self;
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-cctr.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-cctr-node.mjs');
+
+        const template = {};
+        template[ctlProto.CLASS] = (await mainTemplatePromise).default;
+        template[ctlProto.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.render = function (callback) {
@@ -83,27 +82,22 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
         }, callback));
     };
 
-    ctlProto.addControl = function (control, options) {
+    ctlProto.addControl = async function (control, options) {
         const self = this;
         options.position = options.position || options.side || self.POSITION.LEFT;
 
-        return new Promise(function (resolve, _reject) {
-            const idx = ++self.ctlCount;
-            self.renderPromise().then(function renderAndAdd() {
-                self.getRenderedHtml(self.CLASS + '-node', { index: idx }, function (html) {
-                    var template = document.createElement('template');
-                    template.innerHTML = html.trim();
+        const idx = ++self.ctlCount;
+        await self.renderPromise();
+        const html = await self.getRenderedHtml(self.CLASS + '-node', { index: idx });
+        var template = document.createElement('template');
+        template.innerHTML = html.trim();
 
-                    self.div.querySelector('ul.' + self.CLASS + '-' + options.position).appendChild(template.content ? template.content.firstChild : template.firstChild);
-                    self.map.addControl(control, TC.Util.extend({
-                        id: self.getUID(),
-                        div: self.div.querySelector('.' + self.CLASS + '-elm-' + idx).querySelector('div')
-                    }, options)).then(function (ctrl) {
-                        resolve(ctrl);
-                    });
-                });
-            });
-        });
+        self.div.querySelector('ul.' + self.CLASS + '-' + options.position).appendChild(template.content ? template.content.firstChild : template.firstChild);
+        const ctrl = await self.map.addControl(control, TC.Util.extend({
+            id: self.getUID(),
+            div: self.div.querySelector('.' + self.CLASS + '-elm-' + idx).querySelector('div')
+        }, options));
+        return ctrl;
     };
 
     ctlProto.addElement = function (options) {
@@ -122,5 +116,5 @@ TC.inherit(TC.control.ControlContainer, TC.control.Container);
     };
 })();
 
-const ControlContainer = TC.control.ControlContainer;
+TC.control.ControlContainer = ControlContainer;
 export default ControlContainer;

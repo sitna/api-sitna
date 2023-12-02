@@ -19,13 +19,13 @@
   * [Geo Noáin (Valle de Elorz) / Noain (Elortzibar)](https://idena.navarra.es/municipios/noain/?lang=en "Spatial Data Infrastructure of Noáin (Valle de Elorz) / Noain (Elortzibar)")
 
 * Government of Navarre's KML viewer applications:
-  * [Cámaras de tráfico](http://www.navarra.es/home_es/Temas/Territorio/Camaras/ "Traffic Cameras. Government of Navarre")
-  * [Zonas de baño](http://www.navarra.es/home_es/Temas/Medio+Ambiente/Patrimonio+natural/Banos+Naturales/ "Bathing Sites. Government of Navarre")
-  * [Listados contables: Municipios](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Budget and Accounting")
-  * [Listados contables: Concejos](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
-  * [Listados contables: Mancomunidades](http://sitna.navarra.es/kml/?url=http://www.navarra.es/appsext/DescargarFichero/default.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
+  * [Zonas de baño naturales](https://www.navarra.es/es/medio-ambiente/zonas-de-bano-naturales "Natural bathing Sites. Government of Navarre")
+  * [Listados contables: Municipios](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Budget and Accounting")
+  * [Listados contables: Concejos](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
+  * [Listados contables: Mancomunidades](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
-  * [Actúa - Centros de Interpretación de la Naturaleza y Observatorios](https://www.navarra.es/home_es/Temas/Medio+Ambiente/Actua/Centros+de+Interpretacion+de+la+Naturaleza+y+Observatorios.htm)
+  * [Centros de Interpretación de la Naturaleza](https://www.navarra.es/es/web/cin-navarra)
+  * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales "Wildfire prevention")
 
 * Govenment of Navarre's own developments:
   * Anonymous access:
@@ -34,10 +34,8 @@
     * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Dwelling Registry. Government of Navarre")
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Point Viewer. Government of Navarre")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Postal Addresses in Navarre")
-    * [Agencias de Empleo](https://agenciasempleo.navarra.es/EmpleoLocalizaAgencia/ "Navarre Employment Service")
     * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Fishing Permits")    
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI "Registry for Navarre's I+D+i System")
-    * [Centros de Salud](https://centrossanitarios.navarra.es/ "Health Centers")
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/ "Navarre Employment Service Training Offers")
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire "Air Quality")
   * Authenticated access:
@@ -51,4 +49,5 @@
   * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Events on Public Roads. Pamplona Police Department")
 
 * Other developments:
+  * [Visualizador SITMUN](https://sitmun.github.io/sitmun-viewer-app/public/map/1/2)
   * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)

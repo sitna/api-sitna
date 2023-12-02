@@ -1,0 +1,17 @@
+<div class="tc-ctl-fstyler-stroke">
+    {{i18n "strokeColor"}}
+    <input type="color" class="tc-ctl-col tc-ctl-fstyler-str-c" value="{{strokeColor}}" title="{{i18n "selectColor"}}" />
+    {{i18n "width"}}
+    <div class="tc-ctl-fstyler-str-w-watch" style="border-bottom-width:{{strokeWidth}}px;"> </div>
+    <input type="number" class="tc-ctl-fstyler-str-w tc-textbox" value="{{strokeWidth}}" min="1" max="15" />
+</div>
+<div class="tc-ctl-fstyler-fill">
+    {{i18n "fillColor"}}
+    <input type="color" class="tc-ctl-col tc-ctl-fstyler-fll-c" value="{{fillColor}}" title="{{i18n "selectColor"}}" />
+    {{i18n "opacity"}}
+    <input type="number" class="tc-ctl-fstyler-fll-w tc-textbox" value="{{fillOpacity}}" min="0" max="100" />
+</div>
+<div class="tc-ctl-fstyler-radius">
+    {{i18n "symbolRadius"}}
+    <input type="number" class="tc-ctl-fstyler-rad-w tc-textbox" value="{{radius}}" min="1" max="100" />
+</div>

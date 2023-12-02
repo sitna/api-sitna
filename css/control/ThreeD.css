@@ -1,0 +1,29 @@
+﻿
+.tc-ctl.tc-ctl-3d {
+    top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior, btn fullScreen, el margen inferior */
+    position: absolute;
+    left: 0.7em;
+    padding: 0;
+}
+
+.tc-ctl-3d {
+    width: 2em;
+    height: 2em;
+    position: absolute;
+}
+
+    .tc-ctl-3d button:before {
+        font-weight: bold;
+        font-size: 0.9em;
+        content: '3D';
+    }
+
+    .tc-ctl-3d button.tc-checked:before {
+        font-weight: bold;
+        font-size: 0.9em;
+        content: '2D';
+    }
+
+    .tc-ctl-3d button[disabled] {
+        background-color: rgba(156, 156, 156, 0.5);
+    }

@@ -1,0 +1,46 @@
+﻿sitna-file-import {
+    display: block;
+}
+
+    sitna-file-import p {
+        margin: 0.5em 0 0.5em 0;
+    }
+
+.tc-ctl-file-open {
+    height: 2.2em;
+    display: flex;
+    justify-content: flex-end;
+}
+
+sitna-file-import input[type="file"] {
+    display: none;
+}
+
+sitna-file-import ul.tc-ctl-file-recent {
+    max-height: 12em;
+    height: auto;
+    margin-top: 0.5em;
+}
+
+    sitna-file-import ul.tc-ctl-file-recent:empty {
+        display: none;
+    }
+
+    sitna-file-import ul.tc-ctl-file-recent > li {
+        color: var(--list-color);
+        background-color: var(--list-bg-color);
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: baseline;
+    }
+
+        sitna-file-import ul.tc-ctl-file-recent > li h3 {
+            margin: 0.5em;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        sitna-file-import ul.tc-ctl-file-recent > li sitna-button[variant="link"] {
+            max-width: calc(100% - 2em);
+        }

@@ -18,7 +18,7 @@ exports.testQrCodeGenerator = function (test) {
             });
         });
     }).then(function () {
-        const imgSelector = '.tc-modal-window .qrcode > img';
+        const imgSelector = '.tc-modal-window .tc-ctl-share-qrcode > img';
 
         casper.waitForSelector(imgSelector, function () {
             casper.capture("images/qrCode.png"); //Hacemos una captura de pantalla

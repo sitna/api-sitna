@@ -1,0 +1,22 @@
+﻿{
+    "i18n": true,
+    "crossOrigin": "anonymous",
+    "stateful":  true,
+    "controls": {
+        "printPdf": {
+            "div": "print-pdf",
+            "qrCode": true,
+            "legend": {
+                "visible": true,
+                "orientation": "portrait"
+            }
+        },
+        "scaleBar": true,
+        "popup": false,
+        "streetView": false,
+        "attribution": false,
+        "search": false,
+        "featureInfo": false,
+        "coordinates": false
+    }
+}

@@ -1,33 +1,27 @@
-﻿TC.tool = TC.tool || {};
+import TC from '../../TC';
+import ElevationService from './ElevationService';
+import Consts from '../Consts';
 
-if (!TC.tool.ElevationService) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
-}
+class ElevationServiceIDENA extends ElevationService {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.url = self.options.url || '//idena.navarra.es/ogc/wps';
+        self.process = self.options.process || 'gs:ExtractRasterPoints';
+        self.coverageClass = self.options.coverageClass || 'MDT_maxima_actualidad,Alturas_maxima_actualidad';
+        self.minimumElevation = self.options.minimumElevation || -9998;
+    }
 
-TC.tool.ElevationServiceIDENA = function (_options) {
-    const self = this;
-    TC.tool.ElevationService.apply(self, arguments);
-    self.url = self.options.url || '//idena.navarra.es/ogc/wps';
-    self.process = self.options.process || 'gs:ExtractRasterPoints';
-    self.coverageClass = self.options.coverageClass || 'MDT_maxima_actualidad,Alturas_maxima_actualidad',
-    self.minimumElevation = self.options.minimumElevation || -9998;
-};
-
-TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
-
-(function () {
-    const toolProto = TC.tool.ElevationServiceIDENA.prototype;
-
-    toolProto.request = function (options) {
+    request(options) {
         const self = this;
         options = options || {};
         const geometryOptions = {
             coordinates: options.coordinates,
-            type: TC.Consts.geom.POLYLINE
+            type: Consts.geom.POLYLINE
         };
         if (options.coordinates.length === 1) {
             geometryOptions.coordinates = options.coordinates[0];
-            geometryOptions.type = TC.Consts.geom.POINT;
+            geometryOptions.type = Consts.geom.POINT;
         }
         let coverageClass = options.coverageClass || self.coverageClass;
         const sepIdx = coverageClass.indexOf(',');
@@ -37,7 +31,7 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
         const dataInputs = {
             coverageClass: coverageClass,
             geometry: {
-                mimeType: TC.Consts.mimeType.JSON,
+                mimeType: Consts.mimeType.JSON,
                 value: TC.wrap.Geometry.toGeoJSON(geometryOptions)
             }
         };
@@ -48,15 +42,15 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
             }
             dataInputs.srid = options.crs.substr(idx + 1);
         }
-        return TC.tool.ElevationService.prototype.request.call(self, { dataInputs: dataInputs }, options);
-    };
+        return super.request.call(self, { dataInputs: dataInputs }, options);
+    }
 
-    toolProto.parseResponse = function (response, options) {
+    parseResponse(response, options) {
         const self = this;
         const coverageClass = options.coverageClass || self.coverageClass;
         const coverageClassCount = options.includeHeights && coverageClass ? coverageClass.split(',').length : 1;
         if (coverageClassCount <= 1) {
-            return TC.tool.ElevationService.prototype.parseResponse.call(self, response, options);
+            return super.parseResponse.call(self, response, options);
         }
         if (response.coordinates) {
             const coords = response.coordinates;
@@ -79,5 +73,7 @@ TC.inherit(TC.tool.ElevationServiceIDENA, TC.tool.ElevationService);
             return result;
         }
         return [];
-    };
-})();
+    }
+}
+
+export default ElevationServiceIDENA;

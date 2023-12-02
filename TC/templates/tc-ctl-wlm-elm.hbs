@@ -27,7 +27,7 @@
             {{else}}
                 {{#if legend.length}}
                 <div class="tc-ctl-wlm-legend" data-layer-name="{{layerNames}}">
-                    <h4>{{i18n "content"}}</h4>
+                    <h4>{{i18n "content"}}:</h4>
                     {{#each legend}}
                         {{#each this}}
                     <div><p>{{title}}</p><img data-img="{{src}}" /></div>
@@ -38,7 +38,7 @@
             {{/if}}
             {{#if metadata.length}}
             <div class="tc-ctl-wlm-metadata">
-                <h4>{{i18n "metadata"}}</h4>
+                <h4>{{i18n "metadata"}}:</h4>
                 <ul>
                     {{#each metadata}}
                     <li>

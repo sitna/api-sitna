@@ -32,7 +32,7 @@ casper.test.begin('IDENA-warm up', function (test) {
         test.assertExists('#map', 'El div del mapa esta presente en la pagina');
 
         //Espero a que los slide-panel se hayan cargado en la página.
-        const slidePanelSelector = 'section.slide-panel';
+        const slidePanelSelector = 'section.tc-slide-panel';
         casper.waitForSelector(slidePanelSelector, function () {
             test.assertElementCount(slidePanelSelector, 3, 'El visor contiene leyenda, mapa de situacion y panel de herramientas');
             test.assert(consoleErrors.length === 0, 'No hay errores en la consola');

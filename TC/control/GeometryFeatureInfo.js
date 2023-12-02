@@ -3,8 +3,9 @@
   * Opciones de control de obtención de información de entidades de mapa por línea o por recinto.
   * @typedef GeometryFeatureInfoOptions
   * @extends FeatureInfoOptions
-  * @see MultiFeatureInfoModeOptions
-  * @property {LineStyleOptions|PolygonStyleOptions} [filterStyle] - Estilo de la entidad cuya geometría servirá de filtro espacial para la consulta.
+  * @memberof SITNA.control
+  * @see SITNA.control.MultiFeatureInfoModeOptions
+  * @property {PolylineStyleOptions|PolygonStyleOptions} [filterStyle] - Estilo de la entidad cuya geometría servirá de filtro espacial para la consulta.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta muestra también resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si este valor es verdadero, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
@@ -17,37 +18,31 @@ import FeatureInfoCommons from './FeatureInfoCommons';
 import filter from '../filter';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
-TC.control.FeatureInfoCommons = FeatureInfoCommons;
 TC.filter = filter;
 
-(function () {
-    TC.control.GeometryFeatureInfo = function () {
-        var self = this;
-        TC.control.FeatureInfoCommons.apply(this, arguments);
+class GeometryFeatureInfo extends FeatureInfoCommons {
+    constructor() {
+        super(...arguments);
+        const self = this;
         self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;
-    };
+    }
 
-    TC.inherit(TC.control.GeometryFeatureInfo, TC.control.FeatureInfoCommons);
-
-    var ctlProto = TC.control.GeometryFeatureInfo.prototype;
-
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
-        const result = TC.control.FeatureInfoCommons.prototype.register.call(self, map);
+        const result = super.register.call(self, map);
 
-        self.on(TC.Consts.event.CONTROLDEACTIVATE, function (_e) {
+        self.on(Consts.event.CONTROLDEACTIVATE, function (_e) {
             self.wrap.cancelDraw();
         });
 
-        return result;
-    };
+        return await result;
+    }
 
-    ctlProto.callback = function (coords, _xy) {
-        var self = this;
+    callback(coords, _xy) {
+        const self = this;
         return new Promise(function (resolve, _reject) {
             if (self._drawToken) {
                 resolve();
@@ -62,7 +57,7 @@ TC.filter = filter;
             var visibleLayers = false;
             for (var i = 0; i < self.map.workLayers.length; i++) {
                 var layer = self.map.workLayers[i];
-                if (layer.type === TC.Consts.layerType.WMS) {
+                if (layer.type === Consts.layerType.WMS) {
                     if (layer.getVisibility() && layer.names.length > 0) {
                         visibleLayers = true;
                         break;
@@ -76,7 +71,7 @@ TC.filter = filter;
                     xy: coords,
                     layer: self.filterLayer,
                     callback: function (feature) {
-                        self.wrap.getFeaturesByGeometry(feature).then(() => resolve());
+                        self.wrap.getFeaturesByGeometry(feature).then(resolve);
                     }
                 });
             }
@@ -84,16 +79,16 @@ TC.filter = filter;
                 resolve();
             }
         });
-    };
+    }
 
-    ctlProto.sendRequest = function (filter) {
+    sendRequest(filter) {
         return this.wrap.getFeaturesByGeometry(filter);
-    };
+    }
 
-    ctlProto.responseCallback = function (options) {
-        var self = this;
+    responseCallback(options) {
+        const self = this;
 
-        TC.control.FeatureInfoCommons.prototype.responseCallback.call(self, options);
+        super.responseCallback.call(self, options);
 
         if (self.filterFeature) {
             var services = options.services;
@@ -103,7 +98,7 @@ TC.filter = filter;
                 var service = services[i];
                 if (service.hasLimits) {
                     delete service.layers;
-                    service.hasLimits = service.hasLimits;
+                    //service.hasLimits = service.hasLimits;
                 }
                 else {
                     for (var j = 0; j < service.layers.length; j++) {
@@ -123,17 +118,16 @@ TC.filter = filter;
                 if (services.length) {
                     self.insertLinks();
                 }
-                self.div.querySelector(`.${self.CLASS}-coords`).classList.add(TC.Consts.classes.HIDDEN);
+                self.div.querySelector(`.${self.CLASS}-coords`).classList.add(Consts.classes.HIDDEN);
                 if (!self.info || !self.info.services.length) {
-                    self.map.toast(self.getLocaleString('query.msgNoResults'), { type: TC.Consts.msgType.INFO });
+                    self.map.toast(self.getLocaleString('query.msgNoResults'), { type: Consts.msgType.INFO });
                     return;
                 }
                 self.displayResults();
             });
         }
-    };
+    }
+}
 
-})();
-
-const GeometryFeatureInfo = TC.control.GeometryFeatureInfo;
+TC.control.GeometryFeatureInfo = GeometryFeatureInfo;
 export default GeometryFeatureInfo;

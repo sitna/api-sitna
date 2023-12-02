@@ -2,40 +2,45 @@
 import Consts from '../Consts';
 import MapContents from './MapContents';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.control.MapContents = MapContents;
 
-TC.control.Legend = function () {
-    TC.control.MapContents.apply(this, arguments);
+const Legend = function () {
+    MapContents.apply(this, arguments);
 };
 
-TC.inherit(TC.control.Legend, TC.control.MapContents);
+TC.inherit(Legend, MapContents);
 
 (function () {
-    var ctlProto = TC.control.Legend.prototype;
+    var ctlProto = Legend.prototype;
 
     ctlProto.CLASS = 'tc-ctl-legend';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-legend.hbs";
-    ctlProto.template[ctlProto.CLASS + '-node'] = TC.apiLocation + "TC/templates/tc-ctl-legend-node.hbs";
 
     ctlProto.register = function (map) {
         const self = this;
 
-        map.on(TC.Consts.event.VIEWCHANGE, function (e) {
+        map.on(Consts.event.VIEWCHANGE, function (e) {
             const view = e.view;
             const onLayerAdd = self.loadGraphics.bind(self);
 
-            if (view === TC.Consts.view.THREED) {                
-                map.on(TC.Consts.event.LAYERADD, onLayerAdd);
-            } else if (view === TC.Consts.view.DEFAULT) {
-                map.off(TC.Consts.event.LAYERADD, onLayerAdd);
+            if (view === Consts.view.THREED) {                
+                map.on(Consts.event.LAYERADD, onLayerAdd);
+            } else if (view === Consts.view.DEFAULT) {
+                map.off(Consts.event.LAYERADD, onLayerAdd);
             }
         });
 
-        return TC.control.MapContents.prototype.register.call(self, map);
+        return MapContents.prototype.register.call(self, map);
+    };
+
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-legend.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-legend-node.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        self.template = template;
     };
 
     ctlProto.loadGraphics = function () {
@@ -44,10 +49,11 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
             const layer = self.map.getLayer(li.dataset.layerId);
             if (layer) {
                 li.querySelectorAll('li.' + self.CLASS + '-node-visible').forEach(function (l) {
-                    const img = l.querySelector('img');
-                    if (img && img.getAttribute('src') !== undefined && img.getAttribute('src').length === 0) {
-                        self.styleLegendImage(img, layer);
-                    }
+                    l.querySelectorAll('img').forEach(function (img) {
+                        if (img && img.hasAttribute('src') && img.getAttribute('src').length === 0) {
+                            self.styleLegendImage(img, layer);
+                        }
+                    });
                 });
             }
         });
@@ -71,10 +77,9 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
                             layersInScale = true;
                             l.classList.remove(outOfScale);
                             l.classList.add(inScale);
-                            const img = l.querySelector('img');
-                            if (img) {
+                            l.querySelectorAll('img').forEach(function (img) {
                                 self.styleLegendImage(img, layer);
-                            }
+                            });
                         }
                         else {
                             l.classList.add(outOfScale);
@@ -84,10 +89,9 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
                 });
                 layersInScale = layersInScale || !lis.length;
                 if (!lis.length) {
-                    const img = li.querySelector('img');
-                    if (img) {
-                        self.styleLegendImage(img);
-                    }
+                    li.querySelectorAll('img').forEach(function (img) {
+                        self.styleLegendImage(img, layer);
+                    });
                 }
                 li.classList.toggle(inScale, layersInScale);
                 li.classList.toggle(outOfScale, !layersInScale);
@@ -109,15 +113,15 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
                     const hasVisible = self.CLASS + '-node-hasvisible';
 
                     switch (layer.getNodeVisibility(l.dataset.layerUid, tree)) {
-                        case TC.Consts.visibility.VISIBLE:
+                        case Consts.visibility.VISIBLE:
                             l.classList.remove(notVisible, hasVisible);
                             l.classList.add(visible);
                             break;
-                        case TC.Consts.visibility.NOT_VISIBLE:
+                        case Consts.visibility.NOT_VISIBLE:
                             l.classList.remove(visible, hasVisible);
                             l.classList.add(notVisible);
                             break;
-                        case TC.Consts.visibility.HAS_VISIBLE:
+                        case Consts.visibility.HAS_VISIBLE:
                             l.classList.remove(visible, notVisible);
                             l.classList.add(hasVisible);                            
                             break;
@@ -155,7 +159,7 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
                 layer.hideTree = layer.options.hideTree = false;*/
             }      
 
-            self.div.querySelector('.' + self.CLASS + '-empty').classList.add(TC.Consts.classes.HIDDEN);            
+            self.div.querySelector('.' + self.CLASS + '-empty').classList.add(Consts.classes.HIDDEN);            
             var params = layer.getNestedTree ? layer.getNestedTree() : layer.getTree();//self.layerTrees[layer.id];
             if (layer._title && layer._title !== layer.title)
                 params = Object.assign(params,{ "title": layer._title });
@@ -189,7 +193,7 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
 
     ctlProto.removeLayer = function (layer) {
         if (!layer.isBase) {
-            TC.control.MapContents.prototype.removeLayer.call(this, layer);
+            MapContents.prototype.removeLayer.call(this, layer);
         }
     };
 
@@ -208,5 +212,5 @@ TC.inherit(TC.control.Legend, TC.control.MapContents);
     };
 })();
 
-const Legend = TC.control.Legend;
+TC.control.Legend = Legend;
 export default Legend;

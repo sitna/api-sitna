@@ -1,5 +1,4 @@
 const path = require('path');
-const precompiledTemplates = require('./precompiledTemplates');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
 module.exports = {
@@ -8,20 +7,33 @@ module.exports = {
     devtool: 'source-map',
     resolve: {
         fallback: {
-            buffer: require.resolve('buffer/')
+            buffer: require.resolve('buffer/'),
+            assert: false,
+            util: require.resolve('./util-fallback.js')
         }
     },
-    plugins: [
-        new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer']
-        })
-    ],
     module: {
         rules: [
             {
                 test: /\.js$/,
                 enforce: 'pre',
                 use: ['source-map-loader']
+            },
+            {
+                test: /\.js$/,
+                exclude: [/node_modules/, /lib/],
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        plugins: ['@babel/plugin-proposal-class-properties'
+                            , '@babel/plugin-proposal-class-static-block'
+                            , '@babel/plugin-proposal-private-methods'
+                            , '@babel/plugin-proposal-private-property-in-object'
+                            , '@babel/plugin-proposal-optional-chaining'
+                            , '@babel/plugin-proposal-logical-assignment-operators'
+                            , '@babel/plugin-proposal-nullish-coalescing-operator']
+                    }
+                }
             },
             {
                 resource: path.resolve(__dirname, '../sitna.js'),
@@ -42,31 +54,15 @@ module.exports = {
                         }
                     ]
                 }
-            },
-            {
-                test: /(sitna)|(TC).+\.js$/,
-                loader: 'string-replace-loader',
-                options: {
-                    multiple: [
-                        // Sustituimos plantillas de control únicas por su resultado compilado
-                        {
-                            search: /template = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g,
-                            replace(match, p1) {
-                                return "template = " + precompiledTemplates[p1 + '.hbs'];
-                            }
-                        },
-                        // Sustituimos plantillas de control múltiples por su resultado compilado
-                        {
-                            search: /template\[(.+)\] = TC\.apiLocation \+ \"TC\/templates\/(.+)\.hbs\";/g,
-                            replace(match, p1, p2) {
-                                return "template[" + p1 + "] = " + precompiledTemplates[p2 + '.hbs'];
-                            }
-                        }
-                    ]
-                }
             }
         ]
     },
+    ignoreWarnings: [/Failed to parse source map/],
+    plugins: [
+        new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        })
+    ],
     optimization: {
         minimizer: [new TerserPlugin({
             extractComments: false

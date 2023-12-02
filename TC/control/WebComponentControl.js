@@ -2,12 +2,14 @@
 import BasicMap from '../Map';
 import Util from '../Util';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import i18n from '../i18n';
-import Button from '../../SITNA/ui/Button';
+import Handlebars from '../../lib/handlebars/helpers';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
 TC.i18n = TC.i18n || i18n;
+
+const elementName = 'sitna-control';
 
 class WebComponentControl extends HTMLElement {
     template;
@@ -22,6 +24,7 @@ class WebComponentControl extends HTMLElement {
         self.map = null;
         self.isActive = false;
         self.isDisabled = false;
+        self.CLASS = self.getClassName();
 
         var len = arguments.length;
 
@@ -74,9 +77,12 @@ class WebComponentControl extends HTMLElement {
         else {
             let element = self;
             do {
-                element = element.parentNode;
+                element = element.parentElement;
+                if (!self.containerControl && element instanceof WebComponentControl) {
+                    self.containerControl = element;
+                }
             }
-            while (element && !element.classList.contains(TC.Consts.classes.MAP));
+            while (element && !element.classList.contains(Consts.classes.MAP));
             map = BasicMap.get(element);
             if (map) {
                 map.addControl(self);
@@ -87,12 +93,32 @@ class WebComponentControl extends HTMLElement {
         }
     }
 
+    disconnectedCallback() {
+        this.unregister();
+    }
+
+    getClassName() {
+        return this.CLASS;
+    }
+
+    initProperty(name) {
+        const self = this;
+        if (Object.prototype.hasOwnProperty.call(self.options, name)) {
+            self[name] = self.options[name];
+        }
+        return self;
+    }
+
     show() {
         this.style.display = '';
+        return this;
     }
 
     hide() {
-        this.style.display = 'none';
+        const self = this;
+        self.style.display = 'none';
+        self.unhighlight();
+        return self;
     }
 
     render(callback) {
@@ -105,6 +131,10 @@ class WebComponentControl extends HTMLElement {
         }));
     }
 
+    async loadTemplates() {
+
+    }
+
     _set1stRenderPromise(promise) {
         const self = this;
         if (!self._firstRender) {
@@ -113,163 +143,143 @@ class WebComponentControl extends HTMLElement {
         return promise;
     }
 
-    renderData(data, callback) {
+    async renderData(data, callback) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            if (self.map) {
-                self.trigger(TC.Consts.event.BEFORECONTROLRENDER, { dataObject: data });
-            }
-            self.classList.toggle(TC.Consts.classes.DISABLED, self.isDisabled);
+        if (self.map) {
+            self.trigger(Consts.event.BEFORECONTROLRENDER, { dataObject: data });
+        }
+        self.classList.toggle(Consts.classes.DISABLED, self.isDisabled);
 
-            let template;
-            if (typeof self.template === 'object' && !self.template.compiler) {
-                template = self.template[self.CLASS];
-            }
-            else {
-                template = self.template;
-                self.template = {};
-                self.template[self.CLASS] = template;
-            }
+        let template;
+        if (!self.template) {
+            await self.loadTemplates();
+        }
+        if (typeof self.template === 'object' && !self.template.compiler) {
+            template = self.template[self.CLASS];
+        }
+        else {
+            template = self.template;
+            self.template = {};
+            self.template[self.CLASS] = template;
+        }
 
-            self.getRenderedHtml(self.CLASS, data)
-                .then(function (html) {
-                    self.innerHTML = html;
-                    if (!self.parentElement && self.div) {
-                        self.div.appendChild(self);
-                    }
-                    if (self.map) {
-                        self.trigger(TC.Consts.event.CONTROLRENDER);
-                    }
-                    if (TC.Util.isFunction(callback)) {
-                        callback();
-                    }
-                    resolve();
-                });
-        });
+        const html = await self.getRenderedHtml(self.CLASS, data);
+        self.innerHTML = html;
+        if (!self.parentElement && self.div) {
+            self.div.appendChild(self);
+        }
+        if (self.map) {
+            self.trigger(Consts.event.CONTROLRENDER);
+        }
+        if (TC.Util.isFunction(callback)) {
+            callback();
+        }
     }
 
-    getRenderedHtml(templateId, data, callback) {
+    async getRenderedHtml(templateId, data, callback) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
 
-            const endFn = function (template) {
-                if (typeof template === 'undefined') {
-                    resolve('');
-                    return;
-                }
-                const html = template(data);
-                if (TC.Util.isFunction(callback)) {
-                    callback(html);
-                }
-                resolve(html);
-            };
+        const endFn = function (template) {
+            if (typeof template === 'undefined') {
+                return '';
+            }
+            const html = template(data);
+            if (TC.Util.isFunction(callback)) {
+                callback(html);
+            }
+            return html;
+        };
 
-            const template = self.template[templateId];
-            if (typeof template !== 'function') {
-                self.#processTemplates({ locale: self.map && self.map.options.locale, className: self.CLASS }).then(function () {
-                    endFn(self.template[templateId]);
-                });
-            }
-            else {
-                endFn(template);
-            }
-        });
+        if (!self.template) {
+            await self.loadTemplates();
+        }
+        const template = self.template[templateId];
+        if (typeof template !== 'function') {
+            await self.#processTemplates({ locale: self.map && self.map.options.locale, className: self.CLASS });
+            return endFn(self.template[templateId]);
+        }
+        else {
+            return endFn(template);
+        }
     }
 
-    #processTemplates(options) {
+    async #processTemplates(options) {
         const self = this;
         options = options || {};
-        return new Promise(function (resolve, _reject) {
-            const templates = self.template;
-            let mustCompile = false;
-            for (var key in templates) {
-                const template = templates[key];
-                if (typeof template === 'string') {
-                    mustCompile = true;
-                }
-            }
+        const templates = self.template;
 
-            const callback = function () {
-                const templatePromises = [];
-                for (var key in templates) {
-                    const templateName = key;
-                    let template = templates[templateName];
-                    if (typeof template === 'string') {
-                        templatePromises.push(new Promise(function (res, rej) {
-                            TC.ajax({
-                                url: template,
-                                method: 'GET',
-                                responseType: 'text'
-                            })
-                                .then(function (response) {
-                                    templates[templateName] = template = TC._hbs.compile(response.data); // TODO: add optimization options
-                                    res(template);
-                                })
-                                .catch(function (err) {
-                                    console.log("Error fetching template: " + err);
-                                    rej(err);
-                                });
-                        }));
-                    }
-                    else {
-                        if (typeof template === 'object') {
-                            templates[key] = template = TC._hbs.template(template);
-                        }
-                    }
-                }
-
-                Promise.all(templatePromises).then(function () {
-                    for (var key in templates) {
-                        const t = templates[key];
-                        if (t && key !== options.className) {
-                            TC._hbs.registerPartial(key, templates[key]);
-                        }
-                    }
-                    resolve();
-                });
-            };
-
-            if (mustCompile) {
-                TC.loadJSInOrder(
-                    !TC._hbs || !TC._hbs.compile,
-                    [
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_FULL,
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
-                    ],
-                    callback
-                );
+        const templatePromises = [];
+        for (var key in templates) {
+            const templateName = key;
+            let template = templates[templateName];
+            if (typeof template === 'string') {
+                templatePromises.push(new Promise(function (res, rej) {
+                    TC.ajax({
+                        url: template,
+                        method: 'GET',
+                        responseType: 'text'
+                    })
+                        .then(function (response) {
+                            templates[templateName] = template = Handlebars.compile(response.data); // TODO: add optimization options
+                            res(template);
+                        })
+                        .catch(function (err) {
+                            console.log("Error fetching template: " + err);
+                            rej(err);
+                        });
+                }));
             }
             else {
-                TC.loadJSInOrder(
-                    !TC._hbs,
-                    [
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_RUNTIME,
-                        TC.apiLocation + TC.Consts.url.TEMPLATING_HELPERS
-                    ],
-                    callback
-                );
+                if (typeof template === 'object') {
+                    templates[key] = template = Handlebars.template(template);
+                }
             }
-        });
+        }
+
+        await Promise.all(templatePromises);
+        for (var key in templates) {
+            const t = templates[key];
+            if (t && key !== options.className) {
+                Handlebars.registerPartial(key, templates[key]);
+            }
+        }
+
     }
 
-    register(map) {
+    async register(map) {
         const self = this;
-        self.id = self.options.id || TC.getUID({
-            prefix: self.CLASS.substr('tc-ctl'.length + 1) + '-'
-        });
-        return new Promise(function (resolve, _reject) {
-            self.map = map;
-            Promise.resolve(self.render()).then(function () {
-                if (!self.div.parentElement) {
-                    map.div.appendChild(self);
-                    self.div = map.div;
-                }
-                if (self.options.active) {
-                    self.activate();
-                }
-                resolve(self);
+        if (!self.id) {
+            self.id = self.options.id || TC.getUID({
+                prefix: self.CLASS.substr('tc-ctl'.length + 1) + '-'
             });
-        });
+        }
+        self.map = map;
+        await self.render();
+        if (!self.parentElement) {
+            map.div.appendChild(self);
+            self.div = map.div;
+        }
+        if (self.options.active) {
+            self.activate();
+        }
+        return self;
+    }
+
+    unregister() {
+        const self = this;
+        if (self.map) {
+            self.map.layers.slice().forEach(layer => {
+                if (layer.owner === self) {
+                    self.map.removeLayer(layer);
+                }
+            });
+            const idx = self.map.controls.indexOf(self);
+            if (idx >= 0) {
+                self.map.controls.splice(idx, 1);
+            }
+            self.map = null;
+        }
+        return self;
     }
 
     activate() {
@@ -281,9 +291,10 @@ class WebComponentControl extends HTMLElement {
         self.isActive = true;
         if (self.map) {
             self.map.activeControl = self;
-            self.map.trigger(TC.Consts.event.CONTROLACTIVATE, { control: self });
-            self.trigger(TC.Consts.event.CONTROLACTIVATE, { control: self });
+            self.map.trigger(Consts.event.CONTROLACTIVATE, { control: self });
+            self.trigger(Consts.event.CONTROLACTIVATE, { control: self });
         }
+        return self;
     }
 
     deactivate(stopChain) {
@@ -310,26 +321,28 @@ class WebComponentControl extends HTMLElement {
                 if (nextControl)
                     nextControl.activate();
             }
-            self.map.trigger(TC.Consts.event.CONTROLDEACTIVATE, { control: self });
-            self.trigger(TC.Consts.event.CONTROLDEACTIVATE, { control: self });
+            self.map.trigger(Consts.event.CONTROLDEACTIVATE, { control: self });
+            self.trigger(Consts.event.CONTROLDEACTIVATE, { control: self });
         }
+        return self;
     }
 
     enable() {
         const self = this;
         self.isDisabled = false;
-        self.classList.remove(TC.Consts.classes.DISABLED);
+        self.classList.remove(Consts.classes.DISABLED);
         delete self.dataset.tcMessage;
         if (self.containerControl && self.containerControl.onControlEnable) {
             self.containerControl.onControlEnable(self);
         }
+        return self;
     }
 
     disable(options) {
         const self = this;
         options = options || {};
         self.isDisabled = true;
-        self.classList.add(TC.Consts.classes.DISABLED);
+        self.classList.add(Consts.classes.DISABLED);
         let message = self.getLocaleString('disabledControl');
         if (options.reason) {
             message = `${message} - ${options.reason}`;
@@ -338,12 +351,43 @@ class WebComponentControl extends HTMLElement {
         if (self.containerControl && self.containerControl.onControlDisable) {
             self.containerControl.onControlDisable(self);
         }
+        return self;
+    }
+
+    highlight() {
+        const self = this;
+        if (self.div) {
+            self.div.classList.add(Consts.classes.HIGHLIGHTED);
+        }
+        if (self.map) {
+            self.map.trigger(Consts.event.CONTROLHIGHLIGHT, { control: self });
+        }
+        return self;
+    }
+
+    unhighlight() {
+        const self = this;
+        if (self.div) {
+            self.div.classList.remove(Consts.classes.HIGHLIGHTED);
+        }
+        if (self.map) {
+            self.map.trigger(Consts.event.CONTROLUNHIGHLIGHT, { control: self });
+        }
+        return self;
+    }
+
+    isHighlighted() {
+        const self = this;
+        if (self.div) {
+            return self.div.classList.contains(Consts.classes.HIGHLIGHTED);
+        }
+        return false;
     }
 
     renderPromise() {
         const self = this;
         return self._firstRender || new Promise(function (resolve, _reject) {
-            self.one(TC.Consts.event.CONTROLRENDER, function () {
+            self.one(Consts.event.CONTROLRENDER, function () {
                 resolve(self);
             });
         });
@@ -355,9 +399,11 @@ class WebComponentControl extends HTMLElement {
         elements.forEach(function (elm) {
             elm.addEventListener(event, listener);
         });
+        return self;
     }
 
     addUIEventListeners() {
+        return this;
     }
 
     isExclusive() {
@@ -366,7 +412,7 @@ class WebComponentControl extends HTMLElement {
 
     getLocaleString(key, texts) {
         const self = this;
-        const locale = self.map ? self.map.options.locale : TC.Cfg.locale;
+        const locale = self.map ? self.map.options.locale : Cfg.locale;
         return Util.getLocaleString(locale, key, texts);
     }
 
@@ -386,82 +432,68 @@ class WebComponentControl extends HTMLElement {
     }
 
     importState(_state) {
+        return this;
     }
 
-    getDownloadDialog() {
+    async getDownloadDialog() {
         const self = this;
         self._downloadDialog = self._downloadDialog || self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
-        if (self._downloadDialog) {
-            self._downloadDialog.caller = self;
-            return Promise.resolve(self._downloadDialog);
+        if (!self._downloadDialog) {
+            self._downloadDialog = await self.map.addControl('FeatureDownloadDialog');
         }
-        return new Promise(function (resolve, _reject) {
-            self.map.addControl('FeatureDownloadDialog').then(ctl => {
-                self._downloadDialog = ctl;
-                self._downloadDialog.caller = self;
-                resolve(ctl);
-            });
-        });
+        self._downloadDialog.caller = self;
+        return self._downloadDialog;
     }
 
-    getElevationTool() {
+    async getElevationTool() {
         const self = this;
         if (!self.displayElevation && !self.options.displayElevation) {
-            return Promise.resolve(null);
+            return null;
         }
         if (self.elevation) {
-            return Promise.resolve(self.elevation);
+            return self.elevation;
         }
-        return new Promise(function (resolve, _reject) {
-            TC.loadJS(
-                !TC.tool || !TC.tool.Elevation,
-                TC.apiLocation + 'TC/tool/Elevation',
-                function () {
-                    if (typeof self.options.displayElevation === 'boolean') {
-                        if (self.map) {
-                            self.map.getElevationTool().then(function (mapElevation) {
-                                if (mapElevation) {
-                                    self.elevation = mapElevation;
-                                }
-                                else {
-                                    self.elevation = new TC.tool.Elevation();
-                                }
-                                resolve(self.elevation);
-                            });
-                        }
-                        else {
-                            self.elevation = new TC.tool.Elevation();
-                            resolve(self.elevation);
-                        }
-                    }
-                    else {
-                        if (self.map) {
-                            self.map.getElevationTool().then(function (mapElevation) {
-                                if (mapElevation) {
-                                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
-                                }
-                                else {
-                                    self.elevation = new TC.tool.Elevation(self.options.displayElevation);
-                                }
-                                resolve(self.elevation);
-                            });
-                        }
-                        else {
-                            self.elevation = new TC.tool.Elevation(self.options.displayElevation);
-                            resolve(self.elevation);
-                        }
-                    }
+        if (!TC.tool.Elevation) {
+            await import('../tool/Elevation');
+        }
+        if (typeof self.options.displayElevation === 'boolean') {
+            if (self.map) {
+                const mapElevation = await self.map.getElevationTool();
+                if (mapElevation) {
+                    self.elevation = mapElevation;
                 }
-            );
-        });
+                else {
+                    self.elevation = new TC.tool.Elevation();
+                }
+            }
+            else {
+                self.elevation = new TC.tool.Elevation();
+            }
+        }
+        else {
+            if (self.map) {
+                const mapElevation = await self.map.getElevationTool();
+                if (mapElevation) {
+                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
+                }
+                else {
+                    self.elevation = new TC.tool.Elevation(self.options.displayElevation);
+                }
+            }
+            else {
+                self.elevation = new TC.tool.Elevation(self.options.displayElevation);
+            }
+        }
+        return self.elevation;
     }
 
     #getNativeListener(evt, callback) {
+        const self = this;
         const result = function (evt) {
             const cbParameter = {
                 type: evt.type,
-                target: this,
-                currentTarget: this
+                target: self,
+                currentTarget: self
             };
             if (evt.detail) {
                 Object.keys(evt.detail).forEach(function (key) {
@@ -470,9 +502,10 @@ class WebComponentControl extends HTMLElement {
                     }
                 });
             }
-            return callback.call(this, cbParameter);
+            return callback.call(self, cbParameter);
         }.bind(this);
-        const stack = this._listeners[evt] = this._listeners[evt] || new Map();
+        self._listeners = self._listeners || [];
+        const stack = self._listeners[evt] = this._listeners[evt] || new Map();
         stack.set(callback, result);
         return result;
     }
@@ -486,12 +519,11 @@ class WebComponentControl extends HTMLElement {
     }
 
     on(events, callback) {
-        const self = this;
-        return self.#onInternal(events, callback);
+        return this.#onInternal(events, callback);
     }
 
     one(events, callback) {
-        return self.#onInternal(events, callback, { once: true });
+        return this.#onInternal(events, callback, { once: true });
     }
 
     off(events, callback) {
@@ -587,6 +619,6 @@ class WebComponentControl extends HTMLElement {
     }
 }
 
-customElements.define('sitna-control', WebComponentControl);
+customElements.get(elementName) || customElements.define(elementName, WebComponentControl);
 TC.control.WebComponentControl = WebComponentControl;
 export default WebComponentControl;

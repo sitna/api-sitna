@@ -3,8 +3,8 @@ import Consts from './Consts';
 import i18n from './i18n';
 import proj4 from 'proj4';
 import UAParser from 'ua-parser-js';
+import Handlebars from '../lib/handlebars/helpers';
 
-TC.Consts = Consts;
 TC.i18n = TC.i18n || i18n;
 
 String.prototype.soundex = function () {
@@ -35,7 +35,7 @@ var toLocaleString = Number.prototype.toLocaleString;
 Number.prototype.toLocaleString = function (locale, _options) {
     if (locale === "eu-ES" && !TC.Util.detectIE()) {
         var sNum = toLocaleString.apply(this, arguments);
-        sNum = sNum.replace(/\,/g, '.');
+        sNum = sNum.replace(/,/g, '.');
         if (!(Math.floor(this) === this && Number.isInteger(Math.floor(this))))
             sNum = sNum.replace(/.([^.]*)$/, ",$1");
 
@@ -52,9 +52,12 @@ var path1 = ["Capability", "Request", "GetMap", "DCPType", "0", "HTTP", "Get", "
 var path2 = ["OperationsMetadata", "GetTile", "DCP", "HTTP", "Get", "0", "href"];
 var getOnPath = function (obj, p, i) {
     if (i < p.length - 1) {
-        if (obj.hasOwnProperty(p[i]))
+        if (Object.prototype.hasOwnProperty.call(obj, p[i])) {
             return getOnPath(obj[p[i]], p, ++i);
-        else return null;
+        }
+        else {
+            return null;
+        }
     } else {
         return obj[p[i]];
     }
@@ -70,6 +73,26 @@ const countDecimals = (value) => {
         return value.toString().split(".")[1].length || 0;
     return 0;
 };
+
+const stylePropertyNames = new Set([
+    'strokeColor',
+    'strokeWidth',
+    'fillColor',
+    'strokeOpacity',
+    'fillOpacity',
+    'url',
+    'radius',
+    'anchor',
+    'width',
+    'height',
+    'label',
+    'labelKey',
+    'labelOutlineWidth',
+    'labelOutlineColor',
+    'labelOffset',
+    'fontColor',
+    'fontSize'
+]);
 
 
 var Util = {
@@ -304,7 +327,7 @@ var Util = {
     },
 
     isURL: function (text) {
-        return /^(http|https|ftp|mailto)\:\/\//i.test(text);
+        return /^(http|https|ftp|mailto):\/\//i.test(text);
     },
 
     isSecureURL: function (url) {
@@ -317,7 +340,7 @@ var Util = {
 
     isSameOrigin: function (uri) {
         var result = uri.indexOf("http") !== 0 && uri.indexOf("//") !== 0;
-        var urlParts = !result && uri.match(TC.Consts.url.SPLIT_REGEX);
+        var urlParts = !result && uri.match(Consts.url.SPLIT_REGEX);
         if (urlParts) {
             var location = window.location;
             var uProtocol = urlParts[1];
@@ -437,11 +460,8 @@ var Util = {
                 var classes = options.classes || TC.Cfg.styles.marker.classes;
                 className = classes[0];
                 if (options.group) {
-                    if (markerGroupClassCache[options.group] === undefined) {
-                        var i = 0;
-                        for (var key in markerGroupClassCache) {
-                            i++;
-                        }
+                    if (!Object.prototype.hasOwnProperty.call(markerGroupClassCache, options.group)) {
+                        let i = Object.keys(markerGroupClassCache).length;
                         i = i % classes.length;
                         markerGroupClassCache[options.group] = classes[i];
                     }
@@ -475,17 +495,18 @@ var Util = {
             width = Math.max(width, diameter);
             height = Math.max(height, diameter);
             switch (options.geometryType) {
-                case TC.Consts.geom.POINT:
+                case Consts.geom.POINT:
                     body = `<circle cx="${width / 2}" cy="${height / 2}" r="${style.radius}" stroke="${style.strokeColor}" stroke-width="${strokeWidth}" fill="${fillColor}" fill-opacity="${fillOpacity}" ${lineDashText}/>`;
                     break;
-                case TC.Consts.geom.POLYLINE:
+                case Consts.geom.POLYLINE: {
                     const xStart = strokeHalfWidth;
                     const yStart = height - strokeHalfWidth;
                     const xEnd = width - strokeHalfWidth;
                     const yEnd = strokeHalfWidth;
                     body = `<polyline points="${xStart},${yStart} ${xEnd},${yEnd}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth}" ${lineDashText}/>`;
                     break;
-                case TC.Consts.geom.POLYGON:
+                }
+                case Consts.geom.POLYGON: {
                     const x1 = strokeHalfWidth;
                     const y1 = height - strokeHalfWidth;
                     const x2 = strokeHalfWidth;
@@ -496,6 +517,7 @@ var Util = {
                     const y4 = height - strokeHalfWidth;
                     body = `<polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${fillColor};fill-opacity:${fillOpacity}" ${lineDashText}/>`;
                     break;
+                }
                 default:
                     body = `<rect x="${strokeHalfWidth}" x="${strokeHalfWidth}" width="${width - strokeWidth}" height="${height - strokeWidth}" style="stroke:${style.strokeColor};stroke-width:${strokeWidth};fill:${fillColor};fill-opacity:${fillOpacity}" ${lineDashText}/>`;
                     break;
@@ -521,9 +543,14 @@ var Util = {
                 n = treeNode.children[i];
                 if (n.name === name) {
                     found = true;
-                    const r = addArrayToTree(path, n, index + 1);
-                    if (r) {
-                        result = r;
+                    if (index === path.length - 1) {
+                        result = n;
+                    }
+                    else {
+                        const r = addArrayToTree(path, n, index + 1);
+                        if (r) {
+                            result = r;
+                        }
                     }
                     break;
                 }
@@ -550,7 +577,7 @@ var Util = {
         var _parseGeoCoord = function (text) {
             var t = text;
             var result = {};
-            result.type = TC.Consts.GEOGRAPHIC;
+            result.type = Consts.GEOGRAPHIC;
             var idx = t.indexOf('\u00B0');
             result.value = parseFloat(t.substr(0, idx));
             t = t.substr(idx + 1);
@@ -601,7 +628,7 @@ var Util = {
             }
             // nn.nn N
             if (t.match(/^1?\d{0,2}([.,]\d+)?\s*\u00B0?\s*[NnSsWwOoEe]$/g)) {
-                var result = { type: TC.Consts.GEOGRAPHIC, value: parseFloat(t.substr(0, t.length - 1).replace(',', '.')) };
+                var result = { type: Consts.GEOGRAPHIC, value: parseFloat(t.substr(0, t.length - 1).replace(',', '.')) };
                 if (t.match(/[SsWwOo]$/)) {
                     result.value = -result.value;
                 }
@@ -609,11 +636,11 @@ var Util = {
             }
             // +nn.nn
             if (t.match(/^[+-]?1?\d{0,2}([.,]\d+)?\s*\u00B0?$/g)) {
-                return { type: TC.Consts.GEOGRAPHIC, value: parseFloat(t.replace(',', '.')) };
+                return { type: Consts.GEOGRAPHIC, value: parseFloat(t.replace(',', '.')) };
             }
             // UTM
             if (t.match(/^[-+]?\d{6,7}([.,]\d+)?$/g)) {
-                return { type: TC.Consts.UTM, value: parseFloat(t.replace(',', '.')) };
+                return { type: Consts.UTM, value: parseFloat(t.replace(',', '.')) };
             }
             return null;
         };
@@ -746,6 +773,9 @@ var Util = {
         }
         return result;
     },
+    toURNCRS: function (crs) {
+        return crs.replace(/^(?<epsg>EPSG):(?<code>\d{4,6})$/g, "urn:ogc:def:crs:$<epsg>::$<code>");
+    },
 
     CRSCodesEqual: function (crs1, crs2) {
         if (crs1 === crs2) {
@@ -772,61 +802,53 @@ var Util = {
         return result;
     },
 
-    getRenderedHtml: function (templateOrId, data, callback) {
+    getRenderedHtml: async function (templateOrId, data, callback) {
         const compileTemplate = function (templateId, txt) {
-            const template = TC._hbs.compile(txt); // TODO: add optimization options
-            TC._hbs.registerPartial(templateId, template);
+            const template = Handlebars.compile(txt); // TODO: add optimization options
+            Handlebars.registerPartial(templateId, template);
             templateCache.set(templateId, template);
             return template;
         };
-        const fetchTemplate = function (templateId) {
-            return new Promise(function (resolve, reject) {
-                let template = templateCache.get(templateId);
-                if (template) {
-                    resolve(template);
-                }
-                else {
-                    templateCache.set(templateId, true);
-                    TC.ajax({
+        const fetchTemplate = async function (templateId) {
+            let template = templateCache.get(templateId);
+            if (template) {
+                return template;
+            }
+            else {
+                templateCache.set(templateId, true);
+                let response;
+                try {
+                    response = await TC.ajax({
                         url: TC.apiLocation + `TC/templates/${templateId}.hbs`,
                         method: 'GET',
                         responseType: 'text'
                     })
-                        .then(function (response) {
-                            const matches = response.data.match(/{{> ([a-zA-Z\-]+)(?:(?:\s[a-zA-Z]+)\s*)?}}/);
-                            if (matches) {
-                                Promise.all(matches.slice(1).map(str => fetchTemplate(str.trim()))).then(function () {
-                                    resolve(compileTemplate(templateId, response.data));
-                                });
-                            }
-                            else {
-                                resolve(compileTemplate(templateId, response.data));
-                            }
-                        })
-                        .catch(function (err) {
-                            console.log("Error fetching template: " + err);
-                            reject(err);
-                        });
                 }
-            });
+                catch (err) {
+                    console.log("Error fetching template: " + err.message);
+                    throw err;
+                }
+                const matches = response.data.match(/{{> ([a-zA-Z\-]+)(?:(?:\s[a-zA-Z]+)\s*)?}}/);
+                if (matches) {
+                    await Promise.all(matches.slice(1).map(str => fetchTemplate(str.trim())));
+                }
+                return compileTemplate(templateId, response.data);
+            }
         };
-        return new Promise(function (resolve, reject) {
-            const endFn = function (template) {
-                const html = template(data);
-                if (Util.isFunction(callback)) {
-                    callback(html);
-                }
-                resolve(html);
-            };
-            if (Util.isFunction(templateOrId)) {
-                endFn(templateOrId);
+        const endFn = function (template) {
+            const html = template(data);
+            if (Util.isFunction(callback)) {
+                callback(html);
             }
-            else {
-                fetchTemplate(templateOrId)
-                    .then((template) => endFn(template))
-                    .catch(err => reject(err));
-            }
-        });
+            return html;
+        };
+        if (Util.isFunction(templateOrId)) {
+            return endFn(templateOrId);
+        }
+        else {
+            const template = await fetchTemplate(templateOrId);
+            return endFn(template);
+        }
     },
 
     getSimpleMimeType: function (mimeType) {
@@ -854,26 +876,26 @@ var Util = {
         }
         switch (url.substr(url.lastIndexOf('.') + 1).toLowerCase()) {
             case 'kml':
-                return TC.Consts.mimeType.KML;
+                return Consts.mimeType.KML;
             case 'kmz':
-                return TC.Consts.mimeType.KMZ;
+                return Consts.mimeType.KMZ;
             case 'json':
             case 'geojson':
-                return TC.Consts.mimeType.GEOJSON;
+                return Consts.mimeType.GEOJSON;
             case 'gml':
-                return TC.Consts.mimeType.GML;
+                return Consts.mimeType.GML;
             case 'gpx':
-                return TC.Consts.mimeType.GPX;
+                return Consts.mimeType.GPX;
             case 'gpkg':
-                return TC.Consts.mimeType.GEOPACKAGE;
+                return Consts.mimeType.GEOPACKAGE;
             case 'shp':
             case 'dbf':
             case 'prj':
             case 'cst':
             case 'cpg':
-                return TC.Consts.mimeType.SHAPEFILE;
+                return Consts.mimeType.SHAPEFILE;
             case 'zip':
-                return TC.Consts.mimeType.ZIP;
+                return Consts.mimeType.ZIP;
             default:
                 return null;
         }
@@ -1156,7 +1178,7 @@ var Util = {
         options = options || {};
 
         contentNode.hidden = false;
-        contentNode.classList.add(TC.Consts.classes.VISIBLE);
+        contentNode.classList.add(Consts.classes.VISIBLE);
         const closeButton = contentNode.querySelectorAll('.tc-modal-close');
         if (closeButton && closeButton.length > 0) {
             for (var i = 0; i < closeButton.length; i++) {
@@ -1184,7 +1206,7 @@ var Util = {
     closeModal: function (callback, target) {
 
         const hide = function (modal) {
-            modal.classList.remove(TC.Consts.classes.VISIBLE);
+            modal.classList.remove(Consts.classes.VISIBLE);
         };
 
         var modal;
@@ -1356,24 +1378,26 @@ var Util = {
     getFormatFromFileExtension: function (extension) {
         switch (extension) {
             case '.kml':
-                return TC.Consts.format.KML;
+                return Consts.format.KML;
             case '.kmz':
-                return TC.Consts.format.KMZ;
+                return Consts.format.KMZ;
             case '.gpx':
-                return TC.Consts.format.GPX;
+                return Consts.format.GPX;
             case '.json':
             case '.geojson':
-                return TC.Consts.format.GEOJSON;
+                return Consts.format.GEOJSON;
             case '.gml':
-                return TC.Consts.format.GML;
+                return Consts.format.GML;
             case '.wkt':
-                return TC.Consts.format.WKT;
+                return Consts.format.WKT;
+            case '.wkb':
+                return Consts.format.WKB;
             case '.topojson':
-                return TC.Consts.format.TOPOJSON;
+                return Consts.format.TOPOJSON;
             case '.gpkg':
-                return TC.Consts.format.GEOPACKAGE;
+                return Consts.format.GEOPACKAGE;
             case '.shp':
-                return TC.Consts.format.SHAPEFILE;
+                return Consts.format.SHAPEFILE;
             default:
                 return null;
         }
@@ -1586,13 +1610,13 @@ var Util = {
                 }
             };
 
-            img.onerror = function (error) {
+            img.onerror = function (_error) {
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', TC.proxify(src), true);
                 xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
                 xhr.responseType = 'arraybuffer';
-                xhr.onload = function (e) {
+                xhr.onload = function (_e) {
                     if (this.status === 200) {
                         var uInt8Array = new Uint8Array(this.response);
                         var i = uInt8Array.length;
@@ -1663,7 +1687,7 @@ var Util = {
         var newCanvas = TC.Util.cloneCanvas(canvas);
         var context = newCanvas.getContext('2d');
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, _reject) {
             var newImage = new Image();
             newImage.crossOrigin = 'anonymous';
             newImage.src = img;
@@ -1695,7 +1719,12 @@ var Util = {
     },
 
     mergeCanvases: function (canvases) {
-        const rects = canvases.map(c => c.getBoundingClientRect());
+        const rects = canvases.map(c => c.parentElement ? c.getBoundingClientRect() : {
+            top: 0,
+            left: 0,
+            bottom: c.height,
+            right: c.width
+        });
         const bbox = rects.reduce(function (prev, rect) {
             return [
                 Math.min(prev[0], rect.left),
@@ -1766,7 +1795,7 @@ var Util = {
                 request.open("POST", url);
                 request.setRequestHeader('Content-Type', 'application/xml; charset=UTF-8');
 
-                request.onreadystatechange = function (e) {
+                request.onreadystatechange = function (_e) {
                     if (request.readyState === 4) { // DONE
                         if (request.status !== 200) {
                             reject({
@@ -1811,7 +1840,7 @@ var Util = {
             else if (response.data.type.indexOf("xml") >= 0) {
                 format = ".gml";
                 if (/outputFormat="\S{1,}"/.exec(data)[0].includes(".kml") || /outputFormat="\S{1,}"/.exec(data)[0].includes("shape-zip")) {
-                    throw { key: TC.Consts.DownloadError.MIMETYPE_NOT_SUPORTED, url: url, data: data, format: /outputFormat="\S{1,}"/.exec(data)[0] };
+                    throw { key: Consts.DownloadError.MIMETYPE_NOT_SUPORTED, url: url, data: data, format: /outputFormat="\S{1,}"/.exec(data)[0] };
                 }
             }
             TC.Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data);
@@ -2041,7 +2070,7 @@ var Util = {
 
     isSameOriginByLocation: function (uri, location) {
         var result = uri.indexOf("http") !== 0 && uri.indexOf("//") !== 0;
-        var urlParts = !result && uri.match(TC.Consts.url.SPLIT_REGEX);
+        var urlParts = !result && uri.match(Consts.url.SPLIT_REGEX);
         if (urlParts) {
             var uProtocol = urlParts[1];
             result = (uProtocol == location.protocol || uProtocol == undefined) && urlParts[3] == location.hostname;
@@ -2148,10 +2177,8 @@ var Util = {
             case 'gml:MultiCurvePropertyType':
             case 'gml:CurvePropertyType':
                 return true;
-                break;
             default:
                 return false;
-                break;
         }
     },
 
@@ -2198,22 +2225,27 @@ var Util = {
         };
     },
 
+    isStyleOption: function (name) {
+        return stylePropertyNames.has(name);
+    },
+
     hasStyleOptions: function (options) {
-        return options.hasOwnProperty('strokeColor') ||
-            options.hasOwnProperty('strokeWidth') ||
-            options.hasOwnProperty('fillColor') ||
-            options.hasOwnProperty('strokeOpacity') ||
-            options.hasOwnProperty('fillOpacity') ||
-            options.hasOwnProperty('url') ||
-            options.hasOwnProperty('radius') ||
-            options.hasOwnProperty('anchor') ||
-            options.hasOwnProperty('width') ||
-            options.hasOwnProperty('height') ||
-            options.hasOwnProperty('labelOutlineWidth') ||
-            options.hasOwnProperty('labelOutlineColor') ||
-            options.hasOwnProperty('labelOffset') ||
-            options.hasOwnProperty('fontColor') ||
-            options.hasOwnProperty('fontSize');
+        for (let value of stylePropertyNames.values()) {
+            if (Object.prototype.hasOwnProperty.call(options, value)) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    mergeStyles() {
+        const styles = Array.from(arguments);
+        if (styles.some(s => Util.isFunction(s))) {
+            return function (f) {
+                return Object.assign({}, ...styles.map(s => Util.isFunction(s) ? s(f) : s));
+            };
+        }
+        return Object.assign({}, ...styles);
     },
 
     formatCoord: function (x, nDecimales) {
@@ -2230,9 +2262,19 @@ var Util = {
         //return result;
     },
 
+    formatString: function (str, ...values) {
+        const args = values.length ? values : [""];
+        return str.replace(/{(\d+)}/g, function (match, number) {
+            return typeof args[number] !== 'undefined' ?
+                args[number]
+                : match
+                ;
+        });
+    },
+
     getWebWorkerCrossOriginURL: function (url) {
         return new Promise(function (resolve, reject) {
-            if (window.hasOwnProperty('Worker')) {
+            if (Object.prototype.hasOwnProperty.call(window, 'Worker')) {
                 // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
                 if (TC.Util.isSameOrigin(url)) {
                     resolve(url);
@@ -2259,6 +2301,53 @@ var Util = {
                 reject(new Error('No support for service workers'));
             }
         });
+    },
+
+    createSemaphore: function (maxConcurrentTasks = 1) {
+        let count = 0;
+        let queue = [];
+        return {
+            acquire: function () {
+                if (count < maxConcurrentTasks) {
+                    count++
+                    return Promise.resolve();
+                } else {
+                    return new Promise((resolve, reject) => {
+                        queue.push({ resolve: resolve, reject: reject });
+                    });
+                }
+            },
+            release: function () {
+                count--;
+                if (queue.length > 0 && count < maxConcurrentTasks) {
+                    count++;
+                    let promise = queue.shift();
+                    promise.resolve();
+                }
+            },
+            purge: function () {
+                let unresolvedCount = queue.length;
+
+                for (let i = 0; i < unresolvedCount; i++) {
+                    queue[i].reject('Task has been purged.');
+                }
+
+                count = 0;
+                queue = [];
+
+                return unresolvedCount;
+            }
+        };
+    },
+    patternFn : function (t) {
+        t = t.replace(/[^a-z\dáéíóúüñ]/gi, '\\' + '$&');
+        t = t.replace(/(a|á)/gi, "(a|á)");
+        t = t.replace(/(e|é)/gi, "(e|é)");
+        t = t.replace(/(i|í)/gi, "(i|í)");
+        t = t.replace(/(o|ó)/gi, "(o|ó)");
+        t = t.replace(/(u|ú|ü)/gi, "(u|ú|ü)");
+        t = t.replace(/n/gi, "(n|ñ)");
+        return t;
     }
 };
 
@@ -2282,7 +2371,7 @@ const _queryHeaderConstructor = function (capabilities) {
             queryHeader += 'xmlns:gml="http://www.opengis.net/gml" xmlns:wfs="http://www.opengis.net/wfs" ';
             break;
         case "2.0.0":
-            queryHeader += 'xmlns:wfs=\"http://www.opengis.net/wfs/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" ';
+            queryHeader += 'xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" ';
             break;
     }
     for (var i in capabilities) {

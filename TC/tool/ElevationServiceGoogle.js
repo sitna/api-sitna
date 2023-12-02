@@ -1,58 +1,60 @@
-﻿
+import TC from '../../TC';
+import ElevationService from './ElevationService';
+import Util from '../Util';
+import Consts from '../Consts';
+
 // https://developers.google.com/maps/documentation/javascript/elevation?hl=es
 
-TC.tool = TC.tool || {};
+let googleElevator;
+const currentRequestIds = new Map();
 
-if (!TC.tool.ElevationService) {
-    TC.syncLoadJS(TC.apiLocation + 'TC/tool/ElevationService');
-}
-
-TC.tool.ElevationServiceGoogle = function (_options) {
-    const self = this;
-    TC.tool.ElevationService.apply(self, arguments);
-    self.url = self.options.url || '//maps.googleapis.com/maps/api/js?v=3';
-    const intIdx = self.url.lastIndexOf('?');
-    if (intIdx < 0) {
-        self.url += '?';
-    }
-    else if (intIdx < self.url.length - 1) {
-        self.url += '&';
-    }
-    self.url += 'key=' + self.options.googleMapsKey;
-    self.minimumElevation = self.options.minimumElevation || -9998;
-    self.nativeCRS = 'EPSG:4326';
-    self.maxCoordinateCountPerRequest = 512;
-    self.minRetryInterval = 5100;
-    self.maxRetries = Number.isInteger(self.options.maxRetries) ? self.options.maxRetries : 0;
+const upRequestId = function (id, count) {
+    let currentCount = currentRequestIds.get(id) || 0;
+    currentCount += count;
+    currentRequestIds.set(id, currentCount);
 };
 
-TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
-
-(function () {
-    const toolProto = TC.tool.ElevationServiceGoogle.prototype;
-
-    let googleElevator;
-    const currentRequestIds = new Map();
-
-    const upRequestId = function (id, count) {
-        let currentCount = currentRequestIds.get(id) || 0;
-        currentCount += count;
-        currentRequestIds.set(id, currentCount);
-    };
-
-    const downRequestId = function (id) {
-        let currentCount = currentRequestIds.get(id);
-        if (currentCount) {
-            currentCount -= 1;
-            if (currentCount <= 0) {
-                currentRequestIds.delete(id);
-            }
-            return true;
+const downRequestId = function (id) {
+    let currentCount = currentRequestIds.get(id);
+    if (currentCount) {
+        currentCount -= 1;
+        if (currentCount <= 0) {
+            currentRequestIds.delete(id);
         }
-        return false;
-    };
+        return true;
+    }
+    return false;
+};
 
-    toolProto.request = function (options) {
+class ElevationServiceGoogle extends ElevationService {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.url = self.options.url || '//maps.googleapis.com/maps/api/js?v=3';
+        const intIdx = self.url.lastIndexOf('?');
+        if (intIdx < 0) {
+            self.url += '?';
+        }
+        else if (intIdx < self.url.length - 1) {
+            self.url += '&';
+        }
+
+        //ahora google pide en la url de google maps una función función global que se llamará una vez que la API de Maps JavaScript se cargue por completo.
+        let fnCallBackSV = "SV_" + (Math.random() + 1).toString(36).substring(7);
+
+        window[fnCallBackSV] = function () {
+            delete window[fnCallBackSV];
+        }
+
+        self.url += 'key=' + self.options.googleMapsKey + "&callback=" + fnCallBackSV;
+        self.minimumElevation = self.options.minimumElevation || -9998;
+        self.nativeCRS = 'EPSG:4326';
+        self.maxCoordinateCountPerRequest = 512;
+        self.minRetryInterval = 5100;
+        self.maxRetries = Number.isInteger(self.options.maxRetries) ? self.options.maxRetries : 0;
+    }
+
+    request(options) {
         const self = this;
         options = options || {};
         if (!self.options.googleMapsKey) {
@@ -64,10 +66,10 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
         let geomType;
         let coordinateList = options.coordinates;
         if (coordinateList.length === 1) {
-            geomType = TC.Consts.geom.POINT;
+            geomType = Consts.geom.POINT;
         }
         else {
-            geomType = TC.Consts.geom.POLYLINE;
+            geomType = Consts.geom.POLYLINE;
         }
 
         if (self.options.allowedGeometryTypes && !self.options.allowedGeometryTypes.includes(geomType)) {
@@ -84,7 +86,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                 upRequestId(requestId, chunks.length);
                 let retries = 0;
                 const subrequests = chunks.map(function subrequest(chunk) {
-                    const requestOptions = TC.Util.extend({}, options, { coordinates: chunk, id: requestId });
+                    const requestOptions = Util.extend({}, options, { coordinates: chunk, id: requestId });
                     return new Promise(function (res, rej) {
                         if (!currentRequestIds.has(requestId)) {
                             res(cancelledResponse);
@@ -134,7 +136,7 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
         }
 
         if (options.crs && options.crs !== self.nativeCRS) {
-            coordinateList = TC.Util.reproject(coordinateList, options.crs, self.nativeCRS);
+            coordinateList = Util.reproject(coordinateList, options.crs, self.nativeCRS);
         }
 
         return new Promise(function (resolve, _reject) {
@@ -163,15 +165,15 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
                 true
             );
         });
-    };
+    }
 
-    toolProto.parseResponse = function (response, options) {
+    parseResponse(response, options) {
         const self = this;
         switch (response.status) {
             case 'OK':
                 return response.elevations.map(function (r) {
                     if (options.crs && options.crs !== self.nativeCRS) {
-                        return TC.Util.reproject([r.location.lng(), r.location.lat()], self.nativeCRS, options.crs).concat(r.elevation);
+                        return Util.reproject([r.location.lng(), r.location.lat()], self.nativeCRS, options.crs).concat(r.elevation);
                     }
                     else {
                         return [r.location.lng(), r.location.lat(), r.elevation];
@@ -184,9 +186,11 @@ TC.inherit(TC.tool.ElevationServiceGoogle, TC.tool.ElevationService);
             default:
                 return [];
         }
-    };
+    }
 
-    toolProto.cancelRequest = function (id) {
+    cancelRequest(id) {
         currentRequestIds.delete(id);
-    };
-})();
+    }
+}
+
+export default ElevationServiceGoogle;

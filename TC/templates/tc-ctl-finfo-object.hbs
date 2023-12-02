@@ -1,16 +1,16 @@
 {{#if (isObject this)}}
-<table class="complexAttr">
+<table class="tc-complex-attr">
     <tbody>
     {{#each this}}
         {{#unless (isObject this)}}
-        <tr class="keyValue">
+        <tr class="tc-key-val">
             {{#if (eq @key "_content_")}}
                 {{#unless (isEmpty this)}}
-                    <td colspan="2" class="value tc-ctl-finfo-val">{{> tc-ctl-finfo-object this }}</td>
+                    <td colspan="2" class="tc-val tc-ctl-finfo-val">{{> tc-ctl-finfo-object this }}</td>
                 {{/unless}}
             {{else}}
-                <th class="key">{{@key}}</th>
-                <td class="value tc-ctl-finfo-val">{{#unless (isEmpty this)}}{{> tc-ctl-finfo-object this }}{{/unless}}</td>
+                <th class="tc-key">{{@key}}</th>
+                <td class="tc-val tc-ctl-finfo-val">{{#unless (isEmpty this)}}{{> tc-ctl-finfo-object this }}{{/unless}}</td>
             {{/if}}
         </tr>
         {{else}}
@@ -21,13 +21,13 @@
                 <!--object-->
                 <input type="checkbox" id="complexAttr_{{getId this}}">
                 <div>
-                    <label for="complexAttr_{{getId this}}" class="plus" title=""></label>
-                    <label for="complexAttr_{{getId this}}" class="title" title="">{{@key}}</label><br />
+                    <label for="complexAttr_{{getId this}}" class="tc-plus" title=""></label>
+                    <label for="complexAttr_{{getId this}}" class="tc-title" title="">{{@key}}</label><br />
                 {{else}}
                     {{#if (isArray this)}}
                 <!--array-->
                 <div>
-                    <label for="complexAttr_{{getId this}}" class="title" title="">{{@key}}</label><br />
+                    <label for="complexAttr_{{getId this}}" class="tc-title" title="">{{@key}}</label><br />
                     {{else}}
                 <div>
                     {{/if}}
@@ -43,12 +43,12 @@
 </table>
 {{else}}
     {{#if (isArray this)}}
-<div class="complexAttr">
+<div class="tc-complex-attr">
     <input type="checkbox" id="complexAttr_{{getId this}}">
     <div>
-        <label for="complexAttr_{{getId this}}" class="plus" title=""></label>
-        <label for="complexAttr_{{getId this}}" class="title" title="">{{length}} {{i18n "featureInfo.complexData.array"}}</label><br />
-        <table class="complexAttr">
+        <label for="complexAttr_{{getId this}}" class="tc-plus" title=""></label>
+        <label for="complexAttr_{{getId this}}" class="tc-title" title="">{{length}} {{i18n "featureInfo.complexData.array"}}</label><br />
+        <table class="tc-complex-attr">
             <tbody>
                 {{#each this}}
                 <tr>

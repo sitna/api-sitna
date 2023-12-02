@@ -1,89 +1,93 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
+import Util from '../Util';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
+Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
-TC.control.Scale = function () {
-    TC.Control.apply(this, arguments);
-};
-
-TC.inherit(TC.control.Scale, TC.Control);
-
-(function () {
-    var ctlProto = TC.control.Scale.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-scl';
-
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-scl.hbs";
-
-    ctlProto.render = function (callback) {
+class Scale extends Control {
+    constructor() {
+        super(...arguments);
         const self = this;
-        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize }, function () {
+        self.div.classList.add(self.CLASS);
+    }
+
+    getClassName() {
+        return 'tc-ctl-scl';
+    }
+
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-scl.mjs');
+        self.template = module.default;
+    }
+
+    render(callback) {
+        const self = this;
+        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize }, function () {
 
             const span = self.div.querySelector('span');
             span.textContent = '1:' + self.format(span.textContent.substr(2));
 
-            self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () {
+            self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
                 self.setScreenSize();
             }, { passive: true });
 
-            if (TC.Util.isFunction(callback)) {
+            if (Util.isFunction(callback)) {
                 callback();
             }
         }));
-    };
+    }
 
-    ctlProto.register = function (map) {
+    register(map) {
         const self = this;
-        const result = TC.Control.prototype.register.call(self, map);
-        var screenSize = TC.Util.storage.getLocalValue(TC.Consts.SCREEN_SIZE_KEY);
+        const result = super.register.call(self, map);
+        let screenSize = Util.storage.getLocalValue(Consts.SCREEN_SIZE_KEY);
         if (screenSize) {
-            TC.Cfg.screenSize = screenSize;
+            Cfg.screenSize = screenSize;
         }
         self.render(function () {
-            map.on(TC.Consts.event.ZOOM, function () {
+            map.on(Consts.event.ZOOM, function () {
                 delete self.metersPerDegree;
                 self.update();
             });
         });
 
         return result;
-    };
+    }
 
-    ctlProto.update = function () {
+    update() {
         this.render();
-    };
+    }
 
     /*
      *  setScreenSize: Prompts for screen size in inches, updates and stores value
      */
-    ctlProto.setScreenSize = function () {
-        var self = this;
-        TC.prompt(self.getLocaleString('selectScreenSize'), TC.Cfg.screenSize, function (value) {
+    setScreenSize() {
+        const self = this;
+        TC.prompt(self.getLocaleString('selectScreenSize'), Cfg.screenSize, function (value) {
             if (value) {
-                TC.Cfg.screenSize = parseFloat(value);
-                TC.Util.storage.setLocalValue(TC.Consts.SCREEN_SIZE_KEY, TC.Cfg.screenSize);
+                Cfg.screenSize = parseFloat(value);
+                Util.storage.setLocalValue(Consts.SCREEN_SIZE_KEY, Cfg.screenSize);
                 self.update();
             }
         });
-    };
+    }
 
     /*
      *  getScale: Gets scale denominator with a resolution or current map resolution and estimated screen DPI
      *  Parameters: number (optional), the resolution to get scale from. If no parameter is given, current map resolution is used
      *  Returns: number
      */
-    ctlProto.getScale = function (resolution) {
-        var self = this;
+    getScale(resolution) {
+        const self = this;
         var result = 0;
         var res = !resolution && self.map ? self.map.wrap.getResolution() : resolution;
         if (res) {
-            result = res * self.getDpi(TC.Cfg.screenSize) / .0254;
+            result = res * self.getDpi(Cfg.screenSize) / .0254;
             if (window.devicePixelRatio) {
                 result = result * window.devicePixelRatio;
             }
@@ -92,7 +96,7 @@ TC.inherit(TC.control.Scale, TC.Control);
             if (!self.metersPerDegree) {
                 var extent = self.map.getExtent();
                 if (extent) {
-                    self.metersPerDegree = TC.Util.getMetersPerDegree(extent);
+                    self.metersPerDegree = Util.getMetersPerDegree(extent);
                 }
             }
             if (self.metersPerDegree) {
@@ -100,20 +104,19 @@ TC.inherit(TC.control.Scale, TC.Control);
             }
         }
         return result;
-    };
+    }
 
     /*
      *  getDpi: Gets estimated DPI based on screen resolution and screenSize value
      *  Returns: number
      */
-    ctlProto.getDpi = function (screenSize) {
-        var self = this;
+    getDpi(screenSize) {
+        const self = this;
         self.dpi = Math.sqrt(screen.width * screen.width + screen.height * screen.height) / screenSize;
         return self.dpi;
-    };
+    }
 
-
-    ctlProto.format = function (number) {
+    format(number) {
         var n = (new Number(number)).toFixed(0);
         var a = [];
         while (n.length > 3) {
@@ -125,9 +128,8 @@ TC.inherit(TC.control.Scale, TC.Control);
             a.unshift(n);
         }
         return a.join('.');
-    };
+    }
+}
 
-})();
-
-const Scale = TC.control.Scale;
+TC.control.Scale = Scale;
 export default Scale;

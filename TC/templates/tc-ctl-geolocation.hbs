@@ -3,29 +3,32 @@
     <div class="tc-ctl-geolocation-track">
         <div class="tc-ctl-geolocation-track-snap-info"></div>                
         <div class="tc-ctl-geolocation-track-panel-block" >
-            <input id="tc-ctl-geolocation-track-panel-opened-{{controlId}}" type="checkbox" checked/>
-            <label for="tc-ctl-geolocation-track-panel-opened-{{controlId}}" title="{{i18n "geo.trk.panel.help.1"}}">{{i18n "geo.trk.panel.help.2"}}</label>
-            <i class="tc-ctl-geolocation-track-panel-help icon-question-sign" title="{{i18n "geo.trk.panel.help.3"}}"></i>
+            <label title="{{i18n "geo.trk.panel.help.1"}}">
+                <input class="tc-toggle" type="checkbox" checked />
+                {{i18n "geo.trk.panel.help.2"}}
+            </label>
+            <sitna-button variant="minimal" icon="help" text="{{i18n "geo.trk.panel.help.3"}}" class="tc-ctl-geolocation-track-panel-help"></sitna-button>
         </div>
         <div class="tc-ctl-geolocation-track-mng">
             <div class="tc-ctl-geolocation-select">
-                <label class="tc-ctl-geolocation-btn-track" title="{{i18n "geo.track.title"}}"><input type="radio" name="{{controlId}}-mode" checked value="tracks" /><span>{{i18n "geo.gps"}}</span></label><label 
-				class="tc-ctl-geolocation-btn-tracks" title="{{i18n "geo.tracks.title"}}"><input type="radio" name="{{controlId}}-mode" value="track-available" /><span>{{i18n "geo.tracks"}}</span></label>                    
+                <sitna-tab text="{{i18n "geo.gps"}}" title="{{i18n "geo.track.title"}}" group="{{controlId}}-mode" selected for="{{controlId}}-geolocation-panel"></sitna-tab>
+                <sitna-tab text="{{i18n "geo.tracks"}}" title="{{i18n "geo.tracks.title"}}" group="{{controlId}}-mode" for="{{controlId}}-tracks-panel"></sitna-tab>
             </div>                        
-            <div class="tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden">
+            <div id="{{controlId}}-tracks-panel" class="tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden">
                 <i class="tc-ctl-geolocation-track-search-icon"></i>
                 <input id="tc-ctl-geolocation-track-available-srch" type="search" list="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-srch tc-textbox" placeholder="{{i18n "geo.filter.plhr"}}" maxlength="200" />                
-                <ol id="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-lst">
+                <ol class="tc-list tc-ctl-geolocation-track-available-lst">
                     <li class="tc-ctl-geolocation-track-available-empty"><span>{{i18n "geo.noTracks"}}</span></li>
                     <li class="tc-ctl-geolocation-track-not" hidden><span>{{i18n "noMatches"}}</span></li>
                 </ol>
                 <div class="tc-ctl-geolocation-track-cnt">
+                    <button type="button" class="tc-button tc-icon-button tc-btn-delete-all" disabled title="{{i18n "geo.trk.delete.all.tooltip"}}">{{i18n "geo.trk.delete.all"}}</button>
                     <input name="uploaded-file" id="uploaded-file-{{controlId}}" type="file" class="tc-ctl-geolocation-track-import tc-button" accept=".gpx,.kml,.kmz" disabled />
                     <label class="tc-button tc-icon-button" for="uploaded-file-{{controlId}}" title="{{i18n "geo.trk.import.upload" }}">{{i18n "geo.trk.import.lbl"}}</label>
                 </div>
             </div>
-            <div class="tc-ctl-geolocation-tracks tc-ctl-geolocation-panel">    
-                <div class="tc-alert alert-warning tc-hidden" >
+            <div id="{{controlId}}-geolocation-panel" class="tc-ctl-geolocation-tracks tc-ctl-geolocation-panel">    
+                <div class="tc-alert tc-alert-warning tc-hidden" >
                     <p id="panel-msg">
                         {{i18n "geo.trk.panel.1"}}                    
                         <ul>
@@ -38,17 +41,15 @@
                 </div>            
                 <div class="tc-ctl-geolocation-track-ui">   
                     <div  class="tc-ctl-geolocation-track-render">
-                        <input id="tc-ctl-geolocation-track-render-{{controlId}}" type="checkbox" hidden checked />
+                        <input id="tc-ctl-geolocation-track-render-{{controlId}}" class="tc-toggle" type="checkbox" checked />
                         <label for="tc-ctl-geolocation-track-render-{{controlId}}" class="tc-ctl-geolocation-track-render" title="{{i18n "geo.trk.render"}}">{{i18n "geo.trk.render"}}</label>
                     </div>
                     <button type="button" class="tc-button tc-icon-button tc-ctl-geolocation-track-ui-activate" title="{{i18n "geo.track.activate.title"}}">{{i18n "geo.track.activate"}}</button>
                     <button type="button" class="tc-button tc-icon-button tc-ctl-geolocation-track-ui-deactivate tc-hidden" title="{{i18n "geo.track.deactivate.title" }}">{{i18n "geo.track.deactivate"}}</button>
                 </div>
-                <div  class="tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt">
-                    <input type="text" class="tc-ctl-geolocation-track-title tc-textbox" disabled placeholder="{{i18n "geo.trk.name.plhr"}}" maxlength="200" /><button 
-					type="button" class="tc-button tc-icon-button tc-ctl-geolocation-track-save" disabled title="{{i18n "geo.trk.name.save"}}"></button>
-                    <input type="text" class="tc-ctl-geolocation-track-waypoint tc-textbox" disabled placeholder="{{i18n "geo.trk.wyp.plhr"}}" maxlength="200" /><button 
-					type="button" class="tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt" disabled title="{{i18n "geo.trk.wyp.save"}}"></button>
+                <div class="tc-ctl-geolocation-track-current tc-ctl-geolocation-track-cnt">
+                    <input type="text" class="tc-ctl-geolocation-track-title tc-textbox" disabled placeholder="{{i18n "geo.trk.name.plhr"}}" maxlength="200" /><button type="button" class="tc-button tc-icon-button tc-ctl-geolocation-track-save" disabled title="{{i18n "geo.trk.name.save"}}"></button>
+                    <input type="text" class="tc-ctl-geolocation-track-waypoint tc-textbox" disabled placeholder="{{i18n "geo.trk.wyp.plhr"}}" maxlength="200" /><button type="button" class="tc-button tc-icon-button tc-ctl-geolocation-track-add-wpt" disabled title="{{i18n "geo.trk.wyp.save"}}"></button>                    
                 </div>
             </div>
         </div>

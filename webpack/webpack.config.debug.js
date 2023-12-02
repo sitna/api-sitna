@@ -6,7 +6,9 @@ module.exports = {
     devtool: 'source-map',
     resolve: {
         fallback: {
-            buffer: require.resolve('buffer/')
+            buffer: require.resolve('buffer/'),
+            assert: false,
+            util: require.resolve('./util-fallback.js')
         }
     },
     module: {
@@ -21,7 +23,7 @@ module.exports = {
                 loader: 'string-replace-loader',
                 options: {
                     // Añadimos la fecha de compilación a la cadena indicadora de versión
-                     search: /TC\.version = '(\d+\.\d+\.\d+)';/,
+                    search: /TC\.version = '(\d+\.\d+\.\d+)';/,
                     replace(match, p1) {
                         return "TC.version = '" + p1 + " [" + (new Date()).toLocaleString() + "]';";
                     }
@@ -29,10 +31,11 @@ module.exports = {
             }
         ]
     },
+    ignoreWarnings: [/Failed to parse source map/],
     plugins: [
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
-        }),
+        })
     ],
     devServer: {
         allowedHosts: 'auto',
@@ -41,7 +44,8 @@ module.exports = {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
             "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
-        }
+        },
+        watchFiles: './TC/templates/*.mjs'
     },
     output: {
         filename: 'sitna.debug.js',

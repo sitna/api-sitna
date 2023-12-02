@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/global.html#StreetSearchOptions">StreetSearchOptions</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.StreetSearchOptions">StreetSearchOptions</a>.</p>
         <p>Establecer configuración de un origen de datos distinto en la búsqueda de vías.</p>
     </div>
     <script src="../"></script>
@@ -33,7 +33,7 @@
                             secondQueryWord: ['VIA', 'VIANOAC'] // Campo en el que buscar el nombre de la vía.
                         },
                         suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-                            label: "search.list.street", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Vía
+                            labelKey: "search.list.street", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Vía
                             color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
                         }, // El resultado de la configuración anterior será: '#CB0000'.
                         outputProperties: ['ENTIDADC', 'VIA', 'CVIA', 'CENTIDADC', 'CMUNICIPIO'], // Colección con los nombres de los campos a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias. 
@@ -50,8 +50,8 @@
                             },
                             {
                                 point: { // Opciones de estilo de punto para los resultados obtenidos.
-                                    label: "VIA", // Nombre de campo del cual extraer el valor de la etiqueta.
-                                    angle: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
+                                    labelKey: "VIA", // Nombre de campo del cual extraer el valor de la etiqueta.
+                                    labelRotationKey: "CADANGLE", // Nombre de campo del cual extraer la rotación a aplicar a la etiqueta.
                                     fontColor: "#000000", // Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
                                     fontSize: 7, // Tamaño de fuente del texto de la etiqueta descriptiva del punto en píxeles.
                                     labelOutlineColor: "#ffffff", // Color del contorno del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).

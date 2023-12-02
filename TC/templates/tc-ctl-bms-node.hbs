@@ -1,5 +1,5 @@
 {{#if layer}}
-<li class="tc-ctl-bms-node" data-layer-name="{{layer.name}}" data-layer-id="{{layer.id}}" data-layer-uid="{{layer.uid}}"><label{{#if layer.legend}} style="background-image: url({{layer.legend.src}})"{{/if~}}{{#if layer.thumbnail}} style="background-image: url({{layer.thumbnail}})"{{/if~}}>
+<li class="tc-ctl-bms-node" data-layer-name="{{layer.name}}" data-layer-id="{{layer.id}}" data-layer-uid="{{layer.uid}}"><label{{#if layer.legend}} style="background-image: url({{layer.legend.[0].src}})"{{/if~}}{{#if layer.thumbnail}} style="background-image: url({{layer.thumbnail}})"{{/if~}}>
 <input type="radio" name="{{controlId}}-bm" value="{{layer.name}}"{{#if layer.mustReproject}} class="tc-disabled"{{/if~}}>
 <span>{{layer.title}}</span></label>
 <div class="tc-ctl-bms-info">

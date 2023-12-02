@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.feature.Polyline</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.feature.Polyline.html">SITNA.feature.Polyline</a></p>
+        <p>Añadir de distintos modos entidades lineales.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        SITNA.Cfg.workLayers = [
+            {
+                id: "entidades",
+                title: "Demostración de líneas",
+                type: SITNA.Consts.layerType.VECTOR
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+        map.loaded(() => {
+            // Obtenemos la instancia de la capa vectorial
+            const vectorLayer = map.getLayer("entidades");
+
+            // Añadimos una instancia de la clase SITNA.feature.Polyline
+            const track1 = new SITNA.feature.Polyline([
+                [609602, 4742351],
+                [609027, 4742090]
+            ], {
+                strokeColor: '#522852', // violeta
+                strokeWidth: 6,
+                data: {
+                    'Vía': '1'
+                }
+            });
+            vectorLayer.addPolyline(track1);
+
+            // Añadimos una entidad geográfica introduciendo directamente las coordenadas de su geometría
+            vectorLayer.addPolyline([
+                [609599, 4742355],
+                [609025, 4742094]
+            ], {
+                strokeColor: '#b97f24', // dorado
+                strokeWidth: 6
+            })
+                .then(track3 => {
+                    // Añadimos atributos a la nueva entidad.
+                    // Estos datos se pueden consultar al pulsar sobre ella.
+                    track3.setData({
+                        'Vía': '3',
+                        'Longitud': Math.round(track3.getLength()) + ' m'
+                    });
+                    map.zoomToFeatures([
+                        track1,
+                        track3
+                    ]);
+                });
+
+            // Añadimos dos entidades geográficas de una vez
+            const serviceTrack1 = new SITNA.feature.Polyline([
+                [609037, 4742095],
+                [609148, 4742131],
+                [609170, 4742134],
+                [609238, 4742142],
+                [609261, 4742147],
+                [609292, 4742158],
+                [609361, 4742190]
+            ], {
+                strokeColor: '#285228', // verde
+                strokeWidth: 4
+            });
+            const serviceTrack2 = new SITNA.feature.Polyline([
+                [609329, 4742270],
+                [609277, 4742257],
+                [609228, 4742234],
+                [609176, 4742208]
+            ], {
+                strokeColor: '#285228', // verde
+                strokeWidth: 4
+            });
+            vectorLayer.addPolylines([
+                serviceTrack1,
+                serviceTrack2
+            ])
+                .then(trackArray => {
+                    // Añadimos atributos a las nuevas entidades.
+                    // Estos datos se pueden consultar al pulsar sobre ellas.
+                    trackArray.forEach(track => {
+                        track.setData({
+                            'Vía': 'Muerta',
+                            'Longitud': Math.round(track.getLength()) + ' m'
+                        });
+                    })
+                });
+        });
+    </script>
+
+</body>
+</html>

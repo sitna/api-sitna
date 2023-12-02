@@ -108,7 +108,7 @@ describe('Tests de TC.layer.Raster', function () {
 
     describe('imageLoadedBlob_', function () {
 
-        it("Con status 200 y excepción en el cuerpo de respuesta debe cargar TC.Consts.BLANK_IMAGE", function (done) {
+        it("Con status 200 y excepción en el cuerpo de respuesta debe cargar SITNA.Consts.BLANK_IMAGE", function (done) {
 
             var xhr = {
                 response: {
@@ -118,12 +118,12 @@ describe('Tests de TC.layer.Raster', function () {
             var image = new ol.Image();
             TC.layer.Raster.prototype.imageLoadedBlob_(xhr, image);
 
-            expect(image.getImage().src).to.equal(TC.Consts.BLANK_IMAGE);
+            expect(image.getImage().src).to.equal(SITNA.Consts.BLANK_IMAGE);
 
             done();
         });
 
-        it("Con status >= 400 y status <= 500 debe cargar TC.Consts.BLANK_IMAGE", function (done) {
+        it("Con status >= 400 y status <= 500 debe cargar SITNA.Consts.BLANK_IMAGE", function (done) {
 
             var xhr = {
                 status: 500
@@ -131,13 +131,13 @@ describe('Tests de TC.layer.Raster', function () {
             var image = new ol.Image();
             TC.layer.Raster.prototype.imageLoadedBlob_(xhr, image);
 
-            expect(image.getImage().src).to.equal(TC.Consts.BLANK_IMAGE);
+            expect(image.getImage().src).to.equal(SITNA.Consts.BLANK_IMAGE);
 
             done();
         });
 
         // GLS: debería validar si muestra tostada, pero no sé cómo
-        //it("Con status 401 debe lanzar un evento TC.Consts.event.TILELOADERROR", function (done) {
+        //it("Con status 401 debe lanzar un evento SITNA.Consts.event.TILELOADERROR", function (done) {
 
         //    var xhr = {
         //        status: 401
@@ -152,10 +152,10 @@ describe('Tests de TC.layer.Raster', function () {
     //describe('imageLoad_blank_', function () {
     //    $.mockjax.clear();
 
-    //    it("Debe cargar TC.Consts.BLANK_IMAGE", function (done) {
+    //    it("Debe cargar SITNA.Consts.BLANK_IMAGE", function (done) {
 
     //        var mockOptions = {
-    //            url: TC.Consts.BLANK_IMAGE + '&' + TC.getUID()
+    //            url: SITNA.Consts.BLANK_IMAGE + '&' + TC.getUID()
     //        };
     //        $.extend(mockOptions, { status: 200 });
 
@@ -164,7 +164,7 @@ describe('Tests de TC.layer.Raster', function () {
     //        var image = new ol.Image();
     //        TC.layer.Raster.prototype.imageLoad_blank_(image);
 
-    //        expect(image.getImage().src).to.equal(TC.Consts.BLANK_IMAGE);
+    //        expect(image.getImage().src).to.equal(SITNA.Consts.BLANK_IMAGE);
 
     //        $.mockjax.clear(mockOptions.url);
 

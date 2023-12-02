@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="240"
+   height="240"
+   viewBox="0 0 63.4992 63.4992"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   sodipodi:docname="icon-email.svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8284272"
+     inkscape:cx="96.049713"
+     inkscape:cy="134.92203"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     units="px"
+     showguides="false"
+     inkscape:snap-grids="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="177"
+     inkscape:window-maximized="1"
+     inkscape:object-paths="true"
+     inkscape:snap-smooth-nodes="false"
+     inkscape:object-nodes="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid815" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Capa 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-233.49998)">
+    <path
+       style="fill:#000000;fill-opacity:1;stroke-width:1"
+       d="M 20 40 A 20.000001 20.000001 0 0 0 0 60 L 0 170 L 0 190 L 0 200 A 20.000001 20.000001 0 0 0 20 220 L 220 220 A 20.000001 20.000001 0 0 0 240 200 L 240 190 L 240 170 L 240 60 A 20.000001 20.000001 0 0 0 220 40 L 20 40 z M 20 60 A 10 10 0 0 1 24.982422 61.339844 L 24.992188 61.335938 L 119.95508 108.87109 L 215.09375 61.287109 L 215.11133 61.291016 A 10 10 0 0 1 220 60 A 10 10 0 0 1 230 70 A 10 10 0 0 1 224.50586 78.925781 L 224.50586 78.927734 L 125.56641 128.30664 L 125.55273 128.30664 A 10 10 0 0 1 120 130 A 10 10 0 0 1 115.30078 128.82227 L 115.29297 128.82227 L 114.31445 128.33203 L 16.496094 79.353516 A 10 10 0 0 1 14.587891 78.398438 L 14.515625 78.361328 L 14.515625 78.353516 A 10 10 0 0 1 10 70 A 10 10 0 0 1 20 60 z "
+       transform="matrix(0.26458,0,0,0.26458,0,233.49998)"
+       id="path950" />
+  </g>
+</svg>

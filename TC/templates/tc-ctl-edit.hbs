@@ -1,17 +1,26 @@
 <h2>{{i18n "featureEditing"}}</h2>
 <div class="tc-ctl-edit-tools">
     <div class="tc-ctl-edit-mode">
-        <label class="tc-ctl-edit-btn-modify" title="{{i18n "select"}}"><input type="radio" name="{{controlId}}-mode" value="modify" /><span>{{i18n "select"}}</span>
-        </label><label class="tc-ctl-edit-btn-point" title="{{i18n "newPoint"}}"><input type="radio" name="{{controlId}}-mode" value="addpoint" /><span>{{i18n "newPoint"}}</span>
-        </label><label class="tc-ctl-edit-btn-line" title="{{i18n "newLine"}}"><input type="radio" name="{{controlId}}-mode" value="addline" /><span>{{i18n "newLine"}}</span>
-        </label><label class="tc-ctl-edit-btn-polygon" title="{{i18n "newPolygon"}}"><input type="radio" name="{{controlId}}-mode" value="addpolygon" /><span>{{i18n "newPolygon"}}</span>
-        </label><label class="tc-ctl-edit-btn-other" title="{{i18n "otherTools"}}"><input type="radio" name="{{controlId}}-mode" value="other" /><span>{{i18n "otherTools"}}</span></label>
+        <sitna-tab class="tc-ctl-edit-btn-modify" title="{{i18n "select"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-modify"></sitna-tab>
+        <sitna-tab class="tc-ctl-edit-btn-point"  title="{{i18n "newPoint"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-addpoint"></sitna-tab>
+        <sitna-tab class="tc-ctl-edit-btn-line" title="{{i18n "newLine"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-addline"></sitna-tab>
+        <sitna-tab class="tc-ctl-edit-btn-polygon" title="{{i18n "newPolygon"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-addpolygon"></sitna-tab>
+        {{#if otherToolsIncluded}}<sitna-tab class="tc-ctl-edit-btn-other" title="{{i18n "otherTools"}}" group="{{controlId}}-mode" for="{{controlId}}-mode-other"></sitna-tab>{{/if}}
     </div>
-    <div class="tc-ctl-edit-modify tc-hidden"></div>
-    <div class="tc-ctl-edit-point tc-hidden"></div>
-    <div class="tc-ctl-edit-line tc-hidden"></div>
-    <div class="tc-ctl-edit-polygon tc-hidden"></div>
-    <div class="tc-ctl-edit-other tc-hidden">
+    <div id="{{controlId}}-mode-modify" class="tc-ctl-edit-modify tc-hidden">
+        <sitna-modify{{#if snapping}} snapping{{/if}}{{#if stylable}} stylable{{/if}}></sitna-modify>
+    </div>
+    <div id="{{controlId}}-mode-addpoint" class="tc-ctl-edit-point tc-hidden">
+        <sitna-draw mode="point" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
+    </div>
+    <div id="{{controlId}}-mode-addline" class="tc-ctl-edit-line tc-hidden">
+        <sitna-draw mode="polyline" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
+    </div>
+    <div id="{{controlId}}-mode-addpolygon" class="tc-ctl-edit-polygon tc-hidden">
+        <sitna-draw mode="polygon" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
+    </div>
+    <div id="{{controlId}}-mode-other" class="tc-ctl-edit-other tc-hidden">
         <button type="button" class="tc-button tc-ctl-edit-btn-import">{{i18n "importFromOtherLayer"}}</button><button type="button" class="tc-button tc-ctl-edit-btn-dl">{{i18n "download"}}</button>
     </div>
+    <sitna-measurement></sitna-measurement>
 </div>

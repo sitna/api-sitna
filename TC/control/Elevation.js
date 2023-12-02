@@ -1,30 +1,31 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
+import Util from '../Util';
 import Control from '../Control';
+import Feature from '../../SITNA/feature/Feature';
+import Point from '../../SITNA/feature/Point';
+import Polyline from '../../SITNA/feature/Polyline';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+import Geometry from '../Geometry';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
-TC.Control = Control;
 
-TC.control.Elevation = function () {
+const Elevation = function () {
     const self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
 
     self.displayElevation = true;
     self.resultsPanel = null;
 };
 
-TC.inherit(TC.control.Elevation, TC.Control);
+TC.inherit(Elevation, Control);
 
 (function () {
-    const ctlProto = TC.control.Elevation.prototype;
+    const ctlProto = Elevation.prototype;
 
     ctlProto.CLASS = 'tc-ctl-elev';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-ftools.hbs";
-    ctlProto.template[ctlProto.CLASS + '-val'] = TC.apiLocation + "TC/templates/tc-ctl-elev-val.hbs";
 
     const pointElevationCache = new WeakMap();
     const elevationProfileCache = new Map();
@@ -57,65 +58,68 @@ TC.inherit(TC.control.Elevation, TC.Control);
         }
     };
 
-    ctlProto.register = function (map) {
+
+    ctlProto.loadTemplates = async function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            TC.Control.prototype.register.call(self, map).then(function () {
+        const mainTemplatePromise = import('../templates/tc-ctl-ftools.mjs');
+        const valueTemplatePromise = import('../templates/tc-ctl-elev-val.mjs');
 
-                map
-                    .on(TC.Consts.event.FEATUREMODIFY + ' ' + TC.Consts.event.FEATUREREMOVE, function (e) {
-                        removeElevationProfileFromCache(e.feature);
-                    })
-                    .on(TC.Consts.event.FEATUREREMOVE, function (e) {
-                        removeElevationProfileFromCache(e.feature);
-                    })
-                    .on(TC.Consts.event.LAYERREMOVE, function (e) {
-                        e.layer.features && e.layer.features.forEach(feat => removeElevationProfileFromCache(feat));
-                    })
-                    .on(TC.Consts.event.POPUP + ' ' + TC.Consts.event.DRAWTABLE, function (e) {
-                        // Añadimos datos de elevación si se han añadido previamente
-                        if (pointElevationCache.has(e.control.currentFeature)) {
-                            self.displayElevationValue(e.control.currentFeature);
-                        }
-                    });
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-val'] = (await valueTemplatePromise).default;
+        self.template = template;
+    }
 
-                resolve(self);
+    ctlProto.register = async function (map) {
+        const self = this;
+        await Control.prototype.register.call(self, map);
 
-            }).catch(function (error) {
-                reject(error);
+        map
+            .on(Consts.event.FEATUREMODIFY + ' ' + Consts.event.FEATUREREMOVE, function (e) {
+                removeElevationProfileFromCache(e.feature);
+            })
+            .on(Consts.event.FEATUREREMOVE, function (e) {
+                removeElevationProfileFromCache(e.feature);
+            })
+            .on(Consts.event.LAYERREMOVE, function (e) {
+                e.layer.features && e.layer.features.forEach(feat => removeElevationProfileFromCache(feat));
+            })
+            .on(Consts.event.POPUP + ' ' + Consts.event.DRAWTABLE, function (e) {
+                // Añadimos datos de elevación si se han añadido previamente
+                if (pointElevationCache.has(e.control.currentFeature)) {
+                    self.displayElevationValue(e.control.currentFeature);
+                }
             });
-        });
+
+        return self;
     };
 
-    ctlProto.getElevationTool = function () {
+    ctlProto.getElevationTool = async function () {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            const proxyObj = {
-                options: {
-                    displayElevation: self.options || true
-                },
-                elevation: self.elevation,
-                map: self.map
-            };
-            TC.Control.prototype.getElevationTool.call(proxyObj).then(ctl => {
-                self.elevation = ctl;
-                resolve(ctl);
-            });
-        });
+        const proxyObj = {
+            options: {
+                displayElevation: self.options || true
+            },
+            elevation: self.elevation,
+            map: self.map
+        };
+        const ctl = await Control.prototype.getElevationTool.call(proxyObj);
+        self.elevation = ctl;
+        return ctl;
     };
 
     ctlProto.setElevationToolOptions = function (options) {
         const self = this;
-        TC.Util.extend(self.options, options);       
+        Util.extend(self.options, options);
         if (self.elevation) {
-            TC.Util.extend(self.elevation.options, self.options);
+            Util.extend(self.elevation.options, self.options);
         }
     };
 
     ctlProto.displayElevationValue = async function (feature, options) {
         const self = this;
         options = options || {};
-        if (feature instanceof TC.feature.Point) {
+        if (feature instanceof Point) {
             let elevationValues;
             if (options.ignoreCache) {
                 pointElevationCache.delete(feature);
@@ -143,7 +147,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
             if (elevationValues) {
                 const targets = [];
                 let target;
-                const locale = self.map.options.locale || TC.Cfg.locale;
+                const locale = self.map.options.locale || Cfg.locale;
                 const displayControls = self.map.getControlsByClass('TC.control.Popup')
                     .concat(self.map.getControlsByClass('TC.control.ResultsPanel'));
                 displayControls
@@ -176,10 +180,14 @@ TC.inherit(TC.control.Elevation, TC.Control);
                     });
 
                 const renderOptions = {
-                    originalValue: feature.geometry[2] ? TC.Util.formatNumber(Math.round(feature.geometry[2]), locale) : '',
-                    elevationValue: elevationValues.elevation !== null ? TC.Util.formatNumber(Math.round(elevationValues.elevation), locale) : '',
+                    elevationValue: elevationValues.elevation !== null ? Util.formatNumber(Math.round(elevationValues.elevation), locale) : '',
                     heightValue: elevationValues.height ? elevationValues.height.toLocaleString(locale, { maximumFractionDigits: 1 }) : ''
                 };
+                // Si la geometría ya tiene elevación y es distinta de la obtenida por MDT, la mostramos
+                const geometryElevation = feature.geometry[2];
+                if (typeof geometryElevation === 'number' && geometryElevation !== elevationValues.elevation) {
+                    renderOptions.originalValue = Util.formatNumber(Math.round(geometryElevation));
+                }
                 targets.forEach(function addElevElmToTarget(target) {
                     self.getRenderedHtml(self.CLASS + '-val', renderOptions, function (html) {
                         target.querySelectorAll(`tr[class|=${self.CLASS}-pair]`).forEach(elm => elm.remove());
@@ -190,21 +198,21 @@ TC.inherit(TC.control.Elevation, TC.Control);
         }
     };
 
-    ctlProto.displayElevationProfile = function (featureOrCoords, opts) {
+    ctlProto.displayElevationProfile = async function (featureOrCoords, opts) {
         const self = this;
         const options = opts || {};
-        let coords;
+        let lines;
         switch (true) {
-            case TC.feature.Polyline && featureOrCoords instanceof TC.feature.Polyline:
-                coords = featureOrCoords.geometry;
+            case featureOrCoords instanceof Polyline:
+                lines = [featureOrCoords.geometry];
                 break;
-            case TC.feature.MultiPolyline && featureOrCoords instanceof TC.feature.MultiPolyline:
-                coords = featureOrCoords.geometry[0];
+            case featureOrCoords instanceof MultiPolyline:
+                lines = featureOrCoords.geometry;
                 break;
-            case featureOrCoords instanceof TC.Feature:
+            case featureOrCoords instanceof Feature:
                 return;
             default:
-                coords = featureOrCoords;
+                lines = [featureOrCoords];
         }
         self.getProfilePanel().then(function (resultsPanel) {
             resultsPanel.open();
@@ -216,7 +224,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
                 });
             });
         };
-        if (featureOrCoords instanceof TC.Feature) {
+        if (featureOrCoords instanceof Feature) {
             self.getProfilePanel().then(function (resultsPanel) {
                 resultsPanel.setCurrentFeature(featureOrCoords);
             });
@@ -228,30 +236,38 @@ TC.inherit(TC.control.Elevation, TC.Control);
         }
         const li = self.map.getLoadingIndicator();
         const waitId = li && li.addWait();
-        const render = function (elevCoords, options) {
-            let distance = 0.0;
+        const render = function (elevCoordLines, options) {
+            let elevLines = elevCoordLines;
             let maxElevation = Number.NEGATIVE_INFINITY;
             let minElevation = Number.POSITIVE_INFINITY;
-            if (self.map.crs !== self.map.options.utmCrs) {
-                elevCoords = TC.Util.reproject(elevCoords, self.map.crs, self.map.options.utmCrs);
+            if (self.map.getCRS() !== self.map.options.utmCrs) {
+                elevLines = Util.reproject(elevCoordLines, self.map.getCRS(), self.map.options.utmCrs);
             }
-            const profile = elevCoords
-                .map(function calculateDistanceAndExtremes(point, idx, arr) {
-                    let prev = idx === 0 ? point : arr[idx - 1];
-                    const dx = point[0] - prev[0];
-                    const dy = point[1] - prev[1];
-                    distance += Math.sqrt(dx * dx + dy * dy);
-                    var ele = point[2] || 0;
-                    if (typeof ele === 'number') {
-                        maxElevation = Math.max(ele, maxElevation);
-                        minElevation = Math.min(ele, minElevation);
-                    }
-                    return [distance, ele];
+            const profile = elevLines
+                .map(line => {
+                    let distance = 0.0;
+                    return line.map(function calculateDistanceAndExtremes(point, idx, arr) {
+                        let prev = idx === 0 ? point : arr[idx - 1];
+                        distance += Math.hypot(point[0] - prev[0], point[1] - prev[1]);
+                        var ele = point[2] || 0;
+                        if (typeof ele === 'number') {
+                            maxElevation = Math.max(ele, maxElevation);
+                            minElevation = Math.min(ele, minElevation);
+                        }
+                        return [distance, ele];
+                    });
+                })
+                .reduce(function (prev, curr) {
+                    const lastDistance = prev[prev.length - 1][0];
+                    curr.forEach(elm => elm[0] += lastDistance);
+                    return prev.concat(curr);
                 });
+
             if (profile.length === 1) {
                 // Espera una línea, duplicamos el punto para que no se rompa el renderizado del gráfico
                 profile.push(profile[0]);
             }
+            const coords = elevLines.flat();
             let elevationData = {
                 x: profile.map(function (elm) {
                     return elm[0];
@@ -259,13 +275,13 @@ TC.inherit(TC.control.Elevation, TC.Control);
                 ele: profile.map(function (elm) {
                     return elm[1] || 0;
                 }),
-                coords: elevCoords,
+                coords: coords,
                 min: minElevation,
                 max: maxElevation
             };
 
             const elevationGainOptions = {
-                coords: elevCoords
+                coords: coords
             };
             if (typeof self.options === 'object' && self.map.options.elevation) {
                 elevationGainOptions.hillDeltaThreshold = self.options.hillDeltaThreshold || self.map.options.elevation.hillDeltaThreshold;
@@ -275,7 +291,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
                     msg: self.getLocaleString("geo.trk.chart.chpe.empty")
                 };
             }
-            TC.Util.extend(elevationData, TC.tool.Elevation.getElevationGain(elevationGainOptions), options);
+            Util.extend(elevationData, TC.tool.Elevation.getElevationGain(elevationGainOptions), options);
 
             if (options.isSecondary && self.elevationProfileChartData) {
                 if (!self.elevationProfileChartData.secondaryElevationProfileChartData) {
@@ -288,54 +304,92 @@ TC.inherit(TC.control.Elevation, TC.Control);
             }
 
             // Cacheamos el perfil
-            if (featureOrCoords instanceof TC.Feature && !options.ignoreCaching) {
+            if (featureOrCoords instanceof Feature && !options.ignoreCaching) {
                 cacheElevationProfile(featureOrCoords, elevationData);
             }
 
             renderProfile(elevationData);
         };
-        
-        self.getElevationTool().then(function (tool) {
-            if (options.originalElevation) {
-                render(coords, options);
-            }
-            if (options.onlyOriginalElevation) {
-                li && li.removeWait(waitId);
-                return;
-            }
 
-            const timestamp = Date.now();
-            self._depTimestamp = timestamp;
-            const elevationOptions = {
-                crs: self.map.crs,
-                coordinates: coords,
+        const tool = await self.getElevationTool();
+
+        if (options.originalElevation) {
+            render(lines, options);
+        }
+        if (options.onlyOriginalElevation) {
+            li && li.removeWait(waitId);
+            return;
+        }
+
+        const timestamp = Date.now();
+        self._depTimestamp = timestamp;
+        const elevationOptionsTemplate = {
+            crs: self.map.getCRS()
+        };
+
+        if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
+            elevationOptionsTemplate.resolution = tool.options.resolution;
+        }
+        const sampleNumber = Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") ? tool.options.sampleNumber : 0;
+        if (sampleNumber > 0) {
+            elevationOptionsTemplate.resolution = 0;
+        }
+
+        // Repartimos las muestras proporcionalmente entre todas las líneas
+        const sampleNumberCollection = new Array(lines.length);
+        sampleNumberCollection.fill(sampleNumber);
+        if (sampleNumber > 0) {
+            const lineDistances = new Array(lines.length);
+            let totalDistance = 0;
+            lines.forEach((line, idx) => {
+                const pl = new Polyline(line);
+                const lineDistance = pl.getLength();
+                lineDistances[idx] = lineDistance;
+                totalDistance += lineDistance;
+            });
+            sampleNumberCollection.forEach((sn, idx, arr) => {
+                arr[idx] = Math.floor(sn * lineDistances[idx] / totalDistance);
+            });
+        }
+        const interpolatedLines = lines.map((line, idx) => {
+            const interpolationOptions = Object.assign({}, elevationOptionsTemplate, {
+                sampleNumber: sampleNumberCollection[idx]
+            });
+            return Geometry.interpolate(line, interpolationOptions);
+        });
+
+        const elevationPromises = interpolatedLines.map((interpolatedLine, idx) => {
+            const elevationOptions = Object.assign({}, elevationOptionsTemplate, {
+                coordinates: interpolatedLine,
                 partialCallback: function (elevCoords) {
                     if (timestamp === self._depTimestamp) { // Evitamos que una petición anterior machaque una posterior
-                        render(elevCoords, { isSecondary: Object.keys(options).length === 0 ? false : true, ignoreCaching: options.ignoreCaching });
+                        interpolatedLines[idx] = elevCoords;
+                        render(interpolatedLines, {
+                            isSecondary: Object.keys(options).length === 0 ? false : true,
+                            ignoreCaching: options.ignoreCaching
+                        });
                     }
-                }
-            };
-            if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
-                elevationOptions.resolution = tool.options.resolution;
-            }
-            if (Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") && tool.options.sampleNumber !== 0) {
-                elevationOptions.resolution = 0;
-            }
-            tool.getElevation(elevationOptions)
-                .then(function () {
-                    if (options.callback && TC.Util.isFunction(options.callback)) {
-                        options.callback();
-                    }
-                    li && li.removeWait(waitId);
-                })
-                .catch(function (_error) {
-                    self.resetElevationProfile();
-                    li && li.removeWait(waitId);
-                });
+                },
+                resolution: 0,
+                sampleNumber: 0
+            });
+            return tool.getElevation(elevationOptions);
         });
+
+        try {
+            await Promise.all(elevationPromises);
+            if (options.callback && Util.isFunction(options.callback)) {
+                options.callback();
+            }
+            li?.removeWait(waitId);
+        }
+        catch (_error) {
+            self.resetElevationProfile();
+            li?.removeWait(waitId);
+        }
     };
 
-    ctlProto.createProfilePanel = function () {
+    ctlProto.createProfilePanel = async function () {
         const self = this;
 
         const resultsPanelOptions = {
@@ -352,33 +406,29 @@ TC.inherit(TC.control.Elevation, TC.Control);
             }
         };
 
-        return new Promise(function (resolve, _reject) {
-            var addControlPromise;
-            const addResultsPanelChart = function (controlContainer) {
-                resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
-                addControlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
-            };
+        let addControlPromise;
+        const addResultsPanelChart = function (controlContainer) {
+            resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
+            addControlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
+        };
 
-            if (self.options.displayOn) {
-                var controlContainer = self.map.getControlsByClass('TC.control.' + self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
-                if (!controlContainer) {
-                    self.map.addControl(self.options.displayOn).then(addResultsPanelChart);
-                } else {
-                    addResultsPanelChart(controlContainer);
-                }
-            } else {
-                resultsPanelOptions.div = document.createElement('div');
-                self.map.div.appendChild(resultsPanelOptions.div);
-                addControlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
+        if (self.options.displayOn) {
+            let controlContainer = self.map.getControlsByClass('TC.control.' + self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
+            if (!controlContainer) {
+                controlContainer = await self.map.addControl(self.options.displayOn);
             }
+            addResultsPanelChart(controlContainer);
+        } else {
+            resultsPanelOptions.div = document.createElement('div');
+            self.map.div.appendChild(resultsPanelOptions.div);
+            addControlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
+        }
 
-            addControlPromise.then(function (resultsPanel) {
-                resultsPanel.caller = self;
-                self.resultsPanel = resultsPanel;
-                self._decorateChartPanel();
-                resolve(resultsPanel);
-            });
-        });
+        const resultsPanel = await addControlPromise;
+        resultsPanel.caller = self;
+        self.resultsPanel = resultsPanel;
+        self._decorateChartPanel();
+        return resultsPanel;
     };
 
     ctlProto.getProfilePanel = async function () {
@@ -409,7 +459,7 @@ TC.inherit(TC.control.Elevation, TC.Control);
             self.elevationProfileChartData = profileData || self.elevationProfileChartData;
         }
         self.getProfilePanel().then(function (resultsPanel) {
-            if (!resultsPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
+            if (!resultsPanel.div.classList.contains(Consts.classes.HIDDEN)) {
                 if (profileData.isSecondary) {
                     resultsPanel.loadDataOnChart(self.elevationProfileChartData);
                 } else {
@@ -474,5 +524,5 @@ TC.inherit(TC.control.Elevation, TC.Control);
     };
 })();
 
-const Elevation = TC.control.Elevation;
+TC.control.Elevation = Elevation;
 export default Elevation;

@@ -1,0 +1,109 @@
+﻿{
+     "i18n": true,
+	 "maxExtent": false,
+     "stateful": true,
+     "baseLayers": [
+        {
+            "id": "mapabase"
+        },
+        {
+            "id": "ortofoto",
+            "minResolution": 0.25,
+            "maxResolution": 512
+        },
+        {
+            "id": "ortofoto2012"
+        },
+        {
+            "id": "cartografia",
+            "minResolution": 0.5
+        },
+        {
+            "id": "relieve",
+            "title": "Relieve",
+            "type": "WMS",
+            "url": "//idena.navarra.es/ogc/wms",
+            "layerNames": "IDENA:mapa_relieve_bn",
+            "format": "image/jpeg",
+            "isDefault": false,
+            "hideTree": true,
+            "thumbnail": "http://sitna.tracasa.es/api/tc/css/img/thumb-relief_bw.jpg",
+            "minResolution": 2
+        },
+        {
+            "id": "baseYOrto",
+            "title": "Mapa base/ortofoto",
+            "type": "WMS",
+            "url": "//idena.navarra.es/ogc/wms",
+            "layerNames": [ "mapaBase_orto" ],
+            "format": "image/jpeg",
+            "isDefault": false,
+            "hideTree": true,
+            "thumbnail": "layout/idena/img/baseMasOrto.png",
+            "minResolution": 0.25
+        },
+        {
+            "id": "catastro",
+            "minResolution": 0.125
+        },
+        {
+            "id": "ign-raster",
+            "type": "WMTS",
+			"title": "Cartografía raster (IGN)",
+            "url": "//www.ign.es/wmts/mapa-raster",
+            "encoding": "KVP",
+            "layerNames": "MTN",
+            "matrixSet": "EPSG:25830",
+            "format": "image/jpeg",
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-carto_ign.png"
+        },
+        {
+            "id": "ign-base",
+			"title": "Mapa base (IGN)",
+            "type": "WMTS",
+            "url": "//www.ign.es/wmts/ign-base",
+            "encoding": "KVP",
+            "layerNames": "IGNBaseTodo",
+            "matrixSet": "EPSG:25830",
+            "format": "image/jpeg",
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-basemap_ign.png"
+        },
+      {
+        "id": "ign-mtn",
+        "title": "Relieve (IGN)",
+        "type": "WMTS",
+        "url": "//servicios.idee.es/wmts/mdt",
+        "encoding": "KVP",
+        "layerNames": "Relieve",
+        "matrixSet": "EPSG:25830",
+        "format": "image/jpeg",
+        "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-relief_ign.jpg"
+      },
+        {
+            "id": "ign-pnoa",
+			"title": "Ortofoto PNOA",
+            "type": "WMTS",
+            "url": "//www.ign.es/wmts/pnoa-ma",
+            "encoding": "KVP",
+            "layerNames": "OI.OrthoimageCoverage",
+            "matrixSet": "EPSG:25830",
+            "format": "image/jpeg",
+            "thumbnail": "https://sitna.tracasa.es/api/TC/css/img/thumb-orthophoto_pnoa.jpg"
+        },
+        {
+            "id": "ninguno",
+            "title": "Mapa en blanco",
+            "type": "vector",
+            "thumbnail": "layout/idena/img/blank.png",
+            "minResolution": 0.125
+        }
+    ],
+    "controls": {        
+        "scaleBar": true,
+        "popup": false,
+        "streetView": false,
+        "attribution": false,
+        "search": false,
+        "featureInfo": false
+    }
+}

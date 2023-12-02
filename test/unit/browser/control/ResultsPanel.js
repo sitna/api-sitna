@@ -9,7 +9,7 @@ describe('Tests de TC.control.ResultsPanel', function () {
 
     describe('render', function () {
         it("debe establecer la propiedad _firstRender", async function () {
-            var ctl = await TC.Control.create('ResultsPanel', { div: 'ctl-container' });
+            var ctl = await TC.Control.create('ResultsPanel', { div: addControlDiv() });
             ctl.render();
             expect(ctl._firstRender).to.be.an.instanceof(Promise);
         });

@@ -1,0 +1,1655 @@
+﻿@import url(control/Popup.css);
+@import url(control/OverviewMap.css);
+@import url(control/LoadingIndicator.css);
+@import url(control/Scale.css);
+@import url(control/Coordinates.css);
+@import url(control/TOC.css);
+@import url(control/BasemapSelector.css);
+@import url(control/Attribution.css);
+@import url(control/Legend.css);
+@import url(control/LayerCatalog.css);
+@import url(control/FeatureInfo.css);
+@import url(control/OfflineMapMaker.css);
+@import url(control/WorkLayerManager.css);
+@import url(control/NavBar.css);
+@import url(control/Search.css);
+@import url(control/StreetView.css);
+@import url(control/Measure.css);
+@import url(control/Share.css);
+@import url(control/DrawMeasureModify.css);
+@import url(control/ExternalWMS.css);
+@import url(control/Draw.css);
+@import url(control/Modify.css);
+@import url(control/PrintMap.css);
+@import url(control/Download.css);
+@import url(control/ResultsPanel.css);
+@import url(control/Print.css);
+@import url(control/ThreeD.css);
+@import url(control/FeatureTools.css);
+@import url(control/Geolocation.css);
+@import url(view/ThreeD.css);
+@import url(control/ControlContainer.css);
+@import url(control/FullScreen.css);
+@import url(control/NavBarHome.css);
+@import url(control/DataLoader.css);
+@import url(control/WFSQuery.css);
+@import url(control/MultiFeatureInfo.css);
+@import url(control/Edit.css);
+@import url(control/WFSEdit.css);
+@import url(control/FeatureDownloadDialog.css);
+@import url(control/TabContainer.css);
+@import url(control/Elevation.css);
+@import url(control/FileImport.css);
+@import url(control/FileEdit.css);
+@import url(control/LanguageSelector.css);
+@import url(control/Measurement.css);
+@import url(control/FeatureStyler.css);
+
+/*! normalize.css v1.0.0 | MIT License | git.io/normalize */
+.tc-map article, .tc-ctl article, .tc-modal article,
+.tc-map aside, .tc-ctl aside, .tc-modal aside,
+.tc-map details, .tc-ctl details, .tc-modal details,
+.tc-map figcaption, .tc-ctl figcaption, .tc-modal figcaption,
+.tc-map figure, .tc-ctl figure, .tc-modal figure,
+.tc-map footer, .tc-ctl footer, .tc-modal footer,
+.tc-map header, .tc-ctl header, .tc-modal header,
+.tc-map hgroup, .tc-ctl hgroup, .tc-modal hgroup,
+.tc-map nav, .tc-ctl nav, .tc-modal nav,
+.tc-map section, .tc-ctl section, .tc-modal section,
+.tc-map summary, .tc-ctl summary, .tc-modal summary {
+    display: block;
+}
+
+.tc-map audio, .tc-ctl audio, .tc-modal audio,
+.tc-map canvas, .tc-ctl canvas, .tc-modal canvas,
+.tc-map video, .tc-ctl video, .tc-modal video {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+
+    .tc-map audio:not([controls]), .tc-ctl audio:not([controls]), .tc-modal audio:not([controls]) {
+        display: none;
+        height: 0;
+    }
+
+.tc-map [hidden], .tc-ctl [hidden], .tc-modal [hidden] {
+    display: none;
+}
+
+.tc-map button, .tc-ctl button, .tc-modal button,
+.tc-map input, .tc-ctl input, .tc-modal input,
+.tc-map select, .tc-ctl select, .tc-modal select,
+.tc-map textarea, .tc-ctl textarea, .tc-modal textarea {
+    font-family: var(--text-font);
+}
+
+:root {
+    /* custom variables */
+    --color-1: #ffffff;
+    --color-2: #000000;
+    --color-3: #cc0000;
+    --color-4: #cccccc;
+    --color-5: #666666;
+    --color-6: #333333;
+    --color-7: #999999;
+    --color-8: #eeeeee;
+    --color-9: #660000;
+    --color-10: rgba(255, 255, 255, 0);
+    --color-11: rgba(255, 255, 255, 0.7);
+    --color-12: rgba(0, 0, 0, 0.66);
+    --color-13: rgba(102, 0, 0, 0.1);
+    --color-14: #c52737; /*rojo*/
+    --color-15: #3b3bc6; /*azul*/
+    --text-main-color: var(--color-2);
+    --text-sec-color: var(--color-6);
+    --text-font: sans-serif;
+    --disabled-text-color: var(--color-4);
+    --main-bg-color: var(--color-1);
+    --main-hl-color: var(--color-3);
+    --main-inactive-color: var(--color-9);
+    --title-color: var(--color-5);
+    --main-divider-color: var(--color-7);
+    --sec-divider-color: var(--color-4);
+    --border-radius: 0.3rem;
+    --glyph-color: var(--color-6);
+    --glyph-sec-color: var(--color-7);
+    --glyph-hl-color: var(--color-3);
+    --glyph-disabled-color: var(--color-4);
+    --win-btn-color: var(--color-2);
+    --win-btn-bg-color: var(--color-10);
+    --ph-color: var(--color-7);
+    --btn-color: var(--color-1);
+    --btn-bg-color: var(--color-5);
+    --btn-border-color: var(--color-5);
+    --btn-disabled-color: var(--color-1);
+    --btn-disabled-bg-color: var(--color-4);
+    --btn-disabled-border-color: var(--color-4);
+    --btn-hl-color: var(--color-1);
+    --btn-hl-bg-color: var(--color-3);
+    --btn-hl-border-color: var(--color-3);
+    --sec-btn-color: var(--color-2);
+    --sec-btn-bg-color: var(--color-1);
+    --sec-btn-border-color: var(--color-1);
+    --sec-btn-disabled-color: var(--color-4);
+    --sec-btn-disabled-bg-color: var(--color-1);
+    --sec-btn-disabled-border-color: var(--color-1);
+    --sec-btn-hl-color: var(--color-3);
+    --sec-btn-hl-bg-color: var(--color-1);
+    --sec-btn-hl-border-color: var(--color-1);
+    --input-color: var(--color-2);
+    --input-bg-color: var(--color-1);
+    --input-border-color: var(--color-4);
+    --input-disabled-bg-color: var(--color-8);
+    --input-select-color: var(--color-5);
+    --cb-color: var(--color-2);
+    --cb-bg-color: var(--color-4);
+    --cb-checked-color: var(--color-1);
+    --cb-checked-bg-color: var(--color-6);
+    --tab-color: var(--color-5);
+    --tab-hl-color: var(--color-3);
+    --tab-border-color: var(--color-5);
+    --tab-hl-border-color: var(--color-3);
+    --tab-disabled-color: var(--color-4);
+    --tab-disabled-border-color: var(--color-4);
+    --tab-bg-color: transparent;
+    --tab-disabled-bg-color: transparent;
+    --tab-inner-border-radius: var(--border-radius);
+    --tab-selected-font-weight: normal;
+    --map-btn-color: var(--color-1);
+    --map-btn-bg-color: var(--color-12);
+    --map-slider-thumb-bg-color: var(--color-2);
+    --map-slider-bg-color: var(--color-4);
+    --thumb-border-width: 0.3em;
+    --thumb-border-color: var(--color-4);
+    --thumb-text-color: var(--color-2);
+    --thumb-text-shadow-color: var(--color-1);
+    --overlay-color: var(--color-2);
+    --overlay-bg-color: var(--color-11);
+    --overlay-border-color: var(--color-4);
+    --cell-odd-bg-color: var(--color-8);
+    --cell-even-bg-color: var(--color-1);
+    --list-color: var(--color-2);
+    --list-bg-color: var(--color-1);
+    --list-hl-color: var(--color-2);
+    --list-hl-bg-color: var(--color-13);
+    --active-zone-bg-color: var(--color-8);
+    --track-profile-original-color: var(--color-14);
+    --track-profile-mdt-color: var(--color-15);
+    --icon-font-family: 'sitna';
+    --icon-close: '\e908';
+    --icon-delete: '\e90d';
+    --icon-download: '\e902';
+    --icon-download-all: '\e903';
+    --icon-edit: '\e909';
+    --icon-elevation: '\e918';
+    --icon-erase: '\e928';
+    --icon-help: '\e92c';
+    --icon-info: '\e923';
+    --icon-invisible: '\e911';
+    --icon-language: '\e929';
+    --icon-profile: '\e920';
+    --icon-select: '\e927';
+    --icon-share: '\e924';
+    --icon-spinner: '\e90f';
+    --icon-visible: '\e910';
+}
+
+.tc-map :-ms-input-placeholder, .tc-ctl :-ms-input-placeholder, .tc-modal :-ms-input-placeholder { /* Edge */
+    color: var(--ph-color);
+}
+
+.tc-map ::-webkit-input-placeholder, .tc-ctl ::-webkit-input-placeholder, .tc-modal ::-webkit-input-placeholder { /* WebKit browsers */
+    color: var(--ph-color);
+}
+
+.tc-map ::-moz-placeholder, .tc-ctl ::-moz-placeholder, .tc-modal ::-moz-placeholder {
+    color: var(--ph-color);
+}
+
+
+.tc-map .ol-viewport, .tc-map .ol-unselectable, .tc-map .olMapViewport { /* antes era: html, body {. Reducimos el ámbito para no fastidiar a usuarios */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.tc-map a:focus, .tc-ctl a:focus, .tc-modal a:focus {
+    outline: thin dotted;
+}
+
+.tc-map a:active, .tc-map a:hover,
+.tc-ctl a:active, .tc-ctl a:hover,
+.tc-modal a:active, .tc-modal a:hover {
+    outline: 0;
+}
+
+.tc-map h1, .tc-ctl h1, .tc-modal h1 {
+    font-size: 2em;
+    margin: .67em 0;
+}
+
+.tc-map h2, .tc-ctl h2, .tc-modal h2 {
+    font-size: 1.5em;
+    margin: .83em 0;
+}
+
+.tc-map h3, .tc-ctl h3, .tc-modal h3 {
+    font-size: 1.17em;
+    margin: 1em 0;
+}
+
+.tc-map h4, .tc-ctl h4, .tc-modal h4 {
+    font-size: 1em;
+    margin: 1.33em 0;
+}
+
+.tc-map h5, .tc-ctl h5, .tc-modal h5 {
+    font-size: .83em;
+    margin: 1.67em 0;
+}
+
+.tc-map h6, .tc-ctl h6, .tc-modal h6 {
+    font-size: .75em;
+    margin: 2.33em 0;
+}
+
+.tc-map abbr[title], .tc-ctl abbr[title], .tc-modal abbr[title] {
+    border-bottom: 1px dotted;
+}
+
+.tc-map b, .tc-map strong,
+.tc-ctl b, .tc-ctl strong,
+.tc-modal b, .tc-modal strong {
+    font-weight: bold;
+}
+
+.tc-map blockquote, .tc-ctl blockquote, .tc-modal blockquote {
+    margin: 1em 40px;
+}
+
+.tc-map dfn, .tc-ctl dfn, .tc-modal dfn {
+    font-style: italic;
+}
+
+.tc-map mark, .tc-ctl mark, .tc-modal mark {
+    background: #ff0;
+    color: #000;
+}
+
+.tc-map p, .tc-map pre,
+.tc-ctl p, .tc-ctl pre,
+.tc-modal p, .tc-modal pre {
+    margin: 1em 0;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.tc-map code, .tc-map kbd, .tc-map pre, .tc-map samp,
+.tc-ctl code, .tc-ctl kbd, .tc-ctl pre, .tc-ctl samp,
+.tc-modal code, .tc-modal kbd, .tc-modal pre, .tc-modal samp {
+    font-family: monospace,serif;
+    _font-family: 'courier new',monospace;
+    font-size: 1em;
+}
+
+.tc-map pre, .tc-ctl pre, .tc-modal pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.tc-map q, .tc-ctl q, .tc-modal q {
+    quotes: none;
+}
+
+    .tc-map q:before, .tc-map q:after,
+    .tc-ctl q:before, .tc-ctl q:after,
+    .tc-modal q:before, .tc-modal q:after {
+        content: '';
+        content: none;
+    }
+
+.tc-map small, .tc-ctl small, .tc-modal small {
+    font-size: 75%;
+}
+
+.tc-map sub, .tc-map sup,
+.tc-ctl sub, .tc-ctl sup,
+.tc-modal sub, .tc-modal sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+.tc-map sup, .tc-ctl sup, .tc-modal sup {
+    top: -0.5em;
+}
+
+.tc-map sub, .tc-ctl sub, .tc-modal sub {
+    bottom: -0.25em;
+}
+
+.tc-map dl, .tc-map menu, .tc-map ol, .tc-map ul,
+.tc-ctl dl, .tc-ctl menu, .tc-ctl ol, .tc-ctl ul,
+.tc-modal dl, .tc-modal menu, .tc-modal ol, .tc-modal ul {
+    margin: 1em 0;
+}
+
+.tc-map dd, .tc-ctl dd, .tc-modal dd {
+    margin: 0 0 0 40px;
+}
+
+.tc-map menu, .tc-map ol, .tc-map ul,
+.tc-ctl menu, .tc-ctl ol, .tc-ctl ul,
+.tc-modal menu, .tc-modal ol, .tc-modal ul {
+    padding: 0 0 0 40px;
+}
+
+.tc-modal ol.tc-list, .tc-modal ul.tc-list {
+    padding: 0;
+}
+
+.tc-map nav ul, .tc-map nav ol,
+.tc-ctl nav ul, .tc-ctl nav ol,
+.tc-modal nav ul, .tc-modal nav ol {
+    list-style: none;
+    list-style-image: none;
+}
+
+.tc-map img, .tc-ctl img, .tc-modal img {
+    border: 0;
+    -ms-interpolation-mode: bicubic;
+}
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+.tc-map figure, .tc-ctl figure, .tc-modal figure {
+    margin: 0;
+}
+
+.tc-map form, .tc-ctl form, .tc-modal form {
+    margin: 0;
+}
+
+.tc-map fieldset, .tc-ctl fieldset, .tc-modal fieldset {
+    border: 1px solid var(--main-divider-color);
+    margin: 0 2px;
+    padding: .35em .625em .75em;
+}
+
+.tc-map legend, .tc-ctl legend, .tc-modal legend {
+    border: 0;
+    padding: 0;
+    white-space: normal;
+    /*margin-left: -7px;*/
+}
+
+@font-face {
+    font-family: 'mapskin';
+    src: url('fonts/mapskin.woff') format('woff'), url('fonts/mapskin.ttf') format('truetype'), url('fonts/mapskin.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'sitna';
+    src: url('fonts/sitna.woff') format('woff'), url('fonts/sitna.ttf') format('truetype'), url('fonts/sitna.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+sitna-button {
+    height: 2em;
+}
+
+sitna-button[variant="minimal"] {
+    height: 1.5em;
+}
+
+sitna-toggle {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+sitna-tab {
+    text-align: center;
+    flex-grow: 1;
+    box-sizing: content-box; /* Regla anti-Bootstrap */
+}
+
+.tc-map button, .tc-map input, .tc-map select, .tc-map textarea,
+.tc-ctl button, .tc-ctl input, .tc-ctl select, .tc-ctl textarea,
+.tc-modal button, .tc-modal input, .tc-modal select, .tc-modal textarea {
+    font-size: 100%;
+    margin: 0;
+    vertical-align: baseline;
+    /*vertical-align: middle;*/
+}
+
+.tc-modal {
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+    .tc-map button, .tc-map input,
+    .tc-ctl button, .tc-ctl input,
+    .tc-modal button, .tc-modal input {
+        line-height: normal;
+    }
+
+/* para FF */
+@-moz-document url-prefix() {
+    /*button:active, */ .tc-map input:active, .tc-ctl input:active { /*URI: Quito del selector los botones porque en FF al pinchar en un botón hace "flick" debido a que se reduce el padding derecho */
+        padding-right: 6px;
+    }
+}
+
+.tc-map button, html .tc-map input[type="button"], .tc-map input[type="reset"], .tc-map input[type="submit"],
+.tc-ctl button, html .tc-ctl input[type="button"], .tc-ctl input[type="reset"], .tc-ctl input[type="submit"],
+.tc-modal button, html .tc-modal input[type="button"], .tc-modal input[type="reset"], .tc-modal input[type="submit"] {
+    -webkit-appearance: button;
+    cursor: pointer;
+    *overflow: visible;
+}
+
+    .tc-map button[disabled], .tc-map input[disabled],
+    .tc-ctl button[disabled], .tc-ctl input[disabled],
+    .tc-modal button[disabled], .tc-modal input[disabled] {
+        cursor: default;
+    }
+
+.tc-map input[type="checkbox"], .tc-map input[type="radio"],
+.tc-ctl input[type="checkbox"], .tc-ctl input[type="radio"],
+.tc-modal input[type="checkbox"], .tc-modal input[type="radio"] {
+    box-sizing: border-box;
+    padding: 0;
+    /*height: 13px;
+    width: 13px;*/
+}
+
+.tc-map input[type="search"], .tc-ctl input[type="search"], .tc-modal input[type="search"] {
+    -webkit-border: 0px;
+    -webkit-appearance: none;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+/*input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}*/
+
+.tc-map button::-moz-focus-inner, .tc-map input::-moz-focus-inner,
+.tc-ctl button::-moz-focus-inner, .tc-ctl input::-moz-focus-inner,
+.tc-modal button::-moz-focus-inner, .tc-modal input::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+.tc-map textarea, .tc-ctl textarea, .tc-modal textarea {
+    overflow: auto;
+    vertical-align: top;
+}
+
+.tc-map table, .tc-ctl table, .tc-modal table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+@keyframes pulsation {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes pulsation {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes spin {
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(0,0);
+    }
+
+    90% {
+        transform: scale(1.4,1.4);
+    }
+
+    100% {
+        transform: scale(1,1);
+    }
+}
+
+@-webkit-keyframes pop /* Safari and Chrome */
+{
+    0% {
+        transform: scale(0,0);
+    }
+
+    90% {
+        transform: scale(1.4,1.4);
+    }
+
+    100% {
+        transform: scale(1,1);
+    }
+}
+
+@keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeout {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes fadeout {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes toast {
+    0% {
+        opacity: 0;
+        transform: translateY(30%);
+    }
+
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@-webkit-keyframes toast {
+    0% {
+        opacity: 0;
+        -webkit-transform: translateY(30%);
+    }
+
+    100% {
+        opacity: 1;
+        -webkit-transform: none;
+    }
+}
+
+@keyframes newPulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    80% {
+        opacity: 0;
+        transform: scale(1.5);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(2);
+    }
+}
+
+@-webkit-keyframes newPulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    80% {
+        opacity: 0;
+        transform: scale(2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(3);
+    }
+}
+
+@keyframes lightness {
+    50% {
+        background-color: hsla(0, 100%, 40%, 0.66);
+        color: white;
+    }
+
+    100% {
+        background-color: hsla(0, 0%, 0%, 0.66);
+        color: white;
+    }
+}
+
+@-webkit-keyframes lightness {
+    50% {
+        background-color: hsla(0, 100%, 40%, 0.66);
+        border: 0px;
+    }
+
+    100% {
+        background-color: hsla(0, 0%, 0%, 0.66);
+        color: white;
+    }
+}
+
+@keyframes slidedown {
+    0% {
+        transform: scaleY(0);
+    }
+
+    100% {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes bounce-fading-bar {
+    0% {
+        transform: scale(.6);
+    }
+
+    100% {
+        transform: scale(.3);
+    }
+}
+
+@-webkit-keyframes bounce-fading-bar {
+    0% {
+        -webkit-transform: scale(.6);
+    }
+
+    100% {
+        -webkit-transform: scale(.3);
+    }
+}
+
+.tc-ipad-ios7-fix {
+    height: 97% !important;
+}
+
+/*html, body {
+    width: 100%;
+    height: 100%;
+}*/
+
+.olImageLoadError {
+    visibility: hidden !important;
+}
+
+.tc-drag-handle {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+html.tc-fullscreen, body.tc-fullscreen {
+    height: 100%;
+    margin: 0;
+}
+
+.tc-map {
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    position: relative;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+    .tc-map.tc-fullscreen {
+        height: 100%;
+    }
+
+    .tc-map.tc-loading {
+        background-color: var(--main-bg-color);
+    }
+
+        .tc-map.tc-loading:before, .tc-modal .tc-modal-body.tc-loading:before {
+            content: " ";
+            border-radius: 50%;
+            box-shadow: #ccc 6vmin 0 0 0, #ccc 4.243vmin 4.243vmin 0 0, #ccc 0 6vmin 0 0, #ccc -4.243vmin 4.243vmin 0 0, #ccc -6vmin 0 0 0, #ccc -4.243vmin -4.243vmin 0 0, #ccc 0 -6vmin 0 0, #ccc 4.243vmin -4.243vmin 0 0;
+            position: absolute;
+            width: 3vmin;
+            height: 3vmin;
+            background-color: transparent;
+            left: 50%;
+            top: 50%;
+            margin-left: -1.5vmin;
+            margin-top: -1.5vmin;
+            font-size: 2vmin;
+            animation: spin 2s infinite linear;
+            -webkit-animation: spin 2s infinite linear;
+        }
+
+        .tc-map.tc-loading *, .tc-modal .tc-modal-body.tc-loading * {
+            visibility: hidden;
+        }
+
+        .tc-map.tc-loading .tc-toast {
+            visibility: visible;
+        }
+
+            .tc-map.tc-loading .tc-toast span {
+                visibility: visible;
+            }
+
+            .tc-map.tc-loading .tc-toast p {
+                visibility: visible;
+            }
+
+    .tc-map.tc-collapsed {
+        position: absolute;
+        left: auto;
+        top: auto;
+        right: 0;
+        bottom: 15px;
+        width: 25vh;
+        height: 25vh;
+        z-index: 10012;
+        border-top: 0.2em solid #fff;
+        border-left: 0.2em solid #fff;
+        border-top-left-radius: var(--border-radius);
+    }
+
+    .tc-map.tc-drop:after {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: rgba(127,127,127,0.4);
+        border: 4px dashed #666;
+        box-sizing: border-box;
+        z-index: 10020;
+        font-family: mapskin;
+        content: '\e073';
+        font-size: 20vh;
+        color: #666;
+        text-align: center;
+        line-height: 100vh;
+    }
+
+    .tc-map .ol-viewport {
+        background-color: var(--main-bg-color);
+    }
+
+.tc-ctl {
+    padding: 0.5em;
+    z-index: 10000;
+    color: var(--text-main-color);
+}
+
+    .tc-ctl h2 {
+        color: var(--title-color);
+        text-transform: lowercase;
+        background-color: var(--main-bg-color);
+        border-bottom: 1px solid;
+        border-bottom-color: var(--main-divider-color);
+        font-family: Arial, helvetica, sans-serif;
+        font-size: 1.1em;
+        font-weight: bold;
+        padding: 0.2em;
+        margin: 0;
+    }
+
+.tc-ctl-btn {
+    background-color: var(--btn-bg-color);
+    color: var(--btn-color);
+    border: 1px solid var(--btn-border-color);
+}
+
+    .tc-ctl-btn:focus {
+        outline: none;
+    }
+
+    .tc-ctl-btn.tc-disabled, .tc-ctl-btn:disabled {
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
+        cursor: default;
+    }
+
+    .tc-ctl-btn.tc-active {
+        color: var(--btn-hl-color);
+        background-color: var(--btn-hl-bg-color);
+        border-color: var(--btn-hl-border-color);
+    }
+
+.ol-control button {
+    border: 0;
+    border-radius: var(--border-radius);
+}
+
+    .ol-control button.tc-float-btn {
+        border-radius: calc(var(--border-radius) * 0.67);
+    }
+
+.tc-modal .tc-crs-list li.tc-hidden {
+    display: none;
+}
+
+.tc-modal .tc-crs-list button {
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    width: 100%;
+}
+
+button.tc-msg-warning:after {
+    font-family: mapskin;
+    font-style: normal;
+    color: var(--glyph-sec-color);
+    content: '\e0a4';
+    margin-left: 0.5em;
+}
+
+.tc-ctl.tc-disabled h2 {
+    color: var(--disabled-text-color);
+    text-decoration: line-through;
+}
+
+.tc-ctl input[type=color] {
+    border: 0;
+    background-color: transparent;
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: var(--border-radius);
+    padding: 0;
+    margin-left: 0.2em;
+    margin-right: 0.5em;
+    cursor: pointer;
+    outline: none;
+    vertical-align: sub;
+}
+
+    .tc-ctl input[type=color]::-webkit-color-swatch-wrapper {
+        padding: 0;
+        height: 1.5em;
+        width: 1.5em;
+    }
+
+    .tc-ctl input[type=color]::-webkit-color-swatch {
+        border-radius: var(--border-radius);
+        border-color: var(--input-border-color);
+    }
+
+table.tc-attr a[target=_blank]:after {
+    content: ' \21aa';
+}
+
+a.olButton {
+    background-color: #ccc;
+}
+
+a:hover.olButton {
+    background-color: #999;
+}
+
+ol.tc-list, ul.tc-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--sec-divider-color);
+    list-style: none;
+    padding: 0;
+    box-sizing: border-box;
+    max-height: none;
+    scroll-behavior: smooth;
+}
+
+    ol.tc-list > li, ul.tc-list > li {
+        padding: 0.25em 0 0.2em 0.5%;
+        border-bottom: 0.1em solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        line-height: 2em;
+        box-sizing: content-box;
+        color: var(--list-color);
+        background-color: var(--list-bg-color);
+    }
+
+.tc-point {
+    background-image: url(img/point.svg);
+}
+
+.tc-marker1 {
+    background-image: url(img/marker_32.png);
+}
+
+.tc-marker2 {
+    background-image: url(img/marker2_32.png);
+}
+
+.tc-marker3 {
+    background-image: url(img/marker3_32.png);
+}
+
+.tc-marker4 {
+    background-image: url(img/marker4_32.png);
+}
+
+.tc-marker5 {
+    background-image: url(img/marker5_32.png);
+}
+
+.tc-transparent {
+    background-color: transparent;
+    background-image: url(img/transparent.gif);
+}
+
+.tc-hidden {
+    opacity: 0;
+    visibility: hidden;
+    padding: 0;
+    margin: 0;
+}
+
+.tc-3d .tc-3d-hidden {
+    opacity: 0;
+    display: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* para ventanas modales */
+.tc-3d-hidden {
+    opacity: 0;
+    display: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+.tc-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.input-group {
+    margin: 10px;
+    width: 95%;
+}
+
+.tc-modal .tc-crs-list {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+}
+
+    .tc-modal .tc-crs-list > li {
+        padding: 0.25em 0 0.2em 0.5%;
+        border-bottom: 0.1em solid rgba(0,0,0,0.1);
+        overflow: hidden;
+        line-height: 2em;
+        box-sizing: content-box;
+        color: var(--list-color);
+        background-color: var(--list-bg-color);
+    }
+
+.tc-group {
+    margin: 6px 4px 6px 8px;
+}
+
+    .tc-group label {
+        width: 20%;
+        line-height: 2em;
+        display: inline-block;
+        font-weight: bold;
+        color: var(--text-sec-color);
+    }
+
+.tc-textbox, .tc-combo {
+    height: 2em;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--input-border-color);
+    padding: 0;
+    padding-left: 0.2em;
+    color: var(--input-color);
+    background-color: var(--input-bg-color);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+}
+
+.tc-combo {
+    color: var(--input-select-color);
+}
+
+.tc-map .tc-button,
+.tc-ctl .tc-button,
+.tc-modal .tc-button {
+    border: 1px solid;
+    border-color: var(--btn-hl-border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--btn-hl-bg-color);
+    color: var(--btn-hl-color);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    outline: none;
+}
+
+    .tc-button:focus {
+        outline: none;
+    }
+
+    .tc-button.tc-disabled {
+        cursor: not-allowed;
+        filter: alpha(opacity=65);
+        opacity: .65;
+    }
+
+.tc-map .tc-icon-btn,
+.tc-ctl .tc-icon-btn,
+.tc-modal .tc-icon-btn {
+    position: relative;
+    border: none;
+    background-color: transparent;
+    color: transparent;
+    text-indent: -1000vw;
+    font-size: 1.2em;
+    width: 1.2em;
+    height: 1.2em;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none;
+}
+
+    .tc-map .tc-icon-btn:before,
+    .tc-ctl .tc-icon-btn:before,
+    .tc-modal .tc-icon-btn:before {
+        position: absolute;
+        font-family: var(--icon-font-family);
+        text-indent: 0;
+        width: 100%;
+        height: 100%;
+        line-height: 1.2em;
+        top: 0;
+        left: 0;
+        text-align: center;
+        color: var(--glyph-color);
+    }
+
+
+    .tc-map .tc-icon-btn:disabled,
+    .tc-ctl .tc-icon-btn:disabled,
+    .tc-modal .tc-icon-btn:disabled {
+        background-color: transparent;
+    }
+
+        .tc-map .tc-icon-btn:disabled:before,
+        .tc-ctl .tc-icon-btn:disabled:before,
+        .tc-modal .tc-icon-btn:disabled:before {
+            color: var(--sec-btn-disabled-color);
+        }
+
+.tc-icon-btn:focus {
+    outline: none;
+}
+
+.tc-map .tc-toggle,
+.tc-ctl .tc-toggle,
+.tc-modal .tc-toggle {
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    border-radius: calc(var(--border-radius) / 2);
+    outline: none;
+    background-color: var(--cb-bg-color);
+    box-sizing: border-box;
+    cursor: pointer;
+    width: 1.2em;
+    height: 1.2em;
+    padding: 0;
+    text-indent: -1000vw;
+    font-size: 1.2em;
+}
+
+    .tc-map .tc-toggle:before,
+    .tc-ctl .tc-toggle:before,
+    .tc-modal .tc-toggle:before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 0.8em;
+        width: 100%;
+        height: 100%;
+        line-height: 1.5em;
+        text-indent: 0;
+        text-align: center;
+        color: var(--cb-color);
+        content: " ";
+    }
+
+    .tc-map .tc-toggle.tc-checked,
+    .tc-ctl .tc-toggle.tc-checked,
+    .tc-modal .tc-toggle.tc-checked,
+    .tc-map .tc-toggle.tc-active,
+    .tc-ctl .tc-toggle.tc-active,
+    .tc-modal .tc-toggle.tc-active,
+    .tc-map .tc-toggle:checked,
+    .tc-ctl .tc-toggle:checked,
+    .tc-modal .tc-toggle:checked {
+        background-color: var(--cb-checked-bg-color);
+    }
+
+    .tc-map .tc-toggle.tc-checked:before,
+    .tc-ctl .tc-toggle.tc-checked:before,
+    .tc-modal .tc-toggle.tc-checked:before,
+    .tc-map .tc-toggle.tc-active:before,
+    .tc-ctl .tc-toggle.tc-active:before,
+    .tc-modal .tc-toggle.tc-active:before,
+    .tc-map .tc-toggle:checked:before,
+    .tc-ctl .tc-toggle:checked:before,
+    .tc-modal .tc-toggle:checked:before {
+        color: var(--cb-checked-color);
+        content: "\2714";
+    }
+
+.tc-float-btn {
+    position: absolute;
+    width: 2em;
+    height: 2em;
+    z-index: 10002;
+    color: var(--map-btn-color);
+    border-radius: calc(var(--border-radius) * 0.67);
+    border: 0;
+    background-color: var(--map-btn-bg-color);
+    padding: 0;
+    font-size: initial;
+    outline: none;
+    cursor: pointer;
+}
+
+    .tc-float-btn:focus {
+        outline: none;
+    }
+
+button.tc-new:before {
+    content: '';
+    width: 2em;
+    height: 2em;
+    top: -5px;
+    left: -5px;
+    border-radius: 0.2em;
+    border: 3px solid rgba(0, 0, 0, 0.66);
+    position: absolute;
+    animation: newPulse 2s ease 0s infinite;
+}
+
+.tc-icon-button {
+    padding: 4px 18px;
+    font-size: 1em;
+}
+
+.tc-alert {
+    border-radius: 0.2em;
+    padding: 0.2em 0.5em;
+    background-color: #eee;
+}
+
+    .tc-alert.tc-alert-warning strong:before {
+        display: inline-block;
+        margin-top: -0.5em;
+        content: '\26a0';
+        padding-right: 0.2em;
+        font-weight: normal;
+        color: #fc0;
+        font-size: 1.5em;
+    }
+
+    .tc-alert p {
+        margin-left: 0.5em;
+    }
+
+div.tc-alert.tc-hidden {
+    display: none;
+}
+
+.tc-alert.tc-alert-info {
+    margin-top: 0.5em;
+}
+
+    .tc-alert.tc-alert-info:before {
+        display: inline-block;
+        margin-top: -0.3em;
+        content: '\1f449';
+        padding-right: 0.2em;
+        font-weight: normal;
+        font-size: 1.5em;
+    }
+
+.tc-alert sitna-button[icon="close"] {
+    display: block;
+    position: relative;
+    width: 1em;
+    height: 1em;
+    float: right;
+}
+
+.tc-modal {
+    background-color: rgba(0,0,0,0.4);
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: none;
+    z-index: 100010;
+}
+
+    .tc-modal.tc-visible {
+        animation: fadein 0.25s;
+        visibility: visible;
+        display: grid;
+        grid-template-areas: "topleft top topright" "left center right" "bottomleft bottom bottomright";
+    }
+
+    .tc-modal .tc-modal-background {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+body .tc-modal .tc-modal-background {
+    max-height: 100%;
+}
+
+.tc-modal .tc-modal-window {
+    max-width: 60%;
+    position: absolute;
+    font-family: Arial,helvetica,sans-serif;
+    background-color: var(--main-bg-color);
+    border: 1px solid var(--sec-divider-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0,0,0,.5);
+    z-index: 100011;
+    grid-row-start: 2;
+    grid-row-end: 3;
+    grid-column-start: 2;
+    grid-column-end: 3;
+    align-self: center;
+    justify-self: center;
+}
+
+.tc-modal .tc-modal-header {
+    padding: 0.7em;
+    border-bottom: 1px solid var(--main-divider-color);
+    display: flex;
+}
+
+    .tc-modal .tc-modal-header h3 {
+        padding: 0.2em 0 0 0;
+        margin: 0;
+        font-size: 16px;
+        color: var(--title-color);
+        font-weight: normal;
+        flex: 2 1 auto;
+    }
+
+    .tc-modal .tc-modal-header .tc-modal-close {
+        cursor: pointer;
+        padding: 0;
+        margin: 0;
+        margin-left: 0.3em;
+        color: var(--text-main-color);
+    }
+
+        .tc-modal .tc-modal-header .tc-modal-close:before {
+            font-family: var(--icon-font-family);
+            content: var(--icon-close);
+            display: block;
+            font-size: 1.4em;
+            line-height: 1.2em;
+        }
+
+
+.tc-modal .tc-modal-body {
+    max-height: 60vh;
+    overflow: auto;
+    padding: 0.9em;
+    font-size: 0.9em;
+    color: var(--text-main-color);
+}
+
+    .tc-modal .tc-modal-body.tc-loading {
+        transform: scale(0.5);
+        min-height: 10em;
+    }
+
+        .tc-modal .tc-modal-body.tc-loading .tc-button, .tc-modal .tc-modal-body.tc-loading .tc-ctl-btn {
+            visibility: hidden;
+            transition: unset;
+        }
+
+.tc-modal .tc-modal-footer {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    padding: 0.8em;
+    border-top: 1px solid #EEE;
+    text-align: right;
+    position: relative;
+}
+
+.tc-modal h4 {
+    color: var(--title-color);
+    margin: 0.5em 0 0.5em 0;
+    padding: 0;
+}
+
+.tc-toast-container {
+    position: absolute;
+    visibility: hidden;
+    bottom: 2em;
+    left: 50%;
+    max-width: 24em;
+    z-index: 10011;
+}
+
+.tc-map.tc-ctl-prnmap-printing .tc-toast-container {
+    z-index: 100110;
+    position: fixed;
+}
+
+.tc-toast {
+    position: relative;
+    visibility: visible;
+    left: -50%;
+    width: 100%;
+    background-color: black;
+    font-size: 0.9em;
+    color: #fff;
+    text-align: center;
+    border-radius: var(--border-radius);
+    padding: 0.6em 0.5em;
+    margin-left: -0.15em;
+    margin-top: 0.3em;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    animation: toast 0.3s;
+    -webkit-animation: toast 0.3s;
+}
+
+    .tc-toast p {
+        display: flex;
+        flex-direction: column;
+        word-break: break-word; /* Chrome, Safari */
+        word-wrap: break-word; /* IE11, Firefox */
+        margin: 0;
+        padding: 0;
+    }
+
+        .tc-toast p a {
+            display: contents;
+            font-weight: bold;
+        }
+
+    .tc-toast ul {
+        text-align: left;
+    }
+
+    /* cuando no se cargan los estilos del layout responsive, no funcionan los estilos de las tostadas porque usan fontAwesome */
+    .tc-toast.tc-msg-warning span {
+        font-size: 1em;
+        margin-right: 0.4em;
+        float: left;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 14px solid #ff0;
+        border-radius: 0.1em;
+    }
+
+        .tc-toast.tc-msg-warning span:before {
+            /*content: "\ff01";
+            margin-top: 0.15em;
+            position: absolute;
+            margin-left: -0.3em;
+            color: #000000;
+            font-size: 0.8em;*/
+            content: "!";
+            margin-top: 0.15em;
+            position: absolute;
+            margin-left: -0.15em;
+            color: #000000;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+    .tc-toast.tc-msg-error span {
+        font-size: 0.8em;
+        float: left;
+        background: #ff0000;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+    }
+
+        .tc-toast.tc-msg-error span:before {
+            /*content: '\271a';
+            color: #ffffff;
+            transform: rotate(45deg);
+            position: absolute;
+            left: 0.75em;
+            top: 0.65em;*/
+            content: "x";
+            color: #ffffff;
+            position: absolute;
+            left: 0.9em;
+            top: 0.8em;
+            font-weight: bold;
+        }
+
+    .tc-toast.tc-msg-info span {
+        font-size: 0.8em;
+        float: left;
+        background: #0000ff;
+        width: 13.5px;
+        height: 13.5px;
+        border-radius: 50%;
+    }
+
+        .tc-toast.tc-msg-info span:before {
+            /*content: '\2139';
+            color: #ffffff;
+            position: absolute;
+            left: 1.05em;
+            top: 0.8em;*/
+            content: "i";
+            color: #ffffff;
+            position: absolute;
+            left: 1.05em;
+            top: 0.8em;
+            font-weight: bold;
+        }
+
+
+    .tc-toast.tc-hidden {
+        animation: fadeout 0.3s;
+        -webkit-animation: fadeout 0.3s;
+    }
+
+span.tc-beta {
+    text-transform: uppercase;
+    font-size: 0.7em;
+    color: red;
+    font-weight: normal;
+    font-style: italic;
+}
+
+@media print {
+    .tc-modal {
+        display: none !important;
+    }
+}
+
+    .tc-ctl-rpanel-minimized-max-table.tc-tracking:before {
+        font-family: mapskin;
+        content: "\e00d";
+    }
+
+div.ms-parent.tc-combo {
+    padding-left: 0;
+}
+
+.tc-disabled {
+    display: none;
+}
+
+.tc-offline > [data-no-cb] {
+    display: none;
+}
+
+.tc-3d > [data-no-3d] {
+    display: none;
+}
+
+.tc-beta-button {
+    background-color: hsl(0, 100%, 0%);
+    animation: lightness 5s infinite alternate;
+}
+
+/* estilos propios de cesium. Los paso aquí para no cargar todo el css de widgets que no usamos */
+.cesium-viewer {
+    overflow: hidden;
+    display: block;
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.cesium-viewer-cesiumWidgetContainer {
+    width: 100%;
+    height: 100%;
+}
+
+.cesium-widget {
+    position: relative;
+}
+
+    .cesium-widget, .cesium-widget canvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+    }
+/* fin css cesium */
+
+.tc-map label:first-of-type input[type=radio] ~ span,
+.tc-ctl label:first-of-type input[type=radio] ~ span,
+.tc-modal label:first-of-type input[type=radio] ~ span {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.tc-map label:last-of-type input[type=radio] ~ span,
+.tc-ctl label:last-of-type input[type=radio] ~ span,
+.tc-modal label:last-of-type input[type=radio] ~ span {
+    width: 100%;
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    /* para el salto de línea */
+    white-space: pre-line;
+}
+
+.tc-warning-ie {
+    width: 100%;
+    z-index: 100000;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    background: #cc0000;
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    height: 15%;
+    bottom: 0;
+    flex-wrap: wrap;
+    cursor: pointer;
+}
+
+.tc-loading.tc-map .tc-warning-ie {
+    visibility: visible;
+}
+
+    .tc-loading.tc-map .tc-warning-ie * {
+        visibility: visible;
+    }
+
+/*ocultamos ellipse título de un control que section muestra dento de un diálogo*/
+.tc-modal .tc-modal-body .tc-ctl h2 {
+    display: none;
+    padding: 0;
+    margin: 0;
+}
+/*eliminamos el padding que los controles tienen por defecto cuando se muestra en un diálogo*/
+.tc-modal .tc-modal-body .tc-ctl {
+    padding: 0;
+}

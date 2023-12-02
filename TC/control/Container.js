@@ -2,12 +2,11 @@
 import Control from '../Control';
 
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.control.Container = function () {
+const Container = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);    
+    Control.apply(self, arguments);    
 
     self.controlOptions = self.options.controls || [];
 
@@ -17,25 +16,23 @@ TC.control.Container = function () {
     self._ctlPromises = new Array(self.ctlCount);
 };
 
-TC.inherit(TC.control.Container, TC.Control);
+TC.inherit(Container, Control);
 
 (function () {
-    var ctlProto = TC.control.Container.prototype;
+    var ctlProto = Container.prototype;
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        const ctlRegister = TC.Control.prototype.register.call(self, map);
+        const ctlRegister = Control.prototype.register.call(self, map);
 
         self.uids = new Array(self.ctlCount);
         self.uids.forEach(function (_elm, idx, arr) {
             arr[idx] = self.getUID();
         });
 
-        return new Promise(function (resolve, _reject) {
-            Promise.all([ctlRegister, self.renderPromise()]).then(function () {
-                self.onRender().then(ctl => resolve(ctl));
-            });
-        });        
+        await Promise.all([ctlRegister, self.renderPromise()]);
+        const ctl = await self.onRender();
+        return ctl;
     };
 
     ctlProto.onRender = function () {
@@ -64,5 +61,5 @@ TC.inherit(TC.control.Container, TC.Control);
     };
 })();
 
-const Container = TC.control.Container;
+TC.control.Container = Container;
 export default Container;

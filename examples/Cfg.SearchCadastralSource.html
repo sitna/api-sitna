@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/global.html#CadastralSearchOptions">CadastralSearchOptions</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.CadastralSearchOptions">CadastralSearchOptions</a>.</p>
         <p>Establecer configuración de un origen de datos distinto en la búsqueda de parcelas catastrales.</p>
     </div>
     <script src="../"></script>
@@ -37,7 +37,7 @@
                             thirdQueryWord: 'PARCELA' // Campo en el que buscar la parcela.
                         },
                         suggestionListHead: { // Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-                            label: "search.list.cadastral", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Parcela catastral
+                            labelKey: "search.list.cadastral", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Parcela catastral
                             color: [ // En este caso la consulta se hace sobre varias capas. Con el siguiente objeto se define el color de los resultados de la búsqueda de cada capa. Estos colores también se mostrarán en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
                                 {
                                     CATAST_Pol_ParcelaUrba: { // Nombre de capa presente en la propiedad `featureType`.

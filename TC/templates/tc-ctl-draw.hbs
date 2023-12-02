@@ -5,21 +5,7 @@
     <button type="button" class="tc-ctl-btn tc-ctl-draw-btn-end" disabled title="{{i18n "end"}}">{{i18n "end"}}</button>
     <button type="button" class="tc-ctl-btn tc-ctl-draw-btn-cancel" title="{{i18n "cancel"}}">{{i18n "cancel"}}</button>
 </div>
-{{#if styling}}
-<div class="tc-ctl-draw-style">
-    <div class="tc-ctl-draw-style-stroke">
-        {{i18n "strokeColor"}}
-        <input type="color" class="tc-ctl-col tc-ctl-draw-str-c" value="{{strokeColor}}" title="{{i18n "selectColor"}}" />
-        {{i18n "width"}}
-        <div class="tc-ctl-draw-str-w-watch" style="border-bottom-width:{{strokeWidth}}px;"> </div>
-        <input type="number" class="tc-ctl-draw-str-w tc-textbox" value="{{strokeWidth}}" min="1" max="15" />
-    </div>
-    <div class="tc-ctl-draw-style-fill">
-        {{i18n "fillColor"}}
-        <input type="color" class="tc-ctl-col tc-ctl-draw-fll-c" value="{{fillColor}}" title="{{i18n "selectColor"}}" />
-        {{i18n "opacity"}}
-        <input type="number" class="tc-ctl-draw-fll-w tc-textbox" value="{{fillOpacity}}" min="0" max="100" />
-    </div>
+<div class="tc-ctl-draw-style{{#unless stylable}} tc-hidden{{/unless}}">
+    <sitna-feature-styler></sitna-feature-styler>
 </div>
-{{/if}}
 

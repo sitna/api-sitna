@@ -1,17 +1,15 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Control from '../Control';
-import Draw from './Draw';
+import './Draw';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.control.Draw = Draw;
-TC.Control = Control;
 
-TC.control.Measure = function () {
+const Measure = function () {
     var self = this;
 
-    TC.Control.apply(self, arguments);
+    Control.apply(self, arguments);
+    self.snapping = self.options.snapping;
 
     self.drawControls = [];
     self.persistentDrawControls = false;
@@ -27,48 +25,48 @@ TC.control.Measure = function () {
         self.reset = true;
 
         self.wrap = new TC.wrap.control.Measure(self);
-
-        self._len = self.div.querySelector('.tc-ctl-meas-val-len');
-        self._area = self.div.querySelector('.tc-ctl-meas-val-area');
-        self._peri = self.div.querySelector('.tc-ctl-meas-val-peri');
     });
 };
-TC.control.Measure.units = {
-    "m": { peso: 0, abbr: "m&sup2;" },
-    "dam": { peso: 1, abbr: "dam&sup2;", precision: 2 },
-    "hm": { peso: 2, abbr: "hm&sup2;", precision: 2 },
-    "ha": { peso: 2, abbr: "ha", precision: 3 },
-    "km": { peso: 3, abbr: "km&sup2;", precision: 3 }
-};
 
-TC.inherit(TC.control.Measure, TC.Control);
+TC.inherit(Measure, Control);
 
 (function () {
-    var ctlProto = TC.control.Measure.prototype;
+    var ctlProto = Measure.prototype;
 
     ctlProto.CLASS = 'tc-ctl-meas';
 
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-meas.hbs";
+    ctlProto.loadTemplates = async function () {
+        const self = this;
+        const module = await import('../templates/tc-ctl-meas.mjs');
+        self.template = module.default;
+    };
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id }, function () {
+        return self._set1stRenderPromise(Control.prototype.renderData.call(self, {
+            controlId: self.id,
+            displayElevation: self.options.displayElevation,
+            singleSketch: !self.persistentDrawControls,
+            extensibleSketch: self.persistentDrawControls,
+            stylable: self.persistentDrawControls
+        }, function () {
             if (self.options.mode) {
-                self.div.querySelector('.tc-ctl-meas-select').classList.add(TC.Consts.classes.HIDDEN);
+                self.div.querySelector('.tc-ctl-meas-select').classList.add(Consts.classes.HIDDEN);
             }
 
-            self.div.querySelectorAll(`.${TC.control.Measure.prototype.CLASS}-select span`).forEach(function (span) {
-                span.addEventListener(TC.Consts.event.CLICK, function (_e) {
-                    var label = this;
-                    while (label && label.tagName !== 'LABEL') {
-                        label = label.parentElement;
-                    }
-                    var checkbox = label.querySelector(`input[type=radio][name="${self.id}-mode"]`);
-                    var newMode = checkbox.value;
+            self.lineMeasurementControl = self.div.querySelector('sitna-measurement[mode="polyline"]')
+            self.polygonMeasurementControl = self.div.querySelector('sitna-measurement[mode="polygon"]')
+            self.lineMeasurementControl.containerControl = self;
+            self.lineMeasurementControl.displayElevation = self.options.displayElevation;
+            self.polygonMeasurementControl.containerControl = self;
 
-                    checkbox.checked = true;
-                    self.setMode(newMode, true);
-                }, { passive: true });
+            self.div.querySelectorAll(`.${Measure.prototype.CLASS}-select sitna-tab`).forEach(function (tab) {
+                tab.callback = function () {
+                    const target = this.target;
+                    if (target) {
+                        self.setMode(target.id.substr(target.id.indexOf('-mode-') + 6), true);
+                    }
+                };
             });
 
             if (TC.Util.isFunction(callback)) {
@@ -77,93 +75,82 @@ TC.inherit(TC.control.Measure, TC.Control);
         }));
     };
 
-    ctlProto.register = function (map) {
+    ctlProto.register = async function (map) {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            TC.Control.prototype.register.call(self, map).then(function () {
-                self.map.on(TC.Consts.event.VIEWCHANGE, function () {
-                    if (self.map.view === TC.Consts.view.PRINTING) {
-                        self.trigger(TC.Consts.event.DRAWEND);
-                    }
-                });
-
-                const layerId = self.getUID();
-                const drawLinesId = self.getUID();
-                const drawPolygonsId = self.getUID();
-
-                self.units = self.options.units ? self.options.units : ["m", "km"];
-
-                self.layerPromise = map.addLayer({
-                    id: layerId,
-                    title: self.getLocaleString('measure'),
-                    owner: self,
-                    stealth: true,
-                    type: TC.Consts.layerType.VECTOR,
-                    styles: {
-                        point: map.options.styles.point,
-                        line: map.options.styles.line,
-                        polygon: map.options.styles.polygon
-                    }
-                });
-
-                Promise.all([self.layerPromise, self.renderPromise()]).then(function (objects) {
-                    const layer = objects[0];
-                    self.layer = layer;
-                    self.layer.map.putLayerOnTop(self.layer);
-
-                    self._lineDrawControlPromise = map.addControl('draw', {
-                        id: drawLinesId,
-                        div: self.div.querySelector('.tc-ctl-meas-line'),
-                        mode: TC.Consts.geom.POLYLINE,
-                        measure: true,
-                        extensible: true,
-                        persistent: self.persistentDrawControls,
-                        styling: self.persistentDrawControls,
-                        layer: self.layer
-                    });
-                    self._polygonDrawControlPromise = map.addControl('draw', {
-                        id: drawPolygonsId,
-                        div: self.div.querySelector('.tc-ctl-meas-polygon'),
-                        mode: TC.Consts.geom.POLYGON,
-                        measure: true,
-                        persistent: self.persistentDrawControls,
-                        styling: self.persistentDrawControls,
-                        layer: self.layer
-                    });
-
-                    Promise.all([self._lineDrawControlPromise, self._polygonDrawControlPromise]).then(function (controls) {
-                        self.lineDrawControl = controls[0];
-                        self.polygonDrawControl = controls[1];
-                        controls.forEach(function (ctl) {
-                            ctl.containerControl = self;
-                            self.drawControls.push(ctl);
-                            ctl
-                                .on(TC.Consts.event.MEASURE + ' ' + TC.Consts.event.MEASUREPARTIAL, function (e) {
-                                    self.showMeasurements(e);
-                                })
-                                .on(TC.Consts.event.DRAWCANCEL, function (_e) {
-                                    // Alerta de condición de carrera si no ponemos un timeout:
-                                    // 1- Se llama a cancel de un control Draw.
-                                    // 2- Se llama a deactivate (como es mediante cancel, no se se corta la cadena de activación controles).
-                                    // 3- Si el control activo anterior era otro de los modos de dibujo de Measure, se activa.
-                                    // 4- Se llama a cancel desde aquí.
-                                    // 5- Se llama a deactivate del control que acabamos de activar en 3.
-                                    // El activate de 3 y el deactivate de 5 sobre el mismo control entran en condición de carrera al crear/destruir la interaction
-                                    // por tanto se puede quedar en un estado inconsistente. Para evitar eso, separamos 3 de 5 por el siguiente timeout.
-                                    setTimeout(function () {
-                                        self.cancel();
-                                    }, 100);
-                                });
-                            // Desactivamos el método exportState que ya se encarga el control padre de ello
-                            ctl.exportsState = false;
-                        });
-
-                        resolve(self);
-                        self.setMode(self.options.mode);
-                    }).catch(reject);
-                }).catch(reject);
-            });
+        await Control.prototype.register.call(self, map);
+        self.map.on(Consts.event.VIEWCHANGE, function () {
+            if (self.map.view === Consts.view.PRINTING) {
+                self.trigger(Consts.event.DRAWEND);
+            }
         });
+
+        const layerId = self.getUID();
+        const drawLinesId = self.getUID();
+        const drawPolygonsId = self.getUID();
+
+        self.units = self.options.units ? self.options.units : ["m", "km"];
+
+        if (self.options.layerLess) {
+            self.layerPromise = Promise.resolve(null);
+        }
+        else {
+            self.layerPromise = map.addLayer({
+                id: layerId,
+                title: self.getLocaleString('measure'),
+                owner: self,
+                stealth: true,
+                type: Consts.layerType.VECTOR,
+                styles: {
+                    point: map.options.styles.point,
+                    line: map.options.styles.line,
+                    polygon: map.options.styles.polygon
+                }
+            });
+        }
+        self.layer = await self.layerPromise;
+        await self.renderPromise();
+        if (self.layer) {
+            map.putLayerOnTop(self.layer);
+        }
+
+        const controls = await Promise.all([self.getLineDrawControl(), self.getPolygonDrawControl()]);
+        self.lineDrawControl = controls[0];
+        self.polygonDrawControl = controls[1];
+        self.lineDrawControl.id = drawLinesId;
+        self.polygonDrawControl.id = drawPolygonsId;
+        self.lineDrawControl.setLayer(self.layer);
+        self.polygonDrawControl.setLayer(self.layer);
+        self.lineDrawControl.snapping = self.snapping;
+        self.polygonDrawControl.snapping = self.snapping;
+        controls.forEach(function (ctl) {
+            ctl.containerControl = self;
+            self.drawControls.push(ctl);
+            ctl
+                .on(Consts.event.DRAWSTART, function (_e) {
+                    self.resetValues();
+                })
+                .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, function (e) {
+                    self.displayMeasurements(e);
+                })
+                .on(Consts.event.DRAWCANCEL, function (_e) {
+                    // Alerta de condición de carrera si no ponemos un timeout:
+                    // 1- Se llama a cancel de un control Draw.
+                    // 2- Se llama a deactivate (como es mediante cancel, no se se corta la cadena de activación controles).
+                    // 3- Si el control activo anterior era otro de los modos de dibujo de Measure, se activa.
+                    // 4- Se llama a cancel desde aquí.
+                    // 5- Se llama a deactivate del control que acabamos de activar en 3.
+                    // El activate de 3 y el deactivate de 5 sobre el mismo control entran en condición de carrera al crear/destruir la interaction
+                    // por tanto se puede quedar en un estado inconsistente. Para evitar eso, separamos 3 de 5 por el siguiente timeout.
+                    setTimeout(function () {
+                        self.cancel();
+                    }, 100);
+                });
+            // Desactivamos el método exportState que ya se encarga el control padre de ello
+            ctl.exportsState = false;
+        });
+
+        self.setMode(self.options.mode);
+        return self;
     };
 
     ctlProto.displayMode = function (mode) {
@@ -174,15 +161,15 @@ TC.inherit(TC.control.Measure, TC.Control);
             modes.push(elm);
         });
         switch (mode) {
-            case TC.Consts.geom.POLYLINE:
-                self._activeMode = modes.filter(function (elm) {
+            case Consts.geom.POLYLINE:
+                self._activeMode = modes.find(function (elm) {
                     return elm.matches('.tc-ctl-meas-len');
-                })[0];
+                });
                 break;
-            case TC.Consts.geom.POLYGON:
-                self._activeMode = modes.filter(function (elm) {
+            case Consts.geom.POLYGON:
+                self._activeMode = modes.find(function (elm) {
                     return elm.matches('.tc-ctl-meas-area');
-                })[0];
+                });
                 break;
             case null:
             case undefined:
@@ -197,20 +184,20 @@ TC.inherit(TC.control.Measure, TC.Control);
         });
 
         if (mode) {
-            const radio = self.div.querySelector(`input[type=radio][name="${self.id}-mode"][value="${mode}"]`);
-            radio.checked = true;
+            const tab = self.div.querySelector(`sitna-tab[group="${self.id}-mode"][for="${self.id}-mode-${mode}"]`);
+            tab.selected = true;
         }
         else {
-            self.div.querySelectorAll(`input[type=radio][name="${self.id}-mode"]`).forEach(function (radio) {
-                radio.checked = false;
+            self.div.querySelectorAll(`sitna-tab[group="${self.id}-mode"]`).forEach(function (tab) {
+                tab.selected = false;
             });
         }
         if (self._activeMode) {
-            self._activeMode.classList.remove(TC.Consts.classes.HIDDEN);
-            self._activeMode.querySelector('.tc-ctl').classList.remove(TC.Consts.classes.COLLAPSED);
+            self._activeMode.classList.remove(Consts.classes.HIDDEN);
+            self._activeMode.querySelector('.tc-ctl').classList.remove(Consts.classes.COLLAPSED);
         }
         hiddenModes.forEach(function (elm) {
-            elm.classList.add(TC.Consts.classes.HIDDEN);
+            elm.classList.add(Consts.classes.HIDDEN);
         });
         return self;
     };
@@ -223,25 +210,25 @@ TC.inherit(TC.control.Measure, TC.Control);
 
         var event;
         switch (mode) {
-            case TC.Consts.geom.POLYLINE:
+            case Consts.geom.POLYLINE:
                 self.lineDrawControl.activate();
-                event = TC.Consts.event.CONTROLACTIVATE;
+                event = Consts.event.CONTROLACTIVATE;
                 break;
-            case TC.Consts.geom.POLYGON:
+            case Consts.geom.POLYGON:
                 self.polygonDrawControl.activate();
-                event = TC.Consts.event.CONTROLACTIVATE;
+                event = Consts.event.CONTROLACTIVATE;
                 break;
             case null:
             case undefined:
                 self.drawControls.forEach(function (ctl) {
                     if (ctl.isActive) {
-                        ctl.cancel();
+                        ctl.deactivate();
                     }
                 });
-                event = TC.Consts.event.CONTROLDEACTIVATE;
+                event = Consts.event.CONTROLDEACTIVATE;
                 break;
             default:
-                event = TC.Consts.event.CONTROLACTIVATE;
+                event = Consts.event.CONTROLACTIVATE;
                 break;
         }
 
@@ -257,55 +244,67 @@ TC.inherit(TC.control.Measure, TC.Control);
         return this;
     };
 
-    ctlProto.showMeasurements = function (options) {
+    ctlProto.displayMeasurements = function (options) {
         const self = this;
         options = options || {};
-        var units = options.units;
-        var precision;
-        const locale = self.map.options.locale || TC.Cfg.locale;
-        if (options.area) {
-            var area = options.area;
-            (self.units instanceof Array ? self.units : self.units.split(",")).forEach(function (unit, _index, array) {
-                const difPeso = TC.control.Measure.units[unit.trim()].peso - TC.control.Measure.units.m.peso;
-                let precision = TC.control.Measure.units[unit.trim()].precision ? TC.control.Measure.units[unit.trim()].precision : 0;
-                if (array.length === 1 || area >= Math.pow(100, difPeso) / Math.pow(10, precision ? precision - 1 : precision)) {
-                    self._area.innerHTML = TC.Util.formatNumber((area / Math.pow(100, difPeso)).toFixed(precision), locale) + ' ' + TC.control.Measure.units[unit].abbr;
-                }
-            });
+        if (Object.prototype.hasOwnProperty.call(options, 'area')) {
+            self.polygonMeasurementControl.displayMeasurement(options);
         }
-        if (options.perimeter) {
-            var perimeter = options.perimeter;
-            if (perimeter > 1000) {
-                perimeter = perimeter / 1000;
-                units = 'km';
-            }
-            precision = units === 'm' ? 0 : 3;
-            self._peri.innerHTML = TC.Util.formatNumber(perimeter.toFixed(precision), locale) + ' ' + units;
-        }
-        if (options.length) {
-            var length = options.length;
-            if (length > 1000) {
-                length = length / 1000;
-                units = 'km';
-            }
-            precision = units === 'm' ? 0 : 3;
-            self._len.innerHTML = TC.Util.formatNumber(length.toFixed(precision), locale) + ' ' + units;
+        if (Object.prototype.hasOwnProperty.call(options, 'length')) {
+            self.lineMeasurementControl.displayMeasurement(options);
         }
         return self;
     };
 
+    ctlProto.getLineMeasurementControl = async function () {
+        const self = this;
+        await self.renderPromise();
+        return self.div.querySelector('sitna-measurement[mode="polyline"]');
+    };
+
+    ctlProto.getPolygonMeasurementControl = async function () {
+        const self = this;
+        await self.renderPromise();
+        return self.div.querySelector('sitna-measurement[mode="polygon"]');
+    };
+
     ctlProto.resetValues = function () {
         const self = this;
-        if (self._len) {
-            self._len.textContent = self.NOMEASURE;
-            self._area.textContent = self.NOMEASURE;
-            self._peri.textContent = self.NOMEASURE;
-        }
+        self.getLineMeasurementControl().then(ctl => ctl.clearMeasurement());
+        self.getPolygonMeasurementControl().then(ctl => ctl.clearMeasurement());
         return self;
     };
 
     ctlProto.getDrawLines = function () {
 
+    };
+
+    ctlProto.getLayer = function () {
+        const self = this;
+        if (self.layer) {
+            return Promise.resolve(self.layer);
+        }
+        return self.layerPromise;
+    };
+
+    ctlProto.setLayer = async function (layer) {
+        const self = this;
+        self.layer = layer;
+        for await (const control of [self.getLineDrawControl(), self.getPolygonDrawControl()]) {
+            control.setLayer(self.layer);
+        }
+    };
+
+    ctlProto.getLineDrawControl = async function () {
+        const self = this;
+        await self.renderPromise();
+        return self.div.querySelector('.tc-ctl-meas-len sitna-draw');
+    };
+
+    ctlProto.getPolygonDrawControl = async function () {
+        const self = this;
+        await self.renderPromise();
+        return self.div.querySelector('.tc-ctl-meas-area sitna-draw');
     };
 
     ctlProto.exportState = function () {
@@ -328,5 +327,5 @@ TC.inherit(TC.control.Measure, TC.Control);
 
 })();
 
-const Measure = TC.control.Measure;
+TC.control.Measure = Measure;
 export default Measure;

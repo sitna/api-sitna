@@ -1,0 +1,122 @@
+﻿
+.tc-ctl-download-cnt {
+    width: 97%;
+    margin-top: 0;
+}
+
+.tc-ctl-download-cnt span {
+    width: 100%;
+    display: block;
+    line-height: 2em;
+    color: #333;
+    font-weight: bold;
+    font-size: 104.5%;
+}
+
+div.tc-ctl-download-cnt label {
+    width: 25%;
+}
+
+.tc-ctl-download-cnt select.tc-combo {
+    width: 75%;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.tc-ctl-download-div label.tc-ctl-download-image-qr-label,
+.tc-ctl-download-div label.tc-ctl-download-image-wld-label {
+    display: inline-block;
+    line-height: 3em;
+    width: calc(50% - 2px);
+    font-weight: normal;
+}
+.tc-3d .tc-ctl-download-div label.tc-ctl-download-image-wld-label {
+    display: none;
+}
+
+.tc-ctl-download-image label.tc-loading:after {
+    font-family: var(--icon-font-family);
+    content: var(--icon-spinner);
+    display: inline-block;
+    margin-left: 0.5em;
+    animation: spin 2s infinite linear;
+    -webkit-animation: spin 2s infinite linear;
+}
+
+sitna-button.tc-ctl-download-help {
+    line-height: 1.55em;
+    opacity: 0.5;
+    display: inline-block;
+}
+
+.tc-ctl-download .tc-ctl-download-btn {
+    height: 2em;
+}
+
+div.tc-ctl-download .tc-ctl-download-btn:before {
+    font-family: 'Mapskin';
+    content: "\e02c";
+    margin-right: 0.5em;
+}
+
+/*div.tc-ctl-download .tc-alert {
+    clear: both;
+    padding: 10px;
+    margin: 40px 10px 10px 10px;
+}
+
+    div.tc-ctl-download .tc-alert p {
+        margin: 0;
+    }*/
+
+.tc-ctl-download-select {
+    clear: both;
+    width: 100%;
+    display: inline-block;
+}
+
+div.tc-ctl-download .tc-ctl-download-help-dialog li {
+    margin-bottom: 5px;
+}
+
+div.tc-ctl-download .tc-ctl-download-help-dialog ul ul {
+    margin-top: 3px;
+}
+
+div.tc-ctl-download .tc-ctl-download-help-dialog li li {
+    margin-bottom: 3px;
+}
+
+.tc-ctl-download-cnt.tc-group {
+    display: block;
+}
+
+    .tc-ctl-download-cnt.tc-group.tc-hidden {
+        display: none;
+    }
+
+.tc-ctl-share-qr-dialog .tc-modal-body {
+    display: flex;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -webkit-flexbox;
+    justify-content: center;
+    align-items: center;    
+}
+
+    .tc-ctl-share-qr-dialog .tc-modal-body .tc-ctl-share-qr-alert {
+        text-align: justify;
+        -webkit-align-self: flex-start;
+        -ms-flex-item-align: start;
+        align-self: start;
+    }
+
+/*div.tc-ctl-download-div i {
+    color: #666;
+}*/
+@media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
+    .tc-ctl-share-qr-dialog .tc-modal-body {
+        max-width: 256px; /* tamaño del QR */
+    }
+}

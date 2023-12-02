@@ -1,39 +1,34 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
 import Control from '../Control';
 
-TC.Consts = Consts;
 TC.control = TC.control || {};
-TC.Control = Control;
 
-TC.Consts.classes.PRINTABLE = 'tc-printable';
+Consts.classes.PRINTABLE = 'tc-printable';
 
-TC.control.Print = function (options)
+const Print = function (options)
 {
     const self = this;
     self.options = options || {};
 
     self.ready = false;
 
-    self.title = self.options.title || TC.Util.getLocaleString(TC.Cfg.locale, 'printPage');
-    self.cssUrl = self.options.cssUrl || TC.apiLocation + 'TC/css/print.css';
+    self.title = self.options.title || TC.Util.getLocaleString(Cfg.locale, 'printPage');
+    self.cssUrl = self.options.cssUrl || TC.apiLocation + 'css/print.css';
 
     if (self.options.target) {
-        (self.options.printableElement || self.options.target).classList.add(TC.Consts.classes.PRINTABLE);
+        (self.options.printableElement || self.options.target).classList.add(Consts.classes.PRINTABLE);
         self.render();
     }
 };
 
-TC.inherit(TC.control.Print, TC.Control);
+TC.inherit(Print, Control);
 
 (function () {
-    const ctlProto = TC.control.Print.prototype;
+    const ctlProto = Print.prototype;
 
     ctlProto.CLASS = 'tc-ctl-print';
-
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-print.hbs";
-    ctlProto.template[ctlProto.CLASS + '-page'] = TC.apiLocation + "TC/templates/tc-ctl-print-page.hbs";
 
     ctlProto.renderPrintPage = function () {
         const self = this;
@@ -71,39 +66,37 @@ TC.inherit(TC.control.Print, TC.Control);
         }
     };
 
-    ctlProto.renderData = function (data, callback) {
+    ctlProto.loadTemplates = async function () {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            if (self.div) {
-                TC.Control.prototype.renderData.call(self, data, callback)
-                    .then(() => resolve())
-                    .catch((e) => reject(e));
+        const mainTemplatePromise = import('../templates/tc-ctl-print.mjs');
+        const pageTemplatePromise = import('../templates/tc-ctl-print-page.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-page'] = (await pageTemplatePromise).default;
+        self.template = template;
+    };
+
+    ctlProto.renderData = async function (data, callback) {
+        const self = this;
+        if (self.div) {
+            await Control.prototype.renderData.call(self, data, callback);
+            return;
+        }
+        const target = self.getRenderTarget();
+        if (target) {
+            const html = await self.getRenderedHtml(self.CLASS, null);
+            if (!target.querySelector('.' + self.CLASS + '-btn')) {
+                self._mustAddListeners = true;
+                target.insertAdjacentHTML('beforeend', html);
             }
-            else {
-                const target = self.getRenderTarget();
-                if (target) {
-                    self.getRenderedHtml(self.CLASS, null).then(function (out) {
-                        if (!target.querySelector('.' + self.CLASS + '-btn')) {
-                            self._mustAddListeners = true;
-                            target.insertAdjacentHTML('beforeend', out);
-                        }
-                        if (TC.Util.isFunction(callback)) {
-                            callback();
-                        }
-                        resolve();
-                    });
-                }
-                else {
-                    if (TC.Util.isFunction(callback)) {
-                        callback();
-                    }
-                    resolve();
-                }
-            }
-        });
+        }
+        if (TC.Util.isFunction(callback)) {
+            callback();
+        }
     };
 
 })();
 
-const Print = TC.control.Print;
+TC.control.Print = Print;
 export default Print;

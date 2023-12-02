@@ -9,14 +9,17 @@
     , Cartesian3
     , Cartographic
     , CesiumTerrainProvider
+    , CustomHeightmapTerrainProvider
     , CircleGeometry
     , ClockRange
     , ClockStep
     , Color
     , ColorGeometryInstanceAttribute
+    , ColorMaterialProperty
     , combine
     , Credit
     , CzmlDataSource
+    , CustomDataSource
     , DataSourceCollection
     , DataSourceDisplay
     , DeveloperError
@@ -29,8 +32,10 @@
     , EventHelper
     , GeographicTilingScheme
     , GeometryInstance
+    , getImagePixels
     , Globe
     , GroundPrimitive
+    , HeadingPitchRange
     , HeightReference
     , HeightmapTerrainData
     , HorizontalOrigin
@@ -38,6 +43,7 @@
     , ImageryState
     , IntersectionTests
     , JulianDate
+    , LabelGraphics
     , LabelStyle
     , Math
     , Matrix3
@@ -45,6 +51,7 @@
     , PinBuilder
     , PolygonGeometry
     , PolygonHierarchy
+    , PolygonPipeline
     , PolylineDashMaterialProperty
     , Property
     , Quaternion
@@ -59,6 +66,7 @@
     , SkyAtmosphere
     , SkyBox
     , TerrainProvider
+    , TileAvailability
     , TileCoordinatesImageryProvider
     , TileProviderError    
     , TimeIntervalCollection
@@ -68,6 +76,7 @@
     , Viewer
     , WebMapServiceImageryProvider
     , WebMapTileServiceImageryProvider
+    , WebMercatorTilingScheme
     , when
     , defaultValue    
     , defined
@@ -91,14 +100,17 @@ export {
     , Cartesian2
     , Cartesian3
     , Cartographic
-    , CesiumTerrainProvider    
+    , CesiumTerrainProvider
+    , CustomHeightmapTerrainProvider
     , CircleGeometry
     , ClockRange
     , ClockStep
     , Color
     , ColorGeometryInstanceAttribute
+    , ColorMaterialProperty
     , combine
     , Credit
+    , CustomDataSource
     , CzmlDataSource
     , DataSourceCollection
     , DataSourceDisplay
@@ -112,8 +124,10 @@ export {
     , EventHelper
     , GeographicTilingScheme
     , GeometryInstance
+    , getImagePixels
     , Globe
     , GroundPrimitive
+    , HeadingPitchRange
     , HeightReference
     , HeightmapTerrainData
     , HorizontalOrigin
@@ -121,6 +135,7 @@ export {
     , ImageryState
     , IntersectionTests
     , JulianDate
+    , LabelGraphics
     , LabelStyle
     , Math
     , Matrix3
@@ -128,6 +143,7 @@ export {
     , PinBuilder
     , PolygonGeometry
     , PolygonHierarchy
+    , PolygonPipeline
     , PolylineDashMaterialProperty
     , Property
     , Quaternion
@@ -142,6 +158,7 @@ export {
     , SkyAtmosphere
     , SkyBox
     , TerrainProvider
+    , TileAvailability
     , TileCoordinatesImageryProvider
     , TileProviderError
     , TimeIntervalCollection
@@ -151,6 +168,7 @@ export {
     , Viewer
     , WebMapServiceImageryProvider
     , WebMapTileServiceImageryProvider
+    , WebMercatorTilingScheme
     , when
     , defaultValue    
     , defined
@@ -160,4 +178,5 @@ export {
     , RequestType
     , TimeInterval 
     , VERSION
+    
 };

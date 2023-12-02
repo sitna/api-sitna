@@ -122,34 +122,34 @@ body > pre.prettyprint {
         transition: visibility 0s .25s, opacity .25s linear;
     }
 
-div.tc-map.tc-lo div.tc-ctl-p-results {
+div.tc-map.tc-lo div.tc-ctl-rpanel {
     top: 26em;
 }
 
-    div.tc-map.tc-lo div.tc-ctl-p-results div.prcollapsed {
+    div.tc-map.tc-lo div.tc-ctl-rpanel div.tc-ctl-rpanel-minimized {
         top: 26em;
     }
 
-    div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable {
+    div.tc-map.tc-lo div.tc-ctl-rpanel.tc-resizable {
         top: 10em;
     }
 
-        div.tc-map.tc-lo div.tc-ctl-p-results.tc-resizable div.prcollapsed {
+        div.tc-map.tc-lo div.tc-ctl-rpanel.tc-resizable div.tc-ctl-rpanel-minimized {
             top: 10em;
         }
 
-div.tc-map.tc-lo.tc-3d div.tc-ctl-p-results div.prcollapsed {
+div.tc-map.tc-lo.tc-3d div.tc-ctl-rpanel div.tc-ctl-rpanel-minimized {
     top: 8.1em;
     left: 3.75em;
 }
 
-div.tc-map.tc-lo.tc-3d div.tc-ctl-p-results {
+div.tc-map.tc-lo.tc-3d div.tc-ctl-rpanel {
     top: 8.6em;
     left: 3.75em;
 }
 
 @media screen and (min-width: 380px) {
-    div.tc-map div.tc-ctl.tc-ctl-p-results div.prpanel-group {
+    div.tc-map div.tc-ctl.tc-ctl-rpanel div.tc-ctl-rpanel-grp {
         width: auto;
     }
 }
@@ -183,7 +183,7 @@ div .tc-3d > .tc-ctl-3d {
         top: calc(1.5em + 2em + 2em + 0.5em + 2em + 0.6em);
     }
 
-    div.tc-map.tc-lo.tc-3d div.tc-ctl-p-results div.prcollapsed {
+    div.tc-map.tc-lo.tc-3d div.tc-ctl-rpanel div.tc-ctl-rpanel-minimized {
         top: 8.6em;
         left: 3.75em;
     }

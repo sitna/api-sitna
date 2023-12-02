@@ -15,6 +15,14 @@
             ui: 'bdd'
         });
         var expect = chai.expect;
+        let controlCounter = 0;
+        const addControlDiv = function () {
+            const div = document.createElement('div');
+            const id = 'test-ctl-' + controlCounter++;
+            div.setAttribute('id', id);
+            document.getElementById('ctl-container').appendChild(div);
+            return id;
+        };
     </script>
     <script src="http://localhost:8080/sitna.js"></script>
 
@@ -23,17 +31,15 @@
     <script src="ol.js"></script>
     <script src="control/Attribution.js"></script>
     <script src="control/BasemapSelector.js"></script>
-    <script src="control/OfflineMapMaker.js"></script>
     <script src="control/Coordinates.js"></script>
     <script src="control/Download.js"></script>
     <script src="control/Draw.js"></script>
-    <script src="control/DrawMeasureModify.js"></script>
     <script src="control/Edit.js"></script>
     <script src="control/ExternalWMS.js"></script>
     <script src="control/FeatureInfo.js"></script>
     <script src="control/FeatureTools.js"></script>
-    <script src="control/FileImport.js"></script>
     <script src="control/FileEdit.js"></script>
+    <script src="control/FileImport.js"></script>
     <script src="control/FullScreen.js"></script>
     <script src="control/Geolocation.js"></script>
     <script src="control/LanguageSelector.js"></script>
@@ -44,6 +50,8 @@
     <script src="control/Measure.js"></script>
     <script src="control/Modify.js"></script>
     <script src="control/NavBar.js"></script>
+    <script src="control/OfflineMapMaker.js"></script>
+    <script src="control/DrawMeasureModify.js"></script>
     <script src="control/OverviewMap.js"></script>
     <script src="control/PolygonFeatureInfo.js"></script>
     <script src="control/Popup.js"></script>
@@ -68,7 +76,7 @@
     <!--<script src="tool/Proxification.js"></script>-->
 
     <script>
-        TC.i18n.loadResources(true, 'http://localhost:8080/TC/resources/', 'es-ES').then(() => mocha.run());
+        TC.i18n.loadResources(true, 'http://localhost:8080/resources/', 'es-ES').then(() => mocha.run());
     </script>
 </body>
 </html>

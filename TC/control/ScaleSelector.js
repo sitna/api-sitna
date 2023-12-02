@@ -1,30 +1,32 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
+import Util from '../Util';
 import Scale from './Scale';
 
 TC.control = TC.control || {};
-TC.Consts = Consts;
-TC.control.Scale = Scale;
 
-TC.control.ScaleSelector = function () {
-    var self = this;
+class ScaleSelector extends Scale {
+    scales = null;
 
-    TC.control.Scale.apply(self, arguments);
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.div.classList.add(self.CLASS);
+    }
 
-    self.scales = null;
-};
+    getClassName() {
+        return 'tc-ctl-ss';
+    }
 
-TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-ss.mjs');
+        self.template = module.default;
+    }
 
-(function () {
-    var ctlProto = TC.control.ScaleSelector.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-ss';
-
-    ctlProto.template = TC.apiLocation + "TC/templates/tc-ctl-ss.hbs";
-
-    ctlProto.render = function (callback) {
-        var self = this;
+    render(callback) {
+        const self = this;
         return self._set1stRenderPromise(new Promise(function (resolve, reject) {
             if (self.map) {
                 if (!self.scales && self.map.options.resolutions) {
@@ -32,20 +34,20 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
                 }
                 var render = function () {
                     self.scales = self.map.wrap.getResolutions().map(self.getScale, self);
-                    self.renderData({ scale: self.getScale(), screenSize: TC.Cfg.screenSize, scales: self.scales }, function () {
+                    self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize, scales: self.scales }, function () {
 
                         self.div.querySelectorAll('option').forEach(function (option) {
                             option.textContent = '1:' + self.format(option.textContent.substr(2));
                         });
 
-                        self.div.querySelector('input[type="button"]').addEventListener(TC.Consts.event.CLICK, function () {
+                        self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
                             self.setScreenSize();
                         }, { passive: true });
 
                         self.div.querySelector('select').addEventListener('change', function () {
                             self.setScale(this.value);
                         });
-                        if (TC.Util.isFunction(callback)) {
+                        if (Util.isFunction(callback)) {
                             callback();
                         }
                         resolve();
@@ -64,16 +66,16 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
                 reject(Error('ScaleSelector no registrado'));
             }
         }));
-    };
+    }
 
-    /*
-    *  setScale: Sets the resolution of the map from a scale denominator and estimated screen DPI
-    *  Parameters: number, the scale denominator
-    *  Returns: number, the resolution
-    */
-    ctlProto.setScale = function (scale) {
-        var self = this;
-        var result = scale * .0254 / self.getDpi(TC.Cfg.screenSize);
+/*
+ *  setScale: Sets the resolution of the map from a scale denominator and estimated screen DPI
+ *  Parameters: number, the scale denominator
+ *  Returns: number, the resolution
+ */
+    setScale(scale) {
+        const self = this;
+        let result = scale * .0254 / self.getDpi(Cfg.screenSize);
         if (window.devicePixelRatio) {
             result = result / window.devicePixelRatio;
         }
@@ -82,9 +84,10 @@ TC.inherit(TC.control.ScaleSelector, TC.control.Scale);
         }
         self.map.wrap.setResolution(result);
         return result;
-    };
+    }
 
-})();
+}
 
-const ScaleSelector = TC.control.ScaleSelector;
+
+TC.control.ScaleSelector = ScaleSelector;
 export default ScaleSelector;

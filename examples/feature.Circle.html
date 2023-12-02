@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.feature.Circle</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.feature.Circle.html">SITNA.feature.Circle</a></p>
+        <p>Añadir de distintos modos entidades con geometría circular.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        SITNA.Cfg.workLayers = [
+            {
+                id: "entidades",
+                title: "Demostración de círculos",
+                type: SITNA.Consts.layerType.VECTOR
+            }
+        ];
+        var map = new SITNA.Map("mapa");
+        map.loaded(() => {
+            // Obtenemos la instancia de la capa vectorial
+            const vectorLayer = map.getLayer("entidades");
+
+            // Creamos una instancia de la clase SITNA.feature.Circle pasándole un objeto de definición de geometría
+            const circle1 = new SITNA.feature.Circle({
+                center: [612175, 4717775],
+                radius: 10000
+            }, {
+                strokeColor: '#522852', // violeta
+                strokeWidth: 6,
+                fillColor: '#285228', // verde
+                fillOpacity: 0.5,
+                data: {
+                    'Color': 'Violeta/verde'
+                }
+            });
+
+            // Creamos una instancia de la clase SITNA.feature.Circle pasándole un array de coordenadas
+            const circle2 = new SITNA.feature.Circle([
+                [642175, 4717775], // coordenadas del centro
+                [647175, 4717775], // coordenadas de un punto de la circunferencia
+            ], {
+                strokeColor: '#b97f24', // dorado
+                strokeWidth: 8,
+                fillColor: '#282852', // azul
+                fillOpacity: 0.2,
+                data: {
+                    'Color': 'Dorado/azul'
+                }
+            });
+
+            // Añadimos una instancia de la clase SITNA.feature.Circle a la capa pasándole un objeto de definición de geometría
+            vectorLayer.addCircle({
+                center: [612175, 4687775],
+                radius: 12000
+            }, {
+                strokeColor: '#880000', // granate
+                strokeWidth: 10,
+                fillColor: '#000000', // negro
+                fillOpacity: 0, // Completamente transparente
+                data: {
+                    'Color': 'Granate/transparente'
+                }
+            });
+
+            // Añadimos una instancia de la clase SITNA.feature.Circle a la capa pasándole un array de coordenadas
+            vectorLayer.addCircle([
+                [642175, 4687775], // coordenadas del centro
+                [644175, 4687775], // coordenadas de un punto de la circunferencia
+            ], {
+                strokeColor: '#000000', // negro
+                strokeWidth: 6,
+                fillColor: '#cccccc', // gris
+                fillOpacity: 1, // Completamente opaco
+                data: {
+                    'Color': 'Negro/gris'
+                }
+            });
+
+            // Añadimos las dos entidades geográficas de una vez
+            vectorLayer.addCircles([
+                circle1,
+                circle2
+            ])
+                .then(circleArray => {
+                    // Añadimos atributos a las nuevas entidades.
+                    // Estos datos se pueden consultar al pulsar sobre ellas.
+                    circleArray.forEach(circle => {
+                        const newData = circle.getData();
+                        newData["Centro"] = circle.getCenter().toString();
+                        newData["Radio en metros"] = circle.getRadius();
+                        circle.setData(newData);
+                    })
+                    map.zoomToFeatures(vectorLayer.features);
+                });
+        });
+    </script>
+
+</body>
+</html>

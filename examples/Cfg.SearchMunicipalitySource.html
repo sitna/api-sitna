@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/global.html#MunicipalitySearchOptions">MunicipalitySearchOptions</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.MunicipalitySearchOptions">MunicipalitySearchOptions</a>.</p>
         <p>Establecer configuración de un origen de datos distinto en la búsqueda de municipios.</p>
     </div>
     <script src="../"></script>
@@ -31,7 +31,7 @@
                             firstQueryWord: ['MUNINOAC', 'MUNICIPIO'] // Campos en los que buscar el nombre de municipio.
                         },
                         suggestionListHead: { //  Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-                            label: "search.list.municipality", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Municipio.
+                            labelKey: "search.list.municipality", // Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… en este caso Municipio.
                             color: "strokeColor" // Configuración para obtener el color que representa al tipo de búsqueda. Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
                         }, // El resultado de la configuración anterior será: '#FE06A5'.
                         outputProperties: ['MUNICIPIO'], // Colección con el nombre del campo a mostrar (según el patrón indicando en `outputFormatLabel`) en la lista de sugerencias. 

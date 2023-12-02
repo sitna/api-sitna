@@ -1,500 +1,753 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Cfg from '../Cfg';
+import Util from '../Util';
 import wrap from '../ol/ol';
-import Control from '../Control';
+import './Draw';
+import './Modify';
+import './Measurement';
+import Geometry from '../Geometry';
+import Point from '../../SITNA/feature/Point';
+import Polyline from '../../SITNA/feature/Polyline';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+import Polygon from '../../SITNA/feature/Polygon';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import WebComponentControl from './WebComponentControl';
 
-TC.control = TC.control || {};
-TC.Consts = Consts;
 TC.wrap = wrap;
-TC.Control = Control;
 
-(function () {
+const className = 'tc-ctl-edit';
+const elementName = 'sitna-edit';
 
-    const setEditState = function (ctl, state) {
-        ctl.div.querySelectorAll(ctl._selectors.MODE_RADIO_BUTTON).forEach(r => r.disabled = !state);
-    }
+class Edit extends WebComponentControl {
+    CLASS = className;
+    #classSelector;
+    #selectors;
+    #previousActiveControl;
+    #featureImportPanelPromise;
+    #highlightsLayerPromise;
+    #measurementControl;
+    #originalFeatures = new WeakMap();
 
-    /* Creamos el constructor, llamando al constructor del padre */
-    TC.control.Edit = function () {
-        const self = this;
-
-        TC.Control.apply(this, arguments);
-
-        self._classSelector = '.' + self.CLASS;
-
-        self._selectors = {
-            MODE_RADIO_BUTTON: `input[type=radio][name="${self.id}-mode"]`
-        };
-
-
-        self.wrap = new TC.wrap.control.Edit(self);
-        self.layer = null;
-        //self.feature = self.options.feature ? self.options.feature : null;
-        self.callback = TC.Util.isFunction(arguments[2]) ? arguments[2] : (self.options.callback ? self.options.callback : null);
-        self.cancelActionConfirmTxt = self.options.cancelText ? self.options.eraseText : "Si continua todos los cambios se perderán. ¿Desea continuar?";
-        self.styles = self.options.styles;
-        self.layersEditData = {};
-        self.pointDrawControl = null;
-        self.lineDrawControl = null;
-        self.polygonDrawControl = null;
-        //self.cutDrawControl = null;
-        self.modifyControl = null;
-        self.snapping = (typeof self.options.snapping === 'boolean') ? self.options.snapping : true;
-
-
-            //.on(TC.Consts.event.EDITIONSAVE, function (e) {
-            //    if (self.callback)
-            //        self.callback(e.added, e.removed, e.modified);
-            //});
-    };
-
-    TC.inherit(TC.control.Edit, TC.Control);
-
-    TC.control.Edit.mode = {
+    static mode = {
         MODIFY: 'modify',
         ADDPOINT: 'addpoint',
         ADDLINE: 'addline',
         ADDPOLYGON: 'addpolygon',
         CUT: 'cut',
         OTHER: 'other'
+    };
+
+    constructor() {
+        super(...arguments);
+        const self = this;
+
+        self.#classSelector = '.' + self.CLASS;
+
+        self.#selectors = {
+            MODE_TAB: `.${self.CLASS}-mode sitna-tab`
+        };
+
+        self.mode = self.options.mode 
+        self
+            .initProperty('stylable')
+            .initProperty('snapping')
+            .initProperty('mode')
+            .initProperty('otherToolsIncluded');
+        self.wrap = new TC.wrap.control.Edit(self);
+        self.layer = null;
+        //self.feature = self.options.feature ? self.options.feature : null;
+        self.callback = Util.isFunction(arguments[2]) ? arguments[2] : (self.options.callback ? self.options.callback : null);
+        self.cancelActionConfirmTxt = self.options.cancelText ? self.options.eraseText : "Si continua todos los cambios se perderán. ¿Desea continuar?";
+        self.layersEditData = {};
+        self.pointDrawControl = null;
+        self.lineDrawControl = null;
+        self.polygonDrawControl = null;
+        //self.cutDrawControl = null;
+        self.modifyControl = null;
     }
 
-    const ctlProto = TC.control.Edit.prototype;
+    static get observedAttributes() {
+        return ['mode', 'stylable'];
+    }
 
-    ctlProto.CLASS = 'tc-ctl-edit';
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) {
+            return;
+        }
+        const self = this;
+        if (name === 'stylable') {
+            self.#onStylableChange();
+        }
+        if (name === 'mode') {
+            self.#onModeChange();
+        }
+        if (name == 'snapping') {
+            self.#onSnappingChange();
+        }
+    }
 
-    ctlProto.template = {};
-    ctlProto.template[ctlProto.CLASS] = TC.apiLocation + "TC/templates/tc-ctl-edit.hbs";
-    ctlProto.template[ctlProto.CLASS + '-attr'] = TC.apiLocation + "TC/templates/tc-ctl-edit-attr.hbs";
-    ctlProto.template[ctlProto.CLASS + '-import'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import.hbs";
-    ctlProto.template[ctlProto.CLASS + '-import-layer'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import-layer.hbs";
-    ctlProto.template[ctlProto.CLASS + '-import-feature'] = TC.apiLocation + "TC/templates/tc-ctl-edit-import-feature.hbs";
+    getClassName() {
+        return className;
+    }
+
+    get stylable() {
+        return this.hasAttribute('stylable');
+    }
+
+    set stylable(value) {
+        this.toggleAttribute('stylable', !!value);
+    }
+
+    async #onStylableChange() {
+        const self = this;
+        const controls = await Promise.all([
+            self.getModifyControl(),
+            self.getPointDrawControl(),
+            self.getLineDrawControl(),
+            self.getPolygonDrawControl()
+        ]);
+        const isStylable = self.stylable;
+        controls.forEach(c => c.stylable = isStylable);
+    }
+
+    get snapping() {
+        return this.hasAttribute('snapping');
+    }
+
+    set snapping(value) {
+        this.toggleAttribute('snapping', !!value);
+    }
+
+    async #onSnappingChange() {
+        const self = this;
+        const snapping = self.snapping;
+        (await self.getPointDrawControl()).snapping = snapping;
+        (await self.getLineDrawControl()).snapping = snapping;
+        (await self.getPolygonDrawControl()).snapping = snapping;
+    }
+
+    get mode() {
+        const self = this;
+        if (self.hasAttribute('mode')) {
+            return self.getAttribute('mode');
+        }
+        return Edit.mode.MODIFY;
+    }
+
+    set mode(value) {
+        this.setAttribute('mode', value || '');
+    }
+
+    get otherToolsIncluded() {
+        const self = this;
+        return !self.hasAttribute('no-other-tools');
+    }
+
+    set otherToolsIncluded(value) {
+        this.toggleAttribute('no-other-tools', !value);
+    }
+
+    #onModeChange() {
+        const self = this;
+        const mode = self.mode;
+        //setFeatureSelectReadyState(self);
+
+        var activateDraw = function (draw) {
+            if (draw) {
+                if (self.snapping) {
+                    draw.snapping = self.layer;
+                }
+                draw.activate();
+            }
+        };
+
+        Promise.all([
+            self.getPointDrawControl(),
+            self.getLineDrawControl(),
+            self.getPolygonDrawControl(),
+            //self._cutDrawCtlPromise,
+            self.getModifyControl()
+        ]).then(function (controls) {
+            const pointDrawControl = controls[0];
+            const lineDrawControl = controls[1];
+            const polygonDrawControl = controls[2];
+            //const cutDrawControl = controls[3];
+            const modifyControl = controls[3];
+            switch (mode) {
+                case Edit.mode.MODIFY:
+                    modifyControl.activate();
+                    break;
+                case Edit.mode.ADDPOINT:
+                    activateDraw(pointDrawControl);
+                    self.#measurementControl.mode = Consts.geom.POINT;
+                    break;
+                case Edit.mode.ADDLINE:
+                    activateDraw(lineDrawControl);
+                    self.#measurementControl.mode = Consts.geom.POLYLINE;
+                    break;
+                case Edit.mode.ADDPOLYGON:
+                    activateDraw(polygonDrawControl);
+                    self.#measurementControl.mode = Consts.geom.POLYGON;
+                    break;
+                case Edit.mode.OTHER:
+                    if (controls.indexOf(self.map.activeControl) >= 0) {
+                        self.map.activeControl.deactivate();
+                    }
+                    break;
+                default:
+                    if (controls.indexOf(self.map.activeControl) >= 0) {
+                        self.map.activeControl.deactivate();
+                    }
+                    //if (cutDrawControl.isActive) {
+                    //    cutDrawControl.deactivate();
+                    //}
+                    break;
+            }
+
+            if (mode) {
+                const tab = self.querySelector(`${self.#selectors.MODE_TAB}[for="${self.id}-mode-${mode}"]`);
+                tab.selected = true;
+            }
+            else {
+                self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
+                    tab.selected = false;
+                });
+            }
+        });
+    }
 
     /* Extendemos el método register. 
        La lógica del control suele definirse aquí. */
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
 
-        return new Promise(function (resolve, _reject) {
+        await super.register.call(self, map);
 
-            TC.Control.prototype.register.call(self, map).then(function () {
+        self.#measurementControl = self.querySelector('sitna-measurement');
+        self.#measurementControl.displayElevation = self.options.displayElevation;
 
-                const DRAW = 'draw';
-                self._pointDrawCtlPromise = map.addControl(DRAW, {
-                    id: self.getUID(),
-                    div: self.div.querySelector(`.${self.CLASS}-point`),
-                    mode: TC.Consts.geom.POINT,
-                    styling: self.options.styling,
-                    layer: false
-                });
-                self._lineDrawCtlPromise = map.addControl(DRAW, {
-                    id: self.getUID(),
-                    div: self.div.querySelector(`.${self.CLASS}-line`),
-                    mode: TC.Consts.geom.POLYLINE,
-                    styling: self.options.styling,
-                    layer: false
-                });
-                self._polygonDrawCtlPromise = map.addControl(DRAW, {
-                    id: self.getUID(),
-                    div: self.div.querySelector(`.${self.CLASS}-polygon`),
-                    mode: TC.Consts.geom.POLYGON,
-                    styling: self.options.styling,
-                    layer: false
-                });
-                //self._cutDrawCtlPromise = map.addControl(DRAW, {
-                //    id: self.getUID(),
-                //    div: self.div.querySelector(`.${self.CLASS}-cut`),
-                //    mode: TC.Consts.geom.POLYLINE,
-                //    snapping: true,
-                //    styles: {
-                //        line: {
-                //            lineDash: [5, 5]
-                //        }
-                //    },
-                //    layer: false
-                //});
-                self._modifyCtlPromise = map.addControl('modify', {
-                    id: self.getUID(),
-                    div: self.div.querySelector(`.${self.CLASS}-modify`),
-                    snapping: self.snapping
-                });
-                Promise.all([
-                    self._pointDrawCtlPromise,
-                    self._lineDrawCtlPromise,
-                    self._polygonDrawCtlPromise,
-                    //self._cutDrawCtlPromise,
-                    self._modifyCtlPromise
-                ]).then(function (controls) {
-                    self.pointDrawControl = controls[0];
-                    self.lineDrawControl = controls[1];
-                    self.polygonDrawControl = controls[2];
-                    //self.cutDrawControl = controls[3];
-                    self.modifyControl = controls[3];
+        //self._cutDrawCtlPromise = map.addControl(DRAW, {
+        //    id: self.getUID(),
+        //    div: self.querySelector(`.${self.CLASS}-cut`),
+        //    mode: Consts.geom.POLYLINE,
+        //    snapping: true,
+        //    styles: {
+        //        line: {
+        //            lineDash: [5, 5]
+        //        }
+        //    },
+        //    layer: false
+        //});
 
-                    const drawendHandler = function (e) {
-                        self.trigger(TC.Consts.event.DRAWEND, { feature: e.feature });
-                    };
-                    const drawcancelHandler = function () {
-                        self.cancel();
-                    };
-                    self.pointDrawControl
-                        .on(TC.Consts.event.DRAWEND, drawendHandler)
-                        .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    self.lineDrawControl
-                        .on(TC.Consts.event.DRAWEND, drawendHandler)
-                        .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    self.polygonDrawControl
-                        .on(TC.Consts.event.DRAWEND, drawendHandler)
-                        .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    //self.cutDrawControl
-                    //    .on(TC.Consts.event.DRAWEND, function (e) {
-                    //        //TC.loadJS(
-                    //        //    !window.turf && !turf.lineSplit,
-                    //        //    [TC.apiLocation + 'lib/turf/line-split'],
-                    //        //    function () {
 
-                    //        //    }
-                    //        //);
+        if (Array.isArray(self.options.modes) && self.options.modes.length == 1) {
+            self.mode = self.options.modes[0];
+        }
 
-                    //        //self.layer.features.filter(f => f)
-                    //    })
-                    //    .on(TC.Consts.event.DRAWCANCEL, drawcancelHandler);
-                    self.modifyControl
-                        .on(TC.Consts.event.FEATUREMODIFY, function (e) {
-                            self.trigger(TC.Consts.event.FEATUREMODIFY, { feature: e.feature, layer: e.layer });
-                        })
-                        .on(TC.Consts.event.FEATUREADD, function (e) {
-                            self.trigger(TC.Consts.event.FEATUREADD, { feature: e.feature, layer: e.layer });
-                        })
-                        .on(TC.Consts.event.FEATUREREMOVE, function (e) {
-                            self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: e.feature, layer: e.layer });
-                        });
+        map.loaded(function () {
+            self.setLayer(self.options.layer);
+        });
 
-                    self.modifyControl.displayAttributes = function () {
-                        const selectedFeatures = self.getSelectedFeatures();
-                        const feature = selectedFeatures[selectedFeatures.length - 1];
-                        if (feature) {
-                            const data = feature.getData() || {};
-                            self.modifyControl._editAttrBtn.classList.add(TC.Consts.classes.ACTIVE);
-                            let attributes = self.getLayerEditData(feature.layer).attributes;
-                            if (!Object.keys(attributes).lengh) {
-                                // No hay información de capa concerniente a atributos. 
-                                // Tomamos los de la entidad seleccionada
-                                const feature = self.getSelectedFeatures()[0];
-                                if (feature && Object.keys(data).length) {
-                                    attributes = {};
-                                    for (var key in data) {
-                                        attributes[key] = { name: key, value: data[key] };
+        map
+            .on(Consts.event.RESULTSPANELCLOSE, function (e) {
+                if (e.control === self.featureImportPanel) {
+                    self.featuresToImport = [];
+                    self.getHighlightsLayer().then(l => l.clearFeatures());
+                }
+            })
+            .on(Consts.event.LAYERREMOVE + ' ' + Consts.event.FEATURESCLEAR, function (e) {
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    self.getHighlightsLayer().then(function (hlLayer) {
+                        for (let i = self.featuresToImport.length - 1; i >= 0; i--) {
+                            const fti = self.featuresToImport[i];
+                            if (fti.layer === e.layer || (fti.original && fti.original.layer === e.layer)) {
+                                self.featuresToImport.splice(i, 1);
+                                hlLayer.removeFeature(fti);
+                            }
+                        }
+                        const li = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
+                        if (li) {
+                            li.remove();
+                        }
+                    });
+                }
+            })
+            .on(Consts.event.FEATUREREMOVE, function (e) {
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    self.getHighlightsLayer().then(function (hlLayer) {
+                        for (var i = 0, ii = self.featuresToImport.length; i < ii; i++) {
+                            const fti = self.featuresToImport[i];
+                            if (fti === e.feature || fti.original === e.feature) {
+                                self.featuresToImport.splice(i, 1);
+                                hlLayer.removeFeature(fti);
+                                const lli = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
+                                if (lli) {
+                                    const fli = lli.querySelector(`#tc-ctl-edit-import-list-cb-${e.layer.id}-${e.feature.id}`);
+                                    if (fli) {
+                                        fli.remove();
                                     }
+                                    if (!lli.children.length) {
+                                        lli.remove();
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    });
+                }
+            })
+            .on(Consts.event.LAYERUPDATE, function (e) { // TODO: Actualizar cuando la capa ya existe en la lista
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    const layerObj = self.getAvailableFeaturesToImport().find(l => l.id === e.layer.id);
+                    if (layerObj) {
+                        self.getRenderedHtml(self.CLASS + '-import-layer', layerObj, function (html) {
+                            const list = self
+                                .featureImportPanel
+                                .getInfoContainer()
+                                .querySelector(`.${self.CLASS}-import-list .tc-layers`);
+                            if (!list.querySelector(`li[data-layer-id="${e.layer.id}"]`)) {
+                                list.insertAdjacentHTML('beforeend', html);
+                            }
+                        });
+                    }
+                }
+            })
+            .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
+                if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+                    const layer = e.layer;
+                    const features = (e.feature ? [e.feature] : e.features).filter(f => self.isFeatureAllowed(f));
+                    if (features.length) {
+                        self.displayLayerToImport({
+                            id: layer.id,
+                            title: layer.title,
+                            features: features
+                        });
+                    }
+                }
+            })
+            .on(Consts.event.CONTROLACTIVATE, function (e) {
+                switch (e.control) {
+                    case self.pointDrawControl:
+                        self.#measurementControl.setMode(Consts.geom.POINT);
+                        break;
+                    case self.lineDrawControl:
+                        self.#measurementControl.setMode(Consts.geom.POLYLINE);
+                        break;
+                    case self.polygonDrawControl:
+                        self.#measurementControl.setMode(Consts.geom.POLYGON);
+                        break;
+                    default:
+                        self.#measurementControl.clear();
+                        break;
+                }
+            });
+        return self;
+    }
+
+    #getModeTab(mode) {
+        const self = this;
+        return self.querySelector(`sitna-tab[for="${self.id}-mode-${mode}"]`);
+    }
+
+
+    async loadTemplates() {
+        const self = this;
+
+        const mainTemplatePromise = import('../templates/tc-ctl-edit.mjs');
+        const attributesTemplatePromise = import('../templates/tc-ctl-edit-attr.mjs');
+        const importTemplatePromise = import('../templates/tc-ctl-edit-import.mjs');
+        const importLayerTemplatePromise = import('../templates/tc-ctl-edit-import-layer.mjs');
+        const importFeatureTemplatePromise = import('../templates/tc-ctl-edit-import-feature.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
+        template[self.CLASS + '-import'] = (await importTemplatePromise).default;
+        template[self.CLASS + '-import-layer'] = (await importLayerTemplatePromise).default;
+        template[self.CLASS + '-import-feature'] = (await importFeatureTemplatePromise).default;
+        self.template = template;
+    }
+
+    async render(callback) {
+        const self = this;
+        await self._set1stRenderPromise(super.renderData.call(self, {
+            controlId: self.id,
+            stylable: self.stylable,
+            snapping: self.snapping,
+            otherToolsIncluded: self.otherToolsIncluded
+        }));
+
+        const controls = await Promise.all([
+            self.getPointDrawControl(),
+            self.getLineDrawControl(),
+            self.getPolygonDrawControl(),
+            //self._cutDrawCtlPromise,
+            self.getModifyControl()
+        ]);
+        self.pointDrawControl = controls[0];
+        self.lineDrawControl = controls[1];
+        self.polygonDrawControl = controls[2];
+        self.pointDrawControl.id = self.getUID();
+        self.lineDrawControl.id = self.getUID();
+        self.polygonDrawControl.id = self.getUID();
+        self.pointDrawControl.snapping = self.snapping;
+        self.lineDrawControl.snapping = self.snapping;
+        self.polygonDrawControl.snapping = self.snapping;
+        //self.cutDrawControl = controls[3];
+        self.modifyControl = controls[3];
+        self.modifyControl.id = self.getUID();
+
+        const addElevation = async function (feature) {
+            if (self.map.options.elevation && feature.getGeometryStride() > 2) {
+                let changed = false;
+                let elevationTool;
+                for (const point of Geometry.iterateCoordinates(feature.geometry)) {
+                    if (!point[2]) {
+                        elevationTool = elevationTool || await self.map.getElevationTool();
+                        const newCoords = await elevationTool.getElevation({
+                            coordinates: [point]
+                        });
+                        if (newCoords?.length) {
+                            changed = true;
+                            point[2] = newCoords[0][2];
+                        }
+                    }
+                }
+                if (changed) {
+                    feature.setCoordinates(feature.geometry);
+                }
+            }
+        };
+
+        const drawstartHandler = function (e) {
+            self.#measurementControl.clearMeasurement();
+            if (e.feature) {
+                self.#cacheOriginalFeature(e.feature);
+            }
+        };
+        const drawendHandler = async function (e) {
+            await addElevation(e.feature);
+            self.trigger(Consts.event.DRAWEND, { feature: e.feature });
+        };
+        const drawcancelHandler = function () {
+            self.cancel();
+        };
+        const measureHandler = function (e) {
+            self.#measurementControl.displayMeasurement(e);
+        };
+        self.pointDrawControl
+            .on(Consts.event.DRAWEND, drawendHandler)
+            .on(Consts.event.DRAWCANCEL, drawcancelHandler)
+            .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, measureHandler);
+        self.lineDrawControl
+            .on(Consts.event.DRAWSTART, drawstartHandler)
+            .on(Consts.event.DRAWEND, drawendHandler)
+            .on(Consts.event.DRAWCANCEL, drawcancelHandler)
+            .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, measureHandler);
+        self.polygonDrawControl
+            .on(Consts.event.DRAWSTART, drawstartHandler)
+            .on(Consts.event.DRAWEND, drawendHandler)
+            .on(Consts.event.DRAWCANCEL, drawcancelHandler)
+            .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, measureHandler);
+        //self.cutDrawControl
+        //    .on(Consts.event.DRAWEND, function (e) {
+        //        //TC.loadJS(
+        //        //    !window.turf && !turf.lineSplit,
+        //        //    [TC.apiLocation + 'lib/turf/line-split'],
+        //        //    function () {
+
+        //        //    }
+        //        //);
+
+        //        //self.layer.features.filter(f => f)
+        //    })
+        //    .on(Consts.event.DRAWCANCEL, drawcancelHandler);
+        self.modifyControl
+            .on(Consts.event.FEATUREMODIFY, async function onFeatureModify(e) {
+                if (e.layer === self.layer) {
+                    self.#measurementControl.displayMeasurement(e.feature);
+                }
+                await addElevation(e.feature);
+                self.trigger(Consts.event.FEATUREMODIFY, { feature: e.feature, layer: e.layer });
+            })
+            .on(Consts.event.FEATUREADD, function (e) {
+                self.trigger(Consts.event.FEATUREADD, { feature: e.feature, layer: e.layer });
+            })
+            .on(Consts.event.FEATUREREMOVE, function (e) {
+                self.trigger(Consts.event.FEATUREREMOVE, { feature: e.feature, layer: e.layer });
+            })
+            .on(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, function (_e) {
+                const features = self.modifyControl.getSelectedFeatures();
+                if (features.length) {
+                    self.#measurementControl.displayMeasurement(features[features.length - 1]);
+                }
+                else {
+                    self.#measurementControl.clearMeasurement();
+                }
+            });
+
+        self.modifyControl.displayAttributes = function () {
+            const selectedFeatures = self.getSelectedFeatures();
+            const feature = selectedFeatures[selectedFeatures.length - 1];
+            if (feature) {
+                const data = feature.getData() || {};
+                self
+                    .modifyControl
+                    .querySelector('.' + self.modifyControl.CLASS + '-btn-attr')
+                    .classList.add(Consts.classes.ACTIVE);
+                let attributes = self.getLayerEditData(feature.layer).attributes;
+                if (!Object.keys(attributes).length) {
+                    // No hay información de capa concerniente a atributos. 
+                    // Tomamos los de la entidad seleccionada
+                    const feature = self.getSelectedFeatures()[0];
+                    if (feature && Object.keys(data).length) {
+                        attributes = {};
+                        for (var key in data) {
+                            attributes[key] = { name: key, value: data[key] };
+                        }
+                    }
+                }
+                const attrArray = Object.keys(attributes).map(k => attributes[k]);
+                const jfa = self._joinedFeatureAttributes || [];
+
+                attrArray.forEach(function (attributeObj) {
+                    attributeObj.value = data[attributeObj.name];
+                    if (attributeObj.name === 'id') {
+                        attributeObj.readOnly = true;
+                    }
+                    attributeObj.availableValues = [];
+                    jfa.forEach(function (jfaObj) {
+                        const val = jfaObj[attributeObj.name];
+                        if (val !== undefined && val !== '') {
+                            attributeObj.availableValues.push(val);
+                        }
+                    });
+                });
+
+                attrArray.forEach(function (attributeObj) {
+                    if (attributeObj.type === 'date') {
+                        if (attributeObj.value) {
+                            attributeObj.value = new Date(attributeObj.value).toISOString().substr(0, 10);
+                        }
+                    }
+                    else if (attributeObj.type === 'dateTime') {
+                        if (attributeObj.value) {
+                            attributeObj.value = new Date(attributeObj.value).toISOString().substr(0, 19);
+                        }
+                    }
+                });
+
+                attrArray.sort(function (a, b) {
+                    if (a.readOnly ? !b.readOnly : b.readOnly) { //XOR
+                        return !a.readOnly - !b.readOnly; // Primero readOnly
+                    }
+                    if (a.name > b.name) {
+                        return 1;
+                    }
+                    if (a.name < b.name) {
+                        return -1;
+                    }
+                    return 0;
+                });
+                self.getRenderedHtml(self.CLASS + '-attr', { data: attrArray }, function (html) {
+                    const contentDiv = self.getAttributeDisplayTarget();
+                    contentDiv.classList.remove(Consts.classes.HIDDEN);
+                    contentDiv.innerHTML = html;
+                    const inputs = contentDiv.querySelectorAll('input');
+                    const selects = contentDiv.querySelectorAll('select');
+                    inputs.forEach(function (elm) {
+                        elm.addEventListener('input', function (e) {
+                            const input = e.target;
+                            for (var i = 0, len = selects.length; i < len; i++) {
+                                const select = selects[i];
+                                if (select.matches(`[name=${e.target.getAttribute('name')}]`) && select.value !== input.value) {
+                                    select.value = '';
+                                    break;
                                 }
                             }
-                            const attrArray = Object.keys(attributes).map(k => attributes[k]);
-                            const jfa = self._joinedFeatureAttributes || [];
-
-                            attrArray.forEach(function (attributeObj) {
-                                attributeObj.value = data[attributeObj.name];
-                                if (attributeObj.name === 'id') {
-                                    attributeObj.readOnly = true;
+                        });
+                    });
+                    selects.forEach(function (elm) {
+                        elm.addEventListener('change', function (e) {
+                            const select = e.target;
+                            for (var i = 0, len = inputs.length; i < len; i++) {
+                                const input = inputs[i];
+                                if (input.matches(`[name=${e.target.getAttribute('name')}]`)) {
+                                    input.value = select.value;
+                                    break;
                                 }
-                                attributeObj.availableValues = [];
-                                jfa.forEach(function (jfaObj) {
-                                    const val = jfaObj[attributeObj.name];
-                                    if (val !== undefined && val !== '') {
-                                        attributeObj.availableValues.push(val);
-                                    }
-                                });
-                            });
+                            }
+                        });
+                    });
 
-                            attrArray.sort(function (a, b) {
-                                if (a.readOnly ? !b.readOnly : b.readOnly) { //XOR
-                                    return !a.readOnly - !b.readOnly; // Primero readOnly
+                    contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-ok`).addEventListener(Consts.event.CLICK, function (_e) {
+                        self.modifyControl._onAttrOK();
+                    }, { passive: true });
+
+                    contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(Consts.event.CLICK, function (_e) {
+                        self.modifyControl.closeAttributes();
+                    }, { passive: true });
+                });
+            }
+        };
+
+        self.modifyControl._onAttrOK = function () {
+            const that = this;
+            const feature = that.getSelectedFeatures()[0];
+            if (feature) {
+                const data = {};
+                const attributes = self.getLayerEditData(feature.layer).attributes;
+                const layerHasInfo = Object.keys(attributes).length > 0;
+                const inputs = that.getAttributeDisplayTarget().querySelectorAll('input');
+                inputs.forEach(function (input) {
+                    var name = input.getAttribute('name');
+                    var value = input.value;
+                    if (layerHasInfo) {
+                        switch (attributes[name].type) {
+                            case 'int':
+                            case 'integer':
+                            case 'byte':
+                            case 'long':
+                            case 'negativeInteger':
+                            case 'nonNegativeInteger':
+                            case 'nonPositiveInteger':
+                            case 'positiveInteger':
+                            case 'short':
+                            case 'unsignedLong':
+                            case 'unsignedInt':
+                            case 'unsignedShort':
+                            case 'unsignedByte':
+                                value = parseInt(value);
+                                if (!Number.isNaN(value)) {
+                                    data[name] = value;
                                 }
-                                if (a.name > b.name) {
-                                    return 1;
+                                break;
+                            case 'double':
+                            case 'float':
+                            case 'decimal':
+                                value = parseFloat(value);
+                                if (!Number.isNaN(value)) {
+                                    data[name] = value;
                                 }
-                                if (a.name < b.name) {
-                                    return -1;
-                                }
-                                return 0;
-                            });
-                            self.getRenderedHtml(self.CLASS + '-attr', { data: attrArray }, function (html) {
-                                self.modifyControl._attributesSection;
-                                const contentDiv = self.getAttributeDisplayTarget();
-                                contentDiv.classList.remove(TC.Consts.classes.HIDDEN);
-                                contentDiv.innerHTML = html;
-                                const inputs = contentDiv.querySelectorAll('input');
-                                const selects = contentDiv.querySelectorAll('select');
-                                inputs.forEach(function (elm) {
-                                    elm.addEventListener('input', function (e) {
-                                        const input = e.target;
-                                        for (var i = 0, len = selects.length; i < len; i++) {
-                                            const select = selects[i];
-                                            if (select.matches(`[name=${e.target.getAttribute('name')}]`) && select.value !== input.value) {
-                                                select.value = '';
-                                                break;
-                                            }
-                                        }
-                                    });
-                                });
-                                selects.forEach(function (elm) {
-                                    elm.addEventListener('change', function (e) {
-                                        const select = e.target;
-                                        for (var i = 0, len = inputs.length; i < len; i++) {
-                                            const input = inputs[i];
-                                            if (input.matches(`[name=${e.target.getAttribute('name')}]`)) {
-                                                input.value = select.value;
-                                                break;
-                                            }
-                                        }
-                                    });
-                                });
-
-                                contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-ok`).addEventListener(TC.Consts.event.CLICK, function (_e) {
-                                    self.modifyControl._onAttrOK();
-                                }, { passive: true });
-
-                                contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(TC.Consts.event.CLICK, function (_e) {
-                                    self.modifyControl.closeAttributes();
-                                }, { passive: true });
-                            });
-                        }
-                    };
-
-                    self.modifyControl._onAttrOK = function () {
-                        const that = this;
-                        const feature = that.getSelectedFeatures()[0];
-                        if (feature) {
-                            const data = {};
-                            const attributes = self.getLayerEditData(feature.layer).attributes;
-                            const layerHasInfo = Object.keys(attributes).length > 0;
-                            const inputs = that.getAttributeDisplayTarget().querySelectorAll('input');
-                            inputs.forEach(function (input) {
-                                var name = input.getAttribute('name');
-                                var value = input.value;
-                                if (layerHasInfo) {
-                                    switch (attributes[name].type) {
-                                        case 'int':
-                                        case 'integer':
-                                        case 'byte':
-                                        case 'long':
-                                        case 'negativeInteger':
-                                        case 'nonNegativeInteger':
-                                        case 'nonPositiveInteger':
-                                        case 'positiveInteger':
-                                        case 'short':
-                                        case 'unsignedLong':
-                                        case 'unsignedInt':
-                                        case 'unsignedShort':
-                                        case 'unsignedByte':
-                                            value = parseInt(value);
-                                            if (!Number.isNaN(value)) {
-                                                data[name] = value;
-                                            }
-                                            break;
-                                        case 'double':
-                                        case 'float':
-                                        case 'decimal':
-                                            value = parseFloat(value);
-                                            if (!Number.isNaN(value)) {
-                                                data[name] = value;
-                                            }
-                                            break;
-                                        case 'date':
-                                        case 'time':
-                                        case 'dateTime':
-                                            data[name] = new Date(value);
-                                            break;
-                                        case 'boolean':
-                                            data[name] = !!value;
-                                            break;
-                                        case undefined:
-                                            break;
-                                        default:
-                                            data[name] = value;
-                                            break;
-                                    }
+                                break;
+                            case 'date':
+                                // Obtiene el valor yyyy-mm-dd
+                                if (value) {
+                                    data[name] = new Date(value).toISOString().substr(0, 10);
                                 }
                                 else {
                                     data[name] = value;
                                 }
-                            });
-                            feature.setData(data);
-                            that.trigger(TC.Consts.event.FEATUREMODIFY, { feature: feature, layer: that.layer });
-                            that.closeAttributes();
+                                break;
+                            case 'dateTime':
+                                // Obtiene el valor yyyy-mm-ddThh:mm:ss
+                                if (value) {
+                                    data[name] = new Date(value).toISOString().substr(0, 19);
+                                }
+                                else {
+                                    data[name] = value;
+                                }
+                                break;
+                            case 'boolean':
+                                data[name] = !!value;
+                                break;
+                            case undefined:
+                                break;
+                            default:
+                                data[name] = value;
+                                break;
                         }
-                    };
-
-                    if (Array.isArray(self.options.modes) && self.options.modes.length == 1) {
-                        self.setMode(self.options.modes[0], null);
                     }
-
-                    resolve(self);
-
-                    map.loaded(function () {
-                        self.setLayer(self.options.layer);
-                    });
-
-                    map
-                        .on(TC.Consts.event.RESULTSPANELCLOSE, function (e) {
-                            if (e.control === self.featureImportPanel) {
-                                self.featuresToImport = [];
-                                self.getHighlightsLayer().then(l => l.clearFeatures());
-                            }
-                        })
-                        .on(TC.Consts.event.LAYERREMOVE + ' ' + TC.Consts.event.FEATURESCLEAR, function (e) {
-                            if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
-                                self.getHighlightsLayer().then(function (hlLayer) {
-                                    for (let i = self.featuresToImport.length - 1; i >= 0; i--) {
-                                        const fti = self.featuresToImport[i];
-                                        if (fti.layer === e.layer || (fti.original && fti.original.layer === e.layer)) {
-                                            self.featuresToImport.splice(i, 1);
-                                            hlLayer.removeFeature(fti);
-                                        }
-                                    }
-                                    const li = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
-                                    if (li) {
-                                        li.remove();
-                                    }
-                                });
-                            }
-                        })
-                        .on(TC.Consts.event.FEATUREREMOVE, function (e) {
-                            if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
-                                self.getHighlightsLayer().then(function (hlLayer) {
-                                    for (var i = 0, ii = self.featuresToImport.length; i < ii; i++) {
-                                        const fti = self.featuresToImport[i];
-                                        if (fti === e.feature || fti.original === e.feature) {
-                                            self.featuresToImport.splice(i, 1);
-                                            hlLayer.removeFeature(fti);
-                                            const lli = self.featureImportPanel.getInfoContainer().querySelector(`li[data-layer-id="${e.layer.id}"]`);
-                                            if (lli) {
-                                                const fli = lli.querySelector(`#tc-ctl-edit-import-list-cb-${e.layer.id}-${e.feature.id}`);
-                                                if (fli) {
-                                                    fli.remove();
-                                                }
-                                                if (!lli.children.length) {
-                                                    lli.remove();
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    }
-                                });
-                            }
-                        })
-                        .on(TC.Consts.event.LAYERUPDATE, function (e) { // TODO: Actualizar cuando la capa ya existe en la lista
-                            if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
-                                const layerObj = self.getAvailableFeaturesToImport().filter(l => l.id === e.layer.id)[0];
-                                if (layerObj) {
-                                    self.getRenderedHtml(self.CLASS + '-import-layer', layerObj, function (html) {
-                                        const list = self
-                                            .featureImportPanel
-                                            .getInfoContainer()
-                                            .querySelector(`.${self.CLASS}-import-list .tc-layers`);
-                                        if (!list.querySelector(`li[data-layer-id="${e.layer.id}"]`)) {
-                                            list.insertAdjacentHTML('beforeend', html);
-                                        }
-                                    });
-                                }
-                            }
-                        })
-                        .on(TC.Consts.event.FEATUREADD + ' ' + TC.Consts.event.FEATURESADD, function (e) {
-                            if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
-                                const layer = e.layer;
-                                const features = (e.feature ? [e.feature] : e.features).filter(f => self.isFeatureAllowed(f));
-                                if (features.length) {
-                                    self.displayLayerToImport({
-                                        id: layer.id,
-                                        title: layer.title,
-                                        features: features
-                                    });
-                                }
-                            }
-                        });
+                    else {
+                        data[name] = value;
+                    }
                 });
-            });
-        });
-    };
+                feature.setData(data);
+                that.trigger(Consts.event.FEATUREMODIFY, { feature: feature, layer: that.layer });
+                that.closeAttributes();
+            }
+        };
 
-    ctlProto.render = function (callback) {
-        const self = this;
-        return self._set1stRenderPromise(TC.Control.prototype.renderData.call(self, { controlId: self.id}, function () {
 
-            //control de renderizado enfunción del modo de edicion
-            if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
-                for (var m in TC.control.Edit.mode)
-                    if (typeof m === 'string' && self.options.modes.indexOf(TC.control.Edit.mode[m]) < 0) {
-                        const label = self.div.querySelector(`label${self._classSelector}-btn-${TC.control.Edit.mode[m]}`);
-                        label.parentElement.removeChild(label);
-                        const div = self.div.querySelector(`div${self._classSelector}-${TC.control.Edit.mode[m]}`);
-                        div.parentElement.removeChild(div);
-                    }
-                if (self.options.modes.length === 1) {
-                    var mode = self.options.modes[0];
-                    const label = self.div.querySelector(`label${self._classSelector}-btn-${mode}`);
-                    label.parentElement.removeChild(label);
+        //control de renderizado enfunción del modo de edicion
+        if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
+            for (var m in Edit.mode) {
+                if (typeof m === 'string' && self.options.modes.indexOf(Edit.mode[m]) < 0) {
+                    const tab = self.#getModeTab(Edit.mode[m]);
+                    const div = tab.target;
+                    div.parentElement.removeChild(div);
+                    tab.parentElement.removeChild(tab);
                 }
             }
-
-            self.div.querySelectorAll(self._selectors.MODE_RADIO_BUTTON).forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    var newMode = this.value;
-                    var mode = self.mode === newMode ? undefined : newMode;
-                    self.setMode(mode);
-                });
-            });
-
-            self.div.querySelector(self._classSelector + '-btn-import').addEventListener(TC.Consts.event.CLICK, function (_e) {
-                self.showFeatureImportPanel();
-            }, { passive: true });
-
-            self.div.querySelector(self._classSelector + '-btn-dl').addEventListener(TC.Consts.event.CLICK, function (_e) {
-                self.getDownloadDialog().then(function (dialog) {
-                    const options = {
-                        title: self.getLocaleString('download'),
-                        fileName: self.layer.id.toLowerCase().replace(' ', '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true),
-                        elevation: self.options.downloadElevation
-                    };
-                    dialog.open(self.layer.features, options);
-                });
-            }, { passive: true });
-
-            if (TC.Util.isFunction(callback)) {
-                callback();
+            if (self.options.modes.length === 1) {
+                var mode = self.options.modes[0];
+                const tab = self.#getModeTab(mode);
+                tab.parentElement.removeChild(tab);
             }
-        }));
-    };
+        }
 
-    ctlProto.getGeometryType = function (geometryType) {
+        self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
+            tab.callback = function () {
+                const targetId = this.target?.getAttribute('id');
+                if (targetId) {
+                    const newMode = targetId.substr(targetId.lastIndexOf('-') + 1);
+                    self.mode = this.selected ? newMode : null;
+                }
+            }
+        });
+
+        self.querySelector(self.#classSelector + '-btn-import').addEventListener(Consts.event.CLICK, function (_e) {
+            self.showFeatureImportPanel();
+        }, { passive: true });
+
+        self.querySelector(self.#classSelector + '-btn-dl').addEventListener(Consts.event.CLICK, function (_e) {
+            self.getDownloadDialog().then(function (dialog) {
+                const options = {
+                    title: self.getLocaleString('download'),
+                    fileName: self.layer.id.toLowerCase().replace(' ', '_') + '_' + Util.getFormattedDate(new Date().toString(), true),
+                    elevation: self.options.downloadElevation
+                };
+                dialog.open(self.layer.features, options);
+            });
+        }, { passive: true });
+
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+        return self;
+    }
+
+    getGeometryType(geometryType) {
         switch (geometryType) {
             case 'gml:LinearRingPropertyType':
             case 'gml:PolygonPropertyType':
             case 'LinearRingPropertyType':
             case 'PolygonPropertyType':
-                return TC.Consts.geom.POLYGON;
+                return Consts.geom.POLYGON;
             case 'gml:MultiPolygonPropertyType':
             case 'gml:MultiSurfacePropertyType':
             case 'MultiPolygonPropertyType':
             case 'MultiSurfacePropertyType':
-                return TC.Consts.geom.MULTIPOLYGON;
+                return Consts.geom.MULTIPOLYGON;
             case 'gml:LineStringPropertyType':
             case 'gml:CurvePropertyType':
             case 'LineStringPropertyType':
             case 'CurvePropertyType':
-                return TC.Consts.geom.POLYLINE;
+                return Consts.geom.POLYLINE;
             case 'gml:MultiLineStringPropertyType':
             case 'gml:MultiCurvePropertyType':
             case 'MultiLineStringPropertyType':
             case 'MultiCurvePropertyType':
-                return TC.Consts.geom.MULTIPOLYLINE;
+                return Consts.geom.MULTIPOLYLINE;
             case 'gml:PointPropertyType':
             case 'gml:MultiPointPropertyType':
             case 'PointPropertyType':
             case 'MultiPointPropertyType':
-                return TC.Consts.geom.POINT;
+                return Consts.geom.POINT;
             case 'gml:BoxPropertyType':
             case 'BoxPropertyType':
-                return TC.Consts.geom.RECTANGLE;
+                return Consts.geom.RECTANGLE;
             case 'gml:GeometryCollectionPropertyType':
             case 'gml:GeometryAssociationType':
             case 'gml:GeometryPropertyType':
@@ -505,10 +758,9 @@ TC.Control = Control;
             default:
                 return false;
         }
+    }
 
-    };
-
-    ctlProto.setLayer = function (layer) {
+    setLayer(layer) {
         const self = this;
         self.modifyControl && self.modifyControl.unselectFeatures(self.getSelectedFeatures());
         self.layer = self.map.getLayer(layer);
@@ -550,106 +802,24 @@ TC.Control = Control;
         self.getLineDrawControl().then(setLayer);
         self.getPolygonDrawControl().then(setLayer);
         //self.getCutDrawControl().then(setLayer);
-        self.setMode(self.layer ? TC.control.Edit.mode.MODIFY : null);
-        setEditState(self, self.layer);
-    };
+        self.mode = self.layer ? Edit.mode.MODIFY : null;
+        self.#setEditState(self.layer);
+        return self;
+    }
 
-    ctlProto.setMode = function (mode) {
-        var self = this;
-        self.mode = mode;
-        //setFeatureSelectReadyState(self);
-
-        var activateDraw = function (draw) {
-            if (draw) {
-                if (self.snapping) {
-                    draw.snapping = self.layer;
-                }
-                draw.activate();
-            }
-        };
-
-        var active;
-        var hiddenList;
-        Promise.all([
-            self._pointDrawCtlPromise,
-            self._lineDrawCtlPromise,
-            self._polygonDrawCtlPromise,
-            //self._cutDrawCtlPromise,
-            self._modifyCtlPromise
-        ]).then(function (controls) {
-            const pointDrawControl = controls[0];
-            const lineDrawControl = controls[1];
-            const polygonDrawControl = controls[2];
-            //const cutDrawControl = controls[3];
-            const modifyControl = controls[3];
-            switch (mode) {
-                case TC.control.Edit.mode.MODIFY:
-                    active = self.div.querySelector(self._classSelector + '-modify');
-                    hiddenList = self.div.querySelectorAll(self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon,' + self._classSelector + '-other');
-                    modifyControl.activate();
-                    break;
-                case TC.control.Edit.mode.ADDPOINT:
-                    active = self.div.querySelector(self._classSelector + '-point');
-                    hiddenList = self.div.querySelectorAll(self._classSelector + '-modify,' + self._classSelector + '-line,' + self._classSelector + '-polygon,' + self._classSelector + '-other');
-                    activateDraw(pointDrawControl);
-                    break;
-                case TC.control.Edit.mode.ADDLINE:
-                    active = self.div.querySelector(self._classSelector + '-line');
-                    hiddenList = self.div.querySelectorAll(self._classSelector + '-modify,' + self._classSelector + '-point,' + self._classSelector + '-polygon,' + self._classSelector + '-other');
-                    activateDraw(lineDrawControl);
-                    break;
-                case TC.control.Edit.mode.ADDPOLYGON:
-                    active = self.div.querySelector(self._classSelector + '-polygon');
-                    hiddenList = self.div.querySelectorAll(self._classSelector + '-modify,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-other');
-                    activateDraw(polygonDrawControl);
-                    break;
-                case TC.control.Edit.mode.OTHER:
-                    active = self.div.querySelector(self._classSelector + '-other');
-                    hiddenList = self.div.querySelectorAll(self._classSelector + '-modify,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon');
-                    if (controls.indexOf(self.map.activeControl) >= 0) {
-                        self.map.activeControl.deactivate();
-                    }
-                    break;
-                default:
-                    active = null;
-                    hiddenList = self.div.querySelectorAll(self._classSelector + '-modify,' + self._classSelector + '-point,' + self._classSelector + '-line,' + self._classSelector + '-polygon,' + self._classSelector + '-other');
-                    if (controls.indexOf(self.map.activeControl) >= 0) {
-                        self.map.activeControl.deactivate();
-                    }
-                    //if (cutDrawControl.isActive) {
-                    //    cutDrawControl.deactivate();
-                    //}
-                    break;
-            }
-
-            if (mode) {
-                const radio = self.div.querySelector(`${self._selectors.MODE_RADIO_BUTTON}[value=${mode}]`);
-                radio.checked = true;
-            }
-            else {
-                self.div.querySelectorAll(self._selectors.MODE_RADIO_BUTTON).forEach(function (radio) {
-                    radio.checked = false;
-                });
-            }
-            if (active) {
-                active.classList.remove(TC.Consts.classes.HIDDEN);
-            }
-            hiddenList.forEach(function (hidden) {
-                hidden.classList.add(TC.Consts.classes.HIDDEN);
-            });
-        });
-    };
-
-    ctlProto.constrainModes = function (modes) {
+    constrainModes(modes) {
         const self = this;
         if (!Array.isArray(modes)) {
             modes = [];
         }
+        if (!modes.length) {
+            modes = Object.values(Edit.mode);
+        }
         self.modes = modes
             .filter(function (m) {
                 // Quitamos los valores que no sean modos de edición
-                for (var key in TC.control.Edit.mode) {
-                    if (TC.control.Edit.mode[key] === m) {
+                for (var key in Edit.mode) {
+                    if (Edit.mode[key] === m) {
                         return true;
                     }
                 }
@@ -663,41 +833,42 @@ TC.Control = Control;
                 return self.options.modes.indexOf(m) >= 0;
             });
         if (self.modes.indexOf(self.mode) < 0) {
-            self.setMode(null);
+            self.mode = null;
         }
-        const selector = self.modes.map(m => `[value=${m}]`).join() || '[value]';
-        self.div.querySelectorAll(self._selectors.MODE_RADIO_BUTTON).forEach(function (rb) {
-            rb.disabled = !rb.matches(selector);
+        const selector = self.modes.map(m => `[for="${self.id}-mode-${m}"]`).join() || '[for]';
+        self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
+            tab.disabled = !tab.matches(selector);
         });
-    };
+        return self;
+    }
 
-    ctlProto.isFeatureAllowed = function (feature) {
+    isFeatureAllowed(feature) {
         const self = this;
         switch (true) {
-            case TC.feature.Point && feature instanceof TC.feature.Point:
-                return self.modes.indexOf(TC.control.Edit.mode.ADDPOINT) >= 0;
-            case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                return self.modes.indexOf(TC.control.Edit.mode.ADDLINE) >= 0;
-            case TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline:
-                return self.modes.indexOf(TC.control.Edit.mode.ADDLINE) >= 0 && self.isMultiple;
-            case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-                return self.modes.indexOf(TC.control.Edit.mode.ADDPOLYGON) >= 0;
-            case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                return self.modes.indexOf(TC.control.Edit.mode.ADDPOLYGON) >= 0 && self.isMultiple;
+            case feature instanceof Point:
+                return self.modes.includes(Edit.mode.ADDPOINT);
+            case feature instanceof Polyline:
+                return self.modes.includes(Edit.mode.ADDLINE);
+            case feature instanceof MultiPolyline:
+                return self.modes.includes(Edit.mode.ADDLINE) && self.isMultiple;
+            case feature instanceof Polygon:
+                return self.modes.includes(Edit.mode.ADDPOLYGON);
+            case feature instanceof MultiPolygon:
+                return self.modes.includes(Edit.mode.ADDPOLYGON) && self.isMultiple;
             default:
                 return true;
         }
-    };
+    }
 
-    ctlProto.setComplexGeometry = function (isMultiple) {
+    async setComplexGeometry(isMultiple) {
         const self = this;
         self.isMultiple = isMultiple;
-        //self.getPointDrawControl().then(c => c.setMode(isMultiple ? TC.Consts.geom.MULTIPOINT : TC.Consts.geom.POINT));
-        self.getLineDrawControl().then(c => c.setMode(isMultiple ? TC.Consts.geom.MULTIPOLYLINE : TC.Consts.geom.POLYLINE));
-        self.getPolygonDrawControl().then(c => c.setMode(isMultiple ? TC.Consts.geom.MULTIPOLYGON : TC.Consts.geom.POLYGON));
-    };
+        //(await self.getPointDrawControl()).setMode(isMultiple ? Consts.geom.MULTIPOINT : Consts.geom.POINT);
+        (await self.getLineDrawControl()).setMode(isMultiple ? Consts.geom.MULTIPOLYLINE : Consts.geom.POLYLINE);
+        (await self.getPolygonDrawControl()).setMode(isMultiple ? Consts.geom.MULTIPOLYGON : Consts.geom.POLYGON);
+    }
 
-    ctlProto.getLayerEditData = function (optionalLayer) {
+    getLayerEditData(optionalLayer) {
         const self = this;
         const layer = optionalLayer || self.layer;
         if (!layer) {
@@ -706,54 +877,48 @@ TC.Control = Control;
         return self.layersEditData[layer.id] = self.layersEditData[layer.id] || {
             checkedOut: false
         };
-    };
+    }
 
-    ctlProto.cancel = function () {
-        var self = this;
+    cancel() {
+        const self = this;
         if (Array.isArray(self.options.modes) && self.options.modes.length == 1) {
-            self.setMode(self.options.modes[0], null);
+            self.mode = self.options.modes[0];
         }
         else {
-            self.setMode(null, false);
+            self.mode = null;
         }
         self.wrap.cancel(true, self.cancelActionConfirmTxt);
-    };
+        return self;
+    }
 
-    ctlProto.onFeatureClick = function (e) {
-        const self = this;
-        if (!self.activeControl || !self.activeControl.isExclusive()) {
-            e.feature.show();
-        }
-    };
-    
-    ctlProto.activate = function (options) {
+    async activate(options) {
         const self = this;
         options = options || {};
-        const activateCtl = function (ctl) {
-            if (ctl !== self.map.activeControl) {
-                self._previousActiveControl = self.map.activeControl;
-            }
-        };
+        let ctl;
         switch (options.mode) {
-            case TC.control.Edit.mode.ADDPOINT:
-                self.getPointDrawControl().then(activateCtl);
+            case Edit.mode.ADDPOINT:
+                ctl = await self.getPointDrawControl();
                 break;
-            case TC.control.Edit.mode.ADDLINE:
-                self.getLineDrawControl().then(activateCtl);
+            case Edit.mode.ADDLINE:
+                ctl = await self.getLineDrawControl();
                 break;
-            case TC.control.Edit.mode.ADDPOLYGON:
-                self.getPolygonDrawControl().then(activateCtl);
+            case Edit.mode.ADDPOLYGON:
+                ctl = await self.getPolygonDrawControl();
                 break;
             default:
-                self.getModifyControl().then(activateCtl);
+                ctl = await self.getModifyControl();
                 break;
         }
-    };
 
-    ctlProto.deactivate = function () {
+        if (ctl !== self.map.activeControl) {
+            self.#previousActiveControl = self.map.activeControl;
+        }
+    }
+
+    deactivate() {
         const self = this;
-        if (self._previousActiveControl) {
-            self.map.previousActiveControl = self._previousActiveControl;
+        if (self.#previousActiveControl) {
+            self.map.previousActiveControl = self.#previousActiveControl;
             switch (self.map.activeControl) {
                 case self.pointDrawControl:
                     self.pointDrawControl.deactivate();
@@ -772,21 +937,22 @@ TC.Control = Control;
             }
         }
         self.modifyControl && self.modifyControl.closeAttributes();
-    };
+        return self;
+    }
 
-    ctlProto.isExclusive = function () {
+    isExclusive() {
         return true;
-    };
+    }
 
-    ctlProto.getAttributeDisplayTarget = function () {
-        return this.modifyControl._attributesSection;
-    };
+    getAttributeDisplayTarget() {
+        return this.modifyControl?.getAttributeDisplayTarget();
+    }
 
-    //ctlProto.joinFeatures = function (features) {
-    //    var self = this;
-    //    if (self.geometryType === TC.Consts.geom.MULTIPOLYLINE ||
-    //        self.geometryType === TC.Consts.geom.MULTIPOLYGON ||
-    //        self.geometryType === TC.Consts.geom.MULTIPOINT) {
+    //joinFeatures(features) {
+    //    const self = this;
+    //    if (self.geometryType === Consts.geom.MULTIPOLYLINE ||
+    //        self.geometryType === Consts.geom.MULTIPOLYGON ||
+    //        self.geometryType === Consts.geom.MULTIPOINT) {
     //        self._joinedFeatureAttributes = [];
     //        if (features.length > 1) {
     //            var geometries = features.map(function (elm) {
@@ -800,20 +966,21 @@ TC.Control = Control;
     //            for (var i = 0, len = features.length; i < len; i++) {
     //                var feature = features[i];
     //                self.layer.removeFeature(feature);
-    //                self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
+    //                self.trigger(Consts.event.FEATUREREMOVE, { feature: feature });
     //            }
     //            self.layer.addFeature(newFeature).then(function (feat) {
     //                self.setSelectedFeatures([newFeature]);
-    //                self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
+    //                self.trigger(Consts.event.FEATUREADD, { feature: feat });
     //                feat.showPopup(self.attributeEditor);
     //            });
     //        }
     //        setFeatureSelectedState(self, [newFeature]);
     //    }
-    //};
+    //    return self;
+    //}
 
-    //ctlProto.splitFeatures = function (features) {
-    //    var self = this;
+    //splitFeatures(features) {
+    //    const self = this;
     //    var complexFeatures = features.filter(complexGeometryFilter);
     //    var geometries = complexFeatures.map(function (elm) {
     //        return elm.geometry;
@@ -830,130 +997,131 @@ TC.Control = Control;
     //    for (var i = 0, len = complexFeatures.length; i < len; i++) {
     //        var feature = complexFeatures[i];
     //        self.layer.removeFeature(feature);
-    //        self.trigger(TC.Consts.event.FEATUREREMOVE, { feature: feature });
+    //        self.trigger(Consts.event.FEATUREREMOVE, { feature: feature });
     //    }
     //    var newFeatPromises = new Array(newFeatures.length);
     //    for (var i = 0, len = newFeatures.length; i < len; i++) {
     //        const promise = newFeatPromises[i] = self.layer.addFeature(newFeatures[i]);
     //        promise.then(function (feat) {
-    //            self.trigger(TC.Consts.event.FEATUREADD, { feature: feat });
+    //            self.trigger(Consts.event.FEATUREADD, { feature: feat });
     //        });
     //    }
     //    Promise.all(newFeatPromises).then(function() {
     //        self.setSelectedFeatures(newFeatures);
     //    });
     //    setFeatureSelectedState(self, newFeatures);
-    //};
+    //    return self;
+    //}
 
-    //ctlProto.deleteFeatures = function (features) {
-    //    var self = this;
+    //deleteFeatures(features) {
+    //    const self = this;
     //    self.wrap.deleteFeatures(features);
     //    if (self.layer.features.length === 0) {
     //        self._deleteBtn.disabled = true;
     //    }
-    //};
+    //    return self;
+    //}
 
-    ctlProto.getSelectedFeatures = function () {
-        return this.modifyControl.getSelectedFeatures();
-    };
+    getSelectedFeatures() {
+        return this.modifyControl?.getSelectedFeatures();
+    }
 
-    ctlProto.setSelectedFeatures = function (features) {
-        return this.modifyControl.setSelectedFeatures(features);
-    };
+    setSelectedFeatures(features) {
+        return this.modifyControl?.setSelectedFeatures(features);
+    }
 
-    ctlProto.getLayer = function () {
-        var self = this;
-        return self.layer;
-    };
-
-    ctlProto.getModifyControl = function () {
+    async getLayer() {
         const self = this;
-        return self._modifyCtlPromise || new Promise(function (resolve, _reject) {
-            self.renderPromise().then(() => resolve(self.modifyControl));
-        });
-    };
+        if (self.layer) {
+            return self.layer;
+        }
+        return await self.layerPromise;
+    }
 
-    ctlProto.getPointDrawControl = function () {
+    async getModifyControl() {
         const self = this;
-        return self._pointDrawCtlPromise || new Promise(function (resolve, _reject) {
-            self.renderPromise().then(() => resolve(self.pointDrawControl));
-        });
-    };
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-modify sitna-modify`);
+    }
 
-    ctlProto.getLineDrawControl = function () {
+    async getPointDrawControl() {
         const self = this;
-        return self._lineDrawCtlPromise || new Promise(function (resolve, _reject) {
-            self.renderPromise().then(() => resolve(self.lineDrawControl));
-        });
-    };
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-point sitna-draw`);
+    }
 
-    ctlProto.getPolygonDrawControl = function () {
+    async getLineDrawControl() {
         const self = this;
-        return self._polygonDrawCtlPromise || new Promise(function (resolve, _reject) {
-            self.renderPromise().then(() => resolve(self.polygonDrawControl));
-        });
-    };
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-line sitna-draw`);
+    }
 
-    //ctlProto.getCutDrawControl = function () {
+    async getPolygonDrawControl() {
+        const self = this;
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-polygon sitna-draw`);
+    }
+
+    //async getCutDrawControl() {
     //    const self = this;
-    //    return self._cutDrawCtlPromise || new Promise(function (resolve, reject) {
-    //        self.renderPromise().then(() => resolve(self.cutDrawControl));
-    //    });
-    //};
+    //    if (self._cutDrawCtlPromise) {
+    //        return await self._cutDrawCtlPromise;
+    //    await self.renderPromise();
+    //    return self.cutDrawControl;
+    //}
 
-    ctlProto.getFeatureImportPanel = function () {
+    async getFeatureImportPanel() {
         const self = this;
-        if (!self._featureImportPanelPromise) {
-            self._featureImportPanelPromise = self.map.addControl('resultsPanel', {
+        if (!self.#featureImportPanelPromise) {
+            self.#featureImportPanelPromise = self.map.addControl('resultsPanel', {
                 titles: {
                     main: self.getLocaleString('importFromOtherLayer')
                 }
             });
-            self._featureImportPanelPromise.then(panel => self.featureImportPanel = panel);
+            self.featureImportPanel = await self.#featureImportPanelPromise;
         }
-        return self._featureImportPanelPromise;
-    };
+        return await self.#featureImportPanelPromise;
+    }
 
-    ctlProto.getHighlightsLayer = function () {
+    async getHighlightsLayer() {
         const self = this;
-        if (!self._highlightsLayerPromise) {
-            self._highlightsLayerPromise = self.map.addLayer({
+        if (!self.#highlightsLayerPromise) {
+            self.#highlightsLayerPromise = self.map.addLayer({
                 id: self.getUID(),
-                type: TC.Consts.layerType.VECTOR,
+                type: Consts.layerType.VECTOR,
                 title: 'Highlights Layer',
                 stealth: true,
-                styles: self.map.options.styles.selection || TC.Cfg.styles.selection
+                styles: self.map.options.styles.selection || Cfg.styles.selection
             });
-            self._highlightsLayerPromise.then(layer => self.highlightsLayer = layer);
+            self.highlightsLayer = await self.#highlightsLayerPromise;
         }
-        return self._highlightsLayerPromise;
-    };
+        return self.#highlightsLayerPromise;
+    }
 
-    ctlProto.highlightFeatures = function (features) {
+    async highlightFeatures(features) {
         const self = this;
-        self.getHighlightsLayer().then(function (layer) {
-            const featuresToHighlight = self.featuresToImport.concat(features);
-            layer.features.slice().forEach(function (feature) {
-                if (!feature.original || featuresToHighlight.indexOf(feature.original) < 0) {
-                    layer.removeFeature(feature);
-                }
-            });
-            layer.addFeatures(featuresToHighlight
-                .filter(function (feature) {
-                    return !layer.features.some(function (f) {
-                        return f.original && f.original === feature;
-                    });
-                })
-                .map(function (feature) {
+        const highlightsLayer = await self.getHighlightsLayer();
+        const featuresToHighlight = self.featuresToImport.concat(features);
+        highlightsLayer.features.slice().forEach(function (feature) {
+            if (!feature.original || featuresToHighlight.indexOf(feature.original) < 0) {
+                highlightsLayer.removeFeature(feature);
+            }
+        });
+        await highlightsLayer.addFeatures(featuresToHighlight
+            .filter(function (feature) {
+                return !highlightsLayer.features.some(function (f) {
+                    return f.original && f.original === feature;
+                });
+            })
+            .map(function (feature) {
                 const newFeature = feature.clone();
                 newFeature.toggleSelectedStyle(true);
                 newFeature.original = feature;
                 return newFeature;
             }));
-        });
-    };
+    }
 
-    ctlProto.getAvailableFeaturesToImport = function () {
+    getAvailableFeaturesToImport() {
         const self = this;
         return self.map.workLayers
             .filter(l => !l.isRaster())
@@ -969,19 +1137,9 @@ TC.Control = Control;
                 };
             })
             .filter(l => l.features.length);
-    };
+    }
 
-    ctlProto.getFeatureFromImportList = function (elm) {
-        const self = this;
-        const cb = elm.querySelector('input');
-        const layer = self.map.getLayer(elm.parentElement.parentElement.dataset.layerId);
-        if (layer) {
-            return layer.getFeatureById(cb.value);
-        }
-        return null;
-    };
-
-    ctlProto.importFeatures = function (features) {
+    importFeatures(features) {
         const self = this;
         let failure = false;
         const layerEditData = self.getLayerEditData();
@@ -1001,11 +1159,11 @@ TC.Control = Control;
             };
             if (self.isMultiple) {
                 switch (true) {
-                    case TC.feature.Polygon && feature instanceof TC.feature.Polygon:
-                        newFeature = new TC.feature.MultiPolygon([feature.geometry], featureOptions);
+                    case feature instanceof Polygon:
+                        newFeature = new MultiPolygon([feature.geometry], featureOptions);
                         break;
-                    case TC.feature.Polyline && feature instanceof TC.feature.Polyline:
-                        newFeature = new TC.feature.MultiPolyline([feature.geometry], featureOptions);
+                    case feature instanceof Polyline:
+                        newFeature = new MultiPolyline([feature.geometry], featureOptions);
                         break;
                     default:
                         newFeature = feature.clone();
@@ -1014,11 +1172,11 @@ TC.Control = Control;
             }
             else {
                 switch (true) {
-                    case TC.feature.MultiPolygon && feature instanceof TC.feature.MultiPolygon:
-                        newFeature = new TC.feature.Polygon(feature.geometry[0], featureOptions);
+                    case feature instanceof MultiPolygon:
+                        newFeature = new Polygon(feature.geometry[0], featureOptions);
                         break;
-                    case TC.feature.MultiPolyline && feature instanceof TC.feature.MultiPolyline:
-                        newFeature = new TC.feature.Polyline(feature.geometry[0], featureOptions);
+                    case feature instanceof MultiPolyline:
+                        newFeature = new Polyline(feature.geometry[0], featureOptions);
                         break;
                     default:
                         newFeature = feature.clone();
@@ -1029,62 +1187,79 @@ TC.Control = Control;
             return newFeature;
         }).forEach(function (feature) {
             self.layer.addFeature(feature);
-            self.trigger(TC.Consts.event.FEATUREADD, { feature: feature, layer: self.layer });
+            self.trigger(Consts.event.FEATUREADD, { feature: feature, layer: self.layer });
         });
-        
-        if (failure) {
-            self.map.toast(self.getLocaleString('importFromOtherLayer.warning'), { type: TC.Consts.msgType.WARNING });
-        }
-    };
 
-    const handleCheck = function (ctl, checkbox) {
-        const feature = ctl.getFeatureFromImportList(checkbox.parentElement);
+        if (failure) {
+            self.map.toast(self.getLocaleString('importFromOtherLayer.warning'), { type: Consts.msgType.WARNING });
+        }
+        return self;
+    }
+
+    #getFeatureFromImportList(elm) {
+        const self = this;
+        const cb = elm.querySelector('input');
+        const layer = self.map.getLayer(elm.parentElement.parentElement.dataset.layerId);
+        if (layer) {
+            return layer.getFeatureById(cb.value);
+        }
+        return null;
+    }
+
+    #setEditState(state) {
+        const self = this;
+        self.querySelectorAll(self.#selectors.MODE_RADIO_BUTTON).forEach(r => r.disabled = !state);
+    }
+
+    #handleCheck(checkbox) {
+        const self = this;
+        const feature = self.#getFeatureFromImportList(checkbox.parentElement);
         if (checkbox.checked) {
-            ctl.featuresToImport.push(feature);
+            self.featuresToImport.push(feature);
         }
         else {
-            const idx = ctl.featuresToImport.indexOf(feature);
+            const idx = self.featuresToImport.indexOf(feature);
             if (idx >= 0) {
-                ctl.featuresToImport.splice(idx, 1);
+                self.featuresToImport.splice(idx, 1);
             }
         }
-    };
+    }
 
-    ctlProto._addImportLayerEvents = function (li) {
+    #addImportLayerEvents(li) {
         const self = this;
-        
+
         li.querySelector('input').addEventListener('change', function (_e) {
             const cb = this;
             cb.parentElement.querySelectorAll('li.tc-feature input').forEach(function (ccb) {
                 if (ccb.checked !== cb.checked) {
                     ccb.checked = cb.checked;
-                    handleCheck(self, ccb);
+                    self.#handleCheck(ccb);
                 }
             });
             self.highlightFeatures([]);
         });
 
         li.querySelectorAll('li.tc-feature').forEach(function (elm) {
-            self._addImportFeatureEvents(elm);
+            self.#addImportFeatureEvents(elm);
         });
-    };
+    }
 
-    ctlProto._addImportFeatureEvents = function (li) {
+    #addImportFeatureEvents(li) {
         const self = this;
         const highlightListener = function (_e) {
-            const feature = self.getFeatureFromImportList(this);
+            const feature = self.#getFeatureFromImportList(this);
             if (feature) {
                 self.highlightFeatures([feature]);
             }
         };
-        li.addEventListener(TC.Consts.event.CLICK, highlightListener, { passive: true });
+        li.addEventListener(Consts.event.CLICK, highlightListener, { passive: true });
         li.addEventListener('mouseover', highlightListener);
         li.querySelector('input').addEventListener('change', function (_e) {
-            handleCheck(self, this);
+            self.#handleCheck(this);
         });
-    };
+    }
 
-    ctlProto.showFeatureImportPanel = function () {
+    showFeatureImportPanel() {
         const self = this;
 
         self.featuresToImport = [];
@@ -1097,51 +1272,50 @@ TC.Control = Control;
                     self.highlightFeatures([]);
                 });
                 container.querySelectorAll('li.tc-layer').forEach(function (elm) {
-                    self._addImportLayerEvents(elm);
+                    self.#addImportLayerEvents(elm);
                 });
-                container.querySelector(`.${self.CLASS}-import-btn-ok`).addEventListener(TC.Consts.event.CLICK, function (_e) {
+                container.querySelector(`.${self.CLASS}-import-btn-ok`).addEventListener(Consts.event.CLICK, function (_e) {
                     self.importFeatures();
                     self.featureImportPanel.close();
                 }, { passive: true });
             });
         });
-    };
+    }
 
-    ctlProto.displayLayerToImport = function (layer) {
+    async displayLayerToImport(layer) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(TC.Consts.classes.HIDDEN)) {
-                const container = self.featureImportPanel.getInfoContainer();
-                const list = container.querySelector(`.${self.CLASS}-import-list .tc-layers`);
-                const layerElementSelector = `li[data-layer-id="${layer.id}"]`;
-                const li = list.querySelector(layerElementSelector);
-                if (li) {
-                    layer.features.forEach(function (feature) {
-                        if (self.isFeatureAllowed(feature)) {
-                            self.getRenderedHtml(self.CLASS + '-import-feature', layer, function (html) {
-                                li.insertAdjacentHTML('beforeend', html);
-                                self._addImportFeatureEvents(li.querySelector('li:last-child'));
-                            });
-                        }
-                    });
-                    resolve(li);
-                }
-                else {
-                    self.getRenderedHtml(self.CLASS + '-import-layer', { id: layer.id, title: layer.title, features: layer.features }, function (html) {
-                        list.insertAdjacentHTML('beforeend', html);
-                        const newLi = list.querySelector(layerElementSelector);
-                        self._addImportLayerEvents(newLi);
-                        resolve(newLi);
-                    });
-                }
+        if (self.featureImportPanel && !self.featureImportPanel.div.classList.contains(Consts.classes.HIDDEN)) {
+            const container = self.featureImportPanel.getInfoContainer();
+            const list = container.querySelector(`.${self.CLASS}-import-list .tc-layers`);
+            const layerElementSelector = `li[data-layer-id="${layer.id}"]`;
+            const li = list.querySelector(layerElementSelector);
+            if (li) {
+                layer.features.forEach(function (feature) {
+                    if (self.isFeatureAllowed(feature)) {
+                        self.getRenderedHtml(self.CLASS + '-import-feature', layer, function (html) {
+                            li.insertAdjacentHTML('beforeend', html);
+                            self.#addImportFeatureEvents(li.querySelector('li:last-child'));
+                        });
+                    }
+                });
+                return li;
             }
             else {
-                resolve(null);
+                const html = await self.getRenderedHtml(self.CLASS + '-import-layer', { id: layer.id, title: layer.title, features: layer.features });
+                list.insertAdjacentHTML('beforeend', html);
+                const newLi = list.querySelector(layerElementSelector);
+                self.#addImportLayerEvents(newLi);
+                return newLi;
             }
-        });
-    };
+        }
+        return null;
+    }
 
-})();
+    #cacheOriginalFeature(feature) {
+        const self = this;
+        self.#originalFeatures.set(feature, feature.clone());
+    }
+}
 
-const Edit = TC.control.Edit;
+customElements.get(elementName) || customElements.define(elementName, Edit);
 export default Edit;

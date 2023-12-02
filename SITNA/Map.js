@@ -1,18 +1,18 @@
-var SITNA = window.SITNA || {};
 import TC from '../TC';
-import { Cfg } from '../TC/Cfg';
+import Consts from '../TC/Consts';
+import Cfg from '../TC/Cfg';
+import Util from '../TC/Util';
 import BasicMap from '../TC/Map';
 import Search from '../TC/control/Search';
 import filter from '../TC/filter';
 TC.Map = BasicMap;
-SITNA.Cfg = TC.Cfg = Cfg;
 TC.filter = filter;
 TC.control = TC.control || {};
 TC.control.Search = Search;
 
 /**
   * Opciones de maquetación de mapa (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
-  * @typedef LayoutOptions
+  * @typedef SITNA.LayoutOptions
   * @property {string} [config] - URL de un archivo de configuración del mapa.
   * @property {string} [i18n] - URL de la carpeta donde se encuentran los archivos de textos para internacionalización (Ver 
   * la documentación de [soporte multiidioma](tutorial-layout_cfg.html#soporte-multiidioma) de las maquetaciones).
@@ -21,7 +21,7 @@ TC.control.Search = Search;
   * @property {string} [script] - URL de un documento JavaScript. Útil para añadir
   * lógica a los elementos de interfaz de usuario que se añaden con la maquetación.
   * @property {string} [style] - URL de una hoja de estilos para los elementos de interfaz de usuario que se añaden con la maquetación.
-  * @see MapOptions
+  * @see SITNA.MapOptions
   * @see layout_cfg
   * @example <caption>[Ver en vivo](../examples/cfg.LayoutOptions.html)</caption> {@lang html}
   * <div id="mapa"></div>
@@ -51,7 +51,7 @@ TC.control.Search = Search;
  * @class Map
  * @memberof SITNA
  * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
- * @param {MapOptions} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben las del objeto de configuración global {@link SITNA.Cfg}.
+ * @param {SITNA.MapOptions} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben las del objeto de configuración global {@link SITNA.Cfg}.
  * @see SITNA.Cfg
  * @see layout_cfg
  * @example <caption>[Ver en vivo](../examples/Map.1.html)</caption> {@lang html}
@@ -114,12 +114,12 @@ TC.control.Search = Search;
  * </script>
  */
 
-SITNA.Map = function (div, options) {
+const Map = function (div, options) {
     const self = this;
 
-    if (TC.Cfg.controls.search) {
+    if (Cfg.controls.search) {
         // Por defecto en SITNA todas las búsquedas están habilitadas
-        TC.Cfg.controls.search.allowedSearchTypes = TC.Util.extend(TC.Cfg.controls.search.allowedSearchTypes, {
+        Cfg.controls.search.allowedSearchTypes = Util.extend(Cfg.controls.search.allowedSearchTypes, {
             urban: {},
             street: {},
             number: {},
@@ -129,30 +129,30 @@ SITNA.Map = function (div, options) {
         if (options && options.controls && options.controls.search) {
             const keys = Object.keys(options.controls.search);
 
-            const searchCfg = TC.Util.extend(options.controls.search, { allowedSearchTypes: {} });
+            const searchCfg = Util.extend(options.controls.search, { allowedSearchTypes: {} });
 
             keys.forEach(function (key) {
-                if (typeof options.controls.search[key] === "boolean" || TC.Util.isPlainObject(options.controls.search[key])) {
+                if (typeof options.controls.search[key] === "boolean" || Util.isPlainObject(options.controls.search[key])) {
                     if (options.controls.search[key]) {
 
                         switch (true) {
                             case key === "placeName":
-                                searchCfg.allowedSearchTypes[TC.Consts.searchType.PLACENAME] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                                searchCfg.allowedSearchTypes[Consts.searchType.PLACENAME] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                                 break;
                             case key === "placeNameMunicipality":
-                                searchCfg.allowedSearchTypes[TC.Consts.searchType.PLACENAMEMUNICIPALITY] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                                searchCfg.allowedSearchTypes[Consts.searchType.PLACENAMEMUNICIPALITY] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                                 break;
                             case key === "postalAddress":
-                                searchCfg.allowedSearchTypes[TC.Consts.searchType.NUMBER] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                                searchCfg.allowedSearchTypes[Consts.searchType.NUMBER] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                                 break;
                             case key === "cadastralParcel":
-                                searchCfg.allowedSearchTypes[TC.Consts.searchType.CADASTRAL] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                                searchCfg.allowedSearchTypes[Consts.searchType.CADASTRAL] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                                 break;
                             case key === "town":
-                                searchCfg.allowedSearchTypes[TC.Consts.searchType.URBAN] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                                searchCfg.allowedSearchTypes[Consts.searchType.URBAN] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                                 break;
                             default:
-                                searchCfg.allowedSearchTypes[key] = TC.Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                                searchCfg.allowedSearchTypes[key] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
                         }
                     }
 
@@ -164,9 +164,9 @@ SITNA.Map = function (div, options) {
         }
     }
 
-    if (TC.Cfg.controls.threeD) {
-        if (SITNA.Cfg.views && SITNA.Cfg.views.threeD) {
-            SITNA.Cfg.views.threeD.controls = [
+    if (Cfg.controls.threeD) {
+        if (Cfg.views && Cfg.views.threeD) {
+            Cfg.views.threeD.controls = [
                 "search",
                 "toc",
                 "attribution",
@@ -209,22 +209,30 @@ SITNA.Map = function (div, options) {
     });
 };
 
-TC.inherit(SITNA.Map, TC.Map);
+TC.inherit(Map, TC.Map);
 
 (function () {
-    const mapProto = SITNA.Map.prototype;
+    const mapProto = Map.prototype;
 
 /**
  * Añade una capa al mapa. Si se le pasa un objeto del Tipo {@link LayerOptions} como parámetro `layer`
  * y tiene definida la propiedad `url`, establece por defecto
- * el tipo de capa a {@link SITNA.Consts.layerType.KML} si la URL acaba en _**.kml**_.
+ * el tipo de capa a [SITNA.Consts.layerType.KML]{@link SITNA.Consts} si la URL acaba en _**.kml**_.
  * 
- * El tipo de la capa no puede ser {@link SITNA.Consts.layerType.WFS}.
+ * El tipo de la capa no puede ser [SITNA.Consts.layerType.WFS]{@link SITNA.Consts}.
  * @method addLayer
  * @memberof SITNA.Map
  * @instance
- * @param {string|LayerOptions} layer Identificador de capa u objeto de opciones de capa.
+ * @async
+ * @param {string|SITNA.layer.LayerOptions|SITNA.layer.Layer} layer - Identificador de capa, objeto de opciones de capa o
+ * instancia de la clase {@link SITNA.layer.Layer}.
  * @param {function} [callback] Función a la que se llama tras ser añadida la capa.     
+ * @returns {Promise<SITNA.layer.Layer>} Objeto de capa añadido.
+ * 
+ * La clase del objeto dependerá del valor de la propiedad `type` del parámetro `layer`. Si es 
+ * [SITNA.Consts.layerType.VECTOR]{@link SITNA.Consts}, [SITNA.Consts.layerType.WFS]{@link SITNA.Consts} 
+ * o [SITNA.Consts.layerType.KML]{@link SITNA.Consts}, el objeto será de la clase {@link SITNA.layer.Vector}.
+ * En cualquier otro caso será de la clase {@link SITNA.layer.Raster}.
  * @example <caption>[Ver en vivo](../examples/Map.addLayer.1.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
@@ -253,6 +261,16 @@ TC.inherit(SITNA.Map, TC.Map);
  *         });
  *     });
  * </script>
+ */
+
+/**
+ * Obtiene una capa del mapa.
+ * @method getLayer
+ * @memberof SITNA.Map
+ * @instance
+ * @param {string|SITNA.layer.Layer} layer Identificador de capa u objeto de capa.
+ * @returns {SITNA.layer.Layer|null} Objeto de capa si esta existe y está en el mapa, 
+ * o `null` si el mapa no tiene ninguna capa que cumpla el requisito del parámetro.
  */
 
 /**
@@ -438,11 +456,11 @@ TC.inherit(SITNA.Map, TC.Map);
  */
 
 /**
- * Elimina un conjunto de marcadores del mapa.
+ * Elimina una colección de entidades geográficas del mapa.
  * @method removeFeatures
  * @memberof SITNA.Map
  * @instance
- * @param {SITNA.feature.Marker[]} markers - Lista de marcadores a eliminar.
+ * @param {SITNA.feature.Feature[]} features - Lista de entidades geográficas a eliminar.
  * @example <caption>[Ver en vivo](../examples/Map.removeFeatures.html)</caption> {@lang html}
  *   <div class="instructions div-select">
  *      <button id="add-btn">Añadir marcador</button>
@@ -737,7 +755,8 @@ TC.inherit(SITNA.Map, TC.Map);
 
 /**
  * Objeto proporcionado en las respuestas a peticiones de datos de búsqueda ({@link SITNA.Map#getMunicipalities}, etc.).
- * @typedef SITNA.Map~SearchResultItem
+ * @typedef SearchResultItem
+ * @memberof SITNA
  * @see SITNA.Map#getCommonwealths
  * @see SITNA.Map#getCouncils
  * @see SITNA.Map#getMunicipalities
@@ -753,7 +772,7 @@ TC.inherit(SITNA.Map, TC.Map);
  * @see SITNA.Map#getCouncils
  * @see SITNA.Map#getMunicipalities
  * @see SITNA.Map#getUrbanAreas
- * @param {SITNA.Map~SearchResultItem[]} data - Lista de elementos de búsqueda. Cada elemento tiene un identificador y un texto descriptivo.
+ * @param {SITNA.SearchResultItem[]} data - Lista de elementos de búsqueda. Cada elemento tiene un identificador y un texto descriptivo.
  */
 
 /**
@@ -786,7 +805,7 @@ TC.inherit(SITNA.Map, TC.Map);
  */
 
 /*
-    Obtiene los valores ({@link SITNA.Map~SearchResultItem}) de las entidades geográficas disponibles en la capa de IDENA que corresponda según el parámetro searchType. 
+    Obtiene los valores ({@link SITNA.SearchResultItem}) de las entidades geográficas disponibles en la capa de IDENA que corresponda según el parámetro searchType. 
     Puede consultar también online el [ejemplo 1](../examples/Map.getQueryableData.html). 
     
     method getQueryableData
@@ -945,13 +964,13 @@ TC.inherit(SITNA.Map, TC.Map);
                 version: queryable.version,
                 propertyname: (!(queryable.dataIdProperty instanceof Array) ? [queryable.dataIdProperty] : queryable.dataIdProperty)
                     .concat(!(queryable.outputProperties instanceof Array) ? [queryable.outputProperties] : queryable.outputProperties).join(','),
-                outputformat: TC.Consts.format.JSON
+                outputformat: Consts.format.JSON
             };
 
-            const url = queryable.url + '?' + TC.Util.getParamString(params);
+            const url = queryable.url + '?' + Util.getParamString(params);
             const response = await TC.ajax({
                 url: url,
-                responseType: TC.Consts.mimeType.JSON
+                responseType: Consts.mimeType.JSON
             });
             const responseData = response.data;
             queryable.queryableData = [];
@@ -990,7 +1009,7 @@ TC.inherit(SITNA.Map, TC.Map);
                     }
 
                     const add = (Array.isArray(data.label) ? data.label.join('') : data.label).trim().length > 0;
-                    data.label = queryable.outputFormatLabel ? queryable.outputFormatLabel.tcFormat(data.label) : data.label.join('-');
+                    data.label = queryable.outputFormatLabel ? Util.formatString(queryable.outputFormatLabel, ...data.label) : data.label.join('-');
 
                     if (add) {
                         queryable.queryableData.push(data);
@@ -1033,13 +1052,13 @@ TC.inherit(SITNA.Map, TC.Map);
     };
 
 /**
- * Obtiene los valores ({@link SITNA.Map~SearchResultItem}) de los municipios disponibles en la capa de IDENA.
+ * Obtiene los valores ({@link SITNA.SearchResultItem}) de los municipios disponibles en la capa de IDENA.
  * @method getMunicipalities
  * @memberof SITNA.Map
  * @instance
  * @async  
  * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.
- * @returns {Promise<SITNA.Map~SearchResultItem[]>} Lista de municipios.
+ * @returns {Promise<SITNA.SearchResultItem[]>} Lista de municipios.
  * @example <caption>[Ver en vivo](../examples/Map.getMunicipalities.html)</caption> {@lang html} 
  * <div class="instructions divSelect">
  *     <div>
@@ -1084,16 +1103,16 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script> 
  */
     mapProto.getMunicipalities = function (callback) {
-        return this.getQueryableData(SITNA.Consts.mapSearchType.MUNICIPALITY, callback);
+        return this.getQueryableData(Consts.mapSearchType.MUNICIPALITY, callback);
     };
 /**
- * Obtiene los valores ({@link SITNA.Map~SearchResultItem}) de los cascos urbanos disponibles en la capa de IDENA.
+ * Obtiene los valores ({@link SITNA.SearchResultItem}) de los cascos urbanos disponibles en la capa de IDENA.
  * @method getUrbanAreas
  * @memberof SITNA.Map
  * @instance
  * @async  
  * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.  
- * @returns {Promise<SITNA.Map~SearchResultItem[]>} Lista de cascos urbanos.
+ * @returns {Promise<SITNA.SearchResultItem[]>} Lista de cascos urbanos.
  * @example <caption>[Ver en vivo](../examples/Map.getUrbanAreas.html)</caption> {@lang html}
  * <div class="instructions divSelect">
  *     <div>
@@ -1138,17 +1157,17 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>
  */
     mapProto.getUrbanAreas = function (callback) {
-        return this.getQueryableData(SITNA.Consts.mapSearchType.URBAN, callback);
+        return this.getQueryableData(Consts.mapSearchType.URBAN, callback);
     };
 
 /**
- * Obtiene los valores ({@link SITNA.Map~SearchResultItem}) de las mancomunidades de residuos disponibles en la capa de IDENA. 
+ * Obtiene los valores ({@link SITNA.SearchResultItem}) de las mancomunidades de residuos disponibles en la capa de IDENA. 
  * @method getCommonwealths
  * @memberof SITNA.Map
  * @instance
  * @async  
  * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.  
- * @returns {Promise<SITNA.Map~SearchResultItem[]>} Lista de mancomunidades.
+ * @returns {Promise<SITNA.SearchResultItem[]>} Lista de mancomunidades.
  * @example <caption>[Ver en vivo](../examples/Map.getCommonwealths.html)</caption> {@lang html}
  * <div class="instructions divSelect">
  *     <div>
@@ -1193,17 +1212,17 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>     
  */
     mapProto.getCommonwealths = function (callback) {
-        return this.getQueryableData(SITNA.Consts.mapSearchType.COMMONWEALTH, callback);
+        return this.getQueryableData(Consts.mapSearchType.COMMONWEALTH, callback);
     };
 
 /**
- * Obtiene los valores ({@link SITNA.Map~SearchResultItem}) de los concejos disponibles en la capa de IDENA. 
+ * Obtiene los valores ({@link SITNA.SearchResultItem}) de los concejos disponibles en la capa de IDENA. 
  * @method getCouncils
  * @memberof SITNA.Map
  * @instance
  * @async  
  * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.  
- * @returns {Promise<SITNA.Map~SearchResultItem[]>} Lista de concejos.
+ * @returns {Promise<SITNA.SearchResultItem[]>} Lista de concejos.
  * @example <caption>[Ver en vivo](../examples/Map.getCouncils.html)</caption> {@lang html}
  * <div class="instructions divSelect">
  *     <div>
@@ -1248,7 +1267,7 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>
  */
     mapProto.getCouncils = function (callback) {
-        return this.getQueryableData(SITNA.Consts.mapSearchType.COUNCIL, callback);
+        return this.getQueryableData(Consts.mapSearchType.COUNCIL, callback);
     };
 
 /**
@@ -1283,7 +1302,7 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>
  */
     mapProto.searchCommonwealth = function (id, callback) {
-        return this.searchTyped(SITNA.Consts.mapSearchType.COMMONWEALTH, id, callback);
+        return this.searchTyped(Consts.mapSearchType.COMMONWEALTH, id, callback);
     };
 
 /**
@@ -1318,7 +1337,7 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>    
  */
     mapProto.searchCouncil = function (id, callback) {
-        return this.searchTyped(SITNA.Consts.mapSearchType.COUNCIL, id, callback);
+        return this.searchTyped(Consts.mapSearchType.COUNCIL, id, callback);
     };
 
 /**
@@ -1352,7 +1371,7 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>
  */
     mapProto.searchUrbanArea = function (id, callback) {
-        return this.searchTyped(SITNA.Consts.mapSearchType.URBAN, id, callback);
+        return this.searchTyped(Consts.mapSearchType.URBAN, id, callback);
     };
 
 /**
@@ -1387,7 +1406,7 @@ TC.inherit(SITNA.Map, TC.Map);
  * </script>
  */
     mapProto.searchMunicipality = function (id, callback) {
-        return this.searchTyped(SITNA.Consts.mapSearchType.MUNICIPALITY, id, callback);
+        return this.searchTyped(Consts.mapSearchType.MUNICIPALITY, id, callback);
     };
 
     // Busca en la configuración que corresponda según el parámetro searchType el identificador pasado como parámetro
@@ -1398,7 +1417,7 @@ TC.inherit(SITNA.Map, TC.Map);
         const query = search.availableSearchTypes[searchType];
 
         if (Array.isArray(id) && query.goToIdFormat) {
-            id = query.goToIdFormat.tcFormat(id);
+            id = Util.formatString(query.goToIdFormat, ...id);
         }
 
         search.data = search.data || [];
@@ -1442,7 +1461,7 @@ TC.inherit(SITNA.Map, TC.Map);
 
                     return {
                         params: {
-                            type: TC.Consts.layerType.WFS,
+                            type: Consts.layerType.WFS,
                             url: this.url,
                             version: this.version,
                             geometryName: this.geometryName,
@@ -1460,9 +1479,9 @@ TC.inherit(SITNA.Map, TC.Map);
         }
 
         return new Promise(function (resolve, _reject) {
-            self.one(TC.Consts.event.SEARCHQUERYEMPTY, function (_e) {
+            self.one(Consts.event.SEARCHQUERYEMPTY, function (_e) {
                 self.toast(search.EMPTY_RESULTS_LABEL, {
-                    type: TC.Consts.msgType.INFO, duration: 5000
+                    type: Consts.msgType.INFO, duration: 5000
                 });
 
                 if (callback) {
@@ -1471,7 +1490,7 @@ TC.inherit(SITNA.Map, TC.Map);
                 resolve(null);
             });
 
-            self.one(TC.Consts.event.FEATURESADD, function (e) {
+            self.one(Consts.event.FEATURESADD, function (e) {
                 if (e.layer === self._searchLayer && e.layer.features && e.layer.features.length > 0) {
                     self.zoomToFeatures(e.layer.features);
                 }
@@ -1555,7 +1574,7 @@ TC.inherit(SITNA.Map, TC.Map);
         id = (id || '').trim();
         if (layer.length === 0 || field.length === 0 || id.length === 0) {
             self.toast(self._searchControl.EMPTY_RESULTS_LABEL, {
-                type: TC.Consts.msgType.INFO, duration: 5000
+                type: Consts.msgType.INFO, duration: 5000
             });
 
             if (callback) {
@@ -1573,7 +1592,7 @@ TC.inherit(SITNA.Map, TC.Map);
                     const filters = properties.map(function (elm) {
                         if (Object.prototype.hasOwnProperty.call(elm, "type")) {
                             switch (true) {
-                                case elm.type === TC.Consts.comparison.EQUAL_TO: {
+                                case elm.type === Consts.comparison.EQUAL_TO: {
                                     return new TC.filter.equalTo(elm.name, elm.value);
                                 }
                             }
@@ -1591,7 +1610,7 @@ TC.inherit(SITNA.Map, TC.Map);
 
             const layerOptions = {
                 id: idQuery,
-                type: SITNA.Consts.layerType.WFS,
+                type: Consts.layerType.WFS,
                 url: self._searchControl.url,
                 version: self._searchControl.version,
                 stealth: true,
@@ -1600,9 +1619,9 @@ TC.inherit(SITNA.Map, TC.Map);
                 featureType: layer,
                 maxFeatures: 1,
                 properties: transformFilter([{
-                    name: field, value: id, type: TC.Consts.comparison.EQUAL_TO
+                    name: field, value: id, type: Consts.comparison.EQUAL_TO
                 }]),
-                outputFormat: TC.Consts.format.JSON
+                outputFormat: Consts.format.JSON
             };
 
             let tcSrchGenericLayer;
@@ -1610,11 +1629,11 @@ TC.inherit(SITNA.Map, TC.Map);
                 tcSrchGenericLayer = layer;
 
                 self.search = {
-                    layer: layer, type: SITNA.Consts.mapSearchType.GENERIC
+                    layer: layer, type: Consts.mapSearchType.GENERIC
                 };
             });
 
-            self.on(TC.Consts.event.FEATURESADD, function (e) {
+            self.on(Consts.event.FEATURESADD, function (e) {
                 const layer = e.layer;
                 if (layer === tcSrchGenericLayer && layer.features && layer.features.length > 0) {
 
@@ -1629,12 +1648,12 @@ TC.inherit(SITNA.Map, TC.Map);
             });
 
             return new Promise(function (resolve, _reject) {
-                self.on(TC.Consts.event.LAYERUPDATE, function (e) {
+                self.on(Consts.event.LAYERUPDATE, function (e) {
                     const layer = e.layer;
                     const newData = e.newData;
                     if (layer === tcSrchGenericLayer && newData && newData.features && newData.features.length === 0)
                         self.toast(self._searchControl.EMPTY_RESULTS_LABEL, {
-                            type: TC.Consts.msgType.INFO, duration: 5000
+                            type: Consts.msgType.INFO, duration: 5000
                         });
 
                     const value = layer === tcSrchGenericLayer && newData && newData.features && newData.features.length === 0 ? null : idQuery;
@@ -1718,5 +1737,4 @@ TC.inherit(SITNA.Map, TC.Map);
 
 })();
 
-const SitnaMap = SITNA.Map;
-export default SitnaMap;
+export default Map;
