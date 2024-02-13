@@ -8,6 +8,7 @@
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre")
   * [Map Comparator](https://comparamapas.navarra.es/?lang=en "Navarre Maps and Orthophotos Comparison")
   * [Forest Planning](https://administracionelectronica.navarra.es/VisorOrdenacionForestal/default.aspx?lang=en)
+  * [Geología, Cavidades, Manantiales y Geotecnia](https://administracionelectronica.navarra.es/geologiaVisor/ "Geology, Cavities, Springs and Geotechnics")
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
   * GeoPamplona. [City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
