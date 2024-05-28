@@ -104,13 +104,20 @@
     <Content Include="batch\ol-webpack\main.js" />
     <Content Include="batch\ol-webpack\webpack.config.js" />
     <Content Include="css\compiler.js" />
+    <Content Include="css\control\AttributesEdit.css" />
     <Content Include="css\control\FeatureStyler.css" />
+    <Content Include="css\control\ImageMagnifier.css" />
+    <Content Include="css\control\TrackEdit.css" />
+    <Content Include="css\control\LayerLegend.css" />
+    <Content Include="css\img\tcCtlLayerLegendLoading.svg" />
     <Content Include="css\img\thumb-basemap-grey.png" />
+    <Content Include="css\img\thumb-ortho2023.jpg" />
     <Content Include="css\img\thumb-topo-pamplona.jpg" />
     <Content Include="css\ui\sitna-tab.css" />
     <Content Include="css\ui\sitna-toggle.css" />
     <Content Include="css\ui\sitna-button.css" />
     <Content Include="examples\cfg.MarkerOptions.2.html" />
+    <Content Include="examples\cfg.SearchTypeOptions.html" />
     <Content Include="examples\data\circle.png" />
     <Content Include="examples\data\speech-icon.png" />
     <Content Include="examples\data\star.png" />
@@ -126,17 +133,24 @@
     <Content Include="examples\feature.Polygon.html" />
     <Content Include="examples\feature.Polyline.html" />
     <Content Include="lib\geopackagejs\dist\geopackage-browser.js" />
+    <Content Include="lib\ol\format\GML.js" />
     <Content Include="lib\ol\format\GMLBase.js" />
     <Content Include="lib\ol\proj\epsg4326.js" />
+    <Content Include="SITNA\format\GeoPackage.js" />
+    <Content Include="SITNA\format\Shapefile.js" />
     <Content Include="SITNA\ui\Tab.js" />
     <Content Include="SITNA\ui\Toggle.js" />
     <Content Include="SITNA\ui\Button.js" />
     <Content Include="SITNA\ui\Component.js" />
     <Content Include="TC\control\FeatureStyler.js" />
     <Content Include="TC\control\FileEdit.js" />
+    <Content Include="TC\control\InfoDisplay.js" />
     <Content Include="TC\control\itemToolContainer.js" />
     <Content Include="TC\control\LanguageSelector.js" />
+    <Content Include="TC\control\LayerLegend.js" />
     <Content Include="TC\control\layerOwner.js" />
+    <Content Include="TC\control\AttributesEdit.js" />
+    <Content Include="TC\control\ImageMagnifier.js" />
     <Content Include="TC\control\Measurement.js" />
     <Content Include="css\control\FileEdit.css" />
     <Content Include="css\control\FileImport.css" />
@@ -151,12 +165,15 @@
     <Content Include="css\img\thumb-bta.png" />
     <Content Include="css\img\thumb-opentopomap.png" />
     <Content Include="css\img\thumb-ortho2022.jpg" />
+    <Content Include="TC\control\TrackDownloadDialog.js" />
+    <Content Include="TC\control\TrackEdit.js" />
     <Content Include="TC\EventTarget.js" />
     <Content Include="TC\i18n.js" />
     <Content Include="TC\control\WebComponentControl.js" />
     <Content Include="SITNA\layer\Raster.js" />
     <Content Include="SITNA\layer\Vector.js" />
     <Content Include="TC\templates\compiler.js" />
+    <Content Include="TC\tool\OgcApiProcessesElevationService.js" />
     <Content Include="TC\view\ThreeDDraw.js" />
     <Content Include="test\unit\browser\control\FileEdit.js" />
     <Content Include="test\unit\browser\control\LanguageSelector.js" />
@@ -182,7 +199,7 @@
     <Content Include="examples\cfg.LayerOptions.cluster.html" />
     <Content Include="examples\cfg.DataLoaderOptions.html" />
     <Content Include="examples\cfg.FeatureInfoOptions.persistentHighlights.html" />
-    <Content Include="examples\cfg.LayerOptions.filter.html" />
+    <Content Include="examples\cfg.RasterOptions.filter.html" />
     <Content Include="examples\cfg.DrawMeasureModifyOptions.html" />
     <Content Include="examples\cfg.LayerOptions.overviewMapLayer.html" />
     <Content Include="examples\cfg.MapControlOptions.fullScreen.html" />
@@ -781,6 +798,11 @@
     <Content Include="TC\templates\tc-ctl-msmt.hbs" />
     <Content Include="TC\templates\tc-ctl-lcat-results-path.hbs" />
     <Content Include="TC\templates\tc-ctl-fstyler.hbs" />
+    <Content Include="TC\templates\tc-ctl-attr-edit.hbs" />
+    <Content Include="TC\templates\tc-ctl-tedit.hbs" />
+    <Content Include="TC\templates\tc-ctl-attr-edit-row.hbs" />
+    <Content Include="TC\templates\tc-ctl-attr-edit-new.hbs" />
+    <Content Include="TC\templates\tc-ctl-attr-edit-table.hbs" />
     <None Include="test\endToEnd\config\env\pro.json" />
     <None Include="test\endToEnd\config\env\vinet18.json" />
     <None Include="test\endToEnd\config\env\local.json" />
@@ -858,6 +880,15 @@
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugIC|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
