@@ -1,0 +1,43 @@
+﻿sitna-attributes-edit {
+    display: block;
+}
+.tc-ctl-edit .tc-ctl-attr-edit-body {
+    max-height: 10em;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tc-ctl-rpanel .tc-ctl-edit .tc-ctl-attr-edit-body {
+    max-height: 8em;
+    overflow-y: auto;
+}
+
+.tc-ctl-edit .tc-ctl-attr-edit-body table {
+    flex-basis: 100%;
+}
+
+    .tc-ctl-edit .tc-ctl-attr-edit-body table th {
+        text-align: left;
+    }
+
+    .tc-ctl-edit .tc-ctl-attr-edit-body table input {
+        width: calc(100% - 1em);
+        min-width: 4em;
+    }
+
+.tc-ctl-edit select.tc-ctl-attr-edit-type.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-edit .tc-ctl-attr-edit-new-value input,
+.tc-ctl-edit .tc-ctl-attr-edit-new-value select,
+.tc-ctl-edit .tc-ctl-attr-edit-new-value sitna-toggle {
+    display: none;
+}
+
+    .tc-ctl-edit .tc-ctl-attr-edit-new-value input.tc-active,
+    .tc-ctl-edit .tc-ctl-attr-edit-new-value select.tc-active,
+    .tc-ctl-edit .tc-ctl-attr-edit-new-value sitna-toggle.tc-active {
+        display: inline-block;
+    }
