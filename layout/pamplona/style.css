@@ -16,31 +16,38 @@ html, body, #mapa:not(.tc-ctl-sv-active) {
     width: 100%;
     height: 100%;    
 }
-.tc-ctl input[type=range]::-webkit-slider-runnable-track {
+.tc-ctl input[type=range]::-webkit-slider-runnable-track,
+.tc-modal input[type=range]::-webkit-slider-runnable-track {
     background: linear-gradient(to right, rgba(213,235,90,0), #D2EA56);
 }
 
-.tc-ctl input[type=range]::-webkit-slider-thumb {
+.tc-ctl input[type=range]::-webkit-slider-thumb,
+.tc-modal input[type=range]::-webkit-slider-thumb {
     background: #5a7586;
 }
 
-.tc-ctl input[type=range]:focus::-webkit-slider-runnable-track {
+.tc-ctl input[type=range]:focus::-webkit-slider-runnable-track,
+.tc-modal input[type=range]:focus::-webkit-slider-runnable-track {
     background: linear-gradient(to right, rgba(213,235,90,0), #D2EA56);
 }
 
-.tc-ctl input[type=range]::-moz-range-track {
+.tc-ctl input[type=range]::-moz-range-track,
+.tc-modal input[type=range]::-moz-range-track {
     background: linear-gradient(to right, rgba(213,235,90,0), #D2EA56);
 }
 
-.tc-ctl input[type=range]::-moz-range-thumb {
+.tc-ctl input[type=range]::-moz-range-thumb,
+.tc-modal input[type=range]::-moz-range-thumb {
     background: #5a7586;
 }
 
-.tc-ctl input[type=range]::-ms-track {
+.tc-ctl input[type=range]::-ms-track,
+.tc-modal input[type=range]::-ms-track {
     background: linear-gradient(to right, rgba(213,235,90,0), #D2EA56);
 }
 
-.tc-ctl input[type=range]::-ms-thumb {
+.tc-ctl input[type=range]::-ms-thumb,
+.tc-modal input[type=range]::-ms-thumb {
     background: #5a7586;
 }
 
@@ -782,22 +789,12 @@ li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-download:hover, li.tc-ctl-lcat-sear
     color:#D2EA56;
 }
 
-/* Safari 4.0 - 8.0 */
-@-webkit-keyframes downloading {
-    0%   {color: inherit;}    
-    50% {color: #D2EA56;}
-    100% {color: inherit;}    
-}
-/* Standard syntax */
 @keyframes downloading {
     0%   {color: inherit;}    
     50% {color: #D2EA56;}
     100% {color: inherit;}    
 }
 .tc-ctl-lcat-btn-download.tc-downloading, .tc-ctl-lcat-search-btn-download.tc-downloading:after {
-    -webkit-animation-name: downloading; /* Safari 4.0 - 8.0 */
-    -webkit-animation-duration: 1.5s; /* Safari 4.0 - 8.0 */
-    -webkit-animation-iteration-count:infinite;
     animation-name: downloading;
     animation-duration: 1.5s;
     animation-iteration-count: infinite;
@@ -845,7 +842,6 @@ li.tc-ctl-lcat-node > button.tc-ctl-lcat-btn-download:hover, li.tc-ctl-lcat-sear
 .tc-ctl-wlm .tc-ctl-wlm-btn-query.tc-loading{
     cursor:default;
     animation: pulsation 0.75s infinite;
-    -webkit-animation: pulsation 0.75s infinite;
 }
 .tc-ctl-wlm .tc-ctl-wlm-btn-query.tc-unavailable:after{
     cursor: default;    
