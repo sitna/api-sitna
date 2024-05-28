@@ -33,6 +33,7 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Measure from './Measure';
 import './Modify';
 import './Measurement';
@@ -42,98 +43,36 @@ import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-
+import Popup from './Popup';
 
 TC.control = TC.control || {};
 
-const DrawMeasureModify = function () {
-    var self = this;
+Consts.event.RESULTSPANELCLOSE = Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
+Consts.event.FEATURESSELECT = Consts.event.FEATURESSELECT || "featuresselect.tc";
 
-    Measure.apply(self, arguments);
+class DrawMeasureModify extends Measure {
+    #selectors = {};
+    #clearBtn;
+    #downloadBtn;
+    #elevationControlPromise;
 
-    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-    if (window.$) {
-        self._$dialogDiv = $(self._dialogDiv);
+    constructor() {
+        super(...arguments);
+        const self = this;
+
+        self._dialogDiv = Util.getDiv(self.options.dialogDiv);
+        if (!self.options.dialogDiv) {
+            document.body.appendChild(self._dialogDiv);
+        }
+
+        self.#selectors.MODE_RADIO_BUTTON = `input[type=radio][name="${self.id}-mode"]`;
+
+        self.persistentDrawControls = true;
     }
-    if (!self.options.dialogDiv) {
-        document.body.appendChild(self._dialogDiv);
-    }
 
-    const cs = self._classSelector = '.' + self.CLASS;
-    self._selectors = {
-        ELEVATION_CHECKBOX: cs + '-dialog-elev input[type=checkbox]',
-        MODE_RADIO_BUTTON: `input[type=radio][name="${self.id}-mode"]`
-    };
-
-    self.persistentDrawControls = true;
-
-    self.renderPromise().then(function () {
-        self._1stCoordText = self.div.querySelector('.tc-ctl-meas-val-coord-1-t');
-        self._2ndCoordText = self.div.querySelector('.tc-ctl-meas-val-coord-2-t');
-        self._1stCoordValue = self.div.querySelector('.tc-ctl-meas-val-coord-1-v');
-        self._2ndCoordValue = self.div.querySelector('.tc-ctl-meas-val-coord-2-v');
-        self._elevationText = self.div.querySelector('.tc-ctl-meas-val-coord-ele-t');
-        self._elevationValue = self.div.querySelector('.tc-ctl-meas-val-coord-ele-v');
-    });
-
-};
-
-TC.inherit(DrawMeasureModify, Measure);
-
-(function () {
-    var ctlProto = DrawMeasureModify.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-dmm';
-
-    Consts.event.RESULTSPANELCLOSE = Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
-    Consts.event.FEATURESSELECT = Consts.event.FEATURESSELECT || "featuresselect.tc";
-
-    ctlProto.loadTemplates = async function () {
+    async register(map) {
         const self = this;
-        const module = await import('../templates/tc-ctl-dmm.mjs');
-        self.template = module.default;
-    };
-
-    ctlProto.render = function (callback) {
-        const self = this;
-        const promise = self._set1stRenderPromise(Measure.prototype.render.call(self, function () {
-            self.pointMeasurementControl = self.div.querySelector('sitna-measurement[mode="point"]');
-            self.pointMeasurementControl.containerControl = self;
-            self._clearBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr');
-            self._clearBtn.addEventListener(Consts.event.CLICK, function (_e) {
-                TC.confirm(self.getLocaleString('deleteAll.confirm'), function () {
-                    self.clear();
-                    cancelDraw.apply(self);
-                });
-            }, { passive: true });
-            self._downloadBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl');
-            self._downloadBtn.addEventListener(Consts.event.CLICK, function (_e) {
-                self.showSketchDownloadDialog();
-            }, { passive: true });
-
-            const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
-            showHideBtn.addEventListener(Consts.event.CLICK, function (e) {
-                const visibility = !e.target.classList.contains(Consts.classes.ACTIVE);
-                self.drawControls.forEach(function (dv) {
-                    dv.layer.setVisibility(visibility);
-                    if (dv.isActive)
-                        dv.wrap.setVisibility(visibility);
-                });
-                e.target.title = self.getLocaleString(visibility ? "hideSketch":"showSketch");
-                e.target.classList.toggle(Consts.classes.ACTIVE);
-            }, { passive: true });
-
-            if (TC.Util.isFunction(callback)) {
-                callback();
-            }
-        }));
-        
-        return promise;
-    };
-
-    ctlProto.register = async function (map) {
-        const self = this;
-        await Measure.prototype.register.call(self, map);
+        await super.register.call(self, map);
         const modifyId = self.getUID();
         const pointDrawControlId = self.getUID();
 
@@ -200,7 +139,7 @@ TC.inherit(DrawMeasureModify, Measure);
                         });
                     }
 
-                    const popups = self.map.getControlsByClass('TC.control.Popup');
+                    const popups = self.map.getControlsByClass(Popup);
                     popups.forEach(function (pu) {
                         if (pu.currentFeature === e.feature && pu.isVisible()) {
                             pu.hide();
@@ -244,7 +183,7 @@ TC.inherit(DrawMeasureModify, Measure);
             })
             .on(Consts.event.PROJECTIONCHANGE, function (e) {
                 if (self.elevationChartData) {
-                    self.elevationChartData.coords = TC.Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
+                    self.elevationChartData.coords = Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
                 }
             });
 
@@ -259,7 +198,7 @@ TC.inherit(DrawMeasureModify, Measure);
                     }
                     self.resetValues();
                 });
-                //beginDraw.apply(self);
+                //self.#beginDraw();
             })
             .on(Consts.event.DRAWUNDO + ' ' + Consts.event.DRAWREDO, function () {
                 const lineDrawControl = this;
@@ -273,7 +212,7 @@ TC.inherit(DrawMeasureModify, Measure);
                         }
                     }
                 });
-                cancelDraw.apply(self);
+                self.#cancelDraw();
             })
             .on(Consts.event.DRAWEND, function (e) {
                 self.getElevationControl().then(function (ctl) {
@@ -301,23 +240,24 @@ TC.inherit(DrawMeasureModify, Measure);
                     }
                 });
                 if (e.target.historyIndex === 1)
-                    beginDraw.apply(self);
+                    self.#beginDraw();
             })
             .on(Consts.event.STYLECHANGE, function (e) {
                 self.onStyleChange(e);
             }).on(Consts.event.DRAWCANCEL, function () {
-                cancelDraw.apply(self);
+                self.#cancelDraw();
             });
 
         const polygonDrawControl = await self.getPolygonDrawControl();
         polygonDrawControl
             .on(Consts.event.DRAWSTART, function () {
                 self.resetValues();
-                //beginDraw.apply(self);
+                //self.#beginDraw();
             })
             .on(Consts.event.POINT, function (e) {
-                if (e.target.historyIndex === 1)
-                    beginDraw.apply(self);
+                if (e.target.historyIndex === 1) {
+                    self.#beginDraw();
+                }
             })
             //.on(Consts.event.DRAWEND, function (e) {
             //    self.getElevationTool().then(function (tool) {
@@ -333,7 +273,7 @@ TC.inherit(DrawMeasureModify, Measure);
                 self.onStyleChange(e);
             })
             .on(Consts.event.DRAWCANCEL + ' ' + Consts.event.DRAWUNDO, function () {
-                cancelDraw.apply(self);
+                self.#cancelDraw();
             });
 
         const pointDrawControl = await self.getPointDrawControl();
@@ -366,7 +306,7 @@ TC.inherit(DrawMeasureModify, Measure);
                         });
                     }
                 });
-                beginDraw.apply(self);
+                self.#beginDraw();
             })
             .on(Consts.event.DRAWCANCEL, function (_e) {
                 // Alerta de condición de carrera si no ponemos un timeout:
@@ -380,7 +320,7 @@ TC.inherit(DrawMeasureModify, Measure);
                 setTimeout(function () {
                     self.cancel();
                 }, 100);
-                cancelDraw.apply(self);
+                self.#cancelDraw();
             })
             .on(Consts.event.STYLECHANGE, function (e) {
                 self.onStyleChange(e);
@@ -388,7 +328,7 @@ TC.inherit(DrawMeasureModify, Measure);
         // Desactivamos el método exportState que ya se encarga el control padre de ello
         pointDrawControl.exportsState = false;
 
-        self._elevationControlPromise = map.addControl('elevation', self.options.displayElevation);
+        self.#elevationControlPromise = map.addControl('elevation', self.options.displayElevation);
 
         self.setMode(self.options.mode);
 
@@ -402,18 +342,18 @@ TC.inherit(DrawMeasureModify, Measure);
                     self.getModifyControl().then(function (modify) {
                         modify.displayLabelText(feature.getStyle().label);
                     });
-                    self._clearBtn.disabled = false;
-                    self._downloadBtn.disabled = false;
+                    self.#clearBtn.disabled = false;
+                    self.#downloadBtn.disabled = false;
                 }
             })
             .on(Consts.event.FEATUREREMOVE + ' ' + Consts.event.FEATURESCLEAR, function (e) {
                 const layer = e.layer;
                 if (layer === self.layer) {
                     if (self.layer.features.length === 0) {
-                        self._clearBtn.disabled = true;
-                        self._downloadBtn.disabled = true;
+                        self.#clearBtn.disabled = true;
+                        self.#downloadBtn.disabled = true;
                         self.resetValues();
-                        cancelDraw.apply(self);
+                        self.#cancelDraw();
                     }
                 }
             })
@@ -426,9 +366,49 @@ TC.inherit(DrawMeasureModify, Measure);
             });
 
         return self;
-    };
+    }
 
-    ctlProto.displayMode = function (mode) {
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-dmm.mjs');
+        self.template = module.default;
+    }
+
+    async render(callback) {
+        const self = this;
+        await super.render.call(self);
+        self.pointMeasurementControl = self.div.querySelector('sitna-measurement[mode="point"]');
+        self.pointMeasurementControl.containerControl = self;
+        self.#clearBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr');
+        self.#clearBtn.addEventListener(Consts.event.CLICK, function (_e) {
+            TC.confirm(self.getLocaleString('deleteAll.confirm'), function () {
+                self.clear();
+                self.#cancelDraw();
+            });
+        }, { passive: true });
+        self.#downloadBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl');
+        self.#downloadBtn.addEventListener(Consts.event.CLICK, function (_e) {
+            self.showSketchDownloadDialog();
+        }, { passive: true });
+
+        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+        showHideBtn.addEventListener(Consts.event.CLICK, function (e) {
+            const visibility = !e.target.classList.contains(Consts.classes.ACTIVE);
+            self.drawControls.forEach(function (dv) {
+                dv.layer.setVisibility(visibility);
+                if (dv.isActive)
+                    dv.wrap.setVisibility(visibility);
+            });
+            e.target.title = self.getLocaleString(visibility ? "hideSketch" : "showSketch");
+            e.target.classList.toggle(Consts.classes.ACTIVE);
+        }, { passive: true });
+
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+    }
+
+    displayMode(mode) {
         const self = this;
         if (mode === Consts.geom.POINT) {
             self._activeMode = self.div.querySelector('.tc-ctl-meas-pt');
@@ -436,10 +416,10 @@ TC.inherit(DrawMeasureModify, Measure);
         if (self.modify) {
             self.modify.div.classList.remove(Consts.classes.COLLAPSED);
         }
-        return Measure.prototype.displayMode.call(self, mode);
-    };
+        return super.displayMode.call(self, mode);
+    }
 
-    ctlProto.displayFeatureMode = function (feature) {
+    displayFeatureMode(feature) {
         const self = this;
         if (feature) {
             self.displayMeasurements(self.getFeatureMeasurementData(feature));
@@ -466,25 +446,23 @@ TC.inherit(DrawMeasureModify, Measure);
                     break;
             }
         }
-    };
+    }
 
-    ctlProto.setMode = function (mode) {
+    async setMode(mode) {
         const self = this;
         if (mode === Consts.geom.POINT) {
-            self.getPointDrawControl().then(function (ctl) {
-                ctl.activate();
-                Measure.prototype.setMode.call(self, mode);
-                cancelDraw.apply(self);
-            });
+            const ctl = await self.getPointDrawControl();
+            ctl.activate();
+            super.setMode.call(self, mode);
+            self.#cancelDraw();
         }
         else {
-            Measure.prototype.setMode.call(self, mode);
-            cancelDraw.apply(self);            
+            super.setMode.call(self, mode);
+            self.#cancelDraw();
         }
-        
-    };
+    }
 
-    ctlProto.constrainModes = function (modes) {
+    setModes(modes) {
         const self = this;
         if (!Array.isArray(modes)) {
             modes = [];
@@ -493,23 +471,23 @@ TC.inherit(DrawMeasureModify, Measure);
             self.setMode(null);
         }
         const selector = modes.map(m => `[value=${m}]`).join() || '[value]';
-        self.div.querySelectorAll(self._selectors.MODE_RADIO_BUTTON).forEach(function (rb) {
+        self.div.querySelectorAll(self.#selectors.MODE_RADIO_BUTTON).forEach(function (rb) {
             rb.disabled = !rb.matches(selector);
         });
-    };
+    }
 
-    ctlProto.setLayer = async function (layer) {
+    async setLayer(layer) {
         const self = this;
-        await Measure.prototype.setLayer.call(self, layer);
+        await super.setLayer.call(self, layer);
         for await (const control of [self.getPointDrawControl(), self.getModifyControl()]) {
             control.setLayer(self.layer);
         }
         if (self.layer?.features.length) {
             self.displayFeatureMode(self.layer.features[0]);
         }
-    };
+    }
 
-    ctlProto.setFeatureMeasurementData = function (feature) {
+    setFeatureMeasurementData(feature) {
         const self = this;
         switch (self.mode) {
             case Consts.geom.POINT:
@@ -525,15 +503,16 @@ TC.inherit(DrawMeasureModify, Measure);
                 break;
         }
         return self;
-    };
+    }
 
-    ctlProto.getFeatureMeasurementData = function (feature) {
+    getFeatureMeasurementData(feature) {
         const self = this;
         const result = {
-            units: self.map.wrap.isGeo() || self.map.on3DView ? 'degree' : 'm'
+            units: self.map.wrap.isGeo() || (self.map.on3DView && feature instanceof Point) ? 'degree' : 'm'
+            //units: 'm'
         };
         const measureOptions = {
-            crs: self.map.options.utmCrs
+            crs: self.map.getCRS()
         };
         switch (true) {
             case feature instanceof Polygon:
@@ -557,32 +536,31 @@ TC.inherit(DrawMeasureModify, Measure);
                 break;
         }
         return result;
-    };
+    }
 
-    ctlProto.getPointMeasurementControl = async function () {
+    async getPointMeasurementControl() {
         const self = this;
         await self.renderPromise();
         return self.div.querySelector('sitna-measurement[mode="point"]');
-    };
+    }
 
-    ctlProto.displayMeasurements = function (options) {
+    displayMeasurements(options = {}) {
         const self = this;
-        Measure.prototype.displayMeasurements.call(self, options);
-        options = options || {};
+        super.displayMeasurements.call(self, options);
         if (options.coordinates) {
             self.pointMeasurementControl.displayMeasurement(options);
         }
         return self;
-    };
+    }
 
-    ctlProto.resetValues = function () {
+    resetValues() {
         const self = this;
-        Measure.prototype.resetValues.call(self);
+        super.resetValues.call(self);
         self.getPointMeasurementControl().then(ctl => ctl.clearMeasurement());
         return self;
-    };
+    }
 
-    ctlProto.clear = function () {
+    clear() {
         const self = this;
         self.resetValues();
         self.layer.clearFeatures();
@@ -597,18 +575,18 @@ TC.inherit(DrawMeasureModify, Measure);
                 }
             });
         }
-        self._clearBtn.disabled = true;
-        self._downloadBtn.disabled = true;
+        self.#clearBtn.disabled = true;
+        self.#downloadBtn.disabled = true;
         return self;
-    };
+    }
 
-    ctlProto.showSketchDownloadDialog = function (_options) {
+    showSketchDownloadDialog(_options) {
         const self = this;
 
         self.getDownloadDialog().then(function (control) {
             var options = {
                 title: self.getLocaleString("downloadSketch"),
-                fileName: self.getLocaleString('sketch').toLowerCase().replace(' ', '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true)
+                fileName: self.getLocaleString('sketch').toLowerCase().replace(' ', '_') + '_' + Util.getFormattedDate(new Date().toString(), true)
             };
             //si el control tiene su propia configuración de elevacion la pasamos para que sobrescriba a la del mapa
             if (self.map.elevation || self.options.displayElevation) {
@@ -617,13 +595,12 @@ TC.inherit(DrawMeasureModify, Measure);
                 });
             }
             control.open(self.layer.features, options);
-            
+
         });
         return self;
-        
-    };
+    }
 
-    ctlProto.onStyleChange = function (e) {
+    onStyleChange(e) {
         const self = this;
         var featureCtor;
         switch (e.target.mode) {
@@ -659,6 +636,8 @@ TC.inherit(DrawMeasureModify, Measure);
                         styleOptions["labelOutlineColor"] = e.labelOutlineColor;
                     if (e.labelOutlineWidth)
                         styleOptions["labelOutlineWidth"] = e.labelOutlineWidth;
+                    if (e.radius)
+                        styleOptions["radius"] = e.radius;
 
                     //feature._originalStyle[e.property] = e.value;
                     feature.setStyle(styleOptions);
@@ -669,9 +648,9 @@ TC.inherit(DrawMeasureModify, Measure);
                 }
             });
         }
-    };
+    }
 
-    ctlProto.activateElevationProfile = async function () {
+    async activateElevationProfile() {
         const self = this;
         self.elevationProfileActive = true;
         var profileDrawn = false;
@@ -696,9 +675,9 @@ TC.inherit(DrawMeasureModify, Measure);
         if (elevationControl.resultsPanel) {
             elevationControl.resultsPanel.show();
         }
-    };
+    }
 
-    ctlProto.deactivateElevationProfile = async function () {
+    async deactivateElevationProfile() {
         const self = this;
         self.elevationProfileActive = false;
         const elevationControl = await self.getElevationControl();
@@ -706,9 +685,9 @@ TC.inherit(DrawMeasureModify, Measure);
         if (elevationControl.resultsPanel) {
             elevationControl.resultsPanel.close();
         }
-    };
+    }
 
-    ctlProto.resetElevationProfile = function () {
+    resetElevationProfile() {
         const self = this;
         if (self.options.displayElevation && self.resultsPanelChart) {
             self.elevationChartData = {
@@ -720,31 +699,33 @@ TC.inherit(DrawMeasureModify, Measure);
             };
             self.resultsPanelChart.openChart(self.elevationChartData);
         }
-    };
+    }
 
-    ctlProto.getElevationControl = function () {
-        return this._elevationControlPromise;
-    };
+    getElevationControl() {
+        return this.#elevationControlPromise;
+    }
 
-    ctlProto.getPointDrawControl = async function () {
+    async getPointDrawControl() {
         const self = this;
         await self.renderPromise();
-        return self.div.querySelector('.' + Measure.prototype.CLASS + '-pt sitna-draw');
-    };
+        return self.div.querySelector('.' + super.CLASS + '-pt sitna-draw');
+    }
 
-    ctlProto.getModifyControl = async function () {
+    async getModifyControl() {
         const self = this;
         await self.renderPromise();
         return self.div.querySelector('.' + self.CLASS + '-mod sitna-modify');
-    };
+    }
 
-    const beginDraw = function () {
+    #beginDraw() {
         const self = this;
         const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
-        if (showHideBtn) showHideBtn.disabled = false;
-    };
+        if (showHideBtn) {
+            showHideBtn.disabled = false;
+        }
+    }
 
-    const cancelDraw = function () {
+    #cancelDraw() {
         const self = this;
         const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
         if (showHideBtn) {
@@ -755,9 +736,9 @@ TC.inherit(DrawMeasureModify, Measure);
                 showHideBtn.title = self.getLocaleString("hideSketch");
             });
         }
-    };
+    }
+}
 
-})();
-
+DrawMeasureModify.prototype.CLASS = 'tc-ctl-dmm';
 TC.control.DrawMeasureModify = DrawMeasureModify;
 export default DrawMeasureModify;
