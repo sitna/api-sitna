@@ -49,7 +49,7 @@
 import localforage from 'localforage';
 import TC from '../../TC';
 import Consts from '../Consts';
-import Control from '../Control';
+import Util from '../Util';
 import SWCacheClient from './SWCacheClient';
 import Edit from './Edit';
 import Geometry from '../Geometry';
@@ -68,210 +68,164 @@ TC.control = TC.control || {};
 TC.Geometry = Geometry;
 TC.filter = filter;
 
+let newFeatureIdNumber = 0;
+const getNewFeatureId = function () {
+    return "NewFeature." + newFeatureIdNumber++;
+};
 
-const WFSEdit = function () {
-    const self = this;
-
-    SWCacheClient.apply(this, arguments);
-    self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || false;
-
-    self._classSelector = '.' + self.CLASS;
-
-    self.layer = null;
-    //self.feature = self.options.feature ? self.options.feature : null;
-    self.callback = TC.Util.isFunction(arguments[2]) ?
-        arguments[2] :
-        self.options.callback ? self.options.callback : null;
-    self.layersEditData = {};
-    self.showsOriginalFeatures = typeof self.options.showOriginalFeatures === 'boolean' ? self.options.showOriginalFeatures : false;
-    self.highlightsAdded = self.highlightsModified = self.highlightsRemoved = typeof self.options.highlightChanges === 'boolean' ? self.options.highlightChanges : true;
-    if (!TC.Util.isFunction(self.options.getBeforeEditLayerStyleFunction)) {
-        self.getBeforeEditLayerStyleFunction = self.getBeforeEditLayerStyle;
+const storeFeature = async function (key, feature) {
+    var obj;
+    var geometryType;
+    switch (true) {
+        case feature instanceof Polygon:
+            geometryType = Consts.geom.POLYGON;
+            break;
+        case feature instanceof Polyline:
+            geometryType = Consts.geom.POLYLINE;
+            break;
+        case feature instanceof Point:
+            geometryType = Consts.geom.POINT;
+            break;
+        case feature instanceof MultiPolygon:
+            geometryType = Consts.geom.MULTIPOLYGON;
+            break;
+        case feature instanceof MultiPolyline:
+            geometryType = Consts.geom.MULTIPOLYLINE;
+            break;
+        case feature instanceof MultiPoint:
+            geometryType = Consts.geom.MULTIPOINT;
+            break;
     }
-    self.styles = self.options.styles || {
-        point: {
-            fillColor: "#0000aa",
-            fillOpacity: 0.1,
-            strokeColor: "#0000aa",
-            strokeWidth: 2,
-            strokeOpacity: 1,
-            radius: 6
-        },
-        line: {
-            strokeColor: "#0000aa",
-            strokeWidth: 2,
-            strokeOpacity: 1
-        },
-        polygon: {
-            fillColor: "#0000aa",
-            fillOpacity: 0.1,
-            strokeColor: "#0000aa",
-            strokeWidth: 2,
-            strokeOpacity: 1
-        }
+    obj = {
+        id: feature.id || feature.provId,
+        attributes: feature.data,
+        type: geometryType,
+        geometry: feature.geometry
+    };
+    try {
+        await localforage.setItem(key, obj);
+        return { feature: feature };
+    }
+    catch (error) {
+        throw { feature: feature, error: error };
+    }
+};
+
+
+const deleteFeature = async function (key) {
+    await localforage.removeItem(key);
+    return key;
+};
+
+const readFeature = async function (key) {
+    const value = await localforage.getItem(key);
+    return {
+        key: key,
+        feature: value
     };
 };
 
-TC.inherit(WFSEdit, SWCacheClient);
+const getLayerStoreID = function (layer) {
+    let featureType = layer.options.featureType[0];
+    if (featureType.indexOf(':') < 0) {
+        featureType = layer.options.featureNS + ':' + featureType;
+    }
+    return featureType + '@' + layer.options.url;
+};
 
-(function () {
-    var newFeatureIdNumber = 0;
-    const getNewFeatureId = function () {
-        return "NewFeature." + newFeatureIdNumber++;
-    };
+const getLayerTitle = function (layer) {
+    return layer.getPath ? layer.getPath().join(' • ') : layer.title || layer.id;
+};
 
-    const setSyncState = function (ctl) {
-        const layerEditData = ctl.getLayerEditData();
-        ctl._saveBtn.disabled = !(navigator.onLine && layerEditData && layerEditData.checkedOut) || ctl.isSyncing;
-    };
+const getLegendImage = function (layer, geometryType) {
+    switch (geometryType) {
+        case Consts.geom.POINT:
+        case Consts.geom.MULTIPOINT:
+            return Util.getLegendImageFromStyle(layer.styles.point, { geometryType: Consts.geom.POINT });
+        case Consts.geom.POLYLINE:
+        case Consts.geom.MULTIPOLYLINE:
+            return Util.getLegendImageFromStyle(layer.styles.line, { geometryType: Consts.geom.POLYLINE });
+        default:
+            return Util.getLegendImageFromStyle(layer.styles.polygon, { geometryType: Consts.geom.POLYGON });
+    }
+};
 
-    const setEditState = function (ctl, enabled) {
-        ctl.div.querySelector(ctl._classSelector + '-view').classList.toggle(Consts.classes.HIDDEN, !enabled || !ctl.layer || !(ctl.layer.type === Consts.layerType.WFS || ctl.layer.type === Consts.layerType.WMS));
-        if (ctl.layer && ctl.layer.wfsLayer) {
-            const isLayerCropped = TC.filter && TC.filter.Bbox && ctl.layer.wfsLayer.properties instanceof TC.filter.Bbox;
-            ctl._recropBtn.classList.toggle(Consts.classes.HIDDEN, !isLayerCropped);
-        }
-        ctl.div.querySelector(ctl._classSelector + '-edit').classList.toggle(Consts.classes.HIDDEN, !enabled);
-    };
+class WFSEdit extends SWCacheClient {
+    LOCAL_STORAGE_KEY_PREFIX = "SITNA.offline.edit.";
+    LOCAL_STORAGE_ADDED_KEY_PREFIX = ".added.";
+    LOCAL_STORAGE_MODIFIED_KEY_PREFIX = ".modified.";
+    LOCAL_STORAGE_REMOVED_KEY_PREFIX = ".removed.";
+    #layerSelect;
+    #editPromise;
+    #removingLayer;
+    #editingWatch;
+    #beforeEditLayerWatch;
+    #addedWatch;
+    #modifiedWatch;
+    #removedWatch;
+    #saveBtn;
+    #discardBtn;
+    #recropBtn;
 
-    const setChangesButtonsState = function (ctl) {
-        setSyncState(ctl);
-        const layerEditData = ctl.getLayerEditData();
-        ctl._discardBtn.disabled = !layerEditData || !layerEditData.checkedOut;
-    };
-
-    const setChangedState = function (ctl, isChanged) {
-        if (ctl.layer) {
-            const layerEditData = ctl.getLayerEditData();
-            if (typeof isChanged !== 'undefined') {
-                layerEditData.checkedOut = isChanged;
-                setChangesButtonsState(ctl);
-            }
-            else {
-                var storagePrefix = getStoragePrefix(ctl);
-                localforage.keys().then(function (keys) {
-                    if (keys) {
-                        var disabled = true;
-                        for (var i = 0, len = keys.length; i < len; i++) {
-                            if (keys[i].indexOf(storagePrefix) === 0) {
-                                disabled = false;
-                                break;
-                            }
-                        }
-                        layerEditData.checkedOut = !disabled;
-                        setChangesButtonsState(ctl);
-                    }
-                }, err => console.warn(err));
-            }
-        }
-        else {
-            setChangesButtonsState(ctl);
-        }
-    };
-
-    const storeFeature = async function (key, feature) {
-        var obj;
-        var geometryType;
-        switch (true) {
-            case feature instanceof Polygon:
-                geometryType = Consts.geom.POLYGON;
-                break;
-            case feature instanceof Polyline:
-                geometryType = Consts.geom.POLYLINE;
-                break;
-            case feature instanceof Point:
-                geometryType = Consts.geom.POINT;
-                break;
-            case feature instanceof MultiPolygon:
-                geometryType = Consts.geom.MULTIPOLYGON;
-                break;
-            case feature instanceof MultiPolyline:
-                geometryType = Consts.geom.MULTIPOLYLINE;
-                break;
-            case feature instanceof MultiPoint:
-                geometryType = Consts.geom.MULTIPOINT;
-                break;
-        }
-        obj = {
-            id: feature.id || feature.provId,
-            attributes: feature.data,
-            type: geometryType,
-            geometry: feature.geometry
-        };
-        try {
-            await localforage.setItem(key, obj);
-            return { feature: feature };
-        }
-        catch (error) {
-            throw { feature: feature, error: error };
-        }
-    };
-
-
-    const deleteFeature = async function (key) {
-        await localforage.removeItem(key);
-        return key;
-    };
-
-    const readFeature = async function (key) {
-        const value = await localforage.getItem(key);
-        return {
-            key: key,
-            feature: value
-        };
-    };
-
-    const getLayerStoreID = function (layer) {
-        let featureType = layer.options.featureType[0];
-        if (featureType.indexOf(':') < 0) {
-            featureType = layer.options.featureNS + ':' + featureType;
-        }
-        return featureType + '@' + layer.options.url;
-    };
-
-    const getStoragePrefix = function (ctl, layer) {
-        return ctl.LOCAL_STORAGE_KEY_PREFIX + getLayerStoreID(layer || ctl.layer.wfsLayer || ctl.layer);
-    };
-
-    const getAddedStoragePrefix = function (ctl, layer) {
-        return getStoragePrefix(ctl, layer) + ctl.LOCAL_STORAGE_ADDED_KEY_PREFIX;
-    };
-
-    const getModifiedStoragePrefix = function (ctl, layer) {
-        return getStoragePrefix(ctl, layer) + ctl.LOCAL_STORAGE_MODIFIED_KEY_PREFIX;
-    };
-
-    const getRemovedStoragePrefix = function (ctl, layer) {
-        return getStoragePrefix(ctl, layer) + ctl.LOCAL_STORAGE_REMOVED_KEY_PREFIX;
-    };
-
-    const getLayerTitle = function (layer) {
-        return layer.getPath ? layer.getPath().join(' • ') : layer.title || layer.id;
-    };
-
-    const ctlProto = WFSEdit.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-wfsedit';
-
-    ctlProto.LOCAL_STORAGE_KEY_PREFIX = "TC.offline.edit.";
-    ctlProto.LOCAL_STORAGE_ADDED_KEY_PREFIX = ".added.";
-    ctlProto.LOCAL_STORAGE_MODIFIED_KEY_PREFIX = ".modified.";
-    ctlProto.LOCAL_STORAGE_REMOVED_KEY_PREFIX = ".removed.";
-
-    ctlProto.register = async function (map) {
+    constructor() {
+        super(...arguments);
         const self = this;
 
-        await SWCacheClient.prototype.register.call(self, map);
+        self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || false;
+
+        self.layer = null;
+        //self.feature = self.options.feature ? self.options.feature : null;
+        self.callback = Util.isFunction(arguments[2]) ?
+            arguments[2] :
+            self.options.callback ? self.options.callback : null;
+        self.layersEditData = {};
+        self.showsOriginalFeatures = typeof self.options.showOriginalFeatures === 'boolean' ? self.options.showOriginalFeatures : false;
+        self.highlightsAdded = self.highlightsModified = self.highlightsRemoved = typeof self.options.highlightChanges === 'boolean' ? self.options.highlightChanges : true;
+        if (!Util.isFunction(self.options.getBeforeEditLayerStyleFunction)) {
+            self.getBeforeEditLayerStyleFunction = self.getBeforeEditLayerStyle;
+        }
+        self.styles = self.options.styles || {
+            point: {
+                fillColor: "#0000aa",
+                fillOpacity: 0.1,
+                strokeColor: "#0000aa",
+                strokeWidth: 2,
+                strokeOpacity: 1,
+                radius: 6
+            },
+            line: {
+                strokeColor: "#0000aa",
+                strokeWidth: 2,
+                strokeOpacity: 1
+            },
+            polygon: {
+                fillColor: "#0000aa",
+                fillOpacity: 0.1,
+                strokeColor: "#0000aa",
+                strokeWidth: 2,
+                strokeOpacity: 1
+            }
+        };
+    }
+
+    getClassName() {
+        return 'tc-ctl-wfsedit';
+    }
+
+    async register(map) {
+        const self = this;
+
+        await super.register.call(self, map);
 
         window.addEventListener('online', function () {
-            setSyncState(self);
+            self.#setSyncState();
         });
         window.addEventListener('offline', function () {
-            setSyncState(self);
+            self.#setSyncState();
         });
 
         map.loaded(function () {
-            self._layerSelect.disabled = false;
+            self.#layerSelect.disabled = false;
 
             if (self.options.layer) {
                 self.setLayer(self.options.layer);
@@ -291,8 +245,10 @@ TC.inherit(WFSEdit, SWCacheClient);
             self.showOriginalFeatures(self.showsOriginalFeatures);
         });
 
+
         map.ready(function () {
             map.getControlsByClass('TC.control.WorkLayerManager').forEach(function (ctl) {
+                const editIconText = Util.getTextFromCssVar('--icon-edit', ctl.div);
                 ctl.addItemTool({
                     renderFn: function (container, layerId) {
                         const className = self.CLASS + '-btn-edit';
@@ -302,10 +258,8 @@ TC.inherit(WFSEdit, SWCacheClient);
                             button = new Toggle();
                             button.text = text;
                             button.classList.add(className);
-                            button.checkedIconText = getComputedStyle(document.querySelector(':root'))
-                                .getPropertyValue('--icon-edit')
-                                .replaceAll('"', '');
-                            button.uncheckedIconText = button.checkedIconText;
+                            button.checkedIconText = editIconText;
+                            button.uncheckedIconText = editIconText;
                             button.dataset.layerId = layerId;
                             const layer = map.getLayer(layerId);
                             if (layer.type === Consts.layerType.WMS) {
@@ -347,7 +301,7 @@ TC.inherit(WFSEdit, SWCacheClient);
             });
         });
 
-        self._editPromise = map.addControl('edit', {
+        self.#editPromise = map.addControl('edit', {
             id: self.getUID(),
             div: self.div.querySelector(`.${self.CLASS}-edit`),
             styles: self.styles,
@@ -355,7 +309,7 @@ TC.inherit(WFSEdit, SWCacheClient);
             snapping: self.options.snapping
         });
 
-        self.editControl = await self._editPromise;
+        self.editControl = await self.#editPromise;
 
         self.editControl.getAvailableFeaturesToImport = function () {
             const candidates = Object.getPrototypeOf(self.editControl).getAvailableFeaturesToImport.call(self.editControl);
@@ -383,14 +337,14 @@ TC.inherit(WFSEdit, SWCacheClient);
         self.editControl
             .on(Consts.event.DRAWEND, function (e) {
                 if (self.getLayerEditData().serializable) {
-                    self._storeFeatureAdd(e.feature);
+                    self.#storeFeatureAdd(e.feature);
                 }
             })
             .on(Consts.event.FEATUREMODIFY, function (e) {
                 const feat = e.feature;
                 const fid = feat.provId || feat.id;
                 const storeSuccess = function () {
-                    setChangedState(self, true);
+                    self.#setChangedState(true);
                 };
                 const storeFailure = function () {
                     TC.error(self.getLocaleString('failedWhenSavingModifyOperationInSession'));
@@ -401,7 +355,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                     if (storedFeature) {
                         storedFeature.setCoords(feat.geometry);
                         storedFeature.setData(feat.getData());
-                        storeFeature(getAddedStoragePrefix(self) + fid, feat).then(storeSuccess, storeFailure);
+                        storeFeature(self.#getAddedStoragePrefix() + fid, feat).then(storeSuccess, storeFailure);
                     }
                     else {
                         storedFeature = layerEditData.modifiedFeaturesLayer.getFeatureById(fid);
@@ -410,20 +364,20 @@ TC.inherit(WFSEdit, SWCacheClient);
                             storedFeature.setData(feat.getData());
                         }
                         else {
-                            layerEditData.modifiedFeaturesLayer.addFeature(self._createAuxFeature(feat));
+                            layerEditData.modifiedFeaturesLayer.addFeature(self.#createAuxFeature(feat));
                         }
-                        storeFeature(getModifiedStoragePrefix(self) + fid, feat).then(storeSuccess, storeFailure);
+                        storeFeature(self.#getModifiedStoragePrefix() + fid, feat).then(storeSuccess, storeFailure);
                     }
                 }
             })
             .on(Consts.event.FEATUREADD, function (e) {
                 if (self.getLayerEditData().serializable) {
-                    self._storeFeatureAdd(e.feature);
+                    self.#storeFeatureAdd(e.feature);
                 }
             })
             .on(Consts.event.FEATUREREMOVE, function (e) {
                 if (self.getLayerEditData().serializable) {
-                    self._storeFeatureRemove(e.feature);
+                    self.#storeFeatureRemove(e.feature);
                 }
             });
 
@@ -452,13 +406,13 @@ TC.inherit(WFSEdit, SWCacheClient);
             })
             .on(Consts.event.LAYERREMOVE, function (e) {
                 const layer = e.layer;
-                if (self._removingLayer === layer) {
+                if (self.#removingLayer === layer) {
                     return;
                 }
                 if (self.layer === layer || layer.wmsLayer && self.layer === layer.wmsLayer) {
                     self.setLayer(null);
                 }
-                const option = self._layerSelect.querySelector(`option[value="${layer.id}"]`);
+                const option = self.#layerSelect.querySelector(`option[value="${layer.id}"]`);
                 if (option) {
                     option.parentElement.removeChild(option);
                 }
@@ -481,15 +435,15 @@ TC.inherit(WFSEdit, SWCacheClient);
             });
 
         return self;
-    };
+    }
 
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-wfsedit.mjs');
         self.template = module.default;
-    };
+    }
 
-    ctlProto.render = function (callback) {
+    async render(callback) {
         const self = this;
         var editLayers = [];
         if (self.map) {
@@ -503,179 +457,257 @@ TC.inherit(WFSEdit, SWCacheClient);
                 }
             }
         }
-        return self._set1stRenderPromise(Control.prototype.renderData.call(self, {
+        await super.renderData.call(self, {
             layers: editLayers,
             showOriginalFeatures: self.showsOriginalFeatures,
             highlightChanges: self.highlightsAdded || self.highlightsModified || self.highlightsRemoved,
             controlId: self.id
-        }, function () {
+        });
 
-            self._layerDiv = self.div.querySelector(self._classSelector + '-layer');
-            self._layerSelect = self._layerDiv.querySelector(self._classSelector + '-layer-sel');
-            self._layerSelect.addEventListener('change', function (_e) {
-                setEditState(self, false);
-                self.getEditableLayer(self._layerSelect.value)
-                    .then(function (layer) {
-                        self.setLayer(layer.wmsLayer || layer).then(function () {
-                            if (self.layer) {
-                                self.openEditSession();
-                            }
-                        });
-                    })
-                    .catch(() => {
-                        self.setLayer(null);
+        self.#layerSelect = self.div.querySelector(`.${self.CLASS}-layer .${self.CLASS}-layer-sel`);
+
+        const viewToolsDiv = self.div.querySelector(`.${self.CLASS}-view`);
+
+        self.#editingWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-watch`);
+        self.#beforeEditLayerWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-original-watch`);
+        self.#addedWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-added-watch`);
+        self.#modifiedWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-modified-watch`);
+        self.#removedWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-removed-watch`);
+
+        self.#saveBtn = self.div.querySelector(`.${self.CLASS}-btn-save`);
+        self.#discardBtn = self.div.querySelector(`.${self.CLASS}-btn-discard`);
+        self.#recropBtn = self.div.querySelector(`.${self.CLASS}-view button.${self.CLASS}-btn-crop`);
+
+        self.addUIEventListeners();
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        self.#layerSelect.addEventListener('change', function (_e) {
+            self.#setEditState(false);
+            self.getEditableLayer(self.#layerSelect.value)
+                .then(function (layer) {
+                    self.setLayer(layer.wmsLayer || layer).then(function () {
+                        if (self.layer) {
+                            self.openEditSession();
+                        }
                     });
-            });
-
-            const viewToolsDiv = self.div.querySelector(self._classSelector + '-view');
-
-            self._editingWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-watch`);
-            self._beforeEditLayerWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-original-watch`);
-            self._addedWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-added-watch`);
-            self._modifiedWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-modified-watch`);
-            self._removedWatch = viewToolsDiv.querySelector(`.${self.CLASS}-view-removed-watch`);
-
-            viewToolsDiv.querySelector(`#${self.CLASS}-view-original-cb-${self.id}`).addEventListener('change', function (e) {
-                self.showOriginalFeatures(e.target.checked);
-            });
-
-            viewToolsDiv.querySelector(`#${self.CLASS}-view-added-cb-${self.id}`).addEventListener('change', function (e) {
-                self.highlightAdded(e.target.checked);
-            });
-
-            viewToolsDiv.querySelector(`#${self.CLASS}-view-modified-cb-${self.id}`).addEventListener('change', function (e) {
-                self.highlightModified(e.target.checked);
-            });
-
-            viewToolsDiv.querySelector(`#${self.CLASS}-view-removed-cb-${self.id}`).addEventListener('change', function (e) {
-                self.highlightRemoved(e.target.checked);
-            });
-
-            const colorRegExp = new RegExp(`${self.CLASS}-view-clr-(.+)-${self.id}`);
-            const onColorClick = function (_e) {
-                const input = this.parentElement.querySelector('input[type=color]');
-                const layerEditData = self.getLayerEditData();
-                const layer = layerEditData[input.id.match(colorRegExp)[1] + 'FeaturesLayer'];
-                switch (layerEditData.geometryType) {
-                    case Consts.geom.POINT:
-                        input.value = layer.styles.point.strokeColor;
-                        break;
-                    case Consts.geom.POLYLINE:
-                    case Consts.geom.MULTIPOLYLINE:
-                        input.value = layer.styles.line.strokeColor;
-                        break;
-                    default:
-                        input.value = layer.styles.polygon.strokeColor;
-                        break;
-                }
-                input.click();
-            };
-
-            const onColorChange = function (e) {
-                const input = e.target;
-                const layerEditData = self.getLayerEditData();
-                const prefix = input.id.match(colorRegExp)[1];
-                const layer = layerEditData[prefix + 'FeaturesLayer'];
-                const newColor = layerEditData[prefix + 'CustomColor'] = input.value;
-                switch (layerEditData.geometryType) {
-                    case Consts.geom.POINT:
-                        layer.styles.point.strokeColor = newColor;
-                        break;
-                    case Consts.geom.POLYLINE:
-                    case Consts.geom.MULTIPOLYLINE:
-                        layer.styles.line.strokeColor = newColor;
-                        break;
-                    default:
-                        layer.styles.polygon.strokeColor = newColor;
-                        layer.styles.polygon.fillColor = newColor;
-                        break;
-                }
-                layer.setStyles(layer.styles);
-                self[`_${prefix}Watch`].src = getLegendImage(layer, layerEditData.geometryType);
-            };
-
-            const addedColorInputId = `${self.CLASS}-view-clr-added-${self.id}`;
-            viewToolsDiv.querySelector(`label[for="${addedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
-            document.getElementById(addedColorInputId).addEventListener('change', onColorChange);
-
-            const modifiedColorInputId = `${self.CLASS}-view-clr-modified-${self.id}`;
-            viewToolsDiv.querySelector(`label[for="${modifiedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
-            document.getElementById(modifiedColorInputId).addEventListener('change', onColorChange);
-
-            const removedColorInputId = `${self.CLASS}-view-clr-removed-${self.id}`;
-            viewToolsDiv.querySelector(`label[for="${removedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
-            document.getElementById(removedColorInputId).addEventListener('change', onColorChange);
-
-            self._saveBtn = self.div.querySelector(self._classSelector + '-btn-save');
-            self._saveBtn.addEventListener(Consts.event.CLICK, function () {
-                TC.confirm(self.getLocaleString('edit.applyEdits.confirm', { layerTitle: getLayerTitle(self.layer) }), function () {
-                    self.applyEdits();
+                })
+                .catch(() => {
+                    self.setLayer(null);
                 });
-            }, { passive: true });
-            
-            self._discardBtn = self.div.querySelector(self._classSelector + '-btn-discard');
-            self._discardBtn.addEventListener(Consts.event.CLICK, function () {
-                TC.confirm(self.getLocaleString('edit.discardEdits.confirm', { layerTitle: getLayerTitle(self.layer) }), function () {
-                    self.discardEdits();
-                });
-            }, { passive: true });
+        });
 
-            self._recropBtn = self.div.querySelector(`.${self.CLASS}-view button.${self.CLASS}-btn-crop`);
-            self._recropBtn.addEventListener(Consts.event.CLICK, function () {
-                if (self.layer) {
-                    const reload = () => {
-                        if (self.layer && self.layer.wfsLayer && TC.filter && TC.filter.Bbox && self.layer.wfsLayer.properties instanceof TC.filter.Bbox) {
-                            const layerEditData = self.getLayerEditData();
-                            self.layer.wfsLayer.properties = new TC.filter.Bbox(null, self.map.getExtent(), self.map.getCRS());
-                            self.layer.wfsLayer.refresh();
-                            if (layerEditData.beforeEditLayer) {
-                                layerEditData.beforeEditLayer.properties = self.layer.wfsLayer.properties;
-                                layerEditData.beforeEditLayer.refresh();
-                            }
+        const viewToolsDiv = self.div.querySelector(`.${self.CLASS}-view`);
+        viewToolsDiv.querySelector(`#${self.CLASS}-view-original-cb-${self.id}`).addEventListener('change', function (e) {
+            self.showOriginalFeatures(e.target.checked);
+        });
+
+        viewToolsDiv.querySelector(`#${self.CLASS}-view-added-cb-${self.id}`).addEventListener('change', function (e) {
+            self.highlightAdded(e.target.checked);
+        });
+
+        viewToolsDiv.querySelector(`#${self.CLASS}-view-modified-cb-${self.id}`).addEventListener('change', function (e) {
+            self.highlightModified(e.target.checked);
+        });
+
+        viewToolsDiv.querySelector(`#${self.CLASS}-view-removed-cb-${self.id}`).addEventListener('change', function (e) {
+            self.highlightRemoved(e.target.checked);
+        });
+
+        const colorRegExp = new RegExp(`${self.CLASS}-view-clr-(.+)-${self.id}`);
+        const onColorClick = function (_e) {
+            const input = this.parentElement.querySelector('input[type=color]');
+            const layerEditData = self.getLayerEditData();
+            const layer = layerEditData[input.id.match(colorRegExp)[1] + 'FeaturesLayer'];
+            switch (layerEditData.geometryType) {
+                case Consts.geom.POINT:
+                    input.value = layer.styles.point.strokeColor;
+                    break;
+                case Consts.geom.POLYLINE:
+                case Consts.geom.MULTIPOLYLINE:
+                    input.value = layer.styles.line.strokeColor;
+                    break;
+                default:
+                    input.value = layer.styles.polygon.strokeColor;
+                    break;
+            }
+            input.click();
+        };
+
+        const onColorChange = function (e) {
+            const input = e.target;
+            const layerEditData = self.getLayerEditData();
+            const prefix = input.id.match(colorRegExp)[1];
+            const layer = layerEditData[prefix + 'FeaturesLayer'];
+            const newColor = layerEditData[prefix + 'CustomColor'] = input.value;
+            switch (layerEditData.geometryType) {
+                case Consts.geom.POINT:
+                    layer.styles.point.strokeColor = newColor;
+                    break;
+                case Consts.geom.POLYLINE:
+                case Consts.geom.MULTIPOLYLINE:
+                    layer.styles.line.strokeColor = newColor;
+                    break;
+                default:
+                    layer.styles.polygon.strokeColor = newColor;
+                    layer.styles.polygon.fillColor = newColor;
+                    break;
+            }
+            layer.setStyles(layer.styles);
+            self[`_${prefix}Watch`].src = getLegendImage(layer, layerEditData.geometryType);
+        };
+
+        const addedColorInputId = `${self.CLASS}-view-clr-added-${self.id}`;
+        viewToolsDiv.querySelector(`label[for="${addedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
+        document.getElementById(addedColorInputId).addEventListener('change', onColorChange);
+
+        const modifiedColorInputId = `${self.CLASS}-view-clr-modified-${self.id}`;
+        viewToolsDiv.querySelector(`label[for="${modifiedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
+        document.getElementById(modifiedColorInputId).addEventListener('change', onColorChange);
+
+        const removedColorInputId = `${self.CLASS}-view-clr-removed-${self.id}`;
+        viewToolsDiv.querySelector(`label[for="${removedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
+        document.getElementById(removedColorInputId).addEventListener('change', onColorChange);
+
+        self.#saveBtn.addEventListener(Consts.event.CLICK, function () {
+            TC.confirm(self.getLocaleString('edit.applyEdits.confirm', { layerTitle: getLayerTitle(self.layer) }), function () {
+                self.applyEdits();
+            });
+        }, { passive: true });
+
+        self.#discardBtn.addEventListener(Consts.event.CLICK, function () {
+            TC.confirm(self.getLocaleString('edit.discardEdits.confirm', { layerTitle: getLayerTitle(self.layer) }), function () {
+                self.discardEdits();
+            });
+        }, { passive: true });
+
+        self.#recropBtn.addEventListener(Consts.event.CLICK, function () {
+            if (self.layer) {
+                const reload = () => {
+                    if (self.layer && self.layer.wfsLayer && TC.filter && TC.filter.Bbox && self.layer.wfsLayer.properties instanceof TC.filter.Bbox) {
+                        const layerEditData = self.getLayerEditData();
+                        self.layer.wfsLayer.properties = new TC.filter.Bbox(null, self.map.getExtent(), self.map.getCRS());
+                        self.layer.wfsLayer.refresh();
+                        if (layerEditData.beforeEditLayer) {
+                            layerEditData.beforeEditLayer.properties = self.layer.wfsLayer.properties;
+                            layerEditData.beforeEditLayer.refresh();
                         }
-                    };
-                    const layerEditData = self.getLayerEditData();
-                    const editedFeatures = layerEditData.addedFeaturesLayer.features.concat(layerEditData.modifiedFeaturesLayer.features, layerEditData.removedFeaturesLayer.features);
-                    if (editedFeatures.length) {
-                        let featuresOutside = false;
-                        const extent = self.map.getExtent();
-                        const bbox = [[extent[0], extent[1]], [extent[0], extent[3]], [extent[2], extent[3]], [extent[2], extent[1]]];
-                        for (var i = 0, ii = editedFeatures.length; i < ii; i++) {
-                            if (!TC.Geometry.intersects(editedFeatures[i].geometry, bbox)) {
-                                featuresOutside = true;
-                                break;
-                            }
+                    }
+                };
+                const layerEditData = self.getLayerEditData();
+                const editedFeatures = layerEditData.addedFeaturesLayer.features.concat(layerEditData.modifiedFeaturesLayer.features, layerEditData.removedFeaturesLayer.features);
+                if (editedFeatures.length) {
+                    let featuresOutside = false;
+                    const extent = self.map.getExtent();
+                    const bbox = [[extent[0], extent[1]], [extent[0], extent[3]], [extent[2], extent[3]], [extent[2], extent[1]]];
+                    for (var i = 0, ii = editedFeatures.length; i < ii; i++) {
+                        if (!TC.Geometry.intersects(editedFeatures[i].geometry, bbox)) {
+                            featuresOutside = true;
+                            break;
                         }
-                        if (featuresOutside) {
-                            TC.confirm(self.getLocaleString('refreshLayerToCurrentExtent.confirm'), function () {
-                                reload();
-                            });
-                        }
-                        else {
+                    }
+                    if (featuresOutside) {
+                        TC.confirm(self.getLocaleString('refreshLayerToCurrentExtent.confirm'), function () {
                             reload();
-                        }
+                        });
                     }
                     else {
                         reload();
                     }
-                    
                 }
-            }, { passive: true });
+                else {
+                    reload();
+                }
 
-            if (TC.Util.isFunction(callback)) {
-                callback();
             }
-        }));
-    };
+        }, { passive: true });
+    }
 
-    ctlProto.addLayer = function (layer) {
+    #setSyncState() {
+        const self = this;
+        const layerEditData = self.getLayerEditData();
+        self.#saveBtn.disabled = !(navigator.onLine && layerEditData && layerEditData.checkedOut) || self.isSyncing;
+    }
+
+    #setEditState(enabled) {
+        const self = this;
+        self.div.querySelector(`.${self.CLASS}-view`).classList.toggle(Consts.classes.HIDDEN, !enabled || !self.layer || !(self.layer.type === Consts.layerType.WFS || self.layer.type === Consts.layerType.WMS));
+        if (self.layer && self.layer.wfsLayer) {
+            const isLayerCropped = TC.filter && TC.filter.Bbox && self.layer.wfsLayer.properties instanceof TC.filter.Bbox;
+            self.#recropBtn.classList.toggle(Consts.classes.HIDDEN, !isLayerCropped);
+        }
+        self.div.querySelector(`.${self.CLASS}-edit`).classList.toggle(Consts.classes.HIDDEN, !enabled);
+    }
+
+    #setChangesButtonsState() {
+        const self = this;
+        self.#setSyncState();
+        const layerEditData = self.getLayerEditData();
+        self.#discardBtn.disabled = !layerEditData || !layerEditData.checkedOut;
+    }
+
+    #setChangedState = function (isChanged) {
+        const self = this;
+        if (self.layer) {
+            const layerEditData = self.getLayerEditData();
+            if (typeof isChanged !== 'undefined') {
+                layerEditData.checkedOut = isChanged;
+                self.#setChangesButtonsState();
+            }
+            else {
+                var storagePrefix = self.#getStoragePrefix();
+                localforage.keys().then(function (keys) {
+                    if (keys) {
+                        var disabled = true;
+                        for (var i = 0, len = keys.length; i < len; i++) {
+                            if (keys[i].indexOf(storagePrefix) === 0) {
+                                disabled = false;
+                                break;
+                            }
+                        }
+                        layerEditData.checkedOut = !disabled;
+                        self.#setChangesButtonsState();
+                    }
+                }, err => console.warn(err));
+            }
+        }
+        else {
+            self.#setChangesButtonsState();
+        }
+    }
+
+    #getStoragePrefix(layer) {
+        const self = this;
+        return self.LOCAL_STORAGE_KEY_PREFIX + getLayerStoreID(layer || self.layer.wfsLayer || self.layer);
+    }
+
+    #getAddedStoragePrefix(layer) {
+        const self = this;
+        return self.#getStoragePrefix(layer) + self.LOCAL_STORAGE_ADDED_KEY_PREFIX;
+    }
+
+    #getModifiedStoragePrefix(layer) {
+        const self = this;
+        return self.#getStoragePrefix(layer) + self.LOCAL_STORAGE_MODIFIED_KEY_PREFIX;
+    }
+
+    #getRemovedStoragePrefix(layer) {
+        const self = this;
+        return self.#getStoragePrefix(layer) + self.LOCAL_STORAGE_REMOVED_KEY_PREFIX;
+    }
+
+    addLayer(layer) {
         const self = this;
         const appendOption = function (layer) {
             const option = document.createElement('option');
             option.setAttribute('value', layer.id);
             option.innerHTML = getLayerTitle(layer);
             self.renderPromise().then(function () {
-                self._layerSelect.appendChild(option);
+                self.#layerSelect.appendChild(option);
             });
         };
         if (!layer.isBase && !layer.options.readOnly && !layer.options.stealth) {
@@ -688,14 +720,14 @@ TC.inherit(WFSEdit, SWCacheClient);
                 })
                 .catch((err) => console.log(`Layer ${layer.id} not editable. Reason: ${err.message}`));
         }
-    };
+    }
 
-    ctlProto.setLayer = function (layer) {
+    setLayer(layer) {
         const self = this;
         return new Promise(function (resolve, reject) {
 
             const map = self.map;
-            const selector = self.div.querySelector(self._classSelector + '-layer-sel');
+            const selector = self.div.querySelector(`.${self.CLASS}-layer-sel`);
 
             layer = map.getLayer(layer);
             const mapLayer = map.workLayers.find(l => l === layer);
@@ -706,7 +738,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                         .then(function (editableLayer) {
                             const endProcess = function () {
                                 self.layer = mapLayer;
-                                self._enableEditSerialization(mapLayer)
+                                self.#enableEditSerialization(mapLayer)
                                     .then(function () {
                                         self.getEditControl().then(c => {
                                             selector.value = self.layer.id;
@@ -735,11 +767,11 @@ TC.inherit(WFSEdit, SWCacheClient);
                 }
                 else {
                     if (self.layer && self.layer.wfsLayer) {
-                        self._removingLayer = self.layer.wfsLayer;
+                        self.#removingLayer = self.layer.wfsLayer;
                     }
                     self.getEditControl().then(c => {
-                        setEditState(self, false);
-                        //setChangedState(self, false);
+                        self.#setEditState(false);
+                        //self.#setChangedState(false);
                         self.closeEditSession()
                             .then(() => {
                                 selector.value = '';
@@ -749,7 +781,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                                 resolve(null);
                             })
                             .finally(() => {
-                                delete self._removingLayer;
+                                self.#removingLayer = null;
                             });
                     });
                 }
@@ -760,7 +792,7 @@ TC.inherit(WFSEdit, SWCacheClient);
             }
             else {
                 if (self.layer.wfsLayer) {
-                    self._removingLayer = self.layer.wfsLayer;
+                    self.#removingLayer = self.layer.wfsLayer;
                 }
                 self.closeEditSession().then(() => {
                     if (mapLayer) {
@@ -769,27 +801,27 @@ TC.inherit(WFSEdit, SWCacheClient);
                 });
             }
         });
-    };
+    }
 
-    ctlProto._storeFeatureAdd = function (feature) {
+    #storeFeatureAdd(feature) {
         const self = this;
         feature.provId = getNewFeatureId();
         const layerEditData = self.getLayerEditData();
-        const newFeature = self._createAuxFeature(feature);
+        const newFeature = self.#createAuxFeature(feature);
         layerEditData.addedFeaturesLayer.addFeature(newFeature);
-        storeFeature(getAddedStoragePrefix(self) + feature.provId, newFeature).then(function () {
-            setChangedState(self, true);
+        storeFeature(self.#getAddedStoragePrefix() + feature.provId, newFeature).then(function () {
+            self.#setChangedState(true);
             //self.map.toast(self.getLocaleString('addOperationSavedInSession'));
         }, function () {
             TC.error(self.getLocaleString('failedWhenSavingAddOperationInSession'));
         });
-    };
+    }
 
-    ctlProto._storeFeatureRemove = function (feature) {
+    #storeFeatureRemove(feature) {
         const self = this;
         var fid = feature.provId || feature.id;
         var storeSuccess = function () {
-            setChangedState(self);
+            self.#setChangedState();
             //self.map.toast(self.getLocaleString('removeOperationSavedInSession'));
         };
         var storeFailure = function () {
@@ -799,19 +831,19 @@ TC.inherit(WFSEdit, SWCacheClient);
         if (layerEditData.serializable) {
             let storedFeature = layerEditData.addedFeaturesLayer.getFeatureById(fid);
             if (!storedFeature) {
-                var removedStoragePrefix = getRemovedStoragePrefix(self);
+                var removedStoragePrefix = self.#getRemovedStoragePrefix();
                 storedFeature = layerEditData.modifiedFeaturesLayer.getFeatureById(fid);
                 if (!storedFeature) {
                     storedFeature = layerEditData.removedFeaturesLayer.getFeatureById(fid);
                     if (!storedFeature) {
-                        layerEditData.removedFeaturesLayer.addFeature(self._createAuxFeature(feature));
+                        layerEditData.removedFeaturesLayer.addFeature(self.#createAuxFeature(feature));
                         storeFeature(removedStoragePrefix + fid, feature).then(storeSuccess, storeFailure);
                     }
                 }
                 else {
                     layerEditData.modifiedFeaturesLayer.removeFeature(storedFeature);
-                    layerEditData.removedFeaturesLayer.addFeature(self._createAuxFeature(feature));
-                    deleteFeature(getModifiedStoragePrefix(self) + fid).then(function () {
+                    layerEditData.removedFeaturesLayer.addFeature(self.#createAuxFeature(feature));
+                    deleteFeature(self.#getModifiedStoragePrefix() + fid).then(function () {
                         storeSuccess();
                         storeFeature(removedStoragePrefix + fid, feature).then(storeSuccess, storeFailure);
                     }, storeFailure);
@@ -819,12 +851,12 @@ TC.inherit(WFSEdit, SWCacheClient);
             }
             else {
                 layerEditData.addedFeaturesLayer.removeFeature(storedFeature);
-                deleteFeature(getAddedStoragePrefix(self) + fid).then(storeSuccess, storeFailure);
+                deleteFeature(self.#getAddedStoragePrefix() + fid).then(storeSuccess, storeFailure);
             }
         }
-    };
+    }
 
-    ctlProto._createAuxFeature = function (feature) {
+    #createAuxFeature(feature) {
         const self = this;
         const fid = feature.provId || feature.id;
         const layerEditData = self.getLayerEditData();
@@ -832,30 +864,36 @@ TC.inherit(WFSEdit, SWCacheClient);
         result.setStyle(null);
         result.setId(fid);
         return result;
-    };
+    }
 
-    ctlProto.getEditControl = function () {
+    getEditControl() {
         const self = this;
-        return self._editPromise || new Promise(function (resolve, _reject) {
-            self.renderPromise().then(() => resolve(self.editControl));
+        return self.#editPromise || new Promise(function (resolve, _reject) {
+            const endFn = () => self.renderPromise().then(() => resolve(self.editControl));
+            if (self.map) {
+                self.map.ready(endFn);
+            }
+            else {
+                endFn();
+            }
         });
-    };
+    }
 
-    ctlProto.cacheLayer = async function (layer) {
+    async cacheLayer(layer) {
         const self = this;
         await self.getServiceWorker();
         if (navigator.onLine) {
             const gfUrl = layer.wrap.getGetFeatureUrl();
             const dftUrl = await layer.getDescribeFeatureTypeUrl();
             if (gfUrl && dftUrl) {
-                await self.createCache(getStoragePrefix(self, layer), {
+                await self.createCache(self.#getStoragePrefix(layer), {
                     urlList: [gfUrl, dftUrl]
                 });
             }
         }
-    };
+    }
 
-    ctlProto.getFeatureType = function (layer) {
+    getFeatureType(layer) {
         const self = this;
         return new Promise(function (resolve, reject) {
             layer = layer || self.layer;
@@ -863,37 +901,35 @@ TC.inherit(WFSEdit, SWCacheClient);
             const waitId = li && li.addWait();
             layer.describeFeatureType()
                 .then(function (attributes) {
-                    self.getEditControl().then(function (editControl) {
-                        const layerEditData = self.getLayerEditData(layer);
-                        // recogemos los atributos no geométricos y definimos la geometría
-                        layerEditData.attributes = {};
-                        let key;
-                        for (key in attributes) {
-                            const attr = attributes[key];
-                            const geometryType = editControl.getGeometryType(attr.type);
-                            if (geometryType) {
-                                layerEditData.geometryName = attr.name;
-                                layerEditData.geometryType = typeof geometryType === 'boolean' ? null : geometryType;
-                            }
-                            else {
-                                layerEditData.attributes[key] = attr;
-                            }
+                    const layerEditData = self.getLayerEditData(layer);
+                    // recogemos los atributos no geométricos y definimos la geometría
+                    layerEditData.attributes = {};
+                    let key;
+                    for (key in attributes) {
+                        const attr = attributes[key];
+                        const geometryType = Util.getGeometryType(attr.type);
+                        if (geometryType) {
+                            layerEditData.geometryName = attr.name;
+                            layerEditData.geometryType = typeof geometryType === 'boolean' ? null : geometryType;
                         }
-                        for (key in layerEditData.attributes) {
-                            const attr = layerEditData.attributes[key];
-                            attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
+                        else {
+                            layerEditData.attributes[key] = attr;
                         }
-                        resolve(layerEditData);
-                    });
+                    }
+                    for (key in layerEditData.attributes) {
+                        const attr = layerEditData.attributes[key];
+                        attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
+                    }
+                    resolve(layerEditData);
                 })
                 .catch(function (err) {
                     reject(err);
                 })
                 .finally(() => li && li.removeWait(waitId));
         });
-    };
+    }
 
-    ctlProto._addAuxLayersToMap = async function (layer) {
+    async #addAuxLayersToMap(layer) {
         const self = this;
         const map = self.map;
         layer = layer || self.layer;
@@ -933,18 +969,18 @@ TC.inherit(WFSEdit, SWCacheClient);
             afLayer.setStyles(self.getAddedFeaturesLayerStyle(editableLayer));
             mfLayer.setStyles(self.getModifiedFeaturesLayerStyle(editableLayer));
             rfLayer.setStyles(self.getRemovedFeaturesLayerStyle(editableLayer));
-            self._editingWatch.src = getLegendImage(editableLayer, layerEditData.geometryType);
-            self._beforeEditLayerWatch.src = getLegendImage(beLayer, layerEditData.geometryType);
-            self._addedWatch.src = getLegendImage(afLayer, layerEditData.geometryType);
-            self._modifiedWatch.src = getLegendImage(mfLayer, layerEditData.geometryType);
-            self._removedWatch.src = getLegendImage(rfLayer, layerEditData.geometryType);
+            self.#editingWatch.src = getLegendImage(editableLayer, layerEditData.geometryType);
+            self.#beforeEditLayerWatch.src = getLegendImage(beLayer, layerEditData.geometryType);
+            self.#addedWatch.src = getLegendImage(afLayer, layerEditData.geometryType);
+            self.#modifiedWatch.src = getLegendImage(mfLayer, layerEditData.geometryType);
+            self.#removedWatch.src = getLegendImage(rfLayer, layerEditData.geometryType);
         }
         else {
             throw Error(`No auxiliary layers for ${layer.id}`);
         }
-    };
+    }
 
-    ctlProto.openEditSession = function () {
+    openEditSession() {
         const self = this;
         if (!self.layer) {
             return Promise.reject(Error('No layer set for editing'));
@@ -967,8 +1003,8 @@ TC.inherit(WFSEdit, SWCacheClient);
                                     break;
                             }
                             editControl.activate();
-                            setEditState(self, true);
-                            setChangedState(self);
+                            self.#setEditState(true);
+                            self.#setChangedState();
 
                             const modes = [Edit.mode.MODIFY, Edit.mode.OTHER];
                             switch (layerEditData.geometryType) {
@@ -988,10 +1024,10 @@ TC.inherit(WFSEdit, SWCacheClient);
                                 default:
                                     break;
                             }
-                            editControl.constrainModes(modes);
+                            editControl.setModes(modes);
                             editControl.mode = Edit.mode.MODIFY;
 
-                            self._addAuxLayersToMap()
+                            self.#addAuxLayersToMap()
                                 .then(() => resolve())
                                 .catch((err) => reject(err));
                         });
@@ -1001,7 +1037,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                     if (self.layer && self.layer.type === Consts.layerType.VECTOR) {
                         self.getEditControl().then(function (editControl) {
                             editControl.activate();
-                            setEditState(self, true);
+                            self.#setEditState(true);
                             editControl.mode = Edit.mode.MODIFY;
                             resolve();
                         });
@@ -1011,20 +1047,20 @@ TC.inherit(WFSEdit, SWCacheClient);
                     }
                 });
         });
-    };
+    }
 
-    ctlProto.closeEditSession = async function () {
+    async closeEditSession() {
         const self = this;
         await self.renderPromise();
-        setChangedState(self, false);
+        self.#setChangedState(false);
         self.getEditControl().then(c => c.deactivate());
         const layerEditData = self.getLayerEditData();
         if (layerEditData?.beforeEditLayer) {
-            self._editingWatch.src = Consts.BLANK_IMAGE;
-            self._beforeEditLayerWatch.src = Consts.BLANK_IMAGE;
-            self._addedWatch.src = Consts.BLANK_IMAGE;
-            self._modifiedWatch.src = Consts.BLANK_IMAGE;
-            self._removedWatch.src = Consts.BLANK_IMAGE;
+            self.#editingWatch.src = Consts.BLANK_IMAGE;
+            self.#beforeEditLayerWatch.src = Consts.BLANK_IMAGE;
+            self.#addedWatch.src = Consts.BLANK_IMAGE;
+            self.#modifiedWatch.src = Consts.BLANK_IMAGE;
+            self.#removedWatch.src = Consts.BLANK_IMAGE;
             const previousLayer = self.layer;
             const editableLayer = await self.getEditableLayer(self.layer);
             const removePromises = [];
@@ -1044,9 +1080,9 @@ TC.inherit(WFSEdit, SWCacheClient);
             }
             await Promise.all(removePromises);
         }
-    };
+    }
 
-    ctlProto.getEditableLayer = async function (layer) {
+    async getEditableLayer(layer) {
         const self = this;
         const notEditableErrorMsg = `Layer ${layer.id} not editable`;
         const map = self.map;
@@ -1106,11 +1142,11 @@ TC.inherit(WFSEdit, SWCacheClient);
         else {
             throw Error('No layer to edit');
         }
-    };
+    }
 
-    ctlProto.isLayerEdited = async function (layer) {
+    async isLayerEdited(layer) {
         const self = this;
-        const storagePrefix = getStoragePrefix(self, layer);
+        const storagePrefix = self.#getStoragePrefix(layer);
         try {
             const keys = await localforage.keys();
             if (keys) {
@@ -1122,9 +1158,9 @@ TC.inherit(WFSEdit, SWCacheClient);
             console.warn(err);
             return false;
         }
-    };
+    }
 
-    ctlProto.getLayerEditData = function (optionalLayer) {
+    getLayerEditData(optionalLayer) {
         const self = this;
         const layer = optionalLayer || self.layer;
         if (!layer) {
@@ -1133,22 +1169,9 @@ TC.inherit(WFSEdit, SWCacheClient);
         return self.layersEditData[layer.id] = self.layersEditData[layer.id] || {
             checkedOut: false
         };
-    };
+    }
 
-    const getLegendImage = function (layer, geometryType) {
-        switch (geometryType) {
-            case Consts.geom.POINT:
-            case Consts.geom.MULTIPOINT:
-                return TC.Util.getLegendImageFromStyle(layer.styles.point, { geometryType: Consts.geom.POINT });
-            case Consts.geom.POLYLINE:
-            case Consts.geom.MULTIPOLYLINE:
-                return TC.Util.getLegendImageFromStyle(layer.styles.line, { geometryType: Consts.geom.POLYLINE });
-            default:
-                return TC.Util.getLegendImageFromStyle(layer.styles.polygon, { geometryType: Consts.geom.POLYGON });
-        }
-    };
-
-    ctlProto._enableEditSerialization = function (layer) {
+    #enableEditSerialization(layer) {
         const self = this;
         return new Promise(function (resolve, _reject) {
             self.getEditableLayer(layer)
@@ -1161,7 +1184,7 @@ TC.inherit(WFSEdit, SWCacheClient);
 
                         var beforeEditLayer = layerEditData.beforeEditLayer;
                         if (!beforeEditLayer) {
-                            beforeEditLayer = layerEditData.beforeEditLayer = new Vector(TC.Util.extend({}, editableLayer.options, {
+                            beforeEditLayer = layerEditData.beforeEditLayer = new Vector(Util.extend({}, editableLayer.options, {
                                 id: self.getUID(),
                                 title: `${baseTitle} - ${self.getLocaleString('dataBeforeEdits')}`,
                                 readOnly: true,
@@ -1227,7 +1250,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                             });
                             addedFeaturesLayer.features.forEach(function (addedFeature) {
                                 if (!editableLayer.getFeatureById(addedFeature.id)) {
-                                    featurePromises.push(editableLayer.addFeature(self._createAuxFeature(addedFeature)));
+                                    featurePromises.push(editableLayer.addFeature(self.#createAuxFeature(addedFeature)));
                                 }
                             });
                             Promise.all(featurePromises).then(() => {
@@ -1237,10 +1260,10 @@ TC.inherit(WFSEdit, SWCacheClient);
                         }
                         else {
                             // Las capas de adiciones, modificaciones y eliminaciones son nuevas. Leemos de local storage.
-                            const storagePrefix = getStoragePrefix(self, editableLayer);
-                            const addedStoragePrefix = getAddedStoragePrefix(self, editableLayer);
-                            const modifiedStoragePrefix = getModifiedStoragePrefix(self, editableLayer);
-                            const removedStoragePrefix = getRemovedStoragePrefix(self, editableLayer);
+                            const storagePrefix = self.#getStoragePrefix(editableLayer);
+                            const addedStoragePrefix = self.#getAddedStoragePrefix(editableLayer);
+                            const modifiedStoragePrefix = self.#getModifiedStoragePrefix(editableLayer);
+                            const removedStoragePrefix = self.#getRemovedStoragePrefix(editableLayer);
                             //var li = map.getLoadingIndicator();
                             localforage.keys().then(function (keys) {
                                 if (keys) {
@@ -1299,7 +1322,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                                                                 break;
                                                         }
                                                         addPromise.then(function (feat) {
-                                                            //feat.setStyle(TC.Util.extend({}, layer.styles.line, layer.styles.polygon));
+                                                            //feat.setStyle(Util.extend({}, layer.styles.line, layer.styles.polygon));
                                                             feat.provId = id;
                                                             feat.setData(obj.feature.attributes);
                                                             const newFeat = feat.clone();
@@ -1340,15 +1363,15 @@ TC.inherit(WFSEdit, SWCacheClient);
                     }
                 });
         });
-    };
+    }
 
-    ctlProto.applyEdits = function () {
+    applyEdits() {
         const self = this;
         if (self.layer) {
             const layerEditData = self.getLayerEditData();
             if (layerEditData.serializable) {
                 self.isSyncing = true;
-                setSyncState(self);
+                self.#setSyncState();
                 const li = self.map.getLoadingIndicator();
                 const waitId = li && li.addWait();
                 // Copiamos modificadas para ponerle el nombre de atributo de geometría descrito en DescribeFeatureType.
@@ -1391,7 +1414,7 @@ TC.inherit(WFSEdit, SWCacheClient);
                                     const beLayerFeatures = layerEditData.beforeEditLayer.features;
                                     beLayerFeatures[beLayerFeatures.length] = f.clone();
                                 });
-                                self.deleteCache(getStoragePrefix(self)).then(function () {
+                                self.deleteCache(self.#getStoragePrefix()).then(function () {
                                     self.cacheLayer(l).finally(function () {
                                         self.isSyncing = false;
                                         li && li.removeWait(waitId);
@@ -1403,19 +1426,18 @@ TC.inherit(WFSEdit, SWCacheClient);
                             })
                             .catch(function (obj) {
                                 self.isSyncing = false;
-                                setSyncState(self);
+                                self.#setSyncState();
                                 li && li.removeWait(waitId);
                                 TC.error(self.getLocaleString('errorSyncingChanges', { code: obj.code, reason: obj.reason }), [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
                             });
                     });
             }
         }
-    };
+    }
 
-    ctlProto.discardEdits = function () {
-        var self = this;
-        self._joinedFeatureAttributes = [];
-        var storagePrefix = getStoragePrefix(self);
+    discardEdits() {
+        const self = this;
+        var storagePrefix = self.#getStoragePrefix();
         localforage.keys().then(function (keys) {
             if (keys) {
                 for (var i = 0, len = keys.length; i < len; i++) {
@@ -1431,55 +1453,55 @@ TC.inherit(WFSEdit, SWCacheClient);
                         layerEditData.modifiedFeaturesLayer.clearFeatures();
                         layerEditData.removedFeaturesLayer.clearFeatures();
                         self.editControl.setSelectedFeatures([]);
-                        self.editControl.modifyControl.closeAttributes();
                         self.getEditableLayer(self.layer).then(l => l.refresh());
                     }
                 }
-                setChangedState(self, false);
+                self.#setChangedState(false);
             }
         }, err => console.warn(err));
         self.editControl.mode = null;
-    };
+    }
 
-    ctlProto.showOriginalFeatures = function (show) {
+    showOriginalFeatures(show) {
         const self = this;
         self.showsOriginalFeatures = show;
         const layerEditData = self.getLayerEditData();
         if (layerEditData) {
             layerEditData.beforeEditLayer.setVisibility(show);
         }
-    };
+    }
 
-    ctlProto.highlightAdded = function (highlight) {
+    highlightAdded(highlight) {
         const self = this;
         self.highlightsAdded = highlight;
         const layerEditData = self.getLayerEditData();
         if (layerEditData && layerEditData.addedFeaturesLayer) {
             layerEditData.addedFeaturesLayer.setVisibility(highlight);
         }
-    };
+    }
 
-    ctlProto.highlightModified = function (highlight) {
+    highlightModified(highlight) {
         const self = this;
         self.highlightsModified = highlight;
         const layerEditData = self.getLayerEditData();
         if (layerEditData && layerEditData.modifiedFeaturesLayer) {
             layerEditData.modifiedFeaturesLayer.setVisibility(highlight);
         }
-    };
+    }
 
-    ctlProto.highlightRemoved = function (highlight) {
+    highlightRemoved(highlight) {
         const self = this;
         self.highlightsRemoved = highlight;
         const layerEditData = self.getLayerEditData();
         if (layerEditData && layerEditData.removedFeaturesLayer) {
             layerEditData.removedFeaturesLayer.setVisibility(highlight);
         }
-    };
+    }
 
-    const getStyleFromFeatureType = function (ctl, layer) {
+    #getStyleFromFeatureType(layer) {
+        const self = this;
         const result = {};
-        const layerEditData = ctl.getLayerEditData(layer.wmsLayer || layer);
+        const layerEditData = self.getLayerEditData(layer.wmsLayer || layer);
         switch (layerEditData.geometryType) {
             case Consts.geom.POLYGON:
             case Consts.geom.MULTIPOLYGON:
@@ -1494,9 +1516,9 @@ TC.inherit(WFSEdit, SWCacheClient);
                 break;
         }
         return result;
-    };
+    }
 
-    ctlProto.getBeforeEditLayerStyle = function (layer) {
+    getBeforeEditLayerStyle(layer) {
         const self = this;
         const getNegativeColor = function (color) {
             const rgba = layer.wrap.getRGBA(color);
@@ -1507,7 +1529,7 @@ TC.inherit(WFSEdit, SWCacheClient);
         };
 
         const dash = [1, 3];
-        const result = TC.Util.extend(true, {}, layer.options.styles || getStyleFromFeatureType(self, layer));
+        const result = Util.extend(true, {}, layer.options.styles || self.#getStyleFromFeatureType(layer));
         if (result.point) {
             result.point.strokeColor = getNegativeColor(result.point.strokeColor);
             result.point.lineDash = dash;
@@ -1522,10 +1544,11 @@ TC.inherit(WFSEdit, SWCacheClient);
         }
 
         return result;
-    };
+    }
 
-    const colorizeLayer = function (ctl, layer, color) {
-        const result = TC.Util.extend(true, {}, layer.options.styles || getStyleFromFeatureType(ctl, layer));
+    #colorizeLayer(layer, color) {
+        const self = this;
+        const result = Util.extend(true, {}, layer.options.styles || self.#getStyleFromFeatureType(layer));
         if (result.point) {
             result.point.strokeColor = color;
             result.point.fillColor = color;
@@ -1539,27 +1562,27 @@ TC.inherit(WFSEdit, SWCacheClient);
         }
 
         return result;
-    };
+    }
 
-    ctlProto.getAddedFeaturesLayerStyle = function (layer) {
+    getAddedFeaturesLayerStyle(layer) {
         const self = this;
         const layerEditData = self.getLayerEditData(layer.wmsLayer || layer);
-        return colorizeLayer(self, layer, layerEditData.addedCustomColor || '#00ff00');
-    };
+        return self.#colorizeLayer(layer, layerEditData.addedCustomColor || '#00ff00');
+    }
 
-    ctlProto.getModifiedFeaturesLayerStyle = function (layer) {
+    getModifiedFeaturesLayerStyle(layer) {
         const self = this;
         const layerEditData = self.getLayerEditData(layer.wmsLayer || layer);
-        return colorizeLayer(self, layer, layerEditData.modifiedCustomColor || '#ff7f00');
-    };
+        return self.#colorizeLayer(layer, layerEditData.modifiedCustomColor || '#ff7f00');
+    }
 
-    ctlProto.getRemovedFeaturesLayerStyle = function (layer) {
+    getRemovedFeaturesLayerStyle(layer) {
         const self = this;
         const layerEditData = self.getLayerEditData(layer.wmsLayer || layer);
-        return colorizeLayer(self, layer, layerEditData.removedCustomColor || '#ff0000');
-    };
+        return self.#colorizeLayer(layer, layerEditData.removedCustomColor || '#ff0000');
+    }
+}
 
-})();
-
+WFSEdit.prototype.CLASS = 'tc-ctl-wfsedit';
 TC.control.WFSEdit = WFSEdit;
 export default WFSEdit;
