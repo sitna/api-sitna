@@ -94,8 +94,6 @@ class MultiFeatureInfo extends FeatureInfoCommons {
     constructor() {
         super(...arguments);
         const self = this;
-        self.div.classList.remove(super.CLASS);
-        self.div.classList.add(self.CLASS);
 
         self.modes = self.options.modes || {};
         if (typeof self.modes[Consts.geom.POINT] === 'undefined') {
@@ -111,10 +109,6 @@ class MultiFeatureInfo extends FeatureInfoCommons {
         self.lastCtrlActive = null;
         self.popup = null;
         self.exportsState = false; // Los controles que exportan estado son los hijos
-    }
-
-    getClassName() {
-        return 'tc-ctl-m-finfo';
     }
 
     async register(map) {
@@ -183,6 +177,22 @@ class MultiFeatureInfo extends FeatureInfoCommons {
             }
         });
 
+        map
+            //.on(Consts.event.FEATUREINFO, function () {
+            //    delFeaturesBtn.disabled = false;
+            //})
+            //.on(Consts.event.NOFEATUREINFO, function (e) {
+            //    if (e.control && e.control.filterFeature) {
+            //        delFeaturesBtn.disabled = false;
+            //    }
+            //})
+            .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD + ' ' + Consts.event.FEATUREREMOVE, function (e) {
+                if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
+                    self.updateUI();
+                }
+            });
+
+
         await Promise.all(ctlPromises);
         if (self.featureInfoControl) {
             self.featureInfoControl.activate();
@@ -210,85 +220,74 @@ class MultiFeatureInfo extends FeatureInfoCommons {
         if (self.modes[Consts.geom.POLYGON]) {
             renderData.polygonSelectValue = Consts.geom.POLYGON;
         }
-        return self._set1stRenderPromise(self.renderData(renderData,
+        return self.renderData(renderData,
             function () {
-                var changeEvent = function () {
-                    switch (this.value) {
-                        case Consts.geom.POLYLINE:
-                            //modo línea
-                            self.lineFeatureInfoControl.activate();
-                            self.lastCtrlActive = self.lineFeatureInfoControl;
-                            break;
-                        case Consts.geom.POLYGON:
-                            //modo poligono
-                            self.polygonFeatureInfoControl.activate();
-                            self.lastCtrlActive = self.polygonFeatureInfoControl;
-                            break;
-                        default:
-                            //modo point
-                            self.featureInfoControl.activate();
-                            self.lastCtrlActive = self.featureInfoControl;
-                            break;
-                    }
-                };
-                self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
-                    input.addEventListener('change', changeEvent);
-                });
 
-                //URI bind del click del boton de borrar seleccionadas
-                const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
-                delFeaturesBtn.addEventListener(Consts.event.CLICK, function (_e) {
-                    self.featureInfoControls.forEach(ctl => {
-                        ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
-                        ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
-                    });
-                }, { passive: true });
-
-                self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(Consts.event.CLICK, async function (_e) {
-                    const downloadDialog = await self.getDownloadDialog();
-                    let options = {
-                        title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
-                        fileName: self._getFileName()
-                    };
-
-                    if (self.map.elevation || self.options.displayElevation) {
-                        options = Object.assign({}, options, {
-                            elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
-                        });
-                    }
-                    downloadDialog.open(Array.prototype.concat.apply([], self.featureInfoControls.map(ctl => ctl.resultsLayer.features)), options);
-                }, { passive: true });
-                self.div.querySelector(`.${self.CLASS}-btn-zoom`).addEventListener(Consts.event.CLICK, function (_e) {
-                    var features = self.featureInfoControls.reduce((i, a) => {
-                        return i.concat(a.resultsLayer.features);
-                    }, [])
-                    self.map.zoomToFeatures(features);
-
-                }, { passive: true });
-                self.map
-                    //.on(Consts.event.FEATUREINFO, function () {
-                    //    delFeaturesBtn.disabled = false;
-                    //})
-                    //.on(Consts.event.NOFEATUREINFO, function (e) {
-                    //    if (e.control && e.control.filterFeature) {
-                    //        delFeaturesBtn.disabled = false;
-                    //    }
-                    //})
-                    .on(Consts.event.FEATUREREMOVE, function (e) {
-                        if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
-                            self.updateUI();
-                        }
-                    })
-                    .on(Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
-                        if (self.featureInfoControls.some(ctl => ctl.resultsLayer === e.layer || ctl.filterLayer === e.layer)) {
-                            self.updateUI();
-                        }
-                    });
+                self.addUIEventListeners();
 
                 if (Util.isFunction(callback)) {
                     callback();
                 }
-            }));
+            });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+
+        const changeEvent = function () {
+            switch (this.value) {
+                case Consts.geom.POLYLINE:
+                    //modo línea
+                    self.lineFeatureInfoControl.activate();
+                    self.lastCtrlActive = self.lineFeatureInfoControl;
+                    break;
+                case Consts.geom.POLYGON:
+                    //modo poligono
+                    self.polygonFeatureInfoControl.activate();
+                    self.lastCtrlActive = self.polygonFeatureInfoControl;
+                    break;
+                default:
+                    //modo point
+                    self.featureInfoControl.activate();
+                    self.lastCtrlActive = self.featureInfoControl;
+                    break;
+            }
+        };
+        self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
+            input.addEventListener('change', changeEvent);
+        });
+
+        //URI bind del click del boton de borrar seleccionadas
+        const delFeaturesBtn = self.div.querySelector(`.${self.CLASS}-btn-remove`);
+        delFeaturesBtn.addEventListener(Consts.event.CLICK, function (_e) {
+            self.featureInfoControls.forEach(ctl => {
+                ctl.resultsLayer.features.slice().forEach(f => ctl.downplayFeature(f));
+                ctl.filterLayer.features.slice().forEach(f => f.layer.removeFeature(f));
+            });
+        }, { passive: true });
+
+        self.div.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(Consts.event.CLICK, async function (_e) {
+            const downloadDialog = await self.getDownloadDialog();
+            let options = {
+                title: self.getLocaleString("featureInfo") + " - " + self.getLocaleString("download"),
+                fileName: self._getFileName()
+            };
+
+            if (self.map.elevation || self.options.displayElevation) {
+                options = Object.assign({}, options, {
+                    elevation: Object.assign({}, self.map.elevation && self.map.elevation.options, self.options.displayElevation)
+                });
+            }
+            downloadDialog.open(Array.prototype.concat.apply([], self.featureInfoControls.map(ctl => ctl.resultsLayer.features)), options);
+        }, { passive: true });
+
+        self.div.querySelector(`.${self.CLASS}-btn-zoom`).addEventListener(Consts.event.CLICK, function (_e) {
+            var features = self.featureInfoControls.reduce((i, a) => {
+                return i.concat(a.resultsLayer.features);
+            }, [])
+            self.map.zoomToFeatures(features);
+
+        }, { passive: true });
     }
 
     activate() {
@@ -360,5 +359,6 @@ class MultiFeatureInfo extends FeatureInfoCommons {
     }
 }
 
+MultiFeatureInfo.prototype.CLASS = 'tc-ctl-m-finfo';
 TC.control.MultiFeatureInfo = MultiFeatureInfo;
 export default MultiFeatureInfo;
