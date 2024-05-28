@@ -17,16 +17,11 @@ class Share extends MapInfo {
     constructor() {
         super(...arguments);
         const self = this;
-        self.div.classList.add(self.CLASS);
 
         self.#dialogDiv = Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
             document.body.appendChild(self.#dialogDiv);
         }
-    }
-
-    getClassName() {
-        return 'tc-ctl-share';
     }
 
     async register(map) {
@@ -78,19 +73,29 @@ class Share extends MapInfo {
     async render(callback) {
         const self = this;
         self.#dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
-        const renderPromise = super.renderData.call(self, { controlId: self.id });
-        self._set1stRenderPromise(renderPromise);
-        await renderPromise;
+        await super.renderData.call(self, { controlId: self.id }, function () {
 
-        //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
-        if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
-            self.div.querySelectorAll('button').forEach(function (btn) {
-                btn.classList.remove('hide');
-            });
-            self.div.querySelectorAll('input[type=text]').forEach(function (input) {
-                delete input.dataset.dataOriginalTitle;
-            });
-        }
+            //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
+            if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
+                self.div.querySelectorAll('button').forEach(function (btn) {
+                    btn.classList.remove('hide');
+                });
+                self.div.querySelectorAll('input[type=text]').forEach(function (input) {
+                    delete input.dataset.dataOriginalTitle;
+                });
+            }
+
+            self.addUIEventListeners();
+
+            if (Util.isFunction(callback)) {
+                callback();
+            }
+
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
 
         self.div.querySelector('h2').addEventListener('click', function (_e) {
             self.update();
@@ -225,10 +230,6 @@ class Share extends MapInfo {
                 alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + self.NAVALERT);
             }
         });
-
-        if (Util.isFunction(callback)) {
-            callback();
-        }
     }
 
     async #selectInputField(elm, shorten) {
@@ -381,5 +382,6 @@ class Share extends MapInfo {
 
 }
 
+Share.prototype.CLASS = 'tc-ctl-share';
 TC.control.Share = Share;
 export default Share;
