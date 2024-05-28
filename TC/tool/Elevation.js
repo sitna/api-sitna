@@ -44,51 +44,53 @@ Consts.elevationService = {
 
 TC.tool = TC.tool || {};
 
-const Elevation = function (options) {
-    const self = this;
-    self.options = options || {};
-    self._servicePromises = [];
-    const serviceOptions = self.options.services || [
-        Consts.elevationService.IDENA,
-        Consts.elevationService.IGN_FR,
-        Consts.elevationService.IGN_ES/*,
-        Consts.elevationService.GOOGLE*/
-    ];      
-
-    serviceOptions.forEach(function (srv, idx) {
-        self._servicePromises[idx] = new Promise(function (resolve, _reject) {
-            const serviceName = typeof srv === 'string' ? srv : srv.name;
-            const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
-            
-            const srvOptions = typeof srv === 'string' ? {} : srv;
-            import('./' + ctorName).then(function (elevationModule) {
-                const ElevationService = elevationModule.default;
-                TC.tool[ctorName] = ElevationService;
-                resolve(new ElevationService(srvOptions));
-            });
-        });
-    });
+let requestUID = 1;
+const getRequestUID = function () {
+    const result = requestUID.toString();
+    requestUID++;
+    return result;
 };
 
-(function () {
-    const toolProto = Elevation.prototype;
-
-    let requestUID = 1;
-    const getRequestUID = function () {
-        const result = requestUID.toString();
-        requestUID++;
-        return result;
+class Elevation {
+    static errors = {
+        MAX_COORD_QUANTITY_EXCEEDED: 'max_coord_quantity_exceeded',
+        UNDEFINED: 'undefined'
     };
+    #servicePromises = [];
 
-    toolProto.getService = function (idx) {
-        return this._servicePromises[idx];
-    };
+    constructor(options = {}) {
+        this.options = options;
+        const serviceOptions = this.options.services || [
+            Consts.elevationService.IDENA,
+            Consts.elevationService.IGN_ES,
+            Consts.elevationService.IGN_FR,
+            Consts.elevationService.GOOGLE
+        ];
 
-    toolProto.getServices = function () {
-        return Promise.all(this._servicePromises);
-    };
+        serviceOptions.forEach((srv, idx) => {
+            this.#servicePromises[idx] = new Promise(function (resolve, _reject) {
+                const serviceName = typeof srv === 'string' ? srv : srv.name;
+                const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
 
-    toolProto.getElevation = async function (options) {
+                const srvOptions = typeof srv === 'string' ? {} : srv;
+                import('./' + ctorName).then(function (elevationModule) {
+                    const ElevationService = elevationModule.default;
+                    TC.tool[ctorName] = ElevationService;
+                    resolve(new ElevationService(srvOptions));
+                });
+            });
+        });
+    }
+
+    getService(idx) {
+        return this.#servicePromises[idx];
+    }
+
+    getServices() {
+        return Promise.all(this.#servicePromises);
+    }
+
+    async getElevation(options) {
         const self = this;
         const opts = Object.assign({}, options);
         opts.id = getRequestUID();
@@ -170,11 +172,10 @@ const Elevation = function (options) {
                 }
             }
         }
-    };
+    }
 
-    toolProto.setGeometry = async function (options) {
+    async setGeometry(options = {}) {
         const self = this;
-        options = options || {};
         const features = options.features || [];
 
         if (features.length) {
@@ -323,9 +324,9 @@ const Elevation = function (options) {
         else {
             return [];
         }
-    };
+    }
 
-    toolProto._updatePartialResult = function (coordinates, responses) {
+    _updatePartialResult(coordinates, responses) {
         let done = false;
         let pending = false;
         for (var i = 0, ii = coordinates.length; i < ii; i++) {
@@ -361,18 +362,12 @@ const Elevation = function (options) {
         // 2: Han contestado todos los servicios
         done = !pending && coordinates.every(p => p[2] !== null) || responses.every(r => r !== false);
         return done;
-    };
+    }
 
-})();
-
-Elevation.errors = {
-    MAX_COORD_QUANTITY_EXCEEDED: 'max_coord_quantity_exceeded',
-    UNDEFINED: 'undefined'
-};
-
-Elevation.getElevationGain = function (options) {
-    return Util.getElevationGain(options);
-};
+    static getElevationGain(options) {
+        return Util.getElevationGain(options);
+    }
+}
 
 TC.tool.Elevation = Elevation;
 export default Elevation;
