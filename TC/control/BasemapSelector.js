@@ -1,93 +1,56 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import MapContents from './MapContents';
 import Raster from '../../SITNA/layer/Raster';
 import Vector from '../../SITNA/layer/Vector';
 
 TC.control = TC.control || {};
 
-const BasemapSelector = function () {
-    var self = this;
-    //options = options || {};
+const getClosestParent = function (elm, selector) {
+    while (elm && !elm.matches(selector)) {
+        elm = elm.parentElement;
+    }
+    return elm;
+};
 
-    MapContents.apply(self, arguments);
+const getTo3DVIew = function (baseLayer) {
+    return Promise.all([
+        baseLayer.getCapabilitiesPromise(),
+        baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : Promise.resolve()
+    ]);
+};
 
-    self.layerInfos = {};
-
-    self._cssClasses = {
-        LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
-        CRS_DIALOG: self.CLASS + '-crs-dialog',
-        CRS_LIST: self.CLASS + '-crs-list',
-        VIEW_BTN: self.CLASS + '-btn-view',
-        CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
-        CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code',
-        TREE: self.CLASS + '-tree',
+class BasemapSelector extends MapContents {
+    #currentSelection;
+    #moreBaseLayersPromise;
+    #moreBaseLayers;
+    #cssClasses = {
+        LOAD_CRS_BUTTON: this.CLASS + '-crs-btn-load',
+        CRS_DIALOG: this.CLASS + '-crs-dialog',
+        CRS_LIST: this.CLASS + '-crs-list',
+        VIEW_BTN: this.CLASS + '-btn-view',
+        CURRENT_CRS_NAME: this.CLASS + '-cur-crs-name',
+        CURRENT_CRS_CODE: this.CLASS + '-cur-crs-code',
+        TREE: this.CLASS + '-tree',
         DETAILS: 'tc-details',
         GRID: 'tc-grid'
     };
 
-    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-    if (window.$) {
-        self._$dialogDiv = $(self._dialogDiv);
+    constructor() {
+        super(...arguments);
+        const self = this;
+        //options = options || {};
+
+        self.layerInfos = {};
+
+        self._dialogDiv = Util.getDiv(self.options.dialogDiv);
+        if (!self.options.dialogDiv) {
+            document.body.appendChild(self._dialogDiv);
+        }
     }
-    if (!self.options.dialogDiv) {
-        document.body.appendChild(self._dialogDiv);
-    }
 
-    self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.tc-modal-close)', function (e) {
-
-        if (e.target.classList.contains(self._cssClasses.LOAD_CRS_BUTTON)) {
-            self.loadFallbackProjections();
-            return;
-        }
-
-        TC.Util.closeModal();
-        const btn = e.target;
-        const crs = btn.dataset.crsCode;
-
-        // dependerá del que esté activo
-        const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
-        dialog.classList.add(Consts.classes.HIDDEN);
-
-        const layer = self.getLayer(dialog.dataset.layerId);
-        if (layer) {
-            if (crs) {
-                TC.loadProjDef({
-                    crs: crs,
-                    callback: function () {
-                        self.map.setProjection({
-                            crs: crs,
-                            baseLayer: layer
-                        });
-                    }
-                });
-            }
-            else {
-                const fallbackLayer = self.getFallbackLayer(btn.dataset.fallbackLayerId);
-                if (fallbackLayer) {
-                    self.map.setBaseLayer(fallbackLayer);
-                }
-            }
-        }
-    }), { passive: true });
-};
-
-TC.inherit(BasemapSelector, MapContents);
-
-(function () {
-
-    var ctlProto = BasemapSelector.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-bms';
-
-    const getClosestParent = function (elm, selector) {
-        while (elm && !elm.matches(selector)) {
-            elm = elm.parentElement;
-        }
-        return elm;
-    };
-
-    const changeInputRadioBaseMap = function (e, callback) {
+    #changeInputRadioBaseMap(e, callback) {
         const self = this;
         var flagToCallback = true;
 
@@ -114,7 +77,7 @@ TC.inherit(BasemapSelector, MapContents);
 
                 if (self.map.on3DView) {
                     if (!layer.getFallbackLayer()) {
-                        self._currentSelection.checked = true;
+                        self.#currentSelection.checked = true;
                         e.stopPropagation();
                         return;
                     } else if (layer.getFallbackLayer()) {
@@ -131,8 +94,8 @@ TC.inherit(BasemapSelector, MapContents);
                     }
                 } else {
                     // provisonal
-                    if (self._currentSelection) {
-                        self._currentSelection.checked = true;
+                    if (self.#currentSelection) {
+                        self.#currentSelection.checked = true;
                     }
 
                     // Buscamos alternativa
@@ -166,28 +129,24 @@ TC.inherit(BasemapSelector, MapContents);
             }
         }
 
-        if (this._currentSelection) {
-            this._currentSelection.checked = true;
+        if (this.#currentSelection) {
+            this.#currentSelection.checked = true;
         }
 
 
         if (callback) {
             callback(flagToCallback);
         }
-    };
+    }
 
-    ctlProto.register = async function (map) {
+    async register(map) {
         const self = this;
 
-        const ctl = await MapContents.prototype.register.call(self, map);
-        self.div.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(Consts.event.CLICK, function (e) {
-            self.toggleView();
-            e.target.blur();
-        }, { passive: true });
-
+        const ctl = await super.register.call(self, map);
+        
         if (self.options.dialogMore) {
             map.on(Consts.event.VIEWCHANGE, function () {
-                self._getMoreBaseLayers();
+                self.#getMoreBaseLayers();
             });
         }
 
@@ -201,65 +160,69 @@ TC.inherit(BasemapSelector, MapContents);
             if (e.target.value === "moreLayers") {
                 self.showMoreLayersDialog();
             } else {
-                changeInputRadioBaseMap.call(self, e);
+                self.#changeInputRadioBaseMap(e);
             }
 
             e.stopPropagation();
         }));
 
         return ctl;
-    };
+    }
 
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-bms.mjs');
         const nodeTemplatePromise = import('../templates/tc-ctl-bms-node.mjs');
         const dialogTemplatePromise = import('../templates/tc-ctl-bms-dialog.mjs');
 
         const template = {};
-        template[ctlProto.CLASS] = (await mainTemplatePromise).default;
-        template[ctlProto.CLASS + '-node'] = (await nodeTemplatePromise).default;
-        template[ctlProto.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
         self.template = template;
-    };
+    }
 
-    ctlProto.render = function (callback) {
+    async render(callback) {
         const self = this;
-        const result = MapContents.prototype.render.call(self, callback, TC.Util.extend({}, self.options, { controlId: self.id }));
+        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
+        await super.render.call(self, callback, Util.extend({}, self.options, { controlId: self.id }));
+        return self;
+    }
 
-        self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-            self._dialogDiv.innerHTML = html;
+    addUIEventListeners() {
+        const self = this;
+        self.div.querySelector(`.${self.#cssClasses.VIEW_BTN}`)?.addEventListener(Consts.event.CLICK, function (e) {
+            self.toggleView();
+            e.target.blur();
+        }, { passive: true });
 
-            if (self.options.dialogMore) {
-                const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
+        if (self.options.dialogMore) {
+            const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
-                dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`).addEventListener(Consts.event.CLICK, function (e) {
-                    self.toggleMoreLayersDialogView();
-                    e.target.blur();
-                    e.stopPropagation();
-                }, { passive: true });
+            dialog.querySelector(`.${self.#cssClasses.VIEW_BTN}`)?.addEventListener(Consts.event.CLICK, function (e) {
+                self.toggleMoreLayersDialogView();
+                e.target.blur();
+                e.stopPropagation();
+            }, { passive: true });
 
-                dialog.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
-                    changeInputRadioBaseMap.call(self, e, function (close) {
-                        if (close) {
-                            TC.Util.closeModal();
-                        }
-                    });
+            dialog.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
+                self.#changeInputRadioBaseMap(e, function (close) {
+                    if (close) {
+                        Util.closeModal();
+                    }
+                });
 
-                    e.stopPropagation();
-                }));
-            }
-        });
+                e.stopPropagation();
+            }));
+        }
+    }
 
-        return result;
-    };
-
-    ctlProto.update = async function (div, baseLayer) {
+    async update(div, baseLayer) {
         const self = this;
 
         div = div || self.div;
 
-        await (self._moreBaseLayersPromise || self._getMoreBaseLayers());
+        await (self.#moreBaseLayersPromise || self.#getMoreBaseLayers());
         Array.from(div.querySelectorAll(`ul.${self.CLASS}-branch li`)).forEach(function (li, _idx, arr) {
             const layer = self.getLayer(li.dataset.layerId);
             if (layer) {
@@ -301,19 +264,19 @@ TC.inherit(BasemapSelector, MapContents);
                 }
 
                 if (checked) {
-                    self._currentSelection = radio;
+                    self.#currentSelection = radio;
                 }
             }
         });
 
         self.updateScale();
-    };
+    }
 
-    ctlProto.updateLayerTree = function (layer) {
-        const self = this;        
+    updateLayerTree(layer) {
+        const self = this;
         // Actuamos cuando la capa es base y es visible en tablas de contenidos o es hija de una visible
         if (layer.isBase && (!layer.options.stealth || layer.firstOption && !layer.firstOption.options.stealth)) {
-            MapContents.prototype.updateLayerTree.call(self, layer);
+            super.updateLayerTree.call(self, layer);
 
             const displayLayer = layer.firstOption || layer;
 
@@ -378,13 +341,13 @@ TC.inherit(BasemapSelector, MapContents);
                 TC.error(err);
             });
         }
-    };
+    }
 
-    ctlProto.updateLayerOrder = function (_layer, _oldIdx, _newIdx) {
+    updateLayerOrder(_layer, _oldIdx, _newIdx) {
         // no hace nada
-    };
+    }
 
-    ctlProto.removeLayer = function (layer) {
+    removeLayer(layer) {
         const self = this;
         if (layer.isBase) {
             const lis = self.div.querySelector('.' + self.CLASS + '-branch').querySelectorAll('li');
@@ -396,46 +359,45 @@ TC.inherit(BasemapSelector, MapContents);
                 }
             }
         }
-    };
+    }
 
-    ctlProto.onErrorLayer = function (layer) {
+    onErrorLayer(layer) {
         const self = this;
 
         if (layer.isBase && !layer.options.stealth) {
             self.map.toast(self.getLocaleString('baseLayerNotAvailable', { mapName: layer.title }), { type: Consts.msgType.ERROR });
         }
-    };
+    }
 
-    ctlProto.getFallbackLayer = function (id) {
+    getFallbackLayer(id) {
         const self = this;
         const filterFn = function (layer) {
             return layer.fallbackLayer && layer.fallbackLayer.id === id;
         };
         let baseLayersWithFallback = self.map.baseLayers.filter(filterFn);
         let result = baseLayersWithFallback.length ? baseLayersWithFallback[0].fallbackLayer : null;
-        if (!result && self._moreBaseLayers) {
-            baseLayersWithFallback = self._moreBaseLayers.filter(filterFn);
+        if (!result && self.#moreBaseLayers) {
+            baseLayersWithFallback = self.#moreBaseLayers.filter(filterFn);
             result = baseLayersWithFallback.length ? baseLayersWithFallback[0].fallbackLayer : null;
         }
         return result;
-    };
+    }
 
-    ctlProto.loadFallbackProjections = function () {
+    loadFallbackProjections() {
         const self = this;
         const lis = self._dialogDiv
-            .querySelector('.' + self._cssClasses.CRS_DIALOG)
-            .querySelectorAll('ul.' + self._cssClasses.CRS_LIST + ' li');
+            .querySelector('.' + self.#cssClasses.CRS_DIALOG)
+            .querySelectorAll('ul.' + self.#cssClasses.CRS_LIST + ' li');
         lis.forEach(function (li) {
             li.classList.remove(Consts.classes.HIDDEN);
-            if (li.querySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON)) {
+            if (li.querySelector('button.' + self.#cssClasses.LOAD_CRS_BUTTON)) {
                 li.classList.add(Consts.classes.HIDDEN);
             }
         });
-    };
+    }
 
-    ctlProto.showProjectionChangeDialog = function (options) {
+    showProjectionChangeDialog(options = {}) {
         const self = this;
-        options = options || {};
         const layer = options.layer;
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
         const modalBody = dialog.querySelector('.tc-modal-body');
@@ -456,6 +418,38 @@ TC.inherit(BasemapSelector, MapContents);
         }).then(function (projList) {
             var hasFallbackCRS = false;
             const fragment = document.createDocumentFragment();
+
+            const onChangeCrsClick = function (e) {
+
+                Util.closeModal();
+                const btn = e.target;
+                const crs = btn.dataset.crsCode;
+
+                // dependerá del que esté activo
+                const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
+                dialog.classList.add(Consts.classes.HIDDEN);
+
+                const layer = self.getLayer(dialog.dataset.layerId);
+                if (layer) {
+                    if (crs) {
+                        TC.loadProjDef({
+                            crs: crs,
+                            callback: function () {
+                                self.map.setProjection({
+                                    crs: crs,
+                                    baseLayer: layer
+                                });
+                            }
+                        });
+                    }
+                    else {
+                        const fallbackLayer = self.getFallbackLayer(btn.dataset.fallbackLayerId);
+                        if (fallbackLayer) {
+                            self.map.setBaseLayer(fallbackLayer);
+                        }
+                    }
+                }
+            };
             projList
                 .forEach(function (projObj) {
                     const li = document.createElement('li');
@@ -463,7 +457,7 @@ TC.inherit(BasemapSelector, MapContents);
                     button.setAttribute('type', 'button');
 
                     if (blCRSList.filter(function (crs) {
-                        return TC.Util.CRSCodesEqual(crs, projObj.code);
+                        return Util.CRSCodesEqual(crs, projObj.code);
                     }).length === 0) {
                         // Es un CRS del fallback
                         hasFallbackCRS = true;
@@ -480,6 +474,9 @@ TC.inherit(BasemapSelector, MapContents);
                         button.dataset.crsCode = projObj.code;
                     }
 
+                    button.addEventListener(Consts.event.CLICK, onChangeCrsClick, { passive: true });
+
+
                     li.appendChild(button);
                     fragment.appendChild(li);
                 });
@@ -490,6 +487,7 @@ TC.inherit(BasemapSelector, MapContents);
                 button.setAttribute('type', 'button');
                 button.innerHTML = self.getLocaleString('reprojectOnTheFly');
                 button.dataset.fallbackLayerId = options.fallbackLayer.id;
+                button.addEventListener(Consts.event.CLICK, onChangeCrsClick, { passive: true });
                 li.appendChild(button);
                 fragment.appendChild(li);
             }
@@ -498,8 +496,11 @@ TC.inherit(BasemapSelector, MapContents);
                 const li = document.createElement('li');
                 const button = document.createElement('button');
                 button.setAttribute('type', 'button');
-                button.classList.add(self._cssClasses.LOAD_CRS_BUTTON);
+                button.classList.add(self.#cssClasses.LOAD_CRS_BUTTON);
                 button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
+                button.addEventListener(Consts.event.CLICK, function (_e) {
+                    self.loadFallbackProjections();
+                }, { passive: true });
                 li.appendChild(button);
                 fragment.appendChild(li);
             }
@@ -508,10 +509,10 @@ TC.inherit(BasemapSelector, MapContents);
             modalBody.classList.remove(Consts.classes.LOADING);
         });
         dialog.querySelector('.' + self.CLASS + '-name').innerHTML = layer.title || layer.name;
-        TC.Util.showModal(dialog);
-    };
+        Util.showModal(dialog);
+    }
 
-    ctlProto.showMoreLayersDialog = function () {
+    showMoreLayersDialog() {
         const self = this;
 
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
@@ -523,18 +524,18 @@ TC.inherit(BasemapSelector, MapContents);
         modalBody.classList.add(Consts.classes.LOADING);
         dialog.classList.remove(Consts.classes.HIDDEN);
 
-        TC.Util.showModal(dialog, {
+        Util.showModal(dialog, {
             closeCallback: function () {
                 // no hay selección, vuelvo a seleccionar el mapa de fondo actual del mapa.
-                this.update().then(() => this._currentSelection.checked = true);
+                this.update().then(() => this.#currentSelection.checked = true);
             }.bind(self)
         });
 
-        const parentTree = self.div.querySelector(`.${self._cssClasses.TREE}`);
-        const isGrid = parentTree.classList.contains(self._cssClasses.GRID);
-        const button = dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`);
-        button.classList.toggle(self._cssClasses.DETAILS, isGrid);
-        button.classList.toggle(self._cssClasses.GRID, !isGrid);
+        const parentTree = self.div.querySelector(`.${self.#cssClasses.TREE}`);
+        const isGrid = parentTree.classList.contains(self.#cssClasses.GRID);
+        const button = dialog.querySelector(`.${self.#cssClasses.VIEW_BTN}`);
+        button.classList.toggle(self.#cssClasses.DETAILS, isGrid);
+        button.classList.toggle(self.#cssClasses.GRID, !isGrid);
         button.setAttribute('title', self.getLocaleString(isGrid ? 'showDetailsView' : 'showGridView'));
 
         const processLayer = bl => {
@@ -545,8 +546,8 @@ TC.inherit(BasemapSelector, MapContents);
             return {};
         };
         const renderBody = function () {
-            const isGrid = dialog.querySelector(`.${self._cssClasses.VIEW_BTN}`).classList.contains(self._cssClasses.DETAILS);
-            const moreBaseLayers = self._moreBaseLayers.slice();
+            const isGrid = dialog.querySelector(`.${self.#cssClasses.VIEW_BTN}`).classList.contains(self.#cssClasses.DETAILS);
+            const moreBaseLayers = self.#moreBaseLayers.slice();
             for (var i = 0, ii = moreBaseLayers.length; i < ii; i++) {
                 if (!moreBaseLayers[i]) {
                     moreBaseLayers[i] = false;
@@ -557,21 +558,21 @@ TC.inherit(BasemapSelector, MapContents);
                 controlId: self.id
             }, function (html) {
                 modalBody.innerHTML = html;
-                const tree = modalBody.querySelector(`.${self._cssClasses.TREE}`);
-                tree.classList.toggle(self._cssClasses.DETAILS, !isGrid);
-                tree.classList.toggle(self._cssClasses.GRID, isGrid);
+                const tree = modalBody.querySelector(`.${self.#cssClasses.TREE}`);
+                tree.classList.toggle(self.#cssClasses.DETAILS, !isGrid);
+                tree.classList.toggle(self.#cssClasses.GRID, isGrid);
                 modalBody.classList.remove(Consts.classes.LOADING);
 
                 self.update(modalBody);
             });
         };
-        self._getMoreBaseLayers(function (layerIdx) {
+        self.#getMoreBaseLayers(function (layerIdx) {
             if (modalBody.classList.contains(Consts.classes.LOADING)) {
                 renderBody();
             }
             else {
                 const li = modalBody.querySelector(`li.${self.CLASS}-node:nth-child(${layerIdx + 1})`);
-                const bl = self._moreBaseLayers[layerIdx];
+                const bl = self.#moreBaseLayers[layerIdx];
                 if (bl) {
                     self.getRenderedHtml(self.CLASS + '-node', processLayer(bl), function (html) {
                         li.insertAdjacentHTML('beforebegin', html);
@@ -583,49 +584,40 @@ TC.inherit(BasemapSelector, MapContents);
         }).then(function () {
             renderBody();
         });
-    };
+    }
 
-    const toggleUI = function (ctl, container) {
-        const tree = container.querySelector(`.${ctl._cssClasses.TREE}`);
+    #toggleUI(container) {
+        const tree = container.querySelector(`.${this.#cssClasses.TREE}`);
         if (tree) {
-            const btn = container.querySelector(`.${ctl._cssClasses.VIEW_BTN}`);
-            const isGrid = btn.classList.toggle(ctl._cssClasses.DETAILS);
-            btn.setAttribute('title', ctl.getLocaleString(btn.classList.toggle(ctl._cssClasses.GRID) ? 'showGridView' : 'showDetailsView'));
-            tree.classList.remove(ctl._cssClasses.DETAILS, ctl._cssClasses.GRID);
-            setTimeout(() => tree.classList.add(isGrid ? ctl._cssClasses.GRID : ctl._cssClasses.DETAILS), 20);
+            const btn = container.querySelector(`.${this.#cssClasses.VIEW_BTN}`);
+            const isGrid = btn.classList.toggle(this.#cssClasses.DETAILS);
+            btn.setAttribute('title', this.getLocaleString(btn.classList.toggle(this.#cssClasses.GRID) ? 'showGridView' : 'showDetailsView'));
+            tree.classList.remove(this.#cssClasses.DETAILS, this.#cssClasses.GRID);
+            setTimeout(() => tree.classList.add(isGrid ? this.#cssClasses.GRID : this.#cssClasses.DETAILS), 20);
         }
-    };
+    }
 
-    ctlProto.toggleView = function () {
-        const self = this;
-        toggleUI(self, self.div);
-    };
+    toggleView() {
+        this.#toggleUI(this.div);
+    }
 
-    ctlProto.toggleMoreLayersDialogView = function () {
-        const self = this;
-        if (self._dialogDiv) {
-            toggleUI(self, self._dialogDiv);
+    toggleMoreLayersDialogView() {
+        if (this._dialogDiv) {
+            this.#toggleUI(this._dialogDiv);
         }
-    };
+    }
 
-    ctlProto.getLayer = function (id) {
+    getLayer(id) {
         const self = this;
-        return self.map && (self.map.getLayer(id) || self._moreBaseLayers && self._moreBaseLayers.find(layer => layer.id === id));
-    };
+        return self.map && (self.map.getLayer(id) || self.#moreBaseLayers && self.#moreBaseLayers.find(layer => layer.id === id));
+    }
 
-    const getTo3DVIew = function (baseLayer) {
-        return Promise.all([
-            baseLayer.getCapabilitiesPromise(),
-            baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : Promise.resolve()
-        ]);
-    };
-
-    ctlProto._getMoreBaseLayers = function (partialCallback) {
+    #getMoreBaseLayers(partialCallback) {
         const self = this;
 
-        if (!self._moreBaseLayers && !self._moreBaseLayersPromise) {
+        if (!self.#moreBaseLayers && !self.#moreBaseLayersPromise) {
 
-            self._moreBaseLayersPromise = new Promise(function (resolve, _reject) {
+            self.#moreBaseLayersPromise = new Promise(function (resolve, _reject) {
 
                 // GLS: Carlos no quiere que se muestren los respectivos dinámicos así que los filtro.
                 var noDyn = TC.Cfg.availableBaseLayers
@@ -643,14 +635,14 @@ TC.inherit(BasemapSelector, MapContents);
                         }
                     });
 
-                self._moreBaseLayers = new Array(noDyn.length);
+                self.#moreBaseLayers = new Array(noDyn.length);
 
                 const resolvePromise = function () {
-                    self._moreBaseLayers = self._moreBaseLayers.filter(function (baseLayer) {
+                    self.#moreBaseLayers = self.#moreBaseLayers.filter(function (baseLayer) {
                         return baseLayer !== null;
                     });
 
-                    resolve(self._moreBaseLayers);
+                    resolve(self.#moreBaseLayers);
                 };
                 const addLayer = async function (i) {
                     const baseLayer = this;
@@ -675,8 +667,8 @@ TC.inherit(BasemapSelector, MapContents);
                         }
                     }
 
-                    self._moreBaseLayers.splice(i, 1, baseLayer);
-                    if (TC.Util.isFunction(partialCallback)) {
+                    self.#moreBaseLayers.splice(i, 1, baseLayer);
+                    if (Util.isFunction(partialCallback)) {
                         partialCallback(i);
                     }
                 };
@@ -690,8 +682,8 @@ TC.inherit(BasemapSelector, MapContents);
                                     addLayer.call(baseLayer, i).then(res);
                                 },
                                 function (_fail) {
-                                    self._moreBaseLayers.splice(i, 1, null);
-                                    if (TC.Util.isFunction(partialCallback)) {
+                                    self.#moreBaseLayers.splice(i, 1, null);
+                                    if (Util.isFunction(partialCallback)) {
                                         partialCallback(i);
                                     }
                                     res();
@@ -703,16 +695,16 @@ TC.inherit(BasemapSelector, MapContents);
                 })).finally(resolvePromise);
             });
 
-        } else if (self._moreBaseLayers) {
+        } else if (self.#moreBaseLayers) {
 
             return new Promise(function (resolve, _reject) {
-                Promise.all(self._moreBaseLayers.filter(function (baseLayer) {
+                Promise.all(self.#moreBaseLayers.filter(function (baseLayer) {
                     return baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS;
                 }).map(function (baseLayer) {
                     return self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
                 })).then(function () {
 
-                    self._moreBaseLayers = self._moreBaseLayers.map(function (baseLayer) {
+                    self.#moreBaseLayers = self.#moreBaseLayers.map(function (baseLayer) {
 
                         if (baseLayer.type === Consts.layerType.WMTS) {
                             var matrixSet = baseLayer.wrap.getCompatibleMatrixSets(self.map.getCRS())[0];
@@ -729,14 +721,15 @@ TC.inherit(BasemapSelector, MapContents);
                         return baseLayer;
                     });
 
-                    resolve(self._moreBaseLayers);
+                    resolve(self.moreBaseLayers);
                 });
             });
         }
 
-        return self._moreBaseLayersPromise;
-    };
-})();
+        return self.#moreBaseLayersPromise;
+    }
+}
 
+BasemapSelector.prototype.CLASS = 'tc-ctl-bms';
 TC.control.BasemapSelector = BasemapSelector;
 export default BasemapSelector;
