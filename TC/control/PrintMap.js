@@ -23,7 +23,9 @@ import TC from '../../TC';
 import Util from '../Util';
 import Consts from '../Consts';
 import MapInfo from './MapInfo';
-import Proxification from '../tool/Proxification';
+import ScaleBar from './ScaleBar';
+import '../tool/Proxification';
+import { CreateSymbolizer } from './LayerLegend';
 
 TC.control = TC.control || {};
 
@@ -476,15 +478,6 @@ const options = {
 };
 
 class PrintMap extends MapInfo {
-    constructor() {
-        super(...arguments);
-        const self = this;
-        self.div.classList.add(self.CLASS);
-    }
-
-    getClassName() {
-        return 'tc-ctl-prnmap';
-    }
 
     async loadTemplates() {
         const self = this;
@@ -501,7 +494,7 @@ class PrintMap extends MapInfo {
 
     render(callback) {
         const self = this;
-        return self._set1stRenderPromise(super.renderData.call(self, { controlId: self.id }, callback));
+        return super.renderData.call(self, { controlId: self.id }, callback);
     }
 
     register(map) {
@@ -728,7 +721,7 @@ class PrintMap extends MapInfo {
     async createPdf() {
         const self = this;
 
-        var loadingCtrl = self.map.getControlsByClass(TC.control.LoadingIndicator)[0];
+        var loadingCtrl = self.map.getLoadingIndicator();
         var hasWait = loadingCtrl.addWait();
         await import("pdfmake/build/pdfmake");
         let pdfFonts = await import("pdfmake/build/vfs_fonts");
@@ -816,7 +809,7 @@ class PrintMap extends MapInfo {
                 //};
             }
             else {
-                let scaleCtrl = self.map.getControlsByClass(TC.control.ScaleBar)[0];
+                let scaleCtrl = self.map.getControlsByClass(ScaleBar)[0];
                 if (scaleCtrl) {
                     var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
                     var bounding = elem[0].getBoundingClientRect();
@@ -851,16 +844,16 @@ class PrintMap extends MapInfo {
 
 
         };
-        const formatCameraData = function () {
-            const cameraData = self.map.view3D.getCameraData();
-            return self.getLocaleString("printCameraCoords", {
-                x: Util.formatCoord(cameraData.latitude, Consts.DEGREE_PRECISION),
-                y: Util.formatCoord(cameraData.longitude, Consts.DEGREE_PRECISION),
-                z: Util.formatCoord(cameraData.height, Consts.METER_PRECISION),
-                head: Math.round(cameraData.heading),
-                pitch: Math.round(cameraData.pitch),
-            })
-        }
+        //const formatCameraData = function () {
+        //    const cameraData = self.map.view3D.getCameraData();
+        //    return self.getLocaleString("printCameraCoords", {
+        //        x: Util.formatCoord(cameraData.latitude, Consts.DEGREE_PRECISION),
+        //        y: Util.formatCoord(cameraData.longitude, Consts.DEGREE_PRECISION),
+        //        z: Util.formatCoord(cameraData.height, Consts.METER_PRECISION),
+        //        head: Math.round(cameraData.heading),
+        //        pitch: Math.round(cameraData.pitch),
+        //    })
+        //}
         const getLegend = function () {
             var content = [];
             var layers = self.map.workLayers.filter(function (layer) {
@@ -870,18 +863,21 @@ class PrintMap extends MapInfo {
 
             var _process = function (value, parentLayer, treeLevel) {
                 if (parentLayer.isVisibleByScale(value.name)) { //Si la capa es visible, la mostramos en la leyenda
-                    var src,
-                        srcBase64;
 
                     //Para las capas cargadas por POST (por ejemplo la búsquedas de Comercio Pamplona)
                     if (parentLayer.options && parentLayer.options.params && parentLayer.options.params.base64LegendSrc) {
-                        srcBase64 = parentLayer.options.params.base64LegendSrc;
+                        const srcBase64 = parentLayer.options.params.base64LegendSrc;
+                        result.push({ title: value.title, level: treeLevel, srcBase64: srcBase64 });
                     }
-                    else if (value.legend) {
-                        src = value.legend.src;
+                    else if (value.legend?.length) {
+                        value.legend.forEach(l => {
+                            result.push({ title: value.title, level: treeLevel, src: l.src, name: value.name });
+                        });
+                    }
+                    else {
+                        result.push({ title: value.title, level: treeLevel, src: "", name: value.name });
                     }
 
-                    result.push({ src: src, title: value.title, level: treeLevel, srcBase64: srcBase64 });
                 }
             };
             var _traverse = function (o, func, parentLayer, treeLevel) {
@@ -903,42 +899,86 @@ class PrintMap extends MapInfo {
                     treeLevel--;
                 }
             };
-            var _getLegendImages = function () {
-                var imagePromises = [];
-
-                for (var i = 0; i < legendByGroup.length; i++) {
-                    var layers = legendByGroup[i].layers;
-
-                    for (var j = 0; j < layers.length; j++) {
-                        (function (k, l) {
-                            var layer = legendByGroup[k].layers[l];
-                            var src = layer.src || layer.srcBase64;
-
-                            if (src) {
-
-                                imagePromises.push(new Promise(function (resolve, reject) {
-                                    const proxificationTool = new Proxification(TC.proxify, { allowedMixedContent: true });
-                                    proxificationTool.fetchImage(src, { exportable: true }).then(function (img) {
-                                        if (img.complete) {
-                                            var imageDetail = Util.imgTagToDataUrl(img, 'image/png');
-                                            layer.image = { base64: imageDetail.base64, canvas: imageDetail.canvas, height: img.height, width: img.width };
-                                        } else {
-                                            imageErrorHandling(src);
-                                        }
-
-                                        resolve();
-
-                                    }, function (error) {
-                                        imageErrorHandling(src);
-                                        reject(error);
-                                    });
-                                }));
-                            }
-                        })(i, j);
+            const getImageAsNode = function (base64data) {
+                return new Promise(function (resolve, reject) {
+                    var i = new Image(); 
+                    i.crossOrigin = 'anonymous';
+                    i.onload = function () {
+                        resolve(i);
+                    };
+                    i.onerror = function (err) {
+                        reject(err);
                     }
-                }
+                    i.src = base64data;
+                })
 
-                return imagePromises;
+            }
+            const pngOrSVG = function (image) {
+                const imageWidth = image.width * 0.75;//item.image.canvas.width / 2;
+                const imageHeight = image.height * 0.75;//(imageWidth * item.image.canvas.height / item.image.canvas.width);
+                const data = {
+                    "width": imageWidth,
+                    "height": imageHeight,
+                    "margin": [0, 0, 0, 2]
+                }
+                data[image.base64 ? "image" : "svg"] = image.base64 ? image.base64 : image.svg;
+                return data; 
+            }
+            var _getLegendImages = function (_layers) {
+                return _layers.map((_layer,index) => {                    
+                    
+                    return new Promise(function (resolve, _reject) {
+                        _layer.getLegend().then(async function (legend) {
+                            var layers = legendByGroup[index].layers;
+                            //layers = layers.filter((layer) => layer.src || layer.srcBase64);
+                            await Promise.all(layers.map(async (layer) => {
+                                return new Promise(async function (resolve, reject) {                                    
+                                    const layerLegend = legend.filter((l) => l)?.[0]?.find((l) => l.layerName === layer.name || _layer.names.length === legend[0].length);
+                                    //eliminar aquellos que no tengan visibilidad por 
+                                    if (!layerLegend) {
+                                        const i = legendByGroup[index].layers.findIndex((l) => l.title === layer.title)
+                                        if (i) {
+                                            legendByGroup[index].layers.splice(i, 1);
+                                            resolve();
+                                            return;
+                                        }
+                                    }
+                                    if (layerLegend?.src) {
+                                        const imageNode = await getImageAsNode(layerLegend.src);
+                                        layer.image = [{ base64: layerLegend.src, height: imageNode.height, width: imageNode.width }];
+                                    }
+                                    else if (layerLegend?.rules?.length) {
+                                        layer.image = await Promise.all(layerLegend.rules.map(async (rule) => {
+                                            const src = await CreateSymbolizer(rule);                                            
+                                            const image = await getImageAsNode(src);
+                                            const imageDetail = Util.imgTagToDataUrl(image, 'image/png');
+                                            return { base64: imageDetail.base64, height: image.height, width: image.width, title: rule.title || rule.name };
+                                        }));
+                                    }
+                                    resolve();
+                                });
+                            }))                            
+                            resolve();
+                        }).catch(async (err) => {
+                            for (var i = 0; i < legendByGroup.length; i++) {
+                                var layers = legendByGroup[i].layers;
+
+                                for (var j = 0; j < layers.length; j++) {
+                                    await (async function (k, l) {
+                                        var layer = legendByGroup[k].layers[l];
+                                        var src = layer.src || layer.srcBase64;
+                                        if (src) {
+                                            const imageNode = await getImageAsNode(src);
+                                            const imageDetail = Util.imgTagToDataUrl(imageNode, 'image/png');
+                                            layer.image = [{ base64: imageDetail.base64, height: imageNode.height, width: imageNode.width }];                                            
+                                        }
+                                    })(i, j);
+                                }
+                            }
+                            resolve();
+                        });                        
+                    });
+                });
             };
             layers.forEach(function (layer) {
                 result = [];
@@ -955,10 +995,10 @@ class PrintMap extends MapInfo {
                 if (result.length > 0) {
                     legendByGroup.push({ title: layer.title, layers: result });
                 }
-            });
+            });            
 
             return new Promise(function (resolve, reject) {
-                Promise.all(_getLegendImages()).then(function () {
+                Promise.all(_getLegendImages(layers)).then(function () {
 
                     const getGroupTable = function (group, index) {
                         var rows = [[{ text: group.title, fontSize: 13, style: ["tablegroup"], margin: [0, index > 0 ? 10 : 0, 0, 2] }]];
@@ -990,24 +1030,31 @@ class PrintMap extends MapInfo {
                                     var headerIndex = rows.map(item => item[0].text || "").indexOf(headerItem.header);
                                     position = headerIndex + itemIndex++;
                                 }
-
-                                if (item.image) {
-                                    itemIndex++;
-                                    var imageWidth = item.image.width * 0.75;//item.image.canvas.width / 2;
-                                    var imageHeight = item.image.height * 0.75;//(imageWidth * item.image.canvas.height / item.image.canvas.width);
-
-                                    const dataLayer = [{
-                                        "ul": [{
-                                            "text": item.title,
-                                            "fontSize": Math.max(9, 14 - item.level),
-                                            "margin": [0 - indentation, 0, 0, 5]
-                                        }, {
-                                            "image": item.image.base64,
-                                            "width": imageWidth,
-                                            "height": imageHeight,
-                                            "margin": [0, 0, 0, 2]
+                                if (item.image?.length) {
+                                    const ul = [{
+                                        "text": item.title,
+                                        "fontSize": Math.max(9, 14 - item.level),
+                                        "margin": [0 - indentation, 0, 0, 5]
+                                    }];
+                                    item.image.forEach((image) => {
+                                        itemIndex++;                                                                                
+                                        if (image.title) {
+                                            ul.push({
+                                                columns: [
+                                                    pngOrSVG(image),
+                                                    {
+                                                        "text": image.title,
+                                                        "fontSize": Math.max(9, 14 - item.level),
+                                                        "width": "*",
+                                                        "margin": [5, 2, 0, 2]
+                                                    }]
+                                            });
                                         }
-                                        ],
+                                        else
+                                            ul.push(pngOrSVG(image));
+                                    });
+                                    const dataLayer = [{
+                                        "ul": ul,
                                         "type": "none",
                                         "margin": [indentation * item.level, 0, 0, 2],
                                     }];
@@ -1048,17 +1095,20 @@ class PrintMap extends MapInfo {
                             }
                         });
                     };
+                    //URI: eliminar leyenda vacía por extent
+                    legendByGroup=legendByGroup.filter((group) => group.layers.some((layer) => layer.image?.length))
 
                     legendByGroup.map(function (group, index) {
                         return {
                             groupIndex: index,
                             height: group.layers.filter(function (item) {
-                                return item.image && item.image.canvas;
+                                return item.image;
                             }).reduce(function (prev, current, index, vector) {
-                                return prev + vector[index].image.canvas.height;
+                                return prev + vector[index].image.reduce((prev, current) => { return prev + current.height }, 0);
                             }, 0)
-                        }
-                    }).sort(function (a, b) {
+                            }
+                        })
+                        .sort(function (a, b) {
                         if (a.height > b.height) {
                             return 1;
                         }
@@ -1188,5 +1238,6 @@ class PrintMap extends MapInfo {
     }
 }
 
+PrintMap.prototype.CLASS = 'tc-ctl-prnmap';
 TC.control.PrintMap = PrintMap;
 export default PrintMap;
