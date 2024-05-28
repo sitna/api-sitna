@@ -676,7 +676,7 @@ console.log("MILLISECONDS",end2-start2);
                     case "minOccurs":
                     case "maxOccurs":
                         current[i] = parseInt(element.attributes[i], 10);
-                        if (isNaN(current[element.attributes[i]]))
+                        if (Number.isNaN(current[element.attributes[i]]))
                             current[i] = element.attributes[i];
                         break;
                     case "nillable":
