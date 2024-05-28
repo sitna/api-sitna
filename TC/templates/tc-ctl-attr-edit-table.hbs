@@ -1,0 +1,10 @@
+<table>
+    <tbody>
+        {{#value}}
+        {{> tc-ctl-attr-edit-row sealed=../sealed }}
+        {{/value}}
+        {{#unless sealed}}
+        {{> tc-ctl-attr-edit-row }}
+        {{/unless}}
+    </tbody>
+</table>
