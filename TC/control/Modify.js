@@ -1,5 +1,6 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Cfg from '../Cfg';
 import WebComponentControl from './WebComponentControl';
 import Point from '../../SITNA/feature/Point';
@@ -23,14 +24,14 @@ Consts.event.CHANGE = 'change';
 //    switch (true) {
 //        case feature instanceof Polygon:
 //        case feature instanceof MultiPolygon:
-//            result = TC.Util.extend({}, mapStyles.polygon);
+//            result = Util.extend({}, mapStyles.polygon);
 //            break;
 //        case feature instanceof Point:
 //        case feature instanceof MultiPoint:
-//            result = TC.Util.extend({}, mapStyles.point);
+//            result = Util.extend({}, mapStyles.point);
 //            break;
 //        default:
-//            result = TC.Util.extend({}, mapStyles.line);
+//            result = Util.extend({}, mapStyles.line);
 //            break;
 //    }
 //    const style = feature.getStyle();
@@ -47,7 +48,7 @@ Consts.event.CHANGE = 'change';
 //const setFeatureSelectedStyle = function (ctl, features) {
 //    const mapStyles = ctl.map.options.styles.selection;
 //    features.forEach(function (feature) {
-//        feature._originalStyle = TC.Util.extend({}, feature.getStyle());
+//        feature._originalStyle = Util.extend({}, feature.getStyle());
 //        feature.setStyle(ctl.styleFunction(feature));
 //    });
 //};
@@ -91,13 +92,10 @@ const className = 'tc-ctl-mod';
 const elementName = 'sitna-modify';
 
 class Modify extends WebComponentControl {
-    CLASS = className;
     #classSelector = '.' + className;
     #deleteBtn;
     #selectBtn;
     #deleteVertexBtn;
-    #editAttrBtn;
-    #attributesSection;
     #joinBtn;
     #splitBtn;
     #textBtn;
@@ -139,10 +137,6 @@ class Modify extends WebComponentControl {
         if (name === 'mode') {
             self.#onModeChange();
         }
-    }
-
-    getClassName() {
-        return className;
     }
 
     get snapping() {
@@ -194,7 +188,6 @@ class Modify extends WebComponentControl {
         const self = this;
         self.#deleteBtn.disabled = features.length === 0;
         self.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
-        self.#editAttrBtn.disabled = features.length !== 1;
         self.#joinBtn.disabled = features.length < 2;
         self.#splitBtn.disabled = !features.some(complexGeometryFilter);
         self.displayLabelText();
@@ -207,14 +200,14 @@ class Modify extends WebComponentControl {
         self.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
         const mode = self.mode;
         self.#deleteVertexBtn.classList.toggle(Consts.classes.ACTIVE, mode === Modify.mode.VERTEX_DELETE);
-        self.#selectBtn.classList.toggle(Consts.classes.ACTIVE, mode !== Modify.mode.VERTEX_DELETE);
+        self.#selectBtn.classList.toggle(Consts.classes.ACTIVE, self.isActive && mode !== Modify.mode.VERTEX_DELETE);
     }
 
     register(map) {
         const self = this;
 
-        self.styles = TC.Util.extend(true, {}, Cfg.styles.selection, map.options.styles?.selection, self.options.styles);
-        self.styles.snapping = TC.Util.extend(true, {}, Cfg.styles.snapping, map.options.styles?.snapping, self.options.styles?.snapping);
+        self.styles = Util.extend(true, {}, Cfg.styles.selection, map.options.styles?.selection, self.options.styles);
+        self.styles.snapping = Util.extend(true, {}, Cfg.styles.snapping, map.options.styles?.snapping, self.options.styles?.snapping);
         self.styles.text = self.styles.text || {
             fontSize: self.styles.line.fontSize,
             fontColor: self.styles.line.fontColor,
@@ -276,13 +269,6 @@ class Modify extends WebComponentControl {
             selectedFeatures.forEach(function (feature) {
                 feature.toggleSelectedStyle(true);
             });
-
-            if (!self.getAttributeDisplayTarget().classList.contains(Consts.classes.HIDDEN)) {
-                self.displayAttributes();
-            }
-            if (!selectedFeatures.length) {
-                self.closeAttributes();
-            }
         });
 
         return result;
@@ -299,88 +285,83 @@ class Modify extends WebComponentControl {
         self.template = template;
     }
 
-    render(callback) {
+    async render(callback) {
         const self = this;
 
-        const renderCallback = function () {
-            self.#selectBtn = self.querySelector('.' + self.CLASS + '-btn-select');
-            self.#selectBtn.addEventListener(Consts.event.CLICK, function (e) {
-                if (!e.target.disabled) {
-                    if (self.isActive) {
-                        if (self.mode !== Modify.mode.VERTEX_DELETE) {
-                            self.deactivate();
-                        }
-                        else {
-                            self.setMode(Modify.mode.SELECT, true);
-                        }
-                    }
-                    else {
-                        self.activate();
-                    }
-                }
-            }, { passive: true });
-            self.#deleteBtn = self.querySelector('.' + self.CLASS + '-btn-delete');
-            self.#deleteBtn.addEventListener(Consts.event.CLICK, function () {
-                self.deleteSelectedFeatures();
-            }, { passive: true });
-            self.#deleteVertexBtn = self.querySelector('.' + self.CLASS + '-btn-del-vertex');
-            self.#deleteVertexBtn.addEventListener(Consts.event.CLICK, function () {
-                const newMode = self.mode === Modify.mode.VERTEX_DELETE ?
-                    Modify.mode.SELECT : Modify.mode.VERTEX_DELETE;
-                self.setMode(newMode, true);
-            }, { passive: true });
-            self.#textBtn = self.querySelector('.' + self.CLASS + '-btn-text');
-            self.#textBtn.addEventListener(Consts.event.CLICK, function () {
-                self.setTextMode(!self.textActive);
-            }, { passive: true });
-            self.#joinBtn = self.querySelector('.' + self.CLASS + '-btn-join');
-            self.#splitBtn = self.querySelector('.' + self.CLASS + '-btn-split');
-            self.#editAttrBtn = self.querySelector('.' + self.CLASS + '-btn-attr');
-            self.#editAttrBtn.addEventListener(Consts.event.CLICK, function () {
-                self.toggleAttributes();
-            }, { passive: true });
-            self.#textInput = self.querySelector('input.' + self.CLASS + '-txt');
-            self.#textInput.addEventListener('input', function (e) {
-                self.labelFeatures(e.target.value);
-            });
-            self.#labelSection = self.querySelector('.' + self.CLASS + '-style-label');
-
-            self.#fontColorPicker = self.querySelector(self.#classSelector + '-fnt-c');
-            self.#fontColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setFontColor(e.target.value);
-            });
-
-            self.#fontSizeSelector = self.querySelector('.' + self.CLASS + '-fnt-s');
-            self.#fontSizeSelector.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setFontSize(e.target.value);
-            });
-
-            self.#attributesSection = self.querySelector('.' + self.CLASS + '-attr');
-
-            self.getStyler().then(styler => styler.addEventListener(Consts.event.STYLECHANGE, e => {
-                self.getSelectedFeatures().forEach(f => {
-                    const newData = {};
-                    newData[e.detail.property] = e.detail.value;
-                    const newStyle = Object.assign({}, f.getStyle(), newData);
-                    f.setStyle(newStyle);
-                });
-            }));
-
-            if (TC.Util.isFunction(callback)) {
-                callback();
-            }
-        };
-
         const styles = self.styles || {};
-        const renderObject = {
+
+        await self.renderData({
             stylable: self.stylable,
             fontSize: styles.text?.fontSize,
             fontColor: styles.text?.fontColor,
             labelOutlineColor: styles.text?.labelOutlineColor,
             labelOutlineWidth: styles.text?.labelOutlineWidth
-        };
+        }, function () {
+            self.#selectBtn = self.querySelector('.' + self.CLASS + '-btn-select');
+            self.#deleteBtn = self.querySelector('.' + self.CLASS + '-btn-delete');
+            self.#deleteVertexBtn = self.querySelector('.' + self.CLASS + '-btn-del-vertex');
+            self.#textBtn = self.querySelector('.' + self.CLASS + '-btn-text');
+            self.#joinBtn = self.querySelector('.' + self.CLASS + '-btn-join');
+            self.#splitBtn = self.querySelector('.' + self.CLASS + '-btn-split');
+            self.#textInput = self.querySelector('input.' + self.CLASS + '-txt');
+            self.#labelSection = self.querySelector('.' + self.CLASS + '-style-label');
+            self.#fontColorPicker = self.querySelector(self.#classSelector + '-fnt-c');
+            self.#fontSizeSelector = self.querySelector('.' + self.CLASS + '-fnt-s');
 
-        return self._set1stRenderPromise(self.renderData(renderObject, renderCallback));
+            self.addUIEventListeners();
+
+            if (Util.isFunction(callback)) {
+                callback();
+            }
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        self.#selectBtn.addEventListener(Consts.event.CLICK, function (e) {
+            if (!e.target.disabled) {
+                if (self.isActive) {
+                    if (self.mode !== Modify.mode.VERTEX_DELETE) {
+                        self.deactivate();
+                    }
+                    else {
+                        self.setMode(Modify.mode.SELECT, true);
+                    }
+                }
+                else {
+                    self.activate();
+                }
+            }
+        }, { passive: true });
+        self.#deleteBtn.addEventListener(Consts.event.CLICK, function () {
+            self.deleteSelectedFeatures();
+        }, { passive: true });
+        self.#deleteVertexBtn.addEventListener(Consts.event.CLICK, function () {
+            const newMode = self.mode === Modify.mode.VERTEX_DELETE ?
+                Modify.mode.SELECT : Modify.mode.VERTEX_DELETE;
+            self.setMode(newMode, true);
+        }, { passive: true });
+        self.#textBtn.addEventListener(Consts.event.CLICK, function () {
+            self.setTextMode(!self.textActive);
+        }, { passive: true });
+        self.#textInput.addEventListener('input', function (e) {
+            self.labelFeatures(e.target.value);
+        });
+        self.#fontColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setFontColor(e.target.value);
+        });
+        self.#fontSizeSelector.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setFontSize(e.target.value);
+        });
+
+        self.getStyler().then(styler => styler.addEventListener(Consts.event.STYLECHANGE, e => {
+            self.getSelectedFeatures().forEach(f => {
+                const newData = {};
+                newData[e.detail.property] = e.detail.value;
+                const newStyle = Object.assign({}, f.getStyle(), newData);
+                f.setStyle(newStyle);
+            });
+        }));
     }
 
     activate() {
@@ -536,14 +517,14 @@ class Modify extends WebComponentControl {
         switch (true) {
             case feature instanceof Polygon:
             case feature instanceof MultiPolygon:
-                result = TC.Util.extend({}, mapStyles.polygon);
+                result = Util.extend({}, mapStyles.polygon);
                 break;
             case feature instanceof Point:
             case feature instanceof MultiPoint:
-                result = TC.Util.extend({}, mapStyles.point);
+                result = Util.extend({}, mapStyles.point);
                 break;
             default:
-                result = TC.Util.extend({}, mapStyles.line);
+                result = Util.extend({}, mapStyles.line);
                 break;
         }
         const style = feature.getStyle();
@@ -577,7 +558,7 @@ class Modify extends WebComponentControl {
         if (color === undefined) {
             color = self.styles.text.fontColor;
         }
-        color = TC.Util.colorArrayToString(color);
+        color = Util.colorArrayToString(color);
         outlineColor = outlineColor || self.getLabelOutlineColor(color);
         self.renderPromise().then(function () {
             self.#fontColorPicker.value = color;
@@ -641,7 +622,7 @@ class Modify extends WebComponentControl {
 
     getLabelOutlineColor(fontColor) {
         if (fontColor) {
-            fontColor = TC.Util.colorArrayToString(fontColor);
+            fontColor = Util.colorArrayToString(fontColor);
             const matchForShort = fontColor.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
             if (matchForShort && matchForShort.length) {
                 fontColor = '#' + matchForShort[1] + matchForShort[1] + matchForShort[2] + matchForShort[2] + matchForShort[3] + matchForShort[3];
@@ -690,7 +671,7 @@ class Modify extends WebComponentControl {
         if (features.length) {
             const style = features[0].getStyle();
             features.forEach(function (feature) {
-                const textStyle = TC.Util.extend({}, self.styles.text, style);
+                const textStyle = Util.extend({}, self.styles.text, style);
                 style.label = text;
                 style.labelOffset = textStyle.labelOffset;
                 style.fontColor = textStyle.fontColor;
@@ -703,67 +684,11 @@ class Modify extends WebComponentControl {
         return self;
     }
 
-    getAttributeDisplayTarget() {
-        return this.#attributesSection;
-    }
-
     async getStyler() {
         const self = this;
         await self.renderPromise();
         self.#styler = self.querySelector('sitna-feature-styler');
         return self.#styler;
-    }
-
-    displayAttributes() {
-        const self = this;
-        const selectedFeatures = self.getSelectedFeatures();
-        const feature = selectedFeatures[selectedFeatures.length - 1];
-        if (feature) {
-            self.getRenderedHtml(self.CLASS + '-attr', { data: feature.getData() }, function (html) {
-                const attributesSection = self.getAttributeDisplayTarget();
-                attributesSection.innerHTML = html;
-                attributesSection.classList.remove(Consts.classes.HIDDEN);
-                self.#editAttrBtn.classList.add(Consts.classes.ACTIVE);
-
-                attributesSection.querySelector(`${self.CLASS}-btn-attr-ok`).addEventListener(Consts.event.CLICK, function (_e) {
-                    self._onAttrOK();
-                }, { passive: true });
-
-                attributesSection.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(Consts.event.CLICK, function () {
-                    self.closeAttributes();
-                }, { passive: true });
-            });
-        }
-    }
-
-    closeAttributes() {
-        const self = this;
-        self.#attributesSection?.classList.add(Consts.classes.HIDDEN);
-        self.#editAttrBtn?.classList.remove(Consts.classes.ACTIVE);
-    }
-
-    toggleAttributes() {
-        const self = this;
-        if (self.#editAttrBtn.classList.toggle(Consts.classes.ACTIVE)) {
-            self.displayAttributes();
-        }
-        else {
-            self.closeAttributes();
-        }
-    }
-
-    _onAttrOK() {
-        const self = this;
-        const feature = self.getSelectedFeatures()[0];
-        if (feature) {
-            const data = {};
-            self.getAttributeDisplayTarget().querySelectorAll('input').forEach(function (input) {
-                data[input.getAttribute('name')] = input.value;
-            });
-            feature.setData(data);
-            self.trigger(Consts.event.FEATUREMODIFY, { feature: feature, layer: self.layer });
-            self.closeAttributes();
-        }
     }
 
     joinFeatures(features) {
@@ -798,6 +723,7 @@ class Modify extends WebComponentControl {
     }
 }
 
+Modify.prototype.CLASS = 'tc-ctl-mod';
 customElements.get(elementName) || customElements.define(elementName, Modify);
 TC.control.Modify = Modify;
 export default Modify;
