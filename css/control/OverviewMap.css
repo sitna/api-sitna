@@ -58,10 +58,6 @@
     height: 1em;
     background-color: var(--main-hl-color);
     z-index: 10000;
-    -webkit-animation-name: bounce-fading-bar;
-    -webkit-animation-duration: 1.3s;
-    -webkit-animation-iteration-count: infinite;
-    -webkit-animation-direction: normal;
     animation-name: bounce-fading-bar;
     animation-duration: 1.3s;
     animation-iteration-count: infinite;

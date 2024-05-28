@@ -66,8 +66,7 @@
 }
 
 .tc-ctl-dmm .tc-ctl-mod .tc-ctl-mod-btn > button.tc-ctl-btn.tc-ctl-mod-btn-join,
-.tc-ctl-dmm .tc-ctl-mod .tc-ctl-mod-btn > button.tc-ctl-btn.tc-ctl-mod-btn-split,
-.tc-ctl-dmm .tc-ctl-mod .tc-ctl-mod-btn > button.tc-ctl-btn.tc-ctl-mod-btn-attr {
+.tc-ctl-dmm .tc-ctl-mod .tc-ctl-mod-btn > button.tc-ctl-btn.tc-ctl-mod-btn-split {
     display: none;
     flex-grow: 0;
 }

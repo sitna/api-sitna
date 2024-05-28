@@ -27,10 +27,6 @@
     background-color: var(--main-hl-color);
     width: 20px;
     height: 20px;
-    -webkit-animation-name: bounce-fading-bar;
-    -webkit-animation-duration: 1.3s;
-    -webkit-animation-iteration-count: infinite;
-    -webkit-animation-direction: normal;
     animation-name: bounce-fading-bar;
     animation-duration: 1.3s;
     animation-iteration-count: infinite;
@@ -40,48 +36,40 @@
 
 .tc-ctl-load-dot1 {
     left: 0;
-    -webkit-animation-delay: 0.52s;
     animation-delay: 0.52s;
 }
 
 .tc-ctl-load-dot2 {
     left: 20px;
-    -webkit-animation-delay: 0.65s;
     animation-delay: 0.65s;
 }
 
 .tc-ctl-load-dot3 {
     left: 40px;
-    -webkit-animation-delay: 0.78s;
     animation-delay: 0.78s;
 }
 
 .tc-ctl-load-dot4 {
     left: 60px;
-    -webkit-animation-delay: 0.91s;
     animation-delay: 0.91s;
 }
 
 .tc-ctl-load-dot5 {
     left: 80px;
-    -webkit-animation-delay: 1.04s;
     animation-delay: 1.04s;
 }
 
 .tc-ctl-load-dot6 {
     left: 100px;
-    -webkit-animation-delay: 1.17s;
     animation-delay: 1.17s;
 }
 
 .tc-ctl-load-dot7 {
     left: 120px;
-    -webkit-animation-delay: 1.3s;
     animation-delay: 1.3s;
 }
 
 .tc-ctl-load-dot8 {
     left: 140px;
-    -webkit-animation-delay: 1.43s;
     animation-delay: 1.43s;
 }

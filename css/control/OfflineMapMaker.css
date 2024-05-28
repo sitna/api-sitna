@@ -116,7 +116,6 @@
 
 .tc-ctl-omm .tc-ctl-omm-list li.tc-disabled {
     animation: pulsation 2s infinite;
-    -webkit-animation: pulsation 2s infinite;
 }
     .tc-ctl-omm .tc-ctl-omm-list li button.tc-toggle {
         font-size: 1.5em;

@@ -73,13 +73,8 @@
     content: var(--icon-erase);
 }
 
-.tc-ctl-mod-btn-attr:after {
-    content: '\1f5d6' var(--icon-edit);
-}
-
 .tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-join,
-.tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-split,
-.tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-attr {
+.tc-ctl-mod.tc-ctl-dmm-mod .tc-ctl-btn.tc-ctl-mod-btn-split {
     display: none;
 }
 

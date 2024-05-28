@@ -93,7 +93,6 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     color: #bbb;
     cursor: default;
     animation: pulsation 0.75s infinite;
-    -webkit-animation: pulsation 0.75s infinite;
 }
 
 .tc-ctl-lcat li.tc-ctl-lcat-node.tc-checked > span {
@@ -275,7 +274,6 @@ div.tc-ctl-lcat-legend {
     margin: 0;
     color: #eee;
     animation: rotation 0.75s linear infinite;
-    -webkit-animation: rotation 0.75s linear infinite;
 }
 
     .tc-ctl-lcat-legend-wait.tc-hidden {
@@ -516,7 +514,6 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         margin-top: 2px;
         display: inline-block;
         animation: spin 2s infinite linear;
-        -webkit-animation: spin 2s infinite linear;
     }
 
     .tc-ctl-lcat-loading-node.tc-error {
@@ -525,7 +522,6 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
 
     .tc-ctl-lcat-loading-node.tc-error:before {
         animation: none;
-        -webkit-animation: none;
         content: "\2bbf";
         color: #f00;
     }

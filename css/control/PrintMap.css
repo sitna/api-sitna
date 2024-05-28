@@ -66,8 +66,8 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
 }
 
 .tc-ctl-prnmap-printing .tc-ctl-prnmap-btn-close:after {
-    font-family: 'FontAwesome';
-    content: '\f00d';
+    font-family: var(--icon-font-family);
+    content: var(--icon-close);
 }
 
 .tc-map.tc-ctl-prnmap-printing, .tc-map-3d.tc-ctl-prnmap-printing {
@@ -139,16 +139,16 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
 }
 
     .tc-ctl-prnmap-btn-pdf:before {
-        font-family: 'FontAwesome';
-        content: '\f019';
+        font-family: var(--icon-font-family);
+        content: var(--icon-print);
         font-size: 0.9em;
     }
 
 .tc-ctl-prnmap-btn:before {
     color: #fff;
     font-size: 1em;
-    font-family: mapskin;
-    content: '\e0ce';
+    font-family: var(--icon-font-family);
+    content: var(--icon-print);
     margin-right: 0.5em;
 }
 
@@ -171,7 +171,6 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     display: inline-block;
     margin-left: 0.5em;
     animation: spin 2s infinite linear;
-    -webkit-animation: spin 2s infinite linear;
 }
 
 .tc-map.tc-collapsed .tc-ctl-prnmap-tools {

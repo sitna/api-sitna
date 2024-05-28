@@ -43,6 +43,7 @@
 .tc-map.tc-collapsed .tc-ctl-attrib {
     display: none;
 }
+
 .tc-ctl-attrib .tc-github:before {
     font-family: FontAwesome;
     content: "\f09b";

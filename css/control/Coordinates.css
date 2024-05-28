@@ -41,7 +41,6 @@
     width: intrinsic;
     width: -moz-max-content;
     width: -webkit-max-content;
-    
     top: 50%;
     right: 0;
     left: auto;
@@ -49,7 +48,6 @@
     -webkit-transform: translate(45%, -50%) rotate( -90deg );
     -moz-transform: translate(45%, -50%) rotate( -90deg );
     transform: translate(45%, -50%) rotate( -90deg );
-
     border-top: 1px solid #ccc;
     border-top-left-radius: var(--border-radius);
     border-top-right-radius: var(--border-radius);
@@ -64,11 +62,10 @@
         right: 0;
         margin: auto;
         transform: none;
-        
         border-top: none;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
-        z-index: 9999;        
+        z-index: 9999;
     }
 }
 
@@ -82,11 +79,10 @@
         right: 0;
         margin: auto;
         transform: none;
-        
         border-top: none;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
-        z-index: 9999;        
+        z-index: 9999;
     }
 }
 
@@ -99,17 +95,18 @@
         transform: none;
         border-top: none;
         border-top-left-radius: 0;
-        border-top-right-radius: 0;        
+        border-top-right-radius: 0;
     }
 }
-    .tc-ctl-coords.tc-fading {
-        animation: slow-fadeout 8s;
-    }
 
-    .tc-ctl-coords.tc-hidden {
-        animation: none;
-        visibility: hidden;        
-    }
+.tc-ctl-coords.tc-fading {
+    animation: slow-fadeout 8s;
+}
+
+.tc-ctl-coords.tc-hidden {
+    animation: none;
+    visibility: hidden;
+}
 
 .tc-map.tc-collapsed .tc-ctl-coords {
     display: none;

@@ -295,7 +295,6 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         margin-top: -1.5vmin;
         font-size: 2vmin;
         animation: spin 2s infinite linear;
-        -webkit-animation: spin 2s infinite linear;
     }
 
     .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading * {
@@ -894,13 +893,13 @@ div.tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
     min-width: 20em;
 }
 
-.tc-ctl-wfsquery-geom-draw sitna-draw {
-    display: block;
-}
+    .tc-ctl-wfsquery-geom-draw sitna-draw {
+        display: block;
+    }
 
-.tc-ctl-wfsquery-geom-draw.tc-hidden, .tc-ctl-wfsquery-geom-btn.tc-hidden {
-    display: none;
-}
+    .tc-ctl-wfsquery-geom-draw.tc-hidden, .tc-ctl-wfsquery-geom-btn.tc-hidden {
+        display: none;
+    }
 
 .tc-ctl-wfsquery-geom-btn {
     padding: 0.5em;

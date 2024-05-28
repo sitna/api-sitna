@@ -55,6 +55,10 @@ sitna-file-edit ul.tc-ctl-file-recent {
     display: none;
 }
 
+.tc-ctl-fedit-panel sitna-attributes-edit h2 {
+    display: block;
+}
+
 .tc-ctl-fedit-panel .tc-ctl-fedit-edit {
     padding: 0.4em;
 }
@@ -69,4 +73,10 @@ sitna-file-edit ul.tc-ctl-file-recent {
     width: calc(100% - 0.4em);
     box-sizing: border-box;
     padding: 0.5em 0 0.5em 0;
+}
+
+sitna-file-edit.tc-ctl sitna-attributes-edit h2 {
+    background-color: transparent;
+    border-bottom: none;
+    font-size: 1.1em;
 }

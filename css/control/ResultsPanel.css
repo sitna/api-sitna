@@ -1,40 +1,28 @@
 ﻿@keyframes showIn {
-    from {
-        opacity: 0
+    0% {
+        opacity: 0;
+        transform: scale(0.1);
     }
 
-    to {
-        opacity: 1
-    }
-}
-
-@-webkit-keyframes showIn {
-    from {
-        opacity: 0
+    99%: {
+        transform: scale(1);
     }
 
-    to {
-        opacity: 1
+    100% {
+        opacity: 1;
+        transform: none;
     }
 }
 
 @keyframes showOut {
-    from {
-        opacity: 1
+    0% {
+        opacity: 1;
+        transform: scale(1);
     }
 
-    to {
-        opacity: 0
-    }
-}
-
-@-webkit-keyframes showOut {
-    from {
-        opacity: 1
-    }
-
-    to {
-        opacity: 0
+    100% {
+        opacity: 0;
+        transform: scale(0.1);
     }
 }
 
@@ -400,6 +388,10 @@ span.tc-track-chart-elev-gain {
     flex: 1;
 }
 
+    .tc-ctl-rpanel .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-body.tc-ctl-rpanel-info {
+        flex-basis: 100%;
+    }
+
 .tc-ctl-rpanel .tc-ctl-rpanel-main {
     /* por interactjs*/
     box-sizing: border-box;
@@ -609,13 +601,13 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
     height: calc(100% - 35px); /*el alto de la cabecera*/
 }
 
-.tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-chart {
-    height: calc(100% - 50px /*del DIV de featureTools*/ ); /*si no, no coge el alto del padre*/
-}
+    .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-chart {
+        height: calc(100% - 50px /*del DIV de featureTools*/ ); /*si no, no coge el alto del padre*/
+    }
 
-.tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-info {
-    height: calc(100% - 50px /*del DIV de featureTools*/ ); /*si no, no coge el alto del padre*/
-}
+    .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-info {
+        height: calc(100% - 50px /*del DIV de featureTools*/ ); /*si no, no coge el alto del padre*/
+    }
 
 .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable.tc-loading[style*="height"] .tc-ctl-rpanel-chart .tc-chart.c3 {
     max-height: none !important; /* no hay más remedio porque es un estilo en línea */
@@ -672,10 +664,10 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
     margin: 0;
 }
 
-.tc-ctl-rpanel-main > .tc-ctl-rpanel-heading > h4 sitna-button {
-    margin: 0.3em 0.2em 0.2em 0.2em;
-    direction:ltr;
-}
+    .tc-ctl-rpanel-main > .tc-ctl-rpanel-heading > h4 sitna-button {
+        margin: 0.3em 0.2em 0.2em 0.2em;
+        direction: ltr;
+    }
 
 .tc-ctl-rpanel-heading {
     height: 2em;
@@ -828,7 +820,7 @@ div.tc-ctl-rpanel-heading-samehw {
     }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-info {
-    width: 100%;
+    flex-basis: 100%;
     display: block;
 }
 
@@ -841,38 +833,38 @@ div.tc-ctl-rpanel-heading-samehw {
     .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo h3 {
         margin: 0em 0 0.5em 0;
     }
-    
-    .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo h3 span,
-    .tc-ctl-rpanel-info .tc-ctl-finfo-layers li h4,
-    div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h3,
-    div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h4 {
-        display: block;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
 
-    div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h3{
-        width:calc(100% - 0.3em);
-    }
+        .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo h3 span,
+        .tc-ctl-rpanel-info .tc-ctl-finfo-layers li h4,
+        div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h3,
+        div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h4 {
+            display: block;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
 
-    .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo .tc-ctl-finfo-multilayer h3 span {
-        width: calc(100% - 80px);
-    }
+div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h3 {
+    width: calc(100% - 0.3em);
+}
+
+.tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo .tc-ctl-finfo-multilayer h3 span {
+    width: calc(100% - 80px);
+}
 
 
-    .tc-ctl-rpanel .tc-ctl-rpanel-info h4 {
-        margin: 0.5em 0.5em 0em 0.5em;
-    }
+.tc-ctl-rpanel .tc-ctl-rpanel-info h4 {
+    margin: 0.5em 0.5em 0em 0.5em;
+}
 
-    .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo h4 {
-        margin: 0;
-    }
+.tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo h4 {
+    margin: 0;
+}
 
-    .tc-ctl-rpanel .tc-ctl-rpanel-info table.tc-attr {
-        width: calc(100% - 1.6em);
-        margin: 0.8em;
-    }
+.tc-ctl-rpanel .tc-ctl-rpanel-info table.tc-attr {
+    width: calc(100% - 1.6em);
+    margin: 0.8em;
+}
 
 div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
     flex-direction: column;
@@ -909,13 +901,10 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
     height: auto;
 }
 
-.tc-ctl-rpanel .tc-ctl-rpanel-info {
-    width: 100%;
-}
-
 .tc-ctl-rpanel-table {
     width: 100%;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: scroll;
 }
 
 .tc-ctl-rpanel .tc-ctl-finfo-coords {
@@ -1085,14 +1074,14 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table table.tc-attr th {
     }
 
 .tc-show-in {
-    -webkit-animation: showIn 0.5s normal forwards ease-in-out;
-    animation: showIn 0.5s normal forwards ease-in-out;
+    animation: showIn 0.2s normal forwards linear;
+    transform-origin: top left;
     /*display:inline-block !important;*/
 }
 
 .tc-show-out {
-    -webkit-animation: showOut 0.5s normal forwards ease-in-out;
-    animation: showOut 0.5s normal forwards ease-in-out;
+    animation: showOut 0.2s normal forwards linear;
+    transform-origin: bottom right;
 }
 
 .tc-ctl-rpanel .tc-ctl-finfo-coords {
@@ -1149,14 +1138,14 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn,
     }
 
 
-    /* --- LEGACY --- */
-    /* Por Carreteras: modificamos las reglas sobre la cabecera del panel de resultados para controlar que la flecha para colapsar el panel quede con mayor margen en el panel warning de carreteras. En la app hay reglas específicas que añaden margen izquierdo pero no derecho y el con el cambio a flexbox del título, la flecha de colapsado queda demasiado a la derecha. */
-    button.tc-icon-btn.tc-ctl-rpanel-close-btn.tc-hidden {
-        width: 0.5em;
-        display: initial;
-    }
+/* --- LEGACY --- */
+/* Por Carreteras: modificamos las reglas sobre la cabecera del panel de resultados para controlar que la flecha para colapsar el panel quede con mayor margen en el panel warning de carreteras. En la app hay reglas específicas que añaden margen izquierdo pero no derecho y el con el cambio a flexbox del título, la flecha de colapsado queda demasiado a la derecha. */
+button.tc-icon-btn.tc-ctl-rpanel-close-btn.tc-hidden {
+    width: 0.5em;
+    display: initial;
+}
 
-    /* --- LEGACY --- */
+/* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-share-btn:before,
 button.tc-icon-btn.tc-ctl-p-results-csv-btn:before,
 button.tc-icon-btn.tc-ctl-p-results-dwn-btn:before,
@@ -1173,14 +1162,14 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
     --icon-text: var(--icon-share);
 }
 
-    /* --- LEGACY --- */
+/* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-csv-btn:before {
     content: "\1f5cb";
     font-size: 1.2rem;
     line-height: 1.8rem;
 }
 
-    /* --- LEGACY --- */
+/* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-csv-btn:after,
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-csv::after {
     color: #ffffff;
@@ -1203,7 +1192,7 @@ button.tc-icon-btn.tc-ctl-p-results-csv-btn:after,
     --icon-text: "\1f5cb";
 }
 
-    /* --- LEGACY --- */
+/* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-dwn-btn:before {
     font-family: var(--icon-font-family);
     content: var(--icon-download);
@@ -1213,7 +1202,7 @@ button.tc-icon-btn.tc-ctl-p-results-dwn-btn:before {
     --icon-text: var(--icon-download);
 }
 
-    /* --- LEGACY --- */
+/* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-min-btn:before {
     content: "\2bc7";
 }
@@ -1222,7 +1211,7 @@ button.tc-icon-btn.tc-ctl-p-results-min-btn:before {
     --icon-text: "\2bc7"
 }
 
-    /* --- LEGACY --- */
+/* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
     font-family: var(--icon-font-family);
     content: var(--icon-close);
@@ -1301,6 +1290,7 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
     .tc-ctl-rpanel-table tbody .tc-icon.extralarge {
         font-size: 230%;
     }
+
     .tc-ctl-rpanel-info .tc-ctl-finfo-layers li h4,
     .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-finfo h3 span,
     div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h3,

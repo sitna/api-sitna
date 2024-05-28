@@ -26,7 +26,76 @@ sitna-measurement .tc-ctl-msmt-txt-elm {
     white-space: nowrap;
 }
 
+sitna-measurement .tc-ctl-msmt-val-crs {
+    color: var(--text-sec-color);
+}
+
 sitna-measurement .tc-ctl-msmt-box sitna-toggle {
     font-size: 1em;
     margin-right: 0;
+}
+
+.tc-ctl-popup sitna-measurement {
+    font-size: 0.8em;
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+    .tc-ctl-popup sitna-measurement .tc-ctl-msmt-box {
+        margin: 0;
+        width: auto;
+        display: block;
+    }
+
+        .tc-ctl-popup sitna-measurement span.tc-ctl-msmt-val-coord {
+            display: table;
+        }
+
+            .tc-ctl-popup sitna-measurement span.tc-ctl-msmt-val-coord > .tc-ctl-msmt-txt-elm {
+                display: table-row;
+            }
+
+                .tc-ctl-popup sitna-measurement span.tc-ctl-msmt-val-coord > .tc-ctl-msmt-txt-elm span {
+                    display: table-cell;
+                }
+
+                    .tc-ctl-popup sitna-measurement span.tc-ctl-msmt-val-coord > .tc-ctl-msmt-txt-elm span:first-child {
+                        font-size: 0;
+                    }
+
+                        .tc-ctl-popup sitna-measurement span.tc-ctl-msmt-val-coord > .tc-ctl-msmt-txt-elm span:first-child:before {
+                            content: attr(title);
+                            font-size: 0.75rem;
+                        }
+
+                    .tc-ctl-popup sitna-measurement span.tc-ctl-msmt-val-coord > .tc-ctl-msmt-txt-elm span:last-child {
+                        text-align: right;
+                        padding-left: 0.5em;
+                    }
+
+.tc-ctl-rpanel-info sitna-measurement {
+    display: block;
+    margin-left: 0.2em;
+    margin-right: 0.2em;
+}
+
+    .tc-ctl-popup sitna-measurement .tc-ctl-msmt-box, .tc-ctl-rpanel-info sitna-measurement .tc-ctl.msmt-box {
+        background-color: transparent;
+        border-width: 0;
+        -webkit-user-select: text; /* Chrome 49+ */
+        -moz-user-select: text; /* Firefox 43+ */
+        user-select: text;
+        cursor: text;
+    }
+
+    sitna-measurement .tc-ctl-msmt-val-coord-1-t,
+    sitna-measurement .tc-ctl-msmt-val-coord-2-t,
+    sitna-measurement .tc-ctl-msmt-val-coord-ele-t {
+        font-weight: bold;
+    }
+
+.tc-ctl-fedit sitna-measurement .tc-ctl-msmt-box {
+    box-sizing: content-box;
+    min-height: 1em;
+    width: calc(100% - 2 * var(--border-radius));
 }

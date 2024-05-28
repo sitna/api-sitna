@@ -72,6 +72,10 @@
     height: 0;
 }
 
+.tc-ctl-wfsedit .tc-ctl-draw-style.tc-hidden {
+    display: none;
+}
+
 .tc-ctl-wfsedit-view {
     position: relative;
     margin-top: 0.5em;
@@ -124,7 +128,6 @@
     font-size: 1.1em;
     cursor: default;
     animation: spin 1s infinite linear;
-    -webkit-animation: spin 1s infinite linear;
     content: '\2b6e';
     line-height: 1.25em;
     height: 1em;
