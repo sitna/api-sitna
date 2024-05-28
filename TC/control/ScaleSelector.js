@@ -9,63 +9,48 @@ TC.control = TC.control || {};
 class ScaleSelector extends Scale {
     scales = null;
 
-    constructor() {
-        super(...arguments);
-        const self = this;
-        self.div.classList.add(self.CLASS);
-    }
-
-    getClassName() {
-        return 'tc-ctl-ss';
-    }
-
     async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-ss.mjs');
         self.template = module.default;
     }
 
-    render(callback) {
+    async render(callback) {
         const self = this;
-        return self._set1stRenderPromise(new Promise(function (resolve, reject) {
-            if (self.map) {
-                if (!self.scales && self.map.options.resolutions) {
-                    self.scales = self.map.options.resolutions.map(self.getScale, self);
-                }
-                var render = function () {
-                    self.scales = self.map.wrap.getResolutions().map(self.getScale, self);
-                    self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize, scales: self.scales }, function () {
+        if (!self.map) {
+            throw Error('ScaleSelector no registrado');
+        }
+        if (!self.scales && self.map.options.resolutions) {
+            self.scales = self.map.options.resolutions.map(self.getScale, self);
+        }
+        if (!self.scales) {
+            await self.map.wrap.getMap();
+        }
+        self.scales = self.map.wrap.getResolutions().map(self.getScale, self);
+        await self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize, scales: self.scales }, function () {
 
-                        self.div.querySelectorAll('option').forEach(function (option) {
-                            option.textContent = '1:' + self.format(option.textContent.substr(2));
-                        });
+            self.div.querySelectorAll('option').forEach(function (option) {
+                option.textContent = '1:' + self.format(option.textContent.substr(2));
+            });
 
-                        self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
-                            self.setScreenSize();
-                        }, { passive: true });
+            self.addUIEventListeners();
 
-                        self.div.querySelector('select').addEventListener('change', function () {
-                            self.setScale(this.value);
-                        });
-                        if (Util.isFunction(callback)) {
-                            callback();
-                        }
-                        resolve();
-                    }).catch(function (err) {
-                        reject(err instanceof Error ? err : Error(err));
-                    });
-                };
-                if (self.scales) {
-                    render();
-                }
-                else {
-                    self.map.wrap.getMap().then(render);
-                }
+            if (Util.isFunction(callback)) {
+                callback();
             }
-            else {
-                reject(Error('ScaleSelector no registrado'));
-            }
-        }));
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+
+        self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
+            self.setScreenSize();
+        }, { passive: true });
+
+        self.div.querySelector('select').addEventListener('change', function () {
+            self.setScale(this.value);
+        });
     }
 
 /*
@@ -88,6 +73,6 @@ class ScaleSelector extends Scale {
 
 }
 
-
+ScaleSelector.prototype.CLASS = 'tc-ctl-ss';
 TC.control.ScaleSelector = ScaleSelector;
 export default ScaleSelector;
