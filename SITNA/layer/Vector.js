@@ -16,7 +16,6 @@ import Circle from '../feature/Circle';
 import wwBlob from '../../workers/tc-dft-web-worker-blob.mjs';
 
 TC.Layer = Layer;
-TC.Util = Util;
 TC.layer = TC.layer || {};
 const featureNamespace = {};
 featureNamespace.Point = Point;
@@ -109,6 +108,8 @@ class Vector extends Layer {
     //se utiliza para saber cuándo está listo el capabilities en los casos en los que se instancia el layer pero no se añade al mapa
     //porque la forma habitual de detectar esto es por los eventos del mapa (que en esos casos no saltarán)
     #capabilitiesPromise = null;
+    #allowedGeometryTypes = new Set();
+    #featureTypeMetadata;
 
     constructor() {
         super(...arguments);
@@ -116,6 +117,14 @@ class Vector extends Layer {
 
         self.type = self.options.type || Consts.layerType.VECTOR;
         self.featureType = self.options.featureType;
+        if (self.options.file) {
+            self.file = self.options.file;
+        }
+        if (self.options.fileSystemFile) {
+            self.fileSystemFile = self.options.fileSystemFile;
+        }
+
+        self.setAllowedGeometryTypes(self.options.allowedGeometryTypes);
 
         const getFileExtension = function (url) {
             url = url || '';
@@ -149,7 +158,7 @@ class Vector extends Layer {
         };
 
         const extension = getFileExtension(self.url);
-        const format = getFormatFromMimeType(self.format) || TC.Util.getFormatFromFileExtension(extension);
+        const format = getFormatFromMimeType(self.format) || Util.getFormatFromFileExtension(extension);
         if (format || self.type === Consts.layerType.KML) {
             if (format === Consts.format.KML) {
                 self.type = Consts.layerType.KML;
@@ -195,7 +204,7 @@ class Vector extends Layer {
             self.features.forEach(f => {
                 const path = f.getPath();
                 if (path.length) {
-                    const node = TC.Util.addArrayToTree(path, result);
+                    const node = Util.addArrayToTree(path, result);
                     if (!nodes.has(node)) {
                         nodes.add(node);
                         if (f.getVisibilityState() === Consts.visibility.NOT_VISIBLE) {
@@ -278,19 +287,19 @@ class Vector extends Layer {
             if (self.styles || self.cluster) {
                 const legendImages = [];
                 if (self.cluster) {
-                    legendImages.push(TC.Util.getLegendImageFromStyle(
-                        TC.Util.extend({}, self.cluster.styles?.point, { radius: Cfg.styles.point.radius + 2, offset: [0, 6] }),
+                    legendImages.push(Util.getLegendImageFromStyle(
+                        Util.extend({}, self.cluster.styles?.point, { radius: Cfg.styles.point.radius + 2, offset: [0, 6] }),
                         { geometryType: Consts.geom.POINT }
                     ));
                 }
                 if (self.styles?.point) {
-                    legendImages.push(TC.Util.getLegendImageFromStyle(self.styles.point, { geometryType: Consts.geom.POINT }));
+                    legendImages.push(Util.getLegendImageFromStyle(self.styles.point, { geometryType: Consts.geom.POINT }));
                 }
                 if (self.styles?.line) {
-                    legendImages.push(TC.Util.getLegendImageFromStyle(self.styles.line, { geometryType: Consts.geom.POLYLINE }));
+                    legendImages.push(Util.getLegendImageFromStyle(self.styles.line, { geometryType: Consts.geom.POLYLINE }));
                 }
                 if (self.styles?.polygon) {
-                    legendImages.push(TC.Util.getLegendImageFromStyle(self.styles.polygon, { geometryType: Consts.geom.POLYGON }));
+                    legendImages.push(Util.getLegendImageFromStyle(self.styles.polygon, { geometryType: Consts.geom.POLYGON }));
                 }
                 result.legend = {
                     src: getMergedLegendImage(legendImages)
@@ -326,7 +335,7 @@ class Vector extends Layer {
         var features = new Array(coordsArray.length);
         var nativeFeatures = [];
         for (var i = 0, len = coordsArray.length; i < len; i++) {
-            const opts = TC.Util.extend(true, {}, options);
+            const opts = Util.extend(true, {}, options);
             let coords = coordsArray[i];
             let feature;
             const isNative = TC.wrap.Feature.prototype.isNative(coords);
@@ -833,6 +842,7 @@ class Vector extends Layer {
                             };
                         };
                         const wwProcess = async function (layers, callback) {
+                            wwInit();
                             var data = await self.proxificationTool.fetchXML(self.getDescribeFeatureTypeUrl(layers || self.featureType));
                             //checkear si excepciones del servidor
                             if (data.querySelector("Exception") || data.querySelector("exception")) {
@@ -845,12 +855,7 @@ class Vector extends Layer {
                             });
                             TC.describeFeatureType[layers instanceof Array ? layers.join(",") : layers] = callback;
                         };
-                        try {
-                            wwInit();
-                        }
-                        catch (err) {
-                            reject(err);
-                        }
+
                         //si no es una array convierto en Array
                         if (!(layerName instanceof Array)) layerName = layerName.split(",");
                         //si tiene distinto Namespace separo las pediciones describeFeatureType										
@@ -898,12 +903,12 @@ class Vector extends Layer {
         });
         result.then(
             function (data) {
-                if (TC.Util.isFunction(callback)) {
+                if (Util.isFunction(callback)) {
                     callback(data);
                 }
             },
             function (errorText) {
-                if (TC.Util.isFunction(error)) {
+                if (Util.isFunction(error)) {
                     error(errorText);
                 }
             }
@@ -1034,6 +1039,17 @@ class Vector extends Layer {
         return result;
     }
 
+    getPath() {
+        const result = [];
+        if (this.file) {
+            if (this.fileSystemFile && this.fileSystemFile !== this.file) {
+                result.push(this.fileSystemFile);
+            }
+            result.push(this.file);
+        }
+        return result;
+    }
+
     setModifiable(modifiable) {
         this.wrap.setModifiable(modifiable);
     }
@@ -1079,15 +1095,105 @@ class Vector extends Layer {
         }
     }
 
+    getAllowedGeometryTypes() {
+        return [...this.#allowedGeometryTypes.values()];
+    }
+
+    setAllowedGeometryTypes(types = []) {
+        this.#allowedGeometryTypes = new Set(types);
+        return this;
+    }
+
+    isGeometryTypeAllowed(feature) {
+        if (this.#allowedGeometryTypes.size === 0) {
+            return true;
+        }
+        return this.#allowedGeometryTypes.has(feature.getGeometryType());
+    }
+
+    async getFeatureTypeMetadata() {
+        if (!this.#featureTypeMetadata) {
+            try {
+                const featureTypeDescription = await this.describeFeatureType();
+                this.#featureTypeMetadata = {
+                    name: this.featureType,
+                    origin: Consts.layerType.WFS,
+                    originaData: featureTypeDescription,
+                    geometries: [],
+                    attributes: []
+                };
+                const getType = (wfsType) => {
+                    switch (wfsType) {
+                        case 'number':
+                        case 'double':
+                        case 'float':
+                        case 'decimal':
+                            return Consts.dataType.FLOAT;
+                        case 'int':
+                        case 'integer':
+                        case 'byte':
+                        case 'long':
+                        case 'negativeInteger':
+                        case 'nonNegativeInteger':
+                        case 'nonPositiveInteger':
+                        case 'positiveInteger':
+                        case 'short':
+                        case 'unsignedLong':
+                        case 'unsignedInt':
+                        case 'unsignedShort':
+                        case 'unsignedByte':
+                            return Consts.dataType.INTEGER;
+                        case 'date':
+                            return Consts.dataType.DATE;
+                        case 'time':
+                            return Consts.dataType.TIME;
+                        case 'dateTime':
+                            return Consts.dataType.DATETIME;
+                        default:
+                            return Consts.dataType.STRING;
+                    }
+                }
+                for (let key in featureTypeDescription) {
+                    const attribute = featureTypeDescription[key];
+                    const geometryType = Util.getGeometryType(attribute.type);
+                    if (geometryType) {
+                        const geometryMetadata = {
+                            name: attribute.name,
+                            originalType: attribute.type
+                        };
+                        if (typeof geometryType !== 'boolean') {
+                            geometryMetadata.type = geometryType
+                        }
+                        this.#featureTypeMetadata.geometries.push(geometryMetadata);
+                    }
+                    else {
+                        const attributeMetadata = {
+                            name: attribute.name,
+                            type: getType(attribute.type),
+                            originalType: attribute.type
+                        };
+                        this.#featureTypeMetadata.attributes.push(attributeMetadata);
+                    }
+                }
+            }
+            catch (_e) { }
+        }
+        return this.#featureTypeMetadata;
+    }
+
+    setFeatureTypeMetadata(obj) {
+        this.#featureTypeMetadata = obj;
+        return this;
+    }
+
     setStyles(options) {
         const self = this;
         self.styles = Util.extend({}, options);
         self.wrap.setStyles(options);
     }
 
-    exportState(options) {
+    exportState(options = {}) {
         const self = this;
-        options = options || {};
         const lObj = {
             id: self.id
         };
@@ -1101,57 +1207,24 @@ class Vector extends Layer {
         const features = options.features || self.features;
         lObj.features = features
             .map(function (f) {
-                let fObj = {};
-                var layerStyle;
-                switch (true) {
-                    case f instanceof Marker:
-                        fObj.type = Consts.geom.POINT;
-                        layerStyle = self.styles?.marker;
-                        break;
-                    case f instanceof Point:
-                        fObj.type = Consts.geom.POINT;
-                        layerStyle = self.styles?.point;
-                        break;
-                    case f instanceof MultiPoint:
-                        fObj.type = Consts.geom.MULTIPOINT;
-                        break;
-                    case f instanceof Polyline:
-                        fObj.type = Consts.geom.POLYLINE;
-                        layerStyle = self.styles?.line;
-                        break;
-                    case f instanceof MultiPolyline:
-                        fObj.type = Consts.geom.MULTIPOLYLINE;
-                        layerStyle = self.styles?.line;
-                        break;
-                    case f instanceof Polygon:
-                        fObj.type = Consts.geom.POLYGON;
-                        layerStyle = self.styles?.polygon;
-                        break;
-                    case f instanceof MultiPolygon:
-                        fObj.type = Consts.geom.MULTIPOLYGON;
-                        layerStyle = self.styles?.polygon;
-                        break;
-                    case f instanceof Circle:
-                        fObj.type = Consts.geom.CIRCLE;
-                        layerStyle = self.styles?.polygon;
-                        break;
-                    default:
-                        break;
-                }
-                fObj.id = f.id;
-                fObj.geom = TC.Util.compactGeometry(f.geometry, precision);
-                fObj.data = f.getData();
-                fObj.autoPopup = f.autoPopup;
-                fObj.showsPopup = f.showsPopup;
+                const fObj = {
+                    id: f.id,
+                    type: f.getGeometryType(),
+                    geom: Util.compactGeometry(f.geometry, precision),
+                    data: f.getData(),
+                    autoPopup: f.autoPopup,
+                    showsPopup: f.showsPopup
+                };
+                let layerStyle = self.styles?.[f.STYLETYPE];
                 if (options.exportStyles === undefined || options.exportStyles) {
-                    layerStyle = TC.Util.extend({}, layerStyle);
+                    layerStyle = Util.extend({}, layerStyle);
                     for (var key in layerStyle) {
                         var val = layerStyle[key];
-                        if (TC.Util.isFunction(val)) {
+                        if (Util.isFunction(val)) {
                             layerStyle[key] = val(f);
                         }
                     }
-                    fObj.style = TC.Util.extend(layerStyle, f.getStyle());
+                    fObj.style = Util.extend(layerStyle, f.getStyle());
                     if (!commonStyles) commonStyles = Object.assign({}, fObj.style);
                     else
                         commonStyles = compareStyles(commonStyles, fObj.style);
@@ -1172,8 +1245,8 @@ class Vector extends Layer {
         const self = this;
         const promises = new Array(obj.features.length);
         obj.features.forEach(function (f, idx) {
-            let style = TC.Util.extend({}, obj.style || {}, f.style);
-            const featureOptions = TC.Util.extend({}, style, {
+            let style = Util.extend({}, obj.style || {}, f.style);
+            const featureOptions = Util.extend({}, style, {
                 data: f.data,
                 id: f.id,
                 showsPopup: f.showsPopup,
@@ -1216,7 +1289,7 @@ class Vector extends Layer {
                     break;
             }
             if (addFn) {
-                var geom = TC.Util.explodeGeometry(f.geom);
+                var geom = Util.explodeGeometry(f.geom);
                 if (obj.crs && self.map.crs !== obj.crs) {
                     promises[idx] = new Promise(function (res, rej) {
                         self.map.one(Consts.event.PROJECTIONCHANGE, function (_e) {
@@ -1250,14 +1323,14 @@ class Vector extends Layer {
         const self = this;
         if (self.type === Consts.layerType.WFS) {
             const getUrl = () => self.options.url || self.url;
-            const _src = !TC.Util.isSecureURL(getUrl()) && TC.Util.isSecureURL(TC.Util.toAbsolutePath(getUrl())) ? self.getBySSL_(getUrl()) : getUrl();
+            const _src = !Util.isSecureURL(getUrl()) && Util.isSecureURL(Util.toAbsolutePath(getUrl())) ? self.getBySSL_(getUrl()) : getUrl();
 
             var params = {};
             params.SERVICE = 'WFS';
             params.VERSION = '2.0.0';
             params.REQUEST = 'GetCapabilities';
 
-            return _src + '?' + TC.Util.getParamString(params);
+            return _src + '?' + Util.getParamString(params);
         }
         return null;
     }
@@ -1327,6 +1400,11 @@ class Vector extends Layer {
             return Promise.reject(new Error(`Layer "${self.id}" does not have capabilities document`));
         }
     }
+
+    setDraggable(draggable, onend, onstart) {
+        this.wrap.setDraggable(draggable, onend, onstart);
+        return this;
+    }
 }
 
 TC.layer.Vector = Vector;
@@ -1344,6 +1422,8 @@ export default Vector;
  * @see SITNA.Map#setBaseLayer
  * @property {string} id - Identificador único de capa. No puede haber en un mapa dos capas con el mismo valor de `id`.
  * @property {SITNA.layer.ClusterOptions} [cluster] - La capa agrupa sus entidades puntuales cercanas entre sí en grupos (clusters).
+ * @property {string} [featureType] - Nombre de la capa del servicio WFS que queremos representar. Propiedad obligatoria
+ * solamente en capas de tipo `WFS`.
  * @property {string} [format] - Tipo MIME del formato de archivo de datos geográficos que queremos cargar (GeoJSON, KML, etc.).
 
   * Para asignar valor a esta propiedad se pueden usar las constantes definidas en [SITNA.Consts.mimeType]{@link SITNA.Consts}.
@@ -1362,9 +1442,9 @@ export default Vector;
  * @property {SITNA.layer.StyleOptions} [styles] - Descripción de los estilos que tendrán las entidades geográficas de la capa.
  * @property {string} [thumbnail] - URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.
  * @property {string} [title] - Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.
- * @property {string} [type=[SITNA.Consts.layerType.VECTOR]{@link SITNA.Consts}] - Tipo de capa. 
+ * @property {string} [type=[SITNA.Consts.layerType.VECTOR]{@link SITNA.Consts}] - Tipo de capa.
  * La lista de valores posibles está definida en [SITNA.Consts.layerType]{@link SITNA.Consts}.
- * @property {string} [url] - URL del servicio OGC o del archivo de datos geográficos que define la capa. 
+ * @property {string} [url] - URL del servicio OGC o del archivo de datos geográficos que define la capa.
  * Propiedad obligatoria en capas de tipo [WFS]{@link SITNA.Consts} y [KML]{@link SITNA.Consts}.
  *
  * Los archivos de datos geográficos soportados son [KML]{@link SITNA.Consts}, [GeoJSON]{@link SITNA.Consts}, [GPX]{@link SITNA.Consts}, [GML]{@link SITNA.Consts}, [WKT]{@link SITNA.Consts} y [TopoJSON]{@link SITNA.Consts}.
