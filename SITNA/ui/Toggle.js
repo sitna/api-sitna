@@ -8,24 +8,22 @@ class Toggle extends Component {
 
     constructor() {
         super();
-        const self = this;
-        self.#checkbox = document.createElement('input');
-        self.#checkbox.setAttribute('type', 'checkbox');
-        self.#checkbox.addEventListener('change', function (_e) {
-            self.checked = self.#checkbox.checked;
+        this.#checkbox = document.createElement('input');
+        this.#checkbox.setAttribute('type', 'checkbox');
+        this.#checkbox.addEventListener('change', (_e) => {
+            this.checked = this.#checkbox.checked;
             const event = new Event('change', { bubbles: true });
-            self.dispatchEvent(event);
+            this.dispatchEvent(event);
         });
-        self.shadowRoot.appendChild(self.#checkbox);
+        this.shadowRoot.appendChild(this.#checkbox);
     }
 
     connectedCallback() {
-        const self = this;
-        self.text = self.text;
-        self.checked = self.checked;
-        self.checkedIconText = self.checkedIconText;
-        self.uncheckedIconText = self.uncheckedIconText;
-        self.disabled = self.disabled;
+        this.text = this.text;
+        this.checked = this.checked;
+        this.checkedIconText = this.checkedIconText;
+        this.uncheckedIconText = this.uncheckedIconText;
+        this.disabled = this.disabled;
     }
 
     static get observedAttributes() {
@@ -36,22 +34,21 @@ class Toggle extends Component {
         if (oldValue === newValue) {
             return;
         }
-        const self = this;
         if (name === 'disabled') {
-            self.disabled = self.disabled;
+            this.disabled = this.disabled;
         }
         else if (name === 'checked') {
-            self.checked = self.checked;
+            this.checked = this.checked;
         }
         if (oldValue !== newValue) {
             if (name === 'text') {
-                self.text = newValue;
+                this.text = newValue;
             }
             if (name === 'checked-icon-text') {
-                self.checkedIconText = newValue;
+                this.checkedIconText = newValue;
             }
             if (name === 'unchecked-icon-text') {
-                self.uncheckedIconText = newValue;
+                this.uncheckedIconText = newValue;
             }
         }
     }
@@ -65,9 +62,8 @@ class Toggle extends Component {
     }
 
     set text(value) {
-        const self = this;
-        self.#checkbox.setAttribute('title', value);
-        self.setAttribute('text', value);
+        this.#checkbox.setAttribute('title', value);
+        this.setAttribute('text', value);
     }
 
     get checkedIconText() {
@@ -79,25 +75,22 @@ class Toggle extends Component {
     }
 
     #setDataValue(name, value) {
-        const self = this;
         if (value) {
-            self.#checkbox.setAttribute('data-' + name, value);
-            self.setAttribute(name, value);
+            this.#checkbox.setAttribute('data-' + name, value);
+            this.setAttribute(name, value);
         }
         else {
-            delete self.#checkbox.removeAttribute('data-' + name);
-            self.removeAttribute(name);
+            delete this.#checkbox.removeAttribute('data-' + name);
+            this.removeAttribute(name);
         }
     }
 
     set checkedIconText(value) {
-        const self = this;
-        self.#setDataValue('checked-icon-text', value);
+        this.#setDataValue('checked-icon-text', value);
     }
 
     set uncheckedIconText(value) {
-        const self = this;
-        self.#setDataValue('unchecked-icon-text', value);
+        this.#setDataValue('unchecked-icon-text', value);
     }
 
     get checked() {
@@ -105,10 +98,9 @@ class Toggle extends Component {
     }
 
     set checked(value) {
-        const self = this;
         const boolValue = !!value;
-        self.toggleAttribute('checked', boolValue);
-        self.#checkbox.checked = boolValue;
+        this.toggleAttribute('checked', boolValue);
+        this.#checkbox.checked = boolValue;
     }
 
     get disabled() {
@@ -116,10 +108,9 @@ class Toggle extends Component {
     }
 
     set disabled(value) {
-        const self = this;
         const boolValue = !!value;
-        self.toggleAttribute('disabled', boolValue);
-        self.#checkbox.disabled = boolValue;
+        this.toggleAttribute('disabled', boolValue);
+        this.#checkbox.disabled = boolValue;
     }
 }
 
