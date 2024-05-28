@@ -1,5 +1,6 @@
 import TC from '../TC';
 import Consts from './Consts';
+import Util from './Util';
 import Cfg from './Cfg';
 import EventTarget from './EventTarget';
 import i18n from './i18n';
@@ -25,17 +26,16 @@ TC.Control = function () {
     self.map = null;
     self.isActive = false;
     self.isDisabled = false;
-    self.CLASS = self.getClassName();
 
     var len = arguments.length;
 
-    self.options = TC.Util.extend({}, len > 1 ? arguments[1] : arguments[0]);
+    self.options = self.mergeOptions(len > 1 ? arguments[1] : arguments[0]);
     self.id = self.options.id || TC.getUID({
         prefix: self.CLASS.substr(TC.Control.prototype.CLASS.length + 1) + '-'
     });
-    self.div = TC.Util.getDiv(self.options.div ? self.options.div : arguments[0]);
-    self.div.classList.add(TC.Control.prototype.CLASS, self.CLASS);
-
+    self.div = Util.getDiv(self.options.div ? self.options.div : arguments[0]);
+    self.div.classList.add(Control.prototype.CLASS, self.CLASS);
+    
     self.template = self.options.template || self.template;
     self.exportsState = false;    
 };
@@ -61,28 +61,20 @@ TC.inherit(TC.Control, EventTarget);
 
     ctlProto.render = function (callback) {
         const self = this;
-        return self._set1stRenderPromise(self.renderData(null, function () {
+        return self.renderData(null, function () {
             self.addUIEventListeners();
             if (typeof callback === 'function') {
                 callback();
             }
-        }));
+        });
     };
 
     ctlProto.loadTemplates = async function () {
 
     };
 
-    ctlProto.getClassName = function () {
-        return this.CLASS;
-    };
-
-    ctlProto._set1stRenderPromise = function (promise) {
-        const self = this;
-        if (!self._firstRender) {
-            self._firstRender = promise;
-        }
-        return promise;
+    ctlProto.mergeOptions = function (...options) {
+        return Util.extend({}, ...options);
     };
 
     ctlProto.renderData = async function (data, callback) {
@@ -105,18 +97,19 @@ TC.inherit(TC.Control, EventTarget);
             self.template[self.CLASS] = template;
         }
 
-        const html = await self.getRenderedHtml(self.CLASS, data);
+        const renderPromise = self.getRenderedHtml(self.CLASS, data);
+        self._firstRender ??= renderPromise;
+        const html = await renderPromise;
         self.div.innerHTML = html;
         if (self.map) {
             self.trigger(Consts.event.CONTROLRENDER);
         }
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             callback();
         }
     };
 
-    const processTemplates = async function (templates, options) {
-        options = options || {};
+    const processTemplates = async function (templates, options = {}) {
 
         const templatePromises = [];
         for (var key in templates) {
@@ -163,7 +156,7 @@ TC.inherit(TC.Control, EventTarget);
                 return '';
             }
             const html = template(data);
-            if (TC.Util.isFunction(callback)) {
+            if (Util.isFunction(callback)) {
                 callback(html);
             }
             return html;
@@ -247,9 +240,8 @@ TC.inherit(TC.Control, EventTarget);
         }
     };
 
-    ctlProto.disable = function (options) {
+    ctlProto.disable = function (options = {}) {
         const self = this;
-        options = options || {};
         self.isDisabled = true;
         if (self.div) {
             self.div.classList.add(Consts.classes.DISABLED);
@@ -330,6 +322,7 @@ TC.inherit(TC.Control, EventTarget);
     };
 
     ctlProto.addUIEventListeners = function () {
+        return this;
     };
 
     ctlProto.isExclusive = function () {
@@ -339,7 +332,7 @@ TC.inherit(TC.Control, EventTarget);
     ctlProto.getLocaleString = function (key, texts) {
         var self = this;
         var locale = self.map ? self.map.options.locale : Cfg.locale;
-        return TC.Util.getLocaleString(locale, key, texts);
+        return Util.getLocaleString(locale, key, texts);
     };
 
     ctlProto.getUID = function () {
@@ -399,7 +392,7 @@ TC.inherit(TC.Control, EventTarget);
             if (self.map) {
                 const mapElevation = await self.map.getElevationTool();
                 if (mapElevation) {
-                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
+                    self.elevation = new TC.tool.Elevation(Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
                 }
                 else {
                     self.elevation = new TC.tool.Elevation(self.options.displayElevation);
@@ -420,7 +413,7 @@ TC.Control.create = async function (type, options) {
         const module = await import('./control/' + ctorName);
         TC.control[ctorName] = module.default;
     }
-    return new TC.control[ctorName](null, options);
+    return new TC.control[ctorName](void (0), options);
 };
 
 var Control = TC.Control;
