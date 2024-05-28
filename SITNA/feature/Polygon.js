@@ -180,10 +180,9 @@ class Polygon extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.createPolygon(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.createPolygon(coords, options);
         }
     }
 
@@ -211,7 +210,6 @@ class Polygon extends Feature {
      * @returns {SITNA.feature.Polygon} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (coords) {
             if (Array.isArray(coords) && Array.isArray(coords[0])) {
                 if (!Array.isArray(coords[0][0])) {
@@ -229,7 +227,7 @@ class Polygon extends Feature {
                 }
             });
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     getCoords(options) {
@@ -253,8 +251,7 @@ class Polygon extends Feature {
      * @returns {number} Longitud total del polígono en metros.
      */
     getLength(options) {
-        const self = this;
-        return self.wrap.getLength({ coordinates: self.getCoordinates(options) });
+        return this.wrap.getLength({ coordinates: this.getCoordinates(options) });
     }
 
     /**
@@ -266,8 +263,11 @@ class Polygon extends Feature {
      * @returns {number} Área del polígono en metros cuadrados.
      */
     getArea(options) {
-        const self = this;
-        return self.wrap.getArea({ coordinates: self.getCoordinates(options) });
+        return this.wrap.getArea({ coordinates: this.getCoordinates(options) });
+    }
+
+    getGeometryType() {
+        return Consts.geom.POLYGON;
     }
 }
 
