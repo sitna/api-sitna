@@ -3,7 +3,7 @@ import Consts from '../Consts';
 
 TC.tool = TC.tool || {};
 
-TC.tool.Proxification = function (proxy, options) {
+TC.tool.Proxification = function (proxy, options = {}) {
     var self = this;
 
     self.Consts = {
@@ -28,8 +28,6 @@ TC.tool.Proxification = function (proxy, options) {
             return result;
         };
     }
-
-    options = options || {};
 
     self._location = options.location || window.location;
 
@@ -206,8 +204,7 @@ TC.tool.Proxification = function (proxy, options) {
                 var upcased = method.toUpperCase()
                 return (methods.indexOf(upcased) > -1) ? upcased : method
             }
-            function Request(input, options) {
-                options = options || {}
+            function Request(input, options = {}) {
                 var body = options.body
                 if (input instanceof Request) {
                     if (input.bodyUsed) { throw new TypeError('Already read') }
@@ -494,9 +491,7 @@ TC.tool.Proxification = function (proxy, options) {
             }
         };
 
-        this.getAction = function (src, options) {
-            options = options || {};
-
+        this.getAction = function (src, options = {}) {
             var host = toHost(src);
             var cache = this.get(host, options);
             if (!cache) {
@@ -849,10 +844,9 @@ TC.tool.Proxification = function (proxy, options) {
     };
 
     /* Sólo GET */
-    toolProto.fetchImage = function (src, options) {
-        var self = this;
+    toolProto.fetchImage = function (src, options = {}) {
+        const self = this;
 
-        options = options || {};
         options.forImage = true;
 
         return new Promise(function (resolve, reject) {
@@ -1016,41 +1010,41 @@ TC.tool.Proxification = function (proxy, options) {
         })
     };
 
-    toolProto.fetchXML = function (url, options) {
+    toolProto.fetchXML = function (url, options = {}) {
         const self = this;
 
-        options = options || {};
-        options.responseType = "xml"; // No puedo usar la constante de la API porque está como application/xml y hay servicios que devuelven text/xml //Consts.mimeType.XML;
+        const opts = { ...options };
+        opts.responseType = "xml"; // No puedo usar la constante de la API porque está como application/xml y hay servicios que devuelven text/xml //Consts.mimeType.XML;
 
-        return self.fetch(url, options);
+        return self.fetch(url, opts);
     };
 
-    toolProto.fetchJSON = function (url, options) {
+    toolProto.fetchJSON = function (url, options = {}) {
         const self = this;
 
-        options = options || {};
-        options.responseType = Consts.mimeType.JSON;
+        const opts = { ...options };
+        opts.responseType = Consts.mimeType.JSON;
 
-        return self.fetch(url, options);
+        return self.fetch(url, opts);
     };
 
-    toolProto.fetchBlob = function (url, options) {
+    toolProto.fetchBlob = function (url, options = {}) {
         const self = this;
 
-        options = options || {};
-        options.responseType = "blob";
+        const opts = { ...options };
+        opts.responseType = "blob";
 
-        return self.fetch(url, options);
+        return self.fetch(url, opts);
     };
 
     /* Para imágenes por POST */
-    toolProto.fetchImageAsBlob = function (url, options) {
+    toolProto.fetchImageAsBlob = function (url, options = {}) {
         const self = this;
 
-        options = options || {};
-        options.responseType = "image";
+        const opts = { ...options };
+        opts.responseType = "image";
 
-        return self.fetch(url, options);
+        return self.fetch(url, opts);
     };
 
     /*
@@ -1276,13 +1270,13 @@ TC.tool.Proxification = function (proxy, options) {
         }
     };
 
-    toolProto.fetchFile = function (url, options) {
+    toolProto.fetchFile = function (url, options = {}) {
         const self = this;
 
-        options = options || {};
-        options.nomanage = true;
+        const opts = { ...options };
+        opts.nomanage = true;
         return new Promise(function (resolve, reject) {
-            self.fetch(url, options).then(function (response) {
+            self.fetch(url, opts).then(function (response) {
                 const contentDisposition = response.headers.get(self._fetch.Headers.CONTENTDISPOSITION);
                 var filename = new RegExp(/[\w|\-|\.]+.\w{1,}$/gi).exec(url)[0];
                 if (contentDisposition && /(attachment);([^;]*)/gi.test(contentDisposition)) {
