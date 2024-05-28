@@ -1,73 +1,63 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Control from '../Control';
 
 TC.control = TC.control || {};
 
-const ProjectionSelector = function () {
-    const self = this;
+class ProjectionSelector extends Control {
+    #cssClasses;
 
-    Control.apply(self, arguments);
+    constructor() {
+        super(...arguments);
+        const self = this;
 
-    self._cssClasses = {
-        LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
-        CRS_DIALOG: self.CLASS + '-crs-dialog',
-        CRS_LIST: self.CLASS + '-crs-list',
-        CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
-        CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code',
-        CHANGE: self.CLASS + '-change',
-        NO_CHANGE: self.CLASS + '-no-change'
-    };
+        self.#cssClasses = {
+            LOAD_CRS_BUTTON: self.CLASS + '-crs-btn-load',
+            CRS_DIALOG: self.CLASS + '-crs-dialog',
+            CRS_LIST: self.CLASS + '-crs-list',
+            CURRENT_CRS_NAME: self.CLASS + '-cur-crs-name',
+            CURRENT_CRS_CODE: self.CLASS + '-cur-crs-code',
+            CHANGE: self.CLASS + '-change',
+            NO_CHANGE: self.CLASS + '-no-change'
+        };
 
-    self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
-    if (window.$) {
-        self._$dialogDiv = $(self._dialogDiv);
-    }
-    if (!self.options.dialogDiv) {
-        document.body.appendChild(self._dialogDiv);
-    }
-
-    self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self._cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
-        const crs = e.target.dataset.crsCode;
-        if (crs) {
-            self.setProjection({
-                crs: crs,
-                allowFallbackLayer: true
-            });
+        self._dialogDiv = Util.getDiv(self.options.dialogDiv);
+        if (!self.options.dialogDiv) {
+            document.body.appendChild(self._dialogDiv);
         }
-    }), { passive: true });
 
-    self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON, function () {
-        self.loadFallbackProjections();
-    }), { passive: true });
-};
+        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self.#cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
+            const crs = e.target.dataset.crsCode;
+            if (crs) {
+                self.setProjection({
+                    crs: crs,
+                    allowFallbackLayer: true
+                });
+            }
+        }), { passive: true });
 
-TC.inherit(ProjectionSelector, Control);
+        self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button.' + self.#cssClasses.LOAD_CRS_BUTTON, function () {
+            self.loadFallbackProjections();
+        }), { passive: true });
+    }
 
-(function () {
+    async render(callback) {
+        await super.render.call(this, callback);
+        this._dialogDiv.innerHTML = await this.getRenderedHtml(self.CLASS + '-dialog', null);
+    }
 
-    const ctlProto = ProjectionSelector.prototype;
+    getAvailableCRS(options = {}) {
+        return this.map.getCompatibleCRS(Util.extend(options, { includeFallbacks: true }));
+    }
 
-    ctlProto.CLASS = 'tc-ctl-projs';
-
-    ctlProto.render = async function (callback) {
+    showProjectionChangeDialog(options = {}) {
         const self = this;
-        await Control.prototype.render.call(self, callback);
 
-        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
-    };
-
-    ctlProto.getAvailableCRS = function (options) {
-        return this.map.getCompatibleCRS(TC.Util.extend(options || {}, { includeFallbacks: true }));
-    };
-
-    ctlProto.showProjectionChangeDialog = function (options) {
-        const self = this;
-
-        const dialog = self._dialogDiv.querySelector('.' + self._cssClasses.CRS_DIALOG);
+        const dialog = self._dialogDiv.querySelector('.' + self.#cssClasses.CRS_DIALOG);
         const body = dialog.querySelector('.tc-modal-body');
         body.classList.add(Consts.classes.LOADING);
-        const ul = body.querySelector('ul.' + self._cssClasses.CRS_LIST);
+        const ul = body.querySelector('ul.' + self.#cssClasses.CRS_LIST);
         ul.innerHTML = '';
         const blFirstOption = self.map.baseLayer.firstOption || self.map.baseLayer;
         const blFallback = blFirstOption.isRaster() ? blFirstOption.getFallbackLayer() : null;
@@ -76,11 +66,9 @@ TC.inherit(ProjectionSelector, Control);
             var crsList = [];
             var blCRSList = [];
 
-            options = options || {};
-
             if (blFirstOption.isRaster()) {
                 blCRSList = blFirstOption.getCompatibleCRS();
-                crsList = self.getAvailableCRS(TC.Util.extend(options, {}));
+                crsList = self.getAvailableCRS(Util.extend(options, {}));
             } else {
                 blCRSList = self.map.baseLayers
                     .filter((layer) => {
@@ -113,11 +101,11 @@ TC.inherit(ProjectionSelector, Control);
                 orderBy: 'name'
             }).then(function (projList) {
                 var hasFallbackCRS = false;
-                var currentCRSName = dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_NAME);
-                var currentCRSCode = dialog.querySelector('.' + self._cssClasses.CURRENT_CRS_CODE);
+                var currentCRSName = dialog.querySelector('.' + self.#cssClasses.CURRENT_CRS_NAME);
+                var currentCRSCode = dialog.querySelector('.' + self.#cssClasses.CURRENT_CRS_CODE);
                 projList
                     .forEach(function (projObj) {
-                        if (currentCRSName && currentCRSCode && TC.Util.CRSCodesEqual(self.map.crs, projObj.code)) {
+                        if (currentCRSName && currentCRSCode && Util.CRSCodesEqual(self.map.crs, projObj.code)) {
                             currentCRSName.textContent = projObj.name;
                             currentCRSCode.textContent = projObj.code;
                         }
@@ -129,7 +117,7 @@ TC.inherit(ProjectionSelector, Control);
                             const li = document.createElement('li');
                             li.appendChild(button);
                             if (blCRSList.filter(function (crs) {
-                                return TC.Util.CRSCodesEqual(crs, projObj.code);
+                                return Util.CRSCodesEqual(crs, projObj.code);
                             }).length === 0) {
                                 // Es un CRS del fallback
                                 hasFallbackCRS = true;
@@ -143,7 +131,7 @@ TC.inherit(ProjectionSelector, Control);
                     const li = document.createElement('li');
                     const button = document.createElement('button');
                     button.setAttribute('type', 'button');
-                    button.classList.add(self._cssClasses.LOAD_CRS_BUTTON);
+                    button.classList.add(self.#cssClasses.LOAD_CRS_BUTTON);
                     button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
                     li.appendChild(button);
                     ul.appendChild(li);
@@ -156,13 +144,13 @@ TC.inherit(ProjectionSelector, Control);
                     ul.appendChild(li);
                 }
                 const visibleLi = ul.querySelectorAll('li:not(.' + Consts.classes.HIDDEN + ')');
-                dialog.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
+                dialog.querySelectorAll('.' + self.#cssClasses.CHANGE).forEach(function (elm) {
                     elm.style.display = visibleLi.length > 1 ? '' : 'none';
                 });
-                dialog.querySelectorAll('.' + self._cssClasses.NO_CHANGE).forEach(function (elm) {
+                dialog.querySelectorAll('.' + self.#cssClasses.NO_CHANGE).forEach(function (elm) {
                     elm.style.display = visibleLi.length > 1 ? 'none' : '';
                 });
-                dialog.querySelector('ul.' + self._cssClasses.CRS_LIST).style.display = visibleLi.length > 0 || hasFallbackCRS ? '' : 'none';
+                dialog.querySelector('ul.' + self.#cssClasses.CRS_LIST).style.display = visibleLi.length > 0 || hasFallbackCRS ? '' : 'none';
                 body.classList.remove(Consts.classes.LOADING);
             });
         };
@@ -173,12 +161,11 @@ TC.inherit(ProjectionSelector, Control);
         else {
             loadProjs();
         }
-        TC.Util.showModal(dialog, options);
-    };
+        Util.showModal(dialog, options);
+    }
 
-    ctlProto.setProjection = function (options) {
+    setProjection(options = {}) {
         const self = this;
-        options = options || {};
 
         TC.loadProjDef({
             crs: options.crs,
@@ -186,31 +173,31 @@ TC.inherit(ProjectionSelector, Control);
                 self.map.setProjection(options);
             }
         });
-    };
+    }
 
-    ctlProto.loadFallbackProjections = function () {
+    loadFallbackProjections() {
         const self = this;
         const lis = self._dialogDiv
-            .querySelector('.' + self._cssClasses.CRS_DIALOG)
-            .querySelectorAll('ul.' + self._cssClasses.CRS_LIST + ' li');
+            .querySelector('.' + self.#cssClasses.CRS_DIALOG)
+            .querySelectorAll('ul.' + self.#cssClasses.CRS_LIST + ' li');
         lis.forEach(function (li) {
             li.classList.remove(Consts.classes.HIDDEN);
-            if (li.querySelector('button.' + self._cssClasses.LOAD_CRS_BUTTON)) {
+            if (li.querySelector('button.' + self.#cssClasses.LOAD_CRS_BUTTON)) {
                 li.classList.add(Consts.classes.HIDDEN);
             }
         });
         self._dialogDiv.querySelectorAll('p.' + Consts.classes.WARNING).forEach(function (p) {
             p.classList.remove(Consts.classes.HIDDEN);
         });
-        self._dialogDiv.querySelectorAll('.' + self._cssClasses.CHANGE).forEach(function (elm) {
+        self._dialogDiv.querySelectorAll('.' + self.#cssClasses.CHANGE).forEach(function (elm) {
             elm.style.display = lis.length > 1 ? '' : 'none';
         });
-        self._dialogDiv.querySelectorAll('.' + self._cssClasses.NO_CHANGE).forEach(function (elm) {
+        self._dialogDiv.querySelectorAll('.' + self.#cssClasses.NO_CHANGE).forEach(function (elm) {
             elm.style.display = lis.length > 1 ? 'none' : '';
         });
-    };
+    }
+}
 
-})();
-
+ProjectionSelector.prototype.CLASS = 'tc-ctl-projs';
 TC.control.ProjectionSelector = ProjectionSelector;
 export default ProjectionSelector;
