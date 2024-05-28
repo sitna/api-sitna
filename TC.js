@@ -27,6 +27,7 @@ TC.control = {};
 TC.capabilities = {};
 TC.capabilitiesWFS = {};
 TC.describeFeatureType = {};
+TC.legendFormat = {};
 TC.tool = {};
 
 TC.cache = {};
@@ -47,7 +48,8 @@ TC.prompt = function (text, value, callback) {
 };
 
 TC.confirm = function (text, accept, cancel) {
-    if (confirm(text)) {
+    const result = confirm(text);
+    if (result) {
         if (TC.Util.isFunction(accept)) {
             accept();
         }
@@ -57,9 +59,11 @@ TC.confirm = function (text, accept, cancel) {
             cancel();
         }
     }
+    return result;
 };
 
-TC.error = function (text) {
+TC.error = function (err) {
+    const text = err.message ?? err;
     if (window.console) {
         console.error(text);
     }
@@ -200,7 +204,7 @@ const addCrossOriginAttr = function (path, scriptEl) {
     }
 };
 
-TC.loadJS = function (condition, url, callback, inOrder=false, notCrossOrigin) {
+TC.loadJS = function (condition, url, callback, inOrder = false, notCrossOrigin) {
     return new Promise(function (resolve, _reject) {
         const endFn = function () {
             if (TC.Util.isFunction(callback)) {
@@ -303,9 +307,8 @@ TC.loadCSS = function (url) {
 };
 
 // Transformación de petición AJAX de jQuery a promesa nativa
-TC.ajax = function (options) {
+TC.ajax = function (options = {}) {
     return new Promise(function (resolve, reject) {
-        options = options || {};
         const method = options.method || 'GET';
         const isGET = method === 'GET';
         var data;
@@ -385,10 +388,218 @@ TC.ajax = function (options) {
     });
 };
 
-var projectionDataCache = {};
+const projectionDataCache = {
+    // Precargamos los códigos más usados
+    '25830': {
+        accuracy: 1.0,
+        area: "Europe between 6°W and 0°W: Faroe Islands offshore; Ireland - offshore; Jan Mayen - offshore; Norway including Svalbard - offshore; Spain - onshore and offshore.",
+        authority: "EPSG",
+        bbox: [
+            80.49,
+            -6.0,
+            35.26,
+            0.01
+        ],
+        code: "25830",
+        default_trans: 1149,
+        kind: "CRS-PROJCRS",
+        name: "ETRS89 / UTM zone 30N",
+        proj4: "+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
+        trans: [
+            1149,
+            1571,
+            7913,
+            7952,
+            7953,
+            8365,
+            8442,
+            9365,
+            9369,
+            9386,
+            9454,
+            9740,
+            9759,
+            9764,
+            9867,
+            9878,
+            9941,
+            9965,
+            9970,
+            9975,
+            10108,
+            15959
+        ],
+        unit: "metre",
+        wkt: "PROJCS[\"ETRS89 / UTM zone 30N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25830\"]]"
+    },
+    '4326': {
+        accuracy: "",
+        area: "World.",
+        authority: "EPSG",
+        bbox: [
+            90.0,
+            -180.0,
+            -90.0,
+            180.0
+        ],
+        code: "4326",
+        default_trans: 0,
+        kind: "CRS-GEOGCRS",
+        name: "WGS 84",
+        proj4: "+proj=longlat +datum=WGS84 +no_defs +type=crs",
+        trans: [
+            3858,
+            3859,
+            8037,
+            9618,
+            9704,
+            9706,
+            9708,
+            10084,
+            15781
+        ],
+        unit: "degree (supplier to define representation)",
+        wkt: "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"
+    },
+    '4258': {
+        accuracy: "",
+        area: "Europe - onshore and offshore: Albania; Andorra; Austria; Belgium; Bosnia and Herzegovina; Bulgaria; Croatia; Cyprus; Czechia; Denmark; Estonia; Faroe Islands; Finland; France; Germany; Gibraltar; Greece; Hungary; Ireland; Italy; Kosovo; Latvia; Liechtenstein; Lithuania; Luxembourg; Malta; Moldova; Monaco; Montenegro; Netherlands; North Macedonia; Norway including Svalbard and Jan Mayen; Poland; Portugal; Romania; San Marino; Serbia; Slovakia; Slovenia; Spain; Sweden; Switzerland; United Kingdom (UK) including Channel Islands and Isle of Man; Vatican City State.",
+        authority: "EPSG",
+        bbox: [
+            84.73,
+            -16.1,
+            32.88,
+            40.18
+        ],
+        code: "4258",
+        default_trans: 0,
+        kind: "CRS-GEOGCRS",
+        name: "ETRS89",
+        proj4: "+proj=longlat +ellps=GRS80 +no_defs +type=crs",
+        trans: [
+            5334,
+            5335,
+            7001,
+            7711,
+            7712,
+            7713,
+            7714,
+            7715,
+            7716,
+            7717,
+            7718,
+            7719,
+            7958,
+            7959,
+            8361,
+            8362,
+            9276,
+            9278,
+            9283,
+            9304,
+            9410,
+            9411,
+            9412,
+            9413,
+            9414,
+            9484,
+            9485,
+            9499,
+            9584,
+            9585,
+            9586,
+            9587,
+            9588,
+            9589,
+            9590,
+            9591,
+            9592,
+            9593,
+            9594,
+            9597,
+            9600,
+            9605,
+            9606,
+            9607,
+            9608,
+            9609,
+            9727,
+            9728,
+            9729,
+            9730,
+            9731,
+            9750,
+            9884,
+            9885,
+            9908,
+            9909,
+            9914,
+            9915,
+            9916,
+            9917,
+            9918,
+            9919,
+            9925,
+            9926,
+            10001,
+            10003,
+            10021,
+            10022,
+            10023,
+            10024,
+            10025,
+            10026,
+            10027,
+            10028,
+            10029,
+            10030,
+            10031,
+            10032,
+            10033,
+            10034,
+            10106,
+            10107,
+            10130,
+            10133
+        ],
+        unit: "degree (supplier to define representation)",
+        wkt: "GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]]"
+    },
+    '3857': {
+        accuracy: "",
+        area: "World between 85.06°S and 85.06°N.",
+        authority: "EPSG",
+        bbox: [
+            85.06,
+            -180.0,
+            -85.06,
+            180.0
+        ],
+        code: "3857",
+        default_trans: 0,
+        kind: "CRS-PROJCRS",
+        name: "WGS 84 / Pseudo-Mercator",
+        proj4: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs +type=crs",
+        trans: [
+            9189,
+            9690,
+            9691,
+            15960
+        ],
+        unit: "metre",
+        wkt: "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]"
+    }
+};
 
-TC.getProjectionData = async function (options) {
-    options = options || {};
+const parseResponseObject = function (obj) {
+    let result = false;
+    if (obj.status === 'ok' && obj.number_result > 0) {
+        result = obj.results[0];
+    }
+    return result;
+};
+
+TC.getProjectionData = function (options = {}) {
     const crs = options.crs || '';
     const match = crs.match(/\d{4,5}$/g);
     let code = match ? match[0] : '';
@@ -400,6 +611,7 @@ TC.getProjectionData = async function (options) {
         }
         return Promise.resolve(projData);
     }
+
     if (options.sync) {
         let result;
         const xhr = new XMLHttpRequest();
@@ -422,23 +634,34 @@ TC.getProjectionData = async function (options) {
             result = false;
         }
         if (result) {
-            result = JSON.parse(result);
+            result = parseResponseObject(JSON.parse(result));
         }
         return result;
     }
 
-    if (!TC.tool.Proxification) {
-        TC.tool.Proxification = (await import('./TC/tool/Proxification')).default;
-    }
+    const endFn = function (resolve) {
+        const proxificationTool = new TC.tool.Proxification(TC.proxify);
+        proxificationTool.fetchJSON(url, options).then((response) => {
+            const data = parseResponseObject(response);
+            projectionDataCache[code] = data;
+            resolve(data);
+        });
+    };
 
-    const proxificationTool = new TC.tool.Proxification(TC.proxify);
-    const data = await proxificationTool.fetchJSON(url, options);
-    projectionDataCache[code] = data;
-    return data;
+    return new Promise(function (resolve, _reject) {
+        if (!TC.tool.Proxification) {
+            import('./TC/tool/Proxification').then((module) => {
+                TC.tool.Proxification = module.default;
+                endFn(resolve);
+            });
+        }
+        else {
+            endFn(resolve);
+        }
+    });
 };
 
-TC.loadProjDef = function (options) {
-    options = options || {};
+TC.loadProjDef = function (options = {}) {
     const crs = options.crs;
     const epsgPrefix = 'EPSG:';
     const urnPrefix = 'urn:ogc:def:crs:EPSG::';
@@ -501,10 +724,9 @@ TC.loadProjDef = function (options) {
         getDef(ogcHttpUriCode).name = name;
     };
     const loadDefResponse = function (data) {
-        const result = data && data.status === 'ok' && data.number_result === 1;
+        const result = !!data;
         if (result) {
-            var def = data.results[0];
-            loadDef(def.code, def.proj4, def.name);
+            loadDef(data.code, data.proj4, data.name);
         }
         return result;
     };
@@ -559,24 +781,22 @@ TC.mix = function (targetCtor, ...mixins) {
 };
 
 const uids = new Map();
-TC.getUID = function (options) {
-    const opts = options || {};
-    const prefix = opts.prefix || '';
+TC.getUID = function (options = {}) {
+    const prefix = options.prefix || '';
     let value = uids.get(prefix);
     if (!value) {
         value = 1;
     }
-    var result = prefix + value;
+    let result = prefix + value;
     uids.set(prefix, value + 1);
-    if (opts.banlist && opts.banlist.includes(result)) {
+    if (options.banlist?.includes(result)) {
         return TC.getUID(options);
     }
     return result;
 };
 
-TC.setUIDStart = function (count, options) {
-    const opts = options || {};
-    const prefix = opts.prefix || '';
+TC.setUIDStart = function (count, options = {}) {
+    const prefix = options.prefix || '';
     let currentValue = uids.get(prefix);
     if (!currentValue) {
         currentValue = 1;
