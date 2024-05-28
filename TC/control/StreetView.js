@@ -34,122 +34,37 @@
 import TC from '../../TC';
 import Consts from '../Consts';
 import Cfg from '../Cfg';
+import Util from '../Util';
 import Control from '../Control';
 
 TC.control = TC.control || {};
 
-const StreetView = function () {
-    var self = this;
-    self._sv = null;
-    self._mapActiveControl = null;
+Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
+let gMapsUrl = Consts.url.GOOGLEMAPS;
+Cfg.proxyExceptions = Cfg.proxyExceptions || [];
+Cfg.proxyExceptions.push(Consts.url.GOOGLEMAPS);
 
-    Control.apply(self, arguments);
+var waitId = 0;
 
-    self.viewDiv = null;
-    self._startLonLat = null;
-};
+class StreetView extends Control {
+    viewDiv = null;
+    #sv = null;
+    #startLonLat = null;
+    #previousActiveControl;
+    #transitioning;
 
-TC.inherit(StreetView, Control);
-
-(function () {
-    Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
-    var gMapsUrl = Consts.url.GOOGLEMAPS;
-    Cfg.proxyExceptions = Cfg.proxyExceptions || [];
-    Cfg.proxyExceptions.push(Consts.url.GOOGLEMAPS);
-
-    var ctlProto = StreetView.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-sv';
-
-    const dispatchCanvasResize = function () {
-        var event = document.createEvent('HTMLEvents');
-        event.initEvent('resize', true, false);
-        const elm = this.map.div.querySelector('canvas') || window;
-        elm.dispatchEvent(event);
-    };
-
-    var preset = function (ctl) {
-        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.add(Consts.classes.CHECKED);
-        ctl.mapDiv.classList.add(ctl.CLASS + '-active');
-    };
-
-    var reset = function (ctl) {
-        const view = ctl.viewDiv;
-        const onTransitionend = function () {
-            view.removeEventListener('transitionend', onTransitionend);
-            dispatchCanvasResize.call(ctl);
-        };
-
-        view.addEventListener('transitionend', onTransitionend);
-
-        // Por si no salta transitionend
-        setTimeout(function () {
-            dispatchCanvasResize.call(ctl);
-        }, 1000);
-
-        if (ctl.map.on3DView && ctl.ThreeDMarker) {
-            ctl.ThreeDMarker.show = false;
-            ctl.map.view3D.getScene().requestRender();
-        }
-        else
-            ctl.layer.clearFeatures();
-        ctl.div.querySelector('.' + ctl.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
-        ctl.div.querySelector('.' + ctl.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
-        ctl.mapDiv.classList.remove(ctl.CLASS + '-active');
-        ctl._startLonLat = null;
-    };
-
-    var resolve = function (ctl) {
-        var result = false;
-        const btn = ctl.div.querySelector('.' + ctl.CLASS + '-btn');
-        const drag = ctl.div.querySelector('.' + ctl.CLASS + '-drag');
-
-        var btnRect = btn.getBoundingClientRect();
-        var dragRect = drag.getBoundingClientRect();
-        drag.classList.add(Consts.classes.HIDDEN);
-        if (dragRect.top < btnRect.top || dragRect.top > btnRect.bottom ||
-            dragRect.left < btnRect.left || dragRect.left > btnRect.right) {
-            // Hemos soltado fuera del botón: activar StreetView
-            result = true;
-            // Precarga de marcadores
-            var extent = ctl.map.getExtent();
-            var xy = [extent[2], extent[3]];
-            if (!ctl.map.on3DView)
-                for (var i = 0; i < 16; i++) {
-                    ctl.layer.addMarker(xy, {
-                        id: 'pegman',
-                        cssClass: 'tc-marker-sv-' + i,
-                        width: 48,
-                        height: 48,
-                        anchor: [0, 1]
-                    });
-                }
-            /////////////////////
-            // Activamos StreetView
-            var mapRect = ctl.mapDiv.getBoundingClientRect();
-            var xpos = (dragRect.left + dragRect.right) / 2 - mapRect.left;
-            var ypos = dragRect.bottom - mapRect.top;
-            var coords = ctl.getCoordinateFromPixel([xpos, ypos]);
-            ctl.callback(coords);
-        }
-        else {
-            reset(ctl);
-        }
-        return result;
-    };
-
-    ctlProto.register = function (map) {
+    register(map) {
         const self = this;
 
         if (!self.viewDiv) {
-            self.viewDiv = TC.Util.getDiv(self.options.viewDiv);
+            self.viewDiv = Util.getDiv(self.options.viewDiv);
             self.viewDiv.classList.add(self.CLASS + '-view', Consts.classes.HIDDEN);
             if (!self.options.viewDiv) {
                 map.div.insertAdjacentElement('beforebegin', self.viewDiv);
             }
         }
 
-        const result = Control.prototype.register.call(self, map);
+        const result = super.register.call(self, map);
 
         self.mapDiv = self.map.div;
 
@@ -195,11 +110,22 @@ TC.inherit(StreetView, Control);
                     containment: (self.getMapDiv && self.mapDiv) || self.map.div
                 });
                 drag.on('dragStart', function (_e) {
-                    preset(self);
+                    self.#preset();
                 });
                 drag.on('dragEnd', function (_e) {
-                    resolve(self);
+                    self.#resolve();
                     drag.setPosition(0, 0);
+                });
+                // Añadimos aviso de que este botón no se pulsa, se arrastra
+                self.div.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
+                    const btnRect = e.target.getBoundingClientRect();
+                    console.log(btnRect);
+                    if (e.clientX >= btnRect.left &&
+                        e.clientX <= btnRect.right &&
+                        e.clientY >= btnRect.top &&
+                        e.clientY <= btnRect.bottom) {
+                        self.map.toast(self.getLocaleString('sv.instructions'), { type: TC.Consts.msgType.INFO });
+                    }
                 });
             });
 
@@ -230,14 +156,96 @@ TC.inherit(StreetView, Control);
         });
         map.on(Consts.event.THREED_DRAG, function (e) {
             if (e.pickedFeature === self.ThreeDMarker) {
-                self._startLonLat = e.oldCoords;
-                self._sv.setPosition({ lng: e.newCoords[0], lat: e.newCoords[1] });
+                self.#startLonLat = e.oldCoords;
+                self.#sv.setPosition({ lng: e.newCoords[0], lat: e.newCoords[1] });
             }
         })
         return result;
-    };
+    }
 
-    ctlProto.loadTemplates = async function () {
+    #dispatchCanvasResize() {
+        const self = this;
+        var event = document.createEvent('HTMLEvents');
+        event.initEvent('resize', true, false);
+        const elm = self.map.div.querySelector('canvas') || window;
+        elm.dispatchEvent(event);
+    }
+
+    #preset() {
+        const self = this;
+        self.div.querySelector('.' + self.CLASS + '-btn').classList.add(Consts.classes.CHECKED);
+        self.mapDiv.classList.add(self.CLASS + '-active');
+    }
+
+    #reset() {
+        const self = this;
+        const view = self.viewDiv;
+        const onTransitionend = function () {
+            view.removeEventListener('transitionend', onTransitionend);
+            self.#dispatchCanvasResize();
+        };
+
+        view.addEventListener('transitionend', onTransitionend);
+
+        // Por si no salta transitionend
+        setTimeout(function () {
+            self.#dispatchCanvasResize();
+        }, 1000);
+
+        if (self.map.on3DView && self.ThreeDMarker) {
+            self.ThreeDMarker.show = false;
+            self.map.view3D.getScene().requestRender();
+        }
+        else {
+            self.layer.clearFeatures();
+        }
+        self.div.querySelector('.' + self.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
+        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
+        self.mapDiv.classList.remove(self.CLASS + '-active');
+        self.#startLonLat = null;
+    }
+
+    #resolve() {
+        const self = this;
+        var result = false;
+        const btn = self.div.querySelector('.' + self.CLASS + '-btn');
+        const drag = self.div.querySelector('.' + self.CLASS + '-drag');
+
+        var btnRect = btn.getBoundingClientRect();
+        var dragRect = drag.getBoundingClientRect();
+        drag.classList.add(Consts.classes.HIDDEN);
+        if (dragRect.top < btnRect.top || dragRect.top > btnRect.bottom ||
+            dragRect.left < btnRect.left || dragRect.left > btnRect.right) {
+            // Hemos soltado fuera del botón: activar StreetView
+            result = true;
+            // Precarga de marcadores
+            var extent = self.map.getExtent();
+            var xy = [extent[2], extent[3]];
+            if (!self.map.on3DView)
+                for (var i = 0; i < 16; i++) {
+                    self.layer.addMarker(xy, {
+                        id: 'pegman',
+                        cssClass: 'tc-marker-sv-' + i,
+                        width: 48,
+                        height: 48,
+                        anchor: [0, 1]
+                    });
+                }
+            /////////////////////
+            // Activamos StreetView
+            var mapRect = self.mapDiv.getBoundingClientRect();
+            var xpos = (dragRect.left + dragRect.right) / 2 - mapRect.left;
+            var ypos = dragRect.bottom - mapRect.top;
+            var coords = self.getCoordinateFromPixel([xpos, ypos]);
+            self.callback(coords);
+        }
+        else {
+            self.#reset();
+        }
+        return result;
+    }
+
+    async loadTemplates() {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-sv.mjs');
         const viewTemplatePromise = import('../templates/tc-ctl-sv-view.mjs');
@@ -246,59 +254,29 @@ TC.inherit(StreetView, Control);
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-view'] = (await viewTemplatePromise).default;
         self.template = template;
-    };
+    }
 
-    ctlProto.render = function () {
+    async render() {
         const self = this;
+        self.viewDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-view', null);
+        await self.renderData(null);
+    }
 
-        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
-            self.renderData(null, function () {
-                self.getRenderedHtml(self.CLASS + '-view', null).then(function (out) {
-                    //lo normal sería hacer el resolve después de volcar out en viewDiv
-                    //pero a veces fallaba
-                    //no se detonaba, sin dar error alguno
-                    //así que lo arreglo como a mí me gusta:
-                    setTimeout(function () {
-                        self.viewDiv.innerHTML = out;
-                        resolve(self);
-                    }
-                        , 300);
-
-
-                    //console.log("Casi resuelto... " + out.length);
-                    //self._$viewDiv.html(out);
-                    //if (err)
-                    //{
-                    //    TC.error(err);
-                    //}
-                    //resolve(self);
-                    //console.log("Resuelto!");
-
-                })
-                    .catch(function (err) {
-                        TC.error(err);
-                    });
-            });
-        }));
-    };
-
-    var waitId = 0;
-
-    ctlProto.callback = function (coords) {
-        var self = this;
-        var geogCrs = 'EPSG:4326';        
+    callback(coords) {
+        const self = this;
+        var geogCrs = 'EPSG:4326';
         var ondrop = function (feature) {
-            if (self._sv) {
+            if (self.#sv) {
                 var bounds = feature.getBounds();
-                const lonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
-                self._sv.setPosition({ lng: lonLat[0], lat: lonLat[1] });
+                const lonLat = Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
+                self.#sv.setPosition({ lng: lonLat[0], lat: lonLat[1] });
             }
         };
 
         var ondrag = function (feature) {
-            if (self._sv) {
+            if (self.#sv) {
                 var bounds = feature.getBounds();
-                self._startLonLat = TC.Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
+                self.#startLonLat = Util.reproject([(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2], self.map.getCrs(), geogCrs);
             }
         };
 
@@ -317,7 +295,7 @@ TC.inherit(StreetView, Control);
             var heading;
             if (sv) {
                 var latLon = sv.getPosition();
-                xy = TC.Util.reproject([latLon.lng(), latLon.lat()], geogCrs, self.map.getCrs());
+                xy = Util.reproject([latLon.lng(), latLon.lat()], geogCrs, self.map.getCrs());
                 heading = sv.getPov().heading;
             }
             else {
@@ -326,7 +304,7 @@ TC.inherit(StreetView, Control);
             }
             if (self.map.on3DView) {
                 self.ThreeDMarker = self.map.view3D.setMarker(xy,
-                    TC.Util.getBackgroundUrlFromCss('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16),
+                    Util.getFeatureStyleFromCss('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16)?.url,
                     self.ThreeDMarker);
 
             }
@@ -368,12 +346,12 @@ TC.inherit(StreetView, Control);
                     var pegmanMarker = self.layer.features[0];
                     delete pegmanMarker.options.url;
                     pegmanMarker.options.cssClass = cssClass
-                    //pegmanMarker.options.cssClass = 'tc-marker-sv-' + (Math.round(16.0 * self._sv.getPov().heading / 360) + 16) % 16;
+                    //pegmanMarker.options.cssClass = 'tc-marker-sv-' + (Math.round(16.0 * self.#sv.getPov().heading / 360) + 16) % 16;
                     pegmanMarker.setStyle(pegmanMarker.options);
                 }
             }
             else {
-                self.ThreeDMarker?.setImage(Math.random() * 1000, TC.Util.getBackgroundUrlFromCss(cssClass));
+                self.ThreeDMarker?.setImage(Math.random() * 1000, Util.getFeatureStyleFromCss(cssClass)?.url);
             }
 
         }
@@ -386,7 +364,7 @@ TC.inherit(StreetView, Control);
                 if (window.google) {
                     setMarker();
                     const view = self.viewDiv;
-                    const lonLat = TC.Util.reproject(coords, self.map.getCrs(), geogCrs);
+                    const lonLat = Util.reproject(coords, self.map.getCrs(), geogCrs);
                     const mapsLonLat = new google.maps.LatLng(lonLat[1], lonLat[0]);
 
                     // Comprobamos si hay datos de SV en el sitio elegido.
@@ -402,18 +380,18 @@ TC.inherit(StreetView, Control);
                             setTimeout(function () { // Timeout para dar tiempo a ocultarse a LoadingIndicator
                                 TC.alert(svStatus === google.maps.StreetViewStatus.ZERO_RESULTS ? self.getLocaleString('noStreetView') : self.getLocaleString('streetViewUnknownError'));
                                 self.layer.wrap.setDraggable(false);
-                                reset(self);
+                                self.#reset();
                             }, 100);
                         }
                         else {
                             const onTransitionend = function (e) {
-                                if (!self._transitioning) {
+                                if (!self.#transitioning) {
                                     return;
                                 }
 
                                 if (e.propertyName === 'width' || e.propertyName === 'height') {
 
-                                    self._transitioning = false;
+                                    self.#transitioning = false;
 
                                     if (li) {
                                         li.removeWait(waitId);
@@ -423,7 +401,7 @@ TC.inherit(StreetView, Control);
                                     resizeEvent.initEvent('resize', false, false);
                                     mapDiv.dispatchEvent(resizeEvent);
 
-                                    dispatchCanvasResize.call(self);
+                                    self.#dispatchCanvasResize();
                                     view.removeEventListener('transitionend', onTransitionend);
 
                                     var svOptions = {
@@ -443,31 +421,31 @@ TC.inherit(StreetView, Control);
                                         imageDateControl: true
                                     };
 
-                                    if (!self._sv) {
-                                        self._sv = new google.maps.StreetViewPanorama(view, svOptions);
-                                        google.maps.event.addListener(self._sv, 'position_changed', function () {
-                                            setMarker(self._sv, view.classList.contains(Consts.classes.VISIBLE));
+                                    if (!self.#sv) {
+                                        self.#sv = new google.maps.StreetViewPanorama(view, svOptions);
+                                        google.maps.event.addListener(self.#sv, 'position_changed', function () {
+                                            setMarker(self.#sv, view.classList.contains(Consts.classes.VISIBLE));
                                         });
                                         self.managePOVChange = function () {
                                             var heading
                                             if (self.map.on3DView)
-                                                heading = (self._sv.getPov().heading || 360) - self.map.view3D.getCameraData().heading
+                                                heading = (self.#sv.getPov().heading || 360) - self.map.view3D.getCameraData().heading
                                             else {
-                                                heading = self._sv.getPov().heading;
+                                                heading = self.#sv.getPov().heading;
                                             }
                                             changeMarker('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16);
                                         }
                                         self.map.on(Consts.event.CAMERACHANGE, self.managePOVChange);
-                                        google.maps.event.addListener(self._sv, 'pov_changed', self.managePOVChange);
-                                        google.maps.event.addListener(self._sv, 'status_changed', function () {
-                                            var svStatus = self._sv.getStatus();
+                                        google.maps.event.addListener(self.#sv, 'pov_changed', self.managePOVChange);
+                                        google.maps.event.addListener(self.#sv, 'status_changed', function () {
+                                            var svStatus = self.#sv.getStatus();
 
                                             if (svStatus !== google.maps.StreetViewStatus.OK) {
-                                                self._sv.setVisible(false);
+                                                self.#sv.setVisible(false);
                                                 TC.alert(svStatus === google.maps.StreetViewStatus.ZERO_RESULTS ? self.getLocaleString('noStreetView') : self.getLocaleString('streetViewUnknownError'));
-                                                if (self._startLonLat) {
-                                                    self._sv.setVisible(true);
-                                                    self._sv.setPosition({ lng: self._startLonLat[0], lat: self._startLonLat[1] });
+                                                if (self.#startLonLat) {
+                                                    self.#sv.setVisible(true);
+                                                    self.#sv.setPosition({ lng: self.#startLonLat[0], lat: self.#startLonLat[1] });
                                                 }
                                                 else {
                                                     self.layer.wrap.setDraggable(false);
@@ -477,13 +455,13 @@ TC.inherit(StreetView, Control);
                                         });
                                     }
                                     else {
-                                        self._sv.setOptions(svOptions);
-                                        self._sv.setVisible(true);
+                                        self.#sv.setOptions(svOptions);
+                                        self.#sv.setVisible(true);
                                     }
                                 }
                             };
 
-                            self._transitioning = true;
+                            self.#transitioning = true;
                             view.addEventListener('transitionend', onTransitionend);
 
                             if (!self.options.viewDiv || !mapDiv.classList.contains(Consts.classes.FULL_SCREEN)) {
@@ -524,21 +502,21 @@ TC.inherit(StreetView, Control);
                             //al cerrar con el aspa, volverá a detonarse StreetView.deactivate()
                             //que, a su vez, restaurará el control anterior (FeatureInfo)
                             if (self.map.activeControl) {
-                                self._previousActiveControl = self.map.activeControl;
+                                self.#previousActiveControl = self.map.activeControl;
                                 self.map.activeControl.deactivate(true);
                             }
 
-                            setMarker(self._sv);
+                            setMarker(self.#sv);
                         }
                     });
                 }
                 else {
-                    reset(self);
+                    self.#reset();
                 }
             }, false, true);
-    };
+    }
 
-    ctlProto.closeView = function () {
+    closeView() {
         const self = this;
         const mapDiv = self.mapDiv;
         const view = self.viewDiv;
@@ -575,18 +553,19 @@ TC.inherit(StreetView, Control);
         view.style.height = view.style.width = "";
         self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
         self.layer.wrap.setDraggable(false);
-        reset(self);
-        self._sv.setVisible(false);
+        self.#reset();
+        self.#sv.setVisible(false);
         const header = document.body.querySelector('header');
         if (header) {
             header.style.display = '';
         }
 
-        if (self._previousActiveControl) {
-            self._previousActiveControl.activate();
+        if (self.#previousActiveControl) {
+            self.#previousActiveControl.activate();
         }
-    };
-})();
+    }
+}
 
+StreetView.prototype.CLASS = 'tc-ctl-sv';
 TC.control.StreetView = StreetView;
 export default StreetView;
