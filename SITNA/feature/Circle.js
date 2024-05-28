@@ -129,10 +129,9 @@ class Circle extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.createCircle(Circle.parseGeometry(coords), options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.createCircle(Circle.parseGeometry(coords), options);
         }
     }
 
@@ -148,9 +147,9 @@ class Circle extends Feature {
         const circunferencePoint = geom[1];
         if (Array.isArray(geom) &&
             Array.isArray(center) &&
-            !isNaN(center[0]) && !isNaN(center[1]) &&
+            !Number.isNaN(center[0]) && !Number.isNaN(center[1]) &&
             Array.isArray(circunferencePoint) &&
-            !isNaN(circunferencePoint[0]) && !isNaN(circunferencePoint[1])) {
+            !Number.isNaN(circunferencePoint[0]) && !Number.isNaN(circunferencePoint[1])) {
             return geom;
         }
         throw new Error('Coordinates not valid for circle');
@@ -178,11 +177,10 @@ class Circle extends Feature {
      * @returns {SITNA.feature.Circle} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (coords) {
             coords = Circle.parseGeometry(coords);
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     /**
@@ -205,8 +203,7 @@ class Circle extends Feature {
      * @returns {number} Longitud del radio en metros.
      */
     getRadius(options) {
-        const self = this;
-        const [center, circonferencePoint] = self.getCoordinates(options);
+        const [center, circonferencePoint] = this.getCoordinates(options);
         return Math.hypot(circonferencePoint[0] - center[0], circonferencePoint[1] - center[1]);
     }
 
@@ -222,10 +219,13 @@ class Circle extends Feature {
         return this.getCoordinates();
     }
 
+    getGeometryType() {
+        return Consts.geom.CIRCLE;
+    }
+
     toPolygon(numPoints = 72) {
-        const self = this;
-        const radius = self.getRadius();
-        const center = self.getCenter();
+        const radius = this.getRadius();
+        const center = this.getCenter();
         const points = new Array(numPoints);
         const dAngle = 2 * Math.PI / numPoints;
         let angle = 0;
@@ -233,7 +233,7 @@ class Circle extends Feature {
             points[i] = [center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)];
             angle += dAngle;
         }
-        return new Polygon([points], Object.assign({}, self.options));
+        return new Polygon([points], Object.assign({}, this.options));
     }
 }
 
