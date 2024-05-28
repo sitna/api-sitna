@@ -169,10 +169,9 @@ class MultiPolygon extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.createMultiPolygon(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.createMultiPolygon(coords, options);
         }
     }
 
@@ -200,7 +199,6 @@ class MultiPolygon extends Feature {
      * @returns {SITNA.feature.MultiPolygon} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (coords) {
             if (Array.isArray(coords) && Array.isArray(coords[0])) {
                 if (!Array.isArray(coords[0][0])) {
@@ -223,7 +221,7 @@ class MultiPolygon extends Feature {
                 });
             });
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     getCoords(options) {
@@ -247,8 +245,7 @@ class MultiPolygon extends Feature {
      * @returns {number} Suma de las longitudes de todos los polígonos, en metros.
      */
     getLength(options) {
-        const self = this;
-        return self.wrap.getLength({ coordinates: self.getCoordinates(options) });
+        return this.wrap.getLength({ coordinates: this.getCoordinates(options) });
     }
 
 
@@ -261,8 +258,11 @@ class MultiPolygon extends Feature {
      * @returns {number} Total de áreas de los polígonos en metros cuadrados.
      */
     getArea(options) {
-        const self = this;
-        return self.wrap.getArea({ coordinates: self.getCoordinates(options) });
+        return this.wrap.getArea({ coordinates: this.getCoordinates(options) });
+    }
+
+    getGeometryType() {
+        return Consts.geom.MULTIPOLYGON;
     }
 }
 
