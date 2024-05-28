@@ -107,15 +107,16 @@ class Layer {
     wrap = null;
     #CAPABILITIES_STORE_KEY_PREFIX = 'TC.capabilities.';
     #onlineCapabilitiesPromise;
+    #metadata;
 
     static state = {
         IDLE: 'idle',
         LOADING: 'loading'
     };
 
-    constructor(options) {
+    constructor(options = {}) {
         const self = this;
-        this.options = options || {};
+        this.options = options;
         Util.extend(self, self.options);
         self.id = self.options.id || TC.getUID();
         self.type = self.options.type || Consts.layerType.WMS;
@@ -415,7 +416,7 @@ class Layer {
                         const layerCollection = data.getElementsByTagName('Layer');
                         for (var i = 0, len = layerCollection.length; i < len; i++) {
                             const curXmlLy = layerCollection[i];
-                            var nd = TC.Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
+                            var nd = Util.getElementByNodeName(curXmlLy, "ows:Identifier")[0];
                             var id = nd.firstChild.data;
 
                             var capLy = capabilities.Contents.Layer.filter(function (ly) {
@@ -570,6 +571,19 @@ class Layer {
     getGetMapUrl() {
         return cleanOgcUrl(this.wrap.getGetMapUrl());
     }
+
+    getMetadata() {
+        return this.#metadata;
+    }
+
+    setMetadata(obj, options = {}) {
+        if (options.replace) {
+            this.#metadata = obj;
+        }
+        else {
+            this.#metadata = { ...this.#metadata, ...obj };
+        }
+    }
 }
 
 export default Layer;
@@ -597,7 +611,7 @@ export default Layer;
  * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link SITNA.MapOptions}.*
  *
  * Si se establece a true, la capa se muestra por defecto si forma parte de los mapas de fondo.
- * @property {LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
+ * @property {SITNA.layer.LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
  * Si el valor es de tipo `string`, tiene que ser un identificador de capas de la API SITNA (un miembro de [SITNA.Consts.layer]{@link SITNA.Consts}).
  *
  * La capa del mapa de situación debe ser compatible con el sistema de referencia de coordenadas del mapa principal (ver propiedad `crs` de {@link SITNA.MapOptions}).
@@ -656,37 +670,6 @@ export default Layer;
  *         },
  *     ];
  *     var map = new SITNA.Map("mapa");
- * </script>
- * @example <caption>Ejemplo de uso de la propiedad `filter` - [Ver en vivo](../examples/cfg.LayerOptions.filter.html)</caption> {@lang html}
- * <div id="mapa"></div>
- * <script>
- * // Establecemos un layout simplificado apto para hacer demostraciones de controles.
- * SITNA.Cfg.layout = "layout/ctl-container";
- * // Añadimos el control de tabla de contenidos en la primera posición.
- * SITNA.Cfg.controls.TOC = {
- *     div: "slot1"
- * };
- * // Añadimos la capa de IDENA de "Estaciones de aforo del Gobierno de Navarra" cuyo titular es "Gobierno de Navarra"
- * // Y añadimos la capa "Estaciones meteorológicas" de IDENA mostrando solo aquellas que están por encima de 1000 m.
- * SITNA.Cfg.workLayers = [
- *     {
- *         id: "layer1",
- *         title: "Estaciones de aforo del Gobierno de Navarra",
- *         type: SITNA.Consts.layerType.WMS,
- *         url: "//idena.navarra.es/ogc/wms",
- *         layerNames: "IDENA:HIDROG_Sym_EstacAforo",
- *         filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>TITULAR</ogc:PropertyName><ogc:Literal><![CDATA[Gobierno de Navarra]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
- *     },
- *     {
- *         id: "layer2",
- *         title: "Estaciones meteorológicas por encima de 1000m",
- *         type: SITNA.Consts.layerType.WMS,
- *         url: "//idena.navarra.es/ogc/wms",
- *         layerNames: "IDENA:estacMeteor",
- *         filter: 'ALTITUD>1000'
- *     }
- * ];
- * var map = new SITNA.Map("mapa");
  * </script>
  * @example <caption>Ejemplo de uso de la propiedad `overviewMapLayer` - [Ver en vivo](../examples/cfg.LayerOptions.overviewMapLayer.html)</caption> {@lang html}
  * <div id="mapa"></div>
