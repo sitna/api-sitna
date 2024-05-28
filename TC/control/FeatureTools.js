@@ -1,5 +1,6 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Control from '../Control';
 import infoShare from './infoShare';
 import Print from './Print';
@@ -9,7 +10,6 @@ import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 
 TC.control = TC.control || {};
 TC.control.infoShare = infoShare;
-TC.control.Print = Print;
 TC.Control = Control;
 
 Consts.event.POPUP = Consts.event.POPUP || 'popup.tc';
@@ -43,8 +43,6 @@ const getClusteredFeatures = function (feature) {
 class FeatureTools extends Control {
     TITLE_SEPARATOR = ' › ';
     FILE_TITLE_SEPARATOR = '__';
-    #selectors;
-    #classSelector;
     _dialogDiv;
     _parentCtl;
 
@@ -54,21 +52,11 @@ class FeatureTools extends Control {
         self.div.classList.add(self.CLASS);
 
         self.exportsState = true;
-        const cs = self.#classSelector = '.' + self.CLASS;
-        self.#selectors = {
-            ELEVATION_CHECKBOX: cs + '-dialog-elev input[type=checkbox]',
-            INTERPOLATION_RADIO: 'input[type=radio][name=finfo-ip-coords]',
-            INTERPOLATION_DISTANCE: cs + '-dialog-ip-m'
-        };
 
-        self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+        self._dialogDiv = Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
-    }
-
-    getClassName() {
-        return 'tc-ctl-ftools';
     }
 
     async register(map) {
@@ -90,7 +78,7 @@ class FeatureTools extends Control {
                 e.feature.toggleSelectedStyle(false);
             });
 
-        await Promise.all([TC.Control.prototype.register.call(self, map), self.renderPromise()]);
+        await Promise.all([super.register.call(self, map), self.renderPromise()]);
         await self.getShareDialog();
         return self;
     }
@@ -106,18 +94,13 @@ class FeatureTools extends Control {
         self.template = template;
     }
 
-    render() {
+    async render() {
         const self = this;
-
-        return self._set1stRenderPromise(Promise.all([
-            self.renderData({ elevation: self.options.displayElevation }),
-            self.getRenderedHtml(self.CLASS + '-dialog', {
-                checkboxId: self.getUID(),
-                elevation: self.options.displayElevation
-            }, function (html) {
-                self._dialogDiv.innerHTML = html;
-            })
-        ]));
+        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', {
+            checkboxId: self.getUID(),
+            elevation: self.options.displayElevation
+        });
+        await self.renderData({ elevation: self.options.displayElevation });
     }
 
     addUI(ctl) {
@@ -138,10 +121,10 @@ class FeatureTools extends Control {
                     if (menuIsMissing()) {
                         let endAddUIPromise = Promise.resolve();
                         const container = ctl.getContainerElement();
-                        if (!container.querySelectorAll('.' + TC.control.Print.prototype.CLASS + '-btn').length) {
+                        if (!container.querySelectorAll('.' + Print.prototype.CLASS + '-btn').length) {
                             const highlightedFeature = !ctl.caller && ctl.currentFeature ? ctl.currentFeature : ctl.caller.highlightedFeature;
                             if (highlightedFeature && highlightedFeature.showsPopup === true) {
-                                self.printControl = new TC.control.Print({
+                                self.printControl = new Print({
                                     target: menuContainer,
                                     printableElement: container,
                                     title: highlightedFeature.id
@@ -426,20 +409,19 @@ class FeatureTools extends Control {
         if (feature && feature.layer && feature.layer.owner && feature.layer === feature.layer.owner.resultsLayer) {
             removeFeature();
             //closeDisplay();
-            if (self._parentCtl?.caller?.removeFeature) self._parentCtl?.caller?.removeFeature(feature);
+            self._parentCtl?.caller?.removeFeature?.(feature);
         }
         else {
             TC.confirm(self.getLocaleString('deleteFeature.confirm'), function () {
                 removeFeature();
                 //closeDisplay();
-                if (self._parentCtl?.caller?.removeFeature)self._parentCtl?.caller?.removeFeature(feature);
+                self._parentCtl?.caller?.removeFeature?.(feature);
             });
         }
     }
 
-    async #prepareFeatureToShare(options) {
+    async #prepareFeatureToShare(options = {}) {
         const self = this;
-        options = options || {};
         const currentFeature = options.feature;
         if (currentFeature) {
             const feature = currentFeature.clone();
@@ -485,7 +467,7 @@ class FeatureTools extends Control {
     #getFeatureFilename(feature) {
         const self = this;
         const layerTitle = self.getFeatureTitle(feature).toString().replace(new RegExp(self.TITLE_SEPARATOR, 'g'), self.FILE_TITLE_SEPARATOR) || self.getLocaleString('feature');
-        return layerTitle.toLowerCase().replace(/\s/gi, '_') + '_' + TC.Util.getFormattedDate(new Date().toString(), true);
+        return layerTitle.toLowerCase().replace(/\s/gi, '_') + '_' + Util.getFormattedDate(new Date().toString(), true);
     }
 
     exportState() {
@@ -554,5 +536,6 @@ class FeatureTools extends Control {
 
 TC.mix(FeatureTools, infoShare);
 
+FeatureTools.prototype.CLASS = 'tc-ctl-ftools';
 TC.control.FeatureTools = FeatureTools;
 export default FeatureTools;
