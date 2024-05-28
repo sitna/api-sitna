@@ -76,11 +76,10 @@ class MultiMarker extends MultiPoint {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.feature = coords;
-            self.wrap.createMultiMarker(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.feature = coords;
+            this.wrap.createMultiMarker(coords, options);
         }
     }
 
@@ -97,7 +96,6 @@ class MultiMarker extends MultiPoint {
      * @returns {SITNA.feature.MultiMarker} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (coords) {
             if (Array.isArray(coords)) {
                 if (!Array.isArray(coords[0])) {
@@ -108,7 +106,7 @@ class MultiMarker extends MultiPoint {
                 throw new TypeError('Coordinates not valid for multimarker');
             }
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     getCoords(options) {
