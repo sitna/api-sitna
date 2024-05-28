@@ -7,7 +7,7 @@
     display: inline;
     height: auto;
 }
-    
+
 :host([variant="minimal"]) {
     display: inline-block;
     width: 2em;
@@ -46,9 +46,9 @@ button {
     text-overflow: ellipsis;
 }
 
-button[data-icon="help"] {
-    cursor: help;
-}
+    button[data-icon="help"] {
+        cursor: help;
+    }
 
 :host(:first-of-type) button {
     border-top-left-radius: var(--border-radius);
@@ -60,22 +60,22 @@ button[data-icon="help"] {
     border-bottom-right-radius: var(--border-radius);
 }
 
-    button:focus {
-        outline: none;
-    }
+button:focus {
+    outline: none;
+}
 
-    button:disabled {
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
-        cursor: default;
-    }
+button:disabled {
+    color: var(--btn-disabled-color);
+    background-color: var(--btn-disabled-bg-color);
+    border-color: var(--btn-disabled-border-color);
+    cursor: default;
+}
 
-    button.active {
-        color: var(--btn-hl-color);
-        background-color: var(--btn-hl-bg-color);
-        border-color: var(--btn-hl-border-color);
-    }
+button.active {
+    color: var(--btn-hl-color);
+    background-color: var(--btn-hl-bg-color);
+    border-color: var(--btn-hl-border-color);
+}
 
 button[data-icon]::before,
 button[data-icon-text]::before {
@@ -124,22 +124,22 @@ button::before:empty {
     margin-right: 0;
 }
 
-    button.icon {
-        text-indent: -1000vw;
-        min-width: 2em;
-    }
+button.icon {
+    text-indent: -1000vw;
+    min-width: 2em;
+}
 
-        button.icon::before {
-            position: absolute;
-            font-size: 1em;
-            height: 100%;
-            width: 100%;
-            text-align: center;
-            text-indent: 0;
-            line-height: 2em;
-            left: 0;
-            top: 0;
-        }
+    button.icon::before {
+        position: absolute;
+        font-size: 1em;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+        text-indent: 0;
+        line-height: 2em;
+        left: 0;
+        top: 0;
+    }
 
 button.minimal {
     background-color: transparent;
@@ -162,18 +162,19 @@ button.minimal {
         top: 0;
     }
 
-button.minimal:disabled {
-    background-color: transparent;
-}
-
-    button.minimal:disabled::before {
-        color: var(--glyph-disabled-color);
+    button.minimal:disabled {
+        background-color: transparent;
     }
+
+        button.minimal:disabled::before {
+            color: var(--glyph-disabled-color);
+        }
 
 button.link {
     background-color: transparent;
     display: inline;
-    color: var(--main-hl-color);
+    color: var(--link-color);
+    text-decoration: var(--link-decoration);
     border: 0;
     text-align: left;
 }
