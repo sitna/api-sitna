@@ -390,8 +390,8 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
     OGCTerrainProvider.prototype.ImageToHeightmapTerrainData = function (noDataValue, arrayBuffer, size, x, y, level, tilingSc) {
         if (this.format === "image/tiff")
             return this.GeotiffToHeightmapTerrainData(noDataValue, arrayBuffer, size, x, y, level, tilingSc);
-        else if (this.format === "image/x-bil;bits=32")
-            debugger;
+        //else if (this.format === "image/x-bil;bits=32")
+        //    debugger;
         else
             return imageToBuffer(arrayBuffer, {
                 offset: 0,
@@ -443,7 +443,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                     var lat = rect.north - ySpacing * j;
                     var res = parser.PCSToImage(lon, lat);
                     if (res[0] == 1) {
-                        var pixelValue = parser.getPixelValueOnDemand(res[1], res[2]);
+                        const pixelValue = parser.getPixelValueOnDemand(res[1], res[2]);
                         if (!pixelValue || (pixelValue && pixelValue[0] <= noDataValue)) {
                             heightBuffer[index] = 0.0;
                         } else {
@@ -459,7 +459,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         else {
             for (var j = 0; j < size.height; j++)
                 for (var i = 0; i < size.width; i++) {
-                    var pixelValue = parser.getPixelValueOnDemand(i, j);
+                    const pixelValue = parser.getPixelValueOnDemand(i, j);
                     if (!pixelValue || (pixelValue && pixelValue[0] <= noDataValue)) {
                         heightBuffer[index] = 0.0;
                     } else {
@@ -554,7 +554,6 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                     'description.layerName is required.');
             }
 
-            var layerName = description.layerName;
             resultat.minLevel = cesium.defaultValue(description.minLevel, undefined);
             resultat.maxLevel = cesium.defaultValue(description.maxLevel, undefined);
 
@@ -880,7 +879,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                             resultat.minLevel = tileSets.length;
                             resultat.maxLevel = 0;
 
-                            resultat.isTileInside = function (x, y, level) {
+                            resultat.isTileInside = function (_x, _y, _level) {
                                 return true;
                                 /*var inside = true;
                                 var bbox = resultat.bbox;
@@ -993,7 +992,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
     };
 
 
-    const imageToBuffer = function (image, limitations, size, hasStyledImage) {
+    const imageToBuffer = function (image, limitations, size, _hasStyledImage) {
         const dataPixels = cesium.getImagePixels(image, size.width, size.height);
 
         const buffer = new Float32Array(dataPixels.length / 4);
@@ -1034,7 +1033,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                 resultat.getHeightmapTerrainData = function (x, y, level) {
                     var retour;
 
-                    if (!isNaN(x + y + level)) {
+                    if (!Number.isNaN(x + y + level)) {
                         const urlGetTileOrCoverage = resultat.templateToURL(x, y, level);
 
                         var hasChildren = 0;
@@ -1068,7 +1067,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
 
                             return myHeightmapTerrainData;
 
-                        }).otherwise(function (evt) {
+                        }).otherwise(function (_evt) {
                             const fetchDataImage = self.format === "image/tiff" ? cesium.Resource.fetchArrayBuffer : cesium.Resource.fetchImage
                             //retour = cesium.when(fetchDataImage({ url: urlGetTileOrCoverage }), function (image) {
                             return cesium.when(fetchDataImage({ url: urlGetTileOrCoverage }), function (image) {
@@ -1225,7 +1224,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             var xy = tilingScheme.positionToTileXY(positions[i], level);
             var key = xy.toString();
 
-            if (!tileRequestSet.hasOwnProperty(key)) {
+            if (!Object.prototype.hasOwnProperty.call(tileRequestSet, key)) {
                 // When tile is requested for the first time
                 var value = {
                     x: xy.x,
@@ -1347,7 +1346,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             request.onsuccess = function (evt) {
                 that.database = evt.target.result;
             };
-            request.onerror = function (evt) {
+            request.onerror = function (_evt) {
                 console.log("IndexedDB--> onerror ");
             };
             request.onupgradeneeded = function (evt) {
@@ -1358,12 +1357,12 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                 }
 
                 if (!thisDB.objectStoreNames.contains('WMTSTiles')) {
-                    var store = thisDB.createObjectStore('WMTSTiles', { keyPath: 'id' });
+                    const store = thisDB.createObjectStore('WMTSTiles', { keyPath: 'id' });
                     store.createIndex("tile", ["level", "row", "column"], { unique: true });
                 }
 
                 if (!thisDB.objectStoreNames.contains('ImageTiles')) {
-                    var store = thisDB.createObjectStore('ImageTiles', { keyPath: 'id' });
+                    const store = thisDB.createObjectStore('ImageTiles', { keyPath: 'id' });
                     store.createIndex("tile", ["level", "row", "column"], { unique: true });
                 }
 
@@ -1413,7 +1412,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
 
                 }
 
-                requestGet.onerror = function (evt) {
+                requestGet.onerror = function (_evt) {
                     deferred.reject("no tile get failed");
                 }
             }
@@ -1549,7 +1548,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                 default:
                     if (linearUnitsCode >= 9000 && linearUnitsCode <= 9099) LinearUnitsName = 'EPSG Linear Units';
                     else if (linearUnitsCode >= 9100 && linearUnitsCode <= 9199) LinearUnitsName = 'EPSG Angular Units';
-                    else if (linearUnitsCode = 32767) LinearUnitsName = 'user-defined unit';
+                    else if (linearUnitsCode == 32767) LinearUnitsName = 'user-defined unit';
                     else if (linearUnitsCode > 32767) LinearUnitsName = 'Private User Implementations';
                     break;
             }
@@ -1590,7 +1589,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
                 default:
                     if (angularUnitsCode >= 9000 && angularUnitsCode <= 9099) AngularUnitsName = 'EPSG Linear Units';
                     else if (angularUnitsCode >= 9100 && angularUnitsCode <= 9199) AngularUnitsName = 'EPSG Angular Units';
-                    else if (angularUnitsCode = 32767) AngularUnitsName = 'user-defined unit';
+                    else if (angularUnitsCode == 32767) AngularUnitsName = 'user-defined unit';
                     else if (angularUnitsCode > 32767) AngularUnitsName = 'Private User Implementations';
                     break;
             }
@@ -2037,7 +2036,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         },
 
         /* from Tiff-js  */
-        getFieldValues: function (fieldTagName, fieldTypeName, typeCount, valueOffset) {
+        getFieldValues: function (_fieldTagName, fieldTypeName, typeCount, valueOffset) {
             var fieldValues = [];
             var fieldTypeLength = this.getFieldTypeLength(fieldTypeName);
             var fieldValueSize = fieldTypeLength * typeCount;
@@ -2089,7 +2088,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             return Math.floor((colorSample * multiplier) + (1 - multiplier));
         },
 
-        clampAffineColorSample: function (colorSample, bitsPerSample, vmin, vmax) {
+        clampAffineColorSample: function (colorSample, _bitsPerSample, vmin, vmax) {
             var multiplier = Math.pow(2, 8) / vmax;
             return Math.floor((colorSample - vmin) * multiplier);
         },
@@ -2148,8 +2147,8 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         /* check  getPlanarConfiguration */
         getPlanarConfiguration: function () {
             var fileDirectory = this.fileDirectories[0];
-            if (fileDirectory.hasOwnProperty('PlanarConfiguration') == false ||
-                fileDirectory.PlanarConfiguration.hasOwnProperty('values') == false ||
+            if (Object.prototype.hasOwnProperty.call(fileDirectory, 'PlanarConfiguration') == false ||
+                Object.prototype.hasOwnProperty.call(fileDirectory.PlanarConfiguration, 'values') == false ||
                 fileDirectory.PlanarConfiguration.values == null)
                 return 1;
 
@@ -2160,8 +2159,8 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         /* return the type  of the pixel or -1 */
         getSampleFormat: function () {
             var fileDirectory = this.fileDirectories[0];
-            if (fileDirectory.hasOwnProperty('SampleFormat') == false ||
-                fileDirectory.SampleFormat.hasOwnProperty('values') == false ||
+            if (Object.prototype.hasOwnProperty.call(fileDirectory, 'SampleFormat') == false ||
+                Object.prototype.hasOwnProperty.call(fileDirectory.SampleFormat, 'values') == false ||
                 fileDirectory.SampleFormat.values == null)
                 return 1;
 
@@ -2171,13 +2170,13 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         /* return min and max values if resent or -1 */
         getSampleMinMax: function () {
             var fileDirectory = this.fileDirectories[0];
-            if (fileDirectory.hasOwnProperty('SMaxSampleValue') == false ||
-                fileDirectory.SMaxSampleValue.hasOwnProperty('values') == false ||
+            if (Object.prototype.hasOwnProperty.call(fileDirectory, 'SMaxSampleValue') == false ||
+                Object.prototype.hasOwnProperty.call(fileDirectory.SMaxSampleValue, 'values') == false ||
                 fileDirectory.SMaxSampleValue.values == null)
                 return -1;
 
-            if (fileDirectory.hasOwnProperty('SMinSampleValue') == false ||
-                fileDirectory.SMinSampleValue.hasOwnProperty('values') == false ||
+            if (Object.prototype.hasOwnProperty.call(fileDirectory, 'SMinSampleValue') == false ||
+                Object.prototype.hasOwnProperty.call(fileDirectory.SMinSampleValue, 'values') == false ||
                 fileDirectory.SMinSampleValue.values == null)
                 return -1;
 
@@ -2223,8 +2222,8 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         /* check if TileOffsets is set */
         hasTileOffset: function () {
             var fileDirectory = this.fileDirectories[0];
-            if (fileDirectory.hasOwnProperty('TileOffsets') == false ||
-                fileDirectory.TileOffsets.hasOwnProperty('values') == false || fileDirectory.TileOffsets.values == null)
+            if (Object.prototype.hasOwnProperty.call(fileDirectory, 'TileOffsets') == false ||
+                Object.prototype.hasOwnProperty.call(fileDirectory.TileOffsets, 'values') == false || fileDirectory.TileOffsets.values == null)
                 return false;
             return true;
         },
@@ -2294,7 +2293,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             }
             this.geoKeys = geoKeyFields;
 
-            if (this.geoKeys.hasOwnProperty('GTRasterTypeGeoKey') == false)
+            if (Object.prototype.hasOwnProperty.call(this.geoKeys, 'GTRasterTypeGeoKey') == false)
                 this.isPixelArea = 0;
             if (this.getRasterTypeName(this.geoKeys.GTRasterTypeGeoKey.value) == 'RasterPixelIsArea')
                 this.isPixelArea = 1;
@@ -2391,7 +2390,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             this.samplesPerPixel = fileDirectory.SamplesPerPixel.values[0];
 
             this.bitsPerPixel = 0;
-            fileDirectory.BitsPerSample.values.forEach(function (bitsPerSample, i, bitsPerSampleValues) {
+            fileDirectory.BitsPerSample.values.forEach(function (bitsPerSample, i, _bitsPerSampleValues) {
                 this.sampleProperties[i] = {
                     'bitsPerSample': bitsPerSample,
                     'hasBytesPerSample': false,
@@ -2419,8 +2418,8 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             }
 
 
-            if (fileDirectory.hasOwnProperty('PlanarConfiguration') && true &&
-                fileDirectory.PlanarConfiguration.hasOwnProperty('values') == true)
+            if (Object.prototype.hasOwnProperty.call(fileDirectory, 'PlanarConfiguration') && true &&
+                Object.prototype.hasOwnProperty.call(fileDirectory.PlanarConfiguration, 'values') == true)
                 this.planarConfiguration = fileDirectory.PlanarConfiguration.values[0];
 
 
@@ -2933,23 +2932,23 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         /** get the CRS code */
         getCRSCode: function () {
             var CRSCode = 0;
-            if (this.geoKeys.hasOwnProperty('GTModelTypeGeoKey') == false)
+            if (Object.prototype.hasOwnProperty.call(this.geoKeys, 'GTModelTypeGeoKey') == false)
                 return 0;
             if (this.getModelTypeName(this.geoKeys.GTModelTypeGeoKey.value) == 'ModelTypeGeographic'
-                && this.geoKeys.hasOwnProperty('GeographicTypeGeoKey'))
+                && Object.prototype.hasOwnProperty.call(this.geoKeys, 'GeographicTypeGeoKey'))
                 CRSCode = this.geoKeys['GeographicTypeGeoKey'].value;
 
             else if (this.getModelTypeName(this.geoKeys.GTModelTypeGeoKey.value) == 'ModelTypeProjected' &&
-                this.geoKeys.hasOwnProperty('ProjectedCSTypeGeoKey'))
+                Object.prototype.hasOwnProperty.call(this.geoKeys, 'ProjectedCSTypeGeoKey'))
                 CRSCode = this.geoKeys['ProjectedCSTypeGeoKey'].value;
             else if (this.getModelTypeName(this.geoKeys.GTModelTypeGeoKey.value) == 'user-defined') {
-                if (this.geoKeys.hasOwnProperty('ProjectedCSTypeGeoKey'))
+                if (Object.prototype.hasOwnProperty.call(this.geoKeys, 'ProjectedCSTypeGeoKey'))
                     CRSCode = this.geoKeys['ProjectedCSTypeGeoKey'].value;
-                else if (this.geoKeys.hasOwnProperty('GeographicTypeGeoKey'))
+                else if (Object.prototype.hasOwnProperty.call(this.geoKeys, 'GeographicTypeGeoKey'))
                     CRSCode = this.geoKeys['GeographicTypeGeoKey'].value;
                 else
                     // Littel Hack for 3857
-                    if (this.geoKeys.hasOwnProperty('GTCitationGeoKey') &&
+                    if (Object.prototype.hasOwnProperty.call(this.geoKeys, 'GTCitationGeoKey') &&
                         this.geoKeys['GTCitationGeoKey'].value.search("WGS_1984_Web_Mercator_Auxiliary_Sphere") != -1)
                         CRSCode = 3857;
                     else
@@ -2983,14 +2982,14 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             console.log(Label);
             for (var i = GeoKeyTab[0]; i <= GeoKeyTab[1]; i++) {
                 var geoKeyName = this.getGeoKeyName(i);
-                if (this.geoKeys.hasOwnProperty(geoKeyName))
+                if (Object.prototype.hasOwnProperty.call(this.geoKeys, geoKeyName))
                     console.log(geoKeyName + " " + this.geoKeys[geoKeyName].value);
             }
         },
 
         /** isPixelArea */
         isPixelArea: function () {
-            if (this.geoKeys.hasOwnProperty('GTRasterTypeGeoKey') == false)
+            if (Object.prototype.hasOwnProperty.call(this.geoKeys, 'GTRasterTypeGeoKey') == false)
                 return true; // default 
             if (this.getRasterTypeName(this.geoKeys.GTRasterTypeGeoKey.value) == 'RasterPixelIsArea')
                 return true;
@@ -3100,7 +3099,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         /**
          * See GeoTiff geo_trans.c
          */
-        GTIFTiepointTranslate: function (gcp_count, x, y, directTransfo) {
+        GTIFTiepointTranslate: function (_gcp_count, x, y, _directTransfo) {
             var fileDirectory = this.fileDirectories[0];
             var modelTiepoint = fileDirectory.ModelTiepoint.values;
             /* I would appreciate a _brief_ block of code for doing second order
@@ -3350,7 +3349,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
     function convertToFloat(tab) {
         for (var j = 0; j < tab.length; j++) {
             var b = parseFloat(tab[j]);
-            if (!isNaN(b))
+            if (!Number.isNaN(b))
                 tab[j] = b;
         }
         return tab;
