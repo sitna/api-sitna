@@ -3,12 +3,12 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SITNA - Ejemplo de CadastralParcelSearchOptions</title>
+    <title>SITNA - Ejemplo de CadastralSearchOptions</title>
     <link rel="stylesheet" href="examples.css" />
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.CadastralParcelSearchOptions">CadastralParcelSearchOptions</a>.</p>
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.CadastralSearchOptions">CadastralSearchOptions</a>.</p>
         <p>Establecer configuración de un origen de datos distinto en la búsqueda de parcelas catastrales.</p>
     </div>
     <script src="../"></script>
@@ -19,8 +19,8 @@
         var map = new SITNA.Map("mapa", {
             controls: {
                 search: {
-                    placeHolder: 'Parcela catastral', // Texto que se mostrará en el cajetín de búsqueda.
-                    instructions: 'Buscar parcela catastral', // Texto que se mostrará como tooltip del botón buscar.
+                    placeHolder: 'Árboles singulares', // Texto que se mostrará en el cajetín de búsqueda.
+                    instructions: 'Buscar árboles singulares', // Texto que se mostrará como tooltip del botón buscar.
                     cadastralParcel: { // Objeto de configuración del origen de datos en el cual buscar las parcelas catastrales.
                         url: '//idena.navarra.es/ogc/wfs', // Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs).
                         featurePrefix: 'IDENA', // Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).

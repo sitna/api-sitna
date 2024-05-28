@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SearchOptions</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.SearchTypeOptions">SearchTypeOptions</a>.</p>
+        <p>Visor con el control de búsquedas para buscar códigos postales.</p>
+        <p>La fuente de datos es <a href="https://idena.navarra.es/ogc/wfs/?service=WFS&version=2.0.0&request=DescribeFeatureType&typename=DIRECC_Pol_CodPostal&outputFormat=application%2Fgml%2Bxml%3B%20version%3D3.2">esta capa</a> del servicio WFS de IDENA.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>    
+    <script>
+        // Creamos un mapa con el control de búsquedas. 
+        // Configuramos el buscador añadiendo un tipo personalizado de búsqueda.
+        // Indicamos un placeHolder y tooltip (propiedad "instructions") acorde con las búsquedas configuradas.
+        var map = new SITNA.Map("mapa", {
+            controls: {
+                search: {
+                    coordinates: false,
+                    cadastralParcel: false,
+                    municipality: false,
+                    town: false,
+                    street: false,
+                    postalAddress: false,
+                    placeHolder: "Código postal",
+                    instructions: "Buscar código postal",
+                    customSearchTypes: [{
+                        dataIdProperty: ["CODPOSTAL"],
+                        featurePrefix: "IDENA",
+                        featureType: ["DIRECC_Pol_CodPostal"],
+                        geometryName: "the_geom",
+                        outputFormat: SITNA.Consts.format.JSON,
+                        outputProperties: ["CODPOSTAL"],
+                        parser: function (pattern) {
+                            // Una cadena válida es aquella que consta de cinco dígitos
+                            const match = /^\d{5}$/.exec(pattern.trim());
+                            if (match) {
+                                return [match[0]];
+                            }
+                            return null;
+                        },
+                        queryProperties: {
+                            firstQueryWord: ["CODPOSTAL"]
+                        },
+                        styles: [{
+                            polygon: {
+                                strokeColor: "#000033",
+                                strokeWidth: 2,
+                                fillColor: "#000033",
+                                fillOpacity: 0.1
+                            }
+                        }],
+                        suggestionListHeader: {
+                            labelKey: "postcode",
+                            colorSource: "strokeColor"
+                        },
+                        suggestionTemplate: "{0}",
+                        url: "https://idena.navarra.es/ogc/wfs/"
+                    }]
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

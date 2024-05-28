@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de RasterOptions.filter</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.layer.html#.RasterOptions">RasterOptions</a>.filter.</p>
+        <p>Filtrado de capas WMS mediante filtros GML o CQL.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        var map = new SITNA.Map("mapa", {
+            // Mapa centrado de Pamplona
+            initialExtent: [606239, 4738249, 614387, 4744409],
+            // Añadimos la capa de GeoPamplona del catálogo de edificios filtrada para mostrar solamente los de uso cultural.
+            // Añadimos también la capa de IDENA de museos filtrada para mostrar solamente los que están en Pamplona.
+            workLayers: [
+                {
+                    id: "layer1",
+                    title: "Catálogo de edificios de Pamplona de uso cultural",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//sig.pamplona.es/ogc/wms",
+                    layerNames: "PROY_Pol_Edificios",
+                    filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>GRUPOEDIF</ogc:PropertyName><ogc:Literal><![CDATA[CULTURAL]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
+                },
+                {
+                    id: "layer2",
+                    title: "Museos localizados en Pamplona",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/ows",
+                    layerNames: "IDENA:DOTACI_Sym_Museos",
+                    filter: "POBLACION='Pamplona'"
+                }
+            ]
+        });
+    </script>
+
+</body>
+</html>
