@@ -20,7 +20,7 @@
             "div": "search",            
             "allowedSearchTypes": {
                 "coordinates": { },
-                "cadastral": { "suggestionRoot": "201" },
+                "cadastralParcel": { "suggestionRoot": "201" },
                 "street": {
                     "rootType": "locality",					
                     "root": [
@@ -51,7 +51,7 @@
                     ],
                     "limit": true
                 },
-                "number": {
+                "postalAddress": {
                     "rootType": "locality",
                     "root": [
                         [ "201", "2" ],
