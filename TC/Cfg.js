@@ -2,14 +2,12 @@ import TC from '../TC';
 import Consts from './Consts';
 import Util from './Util';
 
-TC.Util = Util;
-
 /**
  * Opciones de configuración del mapa. Para más información de como usar objetos de este tipo, consultar {@tutorial 2-configuration}.
  * @typedef MapOptions
  * @memberof SITNA
  * @see 2-configuration
- * @property {LayerOptions[]|string[]} [baseLayers=[SITNA.Consts.layer.IDENA_BASEMAP]{@link SITNA.Consts}, 
+ * @property {SITNA.layer.LayerOptions[]|string[]} [baseLayers=[SITNA.Consts.layer.IDENA_BASEMAP]{@link SITNA.Consts}, 
  * [SITNA.Consts.layer.IDENA_ORTHOPHOTO]{@link SITNA.Consts}, [SITNA.Consts.layer.IDENA_CADASTER]{@link SITNA.Consts}, 
  * [SITNA.Consts.layer.IDENA_CARTO]{@link SITNA.Consts}] - Lista con cualquier combinación de objetos de definición de capa o de identificadores de capas de la API SITNA
  * (miembros de [SITNA.Consts.layer]{@link SITNA.Consts}) para incluir dichas capas como mapas de fondo.
@@ -57,7 +55,7 @@ TC.Util = Util;
  * De esta manera no infringimos las reglas de seguridad de JavaScript, dado que el proxy está alojado en el dominio propio.
  * @property {SITNA.layer.StyleOptions} [styles] - Opciones de estilo de las entidades geográficas.
  * @property {SITNA.MapViewOptions} [views] - Opciones de vistas de mapa, define qué vistas estarán disponibles para conmutar entre el mapa y las vistas adicionales configuradas aquí, y qué opciones se pasan a cada vista. Actualmente, únicamente existe la opción de configurar la vista `threed` que gestiona el control `threed` de {@link SITNA.control.MapControlOptions}.
- * @property {LayerOptions[]} [workLayers] - Lista de objetos de definición de capa para incluir dichas capas como contenido activo del mapa.
+ * @property {SITNA.layer.LayerOptions[]} [workLayers] - Lista de objetos de definición de capa para incluir dichas capas como contenido activo del mapa.
  */
 
 const Defaults = (function () {
@@ -153,6 +151,20 @@ const Defaults = (function () {
                 overviewMapLayer: Consts.layer.IDENA_BASEMAP
             },
             {
+                id: Consts.layer.IDENA_ORTHOPHOTO2023,
+                title: 'Ortofoto 2023',
+                type: Consts.layerType.WMTS,
+                url: '//idena.navarra.es/ogc/wmts/',
+                matrixSet: 'epsg25830',
+                layerNames: 'ortofoto2023',
+                encoding: Consts.WMTSEncoding.RESTFUL,
+                format: 'image/jpeg',
+                isDefault: false,
+                hideTree: true,
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2023.jpg',
+                fallbackLayer: Consts.layer.IDENA_DYNORTHOPHOTO2023,
+                overviewMapLayer: Consts.layer.IDENA_BASEMAP
+            },            {
                 id: Consts.layer.IDENA_ORTHOPHOTO2022,
                 title: 'Ortofoto 2022',
                 type: Consts.layerType.WMTS,
@@ -387,6 +399,18 @@ const Defaults = (function () {
                 isDefault: false,
                 hideTree: true,
                 thumbnail: TC.apiLocation + 'css/img/thumb-orthophoto.jpg',
+                overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
+            },
+            {
+                id: Consts.layer.IDENA_DYNORTHOPHOTO2023,
+                title: 'Ortofoto 2023',
+                type: Consts.layerType.WMS,
+                url: '//idena.navarra.es/ogc/wms',
+                layerNames: 'ortofoto_5000_2023',
+                format: 'image/jpeg',
+                isDefault: false,
+                hideTree: true,
+                thumbnail: TC.apiLocation + 'css/img/thumb-ortho2023.jpg',
                 overviewMapLayer: Consts.layer.IDENA_DYNBASEMAP
             },
             {
@@ -661,7 +685,7 @@ const Defaults = (function () {
                 id: Consts.layer.IGN_FR_BASEMAP,
                 title: "Mapa base \r\n (IGN FR)",
                 type: Consts.layerType.WMTS,
-                url: "//wxs.ign.fr/essentiels/geoportail/wmts",
+                url: "https://data.geopf.fr/wmts",
                 encoding: Consts.WMTSEncoding.KVP,
                 layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
                 matrixSet: "PM",
@@ -675,7 +699,7 @@ const Defaults = (function () {
                 id: Consts.layer.IGN_FR_RELIEF,
                 title: "Relieve \r\n (IGN FR)",
                 type: Consts.layerType.WMTS,
-                url: "//wxs.ign.fr/altimetrie/geoportail/wmts",
+                url: "https://data.geopf.fr/wmts",
                 encoding: Consts.WMTSEncoding.KVP,
                 layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
                 matrixSet: "PM",
@@ -689,7 +713,7 @@ const Defaults = (function () {
                 id: Consts.layer.IGN_FR_ORTHOPHOTO,
                 title: "Ortofoto \r\n (IGN FR)",
                 type: Consts.layerType.WMTS,
-                url: "//wxs.ign.fr/essentiels/geoportail/wmts",
+                url: "https://data.geopf.fr/wmts",
                 encoding: Consts.WMTSEncoding.KVP,
                 layerNames: "ORTHOIMAGERY.ORTHOPHOTOS",
                 matrixSet: "PM",
@@ -713,8 +737,8 @@ const Defaults = (function () {
                 id: Consts.layer.IGN_FR_DYNBASEMAP,
                 title: 'Mapa base \r\n (IGN FR)',
                 type: Consts.layerType.WMS,
-                url: "//wxs.ign.fr/essentiels/geoportail/r/wms",
-                layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGN",
+                url: "https://data.geopf.fr/wms-r",
+                layerNames: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
                 thumbnail: TC.apiLocation + "css/img/thumb-base-fr-ign.png",
                 ignoreProxification: true,
                 overviewMapLayer: Consts.layer.IGN_FR_BASEMAP
@@ -723,7 +747,7 @@ const Defaults = (function () {
                 id: Consts.layer.IGN_FR_DYNRELIEF,
                 title: 'Relieve \r\n (IGN FR)',
                 type: Consts.layerType.WMS,
-                url: "//wxs.ign.fr/altimetrie/geoportail/r/wms",
+                url: "https://data.geopf.fr/wms-r",
                 layerNames: "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW",
                 thumbnail: TC.apiLocation + "css/img/thumb-estom-fr-ign.jpg",
                 ignoreProxification: true,
@@ -733,7 +757,7 @@ const Defaults = (function () {
                 id: Consts.layer.IGN_FR_DYNORTHOPHOTO,
                 title: 'Ortofoto \r\n (IGN FR)',
                 type: Consts.layerType.WMS,
-                url: "//wxs.ign.fr/essentiels/geoportail/r/wms",
+                url: "https://data.geopf.fr/wms-r",
                 layerNames: "ORTHOIMAGERY.ORTHOPHOTOS",
                 thumbnail: TC.apiLocation + "css/img/thumb-ortho-fr-ign.jpg",
                 ignoreProxification: true,
@@ -896,7 +920,7 @@ const Defaults = (function () {
         * @property {boolean|SITNA.control.CoordinatesOptions} [coordinates=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de coordenadas y de sistema de referencia espacial.
         * @property {boolean|SITNA.control.DataLoaderOptions} [dataLoader=false] - Si se establece a un valor *truthy*,  se muestra un control para añadir datos externos, en concreto servicios WMS y archivos locales de datos geográficos.
         * 
-        * Hay más información sobre el funcionamiento del control en la página de documentación de {@link DataLoaderOptions}.
+        * Hay más información sobre el funcionamiento del control en la página de documentación de {@link SITNA.control.DataLoaderOptions}.
         * @property {boolean|SITNA.control.TabContainerOptions} [download=false] - Si se establece a un valor *truthy*, el mapa tiene un control que permite descargar la imagen actual del mapa o las capas cargadas como un archivo de datos vectoriales.
         * Para llevar a cabo esta segunda operación, es necesario que las capas del mapa tengan asociado un servicio WFS al servicio WMS que muestra las entidades en el mapa (software como GeoServer realiza esto automáticamente).
         * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
@@ -907,7 +931,7 @@ const Defaults = (function () {
         * @property {boolean|SITNA.control.LayerCatalogOptions} [layerCatalog=false] - Si se establece a un valor *truthy*, se muestra un control para añadir capas de trabajo desde uno o varios servicios WMS.
         *
         * Este control se usa habitualmente en combinación con `workLayerManager`. Hay más información de cómo funcionan ambos controles en 
-        * la página de documentación de {@link LayerCatalogOptions}.
+        * la página de documentación de {@link SITNA.control.LayerCatalogOptions}.
         * @property {boolean|SITNA.control.ControlOptions} [legend=false] - Si se establece a un valor *truthy*, el mapa tiene leyenda.
         * @property {boolean|SITNA.control.ControlOptions} [loadingIndicator=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de espera de carga.
         * @property {boolean|SITNA.control.ControlOptions} [measure=false] - Si se establece a un valor *truthy*, el mapa tiene un medidor de longitudes, áreas y perímetros.
@@ -919,7 +943,7 @@ const Defaults = (function () {
         * @property {boolean|SITNA.control.OfflineMapMakerOptions} [offlineMapMaker=false] - Si se establece a un valor *truthy*, el mapa tiene un creador de mapas sin conexión para uso sin acceso a Internet.
         * 
         * Hay más información sobre los requisitos necesarios para el correcto funcionamiento del control en la página de documentación de
-        * {@link OfflineMapMakerOptions}.
+        * {@link SITNA.control.OfflineMapMakerOptions}.
         * @property {boolean|SITNA.control.OverviewMapOptions} [overviewMap=false] - Si se establece a un valor *truthy*, el mapa tiene un mapa de situación.
         * @property {boolean|SITNA.control.ControlOptions} [popup=false] - Si se establece a un valor *truthy*, el mapa muestra los datos asociados a los marcadores cuando se pulsa sobre ellos.
         * @property {boolean|SITNA.control.PrintMapOptions} [printMap=false] - Si se establece a un valor *truthy*, se muestra una herramienta para imprimir el mapa en PDF.
@@ -934,7 +958,7 @@ const Defaults = (function () {
         * @property {boolean|SITNA.control.ControlOptions} [scaleSelector=false] - Si se establece a un valor *truthy*, el mapa tiene un selector numérico de escala.
         * @property {boolean|SITNA.control.SearchOptions} [search=false] - Si se establece a un valor *truthy*, el mapa tiene un buscador.
         * El buscador localiza coordenadas y busca entidades geográficas tales como: municipios, cascos urbanos, vías, portales, topónimos, topónimos por municipio, carreteras, puntos kilométricos y parcelas catastrales de IDENA. 
-        * Es posible establecer un origen de datos distinto a IDENA en el que buscar, consultar en {@link SearchOptions}.
+        * Es posible establecer un origen de datos distinto a IDENA en el que buscar, consultar en {@link SITNA.control.SearchOptions}.
         * @property {boolean|SITNA.control.ControlOptions} [share=false] - Si se establece a un valor *truthy*, el mapa tiene un control para compartir mapas por distintos canales.
         * 
         * Para que el control funcione correctamente, hay que establecer un valor verdadero a la opción `stateful` del mapa (Ver {@link SITNA.MapOptions}).
@@ -1069,10 +1093,10 @@ const Defaults = (function () {
                 allowedSearchTypes: {
                     coordinates: {},
                     municipality: {},
-                    urban: {},
+                    town: {},
                     street: {},
-                    number: {},
-                    cadastral: {}
+                    postalAddress: {},
+                    cadastralParcel: {}
                 }
             },
             measure: false,
@@ -1134,15 +1158,15 @@ const Defaults = (function () {
         * @property {SITNA.feature.PolylineStyleOptions} [line] - Opciones de estilo de línea.
         * @property {SITNA.feature.PolygonStyleOptions} [polygon] - Opciones de estilo de polígono.
         * @property {SITNA.feature.MarkerStyleOptions} [marker] - Opciones de estilo de marcador (punto de mapa con icono).
-        * @property {SITNA.layer.ClusterStyleOptions} [cluster] - Opciones de estilo de cluster de puntos. Consultar la propiedad `cluster` de {@link LayerOptions} para saber cómo mostrar clusters.
+        * @property {SITNA.layer.ClusterStyleOptions} [cluster] - Opciones de estilo de cluster de puntos. Consultar la propiedad `cluster` de {@link SITNA.layer.LayerOptions} para saber cómo mostrar clusters.
         * @property {SITNA.layer.HeatmapStyleOptions} [heatmap] - Opciones de estilo de mapa de calor.
         * @see SITNA.MapOptions
         * @see SITNA.control.WFSQueryOptions
-        * @see SITNA.control.CadastralSearchOptions
+        * @see SITNA.control.CadastralParcelSearchOptions
         * @see SITNA.control.MunicipalitySearchOptions
         * @see SITNA.control.PostalAddressSearchOptions
         * @see SITNA.control.StreetSearchOptions
-        * @see SITNA.control.UrbanAreaSearchOptions
+        * @see SITNA.control.TownSearchOptions
         */
         styles: {
             point: {
@@ -1331,7 +1355,7 @@ const Defaults = (function () {
  * 
  * SITNA.Cfg.proxy = "/cgi-bin/proxy.cgi?url="; // Las peticiones a http://www.otrodominio.com se convierten en peticiones a /cgi-bin/proxy.cgi?url=http://www.otrodominio.com
  */
-const Cfg = TC.Util.extend(true, {}, Defaults);
+const Cfg = Util.extend(true, {}, Defaults);
 
 export default Cfg;
 export { Defaults };
