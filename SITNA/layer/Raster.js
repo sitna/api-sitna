@@ -12,6 +12,8 @@ const wfsUrlPromises = {};
 const describeLayerPromises = {};
 const capabilitiesPromises = new Map();
 const formatDescriptions = {};
+var legendObject = {};
+const getMaxExtent = () => [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
 const _getLayerNamePosition = function _getLayerNamePosition(treeNode, name, counter) {
     var result = false;
@@ -56,17 +58,49 @@ var _isNameInArray = function (layer, name, names, looseComparison) {
     });
 };
 
-const reprojectExtent = function (extent, sourceCrs, targetCrs) {
-    const topLeft = Util.reproject([extent[0], extent[3]], sourceCrs, targetCrs);
-    const bottomLeft = Util.reproject([extent[0], extent[1]], sourceCrs, targetCrs);
-    const topRight = Util.reproject([extent[2], extent[3]], sourceCrs, targetCrs);
-    const bottomRight = Util.reproject([extent[2], extent[1]], sourceCrs, targetCrs);
-    const result = new Array(4);
-    result[0] = Math.min(topLeft[0], bottomLeft[0]);
-    result[1] = Math.min(bottomLeft[1], bottomRight[1]);
-    result[2] = Math.max(topRight[0], bottomRight[0]);
-    result[3] = Math.max(topLeft[1], topRight[1]);
-    return result;
+const LegendStatusEnum = {
+    JSON: "json",
+    PNG: "png",
+    UNAVAILABLE: "unavailable"
+}
+
+const reprojectExtent = function ([minX, minY, maxX, maxY], sourceCrs, targetCrs) {
+    const steps = 10;
+    const stepWidth = (maxX - minX) / steps;
+    const stepHeight = (maxY - minY) / steps;
+    const coordinates = [];
+    let x, y;
+    x = minX;
+    var i;
+    for (i = 0; i < steps; i++) {
+        coordinates.push([x, maxY]);
+        x += stepWidth;
+    }
+    y = maxY
+    for (i = 0; i < steps; i++) {
+        coordinates.push([maxX, y]);
+        y -= stepHeight;
+    }
+    x = maxX;
+    for (i = 0; i < steps; i++) {
+        coordinates.push([x, minY]);
+        x -= stepWidth;
+    }
+    y = minY
+    for (i = 0; i < steps; i++) {
+        coordinates.push([minX, y]);
+        y += stepHeight;
+    }
+    const newCoords = Util.reproject(coordinates, sourceCrs, targetCrs);
+    const newXs = newCoords.map(c => c[0]);
+    const newYs = newCoords.map(c => c[1]);
+
+    return [
+        Math.min(...newXs),
+        Math.min(...newYs),
+        Math.max(...newXs),
+        Math.max(...newYs)
+    ];
 };
 
 /**
@@ -578,7 +612,7 @@ class Raster extends Layer {
         return filter;
     }
 
-    
+
     #sortLayerNames(layerNames) {
         const self = this;
         var ln = typeof layerNames === 'string' ? layerNames.split(',') : layerNames;
@@ -755,9 +789,8 @@ class Raster extends Layer {
         return false;
     }
 
-    getCompatibleCRS(options) {
+    getCompatibleCRS(options = {}) {
         const self = this;
-        options = options || {};
         let result = self.wrap.getCompatibleCRS();
         if (options.includeFallback && self.fallbackLayer) {
             const fbLayer = self.getFallbackLayer();
@@ -797,9 +830,8 @@ class Raster extends Layer {
         }
     }
 
-    setProjection(options) {
+    setProjection(options = {}) {
         const self = this;
-        options = options || {};
         if (options.crs) {
             switch (self.type) {
                 case Consts.layerType.WMTS:
@@ -827,12 +859,17 @@ class Raster extends Layer {
      *  isVisibleByScale: return wether the WMS layer is visible at current scale
      *  Parameter: WMS layer name or UID
      */
+
+    getOgcScale = function () {
+        const self = this;
+        return self.map.wrap.getResolution() * self.map.getMetersPerUnit() / 0.00028; // OGC assumes 0.28 mm / pixel
+    };
+
+
     isVisibleByScale(nameOrUid, looseComparison) {
         const self = this;
         let result;
-        const getOgcScale = function () {
-            return self.map.wrap.getResolution() * self.map.getMetersPerUnit() / 0.00028; // OGC assumes 0.28 mm / pixel
-        };
+
         var currentScale;
         var i;
         switch (self.type) {
@@ -840,7 +877,7 @@ class Raster extends Layer {
                 result = false;
                 var tileMatrix = self.wrap.getTileMatrix(self.options.matrixSet);
                 if (tileMatrix) {
-                    currentScale = getOgcScale();
+                    currentScale = self.getOgcScale();
                     for (i = 0; i < tileMatrix.length; i++) {
                         const scaleDenominators = self.wrap.getScaleDenominators(tileMatrix[i]);
                         if (scaleDenominators[0] === currentScale) {
@@ -854,7 +891,7 @@ class Raster extends Layer {
                 result = true;
                 var layers = self.wrap.getAllLayerNodes();
                 if (layers.length > 0) {
-                    currentScale = getOgcScale();
+                    currentScale = self.getOgcScale();
                     var node;
                     if (parseInt(nameOrUid).toString() === nameOrUid) { // Es numérico, asumimos que es un UID
                         node = self.#capabilitiesNodes.get(nameOrUid);
@@ -996,7 +1033,7 @@ class Raster extends Layer {
     }
 
     #isNameInPath(node) {
-    const self = this;
+        const self = this;
         //return self.getDisgregatedLayerNames().some(name => self.getBranch(name).some(step => step === node));
         return self.getDisgregatedLayerNames().some(name => self.getNodePath(name).some(step => step.Name === node || (!step.Name & step.Title === node)));
     }
@@ -1312,13 +1349,13 @@ class Raster extends Layer {
         this.wrap.setResolutions(resolutions);
     }
 
-    getExtent(options) {
+    getExtent(options = {}) {
         const self = this;
-        options = options || {};
         let extent = null;
+        const isGeo = self.map?.wrap.isGeo();
 
         if (self.type === Consts.layerType.WMS) {
-            const mapCrs = options.crs || self.map && self.map.getCRS() || 'EPSG:4326';
+            const mapCrs = options.crs || self.map?.getCRS() || 'EPSG:4326';
             const mapCrsCode = Util.getCRSCode(mapCrs);
 
             const getNodeBoundingBoxes = function (node) {
@@ -1332,7 +1369,7 @@ class Raster extends Layer {
                         bboxes = crsBboxes;
                     }
                 }
-                if (!bboxes && !node.EX_GeographicBoundingBox && node.parent) {
+                if (!bboxes && !(node.EX_GeographicBoundingBox && isGeo) && node.parent) {
                     bboxes = getNodeBoundingBoxes(node.parent);
                 }
                 if (self.capabilities.version === '1.3.0' && bboxes) {
@@ -1354,7 +1391,7 @@ class Raster extends Layer {
                         }
                         return bbox;
                     });
-                    if (!hasOwnBBox && node.EX_GeographicBoundingBox) {
+                    if (!hasOwnBBox && isGeo && node.EX_GeographicBoundingBox) {
                         bboxes.unshift({
                             crs: 'EPSG:4326',
                             extent: node.EX_GeographicBoundingBox
@@ -1375,8 +1412,7 @@ class Raster extends Layer {
                 boundingBoxes[i] = bboxes;
             }
 
-            extent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
-            boundingBoxes
+            const boxIntersections = boundingBoxes
                 .map(function getBestBbox(bboxes) {
                     const result = {};
                     let firstBbox, crsBbox;
@@ -1412,22 +1448,33 @@ class Raster extends Layer {
                     }
                     acc.set(bboxObj.crs, accExtent);
                     return acc;
-                }, new Map())
-                .forEach(function combineExtent(ext, crs) {
-                    if (Util.getCRSCode(crs) === mapCrsCode) {
-                        extent[0] = Math.min(ext[0], extent[0]);
-                        extent[1] = Math.min(ext[1], extent[1]);
-                        extent[2] = Math.max(ext[2], extent[2]);
-                        extent[3] = Math.max(ext[3], extent[3]);
-                    }
-                    else {
-                        const mapCrsExtent = reprojectExtent(ext, crs, mapCrs);
-                        extent[0] = Math.min(mapCrsExtent[0], extent[0]);
-                        extent[1] = Math.min(mapCrsExtent[1], extent[1]);
-                        extent[2] = Math.max(mapCrsExtent[2], extent[2]);
-                        extent[3] = Math.max(mapCrsExtent[3], extent[3]);
-                    }
-                });
+                }, new Map());
+            const hasOwnBBox = Array.from(boxIntersections.keys()).some((crs) => Util.getCRSCode(crs) === mapCrsCode);
+            if (hasOwnBBox) {
+                extent = getMaxExtent();
+                boxIntersections
+                    .forEach(function combineExtent(ext, crs) {
+                        if (Util.getCRSCode(crs) === mapCrsCode) {
+                            extent[0] = Math.min(ext[0], extent[0]);
+                            extent[1] = Math.min(ext[1], extent[1]);
+                            extent[2] = Math.max(ext[2], extent[2]);
+                            extent[3] = Math.max(ext[3], extent[3]);
+                        }
+                    });
+            }
+            else if (isGeo) {
+                extent = getMaxExtent();
+                boxIntersections
+                    .forEach(function combineExtent(ext, crs) {
+                        if (TC.getProjectionData({ crs, sync: true }).unit?.startsWith('degree')) {
+                            const geoExtent = reprojectExtent(ext, crs, mapCrs);
+                            extent[0] = Math.min(geoExtent[0], extent[0]);
+                            extent[1] = Math.min(geoExtent[1], extent[1]);
+                            extent[2] = Math.max(geoExtent[2], extent[2]);
+                            extent[3] = Math.max(geoExtent[3], extent[3]);
+                        }
+                    });
+            }
         }
         else if (self.type === Consts.layerType.WMTS) {
             const layerName = self.names[0];
@@ -1443,7 +1490,7 @@ class Raster extends Layer {
                     .TileMatrixSet
                     .find(tms => tms.Identifier === self.matrixSet);
                 if (matrixSetNode) {
-                    if (layerNode.BoundingBox || layerNode.WGS84BoundingBox) {
+                    if (layerNode.BoundingBox || (isGeo && layerNode.WGS84BoundingBox)) {
                         let boundingBox;
                         if (Array.isArray(layerNode.BoundingBox)) {
                             boundingBox = layerNode.BoundingBox.find(bbox => Util.CRSCodesEqual(bbox.crs, matrixSetNode.SupportedCRS));
@@ -1459,7 +1506,7 @@ class Raster extends Layer {
                             const topRight = stringToNumberArray(boundingBox.UpperCorner);
                             extent = [bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]];
                         }
-                        if (!extent && layerNode.WGS84BoundingBox) {
+                        if (!extent && isGeo && layerNode.WGS84BoundingBox) {
                             extent = reprojectExtent(layerNode.WGS84BoundingBox, 'EPSG:4326', matrixSetNode.SupportedCRS);
                         }
                     }
@@ -1517,7 +1564,7 @@ class Raster extends Layer {
                 }
             }
 
-            var filter = TC.Util.patternFn(text);
+            var filter = Util.patternFn(text);
             var re = new RegExp(filter, "i");
 
             var matches = layers.map(function (ly, ix) {
@@ -1730,8 +1777,44 @@ class Raster extends Layer {
 
         //return self.capabilitiesUrl_.call(self, !Util.isSecureURL(url) && Util.isSecureURL(Util.toAbsolutePath(self.url)) ? self.getBySSL_(url) : url);        
     }
+    getLegendFormatUrl(layerName, full, ImageFormat) {
+        const self = this;
+        var url;
+        const serviceUrl = self.url;
+        const params = {};
+        if (self.type === Consts.layerType.WMTS) {
+            return null;
+        }
+        else {
+            url = serviceUrl;
+            params.SERVICE = 'WMS';
+            params.VERSION = '1.3.0';
+            params.REQUEST = 'GetLegendGraphic';
+            if (!ImageFormat)
+                params.FORMAT = 'application/json';
+            else
+                params.FORMAT = 'image/png';
+            if (!full) {
+                var BBOX = self.map.getExtent();
+                if (ol.proj.get(self.map.getCRS()).axisOrientation_ === 'neu')
+                    BBOX = [BBOX[1], BBOX[0], BBOX[3], BBOX[2]];
+                params.SCALE = self.getOgcScale()
+                params.SRCWIDTH = self.map.div.clientWidth;
+                params.SRCHEIGHT = self.map.div.clientHeight;
+                params.CRS = self.map.getCRS();
+                params.BBOX = BBOX.join(",");
+                params.LEGEND_OPTIONS = "hideEmptyRules:true;fontAntiAliasing:true";
+            }
 
-    
+            //TODO:controlar todos los casos posibles de availableNames
+            params.LAYER = layerName || self.availableNames[0];
+
+        }
+        url = url + '?' + Util.getParamString(Util.extend(params, self.queryParams));
+        return url;
+    }
+
+
     #get$events() {
         const self = this;
         if (self.wrap && self.wrap.$events) {
@@ -1740,12 +1823,18 @@ class Raster extends Layer {
         return null;
     }
 
-    getImageLoad(image, src) {
+    async getImageLoad(image, src) {
         const self = this;
+        const img = image.getImage();
+        img._timestamp = Date.now();
+        const ts = img._timestamp;
 
         const setSRC = function (data) {
-            const img = image.getImage();
-
+            // Evitamos que una carga anterior machaque una posterior
+            if (ts < img._timestamp) {
+                self.#get$events().trigger(Consts.event.TILELOADERROR, { tile: image, error: { text: 'Obsolete image' } });
+                return;
+            }
             if (!Util.isSameOrigin(data.src)) {
                 if (!self.map || self.map.crossOrigin) {
                     img.crossOrigin = data.crossOrigin !== null ?
@@ -1833,27 +1922,35 @@ class Raster extends Layer {
                     return values.length > 1 && values[1].trim().length > 0 && values[0].trim().toLowerCase() !== "layers";
                 }).join('&');
 
-                self.proxificationTool.fetchImageAsBlob(url[0], {
-                    type: "POST",
-                    data: params,
-                    contentType: "application/x-www-form-urlencoded"
-                }).then(function (blob) {
+                try {
+                    const blob = await self.proxificationTool.fetchImageAsBlob(url[0], {
+                        type: "POST",
+                        data: params,
+                        contentType: "application/x-www-form-urlencoded"
+                    })
                     const imageUrl = URL.createObjectURL(blob);
                     const img = image.getImage();
                     img.onload = function (_e) {
                         URL.revokeObjectURL(imageUrl);
                     };
                     setSRC({ src: imageUrl });
-                }).catch(errorFn);
+                }
+                catch (e) {
+                    errorFn(e);
+                }
 
             } else {
                 if (!self.ignoreProxification) {
-                    self.proxificationTool.fetchImage(src, { exportable: !self.map || self.map.crossOrigin }).then(function (img) {
+                    try {
+                        const img = await self.proxificationTool.fetchImage(src, { exportable: !self.map || self.map.crossOrigin });
                         setSRC(img);
-                    }).catch(errorFn);
+                    }
+                    catch (e) {
+                        errorFn(e);
+                    }
                 } else {
                     setSRC({ src: src });
-                    var img = image.getImage();
+                    const img = image.getImage();
 
                     if (!Util.isSameOrigin(src)) {
                         if (!self.map || self.map.crossOrigin) {
@@ -1882,7 +1979,7 @@ class Raster extends Layer {
     async #describeLayer() {
         const self = this;
         const url = new URL(self.url, document.location.href);
-        const layerNames = self.layerNames instanceof Array ? self.layerNames[0] : self.layerNames;
+        const layerNames = self.names instanceof Array ? self.names[0] : self.names;
         url.search = new URLSearchParams({ request: 'DescribeLayer', service: "WMS", version: "1.1.1", Layers: layerNames, outputFormat: "application/json" });
         let urlPromises = describeLayerPromises[self.options.url];
         if (!urlPromises) {
@@ -1917,7 +2014,9 @@ class Raster extends Layer {
         }
         const url = layerDescription.owsURL.substr(0, layerDescription.owsURL.length + (layerDescription.owsURL.endsWith('?') ? -1 : 0));
         try {
-            await self.proxificationTool.fetch(url, { method: "HEAD" });
+            const urlObj = new URL(url);
+            urlObj.searchParams.append('request', 'GetCapabilities');
+            await self.proxificationTool.fetch(urlObj.toString(), { method: "HEAD" });
         }
         catch (_e) {
             return self.options.url.replace(/wms/gi, "wfs");
@@ -1952,6 +2051,93 @@ class Raster extends Layer {
             });
         }
         return self.#wfsLayer;
+    }
+
+    async getLegend(scopeless) {
+        const self = this;
+        if (self.type !== Consts.layerType.WMS)
+            return null;
+        //URI:Comprobamos que el servicio tiene cacheado la cmprobación si soporta leyenda JSON
+        var legendJSONSupported = Object.prototype.hasOwnProperty.call(TC.legendFormat, self.getGetMapUrl()) ? TC.legendFormat[self.getGetMapUrl()] : new Promise(async (resolve, reject) => {
+            const url = self.getLegendFormatUrl();
+            if (url) {
+                try {
+                    //URI: pedimos un getlegendgraphic esperadno que nos de una excpación XML
+                    var response = await Promise.all(
+                        self.availableNames.map((name) => self.proxificationTool.fetch(self.getLegendFormatUrl(name, false), { retryAttempts: 1 }))
+                    );
+                    response = response[0];
+                    switch (true) {
+                        case response.contentType.toLowerCase().includes("application/json"):
+                            TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.JSON;
+                            resolve(LegendStatusEnum.JSON);
+                            break;
+                        case response.contentType.toLowerCase().includes("text/xml"):
+                            if (response.responseText.includes('"OperationNotSupported"') ||
+                                response.responseText.includes('"MissingRights"')) {
+                                reject();
+                                TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.UNAVAILABLE;
+                            }
+                            else {
+                                resolve(LegendStatusEnum.PNG);
+                                TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.PNG;
+                            }
+                            break;
+                        default:
+                            reject();
+                            TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.UNAVAILABLE;
+                            break;
+                    }
+
+                }
+                catch (err) {
+                    if (err?.status >= 400) {
+                        reject(err);
+                        TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.UNAVAILABLE;
+                        return;
+                    }
+
+                    console.warn("GetLegendgraphic error no registrado")
+
+                }
+            }
+        });
+        TC.legendFormat[self.getGetMapUrl()] = legendJSONSupported;
+        //URI: Si es una promesa es que otra capa con la misma url de base ha hecho la petición y esa a la espera de obtenerla
+        if (legendJSONSupported instanceof Promise)
+            legendJSONSupported = await legendJSONSupported;
+        if (legendJSONSupported === LegendStatusEnum.UNAVAILABLE)
+            throw LegendStatusEnum.UNAVAILABLE;
+        //URI: Si es true es que el servicio soporta leyenda como JSON
+        const fetchFunction = legendJSONSupported === LegendStatusEnum.JSON ? self.proxificationTool.fetchJSON : self.proxificationTool.fetchImageAsBlob;
+        const layerNames = legendJSONSupported === LegendStatusEnum.JSON ? self.availableNames : self.getDisgregatedLayerNames();
+        return Promise.all(
+            layerNames.map(async (name) => {
+                try {
+                    legendObject = (await fetchFunction.call(self.proxificationTool, self.getLegendFormatUrl(name, scopeless, legendJSONSupported === LegendStatusEnum.PNG), { retryAttempts: 1 }));
+                    if (legendObject instanceof Blob) {
+                        if (legendObject.size < 100)
+                            return null;
+                        return await new Promise((resolve) => {
+                            var reader = new FileReader();
+                            reader.readAsDataURL(legendObject);
+                            reader.onloadend = function () {
+                                resolve([{
+                                    "layerName": name,
+                                    "src": reader.result
+                                }]);
+                            }
+                        })
+                    }
+                    else
+                        return legendObject.Legend;
+                }
+                catch (ex) {
+                    return null;
+                }
+
+            })
+        );
     }
 
     async getDescribeFeatureTypeUrl() {
@@ -2035,6 +2221,7 @@ class Raster extends Layer {
 
 TC.layer.Raster = Raster;
 export default Raster;
+export { LegendStatusEnum };
 
 /**
  * Opciones de capa raster. Este objeto se utiliza al [configurar un mapa]{@linkplain SITNA.MapOptions}, el [control del catálogo de capas]{@linkplain LayerCatalogOptions}
@@ -2063,20 +2250,54 @@ export default Raster;
  * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link SITNA.MapOptions}.*
  *
  * Si se establece a true, la capa se muestra por defecto si forma parte de los mapas de fondo.
- * @property {string} [matrixSet] - Nombre de conjunto de matrices del servicio WMTS. 
+ * @property {string} [matrixSet] - Nombre de conjunto de matrices del servicio WMTS.
  * Esta propiedad es obligatoria para capas de tipo [WMTS]{@link SITNA.Consts}.
- * @property {LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
+ * @property {SITNA.layer.LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
  * @property {string} [thumbnail] - URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.
  * @property {string} [title] - Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.
  * @property {boolean} [transparent=true] - Indica si la capa tiene transparencia.
  * @property {string} [type] - Tipo de capa. Si no se especifica se considera que la capa es WMS. La lista de valores posibles está definida en [SITNA.Consts.layerType]{@link SITNA.Consts}.
+ * @example <caption>Ejemplo de uso de la propiedad `filter` - [Ver en vivo](../examples/cfg.RasterOptions.filter.html)</caption> {@lang html}
+ * <div id="mapa"></div>
+ * <script>
+ *    // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+ *    SITNA.Cfg.layout = "layout/ctl-container";
+ *    // Añadimos el control de tabla de contenidos en la primera posición.
+ *    SITNA.Cfg.controls.TOC = {
+ *        div: "slot1"
+ *    };
+ *    var map = new SITNA.Map("mapa", {
+ *        // Mapa centrado de Pamplona
+ *        initialExtent: [606239, 4738249, 614387, 4744409],
+ *        // Añadimos la capa de GeoPamplona del catálogo de edificios filtrada para mostrar solamente los de uso cultural.
+ *        // Añadimos también la capa de IDENA de museos filtrada para mostrar solamente los que están en Pamplona.
+ *        workLayers: [
+ *            {
+ *                id: "layer1",
+ *                title: "Catálogo de edificios de Pamplona de uso cultural",
+ *                type: SITNA.Consts.layerType.WMS,
+ *                url: "//sig.pamplona.es/ogc/wms",
+ *                layerNames: "PROY_Pol_Edificios",
+ *                filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>GRUPOEDIF</ogc:PropertyName><ogc:Literal><![CDATA[CULTURAL]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
+ *            },
+ *            {
+ *                id: "layer2",
+ *                title: "Museos localizados en Pamplona",
+ *                type: SITNA.Consts.layerType.WMS,
+ *                url: "//idena.navarra.es/ogc/ows",
+ *                layerNames: "DOTACI_Sym_Museos",
+ *                filter: "POBLACION='Pamplona'"
+ *            }
+ *        ]
+ *    });
+ * </script>
  */
 
 /*
  * Opciones de nombre de capa.
  * @typedef LayerNameOptions
  * @property {boolean} [aggregate=true] - Siempre que sea posible se reemplaza en la lista {{#crossLink "SITNA.layer.Raster/names:property"}}{{/crossLink}} los nombres de capa por los nombres de las capas de grupo que las contienen.
- * @property {boolean} [lazy=false] - Determina si la capa nativa se actualiza en cuanto cambia la lista 
+ * @property {boolean} [lazy=false] - Determina si la capa nativa se actualiza en cuanto cambia la lista
  * {{#crossLink "SITNA.layer.Raster/names:property"}}{{/crossLink}} (valor `false`)
  * o se espera a que la capa se actualice (valor `true`).
  * @property {boolean} [reset] - Determina si la capa la propiedad TC.layer.Raster.{{#crossLink "TC.layer.Raster/availableNames:property"}}{{/crossLink}} (valor <code>false</code>) se restablece
