@@ -1,6 +1,7 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
-import Control from '../Control';
+import Util from '../Util';
+import InfoDisplay from './InfoDisplay';
 
 TC.control = TC.control || {};
 
@@ -10,55 +11,19 @@ Consts.classes.DRAG = Consts.classes.DRAG || 'tc-drag';
 Consts.classes.DRAGGED = Consts.classes.DRAGGED || 'tc-dragged';
 Consts.classes.DRAGGABLE = Consts.classes.DRAGGABLE || 'tc-draggable';
 
-const Popup = function () {
-    var self = this;
+class Popup extends InfoDisplay {
+    currentFeature = null;
 
-    Control.apply(self, arguments);
-    self.currentFeature = null;
-    //self.wrap = { popup: null };    
-    self.wrap = new TC.wrap.control.Popup(self);
-};
-
-TC.inherit(Popup, Control);
-
-(function () {
-    var ctlProto = Popup.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-popup';
-
-    ctlProto.render = function (callback) {
+    constructor() {
+        super(...arguments);
         const self = this;
-        return self._set1stRenderPromise(new Promise(function (resolve, reject) {
-            Control.prototype.renderData.call(self, {
-                closeButton: self.options.closeButton || self.options.closeButton === undefined,
-                shareButton: self.options.share
-            })
-                .then(function addPopup() {
-                    self.popupDiv = self.div.querySelector(`.${ctlProto.CLASS}`);
-                    self.contentDiv = self.popupDiv.querySelector(`.${ctlProto.CLASS}-content`);
-                    self.menuDiv = self.popupDiv.querySelector(`.${ctlProto.CLASS}-menu`);
-                    self.addUIEventListeners();
 
-                    self.map.wrap.addPopup(self).then(function endRender() {
-                        if (TC.Util.isFunction(callback)) {
-                            callback();
-                        }
-                        resolve();
-                    });
-                })
-                .catch(err => reject(err instanceof Error ? err : Error(err)));
-        }));
-    };
+        self.wrap = new TC.wrap.control.Popup(self);
+    }
 
-    ctlProto.loadTemplates = async function () {
+    async register(map) {
         const self = this;
-        const module = await import('../templates/tc-ctl-popup.mjs');
-        self.template = module.default;
-    };
-
-    ctlProto.register = async function (map) {
-        const self = this;
-        await Control.prototype.register.call(self, map);
+        await super.register.call(self, map);
         await self.renderPromise();
         map.on(Consts.event.VIEWCHANGE, function () {
             if (map.view === Consts.view.PRINTING) {
@@ -135,9 +100,32 @@ TC.inherit(Popup, Control);
         //observer.observe(document.querySelector('.ol-overlay-container'), config);
 
         return self;
-    };
+    }
 
-    ctlProto.addUIEventListeners = function () {
+    async loadTemplates() {
+        const self = this;
+        const module = await import('../templates/tc-ctl-popup.mjs');
+        self.template = module.default;
+    }
+
+    async render(callback) {
+        const self = this;
+        await super.renderData.call(self, {
+            closeButton: self.options.closeButton || self.options.closeButton === undefined,
+            shareButton: self.options.share
+        });
+        self.popupDiv = self.div.querySelector(`.${self.CLASS}`);
+        self.contentDiv = self.popupDiv.querySelector(`.${self.CLASS}-content`);
+        self.menuDiv = self.popupDiv.querySelector(`.${self.CLASS}-menu`);
+        self.addUIEventListeners();
+
+        await self.map.wrap.addPopup(self);
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+    }
+
+    addUIEventListeners() {
         const self = this;
         const closeBtn = self.menuDiv.querySelector(`.${self.CLASS}-close`);
         if (closeBtn) {
@@ -153,10 +141,11 @@ TC.inherit(Popup, Control);
                 }
             }, { passive: true });
         }
-    };
+        return self;
+    }
 
-    ctlProto.fitToView = function (delayed) {
-        var self = this;
+    fitToView(delayed) {
+        const self = this;
         if (delayed) {
             setTimeout(function () {
                 self.wrap.fitToView();
@@ -165,10 +154,10 @@ TC.inherit(Popup, Control);
         else {
             self.wrap.fitToView();
         }
-    };
+    }
 
-    ctlProto.hide = function () {
-        var self = this;
+    hide() {
+        const self = this;
         if (self.map) {
             const data = {
                 control: self,
@@ -177,28 +166,37 @@ TC.inherit(Popup, Control);
             self.setDragged(false);
             self.map.wrap.hidePopup(self);
             self.getContainerElement().innerHTML = '';
+            if (self.currentFeature) {
+                self.currentFeature.toggleSelectedStyle(false);
+            }
             self.map.trigger(Consts.event.POPUPHIDE, data);
         }
-    };
+        return self;
+    }
 
-    ctlProto.getContainerElement = function () {
+    getContainerElement() {
         return this.contentDiv || null;
-    };
+    }
 
-    ctlProto.getMenuElement = function () {
+    getInfoContainer() {
+        return this.contentDiv || null;
+    }
+
+    getMenuElement() {
         return this.menuDiv || null;
-    };
+    }
 
-    ctlProto.setDragged = function (dragged) {
+    setDragged(dragged) {
         const self = this;
         self.dragged = dragged;
         if (self.popupDiv) {
             self.popupDiv.classList.toggle(Consts.classes.DRAGGED, !!dragged);
         }
         self.wrap.setDragged(dragged);
-    };
+        return self;
+    }
 
-    ctlProto.setDragging = function (dragging) {
+    setDragging(dragging) {
         const self = this;
         if (dragging) {
             self.setDragged(true);
@@ -207,15 +205,16 @@ TC.inherit(Popup, Control);
         else {
             self.popupDiv.classList.remove(Consts.classes.DRAG);
         }
-    };
+        return self;
+    }
 
-    ctlProto.isVisible = function () {
+    isVisible() {
         const self = this;
 
         return self.popupDiv && self.popupDiv.classList.contains(Consts.classes.VISIBLE);
-    };
+    }
+}
 
-})();
-
+Popup.prototype.CLASS = 'tc-ctl-popup';
 TC.control.Popup = Popup;
 export default Popup;
