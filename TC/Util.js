@@ -7,33 +7,10 @@ import Handlebars from '../lib/handlebars/helpers';
 
 TC.i18n = TC.i18n || i18n;
 
-String.prototype.soundex = function () {
-    var a = this.toLowerCase().split(''),
-        f = a.shift(),
-        r = '',
-        codes = {
-            a: '', e: '', i: '', o: '', u: '',
-            b: 1, f: 1, p: 1, v: 1,
-            c: 2, g: 2, j: 2, k: 2, q: 2, s: 2, x: 2, z: 2,
-            d: 3, t: 3,
-            l: 4,
-            m: 5, n: 5,
-            r: 6
-        };
-
-    r = f +
-        a
-            .map(function (v, _i, _a) { return codes[v]; })
-            .filter(function (v, i, a) { return i === 0 ? v !== codes[f] : v !== a[i - 1]; })
-            .join('');
-
-    return (r + '000').slice(0, 4).toUpperCase();
-};
-
 // GLS: Parche: Chrome no formatea correctamente los números en euskera, establece como separador de decimales el (.)
 var toLocaleString = Number.prototype.toLocaleString;
 Number.prototype.toLocaleString = function (locale, _options) {
-    if (locale === "eu-ES" && !TC.Util.detectIE()) {
+    if (locale === "eu-ES" && !Util.detectIE()) {
         var sNum = toLocaleString.apply(this, arguments);
         sNum = sNum.replace(/,/g, '.');
         if (!(Math.floor(this) === this && Number.isInteger(Math.floor(this))))
@@ -45,7 +22,6 @@ Number.prototype.toLocaleString = function (locale, _options) {
         return toLocaleString.apply(this, arguments);
 };
 
-var iconUrlCache = {};
 var markerGroupClassCache = {};
 
 var path1 = ["Capability", "Request", "GetMap", "DCPType", "0", "HTTP", "Get", "OnlineResource"];
@@ -97,8 +73,7 @@ const stylePropertyNames = new Set([
 
 var Util = {
 
-    getElevationGain: function (options) {
-        options = options || {};
+    getElevationGain: function (options = {}) {
         const coords = options.coords;
         if (coords && coords.length > 0 && coords[0].length > 2) { // si tenemos la Z
             var uphill = 0;
@@ -369,6 +344,15 @@ var Util = {
         return value;
     },
 
+    getTextFromCssVar: function (varName, contextElement = document.documentElement) {
+        const iconUcodeString = getComputedStyle(contextElement).getPropertyValue(varName);
+        const match = iconUcodeString.match(/\\([a-f0-9]{1,6})/i);
+        if (match) {
+            return String.fromCharCode(parseInt(match[1], 16));
+        }
+        return iconUcodeString.replace(/['"]/g, '');
+    },
+
     addProtocol: function (uri) {
         var result = uri;
         if (uri && uri.indexOf('//') === 0) {
@@ -415,30 +399,33 @@ var Util = {
         return "";
     },
 
-    /* 
-    * getBackgroundUrlFromCss: devuelve la URL de background-image en CSS
-    * Parameter: string con nombre de clase
-    */
-    getBackgroundUrlFromCss: function (cssClass) {
-        var result = '';
+    getFeatureStyleFromCss: function (cssClass) {
+        let result = null;
 
         if (cssClass) {
-            if (iconUrlCache[cssClass] !== undefined) {
-                result = iconUrlCache[cssClass];
-            }
-            else {
-                const iconDiv = document.createElement('div');
-                iconDiv.style.display = 'none';
-                iconDiv.classList.add(cssClass);
-                document.body.appendChild(iconDiv);
-                // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
-                var match = /^url\(['"]?(.*?)['"]?\)$/gi.exec(window.getComputedStyle(iconDiv, null).backgroundImage);
-                if (match && match.length > 1) {
-                    result = match[match.length - 1];
+            const iconDiv = document.createElement('div');
+            iconDiv.style.display = 'none';
+            iconDiv.classList.add(cssClass);
+            document.body.appendChild(iconDiv);
+            // The regular expression is nongreedy (.*?), otherwise in FF and IE it gets 'url_to_image"'
+            const computedStyle = window.getComputedStyle(iconDiv, null);
+            const urlMatch = /^url\(['"]?(.*?)['"]?\)$/gi.exec(computedStyle.backgroundImage);
+            if (urlMatch?.length > 1) {
+                result = {
+                    url: urlMatch[urlMatch.length - 1]
+                };
+                const sizeMatch = /^(\d+)px(?: (\d+)px)?$/gi.exec(computedStyle.backgroundSize);
+                if (sizeMatch?.length > 2) {
+                    result.width = parseInt(sizeMatch[1]);
+                    if (sizeMatch[2]) {
+                        result.height = parseInt(sizeMatch[2]);
+                    }
+                    else {
+                        result.height = result.width;
+                    }
                 }
-                iconDiv.parentElement.removeChild(iconDiv);
-                iconUrlCache[cssClass] = result;
             }
+            iconDiv.parentElement.removeChild(iconDiv);
         }
         return result;
     },
@@ -468,7 +455,7 @@ var Util = {
                     className = markerGroupClassCache[options.group];
                 }
             }
-            result = Util.getBackgroundUrlFromCss(className);
+            result = Util.getFeatureStyleFromCss(className)?.url;
         }
         if (!result && options !== TC.Cfg.styles.point && options.cssClass !== '') {
             result = getPointIconUrl(TC.Cfg.styles.point);
@@ -476,9 +463,8 @@ var Util = {
         return result;
     },
 
-    getLegendImageFromStyle: function (style, options) {
+    getLegendImageFromStyle: function (style, options = {}) {
         let result = null;
-        options = options || {};
         if (style.url) {
             result = style.url;
         }
@@ -710,7 +696,7 @@ var Util = {
                         var point = proj4(sourcePrj, targetPrj, { x: coord[0], y: coord[1] });
                         rr[cidx] = [point.x, point.y];
                         if (coord.length > 2) {
-                            for (var i = 2; i < coord.length;i++)
+                            for (var i = 2; i < coord.length; i++)
                                 rr[cidx][i] = coord[i];
                         }
                     } else {
@@ -1174,8 +1160,7 @@ var Util = {
         }
     },
 
-    showModal: function (contentNode, options) {
-        options = options || {};
+    showModal: function (contentNode, options = {}) {
 
         contentNode.hidden = false;
         contentNode.classList.add(Consts.classes.VISIBLE);
@@ -1189,7 +1174,7 @@ var Util = {
                 else {
                     closeCallback = function (e) {
                         e.stopPropagation();
-                        return TC.Util.closeModal(options.closeCallback, e.target);
+                        return Util.closeModal(options.closeCallback, e.target);
                     };
                     modalCloseHandlers.set(closeButton[i], closeCallback);
                 }
@@ -1239,7 +1224,7 @@ var Util = {
         while (elm);
     },
 
-    swipe: function (target, options) {
+    swipe: function (target, options = {}) {
         const addListeners = function (handlers) {
             target.addEventListener('mousedown', handlers.start);
             target.addEventListener('touchstart', handlers.start, { passive: true });
@@ -1265,7 +1250,6 @@ var Util = {
             return;
         }
 
-        options = options || {};
         const minDistance = options.minDistance || 30;
         const maxCrossDistance = options.maxCrossDistance || 30;
         const maxAllowedTime = options.maxAllowedTime || 1000;
@@ -1335,27 +1319,26 @@ var Util = {
     },
 
     getParameterByName: function (name) {
-        const filter = ([key, value]) => key.toLowerCase() === name.toLowerCase();
+        const filter = ([key, _value]) => key.toLowerCase() === name.toLowerCase();
         const params = new URLSearchParams(location.search);
         const paramsArray = Array.from(params);
         const result = paramsArray.find(filter);
         return result ? result[1] : "";
     },
 
-    getLocaleUserChoice: function (options) {
+    getLocaleUserChoice: function (options = {}) {
         var result = 'en-US';
-        options = options || {};
         var cookieName = options.cookieName || 'SITNA.language';
         var paramName = options.paramName || 'lang';
         // Obtenemos preferencia de lenguaje
         var browserLanguage = navigator.languages && navigator.languages.length ? navigator.languages[0] : navigator.language || navigator.userLanguage;
-        var lang = TC.Util.getParameterByName(paramName) || TC.Util.storage.getCookie(cookieName) || browserLanguage;
+        var lang = Util.getParameterByName(paramName) || Util.storage.getCookie(cookieName) || browserLanguage;
         var hyphenIdx = lang.indexOf('-');
         if (hyphenIdx >= 0) {
             lang = lang.substr(0, hyphenIdx);
         }
         var expirationDate = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000);
-        TC.Util.storage.setCookie(cookieName, lang, { expires: expirationDate });
+        Util.storage.setCookie(cookieName, lang, { expires: expirationDate });
 
         switch (lang) {
             case 'eu':
@@ -1403,12 +1386,39 @@ var Util = {
         }
     },
 
+    getFileExtensionFromFormat: function (format) {
+        switch (format) {
+            case Consts.format.KML:
+                return '.kml';
+            case Consts.format.KMZ:
+                return '.kmz';
+            case Consts.format.GPX:
+                return '.gpx';
+            case Consts.format.GEOJSON:
+                return '.geojson';
+            case Consts.format.GML:
+                return '.gml';
+            case Consts.format.WKT:
+                return '.wkt';
+            case Consts.format.WKB:
+                return '.wkb';
+            case Consts.format.TOPOJSON:
+                return '.topojson';
+            case Consts.format.GEOPACKAGE:
+                return '.gpkg';
+            case Consts.format.SHAPEFILE:
+                return '.shp';
+            default:
+                return null;
+        }
+    },
+
     downloadBlob: function (filename, blob) {
         var link = document.createElement("a");
         if (link.download !== undefined) {
             var url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", TC.Util.getValidFilename(filename));
+            link.setAttribute("download", Util.getValidFilename(filename));
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -1418,11 +1428,11 @@ var Util = {
 
     downloadFile: function (filename, type, data) {
         var blob = new Blob([data], { type: type });
-        filename = TC.Util.getValidFilename(filename);
+        filename = Util.getValidFilename(filename);
         if (navigator.msSaveBlob) { // IE 10+
             navigator.msSaveBlob(blob, filename);
         } else {
-            TC.Util.downloadBlob(filename, blob);
+            Util.downloadBlob(filename, blob);
         }
     },
 
@@ -1435,11 +1445,11 @@ var Util = {
         }
         var blob = new Blob([new Uint8Array(array)], { type: type });
 
-        filename = TC.Util.getValidFilename(filename);
+        filename = Util.getValidFilename(filename);
         if (navigator.msSaveBlob) { // IE 10+
             navigator.msSaveBlob(blob, filename);
         } else {
-            TC.Util.downloadBlob(filename, blob);
+            Util.downloadBlob(filename, blob);
         }
     },
 
@@ -1600,7 +1610,7 @@ var Util = {
                 var dataURL;
 
                 try {
-                    dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                    dataURL = Util.toDataUrl(canvas, '#ffffff', {
                         type: outputFormat,
                         encoderOptions: 1.0
                     });
@@ -1630,7 +1640,7 @@ var Util = {
                             img.src = 'data:' + type + ';base64,' + window.btoa(data);
                             img.onload = function () {
                                 const canvas = createCanvas(img);
-                                const dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+                                const dataURL = Util.toDataUrl(canvas, '#ffffff', {
                                     type: outputFormat || 'image/jpeg',
                                     encoderOptions: 1.0
                                 });
@@ -1673,7 +1683,7 @@ var Util = {
         var dataURL;
 
         try {
-            dataURL = TC.Util.toDataUrl(canvas, '#ffffff', {
+            dataURL = Util.toDataUrl(canvas, '#ffffff', {
                 type: outputFormat || 'image/jpeg',
                 encoderOptions: 1.0
             });
@@ -1684,7 +1694,7 @@ var Util = {
     },
 
     addToCanvas: function (canvas, img, position, size) {
-        var newCanvas = TC.Util.cloneCanvas(canvas);
+        var newCanvas = Util.cloneCanvas(canvas);
         var context = newCanvas.getContext('2d');
 
         return new Promise(function (resolve, _reject) {
@@ -1733,11 +1743,11 @@ var Util = {
                 Math.max(prev[3], rect.bottom)
             ];
         }, [
-                Number.POSITIVE_INFINITY,
-                Number.POSITIVE_INFINITY,
-                Number.NEGATIVE_INFINITY,
-                Number.NEGATIVE_INFINITY
-            ]);
+            Number.POSITIVE_INFINITY,
+            Number.POSITIVE_INFINITY,
+            Number.NEGATIVE_INFINITY,
+            Number.NEGATIVE_INFINITY
+        ]);
         const left = bbox[0];
         const top = bbox[1];
 
@@ -1843,7 +1853,7 @@ var Util = {
                     throw { key: Consts.DownloadError.MIMETYPE_NOT_SUPORTED, url: url, data: data, format: /outputFormat="\S{1,}"/.exec(data)[0] };
                 }
             }
-            TC.Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data);
+            Util.downloadFile((response.filename ? response.filename : TC.getUID()) + format, response.contentType, response.data);
 
         };
         var _err;
@@ -1897,7 +1907,7 @@ var Util = {
         if (!Array.isArray(layers) && !(layers instanceof Object))
             layers = [layers];
 
-        let query = '<wfs:GetFeature ' + _queryHeaderConstructor(capabilities).format({
+        let query = '<wfs:GetFeature ' + Util.formatTemplate(_queryHeaderConstructor(capabilities), {
             resultType: onlyHits ? 'resultType="hits"' : '',
             format: 'outputFormat="' + outputFormat + '"'
         }) + (capabilities.version !== "2.0.0" && maxFeatures ? ' maxFeatures="' + maxFeatures + '"' : '') + '>';
@@ -1906,7 +1916,7 @@ var Util = {
         if (Array.isArray(layers)) {
             queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{fields}{filter}</wfs:Query>';
             layers.forEach(function (value) {
-                queryBody += queryItem.format({
+                queryBody += Util.formatTemplate(queryItem, {
                     typeName: value,
                     filter: filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "",
                     fields: getFields()
@@ -1918,7 +1928,7 @@ var Util = {
             for (var layer in layers) {
                 queryItem = '<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + getSRSAttribute() + '>{fields}{filter}</wfs:Query>';
                 let filter = layers[layer];
-                queryBody += queryItem.format({
+                queryBody += Util.formatTemplate(queryItem, {
                     typeName: layer,
                     filter: filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "",
                     fields: getFields()
@@ -1932,15 +1942,15 @@ var Util = {
 
     WFGetPropertyValue: function (layer, valueReference, filter, capabilities) {
         /*if (capabilities.version === "2.0.0") {
-            var query = '<wfs:GetPropertyValue ' + _queryHeaderConstructor(capabilities).format({ resultType: '', format: '' }) + ' valueReference="' + valueReference + '" >';
+            var query = '<wfs:GetPropertyValue ' + Util.formatTemplate(_queryHeaderConstructor(capabilities), { resultType: '', format: '' }) + ' valueReference="' + valueReference + '" >';
             var queryBody = '';
             var queryItem = ('<wfs:Query typeName' + (capabilities.version === "2.0.0" ? 's' : '') + '="{typeName}"' + '>{filter}</wfs:Query>');
-            queryBody += queryItem.format({ typeName: layer, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
+            queryBody += Util.formatTemplate(queryItem, { typeName: layer, filter: (filter && filter instanceof TC.filter.Filter ? filter.getText(capabilities.version) : "") });
             query += queryBody + '</wfs:GetPropertyValue>'
             return query;
         }
         else*/
-        return TC.Util.WFSQueryBuilder([layer], filter, capabilities, "JSON", false, null, null, valueReference);
+        return Util.WFSQueryBuilder([layer], filter, capabilities, "JSON", false, null, null, valueReference);
 
 
     },
@@ -1948,26 +1958,25 @@ var Util = {
     WFSFilterBuilder: function (feature, version, srsName) {
         var filter = '';
         if (Util.isPlainObject(feature)) {
-            filter = '<{prefix}:Filter><{prefix}:Intersects><fes:ValueReference></fes:ValueReference><{prefix}:Function name="querySingle"><{prefix}:Literal>{clipLayer}</{prefix}:Literal><{prefix}:Literal>{geometryName}</{prefix}:Literal><{prefix}:Literal>{where}</{prefix}:Literal></{prefix}:Function></{prefix}:Intersects></{prefix}:Filter>'
-                .format({
-                    prefix: version === "2.0.0" ? "fes" : "ogc",
-                    clipLayer: feature.clipLayer,
-                    geometryName: feature.geometryName,
-                    where: feature.where
-                });
+            filter = Util.formatTemplate('<{prefix}:Filter><{prefix}:Intersects><fes:ValueReference></fes:ValueReference><{prefix}:Function name="querySingle"><{prefix}:Literal>{clipLayer}</{prefix}:Literal><{prefix}:Literal>{geometryName}</{prefix}:Literal><{prefix}:Literal>{where}</{prefix}:Literal></{prefix}:Function></{prefix}:Intersects></{prefix}:Filter>', {
+                prefix: version === "2.0.0" ? "fes" : "ogc",
+                clipLayer: feature.clipLayer,
+                geometryName: feature.geometryName,
+                where: feature.where
+            });
         }
         else {
             switch (true) {
                 case !feature:
                     break;
                 case Array.isArray(feature)://bbox
-                    var gmlEnvelope = ('<gml:Envelope>' +
+                    var gmlEnvelope = Util.formatTemplate('<gml:Envelope>' +
                         '<gml:lowerCorner>{lowerCorner}</gml:lowerCorner>' +
                         '<gml:upperCorner>{upperCorner}</gml:upperCorner>' +
-                        '</gml:Envelope>').format({
-                            lowerCorner: feature[0] + ' ' + feature[1],
-                            upperCorner: feature[2] + ' ' + feature[3]
-                        });
+                        '</gml:Envelope>', {
+                        lowerCorner: feature[0] + ' ' + feature[1],
+                        upperCorner: feature[2] + ' ' + feature[3]
+                    });
                     switch (true) {
                         case version === "1.0.0":
                         case version === "1.1.0":
@@ -1982,10 +1991,10 @@ var Util = {
                     switch (true) {
                         case version === "1.0.0":
                         case version === "1.1.0":
-                            filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + TC.Util.writeGMLGeometry(feature, { version: "2.0", srsName: srsName }) + '</ogc:Intersects></ogc:Filter>';
+                            filter += '<ogc:Filter><ogc:Intersects><ogc:PropertyName></ogc:PropertyName>' + Util.writeGMLGeometry(feature, { version: "2.0", srsName: srsName }) + '</ogc:Intersects></ogc:Filter>';
                             break;
                         case version === "2.0.0":
-                            filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + TC.Util.writeGMLGeometry(feature, { version: "3.2", srsName: srsName }) + '</fes:Intersects></fes:Filter>';
+                            filter += '<fes:Filter><fes:Intersects><fes:ValueReference></fes:ValueReference>' + Util.writeGMLGeometry(feature, { version: "3.2", srsName: srsName }) + '</fes:Intersects></fes:Filter>';
                             break;
                     }
 
@@ -1999,8 +2008,7 @@ var Util = {
         return filter;
     },
 
-    writeGMLGeometry: function (feature, options) {
-        options = options || {};
+    writeGMLGeometry: function (feature, options = {}) {
         const gmlVersion = options.version;
         const getSRSName = function () {
             if (options.srsName) {
@@ -2155,7 +2163,7 @@ var Util = {
 
     cloneMappingFunction: function (elm) {
         if (Array.isArray(elm)) {
-            return elm.map(TC.Util.cloneMappingFunction);
+            return elm.map(Util.cloneMappingFunction);
         }
         return elm;
     },
@@ -2184,7 +2192,7 @@ var Util = {
 
     compactGeometry: function (geometry, precision) {
         const origin = [Number.MAX_VALUE, Number.MAX_VALUE];
-        const newGeom = geometry.map(TC.Util.cloneMappingFunction);
+        const newGeom = geometry.map(Util.cloneMappingFunction);
         const firstIterationFunction = function (elm, idx) {
             if (Array.isArray(elm)) {
                 elm.forEach(firstIterationFunction);
@@ -2225,6 +2233,61 @@ var Util = {
         };
     },
 
+    getGeometryType: function (value) {
+        switch (value) {
+            case 'gml:LinearRingPropertyType':
+            case 'gml:PolygonPropertyType':
+            case 'LinearRingPropertyType':
+            case 'PolygonPropertyType':
+            case 'Polygon':
+            case 'POLYGON':
+                return Consts.geom.POLYGON;
+            case 'gml:MultiPolygonPropertyType':
+            case 'gml:MultiSurfacePropertyType':
+            case 'MultiPolygonPropertyType':
+            case 'MultiSurfacePropertyType':
+            case 'MultiPolygon':
+            case 'MULTIPOLYGON':
+                return Consts.geom.MULTIPOLYGON;
+            case 'gml:LineStringPropertyType':
+            case 'gml:CurvePropertyType':
+            case 'LineStringPropertyType':
+            case 'CurvePropertyType':
+            case 'LineString':
+            case 'LINESTRING':
+                return Consts.geom.POLYLINE;
+            case 'gml:MultiLineStringPropertyType':
+            case 'gml:MultiCurvePropertyType':
+            case 'MultiLineStringPropertyType':
+            case 'MultiCurvePropertyType':
+            case 'MultiLineString':
+            case 'MULTILINESTRING':
+                return Consts.geom.MULTIPOLYLINE;
+            case 'gml:PointPropertyType':
+            case 'PointPropertyType':
+            case 'Point':
+            case 'POINT':
+                return Consts.geom.POINT;
+            case 'gml:MultiPointPropertyType':
+            case 'MultiPointPropertyType':
+            case 'MultiPoint':
+            case 'MULTIPOINT':
+                return Consts.geom.MULTIPOINT;
+            case 'gml:BoxPropertyType':
+            case 'BoxPropertyType':
+                return Consts.geom.RECTANGLE;
+            case 'gml:GeometryCollectionPropertyType':
+            case 'gml:GeometryAssociationType':
+            case 'gml:GeometryPropertyType':
+            case 'GeometryCollectionPropertyType':
+            case 'GeometryAssociationType':
+            case 'GeometryPropertyType':
+                return true;
+            default:
+                return false;
+        }
+    },
+
     isStyleOption: function (name) {
         return stylePropertyNames.has(name);
     },
@@ -2249,7 +2312,7 @@ var Util = {
     },
 
     formatCoord: function (x, nDecimales) {
-        return x.toLocaleString(TC.Util.getLocaleUserChoice(), { maximumFractionDigits: nDecimales });
+        return x.toLocaleString(Util.getLocaleUserChoice(), { maximumFractionDigits: nDecimales });
 
         // No respeta el formato de los números según el idioma
         //var result;            
@@ -2262,7 +2325,18 @@ var Util = {
         //return result;
     },
 
-    formatString: function (str, ...values) {
+    formatTemplate: function (string, dictionary) {
+        var str = string.toString();
+        if (!dictionary) {
+            return str;
+        }
+        for (var key in dictionary) {
+            str = str.replace(RegExp("\\{" + key + "\\}", "gi"), dictionary[key]);
+        }
+        return str;
+    },
+
+    formatIndexedTemplate: function (str, ...values) {
         const args = values.length ? values : [""];
         return str.replace(/{(\d+)}/g, function (match, number) {
             return typeof args[number] !== 'undefined' ?
@@ -2276,7 +2350,7 @@ var Util = {
         return new Promise(function (resolve, reject) {
             if (Object.prototype.hasOwnProperty.call(window, 'Worker')) {
                 // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
-                if (TC.Util.isSameOrigin(url)) {
+                if (Util.isSameOrigin(url)) {
                     resolve(url);
                 }
                 else {
@@ -2339,7 +2413,7 @@ var Util = {
             }
         };
     },
-    patternFn : function (t) {
+    patternFn: function (t) {
         t = t.replace(/[^a-z\dáéíóúüñ]/gi, '\\' + '$&');
         t = t.replace(/(a|á)/gi, "(a|á)");
         t = t.replace(/(e|é)/gi, "(e|é)");
@@ -2351,17 +2425,6 @@ var Util = {
     }
 };
 
-String.prototype.format = function () {
-    var str = this.toString();
-    if (!arguments.length)
-        return str;
-    var args = typeof arguments[0];
-    args = "string" === args || "number" === args ? arguments : arguments[0];
-    for (var arg in args) {
-        str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
-    }
-    return str;
-};
 const _queryHeaderConstructor = function (capabilities) {
     var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
         ' service="WFS" {resultType} {format} ';
@@ -2415,4 +2478,5 @@ if (window.HTMLElement) {
     };
 }
 
+TC.Util = Util;
 export default Util;
