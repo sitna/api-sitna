@@ -21,6 +21,7 @@ import Consts from '../Consts';
 import Cfg from '../Cfg';
 import Util from '../Util';
 import ProjectionSelector from './ProjectionSelector';
+import Popup from './Popup';
 
 TC.control = TC.control || {};
 
@@ -30,8 +31,6 @@ class Coordinates extends ProjectionSelector {
     constructor() {
         super(...arguments);
         const self = this;
-        self.div.classList.remove(super.CLASS);
-        self.div.classList.add(self.CLASS);
 
         self.crs = '';
         self.xy = [0, 0, 0];
@@ -62,10 +61,6 @@ class Coordinates extends ProjectionSelector {
 
         self.geoCrs = self.options.geoCrs || Cfg.geoCrs;
         self.wrap = new TC.wrap.control.Coordinates(self);
-    }
-
-    getClassName() {
-        return 'tc-ctl-coords';
     }
 
     async register(map) {
@@ -190,11 +185,9 @@ class Coordinates extends ProjectionSelector {
     async render(callback) {
         const self = this;
 
-        const renderPromise = self.getRenderedHtml(self.CLASS + '-dialog', null);
-        self._set1stRenderPromise(renderPromise);
-        const html = await renderPromise;
+        const html = await self.getRenderedHtml(self.CLASS + '-dialog', null);
         self._dialogDiv.innerHTML = html;
-        await TC.Control.prototype.renderData.call(self, {
+        await super.renderData.call(self, {
             x: self.x,
             y: self.y,
             lat: self.lat,
@@ -205,7 +198,27 @@ class Coordinates extends ProjectionSelector {
             isGeo: self.isGeo,
             showGeo: !self.isGeo && self.options.showGeo,
             allowReprojection: self.allowReprojection
+        }, function () {
+            self.addUIEventListeners();
+
+            const closeBtn = self.div.querySelector('sitna-button[icon="close"]');
+            if (Util.detectMobile()) {
+                closeBtn.style.display = '';
+            }
+            else {
+                self.div.classList.remove(Consts.classes.HIDDEN);
+                self.div.style.visibility = 'visible';
+                closeBtn.style.display = 'none';
+            }
+
+            if (Util.isFunction(callback)) {
+                callback();
+            }
         });
+    }
+
+    addUIEventListeners() {
+        const self = this;
         const crsButton = self.div.querySelector('button.' + self.#cssClasses.CRS);
         if (crsButton) {
             crsButton.addEventListener(Consts.event.CLICK, function (_e) {
@@ -213,23 +226,11 @@ class Coordinates extends ProjectionSelector {
             }, { passive: true });
         }
 
-        const closeBtn = self.div.querySelector('sitna-button[icon="close"]');
         if (Util.detectMobile()) {
-            closeBtn.addEventListener('click', function () {
+            self.div.querySelector('sitna-button[icon="close"]').addEventListener('click', function () {
                 self.div.classList.add(Consts.classes.HIDDEN);
                 self.clear();
             });
-
-            closeBtn.style.display = '';
-        }
-        else {
-            self.div.classList.remove(Consts.classes.HIDDEN);
-            self.div.style.visibility = 'visible';
-            closeBtn.style.display = 'none';
-        }
-
-        if (Util.isFunction(callback)) {
-            callback();
         }
     }
 
@@ -341,7 +342,7 @@ class Coordinates extends ProjectionSelector {
     getCoords() {
         const self = this;
         // si hay visible un popup, establecemos la posición de la cruz en el punto en el cual se ha abierto el popup
-        const popups = self.map.getControlsByClass('TC.control.Popup');
+        const popups = self.map.getControlsByClass(Popup);
         if (popups?.length > 0 && popups[0].isVisible()) {
             self.coordsToPopup(popups[0]);
         }
@@ -480,5 +481,6 @@ class Coordinates extends ProjectionSelector {
     }
 }
 
+Coordinates.prototype.CLASS = 'tc-ctl-coords';
 TC.control.Coordinates = Coordinates;
 export default Coordinates;
