@@ -7,7 +7,7 @@
     <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">x: <span class="tc-ctl-finfo-coords-val">{{coords.[0]}}</span></span>
     <span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-coords-x">y: <span class="tc-ctl-finfo-coords-val">{{coords.[1]}}</span></span>
     {{/if}}
-    {{#if displayElevation}}<span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-elev" title="{{i18n "elevation"}}">{{i18n "ele"}}: <span class="tc-ctl-finfo-coords-val"></span></span><span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-height" title="{{i18n "heightOverTerrain"}}">{{i18n "height"}}: <span class="tc-ctl-finfo-coords-val"></span></span>{{/if}}
+    {{#if displayElevation}}<span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-elev" title="{{i18n "elevation.explained"}}">{{i18n "ele"}}: <span class="tc-ctl-finfo-coords-val"></span></span><span class="tc-ctl-finfo-coords-pair tc-ctl-finfo-height" title="{{i18n "heightOverTerrain"}}">{{i18n "height"}}: <span class="tc-ctl-finfo-coords-val"></span></span>{{/if}}
 </div>
 <div class="tc-ctl-finfo-result {{#if featureCount}}{{#if (gt featureCount 1)}} tc-ctl-finfo-multilayer{{/if}} {{/if}}">
     <ul class="tc-ctl-finfo-services">
