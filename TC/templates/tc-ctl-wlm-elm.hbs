@@ -30,7 +30,20 @@
                     <h4>{{i18n "content"}}:</h4>
                     {{#each legend}}
                         {{#each this}}
-                    <div><p>{{title}}</p><img data-img="{{src}}" /></div>
+                <div>
+                    <p>{{title}}</p>                  
+                    
+                    {{#if symbols}}
+                    {{#each symbols}}
+                    <p>
+                        <img data-img="{{this.src}}" />
+                        <span>{{{this.title}}}</span>
+                    </p>
+                    {{/each}}
+                    {{else}}
+                    <img data-img="{{src}}" />
+                    {{/if}}
+                </div>
                         {{/each}}
                     {{/each}}
                 </div>
@@ -44,7 +57,7 @@
                     <li>
                         <ul>
                         {{#each this}}
-                            <li><a href="{{{url}}}" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+                            <li><a href="{{{url}}}" class="tc-file-link" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
                         {{/each}}
                         </ul>
                     </li>
