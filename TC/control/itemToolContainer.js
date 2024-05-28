@@ -3,7 +3,6 @@ import Util from '../Util';
 import Consts from '../Consts';
 import Toggle from '../../SITNA/ui/Toggle';
 
-TC.Util = Util;
 TC.control = TC.control || {};
 
 // Mixin
