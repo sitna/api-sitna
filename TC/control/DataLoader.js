@@ -117,7 +117,7 @@ class DataLoader extends TabContainer {
         self.map = map;
         self.title = self.getLocaleString('addMaps');
         const ctl = await super.register.call(self, map);
-        ctl.div.classList.add(self.CLASS + '-datldr');
+        ctl.div.classList.add(TabContainer.prototype.CLASS + '-datldr');
         return ctl;
     }
 }
