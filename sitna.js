@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.1.0
+ * @version 4.2.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -31,28 +31,34 @@ import Cfg from './TC/Cfg';
 import wrap from './TC/wrap';
 import { JL } from 'jsnlog';
 // Importamos para precargar estilos y evitar FOUC
-import './SITNA/ui/Button';
+import Button from './SITNA/ui/Button';
 import './SITNA/ui/Toggle';
 import './SITNA/ui/Tab';
 
 TC.isDebug = true;
 
-const layer = {};
-layer.Layer = Layer;
-layer.Raster = Raster;
-layer.Vector = Vector;
+const layer = {
+    Layer,
+    Raster,
+    Vector
+};
 
-const feature = {};
-feature.Feature = Feature;
-feature.Point = Point;
-feature.MultiPoint = MultiPoint;
-feature.Marker = Marker;
-feature.MultiMarker = MultiMarker;
-feature.Polyline = Polyline;
-feature.MultiPolyline = MultiPolyline;
-feature.Polygon = Polygon;
-feature.MultiPolygon = MultiPolygon;
-feature.Circle = Circle;
+const feature = {
+    Feature,
+    Point,
+    MultiPoint,
+    Marker,
+    MultiMarker,
+    Polyline,
+    MultiPolyline,
+    Polygon,
+    MultiPolygon,
+    Circle
+};
+
+const ui= {
+    Button: Button
+}
 
 const tool = TC.tool || {};
 
@@ -65,10 +71,10 @@ TC.i18n = i18n;
 TC.Cfg = Cfg;
 TC.Map = Map;
 TC.wrap = wrap;
-globalThis.TC = TC;
+globalThis.TC = globalThis.TC || TC;
 //window.JL = JL;
 
-TC.version = '4.1.0';
+TC.version = '4.2.0';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
@@ -86,6 +92,22 @@ TC.loadProjDef({ crs: 'EPSG:25828', name: 'ETRS89 / UTM zone 28N', def: '+proj=u
 TC.loadProjDef({ crs: 'EPSG:25829', name: 'ETRS89 / UTM zone 29N', def: '+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
 TC.loadProjDef({ crs: 'EPSG:25831', name: 'ETRS89 / UTM zone 31N', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
 
+
+// Método que se usa en varios proyectos
+// TODO: eliminar de todos los sitios
+if (!Object.prototype.hasOwnProperty.call(Array.prototype, 'findByProperty')) {
+    Object.defineProperty(Array.prototype, "findByProperty", {
+        enumerable: false,
+        writable: true,
+        value: function (propertyName, value) {
+            for (var i = 0; i < this.length; i++) {
+                if (this[i][propertyName] == value)
+                    return this[i];
+            }
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 
     // Completamos los datos de versión
@@ -95,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     TC.version = TC.version + ' (' + mapLibrary + '; @ ' + TC.apiLocation + ')';
 
-    TC.browser = TC.Util.getBrowser();
+    TC.browser = Util.getBrowser();
 
     fetch(TC.apiLocation + 'config/browser-versions.json')
         .then(r => {
@@ -114,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (match && match.expired) {
                 TC.Cfg.loggingErrorsEnabled = false;
             } else {
-                if (match && !isNaN(match.version)) {
+                if (match && !Number.isNaN(match.version)) {
                     if (TC.browser.version < match.version) {
                         TC._isSupported = false;
                     }
@@ -127,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
 
                         TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale).then(function () {
-                            TC.error(TC.Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), Consts.msgErrorMode.TOAST);
+                            TC.error(Util.getLocaleString(mapObj.options.locale, 'outdatedBrowser'), Consts.msgErrorMode.TOAST);
                         });
                     }, 500);
                 }
@@ -226,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         var DEFAULT_CONTACT_EMAIL = "webmaster@itracasa.es";
                         TC.i18n.loadResources(!TC.i18n[mapObj.options.locale], TC.apiLocation + 'TC/resources/', mapObj.options.locale)
                             .then(function () {
-                                TC.error(TC.Util.getLocaleString(mapObj.options.locale, "genericError") + (mapObj.options.contactEmail || DEFAULT_CONTACT_EMAIL), { type: Consts.msgType.ERROR });
+                                TC.error(Util.getLocaleString(mapObj.options.locale, "genericError") + (mapObj.options.contactEmail || DEFAULT_CONTACT_EMAIL), { type: Consts.msgType.ERROR });
                             });
                     }
                 }
@@ -247,5 +269,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 Cfg.layout = TC.apiLocation + 'layout/responsive';
 
-export { Cfg, SitnaMap as Map, Consts, feature, layer, tool };
+export { Cfg, SitnaMap as Map, Consts, feature, layer, tool, ui };
 
