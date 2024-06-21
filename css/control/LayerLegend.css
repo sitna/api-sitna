@@ -1,0 +1,28 @@
+﻿@keyframes pulse-animation {
+    0% {
+        opacity:0%;
+    }
+    50% {
+        opacity: 100%;
+    }
+
+    100% {
+        opacity: 0%;
+    }
+}
+sitna-layer-legend.tc-ctl {
+    padding: 0;
+}
+sitna-layer-legend.tc-ctl-layer-legend-loading {
+    background-image: url(../img/tcCtlLayerLegendLoading.svg);
+    display: block;
+    min-width: 300px;
+    min-height: 90px;
+    background-position: 5px 5px;
+    background-repeat: no-repeat;
+    margin-bottom: 5px;
+    animation: pulse-animation 1s infinite;
+}
+/*sitna-layer-legend .tc-ctl-legend-watch img{
+    height:20px;
+}*/

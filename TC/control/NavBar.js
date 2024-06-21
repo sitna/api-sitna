@@ -4,22 +4,15 @@ import Control from '../Control';
 TC.control = TC.control || {};
 
 class NavBar extends Control {
-    constructor() {
-        super(...arguments);
-        const self = this;
-        self.div.classList.add(self.CLASS);
-    }
-
-    getClassName() {
-        return 'tc-ctl-nav';
-    }
 
     render() {
         const self = this;
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBar(self);
         }
-        return self._set1stRenderPromise(Promise.resolve());
+        const renderPromise = Promise.resolve();
+        self._firstRender ??= renderPromise;
+        return renderPromise;
     }
 
     async register(map) {
@@ -41,5 +34,6 @@ class NavBar extends Control {
     }
 }
 
+NavBar.prototype.CLASS = 'tc-ctl-nav';
 TC.control.NavBar = NavBar;
 export default NavBar;

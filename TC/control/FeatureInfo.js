@@ -33,53 +33,49 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Cfg from '../Cfg';
 import FeatureInfoCommons from './FeatureInfoCommons';
 import md5 from 'md5';
 
 TC.control = TC.control || {};
 
-const FeatureInfo = function () {
-    var self = this;
-    FeatureInfoCommons.apply(this, arguments);
-    self.wrap = new TC.wrap.control.FeatureInfo(self);
+Consts.classes.FROMLEFT = 'tc-fromleft';
+Consts.classes.FROMRIGHT = 'tc-fromright';
 
-    Consts.classes.FROMLEFT = 'tc-fromleft';
-    Consts.classes.FROMRIGHT = 'tc-fromright';
-};
-
-TC.inherit(FeatureInfo, FeatureInfoCommons);
-
-(function () {
-
-    var ctlProto = FeatureInfo.prototype;
-
-    var roundCoordinates = function roundCoordinates(obj, precision) {
-        var result;
-        if (Array.isArray(obj)) {
-            result = obj.slice();
-            for (var i = 0, len = result.length; i < len; i++) {
-                result[i] = roundCoordinates(result[i]);
-            }
+const roundCoordinates = function roundCoordinates(obj, precision) {
+    var result;
+    if (Array.isArray(obj)) {
+        result = obj.slice();
+        for (var i = 0, len = result.length; i < len; i++) {
+            result[i] = roundCoordinates(result[i]);
         }
-        else if (typeof obj === "number") {
-            result = Math.round(obj.toFixed(precision));
-        }
-        else {
-            result = obj;
-        }
-        return result;
-    };
+    }
+    else if (typeof obj === "number") {
+        result = Math.round(obj.toFixed(precision));
+    }
+    else {
+        result = obj;
+    }
+    return result;
+}
 
-    ctlProto.register = async function (map) {
+class FeatureInfo extends FeatureInfoCommons {
+    constructor() {
+        super(...arguments);
         const self = this;
-        const ctl = await FeatureInfoCommons.prototype.register.call(self, map);
+        self.wrap = new TC.wrap.control.FeatureInfo(self);
+    }
+
+    async register(map) {
+        const self = this;
+        const ctl = await super.register.call(self, map);
         // Le ponemos un padre al div. Evitamos con esto que se añada el div al mapa (no es necesario, ya que es un mero buffer)
         document.createElement('div').appendChild(self.div);
         return ctl;
-    };
+    }
 
-    ctlProto.callback = function (coords, _xy) {
+    callback(coords, _xy) {
         const self = this;
 
         self.querying = true;
@@ -97,7 +93,7 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
             if (self.map && self.filterLayer) {
                 //aquí se pone el puntito temporal
                 var title = self.getLocaleString('featureInfo');
-                var markerOptions = TC.Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
+                var markerOptions = Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
                 self.filterLayer.clearFeatures();
                 self.highlightedFeature = null;
                 self.filterFeature = null;
@@ -149,17 +145,17 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
                 resolve();
             }
         });
-    };
+    }
 
-    ctlProto.sendRequest = function (filter) {
+    sendRequest(filter) {
         const self = this;
         return self.callback(filter.getCoordinates());
-    };
+    }
 
-    ctlProto.responseCallback = function (options) {
+    responseCallback(options) {
         const self = this;
 
-        FeatureInfoCommons.prototype.responseCallback.call(self, options);
+        super.responseCallback.call(self, options);
         if (self.filterFeature) {
             var services = options.services;
 
@@ -246,14 +242,14 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
                     label.addEventListener(Consts.event.CLICK, function (e) {
                         e.stopPropagation();
                     }, { passive: true });
-                });                
+                });
             });
         }
-    };
+    }
 
-    ctlProto.displayResultsCallback = function () {
+    displayResultsCallback() {
         const self = this;
-        FeatureInfoCommons.prototype.displayResultsCallback.call(self);
+        super.displayResultsCallback.call(self);
 
         if (self.elevationRequest) {
             const ctl = self.getDisplayControl();
@@ -284,15 +280,15 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
                 });
             }
         });
-        resizeObserver.observe(self.getDisplayTarget());        
+        resizeObserver.observe(self.getDisplayTarget());
 
         // 26/04/2021 ahora siempre mostramos XY aunque no haya elevación o resultado GFI
         //else if (!self.querying && (!self.info || !self.info.services)) {
         //    self.closeResults();
         //}
-    };
+    }
 
-    ctlProto.renderResults = function (options, callback) {
+    renderResults(options, callback) {
         const self = this;
         if (self.filterFeature) {
             const currentCoords = self.filterFeature.geometry;
@@ -302,15 +298,15 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
                     options.crs = self.map.crs;
                     options.coords = options.coords.map(function (value) {
                         const precision = options.isGeo ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION;
-                        return TC.Util.formatCoord(value, precision);
+                        return Util.formatCoord(value, precision);
                     });
                 }
                 self.renderData(options, callback);
             }
         }
-    };
+    }
 
-    ctlProto.displayElevationValues = function (value) {
+    displayElevationValues(value) {
         const self = this;
         let tValue, sValue;
         if (Array.isArray(value)) {
@@ -322,7 +318,7 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
             sValue = null;
         }
         const locale = self.map.options.locale || Cfg.locale;
-        let elevationString = tValue === null ? '-' : TC.Util.formatNumber(Math.round(tValue), locale) + ' m';
+        let elevationString = tValue === null ? '-' : Util.formatNumber(Math.round(tValue), locale) + ' m';
         let heightString = sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) + ' m' : '-';
         const elevationDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`);
         const heightDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-height`);
@@ -332,9 +328,9 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
             elevationDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = elevationString;
             heightDisplay.querySelector(`.${self.CLASS}-coords-val`).innerHTML = heightString;
         }
-    };
+    }
 
-    ctlProto.loadSharedFeature = function (featureObj) {
+    loadSharedFeature(featureObj) {
         // Función para dar compatibilidad hacia atrás, ahora las features se comparten por URL
         const self = this;
         if (featureObj) {
@@ -361,24 +357,23 @@ TC.inherit(FeatureInfo, FeatureInfoCommons);
                 });
             });
         }
-    };
+    }
 
-    ctlProto.exportQuery = function () {
+    exportQuery() {
         const self = this;
-        const result = FeatureInfoCommons.prototype.exportQuery.call(self);
+        const result = super.exportQuery.call(self);
         result.res = self.queryResolution;
         return result;
-    };
+    }
 
-    ctlProto.importQuery = function (query) {
+    importQuery(query) {
         const self = this;
         if (query.filter) {
             self.map.setResolution(query.res)
-                .then(() => FeatureInfoCommons.prototype.importQuery.call(self, query));
+                .then(() => super.importQuery.call(self, query));
         }
-    };
-
-})();
+    }
+}
 
 TC.control.FeatureInfo = FeatureInfo;
 export default FeatureInfo;

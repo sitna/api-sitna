@@ -18,7 +18,10 @@ import Util from '../Util'
   * así que rara vez será necesario establecer esta propiedad.
   */
 
-class ElevationService { 
+class ElevationService {
+    #proxificationTool;
+    #proxificationToolPromise;
+
     constructor(options) {
         const self = this;
         self.options = options || {};
@@ -33,22 +36,21 @@ class ElevationService {
         }
     }
 
-    async getElevation(options) {
+    async getElevation(options = {}) {
         const self = this;
-        options = options || {};
-        if (options.resolution === undefined) {
-            options.resolution = self.options.resolution;
+        const opts = { ...options };
+        if (opts.resolution === undefined) {
+            opts.resolution = self.options.resolution;
         }
-        if (options.sampleNumber === undefined) {
-            options.sampleNumber = self.options.sampleNumber;
+        if (opts.sampleNumber === undefined) {
+            opts.sampleNumber = self.options.sampleNumber;
         }
         const response = await self.request(options);
-        return (options.responseCallback || self.parseResponse).call(self, response, options);
+        return (opts.responseCallback || self.parseResponse).call(self, response, opts);
     }
 
-    async request(options) {
+    async request(options = {}) {
         const self = this;
-        options = options || {};
         if (options.dataInputs || options.body) {
             const WPS = await import('../format/WPS');
             const data = {
@@ -88,6 +90,17 @@ class ElevationService {
 
     cancelRequest(_id) {
 
+    }
+
+    async getProxificationTool() {
+        if (!this.#proxificationTool) {
+            if (!this.#proxificationToolPromise) {
+                this.#proxificationToolPromise = import('./Proxification');
+            }
+            const Proxification = (await this.#proxificationToolPromise).default;
+            this.#proxificationTool = new Proxification(TC.proxify);
+        }
+        return this.#proxificationTool;
     }
 }
 

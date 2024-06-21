@@ -8,32 +8,54 @@ import Vector from '../../SITNA/layer/Vector';
 
 TC.control = TC.control || {};
 
-const TOC = function () {
-    const self = this;
-    MapContents.apply(self, arguments);
-};
+var CLICKEVENT = 'click';
 
-TC.inherit(TOC, MapContents);
+class TOC extends MapContents {
 
-(function () {
-    var ctlProto = TOC.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-toc';
-
-    var CLICKEVENT = 'click';
-
-    ctlProto.register = function (map) {
+    register(map) {
         const self = this;
-        const result = MapContents.prototype.register.call(self, map);
 
         map.on(Consts.event.EXTERNALSERVICEADDED, function (e) {
             self.onExternalServiceAdded(e);
         });
 
-        return result;
-    };
+        return super.register.call(self, map);
+    }
 
-    ctlProto.onExternalServiceAdded = function (e) {
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-toc.mjs');
+        const branchTemplatePromise = import('../templates/tc-ctl-toc-branch.mjs');
+        const nodeTemplatePromise = import('../templates/tc-ctl-toc-node.mjs');
+
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-branch'] = (await branchTemplatePromise).default;
+        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
+        self.template = template;
+    }
+
+    render(callback) {
+        const self = this;
+
+        return Control.prototype.render.call(self, function () {
+
+            var controlOptions = self.options.controls || [];
+
+            if (controlOptions.length > 0) {
+                var ctl = controlOptions[0];
+                var newDiv = document.createElement("div");
+                self.div.appendChild(newDiv);
+                self.map.addControl(ctl.name, Util.extend({ 'div': newDiv }, ctl.options));
+            }
+
+            if (Util.isFunction(callback)) {
+                callback();
+            }
+        });
+    }
+
+    onExternalServiceAdded(e) {
         const self = this;
         if (e && e.layer) {
             e.layer.map = self.map;
@@ -41,9 +63,9 @@ TC.inherit(TOC, MapContents);
                 self.updateLayerTree(e.layer);
             });
         }
-    };
+    }
 
-    ctlProto.addUIEventListeners = function () {
+    addUIEventListeners() {
         const self = this;
         self.div.addEventListener(CLICKEVENT, TC.EventTarget.listenerBySelector('input[type=checkbox]', function (e) { // No usamos Consts.event.CLICK porque en iPad los eventos touchstart no van bien en los checkbox
             const checkbox = e.target;
@@ -51,17 +73,17 @@ TC.inherit(TOC, MapContents);
 
             //Si es un nodo raiz...
             if (checkbox.parentElement.dataset.layerId) {
-                const layer = self.map.getLayer(checkbox.parentElement.dataset.layerId);                
+                const layer = self.map.getLayer(checkbox.parentElement.dataset.layerId);
                 //y está chequeado y tiene algún nodo desmarcado
                 if (checkbox.checked && checkbox.parentElement.querySelectorAll("ul input:not(:checked").length > 0) {
                     //marcamos todos los checkbox que estén desmarcados
-                    const selectorCSS = "ul " + (layer instanceof Raster ? ("li." + self.CLASS + "-leaf "):"") + "input:not(:checked)";                        
+                    const selectorCSS = "ul " + (layer instanceof Raster ? ("li." + self.CLASS + "-leaf ") : "") + "input:not(:checked)";
                     const uids = Array.from(e.target.parentElement.querySelectorAll(selectorCSS)).map((cb) => {
                         return cb.parentElement.dataset.layerUid;
                     });
-                    layer.setNodeVisibility(uids, checkbox.checked);                   
-                    
-                }                        
+                    layer.setNodeVisibility(uids, checkbox.checked);
+
+                }
             }
             while (ul && !ul.matches('ul.' + self.CLASS + '-wl')) {
                 ul = ul.parentElement;
@@ -103,10 +125,11 @@ TC.inherit(TOC, MapContents);
                 e.stopPropagation();
             }
         }));
-    };
+        return self;
+    }
 
-    ctlProto.update = function (layer) {
-        var self = this;
+    update(layer) {
+        const self = this;
 
         var _getCheckbox = function (li) {
             for (var i = 0, len = li.children.length; i < len; i++) {
@@ -123,7 +146,7 @@ TC.inherit(TOC, MapContents);
 
         layer.tree = null;
         const tree = layer.getTree(false);
-        const rootCheck = _getCheckbox(li);        
+        const rootCheck = _getCheckbox(li);
         rootCheck.checked = layer.getVisibility();
         //si la capa está visible pero alguno de los hijos está oculto le ponemos como indeterminado
         if (rootCheck.checked && layer.getNodeVisibility(tree.uid, tree) === Consts.visibility.HAS_VISIBLE) {
@@ -132,7 +155,7 @@ TC.inherit(TOC, MapContents);
         }
         if (rootCheck.checked && layer.getNodeVisibility(tree.uid, tree) === Consts.visibility.NOT_VISIBLE) {
             rootCheck.checked = rootCheck.indeterminate = false;
-        }    
+        }
         li.querySelectorAll('li').forEach(function (l) {
             const checkbox = _getCheckbox(l);
             const uid = l.dataset.layerUid;
@@ -164,7 +187,7 @@ TC.inherit(TOC, MapContents);
                     const isVisible = Object.prototype.hasOwnProperty.call(node, "isVisible") ? node.isVisible : true;
                     if (node.children && node.children.length && !(layer instanceof Vector)) {
                         const isAllChildrenVisibles = node.children.every(c => c.isVisible || (c.visibilityState && c.visibilityState === Consts.visibility.VISIBLE));
-                        const isAllChildrenHidden =  node.children.every(c => !c.isVisible || (c.visibilityState && c.visibilityState === Consts.visibility.NOT_VISIBLE));
+                        const isAllChildrenHidden = node.children.every(c => !c.isVisible || (c.visibilityState && c.visibilityState === Consts.visibility.NOT_VISIBLE));
                         checkbox.checked = isAllChildrenVisibles;
                         checkbox.indeterminate = !isAllChildrenVisibles && !isAllChildrenHidden;
                     }
@@ -172,7 +195,7 @@ TC.inherit(TOC, MapContents);
                         checkbox.checked = isVisible;
                         checkbox.indeterminate = false;
                     }
-                    
+
                 }
             }
         });
@@ -183,9 +206,10 @@ TC.inherit(TOC, MapContents);
             l.querySelector("input").indeterminate = (someChecked && someNotChecked) || someIndeterminated;
             l.querySelector("input").checked = someChecked && !someNotChecked && !someIndeterminated;
         });
-    };
+        return self;
+    }
 
-    ctlProto.updateScale = function (layer) {
+    updateScale(layer) {
         const self = this;
         const setVisibilityByScale = function (li, layer) {
             if (!li) return;
@@ -194,20 +218,23 @@ TC.inherit(TOC, MapContents);
                 elm.classList.toggle(self.CLASS + '-node-notvisible', !layer.isVisibleByScale(uid));
             });
         };
-        if (!layer)
+        if (!layer) {
             self.getLayerUIElements().forEach(function (li) {
                 setVisibilityByScale(li, self.map.getLayer(li.dataset.layerId));
 
             });
-        else
-            setVisibilityByScale(self.getLayerUIElements().find(ui => ui.dataset.layerId === layer.id), layer);        
-    };
+        }
+        else {
+            setVisibilityByScale(self.getLayerUIElements().find(ui => ui.dataset.layerId === layer.id), layer);
+        }
+        return self;
+    }
 
-    ctlProto.updateLayerTree = function (layer) {
-        var self = this;
+    updateLayerTree(layer) {
+        const self = this;
 
-        if (!layer.isBase && !layer.options.stealth) {            
-            MapContents.prototype.updateLayerTree.call(self, layer);
+        if (!layer.isBase && !layer.options.stealth) {
+            super.updateLayerTree.call(self, layer);
 
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(Consts.classes.HIDDEN);
             self.getRenderedHtml(self.CLASS + '-branch', self.layerTrees[layer.id])
@@ -248,7 +275,7 @@ TC.inherit(TOC, MapContents);
                         const node = 'li.' + self.CLASS + '-node';
                         const leaf = 'li.' + self.CLASS + '-leaf';
                         //guardo los no collapsados
-                        const notCollapsedNodesUid = Array.from(li.querySelectorAll("li.tc-ctl-toc-node:not(.tc-ctl-toc-leaf):not(.tc-collapsed)")).reduce(function (previousValue, currentValue) {                            
+                        const notCollapsedNodesUid = Array.from(li.querySelectorAll("li.tc-ctl-toc-node:not(.tc-ctl-toc-leaf):not(.tc-collapsed)")).reduce(function (previousValue, currentValue) {
                             previousValue.push(currentValue.dataset.layerUid);
                             return previousValue;
                         }, []);
@@ -261,13 +288,13 @@ TC.inherit(TOC, MapContents);
                             //colapso todos los nodos que no son hoja y que previamente no estaban collapsados
                             if (!node_.matches(leaf) &&
                                 !(node_.tagName === "LI" && notCollapsedNodesUid.some(notCollapsedUid => notCollapsedUid === node_.dataset.layerUid) ||
-                                node_.tagName === "UL" && notCollapsedNodesUid.some(notCollapsedUid => notCollapsedUid === node_.parentElement.dataset.layerUid)
+                                    node_.tagName === "UL" && notCollapsedNodesUid.some(notCollapsedUid => notCollapsedUid === node_.parentElement.dataset.layerUid)
                                 )) {
                                 node_.classList.add(Consts.classes.COLLAPSED);
                             }
                         });
-                    }                    
-                   
+                    }
+
                     self.update(layer);
                     self.updateScale(layer);
                 })
@@ -275,18 +302,22 @@ TC.inherit(TOC, MapContents);
                     TC.error(err);
                 });
         }
-    };    
-    ctlProto.removeLayer = function (layer) {
-        if (!layer.isBase) {           
-            MapContents.prototype.removeLayer.call(this, layer);
-        }
-    };
+        return self;
+    }
 
-    ctlProto.updateLayerVisibility = function (layer) {
+    removeLayer(layer) {
+        const self = this;
+        if (!layer.isBase) {
+            super.removeLayer.call(self, layer);
+        }
+        return self;
+    }
+
+    updateLayerVisibility(layer) {
         const self = this;
         self.getLayerUIElements().forEach(function (li) {
             if (li.dataset.layerId === layer.id) {
-                var isHidden = !layer.getVisibility();                
+                var isHidden = !layer.getVisibility();
                 if (isHidden) {
                     li.querySelectorAll('input[type=checkbox]').forEach(function (checkbox) {
                         checkbox.checked = !isHidden;
@@ -306,46 +337,15 @@ TC.inherit(TOC, MapContents);
                 }
             }
         });
-    };
+        return self;
+    }
 
-    ctlProto.updateLayerOrder = function (_layer, _oldIdx, _newIdx) {
+    updateLayerOrder(_layer, _oldIdx, _newIdx) {
         // Este control no tiene que hacer nada
-    };
+        return this;
+    }
 
-    ctlProto.loadTemplates = async function () {
-        const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-toc.mjs');
-        const branchTemplatePromise = import('../templates/tc-ctl-toc-branch.mjs');
-        const nodeTemplatePromise = import('../templates/tc-ctl-toc-node.mjs');
-
-        const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-branch'] = (await branchTemplatePromise).default;
-        template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
-        self.template = template;
-    };
-
-    ctlProto.render = function (callback) {
-        const self = this;
-
-        return Control.prototype.render.call(self, function () {
-
-            var controlOptions = self.options.controls || [];
-
-            if (controlOptions.length > 0) {
-                var ctl = controlOptions[0];
-                var newDiv = document.createElement("div");
-                self.div.appendChild(newDiv);
-                self.map.addControl(ctl.name, Util.extend({ 'div': newDiv }, ctl.options));
-            }
-
-            if (Util.isFunction(callback)) {
-                callback();
-            }
-        });
-    };
-
-    ctlProto.getLayerUIElements = function () {
+    getLayerUIElements() {
         const self = this;
         const result = [];
         const children = self.div.querySelector('ul.' + self.CLASS + '-wl').children;
@@ -356,15 +356,15 @@ TC.inherit(TOC, MapContents);
             }
         }
         return result;
-    };
+    }
 
-    ctlProto.exportState = function () {
-    };
+    exportState() {
+    }
 
-    ctlProto.importState = function (_state) {
-    };
-        
-})();
+    importState(_state) {
+    }
+}
 
+TOC.prototype.CLASS = 'tc-ctl-toc';
 TC.control.TOC = TOC;
 export default TOC;

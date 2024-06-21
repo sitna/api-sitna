@@ -63,11 +63,10 @@ class MultiPoint extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.feature = coords;
-            self.wrap.createMultiPoint(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.feature = coords;
+            this.wrap.createMultiPoint(coords, options);
         }
     }
 
@@ -91,7 +90,6 @@ class MultiPoint extends Feature {
      * @returns {SITNA.feature.MultiPoint} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (coords) {
             if (Array.isArray(coords)) {
                 if (!Array.isArray(coords[0])) {
@@ -102,7 +100,7 @@ class MultiPoint extends Feature {
                 throw new TypeError('Coordinates not valid for multipoint');
             }
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     getCoords(options) {
@@ -115,6 +113,10 @@ class MultiPoint extends Feature {
 
     getCoordsArray() {
         return this.getCoordinates();
+    }
+
+    getGeometryType() {
+        return Consts.geom.MULTIPOINT;
     }
 }
 

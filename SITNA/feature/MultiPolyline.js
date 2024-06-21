@@ -1,4 +1,5 @@
-﻿import Feature from './Feature';
+﻿import Consts from '../../TC/Consts';
+import Feature from './Feature';
 import Polyline from './Polyline';
 
 /**
@@ -129,10 +130,9 @@ class MultiPolyline extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.createMultiPolyline(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.createMultiPolyline(coords, options);
         }
     }
 
@@ -159,11 +159,10 @@ class MultiPolyline extends Feature {
      * @returns {SITNA.feature.MultiPolyline} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (Array.isArray(coords) && Array.isArray(coords[0]) && !Array.isArray(coords[0][0])) {
             coords = [coords];
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     getCoords(options) {
@@ -179,13 +178,12 @@ class MultiPolyline extends Feature {
     }
 
     appendPolyline(polyline) {
-        const self = this;
         if (polyline instanceof Polyline) {
-            const coords = self.getCoordinates();
+            const coords = this.getCoordinates();
             coords.push(polyline.getCoordinates());
-            self.setCoordinates(coords);
+            this.setCoordinates(coords);
         }
-        return self;
+        return this;
     }
 
     /**
@@ -197,8 +195,11 @@ class MultiPolyline extends Feature {
      * @returns {number} Suma de las longitudes de todas las líneas, en metros.
      */
     getLength = function (options) {
-        const self = this;
-        return self.wrap.getLength({ coordinates: self.getCoordinates(options) });
+        return this.wrap.getLength({ coordinates: this.getCoordinates(options) });
+    }
+
+    getGeometryType() {
+        return Consts.geom.MULTIPOLYLINE;
     }
 }
 

@@ -41,7 +41,6 @@ div.tc-ctl-download-cnt label {
     display: inline-block;
     margin-left: 0.5em;
     animation: spin 2s infinite linear;
-    -webkit-animation: spin 2s infinite linear;
 }
 
 sitna-button.tc-ctl-download-help {
@@ -55,8 +54,8 @@ sitna-button.tc-ctl-download-help {
 }
 
 div.tc-ctl-download .tc-ctl-download-btn:before {
-    font-family: 'Mapskin';
-    content: "\e02c";
+    font-family: var(--icon-font-family);
+    content: var(--icon-download);
     margin-right: 0.5em;
 }
 

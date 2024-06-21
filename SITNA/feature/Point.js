@@ -104,11 +104,10 @@ class Point extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.feature = coords;
-            self.wrap.createPoint(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.feature = coords;
+            this.wrap.createPoint(coords, options);
         }
     }
 
@@ -144,24 +143,27 @@ class Point extends Feature {
         return [this.getCoordinates()];
     }
 
+    getGeometryType() {
+        return Consts.geom.POINT;
+    }
+
     setStyle(style) {
-        const self = this;
-        const isCluster = Array.isArray(self.features) && self.features.length > 1;
+        const isCluster = Array.isArray(this.features) && this.features.length > 1;
         if (isCluster) {
             const mergedStyles = [];
-            if (self.layer?.styles?.cluster) {
-                mergedStyles.unshift(self.layer.styles.cluster);
+            if (this.layer?.styles?.cluster) {
+                mergedStyles.unshift(this.layer.styles.cluster);
             }
-            if (self.layer?.map.options.styles?.cluster) {
-                mergedStyles.unshift(self.layer.map.options.styles.cluster);
+            if (this.layer?.map.options.styles?.cluster) {
+                mergedStyles.unshift(this.layer.map.options.styles.cluster);
             }
             if (Cfg?.styles?.cluster) {
                 mergedStyles.unshift(Cfg.styles.cluster);
             }
             const newStyle = Util.mergeStyles(...mergedStyles);
-            return self.wrap.setStyle(newStyle);
+            return this.wrap.setStyle(newStyle);
         }
-        return super.setStyle.call(self, style);
+        return super.setStyle.call(this, style);
     }
 }
 

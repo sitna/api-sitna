@@ -16,6 +16,8 @@ class FeatureDownloadDialog extends Control {
     #interpolation = false;
     #interpolationDistance = null;
     #formats = ["KMZ",/*"KML",*/ "GML", "GeoJSON", "WKT", "WKB", "GPX", "SHP", "GPKG"];
+    #interpolationPanel;
+    #selectors;
 
     constructor() {
         super(...arguments);
@@ -23,7 +25,7 @@ class FeatureDownloadDialog extends Control {
         self.title = self.options.title;
         self.cssClass = self.options.cssClass || "";
 
-        self._selectors = {
+        self.#selectors = {
             ELEVATION_CHECKBOX: "." + self.CLASS + '-elev input[type=checkbox]',
             INTERPOLATION_PANEL: "." + self.CLASS + '-ip',
             INTERPOLATION_RADIO: `input[type=radio][name=${self.id}-finfo-ip-coords]`,
@@ -31,10 +33,6 @@ class FeatureDownloadDialog extends Control {
         };
         self.features = [];
         self.options = {};
-    }
-
-    getClassName() {
-        return 'tc-ctl-dldlog';
     }
 
     async loadTemplates() {
@@ -46,6 +44,43 @@ class FeatureDownloadDialog extends Control {
     render(callback) {
         const self = this;
         return super.renderData.call(self, { controlId: self.id }, callback);
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        if (self.modalBody) {
+            const modalBody = self.modalBody;
+
+            modalBody.querySelectorAll('button[data-format]').forEach((btn) => btn.addEventListener(Consts.event.CLICK, function (e) {
+                self.download({ format: e.target.dataset.format });
+            }, { passive: true }));
+
+            if (self.options?.elevation) {
+
+                modalBody.querySelector(self.#selectors.ELEVATION_CHECKBOX).addEventListener('change', function (_e) {
+                    //self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
+
+                    self.#displayElevation = !self.#displayElevation;
+
+                    self.#interpolationPanel?.classList.toggle(Consts.classes.HIDDEN, !self.#displayElevation || !self.#hasLines() && !self.#hasPolygons());
+
+                });
+
+                if (self.options.elevation?.resolution) {
+
+                    modalBody.querySelectorAll(self.#selectors.INTERPOLATION_RADIO).forEach((radio) => radio.addEventListener('change', function (_e) {
+                        const idDiv = modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE);
+                        idDiv.classList.toggle(Consts.classes.HIDDEN);
+                        self.#interpolation = !self.#interpolation;
+                        if (self.#interpolation) modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE + " input").value = self.#interpolationDistance || modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE + " input").value;
+                    }));
+
+                    modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE).addEventListener('change', function (e) {
+                        self.#interpolationDistance = e.target.value;
+                    });
+                }
+            }
+        }
     }
 
     #hasPoints() {
@@ -63,9 +98,8 @@ class FeatureDownloadDialog extends Control {
             feature instanceof MultiPolygon);
     }
 
-    async #addElevationAndInterpolation(features, options) {
+    async #addElevationAndInterpolation(features, options = {}) {
         const self = this;
-        options = options || {};
         const cloneWithId = function (feat) {
             const result = feat.clone();
             result.id = feat.id;
@@ -113,7 +147,7 @@ class FeatureDownloadDialog extends Control {
         }
     }
 
-    open(featureOrFeatures, options) {
+    async open(featureOrFeatures, options) {
         const self = this;
 
         self.close();
@@ -134,184 +168,47 @@ class FeatureDownloadDialog extends Control {
         options.formats = self.#formats.filter(item => excludedFormats.indexOf(item) < 0);
         self.setOptions(options);
 
-        self.getRenderedHtml(self.CLASS, options, function (html) {
-            const template = document.createElement('template');
-            template.innerHTML = html;
-            self.modal = template.content ? template.content.firstChild : template.firstChild;
-            document.body.appendChild(self.modal);
+        const html = await self.getRenderedHtml(self.CLASS, options);
+        const template = document.createElement('template');
+        template.innerHTML = html;
+        self.modal = template.content ? template.content.firstChild : template.firstChild;
+        document.body.appendChild(self.modal);
 
-            const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
-            modalBody.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button[data-format]', function (e) {
+        const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
 
-                var resolution = self.#displayElevation && self.#interpolation ? parseFloat(modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation && self.map.elevation.options).resolution : 0;
+        self.#interpolationPanel = modalBody.querySelector(self.#selectors.INTERPOLATION_PANEL);
+        const elevationCheckbox = modalBody.querySelector(self.#selectors.ELEVATION_CHECKBOX);
 
-                const endExport = async (features, opts) => {
+        if (options.elevation) {
+            self.#displayElevation = options.elevation.checked ? options.elevation.checked : self.#displayElevation;
 
-                    //checkear si son features con datos complejos
-                    var cancel = false;
-                    if (format !== Consts.format.GEOJSON && opts.format !== Consts.format.WKT && features.some(function (feat) {
-                        for (var attr in feat.getData()) {
-                            if (feat.data[attr] instanceof Object)
-                                return true;
-                        }
-                        return false;
-                    }))
-                        await TC.confirm(self.getLocaleString("dl.export.complexAttr").format(format), null,
-                            function () {
-                                cancel = true;
-                            });
-                    if (cancel) {
-                        return;
-                    }
+            elevationCheckbox.checked = self.#displayElevation;
 
-                    const li = self.map.getLoadingIndicator();
-                    const waitId = li && li.addWait();
+            if (self.#interpolationPanel) {
+                self.#interpolationPanel.classList.toggle(Consts.classes.HIDDEN, !self.#displayElevation || !self.#hasLines() && !self.#hasPolygons() || !options.elevation.resolution);
 
-
-                    TC.Util.closeModal();
-                    self.#addElevationAndInterpolation(features, {
-                            displayElevation: self.#displayElevation,
-                            elevation: self.#displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
-                        }).then(
-                            function (features) {
-                                const innerFileName = opts.fileName ||
-                                    (opts.title ? opts.title.toLowerCase().replace(/ /g, '_') : 'download');
-                                let fileName = opts.fileName || innerFileName + ' ' + TC.Util.getFormattedDate(new Date().toString(), true);
-                                self.map.exportFeatures(features, {
-                                    fileName: innerFileName,
-                                    format: format
-                                }).then(data => {
-                                    fileName = fileName || TC.getUID();
-                                    switch (format) {
-                                        case Consts.format.SHAPEFILE:
-                                            TC.Util.downloadBlob(fileName + ".zip", data);
-                                            break;
-                                        case Consts.format.GEOPACKAGE:
-                                            TC.Util.downloadFile(fileName + ".gpkg", "application/geopackage+sqlite3", data);
-                                            break;
-                                        case Consts.format.KMZ:
-                                            TC.Util.downloadBlob(fileName + ".kmz", data);
-                                            break;
-                                        default: {
-                                            const mimeType = Consts.mimeType[options.format];
-                                            TC.Util.downloadFile(fileName + '.' + format.toLowerCase(), mimeType, data);
-                                            break;
-                                        }
-                                    }
-                                });
-                            },
-                            function (error) {
-                                self.open(features, opts);
-                                if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
-                                    TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
-                                    return;
-                                }
-                                TC.error(self.getLocaleString('elevation.error'));
-                            }
-                        ).finally(function () {
-                            li && li.removeWait(waitId);
-                        });
-                };
-
-                const format = e.target.dataset.format;
-                if (format === Consts.format.GPX) {
-                    if (self.#hasPolygons()) {
-                        TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'), function () {
-                            endExport(self.getFeatures().filter(function (feature) {
-                                return !(feature instanceof Polygon) && !(feature instanceof MultiPolygon);
-                            }), self.getOptions());
-                        });
-                    }
-                    else {
-                        endExport(self.getFeatures(), self.getOptions());
-                    }
-                }
-                else {
-                    endExport(self.getFeatures(), self.getOptions());
-                }
-
-
-            }), { passive: true });
-
-            const interpolationPanel = modalBody.querySelector(self._selectors.INTERPOLATION_PANEL);
-            const elevationCheckbox = modalBody.querySelector(self._selectors.ELEVATION_CHECKBOX);
-
-            if (options.elevation) {
-                self.#displayElevation = options.elevation.checked ? options.elevation.checked : self.#displayElevation;
-
-                elevationCheckbox.checked = self.#displayElevation;
-
-                if (interpolationPanel) {
-                    if (self.#displayElevation) {
-                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
-                    } else {
-                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                        }
-                    }
-
-                    if (self.#displayElevation && (self.#hasLines() || self.#hasPolygons()) && options.elevation.resolution) {
-                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
-                    } else {
-                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                        }
-                    }
-
-                    modalBody.querySelectorAll(self._selectors.INTERPOLATION_RADIO)[self.#interpolation ? 1 : 0].checked = true;
-                    if (self.#interpolation) {
-                        modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE).classList.remove(Consts.classes.HIDDEN);
-                        modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = self.#interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
-                    }
+                modalBody.querySelectorAll(self.#selectors.INTERPOLATION_RADIO)[self.#interpolation ? 1 : 0].checked = true;
+                if (self.#interpolation) {
+                    modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE).classList.remove(Consts.classes.HIDDEN);
+                    const input = modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE + " input");
+                    input.value = self.#interpolationDistance || input.value;
                 }
             }
+        }
 
-            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.ELEVATION_CHECKBOX, function (_e) {
-                //self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
+        self.addUIEventListeners();
 
-                self.#displayElevation = !self.#displayElevation;
-
-                if (interpolationPanel) {
-                    if (self.#displayElevation) {
-                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
-                    } else {
-                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                        }
-                    }
-
-                    if (self.#displayElevation && (self.#hasLines() || self.#hasPolygons())) {
-                        interpolationPanel.classList.remove(Consts.classes.HIDDEN);
-                    } else {
-                        if (!interpolationPanel.classList.contains(Consts.classes.HIDDEN)) {
-                            interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                        }
-                    }
-                }
-
-            }));
-            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_RADIO, function (_e) {
-                const idDiv = modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE);
-                idDiv.classList.toggle(Consts.classes.HIDDEN);
-                self.#interpolation = !self.#interpolation;
-                if (self.#interpolation) modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value = self.#interpolationDistance || modalBody.querySelector(self._selectors.INTERPOLATION_DISTANCE + " input").value;
-            }));
-            modalBody.addEventListener('change', TC.EventTarget.listenerBySelector(self._selectors.INTERPOLATION_DISTANCE, function (e) {
-                self.#interpolationDistance = e.target.value;
-            }));
-
-            let modalOptions = {
-                closeCallback: function () {
-                    self.modal.parentElement.removeChild(self.modal);
-                }
-            };
-
-            if (options.openCallback) {
-                modalOptions.openCallback = options.openCallback;
+        let modalOptions = {
+            closeCallback: function () {
+                self.modal.parentElement.removeChild(self.modal);
             }
+        };
 
-            TC.Util.showModal(self.modal, modalOptions);
-        });
+        if (options.openCallback) {
+            modalOptions.openCallback = options.openCallback;
+        }
+
+        Util.showModal(self.modal, modalOptions);
     }
 
     close(_callback) {
@@ -320,6 +217,101 @@ class FeatureDownloadDialog extends Control {
         if (self.modal && self.modal.parentElement) {
             Util.closeModal();
             self.modal.parentElement.removeChild(self.modal);
+        }
+    }
+
+    download(options = {}) {
+        const self = this;
+        if (!options.format) {
+            return;
+        }
+
+        var resolution = self.#displayElevation && self.#interpolation ?
+            parseFloat(self.modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation?.options)?.resolution : 0;
+        const format = options.format;
+
+        const endExport = async (features, opts) => {
+
+            //checkear si son features con datos complejos
+            var cancel = false;
+            if (format !== Consts.format.GEOJSON && opts.format !== Consts.format.WKT && features.some(function (feat) {
+                for (var attr in feat.getData()) {
+                    if (feat.data[attr] instanceof Object)
+                        return true;
+                }
+                return false;
+            }))
+                await TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.complexAttr"), format), null,
+                    function () {
+                        cancel = true;
+                    });
+            if (cancel) {
+                return;
+            }
+
+            const li = self.map.getLoadingIndicator();
+            const waitId = li && li.addWait();
+
+
+            Util.closeModal();
+            self.#addElevationAndInterpolation(features, {
+                displayElevation: self.#displayElevation,
+                elevation: self.#displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
+            }).then(
+                function (proccessedFeatures) {
+                    const innerFileName = opts.fileName ||
+                        (opts.title ? opts.title.toLowerCase().replace(/ /g, '_') : 'download');
+                    let fileName = opts.fileName || innerFileName + ' ' + Util.getFormattedDate(new Date().toString(), true);
+                    self.map.exportFeatures(proccessedFeatures, {
+                        fileName: innerFileName,
+                        format
+                    }).then(data => {
+                        fileName = fileName || TC.getUID();
+                        switch (format) {
+                            case Consts.format.SHAPEFILE:
+                                Util.downloadBlob(fileName + ".zip", data);
+                                break;
+                            case Consts.format.GEOPACKAGE:
+                                Util.downloadFile(fileName + ".gpkg", "application/geopackage+sqlite3", data);
+                                break;
+                            case Consts.format.KMZ:
+                                Util.downloadBlob(fileName + ".kmz", data);
+                                break;
+                            default: {
+                                const mimeType = Consts.mimeType[format];
+                                Util.downloadFile(fileName + '.' + format.toLowerCase(), mimeType, data);
+                                break;
+                            }
+                        }
+                    });
+                },
+                function (error) {
+                    self.open(features, opts);
+                    if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                        TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
+                        return;
+                    }
+                    TC.error(self.getLocaleString('elevation.error'));
+                }
+            ).finally(function () {
+                li && li.removeWait(waitId);
+            });
+        };
+
+        if (format === Consts.format.GPX) {
+            if (self.#hasPolygons()) {
+                TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'), function () {
+                    endExport(self.getFeatures().filter(function (feature) {
+                        return !(feature instanceof Polygon) && !(feature instanceof MultiPolygon);
+                    }), self.getOptions());
+                });
+            }
+            else {
+                endExport(self.getFeatures(), self.getOptions());
+            }
+        }
+        else {
+            endExport(self.getFeatures(), self.getOptions());
         }
     }
 
@@ -340,5 +332,6 @@ class FeatureDownloadDialog extends Control {
     }
 }
 
+FeatureDownloadDialog.prototype.CLASS = 'tc-ctl-dldlog';
 TC.control.FeatureDownloadDialog = FeatureDownloadDialog;
 export default FeatureDownloadDialog;

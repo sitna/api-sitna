@@ -19,6 +19,7 @@
     margin-left: -49px;
     z-index: 10000;
     pointer-events: none;
+    transform-origin: bottom left;
 }
 
 .ol-overlay-container {
@@ -74,7 +75,6 @@
     width: auto;
     height: auto;
     animation: fadein 0.3s;
-    -webkit-animation: fadein 0.3s;
     pointer-events: initial;
 }
 
@@ -111,13 +111,18 @@
     font-size: 1em;
     border-bottom: 1px solid #ccc;
     margin: 0 0 0.5em 0;
+    cursor: text;
+    user-select: text;
 }
 
 .tc-ctl-popup .tc-ctl-popup-content h4 {
+    width: fit-content;
     font-size: 0.9em;
     margin: 0 0.2em 0.5em 0;
     color: var(--title-color);
     text-shadow: 0 0 0.3em #fff;
+    cursor: text;
+    user-select: text;
 }
 
 .ol-overlaycontainer-stopevent .tc-ctl-popup {
@@ -191,7 +196,6 @@
     font-size: 100%;
     padding: 0;
     margin: 0;
-    width:100%;
 }
 
 .tc-ctl-finfo ul.tc-ctl-finfo-features li table.tc-complex-attr {
@@ -217,7 +221,6 @@
     .tc-ctl-popup table.tc-complex-attr tbody,
     .tc-ctl-popup table.tc-complex-attr table.tc-complex-attr tr,
     .tc-ctl-popup table.tc-complex-attr td {
-        width: 100%;
         display: block;
     }
 
@@ -256,13 +259,13 @@
 }
 
 .tc-ctl-popup .tc-complex-attr .tc-plus:before {
-    font-family: FontAwesome;
-    content: "\f0fe";
+    font-family: var(--icon-font-family);
+    content: '\e905';
     font-size: 1em;
 }
 
 .tc-ctl-popup .tc-complex-attr input:checked ~ div > .tc-plus:before {
-    content: "\f146";
+    content: '\e930';
 }
 
 .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table, .tc-ctl-popup table.tc-complex-attr table, .tc-ctl-popup div.tc-complex-attr table {

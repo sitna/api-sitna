@@ -50,6 +50,7 @@
  * @property {string} layer.IDENA_DYNORTHOPHOTO2020 - Identificador de la capa de ortofoto 2020 del WMS de IDENA.
  * @property {string} layer.IDENA_DYNORTHOPHOTO2021 - Identificador de la capa de ortofoto 2021 del WMS de IDENA.
  * @property {string} layer.IDENA_DYNORTHOPHOTO2022 - Identificador de la capa de ortofoto 2022 del WMS de IDENA.
+ * @property {string} layer.IDENA_DYNORTHOPHOTO2023 - Identificador de la capa de ortofoto 2023 del WMS de IDENA.
  * @property {string} layer.IDENA_ORTHOPHOTO - Identificador de la capa de ortofoto de máxima actualidad del WMTS de IDENA. Esta capa solo es compatible con los sistemas de referencia EPSG:25830 y EPSG:4326.
  * @property {string} layer.IDENA_ORTHOPHOTO2012 - Identificador de la capa de ortofoto 2012 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
  * @property {string} layer.IDENA_ORTHOPHOTO2014 - Identificador de la capa de ortofoto 2014 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
@@ -59,6 +60,7 @@
  * @property {string} layer.IDENA_ORTHOPHOTO2020 - Identificador de la capa de ortofoto 2020 del WMTS de IDENA. Esta capa solo es compatible con los sistemas de referencia EPSG:25830 y EPSG:4326.
  * @property {string} layer.IDENA_ORTHOPHOTO2021 - Identificador de la capa de ortofoto 2021 del WMTS de IDENA. Esta capa solo es compatible con los sistemas de referencia EPSG:25830 y EPSG:4326.
  * @property {string} layer.IDENA_ORTHOPHOTO2022 - Identificador de la capa de ortofoto 2022 del WMTS de IDENA. Esta capa solo es compatible con los sistemas de referencia EPSG:25830 y EPSG:4326.
+ * @property {string} layer.IDENA_ORTHOPHOTO2023 - Identificador de la capa de ortofoto 2023 del WMTS de IDENA. Esta capa solo es compatible con los sistemas de referencia EPSG:25830 y EPSG:4326.
  * @property {string} layer.IDENA_PAMPLONA_DYNORTHOPHOTO2020 - Identificador de la capa de ortofoto de la comarca de Pamplona 2020 del WMS de IDENA.
  * @property {string} layer.IDENA_PAMPLONA_DYNCARTO - Identificador de la capa de la cartografía topográfica de Pamplona del WMS de IDENA.
  * @property {string} layer.IDENA_PAMPLONA_ORTHOPHOTO2020 - Identificador de la capa de ortofoto de la comarca de Pamplona 2020 del WMTS de IDENA. Esta capa solo es compatible con el sistema de referencia EPSG:25830.
@@ -371,25 +373,40 @@ Consts.geom = {
     RECTANGLE: 'rectangle'
 };
 
+Consts.dataType = {
+    BOOLEAN: 'boolean',
+    TINYINT: 'tinyint',
+    SMALLINT: 'smallint',
+    MEDIUMINT: 'mediumint',
+    BIGINT: 'bigint',
+    INTEGER: 'integer',
+    FLOAT: 'float',
+    DOUBLE: 'double',
+    DECIMAL: 'decimal',
+    STRING: 'string',
+    DATE: 'date',
+    TIME: 'time',
+    DATETIME: 'datetime'
+}
+
 Consts.searchType = {
-    CADASTRAL: 'cadastral',
+    CADASTRALPARCEL: 'cadastralParcel',
     COORDINATES: 'coordinates',
     MUNICIPALITY: 'municipality',
     COUNCIL: 'council',
-    LOCALITY: 'locality',
+    TOWN: 'town',
     STREET: 'street',
-    NUMBER: 'number',
-    URBAN: 'urban',
+    POSTALADDRESS: 'postalAddress',
     COMMONWEALTH: 'commonwealth',
     ROAD: 'road',
-    ROADMILESTONE: 'roadmilestone',
-    PLACENAME: 'placename',
-    PLACENAMEMUNICIPALITY: 'placenamemunicipality'
+    ROADMILESTONE: 'roadMilestone',
+    PLACENAME: 'placeName',
+    PLACENAMEMUNICIPALITY: 'placeNameMunicipality'
 };
 Consts.mapSearchType = {
     MUNICIPALITY: Consts.searchType.MUNICIPALITY,
     COUNCIL: Consts.searchType.COUNCIL,
-    URBAN: Consts.searchType.URBAN,
+    TOWN: Consts.searchType.TOWN,
     COMMONWEALTH: Consts.searchType.COMMONWEALTH,
     GENERIC: 'generic'
 };

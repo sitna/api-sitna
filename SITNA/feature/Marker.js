@@ -91,12 +91,11 @@ class Marker extends Point {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            const locale = self.layer && self.layer.map ? self.layer.map.options.locale : Cfg.locale;
-            self.title = self.options.title || TC.i18n[locale][Consts.MARKER];
-            self.wrap.createMarker(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            const locale = this.layer?.map ? this.layer.map.options.locale : Cfg.locale;
+            this.title = this.options.title || TC.i18n[locale][Consts.MARKER];
+            this.wrap.createMarker(coords, options);
         }
     }
 }

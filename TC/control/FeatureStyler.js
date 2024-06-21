@@ -26,7 +26,6 @@ const formatColor = function (color) {
 };
 
 class FeatureStyler extends WebComponentControl {
-    CLASS = className;
     #classSelector = '.' + className;
     #style;
     #strokeColorPicker;
@@ -63,10 +62,6 @@ class FeatureStyler extends WebComponentControl {
         if (name === 'disabled') {
             self.#onDisabledChange();
         }
-    }
-
-    getClassName() {
-        return className;
     }
 
     get mode() {
@@ -166,37 +161,41 @@ class FeatureStyler extends WebComponentControl {
             fillOpacity: (fillOpacity || 0) * 100,
             radius: radius
         };
-        return self._set1stRenderPromise(self.renderData(renderObject, function () {
+        return self.renderData(renderObject, function () {
             self.#onModeChange();
             self.#onDisabledChange();
             self.#strokeColorPicker = self.querySelector(self.#classSelector + '-str-c');
-            self.#strokeColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setStrokeColor(e.target.value);
-            });
-
             self.#strokeWidthSelector = self.querySelector(self.#classSelector + '-str-w');
-            self.#strokeWidthSelector.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setStrokeWidth(e.target.value);
-            });
             self.#strokeWidthWatch = self.querySelector(self.#classSelector + '-str-w-watch');
-
             self.#fillColorPicker = self.querySelector(self.#classSelector + '-fll-c');
-            self.#fillColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setFillColor(e.target.value);
-            });
             self.#fillOpacitySelector = self.querySelector(self.#classSelector + '-fll-w');
-            self.#fillOpacitySelector.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setFillOpacity(parseFloat(e.target.value) / 100);
-            });
             self.#radiusSelector = self.querySelector(self.#classSelector + '-rad-w');
-            self.#radiusSelector.addEventListener(Consts.event.CHANGE, function (e) {
-                self.setRadius(parseFloat(e.target.value));
-            });
+
+            self.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-        }));
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        self.#strokeColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setStrokeColor(e.target.value);
+        });
+        self.#strokeWidthSelector.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setStrokeWidth(e.target.value);
+        });
+        self.#fillColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setFillColor(e.target.value);
+        });
+        self.#fillOpacitySelector.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setFillOpacity(parseFloat(e.target.value) / 100);
+        });
+        self.#radiusSelector.addEventListener(Consts.event.CHANGE, function (e) {
+            self.setRadius(parseFloat(e.target.value));
+        });
     }
 
     setStyles(styles) {
@@ -238,7 +237,7 @@ class FeatureStyler extends WebComponentControl {
             switch (self.mode) {
                 case Consts.geom.POLYLINE:
                 case Consts.geom.MULTIPOLYLINE:
-                case Consts.geom.RECTANGLE:
+                case Consts.geom.RECTANGLE: {
                     const lineStyle = self.styles.line;
                     if (lineStyle.strokeColor) {
                         self.setStrokeColor(lineStyle.strokeColor);
@@ -247,8 +246,9 @@ class FeatureStyler extends WebComponentControl {
                         self.setStrokeWidth(lineStyle.strokeWidth);
                     }
                     break;
+                }
                 case Consts.geom.POLYGON:
-                case Consts.geom.MULTIPOLYGON:
+                case Consts.geom.MULTIPOLYGON: {
                     const polygonStyle = self.styles.polygon;
                     if (polygonStyle.strokeColor) {
                         self.setStrokeColor(polygonStyle.strokeColor);
@@ -263,8 +263,9 @@ class FeatureStyler extends WebComponentControl {
                         self.setFillOpacity(polygonStyle.fillOpacity);
                     }
                     break;
+                }
                 case Consts.geom.POINT:
-                case Consts.geom.MULTIPOINT:
+                case Consts.geom.MULTIPOINT: {
                     const pointStyle = self.styles.point;
                     if (pointStyle.strokeColor) {
                         self.setStrokeColor(pointStyle.strokeColor);
@@ -278,7 +279,11 @@ class FeatureStyler extends WebComponentControl {
                     if (pointStyle.fillOpacity) {
                         self.setFillOpacity(pointStyle.fillOpacity);
                     }
+                    if (pointStyle.radius) {
+                        self.setRadius(pointStyle.radius);
+                    }
                     break;
+                }
                 default:
                     break;
             }
@@ -364,7 +369,7 @@ class FeatureStyler extends WebComponentControl {
                     })
                     .filter(style => !!style));
             }
-            styles = TC.Util.extend(...styles);
+            styles = Util.extend(...styles);
         }
         self.setStyles(styles);
         return self;
@@ -587,6 +592,7 @@ class FeatureStyler extends WebComponentControl {
     }
 }
 
+FeatureStyler.prototype.CLASS = 'tc-ctl-fstyler';
 customElements.get(elementName) || customElements.define(elementName, FeatureStyler);
 TC.control.FeatureStyler = FeatureStyler;
 export default FeatureStyler;

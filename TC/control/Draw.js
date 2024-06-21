@@ -22,17 +22,16 @@ const className = 'tc-ctl-draw';
 const elementName = 'sitna-draw';
 
 class Draw extends WebComponentControl {
-    CLASS = className;
     #classSelector = '.' + className;
     #style;
     #styler;
+    #snapping;
     #pointClass = className + '-point';
     #lineClass = className + '-line';
     #polygonClass = className + '-polygon';
     #rectangleClass = className + '-rectangle';
     #hasOwnLayer;
     #layerPromise;
-    #cancelClick;
     #newBtn;
     #cancelBtn;
     #endBtn;
@@ -88,9 +87,22 @@ class Draw extends WebComponentControl {
             .on(Consts.event.DRAWEND, function (e) {
                 self.#setFeatureAddReadyState();
 
+                // Sacamos prefijo de las entidades que tienen id con formato prefijo.nnn
+                const defaultPrefix = self.getLocaleString('sketch');
+                const usedIds = self.layer.features.map(f => f.getId());
+                const prefix = usedIds
+                    .map(id => id ? id.substring(0, id.indexOf('.')) : '')
+                    .map(f => f ? f : defaultPrefix)
+                    .reduce((acc, cur, idx) => {
+                        if (idx === 0) {
+                            return cur;
+                        }
+                        return cur === acc ? cur : defaultPrefix
+                    }, defaultPrefix);
+
                 const featureId = TC.getUID({
-                    prefix: self.getLocaleString('sketch') + '.',
-                    banlist: self.layer.features.map(f => f.getId())
+                    prefix: prefix + '.',
+                    banlist: usedIds
                 });
                 e.feature.setId(featureId);
 
@@ -121,10 +133,6 @@ class Draw extends WebComponentControl {
         if (name === 'mode') {
             self.#onModeChange();
         }
-    }
-
-    getClassName() {
-        return className;
     }
 
     get mode() {
@@ -172,6 +180,18 @@ class Draw extends WebComponentControl {
 
     set measurer(value) {
         this.toggleAttribute('measurer', !!value);
+    }
+
+    get snapping() {
+        return this.#snapping;
+    }
+
+    set snapping(value) {
+        const self = this;
+        self.#snapping = value;
+        if (self.isActive) {
+            self.wrap.setSnapping(value);
+        }
     }
 
     get singleSketch() {
@@ -227,10 +247,9 @@ class Draw extends WebComponentControl {
             tooltip: strToolTip,
             stylable: self.stylable
         };
-        return self._set1stRenderPromise(self.renderData(renderObject, function () {
+        return self.renderData(renderObject, function () {
             self.reset = true;
             self.callback = null;
-            self.#cancelClick = false;
 
             if (Util.isFunction(self.options.callback)) {
                 self.callback = self.options.callback;
@@ -240,43 +259,48 @@ class Draw extends WebComponentControl {
 
             self.getStyler().then(styler => {
                 styler.setStyles(self.styles);
-                styler.addEventListener(Consts.event.STYLECHANGE, e => {
-                    self.wrap.setStyle();
-                    const eventData = {};
-                    eventData[e.detail.property] = e.detail.value;
-                    self.trigger(Consts.event.STYLECHANGE, eventData);
-                });
             });
 
             self.#newBtn = self.querySelector(self.#classSelector + '-btn-new');
-            self.#newBtn.addEventListener(Consts.event.CLICK, function () {
-                self.new();
-            }, { passive: true });
-
             self.#cancelBtn = self.querySelector(self.#classSelector + '-btn-cancel');
-            self.#cancelBtn.addEventListener(Consts.event.CLICK, function () {
-                self.cancel();
-            }, { passive: true });
-
             self.#endBtn = self.querySelector(self.#classSelector + '-btn-end');
-            self.#endBtn.addEventListener(Consts.event.CLICK, function () {
-                self.end();
-            }, { passive: true });
-
             self.#undoBtn = self.querySelector(self.#classSelector + '-btn-undo');
-            self.#undoBtn.addEventListener(Consts.event.CLICK, function () {
-                self.undo();
-            }, { passive: true });
-
             self.#redoBtn = self.querySelector(self.#classSelector + '-btn-redo');
-            self.#redoBtn.addEventListener(Consts.event.CLICK, function () {
-                self.redo();
-            }, { passive: true });
+
+            self.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-        }));
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        self.getStyler().then(styler => {
+            styler.addEventListener(Consts.event.STYLECHANGE, e => {
+                self.wrap.setStyle();
+                const eventData = {};
+                eventData[e.detail.property] = e.detail.value;
+                self.trigger(Consts.event.STYLECHANGE, eventData);
+            });
+        });
+
+        self.#newBtn.addEventListener(Consts.event.CLICK, function () {
+            self.new();
+        }, { passive: true });
+        self.#cancelBtn.addEventListener(Consts.event.CLICK, function () {
+            self.cancel();
+        }, { passive: true });
+        self.#endBtn.addEventListener(Consts.event.CLICK, function () {
+            self.end();
+        }, { passive: true });
+        self.#undoBtn.addEventListener(Consts.event.CLICK, function () {
+            self.undo();
+        }, { passive: true });
+        self.#redoBtn.addEventListener(Consts.event.CLICK, function () {
+            self.redo();
+        }, { passive: true });
     }
 
     async register(map) {
@@ -376,7 +400,6 @@ class Draw extends WebComponentControl {
 
     cancel() {
         const self = this;
-        self.#cancelClick = true;
         self.resetValues();
         self.#setFeatureAddReadyState();
         self.#cancelBtn.disabled = true;
@@ -419,13 +442,12 @@ class Draw extends WebComponentControl {
         if (self.#cancelBtn) {
             self.#cancelBtn.disabled = true;
         }
-        super.deactivate.call(self, !self.#cancelClick);
+        super.deactivate.call(self);
         if (self.wrap) {
             self.wrap.deactivate();
         }
         self.resetValues();
         //self.trigger(Consts.event.DRAWCANCEL, { ctrl: self });
-        self.#cancelClick = false;
         return self;
     }
 
@@ -490,7 +512,7 @@ class Draw extends WebComponentControl {
                 break;
         }
         self.getStyler().then(styler => {
-            styler.setStyles(styles);
+            styler.setStyles(self.styles);
             self.wrap.setStyle();
         });
     }
@@ -647,6 +669,7 @@ class Draw extends WebComponentControl {
     }
 }
 
+Draw.prototype.CLASS = 'tc-ctl-draw';
 customElements.get(elementName) || customElements.define(elementName, Draw);
 TC.control.Draw = Draw;
 export default Draw;

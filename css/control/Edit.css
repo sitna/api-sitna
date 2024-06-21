@@ -30,7 +30,7 @@
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-other:before {
-    content: '\e032'
+    content: '\2022\2022\2022'
 }
 
 .tc-ctl-edit-btn-new {
@@ -52,13 +52,13 @@
     text-align: center;
 }
 
-    .tc-ctl.tc-ctl-edit h2 {
-        text-align: left;
-    }
+.tc-ctl.tc-ctl-edit h2 {
+    text-align: left;
+}
 
-    .tc-ctl-edit .tc-ctl-edit-modify.tc-hidden, .tc-ctl-edit .tc-ctl-edit-point.tc-hidden, .tc-ctl-edit .tc-ctl-edit-line.tc-hidden, .tc-ctl-edit .tc-ctl-edit-polygon.tc-hidden, .tc-ctl-edit .tc-ctl-edit-other.tc-hidden {
-        display: none;
-    }
+.tc-ctl-edit .tc-ctl-edit-modify.tc-hidden, .tc-ctl-edit .tc-ctl-edit-point.tc-hidden, .tc-ctl-edit .tc-ctl-edit-line.tc-hidden, .tc-ctl-edit .tc-ctl-edit-polygon.tc-hidden, .tc-ctl-edit .tc-ctl-edit-other.tc-hidden {
+    display: none;
+}
 
 .tc-ctl-edit-modify sitna-modify, .tc-ctl-edit .tc-ctl-edit-point sitna-draw, .tc-ctl-edit .tc-ctl-edit-line sitna-draw, .tc-ctl-edit .tc-ctl-edit-polygon sitna-draw, .tc-ctl-edit .tc-ctl.tc-ctl-edit-other {
     /*position: fixed;*/
@@ -104,7 +104,7 @@
     display: none;
 }
 
-.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-attr {
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-del-vertex {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
 }
@@ -118,11 +118,11 @@
     float: left;
 }
 
-.tc-ctl-mod-attr-body select.tc-combo + input {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    width: 85%;
-}
+    .tc-ctl-mod-attr-body select.tc-combo + input {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        width: 85%;
+    }
 
 .tc-ctl-edit-other {
     padding-top: 0.5em;
@@ -192,9 +192,9 @@
             display: none;
         }
 
-        .tc-ctl-edit-import-list ul.tc-layers:empty + .tc-ctl-edit-import-empty-note {
-            display: block;
-        }
+            .tc-ctl-edit-import-list ul.tc-layers:empty + .tc-ctl-edit-import-empty-note {
+                display: block;
+            }
 
         .tc-ctl-edit-import-list ul.tc-layers > li {
             padding: 0.25em 0 0.2em 0.5%;
@@ -239,23 +239,23 @@
                 background-color: var(--list-hl-bg-color);
             }
 
-        .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] {
-            display: none;
+    .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] {
+        display: none;
+    }
+
+        .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] + label:before {
+            font-family: var(--icon-font-family);
+            font-size: 1.2em;
+            margin-left: 0.5em;
+            display: inline-block;
+            font-weight: normal;
+            content: '\e907';
+            width: 1.2em;
         }
 
-            .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] + label:before {
-                font-family: var(--icon-font-family);
-                font-size: 1.2em;
-                margin-left: 0.5em;
-                display: inline-block;
-                font-weight: normal;
-                content: '\e907';
-                width: 1.2em;
-            }
-
-            .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox]:checked + label:before {
-                content: '\e906';
-            }
+        .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox]:checked + label:before {
+            content: '\e906';
+        }
 
 .tc-ctl-edit-import-foot {
     position: absolute;
@@ -269,5 +269,10 @@
 }
 
 sitna-edit sitna-modify .tc-ctl-mod-style.tc-hidden {
-    display:none;
+    display: none;
+}
+
+sitna-edit.tc-ctl-edit sitna-attributes-edit {
+    width: 100%;
+    padding: 0.5em 0 0.5em 0;
 }

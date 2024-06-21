@@ -228,9 +228,10 @@
                 const addSwipe = function (direction) {
                     const selector = '.' + direction + '-panel';
                     const className = 'tc-collapsed-' + direction;
-                    const options = { noSwipe: 'li,a' };
-                    options[direction] = function () {
-                        this.classList.add(className);
+                    const options = {
+                        [direction]: function () {
+                            this.classList.add(className);
+                        }
                     };
                     document.querySelectorAll(selector).forEach(function (panel) {
                         TC.Util.swipe(panel, options);

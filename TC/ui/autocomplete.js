@@ -37,7 +37,7 @@ TC.UI = TC.UI || {};
         // Merge the object into the extended object
         var merge = function(obj) {
             for (var prop in obj) {
-                if (obj.hasOwnProperty(prop)) {
+                if (Object.prototype.hasOwnProperty.call(obj, prop)) {
                     // If property is an object, merge properties
                     if (deep && Object.prototype.toString.call(obj[prop]) === '[object Object]') {
                         extended[prop] = extend(extended[prop], obj[prop]);
@@ -143,7 +143,7 @@ TC.UI = TC.UI || {};
         },
         handleInput = function(e) {
             var inputText = e.target,
-                id = inputText.getAttribute("id"),
+                //id = inputText.getAttribute("id"),
                 text,
                 data,
                 autocomplete = inputText.getAttribute("autocomplete"),
@@ -151,7 +151,7 @@ TC.UI = TC.UI || {};
                 re;
             if (autocomplete) {
                 var settings = this.settings;
-                var openXHR = autocomplete.openXHR;
+                //var openXHR = autocomplete.openXHR;
                 // get the current text of the input field
                 text = inputText.value;
                 // if we don't have enough text zero out the target
@@ -252,7 +252,7 @@ TC.UI = TC.UI || {};
                 el.addEventListener("keyup", handleInput);
 
                 if (el.parentNode.querySelector('.ui-input-clear')) {
-                    el.parentNode.querySelector('.ui-input-clear').addEventListener('click', function(e) {
+                    el.parentNode.querySelector('.ui-input-clear').addEventListener('click', function(_e) {
                         clearTarget(el, settings.target);
                     });
                 }
@@ -260,7 +260,7 @@ TC.UI = TC.UI || {};
                 return el;                
             },
             // Allow dynamic update of source and link
-            update: function(initialOptions, newOptions) {
+            update: function(_initialOptions, newOptions) {
                 var autocomplete = this.getAttribute("autocomplete");
                 if (autocomplete) {
                     this.settings = extend(this.settings, newOptions);                    
@@ -268,7 +268,7 @@ TC.UI = TC.UI || {};
                 return this;
             },
             // Method to forcibly clear our target
-            clear: function(options) {
+            clear: function(_options) {
                 var autocomplete = this.getAttribute("autocomplete");
                 if (autocomplete) {
                     clearTarget(this, this.settings.target);

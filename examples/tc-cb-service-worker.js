@@ -2,7 +2,7 @@
 
     // Arreglo del bug de actualización de la cache
     self.addEventListener('install', function (event) {
-        const cacheName = 'TC.offline.map.common';
+        const cacheName = 'SITNA.offline.map.root';
         event.waitUntil(
             caches.has(cacheName).then(function (hasCache) {
                 if (hasCache) {

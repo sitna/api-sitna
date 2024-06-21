@@ -9,15 +9,19 @@
     </div>
     <div id="{{controlId}}-mode-modify" class="tc-ctl-edit-modify tc-hidden">
         <sitna-modify{{#if snapping}} snapping{{/if}}{{#if stylable}} stylable{{/if}}></sitna-modify>
+        <sitna-attributes-edit></sitna-attributes-edit>
     </div>
     <div id="{{controlId}}-mode-addpoint" class="tc-ctl-edit-point tc-hidden">
         <sitna-draw mode="point" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
+        <sitna-attributes-edit></sitna-attributes-edit>
     </div>
     <div id="{{controlId}}-mode-addline" class="tc-ctl-edit-line tc-hidden">
         <sitna-draw mode="polyline" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
+        <sitna-attributes-edit></sitna-attributes-edit>
     </div>
     <div id="{{controlId}}-mode-addpolygon" class="tc-ctl-edit-polygon tc-hidden">
         <sitna-draw mode="polygon" measurer borrowed-layer{{#if stylable}} stylable{{/if}}></sitna-draw>
+        <sitna-attributes-edit></sitna-attributes-edit>
     </div>
     <div id="{{controlId}}-mode-other" class="tc-ctl-edit-other tc-hidden">
         <button type="button" class="tc-button tc-ctl-edit-btn-import">{{i18n "importFromOtherLayer"}}</button><button type="button" class="tc-button tc-ctl-edit-btn-dl">{{i18n "download"}}</button>

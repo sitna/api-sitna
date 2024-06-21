@@ -1,5 +1,4 @@
 ﻿.tc-ctl-legend {
-    overflow: auto;
     z-index: 10004;
     padding: 0;
 }
@@ -11,8 +10,11 @@
 }
 
 .tc-ctl-legend-watch {
-    display: block;
+    display: flex;
     vertical-align: middle;
+    margin-bottom: 0.3em;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
 }
 
 .tc-ctl-legend-img {
@@ -22,14 +24,18 @@
     box-sizing: border-box;
 }
 
-.tc-ctl-legend-watch img {
-    margin: 0.3em 0 0 0.2em;
+.tc-ctl-legend-watch img {    
+    margin-right: 1em;
+    height:fit-content;
 }
 
     .tc-ctl-legend-watch img[src=""] {
         margin: 0;
         display: none;
     }
+.tc-ctl-legend-txt {
+    line-height: 20px;
+}
 
 .tc-ctl-legend-node-notvisible, .tc-ctl-legend-node-outofscale, .tc-ctl-legend-node > .tc-ctl-legend-nvr {
     display: none;

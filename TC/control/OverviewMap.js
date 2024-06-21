@@ -25,14 +25,9 @@ class OverviewMap extends Control {
     constructor() {
         super(...arguments);
         const self = this;
-        self.div.classList.add(self.CLASS);
 
         self.isLoaded = false;
         self.layer = null;
-    }
-
-    getClassName() {
-        return 'tc-ctl-ovmap';
     }
 
     async loadTemplates() {
@@ -179,5 +174,6 @@ class OverviewMap extends Control {
     }
 }
 
+OverviewMap.prototype.CLASS = 'tc-ctl-ovmap';
 TC.control.OverviewMap = OverviewMap;
 export default OverviewMap;

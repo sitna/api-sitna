@@ -1,4 +1,4 @@
-﻿/// <binding ProjectOpened='startDevServer' />
+/// <binding />
 var gulp = require('gulp'),
     del = require('del'),
     eslint = require('gulp-eslint-new'),
@@ -9,6 +9,7 @@ var gulp = require('gulp'),
     jsonlint = require("gulp-jsonlint"),
     casperJs = require('gulp-casperjs'),
     filter = require('gulp-filter'),
+    run = require('gulp-run'),
     webpack = require('webpack'),
     WebpackDevServer = require('webpack-dev-server'),
     fs = require('fs'),
@@ -130,12 +131,12 @@ const spawnProcess = function (cmd, args, cb) {
     });
 };
 
-function webpackApi(cb) {
-    spawnProcess('webpack.cmd', ['--config', './webpack/webpack.config.js', '--output-path', './dist'], cb);
+function webpackApi() {
+    return run('npm run wp_pro').exec();
 }
 
-function webpackApiDebug(cb) {
-    spawnProcess('webpack.cmd', ['--config', './webpack/webpack.config.debug.js', '--output-path', './dist'], cb);
+function webpackApiDebug() {
+    return run('npm run wp_dbg').exec();
 }
 
 //function bundleCesiumDebug(cb) {

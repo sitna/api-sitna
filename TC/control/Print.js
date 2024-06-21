@@ -1,36 +1,74 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import Cfg from '../Cfg';
+import Util from '../Util';
 import Control from '../Control';
 
 TC.control = TC.control || {};
 
 Consts.classes.PRINTABLE = 'tc-printable';
 
-const Print = function (options)
-{
-    const self = this;
-    self.options = options || {};
+class Print extends Control {
+    #mustAddListeners;
 
-    self.ready = false;
+    constructor() {
+        super(...arguments);
+        const self = this;
+        delete self.div;
 
-    self.title = self.options.title || TC.Util.getLocaleString(Cfg.locale, 'printPage');
-    self.cssUrl = self.options.cssUrl || TC.apiLocation + 'css/print.css';
+        self.ready = false;
 
-    if (self.options.target) {
-        (self.options.printableElement || self.options.target).classList.add(Consts.classes.PRINTABLE);
-        self.render();
+        self.title = self.options.title || Util.getLocaleString(Cfg.locale, 'printPage');
+        self.cssUrl = self.options.cssUrl || TC.apiLocation + 'css/print.css';
+
+        if (self.options.target) {
+            (self.options.printableElement || self.options.target).classList.add(Consts.classes.PRINTABLE);
+            self.render();
+        }
     }
-};
 
-TC.inherit(Print, Control);
+    async loadTemplates() {
+        const self = this;
+        const mainTemplatePromise = import('../templates/tc-ctl-print.mjs');
+        const pageTemplatePromise = import('../templates/tc-ctl-print-page.mjs');
 
-(function () {
-    const ctlProto = Print.prototype;
+        const template = {};
+        template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-page'] = (await pageTemplatePromise).default;
+        self.template = template;
+    }
 
-    ctlProto.CLASS = 'tc-ctl-print';
+    renderData(data, callback) {
+        const self = this;
+        if (self.div) {
+            return super.renderData.call(self, data, callback);
+        }
+        const renderPromise = new Promise(function (resolve, _reject) {
+            const target = self.getRenderTarget();
+            if (target) {
+                self.getRenderedHtml(self.CLASS, null).then(function (html) {
+                    if (!target.querySelector('.' + self.CLASS + '-btn')) {
+                        self.#mustAddListeners = true;
+                        target.insertAdjacentHTML('beforeend', html);
+                    }
+                    if (Util.isFunction(callback)) {
+                        callback();
+                    }
+                    resolve();
+                });
+            }
+            else {
+                if (Util.isFunction(callback)) {
+                    callback();
+                }
+                resolve();
+            }
+        });
+        self._firstRender ??= renderPromise;
+        return renderPromise;
+    }
 
-    ctlProto.renderPrintPage = function () {
+    renderPrintPage() {
         const self = this;
         const page = open(null, self.CLASS);
         const content = (self.options.printableElement || self.options.target).innerHTML;
@@ -43,16 +81,16 @@ TC.inherit(Print, Control);
             .catch(function (err) {
                 TC.error(err);
             });
-    };
+    }
 
-    ctlProto.getRenderTarget = function () {
+    getRenderTarget() {
         const self = this;
         return self.options.target || self.div;
-    };
+    }
 
-    ctlProto.addUIEventListeners = function () {
+    addUIEventListeners() {
         const self = this;
-        if (self._mustAddListeners) {
+        if (self.#mustAddListeners) {
             const target = self.getRenderTarget();
             if (target) {
                 const btn = target.querySelector('.' + self.CLASS + '-btn');
@@ -60,43 +98,14 @@ TC.inherit(Print, Control);
                     btn.addEventListener('click', function (_e) {
                         self.renderPrintPage();
                     });
-                    delete self._mustAddListeners;
+                    self.#mustAddListeners = false;
                 }
             }
         }
-    };
+        return self;
+    }
+}
 
-    ctlProto.loadTemplates = async function () {
-        const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-print.mjs');
-        const pageTemplatePromise = import('../templates/tc-ctl-print-page.mjs');
-
-        const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-page'] = (await pageTemplatePromise).default;
-        self.template = template;
-    };
-
-    ctlProto.renderData = async function (data, callback) {
-        const self = this;
-        if (self.div) {
-            await Control.prototype.renderData.call(self, data, callback);
-            return;
-        }
-        const target = self.getRenderTarget();
-        if (target) {
-            const html = await self.getRenderedHtml(self.CLASS, null);
-            if (!target.querySelector('.' + self.CLASS + '-btn')) {
-                self._mustAddListeners = true;
-                target.insertAdjacentHTML('beforeend', html);
-            }
-        }
-        if (TC.Util.isFunction(callback)) {
-            callback();
-        }
-    };
-
-})();
-
+Print.prototype.CLASS = 'tc-ctl-print';
 TC.control.Print = Print;
 export default Print;

@@ -62,6 +62,7 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Control from '../Control';
 import ThreeDView from '../view/ThreeD';
 
@@ -69,75 +70,58 @@ TC.control = TC.control || {};
 TC.view = TC.view || {};
 TC.view.ThreeD = ThreeDView;
 
-const ThreeD = function () {
-    Control.apply(this, arguments);
-};
+class ThreeD extends Control {
 
-TC.inherit(ThreeD, Control);
-
-(function () {
-
-    var ctlProto = ThreeD.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-3d';
-
-    ctlProto.register = function (map) {
+    register(map) {
         const self = this;
-
-        const result = Control.prototype.register.call(self, map);
 
         map.on(Consts.event.VIEWCHANGE, function (e) {
             if (e.view === Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
-                self.activate();
+                self.set3D();
             }
         });
 
-        return result;
-    };
+        return super.register.call(self, map);
+    }
 
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-3d.mjs');
         self.template = module.default;
-    };
+    }
 
-    ctlProto.renderData = function (data, callback) {
+    renderData(data, callback) {
         const self = this;
 
-        return Control.prototype.renderData.call(self, data, function () {
+        return super.renderData.call(self, data, function () {
             self.button = self.div.querySelector('.' + self.CLASS + '-btn');
 
-            self.button.addEventListener(Consts.event.CLICK, function () {
+            self.addUIEventListeners();
 
-                if (self.button.disabled) {
-                    return;
-                }
-
-                if (!self.map.on3DView) {
-                    self.activate();
-                } else {
-                    self.button.disabled = true;
-
-                    TC.view.ThreeD.unapply({
-                        callback: function () {
-                            self.button.setAttribute('title', self.getLocaleString("threed.tip"));
-
-                            self.button.classList.remove(Consts.classes.CHECKED);
-
-                            self.button.disabled = false;
-                        }
-                    });
-                }
-            }, { passive: true });
-
-            if (TC.Util.isFunction(callback)) {
+            if (Util.isFunction(callback)) {
                 callback();
             }
         });
-    };
+    }
 
-    ctlProto.activate = function () {
-        var self = this;
+    addUIEventListeners() {
+        const self = this;
+        self.button.addEventListener(Consts.event.CLICK, function () {
+
+            if (self.button.disabled) {
+                return;
+            }
+
+            if (self.map.on3DView) {
+                self.unset3D();
+            } else {
+                self.set3D();
+            }
+        }, { passive: true });
+    }
+
+    set3D() {
+        const self = this;
 
         if (!self.map.on3DView) {
             self.button.disabled = true;
@@ -160,19 +144,27 @@ TC.inherit(ThreeD, Control);
         }
 
         manageButton();
+    }
 
-        //Control.prototype.activate.call(self);
-    };
+    unset3D() {
+        const self = this;
 
-    ctlProto.deactivate = function () {
-        var self = this;
+        self.button.disabled = true;
 
-        Control.prototype.deactivate.call(self);
-    };
+        TC.view.ThreeD.unapply({
+            callback: function () {
+                self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
-    ctlProto.browserSupportWebGL = function () {
-        var self = this;
-        var result = false;
+                self.button.classList.remove(Consts.classes.CHECKED);
+
+                self.button.disabled = false;
+            }
+        });
+    }
+
+    browserSupportWebGL() {
+        const self = this;
+        let result = false;
 
         //Check for webgl support and if not, then fall back to leaflet
         if (!window.WebGLRenderingContext) {
@@ -181,7 +173,7 @@ TC.inherit(ThreeD, Control);
             // http://get.webgl.org
             result = false;
         } else {
-            var canvas = document.createElement('canvas');
+            const canvas = document.createElement('canvas');
 
             var webglOptions = {
                 alpha: false,
@@ -227,9 +219,9 @@ TC.inherit(ThreeD, Control);
 
             return result;
         }
-    };
+    }
+}
 
-})();
-
+ThreeD.prototype.CLASS = 'tc-ctl-3d';
 TC.control.ThreeD = ThreeD;
 export default ThreeD;

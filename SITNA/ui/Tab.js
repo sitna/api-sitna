@@ -9,19 +9,15 @@ class Tab extends Component {
 
     constructor() {
         super();
-        const self = this;
-        self.#text = document.createTextNode('');
-        self.shadowRoot.appendChild(self.#text);
-        self.addEventListener(Consts.event.CLICK, function (_e) {
-            self.onClick();
-        }, { passive: true });
+        this.#text = document.createTextNode('');
+        this.shadowRoot.appendChild(this.#text);
+        this.addEventListener(Consts.event.CLICK, (_e) => this.onClick(), { passive: true });
     }
 
     connectedCallback() {
-        const self = this;
-        self.text = self.text;
-        self.toggleAttribute('selected', self.selected);
-        self.#onSelectedChange();
+        this.text = this.text;
+        this.toggleAttribute('selected', this.selected);
+        this.#onSelectedChange();
     }
 
     static get observedAttributes() {
@@ -32,9 +28,8 @@ class Tab extends Component {
         if (oldValue === newValue) {
             return;
         }
-        const self = this;
         if (name === 'selected') {
-            self.#onSelectedChange();
+            this.#onSelectedChange();
         }
     }
 
@@ -47,15 +42,14 @@ class Tab extends Component {
     }
 
     set text(value) {
-        const self = this;
-        self.shadowRoot.removeChild(self.#text);
-        self.#text = document.createTextNode(value);
-        self.shadowRoot.appendChild(self.#text);
+        this.shadowRoot.removeChild(this.#text);
+        this.#text = document.createTextNode(value);
+        this.shadowRoot.appendChild(this.#text);
         if (value) {
-            self.setAttribute('text', value);
+            this.setAttribute('text', value);
         }
         else {
-            self.removeAttribute('text');
+            this.removeAttribute('text');
         }
     }
 
@@ -80,10 +74,9 @@ class Tab extends Component {
     }
 
     #onSelectedChange() {
-        const self = this;
-        const siblings = self.siblings;
-        const allTabs = siblings.concat(self);
-        if (self.selected) {
+        const siblings = this.siblings;
+        const allTabs = siblings.concat(this);
+        if (this.selected) {
             siblings.forEach(s => {
                 s.removeAttribute('selected');
             });
@@ -115,18 +108,16 @@ class Tab extends Component {
     }
 
     get siblings() {
-        const self = this;
-        const allTabs = Array.from(document.querySelectorAll(`${self.elementName}[group="${self.group}"]`));
-        return allTabs.filter(t => t !== self);
+        const allTabs = Array.from(document.querySelectorAll(`${this.elementName}[group="${this.group}"]`));
+        return allTabs.filter(t => t !== this);
     }
 
     onClick() {
-        const self = this;
-        if (!self.disabled) {
-            const condition = self.deselectable ? !self.selected : true;
-            self.toggleAttribute('selected', condition);
-            if (Util.isFunction(self.callback)) {
-                self.callback();
+        if (!this.disabled) {
+            const condition = this.deselectable ? !this.selected : true;
+            this.toggleAttribute('selected', condition);
+            if (Util.isFunction(this.callback)) {
+                this.callback();
             }
         }
     }

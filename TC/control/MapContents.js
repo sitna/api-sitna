@@ -1,36 +1,34 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Control from '../Control';
 import Proxification from '../tool/Proxification';
 
 TC.control = TC.control || {};
 
-const MapContents = function () {
-    var self = this;
-
-    Control.apply(self, arguments);
-
-    self.layerTrees = {};
+const isGetLegendGraphic = function (url) {
+    return /[&?]REQUEST=getLegendGraphic/i.test(url);
 };
 
-TC.inherit(MapContents, Control);
+class MapContents extends Control {
+    constructor() {
+        super(...arguments);
+        this.layerTrees = {};
+    }
 
-(function () {
-    var ctlProto = MapContents.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-mc';
-
-    ctlProto.render = function (callback, options) {
+    async render(callback, options) {
         const self = this;
-        return self._set1stRenderPromise(self.map ? self.renderData(options ? TC.Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree(), function () {
-            self.addUIEventListeners();
-            if (typeof callback === 'function') {
-                callback();
-            }
-        }) : Promise.reject(Error('Cannot render: control has no map')));
-    };
+        if (!self.map) {
+            throw Error('Cannot render: control has no map');
+        }
+        await self.renderData(options ? Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree());
+        self.addUIEventListeners();
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+    }
 
-    ctlProto.register = async function (map) {
+    async register(map) {
         const self = this;
         await Promise.all([Control.prototype.register.call(self, map), self.renderPromise()]);
         for (var i = 0, len = map.layers.length; i < len; i++) {
@@ -100,20 +98,20 @@ TC.inherit(MapContents, Control);
             });
 
         return self;
-    };
+    }
 
-    ctlProto.updateScale = function () {
-    };
+    updateScale() {
+    }
 
-    ctlProto.updateLayerVisibility = function (_layer) {
-    };
+    updateLayerVisibility(_layer) {
+    }
 
-    ctlProto.updateLayerTree = function (layer) {
+    updateLayerTree(layer) {
         layer.tree = null;
         this.layerTrees[layer.id] = layer.getTree();
-    };
+    }
 
-    ctlProto.updateLayerOrder = function (layer, oldIdx, newIdx, collection) {
+    updateLayerOrder(layer, oldIdx, newIdx, collection) {
         const self = this;
         if (oldIdx >= 0 && oldIdx !== newIdx) {
             var currentElm, previousElm;
@@ -144,9 +142,9 @@ TC.inherit(MapContents, Control);
                 }
             }
         }
-    };
+    }
 
-    ctlProto.removeLayer = function (layer) {
+    removeLayer(layer) {
         const self = this;
         const liCollection = self.getLayerUIElements();
         for (var i = 0, len = liCollection.length; i < len; i++) {
@@ -159,25 +157,27 @@ TC.inherit(MapContents, Control);
         if (self.getLayerUIElements().length === 0) {
             self.div.querySelector('.' + self.CLASS + '-empty').classList.remove(Consts.classes.HIDDEN);
         }
-    };
+    }
 
-    ctlProto.onErrorLayer = function (_layer) { };
+    onErrorLayer(_layer) {
+    }
 
-    ctlProto.getLayerUIElements = function () {
+    getLayerUIElements() {
         return this.div.querySelector('ul').children;
-    };
-
-    var isGetLegendGraphic = function (url) {
-        return /[&?]REQUEST=getLegendGraphic/i.test(url);
-    };
+    }
 
     /*
      * Carga y le da estilo a la imagen de la leyenda.
      * @param {string} requestMethod Si queremos pedir la imagen de la leyenda por POST, podemos especificarlo utilizando el parámetro requestMethod.
      */
-    ctlProto.styleLegendImage = function (img, layer) {
+    styleLegendImage(img, layer) {
         if (!img.getAttribute('src')) {
             var imgSrc = img.dataset.img;
+
+            if (imgSrc.startsWith("data")) {
+                img.src = imgSrc;
+                return;
+            }
 
             const proxificationTool = new Proxification(TC.proxify);
 
@@ -215,7 +215,7 @@ TC.inherit(MapContents, Control);
                         ';fontColor:' + colorStr +
                         ';fontAntiAliasing:true';
                     if (layer.params && layer.params.sld_body) {
-                        imgSrc = TC.Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
+                        imgSrc = Util.addURLParameters(imgSrc, { sld_body: layer.params.sld_body });
                     }
 
                     proxificationTool.fetchImage(imgSrc).then(function (img) {
@@ -229,21 +229,21 @@ TC.inherit(MapContents, Control);
                     img.src = i.src;
                 }).catch(function (err) {
                     if (err.status && (err.status === 404 || err.status === 401))
-                        TC.error(TC.Util.getLocaleString(layer.map.options.locale, 'simbologyImgNotFound',
+                        TC.error(Util.getLocaleString(layer.map.options.locale, 'simbologyImgNotFound',
                             { url: imgSrc }));
                     else if (proxificationTool._image.ErrorType.UNEXPECTEDCONTENTTYPE === err.message) {
-                        TC.error(TC.Util.getLocaleString(layer.map.options.locale, 'simbologyNotCompatible'));
+                        TC.error(Util.getLocaleString(layer.map.options.locale, 'simbologyNotCompatible'));
                         //URI:Añado este atributo data para que no se intente obtener la leyenda cade vez que se cambia el zoom del mapa
                         img.src = Consts.BLANK_IMAGE
                     }
                     else
                         TC.error(err);
-                });                
+                });
             }
         }
-    };
+    }
+}
 
-})();
-
+MapContents.prototype.CLASS = 'tc-ctl-mc';
 TC.control.MapContents = MapContents;
 export default MapContents;

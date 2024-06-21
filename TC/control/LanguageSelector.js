@@ -12,7 +12,6 @@ class LanguageOption extends HTMLElement {
         super();
 
         const self = this;
-        self.CLASS = 'tc-ctl-lang-link';
         self.#link = self.querySelector(`a.${self.CLASS}`);
         if (!self.#link) {
             self.#link = document.createElement('a');
@@ -29,7 +28,6 @@ class LanguageOption extends HTMLElement {
 
     connectedCallback() {
         const self = this;
-        self.fullCode = self.fullCode;
         self.shortCode = self.shortCode;
         self.description = self.description;
     }
@@ -83,6 +81,7 @@ class LanguageOption extends HTMLElement {
     }
 }
 
+LanguageOption.prototype.CLASS = 'tc-ctl-lang-link';
 customElements.get(optionElementName) || customElements.define(optionElementName, LanguageOption);
 
 const controlElementName = 'sitna-language-select'
@@ -130,7 +129,6 @@ class LanguageSelector extends WebComponentControl {
             self.languages = languageOptions.map(languageOptions => new LanguageOption(languageOptions));
             self.render();
         }
-        self.static = self.static;
         if (!self.static) {
             self.collapsed = self.collapsed || true;
         }
@@ -155,10 +153,6 @@ class LanguageSelector extends WebComponentControl {
         if (name === 'collapsed') {
             self.collapsed = self.hasAttribute(name);
         }
-    }
-
-    getClassName() {
-        return 'tc-ctl-lang-select';
     }
 
     get static() {
@@ -202,34 +196,37 @@ class LanguageSelector extends WebComponentControl {
         self.template = module.default;
     }
 
-    render() {
+    async render() {
         const self = this;
-        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
-            self.renderData({ languages: self.languages }, function () {
-                const linkContainer = self.querySelector(`.${self.CLASS}-links`);
-                let activeLink;
-                self.languages.forEach(language => {
-                    linkContainer.appendChild(language);
-                    const link = language.querySelector(`a.${language.CLASS}`);
-                    link.addEventListener(Consts.event.CLICK, function (e) {
-                        e.preventDefault();
-                        self.setLanguage(e.target.dataset.langCode);
-                    });
-                    if (LanguageSelector.currentLocale === language.fullCode) {
-                        activeLink = link;
-                    }
-                });
-                activeLink ??= self.languages[0]?.querySelector(`a.${language.CLASS}`);
-                activeLink?.classList.add(Consts.classes.ACTIVE);
-                self.toggle = self.querySelector(`.${self.CLASS}-toggle`);
+        await self.renderData({ languages: self.languages });
+        const linkContainer = self.querySelector(`.${self.CLASS}-links`);
+        let activeLink;
+        self.languages.forEach(language => {
+            linkContainer.appendChild(language);
+            const link = language.querySelector(`a.${language.CLASS}`);
+            if (LanguageSelector.currentLocale === language.fullCode) {
+                activeLink = link;
+            }
+        });
+        activeLink ??= self.languages[0]?.querySelector(`a.${self.languages[0].CLASS}`);
+        activeLink?.classList.add(Consts.classes.ACTIVE);
+        self.toggle = self.querySelector(`.${self.CLASS}-toggle`);
 
-                self.toggle.addEventListener(Consts.event.CLICK, function (_e) {
-                    self.collapsed = !self.collapsed;
-                });
+        self.addUIEventListeners();
+    }
 
-                resolve(self);
+    addUIEventListeners() {
+        const self = this;
+        self.languages.forEach(language => {
+            const link = language.querySelector(`a.${language.CLASS}`);
+            link.addEventListener(Consts.event.CLICK, function (e) {
+                e.preventDefault();
+                self.setLanguage(e.target.dataset.langCode);
             });
-        }));
+        });
+        self.toggle.addEventListener(Consts.event.CLICK, function (_e) {
+            self.collapsed = !self.collapsed;
+        });
     }
 
     getUrl(code) {
@@ -278,5 +275,6 @@ LanguageSelector.currentLocale;
 
 TC.control = TC.control || {};
 TC.control.LanguageSelector = LanguageSelector;
+LanguageSelector.prototype.CLASS = 'tc-ctl-lang-select';
 customElements.get(controlElementName) || customElements.define(controlElementName, LanguageSelector);
 export default LanguageSelector;

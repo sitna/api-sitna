@@ -1,83 +1,77 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Control from '../Control';
 import './Draw';
 
 TC.control = TC.control || {};
 
-const Measure = function () {
-    var self = this;
+class Measure extends Control {
+    constructor() {
+        super(...arguments);
+        const self = this;
 
-    Control.apply(self, arguments);
-    self.snapping = self.options.snapping;
+        self.snapping = self.options.snapping;
 
-    self.drawControls = [];
-    self.persistentDrawControls = false;
-    self.NOMEASURE = '-';
+        self.drawControls = [];
+        self.persistentDrawControls = false;
+        self.NOMEASURE = '-';
 
-    self.exportsState = true;
+        self.exportsState = true;
 
-    this.renderPromise().then(function () {
-        self.measureMode = self.options.mode;
+        this.renderPromise().then(function () {
+            self.measureMode = self.options.mode;
 
-        self.history = [];
-        self.historyIndex = 0;
-        self.reset = true;
+            self.history = [];
+            self.historyIndex = 0;
+            self.reset = true;
 
-        self.wrap = new TC.wrap.control.Measure(self);
-    });
-};
+            self.wrap = new TC.wrap.control.Measure(self);
+        });
+    }
 
-TC.inherit(Measure, Control);
-
-(function () {
-    var ctlProto = Measure.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-meas';
-
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-meas.mjs');
         self.template = module.default;
-    };
+    }
 
-    ctlProto.render = function (callback) {
+    async render(callback) {
         const self = this;
-        return self._set1stRenderPromise(Control.prototype.renderData.call(self, {
+        await super.renderData.call(self, {
             controlId: self.id,
             displayElevation: self.options.displayElevation,
             singleSketch: !self.persistentDrawControls,
             extensibleSketch: self.persistentDrawControls,
             stylable: self.persistentDrawControls
-        }, function () {
-            if (self.options.mode) {
-                self.div.querySelector('.tc-ctl-meas-select').classList.add(Consts.classes.HIDDEN);
-            }
+        });
+        if (self.options.mode) {
+            self.div.querySelector('.tc-ctl-meas-select').classList.add(Consts.classes.HIDDEN);
+        }
 
-            self.lineMeasurementControl = self.div.querySelector('sitna-measurement[mode="polyline"]')
-            self.polygonMeasurementControl = self.div.querySelector('sitna-measurement[mode="polygon"]')
-            self.lineMeasurementControl.containerControl = self;
-            self.lineMeasurementControl.displayElevation = self.options.displayElevation;
-            self.polygonMeasurementControl.containerControl = self;
+        self.lineMeasurementControl = self.div.querySelector('sitna-measurement[mode="polyline"]')
+        self.polygonMeasurementControl = self.div.querySelector('sitna-measurement[mode="polygon"]')
+        self.lineMeasurementControl.containerControl = self;
+        self.lineMeasurementControl.displayElevation = self.options.displayElevation;
+        self.polygonMeasurementControl.containerControl = self;
 
-            self.div.querySelectorAll(`.${Measure.prototype.CLASS}-select sitna-tab`).forEach(function (tab) {
-                tab.callback = function () {
-                    const target = this.target;
-                    if (target) {
-                        self.setMode(target.id.substr(target.id.indexOf('-mode-') + 6), true);
-                    }
-                };
-            });
+        self.div.querySelectorAll('.tc-ctl-meas-select sitna-tab').forEach(function (tab) {
+            tab.callback = function () {
+                const target = this.target;
+                if (target) {
+                    self.setMode(target.id.substr(target.id.indexOf('-mode-') + 6), true);
+                }
+            };
+        });
 
-            if (TC.Util.isFunction(callback)) {
-                callback();
-            }
-        }));
-    };
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+    }
 
-    ctlProto.register = async function (map) {
+    async register(map) {
         const self = this;
-        await Control.prototype.register.call(self, map);
+        await super.register.call(self, map);
         self.map.on(Consts.event.VIEWCHANGE, function () {
             if (self.map.view === Consts.view.PRINTING) {
                 self.trigger(Consts.event.DRAWEND);
@@ -151,9 +145,9 @@ TC.inherit(Measure, Control);
 
         self.setMode(self.options.mode);
         return self;
-    };
+    }
 
-    ctlProto.displayMode = function (mode) {
+    displayMode(mode) {
         const self = this;
 
         const modes = [];
@@ -200,9 +194,9 @@ TC.inherit(Measure, Control);
             elm.classList.add(Consts.classes.HIDDEN);
         });
         return self;
-    };
+    }
 
-    ctlProto.setMode = function (mode) {
+    setMode(mode) {
         const self = this;
 
         self.mode = mode;
@@ -237,16 +231,15 @@ TC.inherit(Measure, Control);
         if (event && self.map) {
             self.map.trigger(event, { control: self });
         }
-    };
+    }
 
-    ctlProto.cancel = function () {
+    cancel() {
         this.setMode(null, false);
         return this;
-    };
+    }
 
-    ctlProto.displayMeasurements = function (options) {
+    displayMeasurements(options = {}) {
         const self = this;
-        options = options || {};
         if (Object.prototype.hasOwnProperty.call(options, 'area')) {
             self.polygonMeasurementControl.displayMeasurement(options);
         }
@@ -254,60 +247,60 @@ TC.inherit(Measure, Control);
             self.lineMeasurementControl.displayMeasurement(options);
         }
         return self;
-    };
+    }
 
-    ctlProto.getLineMeasurementControl = async function () {
+    async getLineMeasurementControl() {
         const self = this;
         await self.renderPromise();
         return self.div.querySelector('sitna-measurement[mode="polyline"]');
-    };
+    }
 
-    ctlProto.getPolygonMeasurementControl = async function () {
+    async getPolygonMeasurementControl() {
         const self = this;
         await self.renderPromise();
         return self.div.querySelector('sitna-measurement[mode="polygon"]');
-    };
+    }
 
-    ctlProto.resetValues = function () {
+    resetValues() {
         const self = this;
         self.getLineMeasurementControl().then(ctl => ctl.clearMeasurement());
         self.getPolygonMeasurementControl().then(ctl => ctl.clearMeasurement());
         return self;
-    };
+    }
 
-    ctlProto.getDrawLines = function () {
+    getDrawLines() {
 
-    };
+    }
 
-    ctlProto.getLayer = function () {
+    getLayer() {
         const self = this;
         if (self.layer) {
             return Promise.resolve(self.layer);
         }
         return self.layerPromise;
-    };
+    }
 
-    ctlProto.setLayer = async function (layer) {
+    async setLayer(layer) {
         const self = this;
         self.layer = layer;
         for await (const control of [self.getLineDrawControl(), self.getPolygonDrawControl()]) {
             control.setLayer(self.layer);
         }
-    };
+    }
 
-    ctlProto.getLineDrawControl = async function () {
+    async getLineDrawControl() {
         const self = this;
         await self.renderPromise();
         return self.div.querySelector('.tc-ctl-meas-len sitna-draw');
-    };
+    }
 
-    ctlProto.getPolygonDrawControl = async function () {
+    async getPolygonDrawControl() {
         const self = this;
         await self.renderPromise();
         return self.div.querySelector('.tc-ctl-meas-area sitna-draw');
-    };
+    }
 
-    ctlProto.exportState = function () {
+    exportState() {
         const self = this;
         if (self.exportsState && self.layer) {
             return {
@@ -316,16 +309,16 @@ TC.inherit(Measure, Control);
             };
         }
         return null;
-    };
+    }
 
-    ctlProto.importState = function (state) {
+    importState(state) {
         const self = this;
         self.layerPromise.then(function (layer) {
             layer.importState(state.layer);
         });
-    };
+    }
+}
 
-})();
-
+Measure.prototype.CLASS = 'tc-ctl-meas';
 TC.control.Measure = Measure;
 export default Measure;

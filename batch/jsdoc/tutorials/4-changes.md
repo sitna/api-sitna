@@ -1,4 +1,14 @@
-### [4.1.0](https://github.com/sitna/api-sitna/releases/tag/v4.0.2)
+### [4.2.0](https://github.com/sitna/api-sitna/releases/tag/v4.2.0)
+- Añadido control para editar y guardar documentos geográficos en el sistema de archivos del dispositivo.
+- Nueva leyenda que muestra únicamente el contenido correspondiente a la zona visualizada en cada momento (no todo el posible a la escala del mapa).
+- Gráficos de la leyenda ampliables pulsando sobre ellos y manteniendo dicha pulsación.
+- Cambio de URLs de servicios del IGN francés.
+- Cambio a servicio OGC API Processes del IGN español para la obtención de elevaciones.
+- Actualización a OpenLayers 8.
+- Añadida la ortofoto 2023 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
+- Corrección de errores.
+
+### [4.1.0](https://github.com/sitna/api-sitna/releases/tag/v4.1.0)
 - Añadida herramienta para modificar una consulta ejecutada o compartida (WFS).
 - Añadida herramienta para volver a centrar los resultados de una consulta (WFS).
 - Añadida herramienta para centrar todos los resultados de selecciones previas por punto, línea o recinto.
@@ -13,7 +23,7 @@
 - Añadido espacio de nombres {@link SITNA.feature} con las clases que representan entidades geográficas.
 - Añadido espacio de nombres {@link SITNA.layer} con las clases que representan capas del mapa.
 - Añadida herramienta para eliminar vértices de entidades geográficas dibujadas previamente.
-- Añadidas las capas OpenTopoMap y ortofoto 2022 a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
+- Añadidas las capas OpenTopoMap, ortofoto 2022 y mapa base gris a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
 - Añadido operador "no es igual a" para cadenas en el [control de consultas WFS]{@linkplain SITNA.control.WFSQueryOptions}.
 - Añadida capacidad de ser instalada como paquete npm.
 - Cambios de clases CSS para paliar interferencias con CSS de terceros.
@@ -153,8 +163,8 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 - El control `featureInfo` pasa a estar incluido por defecto en el mapa.
 - La [página de incrustación de visores con KML](//sitna.tracasa.es/kml/) pasa a usar OpenLayers 3.
 - Correción de errores de la [página de incrustación de visores con KML](//sitna.tracasa.es/kml/).
-- Añadido ejemplo a la documentación de {@link ClickOptions}.
-- Añadido ejemplo a la documentación de {@link CoordinatesOptions}.
+- Añadido ejemplo a la documentación de [ClickOptions]{@link SITNA.control.ClickOptions}.
+- Añadido ejemplo a la documentación de [CoordinatesOptions]{@link SITNA.control.CoordinatesOptions}.
 - Mejorada con botones triestado la usabilidad del control de medición.
 - Añadido indicador de carga de los elementos del visor.
 - Añadido registro centralizado de errores JavaScript.
@@ -164,7 +174,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 
 - Añadido el control de Google StreetView.
 - Añadido el control de gestión de clics en el mapa.
-- Añadidas [opciones]{@linkplain CoordinatesOptions} de representación de coordenadas en el control `coordinates`.
+- Añadidas [opciones]{@linkplain SITNA.control.CoordinatesOptions} de representación de coordenadas en el control `coordinates`.
 - Compatibilidad mejorada con dispositivos móviles.
 - Mejoras de rendimiento en el layout por defecto.
 - Mejoras en la documentación.
@@ -180,7 +190,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 ### 1.0.6
 
 - Añadido el control de información de entidades basado en la petición `getFeatureInfo` de WMS, activable con la propiedad
- `featureInfo` en {@link MapControlOptions}.
+ `featureInfo` en [MapControlOptions]{@link SITNA.control.MapControlOptions}.
 - Añadidas las opciones de zoom al método {@link SITNA.Map#zoomToMarkers}: radio del
  área alrededor del marcador a mostrar y margen a dejar en los bordes.
 - Corregido error en el layout por defecto que impedía la funcionalidad de deslizar dedo para colapsar paneles.
@@ -205,7 +215,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 ### 1.0.3
 
 - Añadida la opción de deshabilitar el zoom en el mapa con la rueda de ratón mediante la propiedad `mousewWheelZoom` de {@link SITNA.MapOptions}.
-- Añadida la posibilidad de mostrar un marcador con su bocadillo de información asociada visible por defecto, mediante la propiedad `showPopup` de {@link MarkerOptions}.
+- Añadida la posibilidad de mostrar un marcador con su bocadillo de información asociada visible por defecto, mediante la propiedad `showPopup` de [MarkerOptions]{@link SITNA.feature.MarkerOptions}.
 - Corrección de errores.
 
 ### 1.0

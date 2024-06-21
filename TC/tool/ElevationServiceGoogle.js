@@ -54,9 +54,8 @@ class ElevationServiceGoogle extends ElevationService {
         self.maxRetries = Number.isInteger(self.options.maxRetries) ? self.options.maxRetries : 0;
     }
 
-    request(options) {
+    request(options = {}) {
         const self = this;
-        options = options || {};
         if (!self.options.googleMapsKey) {
             return Promise.reject(Error('Missing Google Maps key'));
         }

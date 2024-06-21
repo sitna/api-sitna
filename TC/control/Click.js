@@ -36,47 +36,45 @@ import Control from '../Control';
 TC.control = TC.control || {};
 TC.wrap = wrap;
 
-const Click = function () {
-    var self = this;
+class Click extends Control {
+    constructor() {
+        super(...arguments);
+        const self = this;
 
-    Control.apply(self, arguments);
+        if (self.options && self.options.callback) {
+            self.callback = self.options.callback;
+        }
 
-    if (self.options && self.options.callback) {
-        self.callback = self.options.callback;
+        self.wrap = new TC.wrap.control.Click(self);
     }
 
-    self.wrap = new TC.wrap.control.Click(self);
-};
-
-TC.inherit(Click, Control);
-
-(function () {
-    var ctlProto = Click.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-click';
-
-    ctlProto.register = function (map) {
-        var self = this;
+    register(map) {
+        const self = this;
         self.wrap.register(map);
-        return Control.prototype.register.call(self, map);
-    };
+        return super.register.call(self, map);
+    }
 
-    ctlProto.activate = function () {
-        var self = this;
-        Control.prototype.activate.call(self);
-        self.wrap.activate();
-    };
+    activate() {
+        const self = this;
+        if (self.wrap) {
+            self.wrap.activate();
+        }
+        super.activate.call(self);
+    }
 
-    ctlProto.deactivate = function () {
-        var self = this;
-        self.wrap.deactivate();
-        Control.prototype.deactivate.call(self);
-    };
+    deactivate() {
+        const self = this;
+        if (self.wrap) {
+            self.wrap.deactivate();
+        }
+        super.deactivate.call(self);
+    }
 
-    ctlProto.callback = function (coord, point) {
+    callback(coord, point) {
         console.log('[Click][' + coord[0] + ', ' + coord[1] + '][' + point[0] + ', ' + point[1] + ']');
-    };
-})();
+    }
+}
 
+Click.prototype.CLASS = 'tc-ctl-click';
 TC.control.Click = Click;
 export default Click;

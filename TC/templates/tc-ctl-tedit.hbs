@@ -1,0 +1,11 @@
+<div class="tc-ctl-tedit-panel">
+    <div class="tc-ctl-tedit-edit">
+        <sitna-edit id="{{editControlId}}"{{#if stylable}} stylable{{/if}}{{#if snapping}} snapping{{/if}} no-other-tools></sitna-edit>
+    </div>
+    <div class="tc-ctl-tedit-actions">
+        <sitna-button text="{{i18n "save"}}" class="tc-ctl-tedit-btn-save"></sitna-button>
+        {{#if includeSaveAs}}
+        <sitna-button text="{{i18n "saveAs"}}" class="tc-ctl-tedit-btn-saveas"></sitna-button>
+        {{/if}}
+    </div>
+</div>

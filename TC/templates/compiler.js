@@ -35,7 +35,10 @@ files
                     getTagHeight: true,
                     getHeader: true,
                     removeSpecialAttributeTag: true,
-                    formatDateOrNumber: true
+                    formatDateOrNumber: true,
+                    inputDate: true,
+                    inputTime: true,
+                    inputDatetime: true
                 },
                 knownHelpersOnly: true
             });

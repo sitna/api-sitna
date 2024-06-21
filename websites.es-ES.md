@@ -8,6 +8,7 @@
   * [Toponimia](https://administracionelectronica.navarra.es/toponimia/ "Toponimia Oficial de Navarra")
   * [Comparador de Mapas](https://comparamapas.navarra.es/ "Comparación de mapas y ortofotografías de Navarra")
   * [Ordenación Forestal](https://administracionelectronica.navarra.es/VisorOrdenacionForestal/default.aspx)
+  * [Geología, Cavidades, Manantiales y Geotecnia](https://administracionelectronica.navarra.es/geologiaVisor/)
 
 * Desarrollos de [Tracasa Instrumental](https://itracasa.es/) para ayuntamientos de Navarra:
   * GeoPamplona. [Visor Ciudad](https://sig.pamplona.es "SIG Corporativo Ayuntamiento de Pamplona")
@@ -34,13 +35,13 @@
     * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Registro de Viviendas. Gobierno de Navarra")
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Direcciones de Navarra")
-    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)   
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire)
   * Acceso autenticado:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
+    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Permisos de pesca")
 
 * Desarrollos de [SILME](http://www.silme.es/) para el Consell Insular de Menorca:
   * [IDE Menorca](http://ide.cime.es/visor/?lang=es-ES "Infraestructura de Datos Espaciales de Menorca")

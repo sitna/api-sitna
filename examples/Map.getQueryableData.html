@@ -34,12 +34,12 @@
             <br />
             <br />
             Casco Urbano
-            <select id="urban" onchange="applyFilter(this)">
+            <select id="town" onchange="applyFilter(this)">
                 <option value="-1">Seleccione...</option>
             </select>
             <br />
             <br />
-            Manconmunidad
+            Mancomunidad
             <select id="commonwealth" onchange="applyFilter(this)">
                 <option value="-1">Seleccione...</option>
             </select>
@@ -76,7 +76,7 @@
         });
 
         // completamos el desplegable de cascos urbanos
-        map.getQueryableData(SITNA.Consts.mapSearchType.URBAN, function (data) {
+        map.getQueryableData(SITNA.Consts.mapSearchType.TOWN, function (data) {
             var fragment = document.createDocumentFragment();
             data.forEach(function (value) {
                 var option = document.createElement("option");
@@ -84,7 +84,7 @@
                 option.textContent = value.label;
                 fragment.appendChild(option);
             });
-            document.querySelector("#urban").appendChild(fragment);
+            document.querySelector("#town").appendChild(fragment);
         });
 
         // completamos el desplegable de mancomunidades de residuos
@@ -105,7 +105,7 @@
         if (target) {
             var municipalitySelect = document.querySelector("#municipality");
             var councilSelect = document.querySelector("#council");
-            var urbanSelect = document.querySelector("#urban");
+            var urbanSelect = document.querySelector("#town");
             var commonwealthSelect = document.querySelector("#commonwealth");
             var id = target.querySelector('option:checked').value;
             var searchType;
@@ -124,8 +124,8 @@
                     urbanSelect.value = -1;
                     commonwealthSelect.value = -1;
                     break;
-                case target.id == SITNA.Consts.mapSearchType.URBAN:
-                    searchType = SITNA.Consts.mapSearchType.URBAN;
+                case target.id == SITNA.Consts.mapSearchType.TOWN:
+                    searchType = SITNA.Consts.mapSearchType.TOWN;
 
                     municipalitySelect.value = -1;
                     councilSelect.value = -1;

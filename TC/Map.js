@@ -15,7 +15,7 @@ import './control/BasemapSelector';
 import './control/CacheBuilder';
 import './control/Click';
 import './control/Container';
-import './control/ControlContainer';
+import ControlContainer from './control/ControlContainer';
 import './control/Coordinates';
 import './control/DataLoader';
 import './control/Download';
@@ -25,7 +25,7 @@ import './control/Edit';
 import './control/Elevation';
 import './control/ExternalWMS';
 import './control/FeatureDownloadDialog';
-import './control/FeatureInfo';
+import FeatureInfo from './control/FeatureInfo';
 import './control/FeatureInfoCommons';
 import './control/FeatureTools';
 import './control/FileEdit';
@@ -39,19 +39,19 @@ import './control/LayerCatalog';
 import './control/Legend';
 import './control/LineFeatureInfo';
 import './control/ListTOC';
-import './control/LoadingIndicator';
+import LoadingIndicator from './control/LoadingIndicator';
 import './control/MapContents';
 import './control/MapInfo';
 import './control/Measure';
 import './control/Measurement';
 import './control/Modify';
-import './control/MultiFeatureInfo';
+import MultiFeatureInfo from './control/MultiFeatureInfo';
 import './control/NavBar';
 import './control/NavBarHome';
 import './control/OfflineMapMaker';
 import './control/OverviewMap';
 import './control/PolygonFeatureInfo';
-import './control/Popup';
+import Popup from './control/Popup';
 import './control/Print';
 import './control/PrintMap';
 import './control/ProjectionSelector';
@@ -65,20 +65,19 @@ import './control/Share';
 import './control/StreetView';
 import './control/SWCacheClient';
 import './control/TabContainer';
-import './control/ThreeD';
+import ThreeD from './control/ThreeD';
 import './control/TOC';
 import './control/WFSEdit';
 import './control/WFSQuery';
 import './control/WorkLayerManager';
 import { JL } from 'jsnlog';
-import Point from '../SITNA/feature/Point';
-import MultiPoint from '../SITNA/feature/MultiPoint';
+import '../SITNA/feature/Point';
+import '../SITNA/feature/MultiPoint';
 import Marker from '../SITNA/feature/Marker';
-import MultiMarker from '../SITNA/feature/MultiMarker';
-import Polyline from '../SITNA/feature/Polyline';
-import MultiPolyline from '../SITNA/feature/MultiPolyline';
-import Polygon from '../SITNA/feature/Polygon';
-import MultiPolygon from '../SITNA/feature/MultiPolygon';
+import '../SITNA/feature/Polyline';
+import '../SITNA/feature/MultiPolyline';
+import '../SITNA/feature/Polygon';
+import '../SITNA/feature/MultiPolygon';
 import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
 
 TC.EventTarget = EventTarget;
@@ -86,42 +85,7 @@ TC.i18n = TC.i18n || i18n;
 TC.wrap = wrap;
 TC.control = TC.control || {};
 
-TC.inherit = function (childCtor, parentCtor) {
-    childCtor.prototype = Object.create(parentCtor.prototype);
-    childCtor.prototype.constructor = childCtor;
-    childCtor._super = parentCtor.prototype;
-};
-
-TC.mix = function (targetCtor, ...mixins) {
-    Object.assign(targetCtor.prototype, ...mixins);
-};
-
 (function () {
-
-    // Polyfill de CustomEvent
-    /*! (c) Andrea Giammarchi - ISC */
-    var self = this || /* istanbul ignore next */ {};
-    self.CustomEvent = typeof CustomEvent === 'function' ?
-        CustomEvent :
-        (function (__p__) {
-            CustomEvent[__p__] = new CustomEvent('').constructor[__p__];
-            return CustomEvent;
-            function CustomEvent(type, init) {
-                if (!init) init = {};
-                var e = document.createEvent('CustomEvent');
-                e.initCustomEvent(type, !!init.bubbles, !!init.cancelable, init.detail);
-                return e;
-            }
-        }('prototype'));
-
-    if (!Element.prototype.matches) {
-        Element.prototype.matches =
-            Element.prototype.matchesSelector ||
-            Element.prototype.mozMatchesSelector ||
-            Element.prototype.msMatchesSelector ||
-            Element.prototype.oMatchesSelector ||
-            Element.prototype.webkitMatchesSelector;
-    }
 
     /**
      * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
@@ -304,10 +268,10 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    const supportsFileSystemAccess = TC.Util.isFunction(DataTransferItem.prototype.getAsFileSystemHandle);
+    const supportsFileSystemAccess = Util.isFunction(DataTransferItem.prototype.getAsFileSystemHandle);
     const isStatefulLayer = function (layer) {
         return layer.type === Consts.layerType.WMS ||
-            supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.options.file
+            supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.file
     };
 
     const _addToHistory = async function (e) {
@@ -327,7 +291,7 @@ TC.mix = function (targetCtor, ...mixins) {
 
             var saveState = function () {
                 previousState = currentState;
-                currentState = TC.Util.utf8ToBase64(state);
+                currentState = Util.utf8ToBase64(state);
                 // Si el estado es distinto y no hay un estado posterior actualmente
                 if (currentState !== previousState && index > lastStateIndex) {
                     lastStateIndex = index;
@@ -363,9 +327,8 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    const _getMapState = async function (options) {
+    const _getMapState = async function (options = {}) {
         const self = this;
-        options = options || {};
         var state = {};
         let index = stateIndex++;
 
@@ -381,23 +344,18 @@ TC.mix = function (targetCtor, ...mixins) {
         state.ext = ext;
 
         //determinar capa base
-        var baseLayerData = [];
+        let baseLayerData;
 
         // ¿es una capa de respaldo?
         if (self.baseLayers) {
-            baseLayerData = self.baseLayers.filter(function (baseLayer) {
-                return baseLayer.isRaster() && baseLayer.fallbackLayer;
-            }).map(function (baseLayer) {
-                return {
-                    baseLayer: baseLayer, fallbackLayerID: baseLayer.fallbackLayer.id
-                };
-            }).filter(function (baseLayerData) {
-                return baseLayerData.fallbackLayerID === (self.baseLayer ? self.baseLayer.id : self.baseLayers[0].id);
-            });
+            baseLayerData = self.baseLayers
+                .filter(baseLayer => baseLayer.isRaster() && baseLayer.fallbackLayer)
+                .map(baseLayer => ({ baseLayer: baseLayer, fallbackLayerID: baseLayer.fallbackLayer.id }))
+                .find(baseLayerData => baseLayerData.fallbackLayerID === (self.baseLayer ? self.baseLayer.id : self.baseLayers[0].id));
         }
 
-        if (baseLayerData.length > 0) {
-            state.base = baseLayerData[0].baseLayer.id;
+        if (baseLayerData) {
+            state.base = baseLayerData.baseLayer.id;
         } else if (self.baseLayer || self.baseLayers && self.baseLayers[0]) {
             state.base = (self.baseLayer || self.baseLayers[0]).id;
         }
@@ -410,7 +368,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 layer.layerNames = layer.names || layer.layerNames;
                 if (layer.layerNames && layer.layerNames.length || layer.hideTree === false) {
                     const entry = {
-                        u: TC.Util.isOnCapabilities(layer.url),
+                        u: Util.isOnCapabilities(layer.url),
                         n: Array.isArray(layer.names) ? layer.names.join(',') : layer.names,
                         o: layer.getOpacity(),
                         v: layer.getVisibility(),
@@ -430,13 +388,13 @@ TC.mix = function (targetCtor, ...mixins) {
                     state.layers.push(entry);
                 }
             }
-            else if (supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.options.file) {
+            else if (supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.file) {
                 const entry = {
                     o: layer.getOpacity(),
                     v: layer.getVisibility(),
                     h: layer.options.hideTitle,
                     ur: layer.unremovable,
-                    fn: layer.options.file,
+                    fn: layer.file,
                     t: layer.title,
                     i: layer.id
                 };
@@ -449,7 +407,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
 
         if (options.extraStates) {
-            TC.Util.extend(state, options.extraStates);
+            Util.extend(state, options.extraStates);
         }
 
         if (!options.cacheResult && self._controlStatesCache) {
@@ -476,7 +434,7 @@ TC.mix = function (targetCtor, ...mixins) {
         }
 
         if (!self.loadingctrl) {
-            self.loadingCtrl = self.getControlsByClass("TC.control.LoadingIndicator")[0];
+            self.loadingCtrl = self.getLoadingIndicator();
         }
 
         if (!self.hasWait) {
@@ -498,7 +456,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         .then(obj => res(obj))
                         .catch(_err => res(JSON.parse(stringOrJson)))
                         .catch(err => {
-                            TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
+                            TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
                             rej(err);
                         });
                 });
@@ -552,7 +510,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         let lyrCfg;
                         for (var j = 0; j < self.options.workLayers.length; j++) {
 
-                            lyrCfg = TC.Util.extend({}, self.options.workLayers[j], { map: self });
+                            lyrCfg = Util.extend({}, self.options.workLayers[j], { map: self });
 
                             if (stateLayer.u === lyrCfg.url &&
                                 stateLayer.i === lyrCfg.id) {
@@ -590,7 +548,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                 lyrCfg.file = stateLayer.fn;
                             }
                             else {
-                                lyrCfg.url = TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
+                                lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
                                 lyrCfg.layerNames = stateLayer.n ? stateLayer.n.split(',') : [];
                             }
                             promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
@@ -740,7 +698,7 @@ TC.mix = function (targetCtor, ...mixins) {
          * @property div
          * @type HTMLElement
          */
-        self.div = TC.Util.getDiv(div);
+        self.div = Util.getDiv(div);
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
          * @event MAPLOAD
@@ -927,7 +885,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                         map: map, state: map.state.vw3, callback: function () {
                                             setLoaded();
 
-                                            map.getControlsByClass(TC.control.ThreeD)[0].button.removeAttribute("disabled");
+                                            map.getControlsByClass(ThreeD)[0].button.removeAttribute("disabled");
                                         }
                                     });
                                 }
@@ -975,10 +933,8 @@ TC.mix = function (targetCtor, ...mixins) {
 
         self._layerBuffer.layers = [];
 
-        self._fileHandles = new WeakMap();
-
         if (!TC.ready) {
-            TC.Cfg = TC.Util.extend({}, TC.Defaults, Cfg);
+            TC.Cfg = Util.extend({}, TC.Defaults, Cfg);
             TC.ready = true;
         }
 
@@ -1035,7 +991,7 @@ TC.mix = function (targetCtor, ...mixins) {
             var _handleLayerAdd = function _handleLayerAdd(e) {
                 if (e.layer.isBase &&
                     (e.layer === self.baseLayer ||
-                        self.baseLayer && e.layer.fallbackLayer && e.layer.fallbackLayer.id === self.baseLayer.id)) {
+                        self.baseLayer && e.layer.getFallbackLayer?.()?.id === self.baseLayer.id)) {
                     if (typeof self.state !== "undefined") {
                         if (self.state.crs) {
                             self.loaded(function () {
@@ -1081,7 +1037,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     for (var name in self.options.controls) {
                         var ctlOptions = self.options.controls[name];
                         if (ctlOptions) {
-                            ctlOptions = typeof ctlOptions === 'boolean' ? {} : TC.Util.extend(true, {}, ctlOptions);
+                            ctlOptions = typeof ctlOptions === 'boolean' ? {} : Util.extend(true, {}, ctlOptions);
                             if (typeof ctlOptions.div === 'string') {
                                 ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
                             }
@@ -1100,7 +1056,7 @@ TC.mix = function (targetCtor, ...mixins) {
                         if (typeof lyrCfg === 'string') {
                             lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
                         }
-                        self.addLayer(TC.Util.extend({}, lyrCfg, { isBase: true, map: self }));
+                        self.addLayer(Util.extend({}, lyrCfg, { isBase: true, map: self }));
                     }
 
                     //vamos creando un array de capas a añadir. Primero añadimos las capas de estado
@@ -1118,7 +1074,7 @@ TC.mix = function (targetCtor, ...mixins) {
                             }
                         };
                         if (stateLayer.u) {
-                            lyrCfg.url = TC.Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
+                            lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
                             lyrCfg.layerNames = (stateLayer.a || stateLayer.n) ? (stateLayer.a || stateLayer.n).split(',') : undefined;
                         }
                         else {
@@ -1132,7 +1088,7 @@ TC.mix = function (targetCtor, ...mixins) {
                             return !self.state || !self.state.layers || !self.state.layers.some((stateLayer) => workLayer.url === stateLayer.u && workLayer.id === stateLayer.i);
                         })
                             .map(function (workLayer) {
-                                return TC.Util.extend({}, workLayer, { map: self });
+                                return Util.extend({}, workLayer, { map: self });
                             }))
                         //por ultimo recorremos el Array añadiendo las capas al mapa
                         .forEach((lyrCfg) => {
@@ -1140,7 +1096,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                 if (layer.wrap.getRootLayerNode) {
                                     var rootNode = layer.wrap.getRootLayerNode();
                                 }
-                                layer.title = lyrCfg.title || rootNode && (rootNode.Title || rootNode.title);
+                                layer.title = layer.title || lyrCfg.title || rootNode && (rootNode.Title || rootNode.title);
                                 if (lyrCfg.renderOptions && lyrCfg.renderOptions.opacity < 1) {
                                     layer.setOpacity(lyrCfg.renderOptions.opacity);
                                 }
@@ -1191,7 +1147,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     self.workLayers.forEach(function (wl) {
                         delete wl._noFeatureClicked;
                     });
-                    self.getControlsByClass(TC.control.Popup).forEach(function (p) {
+                    self.getControlsByClass(Popup).forEach(function (p) {
                         if (p.isVisible()) {
                             p.hide();
                         }
@@ -1204,7 +1160,15 @@ TC.mix = function (targetCtor, ...mixins) {
             const self = this;
 
             var stateObj = await _getMapState.call(self, options);
-            return TC.Util.utf8ToBase64(stateObj.state);
+            return Util.utf8ToBase64(stateObj.state);
+        };
+
+        mapProto.refreshMapState = async function (options) {
+            const self = this;
+
+            const { state } = await _getMapState.call(self, options);
+            const currentState = Util.utf8ToBase64(state);
+            window.history.replaceState(state, null, window.location.href.split('#').shift() + '#' + currentState);
         };
 
         mapProto.getPreviousMapState = function () {
@@ -1220,20 +1184,20 @@ TC.mix = function (targetCtor, ...mixins) {
 
                 var obj;
                 try {
-                    obj = await jsonpackProcess('unpack', TC.Util.base64ToUtf8(hash));
+                    obj = await jsonpackProcess('unpack', Util.base64ToUtf8(hash));
                 }
                 catch (error) {
                     try {
-                        obj = JSON.parse(TC.Util.base64ToUtf8(hash));
+                        obj = JSON.parse(Util.base64ToUtf8(hash));
                     }
                     catch (err) {
-                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                        TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
                         return;
                     }
                 }
 
-                if (TC.Util.detectIE() && window.location.href.length === 2047) {
-                    TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValidForEdge'), Consts.msgErrorMode.TOAST);
+                if (Util.detectIE() && window.location.href.length === 2047) {
+                    TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValidForEdge'), Consts.msgErrorMode.TOAST);
                 }
 
                 if (obj) {
@@ -1265,7 +1229,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                 !Object.prototype.hasOwnProperty.call(stateLayer, "v") ||
                                 !Object.prototype.hasOwnProperty.call(stateLayer, "h")) {
                                 inValidState = true;
-                                TC.Util.extend(stateLayer, {
+                                Util.extend(stateLayer, {
                                     o: stateLayer.o || 1,
                                     v: stateLayer.v || true,
                                     h: stateLayer.h || false
@@ -1286,10 +1250,10 @@ TC.mix = function (targetCtor, ...mixins) {
                     }
 
                     if (inValidState)
-                        TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                        TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
                     return obj;
                 }
-                TC.error(TC.Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
             }
             return;
         };
@@ -1356,7 +1320,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     Object.prototype.hasOwnProperty.call(layout, 'href') ||
                     Object.prototype.hasOwnProperty.call(layout, 'i18n')
                 ) {
-                    layoutURLs = TC.Util.extend({}, layout);
+                    layoutURLs = Util.extend({}, layout);
                 }
 
                 if (layoutURLs.i18n) {
@@ -1374,7 +1338,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     if (!ignoreError || error.status != 404) {
                         const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
                         TC.error(
-                            TC.Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
+                            Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
                                 { url: error.url }),
                             [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.EMAIL],
                             "Error al cargar " + error.url);
@@ -1427,9 +1391,9 @@ TC.mix = function (targetCtor, ...mixins) {
                                 var linkElement = document.createElement('link');
                                 linkElement.rel = 'stylesheet';
                                 linkElement.href = layoutURLs.style;
-
+                                linkElement.addEventListener('load', resolve);
+                                linkElement.addEventListener('error', resolve);
                                 document.head.appendChild(linkElement);
-                                resolve();
                             })
                             .catch(function (error) {
                                 if (error.status) {
@@ -1456,7 +1420,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                     if (i18n && locale && layoutURLs.i18n) {
                                         TC.i18n.loadResources(true, layoutURLs.i18n, locale).finally(function () {
                                             const replacerFn = function (_match, grp1, grp2, grp3) {
-                                                return TC.Util.getLocaleString(locale, grp1 || grp2 || grp3);
+                                                return Util.getLocaleString(locale, grp1 || grp2 || grp3);
                                             };
                                             //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFn); // Estilo {{key}}
                                             //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFn); // Estilo {@i18n $key="key"/}
@@ -1482,7 +1446,6 @@ TC.mix = function (targetCtor, ...mixins) {
                 }
 
                 Promise.all(layoutPromises).finally(function () {
-
                     if (layoutURLs.script) {
                         fetch(layoutURLs.script)
                             .then(function (response) {
@@ -1537,7 +1500,8 @@ TC.mix = function (targetCtor, ...mixins) {
             self.toast(text, { type: Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
         };*/
         var oldError = TC.error;
-        TC.error = function (text, options, subject) {
+        TC.error = function (err, options, subject) {
+            const text = err.message ?? err;
             if (TC.isDebug && console.trace) {
                 console.trace();
             }
@@ -1624,12 +1588,12 @@ TC.mix = function (targetCtor, ...mixins) {
 
             for (var i = 0; i < layerOption.baseLayers.length; i++) {
                 if (typeof layerOption.baseLayers[i] === 'object') {
-                    TC.Util.extend(layerOption.baseLayers[i], getAvailableBaseLayer.call(self, layerOption.baseLayers[i].id));
+                    Util.extend(layerOption.baseLayers[i], getAvailableBaseLayer.call(self, layerOption.baseLayers[i].id));
                 }
             }
         } else {
             layerOptions.unshift(true); // Deep merge
-            layerOption = TC.Util.extend.apply(this, layerOptions);
+            layerOption = Util.extend.apply(this, layerOptions);
             if (propertyName === 'availableBaseLayers') console.log("layerOption", layerOption);
         }
 
@@ -1648,7 +1612,7 @@ TC.mix = function (targetCtor, ...mixins) {
                             if (typeof ctl[name] === 'boolean') {
                                 ctl[name] = {};
                             }
-                            TC.Util.extend(ctl[name], controlOptions[name]);
+                            Util.extend(ctl[name], controlOptions[name]);
                             delete controlOptions[name];
                         }
                     });
@@ -1664,7 +1628,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     if (typeof containerControl.options === 'boolean') {
                         containerControl.options = {};
                     }
-                    TC.Util.extend(containerControl.options, controlOptions[key]);
+                    Util.extend(containerControl.options, controlOptions[key]);
                     delete controlOptions[key];
                 });
             }
@@ -1675,7 +1639,7 @@ TC.mix = function (targetCtor, ...mixins) {
 
     const mergeOptions = function () {
         const argArray = [true, {}, TC.Cfg].concat(Array.prototype.slice.call(arguments));
-        const result = this.options = TC.Util.extend.apply(this, argArray);
+        const result = this.options = Util.extend.apply(this, argArray);
         // Concatenamos las colecciones availableBaseLayers
         result.availableBaseLayers = TC.Cfg.availableBaseLayers.concat.apply(TC.Cfg.availableBaseLayers, Array.prototype.map.call(arguments, function (arg) {
             return arg.availableBaseLayers || [];
@@ -1687,7 +1651,7 @@ TC.mix = function (targetCtor, ...mixins) {
             .filter(elem => elem.controls)
             .map(elem => elem.controls);
         if (controls.length > 0) {
-            result.controls = TC.Util.extend(true, result.controls, mergeControlOptions(TC.Util.extend(true, controls[0], controls[1])));
+            result.controls = Util.extend(true, result.controls, mergeControlOptions(Util.extend(true, controls[0], controls[1])));
         }
         return result;
     };
@@ -1702,7 +1666,7 @@ TC.mix = function (targetCtor, ...mixins) {
         } else {
             reason = 'layerNameNotValid';
         }
-        errorMessage += TC.Util.getLocaleString(map.options.locale, reason);
+        errorMessage += Util.getLocaleString(map.options.locale, reason);
         TC.error(errorMessage);
         map.trigger(Consts.event.LAYERERROR, { layer: layer, reason: reason });
 
@@ -1724,7 +1688,7 @@ TC.mix = function (targetCtor, ...mixins) {
     mapProto.setCrs = async function (crs, callback) {
         const self = this;
         await self.setProjection({ crs: crs });
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             callback(crs);
         }
         return crs;
@@ -1737,7 +1701,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 if (!wrap._tileloaderror) {
                     const path = layer.getPath();
                     const title = path.length ? path[path.length - 1] : layer.title;
-                    layer.map.toast(TC.Util.getLocaleString(layer.map.options.locale, 'tileload.error',
+                    layer.map.toast(Util.getLocaleString(layer.map.options.locale, 'tileload.error',
                         { name: title, error: event.error.text }),
                         { type: Consts.msgType.ERROR });
                     wrap._tileloaderror = true;
@@ -1764,7 +1728,13 @@ TC.mix = function (targetCtor, ...mixins) {
     mapProto.addLayer = function (layer, callback) {
         const self = this;
 
-        const result = new Promise(function (resolve, reject) {
+        const fitToInitialExtent = function (fit) {
+            if (fit) {
+                self.setExtent(self.initialExtent, { animate: false, contain: true });
+            }
+        };
+
+        const addLayerPromise = new Promise(function (resolve, reject) {
 
             if (typeof layer === 'object') {
                 if (!layer.id)
@@ -1795,7 +1765,7 @@ TC.mix = function (targetCtor, ...mixins) {
 
             var lyr;
             if (typeof layer === 'string') {
-                lyr = new Raster(TC.Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
+                lyr = new Raster(Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
             }
             else {
                 if (layer instanceof Layer) {
@@ -1938,7 +1908,7 @@ TC.mix = function (targetCtor, ...mixins) {
             });
         });
 
-        result
+        return addLayerPromise
             .then(function (l) {
                 self._layerBuffer.resolve(self, l, l.isBase);
                 if (!l.isBase) {
@@ -1946,20 +1916,15 @@ TC.mix = function (targetCtor, ...mixins) {
                 }
                 self.trigger(Consts.event.LAYERADD, { layer: l });
                 self._layerBuffer.checkMapLoad(self);
-                if (TC.Util.isFunction(callback)) {
+                if (Util.isFunction(callback)) {
                     callback(l);
                 }
+                return l;
             }, function (err) {
                 self._layerBuffer.reject(self, err);
                 self._layerBuffer.checkMapLoad(self);
+                throw err;
             });
-
-        const fitToInitialExtent = function (fit) {
-            if (fit) {
-                self.setExtent(self.initialExtent, { animate: false, contain: true });
-            }
-        };
-        return result;
     };
 
     /**
@@ -2050,6 +2015,7 @@ TC.mix = function (targetCtor, ...mixins) {
         self._layerBuffer.remove(layer.id);
         self.trigger(Consts.event.LAYERREMOVE, { layer: layer });
         self._layerBuffer.checkMapLoad(self);
+        layer.map = null;
         return layer;
     };
 
@@ -2089,7 +2055,7 @@ TC.mix = function (targetCtor, ...mixins) {
             });
             self.trigger(Consts.event.LAYERORDER, { layer: layer, oldIndex: beforeIdx, newIndex: idx });
         }
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             callback();
         }
         return layer;
@@ -2129,7 +2095,7 @@ TC.mix = function (targetCtor, ...mixins) {
             if (!found) {
                 layer = getAvailableBaseLayer.call(self, layer);
                 if (layer) {
-                    layer = await self.addLayer(TC.Util.extend(true, {}, layer, { isDefault: true, isBase: true, map: self }));
+                    layer = await self.addLayer(Util.extend(true, {}, layer, { isDefault: true, isBase: true, map: self }));
                     found = true;
                 }
             }
@@ -2143,7 +2109,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 // GLS: comento lo siguiente porque ya se va a tratar en la línea 1838, si no, se lanza el evento 2 veces
                 //.then(function () {                
                 //self.trigger(Consts.event.BASELAYERCHANGE, { layer: layer });
-                //if (TC.Util.isFunction(callback)) {
+                //if (Util.isFunction(callback)) {
                 //    callback();
                 //}
                 //});
@@ -2157,21 +2123,30 @@ TC.mix = function (targetCtor, ...mixins) {
             TC.error('Base layer is not available');
         }
         else {
-            if (!layer.isCompatible(self.getCRS()) && (!layer.fallbackLayer || layer.fallbackLayer && !layer.fallbackLayer.isCompatible(self.getCRS()))) {
-                TC.error('Base layer must be reprojected');
-            }
-            else {
-                self.trigger(Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer });
-
-                result = layer;
-                await self.wrap.getMap();
-                const olLayer = await layer.wrap.getLayer();
-                await self.wrap.setBaseLayer(olLayer);
-                self.baseLayer = layer;
-                self.trigger(Consts.event.BASELAYERCHANGE, { layer: layer });
-                if (TC.Util.isFunction(callback)) {
-                    callback();
+            if (!layer.isCompatible(self.getCRS())) {
+                let fallbackLayer = layer.fallbackLayer;
+                if (typeof fallbackLayer === 'string') {
+                    fallbackLayer = getAvailableBaseLayer.call(self, fallbackLayer);
+                    if (fallbackLayer) {
+                        fallbackLayer = new Raster(fallbackLayer);
+                        await fallbackLayer.getCapabilitiesPromise();
+                    }
                 }
+                if (!fallbackLayer?.isCompatible(self.getCRS())) {
+                    TC.error('Base layer must be reprojected');
+                    return result;
+                }
+            }
+            self.trigger(Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer });
+
+            result = layer;
+            await self.wrap.getMap();
+            const olLayer = await layer.wrap.getLayer();
+            await self.wrap.setBaseLayer(olLayer);
+            self.baseLayer = layer;
+            self.trigger(Consts.event.BASELAYERCHANGE, { layer: layer });
+            if (Util.isFunction(callback)) {
+                callback();
             }
         }
         return result;
@@ -2192,7 +2167,7 @@ TC.mix = function (targetCtor, ...mixins) {
      */
     mapProto.ready = function (callback) {
         var self = this;
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             if (self.isReady) {
                 callback();
             }
@@ -2210,7 +2185,7 @@ TC.mix = function (targetCtor, ...mixins) {
      */
     mapProto.loaded = function (callback) {
         const self = this;
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             if (self.isLoaded) {
                 callback();
             }
@@ -2282,7 +2257,7 @@ TC.mix = function (targetCtor, ...mixins) {
             };
             if (typeof control === 'string') {
                 const ctorName = control.substr(0, 1).toUpperCase() + control.substr(1);
-                const addStringControl = () => _addCtl(new TC.control[ctorName](null, options)).then(resolve);
+                const addStringControl = () => _addCtl(new TC.control[ctorName](void (0), options)).then(resolve);
                 if (!TC.Control || !TC.control[ctorName]) {
                     import(/* webpackMode: "eager" */ './control/' + ctorName).then(function (module) {
                         TC.control[ctorName] = module.default;
@@ -2325,7 +2300,7 @@ TC.mix = function (targetCtor, ...mixins) {
                 }
             }
         }
-        if (TC.Util.isFunction(obj)) {
+        if (Util.isFunction(obj)) {
             self.controls.forEach(ctl => {
                 if (ctl instanceof obj) {
                     result.push(ctl);
@@ -2354,12 +2329,12 @@ TC.mix = function (targetCtor, ...mixins) {
             candidate = self.getControlsByClass('TC.control.' + self.options.defaultActiveControl.substr(0, 1).toUpperCase() + self.options.defaultActiveControl.substr(1))[0];
         }
         if (!candidate) {
-            candidate = self.getControlsByClass('TC.control.MultiFeatureInfo')[0];
+            candidate = self.getControlsByClass(MultiFeatureInfo)[0];
             if (candidate) {
                 candidate = candidate.lastCtrlActive;
             }
             else {
-                candidate = self.getControlsByClass('TC.control.FeatureInfo')[0];
+                candidate = self.getControlsByClass(FeatureInfo)[0];
             }
         }
         return candidate;
@@ -2372,7 +2347,7 @@ TC.mix = function (targetCtor, ...mixins) {
      */
     mapProto.getLoadingIndicator = function () {
         var result = null;
-        var ctls = this.getControlsByClass('TC.control.LoadingIndicator');
+        var ctls = this.getControlsByClass(LoadingIndicator);
         if (ctls.length) {
             result = ctls[0];
         }
@@ -2382,7 +2357,7 @@ TC.mix = function (targetCtor, ...mixins) {
     mapProto.addResultsPanel = function (options) {
         const self = this;
         const opts = Object.assign({}, options);
-        const container = self.getControlsByClass(TC.control.ControlContainer)[0];
+        const container = self.getControlsByClass(ControlContainer)[0];
         if (container) {
             opts.position = container.POSITION.RIGHT;
             return container.addControl('resultsPanel', opts);
@@ -2446,9 +2421,8 @@ TC.mix = function (targetCtor, ...mixins) {
     };
 
 
-    mapProto.getCompatibleCRS = function (options) {
+    mapProto.getCompatibleCRS = function (options = {}) {
         const self = this;
-        options = options || {};
         const layers = options.layers || self.workLayers.concat(self.baseLayer);
         const crsLists = layers
             .filter(function (layer) {
@@ -2465,21 +2439,13 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    mapProto.loadProjections = async function (options) {
-        options = options || {};
+    mapProto.loadProjections = async function (options = {}) {
         const crsList = options.crsList || [];
-        const responses = await Promise.all(crsList
-            .map(function (crs) {
-                return TC.getProjectionData({
-                    crs: TC.Util.getCRSCode(crs)
-                });
-            }));
-        var projList = responses
-            .filter(function (response) {
-                return response.status === 'ok' && response.number_result > 0;
-            })
-            .map(function (response, index, array) {
-                const projData = response.results[0];
+        const projectionDataList = await Promise.all(crsList
+            .map((crs) => TC.getProjectionData({ crs: Util.getCRSCode(crs) })));
+        let projList = projectionDataList
+            .filter((projData) => !!projData)
+            .map(function (projData, index, array) {
                 const code = 'EPSG:' + projData.code;
                 TC.loadProjDef({
                     crs: code,
@@ -2495,14 +2461,13 @@ TC.mix = function (targetCtor, ...mixins) {
                 };
             });
         if (options.orderBy) {
-            projList = projList.sort(TC.Util.getSorterByProperty(options.orderBy));
+            projList = projList.sort(Util.getSorterByProperty(options.orderBy));
         }
         return projList;
     };
 
-    mapProto.setProjection = function (options) {
+    mapProto.setProjection = function (options = {}) {
         const self = this;
-        options = options || {};
         const oldCrs = self.crs;
         return new Promise(function (resolve, reject) {
             var baseLayer;
@@ -2551,13 +2516,13 @@ TC.mix = function (targetCtor, ...mixins) {
                             const setProjection = function (baseLayer) {
 
                                 const _setProjection = function () {
-                                    const layerProjectionOptions = TC.Util.extend({}, options, { oldCrs: self.crs });
+                                    const layerProjectionOptions = Util.extend({}, options, { oldCrs: self.crs });
                                     const setLayerProjection = function (layer) {
                                         layer.setProjection(layerProjectionOptions);
                                     };
                                     if (baseLayer.isCompatible(options.crs) || baseLayer.wrap.getCompatibleMatrixSets(options.crs).length > 0) {
                                         baseLayer.setProjection(layerProjectionOptions);
-                                        self.wrap.setProjection(TC.Util.extend({}, options, { baseLayer: baseLayer }));
+                                        self.wrap.setProjection(Util.extend({}, options, { baseLayer: baseLayer }));
                                         self.crs = options.crs;
                                         // En las capas base disponibles, evaluar su compatibilidad con el nuevo CRS
                                         self.baseLayers
@@ -2575,7 +2540,7 @@ TC.mix = function (targetCtor, ...mixins) {
                                         }
                                     }
                                     else if (baseLayer.fallbackLayer) {
-                                        setProjection(baseLayer.fallbackLayer);
+                                        setProjection(baseLayer.getFallbackLayer());
                                     } else {
                                         endReproject();
                                         reject(Error('Layer has no fallback'));
@@ -2637,13 +2602,13 @@ TC.mix = function (targetCtor, ...mixins) {
      * @param {boolean} [options.animate=false] Realizar animación al hacer el zoom. 
      * El valor es la relación resultante de la diferencia de dimensiones entre la extensión ampliada y la original relativa a la original.
      */
-    mapProto.zoomToFeatures = function (features, options) {
+    mapProto.zoomToFeatures = function (features, options = {}) {
         const self = this;
         if (features.length > 0) {
             let bounds;
             const setExtent = () => {
                 bounds = [Infinity, Infinity, -Infinity, -Infinity];
-                var opts = options || {};
+                var opts = { ...options };
                 opts.contain = true;
                 var radius = opts.pointBoundsRadius || self.options.pointBoundsRadius;
                 radius = radius / self.getMetersPerUnit();
@@ -2697,10 +2662,8 @@ TC.mix = function (targetCtor, ...mixins) {
         }
     };
 
-    mapProto._on3DZoomTo = function (options) {
+    mapProto._on3DZoomTo = function (options = {}) {
         const self = this;
-
-        options = options || {};
 
         if (self.on3DView && options.extent && options.extent.length === 4) {
             // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
@@ -2709,11 +2672,11 @@ TC.mix = function (targetCtor, ...mixins) {
             } else {
                 let extent = options.extent;
                 let coordsXY = self.view3D.view2DCRS !== self.view3D.crs ?
-                    TC.Util.reproject(extent.slice(0, 2), self.view3D.view2DCRS, self.view3D.crs) :
+                    Util.reproject(extent.slice(0, 2), self.view3D.view2DCRS, self.view3D.crs) :
                     extent.slice(0, 2);
 
                 let coordsXY2 = self.view3D.view2DCRS !== self.view3D.crs ?
-                    TC.Util.reproject(extent.slice(2), self.view3D.view2DCRS, self.view3D.crs) :
+                    Util.reproject(extent.slice(2), self.view3D.view2DCRS, self.view3D.crs) :
                     extent.slice(2);
 
                 options.extent = coordsXY.concat(coordsXY2);
@@ -2749,18 +2712,18 @@ TC.mix = function (targetCtor, ...mixins) {
         });
     };
 
-    mapProto.zoomToLayer = function (layer, options) {
+    mapProto.zoomToLayer = function (layer, options = {}) {
         const self = this;
         layer = self.getLayer(layer);
         if (layer.isRaster()) {
             const extent = layer.getExtent();
             if (extent) {
-                options = options || {};
-                options.contain = true;
-                if (typeof options.extentMargin !== 'number') {
-                    options.extentMargin = self.options.extentMargin;
+                const opts = { ...options };
+                opts.contain = true;
+                if (typeof opts.extentMargin !== 'number') {
+                    opts.extentMargin = self.options.extentMargin;
                 }
-                self.setExtent(extent, options);
+                self.setExtent(extent, opts);
 
                 if (self.on3DView) { // GLS: Necesito diferenciar un zoom programático de un zoom del usuario para la gestión del zoom en 3D
                     self._on3DZoomTo({ extent: extent, reprojected: true });
@@ -2818,14 +2781,14 @@ TC.mix = function (targetCtor, ...mixins) {
      * @method addPoint
      * @async
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
-     * @param {TC.cfg.PointStyleOptions} [options] Opciones del punto.
+     * @param {SITNA.feature.PointStyleOptions} [options] Opciones del punto.
      */
     mapProto.addPoint = function (coord, options) {
         var self = this;
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                layer.addPoint(coord, TC.Util.extend(true, {}, options, { layer: layer }));
+                layer.addPoint(coord, Util.extend(true, {}, options, { layer: layer }));
             }
             else {
                 throw new Error('Layer "' + options.layer + '" not found');
@@ -2846,23 +2809,24 @@ TC.mix = function (targetCtor, ...mixins) {
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.MarkerStyleOptions} [options] Opciones del marcador.
      */
-    mapProto.addMarker = async function (coord, options, callback) {
+    mapProto.addMarker = async function (coord, options = {}, callback) {
         const self = this;
-        if (TC.Util.isFunction(options)) {
+        let opts;
+        if (Util.isFunction(options)) {
             callback = options;
-            options = {};
+            opts = {};
         }
         else {
-            options = options || {};
+            opts = { ...options };
         }
         let markerPromise;
-        if (options && options.layer) {
-            var layer = self.getLayer(options.layer);
+        if (opts.layer) {
+            var layer = self.getLayer(opts.layer);
             if (layer) {
-                markerPromise = layer.addMarker(coord, TC.Util.extend(true, {}, options, { layer: layer }));
+                markerPromise = layer.addMarker(coord, Util.extend(true, {}, opts, { layer: layer }));
             }
             else {
-                throw new Error('Layer "' + options.layer + '" not found');
+                throw new Error('Layer "' + opts.layer + '" not found');
             }
         }
         else {
@@ -2870,11 +2834,11 @@ TC.mix = function (targetCtor, ...mixins) {
             const vectorsPromise = _getVectors(self);
             self._markerPromises.push(vectorsPromise)
             const vectors = await vectorsPromise;
-            markerPromise = vectors.addMarker(coord, options);
+            markerPromise = vectors.addMarker(coord, opts);
         }
         self._markerPromises.push(markerPromise);
         const marker = await markerPromise;
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             callback(marker);
         }
         return marker;
@@ -2893,7 +2857,7 @@ TC.mix = function (targetCtor, ...mixins) {
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                layer.addPolyline(coords, TC.Util.extend(true, {}, options, { layer: layer }));
+                layer.addPolyline(coords, Util.extend(true, {}, options, { layer: layer }));
             }
             else {
                 throw new Error('Layer "' + options.layer + '" not found');
@@ -2920,7 +2884,7 @@ TC.mix = function (targetCtor, ...mixins) {
         if (options && options.layer) {
             var layer = self.getLayer(options.layer);
             if (layer) {
-                layer.addPolygon(coords, TC.Util.extend(true, {}, options, { layer: layer }));
+                layer.addPolygon(coords, Util.extend(true, {}, options, { layer: layer }));
             }
             else {
                 throw new Error('Layer "' + options.layer + '" not found');
@@ -2964,9 +2928,8 @@ TC.mix = function (targetCtor, ...mixins) {
         return this.wrap.setResolution(resolution);
     };
 
-    mapProto.exportFeatures = async function (features, options) {
+    mapProto.exportFeatures = async function (features, options = {}) {
         var self = this;
-        options = options || {};
         const featuresToExport = features.filter(f => !f.options.noExport);
         var loadingCtl = self.getLoadingIndicator();
         var waitId = loadingCtl && loadingCtl.addWait();
@@ -3004,310 +2967,81 @@ TC.mix = function (targetCtor, ...mixins) {
             }
         });
         const format = options.format || "";
-        const fillGroupMap = function (groupMap, feature) {
-            const ctor = feature.constructor;
-            let featureList = groupMap.get(ctor);
-            if (!featureList) {
-                featureList = [];
-                groupMap.set(ctor, featureList);
-            }
-            featureList.push(feature);
-            return groupMap;
-        };
         if (format === Consts.format.SHAPEFILE) {
-            const defaultEncoding = "ISO-8859-1";
-            //generar shape
-
-            //agrupar por capa
-            const layers = featuresToExport.reduce(function (rv, feature) {
-                var id = feature.id.substr(0, feature.id.lastIndexOf("."));
-                //si el id no tiene parte numérica intentamos agrupar por otro método
-                if (!id && feature.folders && feature.folders.length)
-                    id = feature.folders[feature.folders.length - 1];
-                if (!id && feature.layer && feature.layer.title)
-                    id = feature.layer.title.substr(0, feature.layer.title.lastIndexOf("."));
-                //var id = feature.layer? (typeof(feature.layer)==="string"?feature.layer:feature.layer.id) :feature.id.substr(0, feature.id.lastIndexOf("."));
-                (rv[id] = rv[id] || []).push(feature);
-                return rv;
-            }, {});
-
-            const getInnerType = function (constructor) {
-
-                switch (true) {
-                    case constructor === Point:
-                    case constructor === Marker:
-                        return 'POINT';
-                    case constructor === Polygon:
-                    case constructor === MultiPolygon:
-                        return 'POLYGON';
-                    case constructor === Polyline:
-                    case constructor === MultiPolyline:
-                        return 'POLYLINE';
-                }
-                return 'NULL';
-            };
-            const proj = await TC.getProjectionData({ crs: self.crs });
-
-            const arrPromises = [];
-            const shpWrite = (await import('@aleffabricio/shp-write/index')).default;
-            let layerId;
-            for (layerId in layers) {
-                //agrupar las features por tipos
-                const groups = layers[layerId].reduce(fillGroupMap, new Map());
-                groups.forEach(function featuresToShp(featureList, constructor, thisMap) {
-                    arrPromises.push(new Promise(function (resolve) {
-                        const data = featureList.reduce(function (prev, curr) {
-                            const data = {};
-                            for (var key in curr.data) {
-                                const val = curr.data[key];
-                                data[key] = typeof val === 'string' ?
-                                    val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
-                                    val;
-                            }
-                            if (curr.getStyle().label && !curr.data.name)
-                                data.name = curr.getStyle().label;
-                            return prev.concat([data]);
-                        }, []);
-                        const geometries = featureList.reduce(function (prev, curr) {
-                            //No se porque no le gusta las geometrias polyline de la herramienta draw por tanto las convierto a multipolyline
-                            if (curr instanceof Polyline) {
-                                curr = new MultiPolyline(curr.getCoords(), curr.options);
-                            }
-                            //si el sistema de referencia es distinto a EPSG:4326 reproyecto las geometrias							
-                            return prev.concat([curr.geometry]);
-                        }, []);
-                        //generamos el un shape mas sus allegados por grupo
-                        shpWrite.write(data
-                            , getInnerType(constructor)
-                            , geometries
-                            , function (_empty, content) {
-                                const fileName = layerId + (thisMap.size > 1 ? "_" + getInnerType(constructor) : "");
-                                resolve({ "fileName": fileName, "content": content });
-                            });
-                    }));
-                });
-            }
-
-            const resolves = [];
-            for (var i = 0; i < arrPromises.length; i++) {
-                resolves[i] = await arrPromises[i];
-            }
-
-            //creamos el fichero zip
-            const JSZip = (await import("jszip")).default;
-            const zip = new JSZip();
-            resolves.forEach(resolve => {
-                zip.file(resolve.fileName + ".shp", resolve.content.shp.buffer);
-                zip.file(resolve.fileName + ".shx", resolve.content.shx.buffer);
-                zip.file(resolve.fileName + ".dbf", resolve.content.dbf.buffer);
-                zip.file(resolve.fileName + ".prj", proj.results[0].wkt);
-                zip.file(resolve.fileName + ".cst", defaultEncoding);
-                zip.file(resolve.fileName + ".cpg", defaultEncoding);
-            });
+            const { default: shpFormat } = await import('../SITNA/format/Shapefile');
             try {
-                const blob = await zip.generateAsync({ type: "blob" });
+                const blob = await shpFormat.exportFeatures(featuresToExport, { crs: self.crs });
                 loadingCtl && loadingCtl.removeWait(waitId);
                 return blob;
             }
             catch (err) {
+                TC.error(err, [Consts.msgErrorMode.CONSOLE, Consts.msgErrorMode.TOAST]);
                 loadingCtl && loadingCtl.removeWait(waitId);
-                throw err;
             }
         }
         if (format === Consts.format.GEOPACKAGE) {
-            const fieldDataType = function (geopackage, value) {
-                var name = '';
-                switch (typeof value) {
-                    case "string":
-                        name = geopackage.DataTypes.TEXT;
-                        break;
-                    case "number":
-                        if (value % 1 === 0)
-                            name = geopackage.DataTypes.INT;
-                        else
-                            name = geopackage.DataTypes.FLOAT;
-                        break;
-                    case "boolean":
-                        name = geopackage.DataTypes.BOOLEAN;
-                        break;
-                    default:
-                        name = geopackage.DataTypes.TEXT;
-                    //date y datetime
-                }
-                return name;
-            };
-            const currentCrs = self.crs;
-            await TC.loadJS(!window.geopackage, TC.apiLocation + "lib/geopackagejs/dist/geopackage-browser.js");
-            const geopackage = window.geopackage;
-            const wkx = (await import('wkx')).default;
-            //Promise.all([import("../lib/geopackagejs/dist/geopackage-browser"), import("wkx/dist/wkx")]).then(async function (responses) {                                    
-            const geopackageAPI = geopackage.GeoPackageAPI;
-            const FeatureColumn = geopackage.FeatureColumn;
-            const GeometryColumns = geopackage.GeometryColumns;
-            const myPackage = await geopackageAPI.create();
-
-            var srs_id = currentCrs.substr(currentCrs.indexOf(":") + 1);
-            if (!myPackage.spatialReferenceSystemDao.queryForId(srs_id)) {
-                var newSRS = myPackage.spatialReferenceSystemDao.createObject();
-                var projData = await TC.getProjectionData({ crs: currentCrs });
-                newSRS.srs_name = currentCrs;
-                newSRS.srs_id = projData.results[0].code;
-                newSRS.organization = currentCrs.substr(0, currentCrs.indexOf(":"));
-                newSRS.organization_coordsys_id = projData.results[0].code;
-                newSRS.definition = projData.results[0].proj4.trim();
-                newSRS.definition_12_063 = projData.results[0].wkt.trim();
-                newSRS.description = projData.results[0].name;
-                myPackage.spatialReferenceSystemDao.create(newSRS);
-            }
-            //agrupar por capa
-            //const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1); 
-            const layers = featuresToExport.reduce(function (rv, feature) {
-                var id = typeof feature.id === "string" ? feature.id.substr(0, feature.id.lastIndexOf(".")) : options.fileName;
-                //var id = feature.layer ? (typeof (feature.layer) === "string" ? feature.layer : feature.layer.id) : feature.id.substr(0, feature.id.lastIndexOf("."));
-                (rv[id] = rv[id] || []).push(feature);
-                return rv;
-            }, {});
-            let layerId;
-            for (layerId in layers) {
-                //agrupar las features por tipos
-                const groups = layers[layerId].reduce(fillGroupMap, new Map());
-                for (let featureList of groups.values()) {
-                    //crear columnas
-
-                    let i = 0;
-
-                    let geometryType;
-                    const firstFeature = featureList[0];
-                    switch (true) {
-                        case firstFeature instanceof Polyline:
-                            geometryType = "LineString";
-                            break;
-                        case firstFeature instanceof MultiPolyline:
-                            geometryType = "MultiLineString";
-                            break;
-                        case firstFeature instanceof Marker:
-                        case firstFeature instanceof Point:
-                            geometryType = "Point";
-                            break;
-                        case firstFeature instanceof MultiMarker:
-                        case firstFeature instanceof MultiPoint:
-                            geometryType = "MultiPoint";
-                            break;
-                        case firstFeature instanceof Polygon:
-                            geometryType = "Polygon";
-                            break;
-                        case firstFeature instanceof MultiPolygon:
-                            geometryType = "MultiPolygon";
-                            break;
-                    }
-                    const tableName = layerId + (groups.size > 1 ? "_" + geometryType : "");// + (timestamp ? "_" + timestamp : "");
-                    var columns = [];
-                    //var dataColumns = [];
-                    var pkColumnName = "id";
-
-                    if (Object.prototype.hasOwnProperty.call(featuresToExport[0], "id") ||
-                        Object.prototype.hasOwnProperty.call(featuresToExport[0], "ID")) {
-                        columns.push(FeatureColumn.createPrimaryKeyColumnWithIndexAndName(i++, pkColumnName));
-                    }
-                    columns.push(FeatureColumn.createGeometryColumn(i++, 'geometry', geometryType.toUpperCase(), true, null));
-
-                    var bounds = [Infinity, Infinity, -Infinity, -Infinity];
-                    for (var j = 0; j < featureList.length; j++) {
-                        var b = featureList[j].getBounds();
-                        if (b) {
-                            bounds[0] = Math.min(bounds[0], b[0]);
-                            bounds[1] = Math.min(bounds[1], b[1]);
-                            bounds[2] = Math.max(bounds[2], b[2]);
-                            bounds[3] = Math.max(bounds[3], b[3]);
-                        }
-                    }
-
-                    for (var x in firstFeature.data || firstFeature.attributes) {
-                        var fieldName = firstFeature.attributes && firstFeature.attributes[x] ? firstFeature.attributes[x].name : x;
-                        if (fieldName.toLowerCase() === 'id') continue;
-                        var fieldValue = firstFeature.data[fieldName];
-                        const c = FeatureColumn.createColumn(i++, fieldName, fieldDataType(geopackage, fieldValue));
-                        columns.push(c);
-                        //dataColumns.push(c);
-                    }
-                    //si alguna feature tiene simbología de tipo texto se añade como una columna más a la tabla llamada "name"
-                    if (featureList.some(f => f.getStyle().label && !f.data.name)) {
-                        const c = FeatureColumn.createColumn(i++, "name", geopackage.DataTypes.TEXT);
-                        columns.push(c);
-                    }
-
-
-                    var geometryColumns = new GeometryColumns();
-                    geometryColumns.table_name = tableName;
-                    geometryColumns.column_name = 'geometry';
-                    geometryColumns.geometry_type_name = geometryType.toUpperCase();
-                    geometryColumns.z = firstFeature.getGeometryStride();
-                    geometryColumns.m = 2;
-                    geometryColumns.srs_id = srs_id;
-                    i = 0;
-                    const boundingBox = new geopackage.BoundingBox(bounds[0], bounds[2], bounds[1], bounds[3]);
-                    await myPackage.createFeatureTable(tableName, geometryColumns, columns, boundingBox, srs_id)
-                    //geopackage.createFeatureTableWithDataColumnsAndBoundingBox(myPackage, tableName, geometryColumns, columns, null, boundingBox, srs_id)
-                    const featureDao = myPackage.getFeatureDao(tableName);
-                    for (let i = 0; i < featureList.length; i++) {
-                        const feature = featureList[i];
-                        const featureRow = featureDao.newRow();
-                        const geometryData = new geopackage.GeometryData();
-                        geometryData.setSrsId(srs_id);
-                        const geometry = wkx.Geometry.parse('SRID=' + srs_id + ';' + new ol.format.WKT().writeFeature(feature.wrap.feature));
-                        //const geometry=(hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))))(new ol.format.WKB().writeGeometry(feature.wrap.feature.getGeometry(),{featureProjection:currentCrs,dataProjection:currentCrs}));
-                        geometryData.setGeometry(geometry);
-                        featureRow.setValueWithColumnName(featureRow.geometryColumn.name, geometryData);
-                        if (Object.prototype.hasOwnProperty.call(feature, "id") ||
-                            Object.prototype.hasOwnProperty.call(feature, "ID"))
-                            featureRow.setValueWithColumnName(pkColumnName, typeof feature.id === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
-                        else if (Object.prototype.hasOwnProperty.call(feature.data, "id") ||
-                            Object.prototype.hasOwnProperty.call(feature.data, "ID"))
-                            featureRow.setValueWithColumnName(pkColumnName, typeof feature.id === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
-                        for (var y in feature.data || feature.attributes) {
-                            const fieldName = firstFeature.attributes && firstFeature.attributes[y] ? firstFeature.attributes[x].name : y;
-                            if (fieldName.toLowerCase() === 'id') {
-                                continue;
-                            }
-                            const fieldValue = feature.data[fieldName];
-                            featureRow.setValueWithColumnName(fieldName, fieldValue);
-                        }
-                        if (featureDao.columns.indexOf("name") >= 0 && !feature.data.name) {
-                            featureRow.setValueWithColumnName("name", feature.getStyle().label);
-                        }
-
-                        featureDao.create(featureRow);
-                    }
-                }
-            }
-
-            let data;
-
+            const { default: gpFormat } = await import('../SITNA/format/GeoPackage');
             try {
-                data = await myPackage.export();
+                const data = await gpFormat.exportFeatures(featuresToExport, { ...options, ...{ crs: self.crs } });
                 loadingCtl && loadingCtl.removeWait(waitId);
                 return data;
             }
-            catch (error) {
-                console.log(error);
+            catch (err) {
+                TC.error(err, [Consts.msgErrorMode.CONSOLE, Consts.msgErrorMode.TOAST]);
                 loadingCtl && loadingCtl.removeWait(waitId);
             }
             return;
         }
-        const data = self.wrap.exportFeatures(featuresToExport, options);
+
         const mimeType = Consts.mimeType[options.format];
-        if (format === Consts.format.KMZ) {
-            const JSZip = (await import("jszip")).default;
+        const zipExtRegex = /\.zip$/i;
+        const isZip = zipExtRegex.test(options.fileName);
+        let JSZip;
+        if (format === Consts.format.KMZ || isZip) {
+            JSZip = (await import("jszip")).default;
+        }
+        if (isZip) {
+            const featureDictionary = new Map();
+            featuresToExport.forEach((feature) => {
+                const fileName = feature.layer?.file;
+                if (fileName) {
+                    let feats = featureDictionary.get(fileName);
+                    if (!feats) {
+                        feats = [];
+                        featureDictionary.set(fileName, feats);
+                    }
+                    feats.push(feature);
+                }
+            });
+
+            const exportByFile = async function (fileName, features) {
+                const format = Util.getFormatFromFileExtension(fileName.substr(fileName.lastIndexOf('.')));
+                return await self.exportFeatures(features, { format });
+            };
+
+            const entries = Array.from(featureDictionary.entries());
+            const dataCollection = await Promise.all(entries.map(elm => exportByFile(...elm)));
             const zip = new JSZip();
-            zip.file((options.fileName || 'doc') + ".kml", data);
+            dataCollection.forEach((data, idx) => {
+                const fileName = entries[idx][0];
+                zip.file(fileName, data);
+            });
             const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
             loadingCtl && loadingCtl.removeWait(waitId);
             return blob;
         }
-        else {
+
+        const data = self.wrap.exportFeatures(featuresToExport, options);
+        if (format === Consts.format.KMZ) {
+            const zip = new JSZip();
+            const fileName = (options.fileName || 'doc') + '.kml';
+            zip.file(fileName, data);
+            const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
             loadingCtl && loadingCtl.removeWait(waitId);
-            return data;
+            return blob;
         }
+        loadingCtl && loadingCtl.removeWait(waitId);
+        return data;
     };
 
     mapProto.exportControlStates = function () {
@@ -3502,7 +3236,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     const isString = typeof service === 'string';
                     const serviceName = isString ? service : service.name;
                     if (serviceName === 'elevationServiceGoogle') {
-                        return TC.Util.extend({
+                        return Util.extend({
                             name: serviceName,
                             googleMapsKey: self.options.googleMapsKey
                         }, isString ? {} : service);
@@ -3538,7 +3272,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     }
                 }
                 var featFounds = parseInt(response.querySelector("FeatureCollection").getAttribute("numberMatched") || response.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);
-                if (isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
+                if (Number.isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
                     resolve({
                         errors: [{
                             key: Consts.WFSErrors.MAX_NUM_FEATURES
@@ -3592,7 +3326,7 @@ TC.mix = function (targetCtor, ...mixins) {
             //        }
             //    }
             //    var featFounds = parseInt(responseData.querySelector("FeatureCollection").getAttribute("numberMatched") || responseData.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);                
-            //    if (isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
+            //    if (Number.isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
             //        resolve({
             //            errors: [{
             //                key: Consts.WFSErrors.MAX_NUM_FEATURES
@@ -3671,7 +3405,7 @@ TC.mix = function (targetCtor, ...mixins) {
             let _filter;
             var geometryFields = [];
             for (var k in response[layerName]) {
-                if (TC.Util.isGeometry(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
+                if (Util.isGeometry(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
                     //if (/^gml:\w+PropertyType$/.test(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
                     geometryFields.push(k);
                 }
@@ -3712,10 +3446,9 @@ TC.mix = function (targetCtor, ...mixins) {
         return returnObject;
     };
 
-    mapProto.extractFeatures = function (options) {
+    mapProto.extractFeatures = function (options = {}) {
         const self = this;
         const arrPromises = [];
-        options = options || {};
         const filter = options.filter;
         const outputFormat = options.outputFormat;
         const download = options.download;
@@ -3734,7 +3467,7 @@ TC.mix = function (targetCtor, ...mixins) {
         const getCRS = function () {
             if (download && (outputFormat === Consts.mimeType.JSON || outputFormat === Consts.mimeType.KML))
                 return Consts.SRSDOWNLOAD_GEOJSON_KML;
-            return TC.Util.toURNCRS(self.getCRS());
+            return Util.toURNCRS(self.getCRS());
         };
         const _postOrDownload = function (objlayer, data) {
             return new Promise(function (resolve) {
@@ -3857,7 +3590,7 @@ TC.mix = function (targetCtor, ...mixins) {
                     ]).then(function (response) {
                         var filter = response[0]; //1
                         if (_numMaxFeatures) {
-                            _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer: service.mapLayers[0] }, TC.Util.WFSQueryBuilder(filter, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
+                            _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer: service.mapLayers[0] }, Util.WFSQueryBuilder(filter, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
                                 if (response.errors && response.errors.length > 0) {
                                     switch (response.errors[0].key) {
                                         case Consts.WFSErrors.INDETERMINATE:
@@ -3873,14 +3606,14 @@ TC.mix = function (targetCtor, ...mixins) {
                                     resolve(response);
                                 }
                                 else {
-                                    _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, TC.Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
+                                    _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
                                         resolve(Object.assign({ service: service, errors: errors }, response));
                                     });
                                 }
                             });
                         }
                         else {
-                            _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, TC.Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
+                            _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
                                 resolve(Object.assign({ service: service, errors: errors }, response));
 
                             });
@@ -4006,11 +3739,12 @@ TC.mix = function (targetCtor, ...mixins) {
                     return l._fileHandle.isSameEntry(handle);
                 })) {
                 if (isSame) {
-                    self.toast(TC.Util.getLocaleString(self.options.locale, 'fileLoadedMoreThanOnce'), { type: Consts.msgType.WARNING });
+                    self.toast(Util.getLocaleString(self.options.locale, 'fileLoadedMoreThanOnce'), { type: Consts.msgType.WARNING });
                 }
             }
             let handles = [entry.mainHandle || entry];
             if (entry.additionalHandles) {
+                handles[0]._siblings = entry.additionalHandles;
                 handles = handles.concat(entry.additionalHandles);
             }
             const permissions = [];

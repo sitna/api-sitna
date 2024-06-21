@@ -6,6 +6,7 @@ import wrap from '../ol/ol';
 import './Draw';
 import './Modify';
 import './Measurement';
+import './AttributesEdit';
 import Geometry from '../Geometry';
 import Point from '../../SITNA/feature/Point';
 import Polyline from '../../SITNA/feature/Polyline';
@@ -16,11 +17,9 @@ import WebComponentControl from './WebComponentControl';
 
 TC.wrap = wrap;
 
-const className = 'tc-ctl-edit';
 const elementName = 'sitna-edit';
 
 class Edit extends WebComponentControl {
-    CLASS = className;
     #classSelector;
     #selectors;
     #previousActiveControl;
@@ -28,6 +27,7 @@ class Edit extends WebComponentControl {
     #highlightsLayerPromise;
     #measurementControl;
     #originalFeatures = new WeakMap();
+    #modes = new Set();
 
     static mode = {
         MODIFY: 'modify',
@@ -37,6 +37,10 @@ class Edit extends WebComponentControl {
         CUT: 'cut',
         OTHER: 'other'
     };
+
+    static event = {
+        MODECHANGE: 'modechange'
+    }
 
     constructor() {
         super(...arguments);
@@ -80,15 +84,11 @@ class Edit extends WebComponentControl {
             self.#onStylableChange();
         }
         if (name === 'mode') {
-            self.#onModeChange();
+            self.#onModeChange(oldValue);
         }
         if (name == 'snapping') {
             self.#onSnappingChange();
         }
-    }
-
-    getClassName() {
-        return className;
     }
 
     get stylable() {
@@ -121,7 +121,7 @@ class Edit extends WebComponentControl {
 
     async #onSnappingChange() {
         const self = this;
-        const snapping = self.snapping;
+        const snapping = self.snapping ? self.layer || self.snapping : false;
         (await self.getPointDrawControl()).snapping = snapping;
         (await self.getLineDrawControl()).snapping = snapping;
         (await self.getPolygonDrawControl()).snapping = snapping;
@@ -148,19 +148,10 @@ class Edit extends WebComponentControl {
         this.toggleAttribute('no-other-tools', !value);
     }
 
-    #onModeChange() {
+    #onModeChange(oldMode) {
         const self = this;
         const mode = self.mode;
         //setFeatureSelectReadyState(self);
-
-        var activateDraw = function (draw) {
-            if (draw) {
-                if (self.snapping) {
-                    draw.snapping = self.layer;
-                }
-                draw.activate();
-            }
-        };
 
         Promise.all([
             self.getPointDrawControl(),
@@ -179,15 +170,15 @@ class Edit extends WebComponentControl {
                     modifyControl.activate();
                     break;
                 case Edit.mode.ADDPOINT:
-                    activateDraw(pointDrawControl);
+                    pointDrawControl.activate();
                     self.#measurementControl.mode = Consts.geom.POINT;
                     break;
                 case Edit.mode.ADDLINE:
-                    activateDraw(lineDrawControl);
+                    lineDrawControl.activate();
                     self.#measurementControl.mode = Consts.geom.POLYLINE;
                     break;
                 case Edit.mode.ADDPOLYGON:
-                    activateDraw(polygonDrawControl);
+                    polygonDrawControl.activate();
                     self.#measurementControl.mode = Consts.geom.POLYGON;
                     break;
                 case Edit.mode.OTHER:
@@ -214,6 +205,9 @@ class Edit extends WebComponentControl {
                     tab.selected = false;
                 });
             }
+
+            const event = new CustomEvent(Edit.event.MODECHANGE, { detail: { oldMode } });
+            self.dispatchEvent(event);
         });
     }
 
@@ -341,15 +335,31 @@ class Edit extends WebComponentControl {
                         self.#measurementControl.clear();
                         break;
                 }
+            })
+            .on(Consts.event.CONTROLDEACTIVATE, function (e) {
+                let attributeEditorControlPromise;
+                switch (e.control) {
+                    case self.pointDrawControl:
+                        attributeEditorControlPromise = self.getPointDrawControlAttributeEditor();
+                        break;
+                    case self.lineDrawControl:
+                        attributeEditorControlPromise = self.getLineDrawControlAttributeEditor();
+                        break;
+                    case self.polygonDrawControl:
+                        attributeEditorControlPromise = self.getPolygonDrawControlAttributeEditor();
+                        break;
+                    default:
+                        break;
+                }
+                attributeEditorControlPromise?.then(ctl => ctl.feature = null);
             });
         return self;
     }
 
-    #getModeTab(mode) {
+    getModeTab(mode) {
         const self = this;
         return self.querySelector(`sitna-tab[for="${self.id}-mode-${mode}"]`);
     }
-
 
     async loadTemplates() {
         const self = this;
@@ -371,12 +381,12 @@ class Edit extends WebComponentControl {
 
     async render(callback) {
         const self = this;
-        await self._set1stRenderPromise(super.renderData.call(self, {
+        await super.renderData.call(self, {
             controlId: self.id,
             stylable: self.stylable,
             snapping: self.snapping,
             otherToolsIncluded: self.otherToolsIncluded
-        }));
+        });
 
         const controls = await Promise.all([
             self.getPointDrawControl(),
@@ -398,15 +408,32 @@ class Edit extends WebComponentControl {
         self.modifyControl = controls[3];
         self.modifyControl.id = self.getUID();
 
+        self.modifyControlAttributesEditor = await self.getModifyControlAttributeEditor();
+        self.modifyControlAttributesEditor.clientControl = self.modifyControl;
+        self.pointDrawControlAttributesEditor = await self.getPointDrawControlAttributeEditor();
+        self.pointDrawControlAttributesEditor.clientControl = self.pointDrawControl;
+        self.lineDrawControlAttributesEditor = await self.getLineDrawControlAttributeEditor();
+        self.lineDrawControlAttributesEditor.clientControl = self.lineDrawControl;
+        self.polygonDrawControlAttributesEditor = await self.getPolygonDrawControlAttributeEditor();
+        self.polygonDrawControlAttributesEditor.clientControl = self.polygonDrawControl;
+
         const addElevation = async function (feature) {
             if (self.map.options.elevation && feature.getGeometryStride() > 2) {
                 let changed = false;
                 let elevationTool;
-                for (const point of Geometry.iterateCoordinates(feature.geometry)) {
+                const cloneTree = function (tree) {
+                    if (Array.isArray(tree)) {
+                        return tree.map((elm) => cloneTree(elm));
+                    }
+                    return tree;
+                }
+                const geometry = cloneTree(feature.geometry);
+                for (const point of Geometry.iterateCoordinates(geometry)) {
                     if (!point[2]) {
                         elevationTool = elevationTool || await self.map.getElevationTool();
                         const newCoords = await elevationTool.getElevation({
-                            coordinates: [point]
+                            coordinates: [point],
+                            crs: self.map.getCrs()
                         });
                         if (newCoords?.length) {
                             changed = true;
@@ -415,7 +442,7 @@ class Edit extends WebComponentControl {
                     }
                 }
                 if (changed) {
-                    feature.setCoordinates(feature.geometry);
+                    feature.setCoordinates(geometry);
                 }
             }
         };
@@ -674,7 +701,7 @@ class Edit extends WebComponentControl {
         if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
             for (var m in Edit.mode) {
                 if (typeof m === 'string' && self.options.modes.indexOf(Edit.mode[m]) < 0) {
-                    const tab = self.#getModeTab(Edit.mode[m]);
+                    const tab = self.getModeTab(Edit.mode[m]);
                     const div = tab.target;
                     div.parentElement.removeChild(div);
                     tab.parentElement.removeChild(tab);
@@ -682,7 +709,7 @@ class Edit extends WebComponentControl {
             }
             if (self.options.modes.length === 1) {
                 var mode = self.options.modes[0];
-                const tab = self.#getModeTab(mode);
+                const tab = self.getModeTab(mode);
                 tab.parentElement.removeChild(tab);
             }
         }
@@ -718,48 +745,6 @@ class Edit extends WebComponentControl {
         return self;
     }
 
-    getGeometryType(geometryType) {
-        switch (geometryType) {
-            case 'gml:LinearRingPropertyType':
-            case 'gml:PolygonPropertyType':
-            case 'LinearRingPropertyType':
-            case 'PolygonPropertyType':
-                return Consts.geom.POLYGON;
-            case 'gml:MultiPolygonPropertyType':
-            case 'gml:MultiSurfacePropertyType':
-            case 'MultiPolygonPropertyType':
-            case 'MultiSurfacePropertyType':
-                return Consts.geom.MULTIPOLYGON;
-            case 'gml:LineStringPropertyType':
-            case 'gml:CurvePropertyType':
-            case 'LineStringPropertyType':
-            case 'CurvePropertyType':
-                return Consts.geom.POLYLINE;
-            case 'gml:MultiLineStringPropertyType':
-            case 'gml:MultiCurvePropertyType':
-            case 'MultiLineStringPropertyType':
-            case 'MultiCurvePropertyType':
-                return Consts.geom.MULTIPOLYLINE;
-            case 'gml:PointPropertyType':
-            case 'gml:MultiPointPropertyType':
-            case 'PointPropertyType':
-            case 'MultiPointPropertyType':
-                return Consts.geom.POINT;
-            case 'gml:BoxPropertyType':
-            case 'BoxPropertyType':
-                return Consts.geom.RECTANGLE;
-            case 'gml:GeometryCollectionPropertyType':
-            case 'gml:GeometryAssociationType':
-            case 'gml:GeometryPropertyType':
-            case 'GeometryCollectionPropertyType':
-            case 'GeometryAssociationType':
-            case 'GeometryPropertyType':
-                return true;
-            default:
-                return false;
-        }
-    }
-
     setLayer(layer) {
         const self = this;
         self.modifyControl && self.modifyControl.unselectFeatures(self.getSelectedFeatures());
@@ -774,7 +759,7 @@ class Edit extends WebComponentControl {
                     let key;
                     for (key in attributes) {
                         const attr = attributes[key];
-                        const geometryType = self.getGeometryType(attr.type);
+                        const geometryType = Util.getGeometryType(attr.type);
                         if (geometryType) {
                             layerEditData.geometryName = attr.name;
                             layerEditData.geometryType = typeof geometryType === 'boolean' ? null : geometryType;
@@ -796,18 +781,28 @@ class Edit extends WebComponentControl {
                     };
                 });
         }
-        const setLayer = c => c.setLayer(self.layer);
-        self.getModifyControl().then(setLayer);
-        self.getPointDrawControl().then(setLayer);
-        self.getLineDrawControl().then(setLayer);
-        self.getPolygonDrawControl().then(setLayer);
-        //self.getCutDrawControl().then(setLayer);
+        Promise.all([
+            self.getModifyControl(),
+            self.getPointDrawControl(),
+            self.getLineDrawControl(),
+            self.getPolygonDrawControl()
+            //self.getCutDrawControl()
+        ]).then(controls => {
+            controls.forEach(ctl => {
+                ctl.setLayer(self.layer);
+            });
+            self.#onSnappingChange();
+        });
         self.mode = self.layer ? Edit.mode.MODIFY : null;
         self.#setEditState(self.layer);
         return self;
     }
 
-    constrainModes(modes) {
+    getModes() {
+        return [...this.#modes.values()];
+    }
+
+    setModes(modes) {
         const self = this;
         if (!Array.isArray(modes)) {
             modes = [];
@@ -815,27 +810,29 @@ class Edit extends WebComponentControl {
         if (!modes.length) {
             modes = Object.values(Edit.mode);
         }
-        self.modes = modes
-            .filter(function (m) {
-                // Quitamos los valores que no sean modos de edición
-                for (var key in Edit.mode) {
-                    if (Edit.mode[key] === m) {
+        self.#modes = new Set(
+            modes
+                .filter(function (m) {
+                    // Quitamos los valores que no sean modos de edición
+                    for (var key in Edit.mode) {
+                        if (Edit.mode[key] === m) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .filter(function (m) {
+                    // Quitamos los modos de edición que no se definieron en la configuración
+                    if (!Array.isArray(self.options.modes)) {
                         return true;
                     }
-                }
-                return false;
-            })
-            .filter(function (m) {
-                // Quitamos los modos de edición que no se definieron en la configuración
-                if (!Array.isArray(self.options.modes)) {
-                    return true;
-                }
-                return self.options.modes.indexOf(m) >= 0;
-            });
-        if (self.modes.indexOf(self.mode) < 0) {
+                    return self.options.modes.indexOf(m) >= 0;
+                })
+        );
+        if (!self.#modes.has(self.mode)) {
             self.mode = null;
         }
-        const selector = self.modes.map(m => `[for="${self.id}-mode-${m}"]`).join() || '[for]';
+        const selector = self.getModes().map(m => `[for="${self.id}-mode-${m}"]`).join() || '[for]';
         self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
             tab.disabled = !tab.matches(selector);
         });
@@ -891,9 +888,8 @@ class Edit extends WebComponentControl {
         return self;
     }
 
-    async activate(options) {
+    async activate(options = {}) {
         const self = this;
-        options = options || {};
         let ctl;
         switch (options.mode) {
             case Edit.mode.ADDPOINT:
@@ -936,7 +932,6 @@ class Edit extends WebComponentControl {
                     break;
             }
         }
-        self.modifyControl && self.modifyControl.closeAttributes();
         return self;
     }
 
@@ -1044,10 +1039,22 @@ class Edit extends WebComponentControl {
         return self.querySelector(`.${self.CLASS}-modify sitna-modify`);
     }
 
+    async getModifyControlAttributeEditor() {
+        const self = this;
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-modify sitna-attributes-edit`);
+    }
+
     async getPointDrawControl() {
         const self = this;
         await self.renderPromise();
         return self.querySelector(`.${self.CLASS}-point sitna-draw`);
+    }
+
+    async getPointDrawControlAttributeEditor() {
+        const self = this;
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-point sitna-attributes-edit`);
     }
 
     async getLineDrawControl() {
@@ -1056,10 +1063,22 @@ class Edit extends WebComponentControl {
         return self.querySelector(`.${self.CLASS}-line sitna-draw`);
     }
 
+    async getLineDrawControlAttributeEditor() {
+        const self = this;
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-line sitna-attributes-edit`);
+    }
+
     async getPolygonDrawControl() {
         const self = this;
         await self.renderPromise();
         return self.querySelector(`.${self.CLASS}-polygon sitna-draw`);
+    }
+
+    async getPolygonDrawControlAttributeEditor() {
+        const self = this;
+        await self.renderPromise();
+        return self.querySelector(`.${self.CLASS}-polygon sitna-attributes-edit`);
     }
 
     //async getCutDrawControl() {
@@ -1137,6 +1156,10 @@ class Edit extends WebComponentControl {
                 };
             })
             .filter(l => l.features.length);
+    }
+
+    displayMeasurement(feature) {
+        this.#measurementControl.displayMeasurement(feature);
     }
 
     importFeatures(features) {
@@ -1317,5 +1340,6 @@ class Edit extends WebComponentControl {
     }
 }
 
+Edit.prototype.CLASS = 'tc-ctl-edit';
 customElements.get(elementName) || customElements.define(elementName, Edit);
 export default Edit;

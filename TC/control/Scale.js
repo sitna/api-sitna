@@ -9,15 +9,6 @@ TC.control = TC.control || {};
 Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
 class Scale extends Control {
-    constructor() {
-        super(...arguments);
-        const self = this;
-        self.div.classList.add(self.CLASS);
-    }
-
-    getClassName() {
-        return 'tc-ctl-scl';
-    }
 
     async loadTemplates() {
         const self = this;
@@ -27,19 +18,24 @@ class Scale extends Control {
 
     render(callback) {
         const self = this;
-        return self._set1stRenderPromise(self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize }, function () {
+        return self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize }, function () {
 
             const span = self.div.querySelector('span');
             span.textContent = '1:' + self.format(span.textContent.substr(2));
 
-            self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
-                self.setScreenSize();
-            }, { passive: true });
+            self.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-        }));
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
+            self.setScreenSize();
+        }, { passive: true });
     }
 
     register(map) {
@@ -131,5 +127,6 @@ class Scale extends Control {
     }
 }
 
+Scale.prototype.CLASS = 'tc-ctl-scl';
 TC.control.Scale = Scale;
 export default Scale;

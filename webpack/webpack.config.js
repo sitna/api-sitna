@@ -70,6 +70,7 @@ module.exports = {
     },
     output: {
         filename: 'sitna.js',
+        uniqueName: 'api-sitna',
         path: path.resolve(__dirname, '../dist'),
         chunkFilename: 'chunks/[name].sitna.js',
         sourceMapFilename: 'maps/[file].map',

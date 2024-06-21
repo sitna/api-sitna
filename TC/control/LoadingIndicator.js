@@ -10,17 +10,12 @@ class LoadingIndicator extends Control {
     constructor() {
         super(...arguments);
         const self = this;
-        self.div.classList.add(self.CLASS);
 
         window.addEventListener('error', function () {
             self.reset();
             // Tell browser to run its own error handler as well
             return false;
         }, false);
-    }
-
-    getClassName() {
-        return 'tc-ctl-load';
     }
 
     async loadTemplates() {
@@ -129,5 +124,6 @@ class LoadingIndicator extends Control {
     }
 }
 
+LoadingIndicator.prototype.CLASS = 'tc-ctl-load';
 TC.control.LoadingIndicator = LoadingIndicator;
 export default LoadingIndicator;

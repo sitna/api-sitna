@@ -42,15 +42,13 @@ TC.filter.Filter.prototype.setTagName = function (_text) {
 
 TC.filter.Filter.prototype.writeFilterCondition_ = function () {
 
-    //return '<{prefix}:{tag}>{childs}</{prefix}:{tag}>'.format({prefix:"ogc",tag:filter.getTagName(),childs:""});
+    //return Util.formatTemplate('<{prefix}:{tag}>{children}</{prefix}:{tag}>', {prefix:"ogc",tag:filter.getTagName(),children:""});
     var filter = this;
-    return '<{prefix}:Filter xmlns:{prefix}=\"{NSURL}" xmlns:gml=\"http://www.opengis.net/gml{gmlversion}">{inner}</{prefix}:Filter>'.format({
-        prefix: this._defaultPrefixNS,
-        NSURL: this._defaultNSURL,
-        tag: filter.getTagName(),
-        inner: this.writeInnerCondition_(filter),
-        gmlVersion: (this._defaultNSURL === this._wfs2NSURL ? '/3.2' : '')
-    });
+    const prefix = this._defaultPrefixNS;
+    const NSURL = this._defaultNSURL;
+    const gmlVersion = this._defaultNSURL === this._wfs2NSURL ? '/3.2' : ''
+    const inner = this.writeInnerCondition_(filter);
+    return `<${prefix}:Filter xmlns:${prefix}="${NSURL}" xmlns:gml="http://www.opengis.net/gml${gmlVersion}">${inner}</${prefix}:Filter>`;
 
     /*ol.xml.pushSerializeAndPop(item,
         ol.format.WFS.GETFEATURE_SERIALIZERS_,
@@ -64,23 +62,7 @@ TC.filter.Filter.prototype.writeInnerCondition_ = function (filter) {
         filter._fieldTitle = this._fieldTitle;
     }
 
-    if (filter instanceof TC.filter.LogicalNary) {
-        return filter.write()
-    }
-    else if (filter instanceof TC.filter.ComparisonBinary) {
-        return filter.write();
-    }
-    else if (filter instanceof TC.filter.Comparison) {
-        return filter.write();
-    }
-    else if (filter instanceof TC.filter.Spatial) {
-        return filter.write();
-    }
-    else if (filter instanceof TC.filter.Function) {
-        return filter.write();
-    }
-    else
-        return filter.write();
+    return filter.write();
 };
 TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (_filters) {
     const parent = this;
@@ -111,6 +93,10 @@ TC.filter.Filter.prototype.readText = function (text) {
     }
 
     return this.readFilterCondition_(text);    
+};
+
+TC.filter.Filter.prototype.toString = function () {
+    return this.write();
 };
 
 TC.filter.Filter.prototype.readFilterCondition_ = function (text) {
@@ -235,11 +221,10 @@ TC.filter.Or = function (_conditions) {
 TC.inherit(TC.filter.Or, TC.filter.LogicalNary);
 
 TC.filter.LogicalNary.prototype.write = function () {
-    return '<{prefix}:{tag}>{inner}</{prefix}:{tag}>'.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        inner: this.writeInnerArrayCondition_()
-    });
+    const prefix = this._defaultPrefixNS;
+    const tag = this.getTagName();
+    const inner = this.writeInnerArrayCondition_();
+    return `<${prefix}:${tag}>${inner}</${prefix}:${tag}>`;
 }
 
 TC.filter.Not = function (condition) {
@@ -249,12 +234,11 @@ TC.filter.Not = function (condition) {
 };
 TC.inherit(TC.filter.Not, TC.filter.Filter);
 
-TC.filter.Filter.prototype.write=function () {
-    return '<{prefix}:{tag}>{inner}</{prefix}:{tag}>'.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        inner: this.writeInnerCondition_(this.condition)
-    });
+TC.filter.Filter.prototype.write = function () {
+    const prefix = this._defaultPrefixNS;
+    const tag = this.getTagName();
+    const inner = this.writeInnerCondition_(this.condition);
+    return `<${prefix}:${tag}>${inner}</${prefix}:${tag}>`;
 }
 
 TC.filter.Comparison = function (tagName, propertyName) {
@@ -267,40 +251,40 @@ TC.inherit(TC.filter.Comparison, TC.filter.Filter);
 
 TC.filter.Comparison.prototype.write = function () {
     var values = '';
+    const prefix = this._defaultPrefixNS;
     //isbetween
-    if (this.LowerBoundary && this.UpperBoundary)
-        values = '<{prefix}:LowerBoundary><{prefix}:Literal>{LowerBoundary}</{prefix}:Literal></{prefix}:LowerBoundary><{prefix}:UpperBoundary><{prefix}:Literal>{UpperBoundary}</{prefix}:Literal></{prefix}:UpperBoundary>'.format({
-            prefix:this._defaultPrefixNS,
-            LowerBoundary: this.LowerBoundary,
-            UpperBoundary: this.UpperBoundary
-        });
-    if (this.pattern)
-        values = '<{prefix}:Literal><![CDATA[{Pattern}]]></{prefix}:Literal>'.format({
-            prefix: this._defaultPrefixNS,
-            Pattern: this.pattern
-        });
-    if (this.params)
-        if (Array.isArray(this.params))
+    if (this.LowerBoundary && this.UpperBoundary) {
+        const getBoundary = function (boundary) {
+            return boundary instanceof TC.filter.Filter ? boundary.write() : `<${prefix}:Literal>${boundary}</${prefix}:Literal>`;
+        }
+        const lowerBoundary = getBoundary(this.LowerBoundary);
+        const upperBoundary = getBoundary(this.UpperBoundary);
+        values = `<${prefix}:LowerBoundary>${lowerBoundary}</${prefix}:LowerBoundary><${prefix}:UpperBoundary>${upperBoundary}</${prefix}:UpperBoundary>`;
+    }
+    if (this.pattern) {
+        values = `<${prefix}:Literal><![CDATA[${this.pattern}]]></${prefix}:Literal>`;
+    }
+    if (this.params) {
+        if (Array.isArray(this.params)) {
             values = this.params.reduce(function (a, b, i) {
                 var fmt = function (text) {
-                    return '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: text });
+                    return `<${prefix}:Literal><![CDATA[${text}]]></${prefix}:Literal>`;
                 }
                 return (i > 0 ? a : fmt(a)) + fmt(b);
             });
-        else
-            values = '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal>'.format({ prefix: this._defaultPrefixNS, value: this.params });
+        }
+        else {
+            values = `<${prefix}:Literal><![CDATA[${this.params}]]></${prefix}:Literal>`;
+        }
+    }
 
-    return '<{prefix}:{tag}{matchCase}{escape}{singleChar}{wildCard}><{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>{values}</{prefix}:{tag}>'.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        matchCase: (typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : ""),
-        escape: (typeof (this.escapeChar) !== "undefined" ? (" " + this._escapeAttrName +"=\"" + this.escapeChar + "\"") : ""),
-        singleChar: (typeof (this.singleChar) !== "undefined" ? " singleChar=\"" + this.singleChar + "\"" : ""),
-        wildCard: (typeof (this.wildCard) !== "undefined" ? " wildCard=\"" + this.wildCard + "\"" : ""),
-        name: this.propertyName,
-        values: values,
-        fieldTitle: this._fieldTitle
-    });
+    const tag = this.getTagName();
+    const matchCase = typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : "";
+    const escape = typeof (this.escapeChar) !== "undefined" ? (" " + this._escapeAttrName + "=\"" + this.escapeChar + "\"") : "";
+    const singleChar = typeof (this.singleChar) !== "undefined" ? " singleChar=\"" + this.singleChar + "\"" : "";
+    const wildCard = typeof (this.wildCard) !== "undefined" ? " wildCard=\"" + this.wildCard + "\"" : "";
+    const fieldTitle = this._fieldTitle;
+    return `<${prefix}:${tag}${matchCase}${escape}${singleChar}${wildCard}><${prefix}:${fieldTitle}>${this.propertyName}</${prefix}:${fieldTitle}>${values}</${prefix}:${tag}>`;
 }
 
 TC.filter.ComparisonBinary = function (
@@ -315,18 +299,13 @@ TC.filter.ComparisonBinary = function (
 TC.inherit(TC.filter.ComparisonBinary, TC.filter.Comparison);
 
 TC.filter.ComparisonBinary.prototype.write = function () {
-    var _str = '<{prefix}:{tag}{matchCase}>' + (this.propertyName instanceof TC.filter.Filter ? '{name}' : '<{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>') + '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal></{prefix}:{tag}>';
-    return _str.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        matchCase: (typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : ""),
-        //escape:(typeof(this.escapeChar)!=="undefined"? " escape=\"" + this.escapeChar+ "\"":""),
-        //singleChar:(typeof(this.singleChar)!=="undefined"? " singleChar=\"" + this.singleChar+ "\"":""),
-        //wildCard:(typeof(this.wildCard)!=="undefined"? " wildCard=\"" + this.wildCard+ "\"":""),
-        name: this.propertyName instanceof TC.filter.Filter ? this.propertyName.write() : this.propertyName,
-        value: this.expression,
-        fieldTitle: this._fieldTitle
-    });
+    const prefix = this._defaultPrefixNS;
+    const fieldTitle = this._fieldTitle;
+    const tag = this.getTagName();
+    const matchCase = typeof (this.matchCase) !== "undefined" ? " matchCase=\"" + this.matchCase + "\"" : "";
+    const value = this.propertyName instanceof TC.filter.Filter ? `${this.propertyName.write()}` : `<${prefix}:${fieldTitle}>${this.propertyName}</${prefix}:${fieldTitle}>`;
+    const expression = this.expression instanceof TC.filter.Filter ? this.expression.write() : `<${prefix}:Literal><![CDATA[${this.expression}]]></${prefix}:Literal>`;
+    return `<${prefix}:${tag}${matchCase}>${value}${expression}</${prefix}:${tag}>`;
 }
 TC.filter.EqualTo = function (propertyName, expression, opt_matchCase) {
     TC.filter.ComparisonBinary.call(this, 'PropertyIsEqualTo', propertyName, expression, opt_matchCase);
@@ -488,21 +467,21 @@ TC.filter.Filter.fromText = function (gml) {
 
 TC.filter.Function.prototype.write = function () {
     var values = '';
+    const prefix = this._defaultPrefixNS;
     if (this.params) {
         var _paramsToText = function (param, prefix) {
             if (typeof (param) === "string") {
-                return '<{prefix}:Literal><![CDATA[{value}]]></{prefix}:Literal>'.format({ prefix: prefix, value: param });
+                return `<${prefix}:Literal><![CDATA[${param}]]></${prefix}:Literal>`;
             }
             if (typeof (param) === "object") {
                 var _text = '';
-                for (var attr in param) {
-                    _text = _text + '<{prefix}:{key}>{value}</{prefix}:{key}>'.format({ prefix: prefix, value: param[attr], key: attr })
+                for (var key in param) {
+                    _text = _text + `<${prefix}:${key}>${param[key]}</${prefix}:${key}>`;
                 }
                 return _text;
             }
         }
         if (Array.isArray(this.params)) {
-            var prefix = this._defaultPrefixNS;
             values = this.params.reduce(function (a, b, i) {
                 var fmt = function (param) {
                     return _paramsToText(param, prefix);
@@ -510,14 +489,12 @@ TC.filter.Function.prototype.write = function () {
                 return (i > 1 ? a : fmt(a)) + fmt(b);
             });
         }
-        else
+        else {
             values = _paramsToText(this.params, this._defaultPrefixNS);
+        }
     }
-    return '<{prefix}:Function name="{tag}">{inner}</{prefix}:Function>'.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        inner: values
-    });
+    const tag = this.getTagName();
+    return `<${prefix}:Function name="${tag}">${values}</${prefix}:Function>`;
 };
 
 TC.filter.Spatial = function (tagName, geometryName, geometry, opt_srsName) {
@@ -553,21 +530,17 @@ TC.wrap.Filter.prototype.getAxisOrientation = function () {
 TC.inherit(TC.filter.Spatial, TC.filter.Filter);
 
 TC.filter.Spatial.prototype.write = function () {
-    var pattern = null;
+    const prefix = this._defaultPrefixNS;
+    const tag = this.getTagName();
+    const fieldTitle = this._fieldTitle;
+    const name = this.geometryName;
+    const geometry = this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(undefined, this.wrap.getAxisOrientation());
     if (this.geometryName) {
-        pattern = '<{prefix}:{tag}><{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>{geometry}</{prefix}:{tag}>';
+        return `<${prefix}:${tag}><${prefix}:${fieldTitle}>${name}</${prefix}:${fieldTitle}>${geometry}</${prefix}:${tag}>`;
     }
     else {
-        pattern = '<{prefix}:{tag}><{prefix}:{fieldTitle}/>{geometry}</{prefix}:{tag}>';
+        return `<${prefix}:${tag}><${prefix}:${fieldTitle}/>${geometry}</${prefix}:${tag}>`;
     }
-
-    return pattern.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        name: this.geometryName,
-        geometry: (this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(undefined, this.wrap.getAxisOrientation())),
-        fieldTitle: this._fieldTitle
-    });
 };
 
 TC.filter.bbox = function () {
@@ -586,24 +559,20 @@ TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
 TC.inherit(TC.filter.Bbox, TC.filter.Spatial);
 
 TC.filter.Bbox.prototype.write = function () {
-    var bbox = '<gml:Envelope{srsName}><gml:lowerCorner>{lowerCorner}</gml:lowerCorner><gml:upperCorner>{upperCorner}</gml:upperCorner></gml:Envelope>'
-	.format({
-        srsName: (typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : ""),
-        lowerCorner: (this.extent[0] + ' ' + this.extent[1]),
-        upperCorner: (this.extent[2] + ' ' + this.extent[3])
-	});
-    var pattern = null;
-    if (this.geometryName)
-        pattern='<{prefix}:{tag}><{prefix}:{fieldTitle}>{name}</{prefix}:{fieldTitle}>{BBOX}</{prefix}:{tag}>';
-    else
-        pattern='<{prefix}:{tag}><{prefix}:{fieldTitle}/>{BBOX}</{prefix}:{tag}>';
-    return pattern.format({
-        prefix: this._defaultPrefixNS,
-        tag: this.getTagName(),
-        fieldTitle:  this._fieldTitle,
-        name: this.geometryName,
-        BBOX: bbox
-    });
+    const srsName = typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : "";
+    const lowerCorner = this.extent[0] + ' ' + this.extent[1];
+    const upperCorner = this.extent[2] + ' ' + this.extent[3];
+    const bbox = `<gml:Envelope${srsName}><gml:lowerCorner>${lowerCorner}</gml:lowerCorner><gml:upperCorner>${upperCorner}</gml:upperCorner></gml:Envelope>`;
+    const prefix = this._defaultPrefixNS;
+    const tag = this.getTagName();
+    const fieldTitle = this._fieldTitle;
+    const name = this.geometryName;
+    if (this.geometryName) {
+        return `<${prefix}:${tag}><${prefix}:${fieldTitle}>${name}</${prefix}:${fieldTitle}>${bbox}</${prefix}:${tag}>`;
+    }
+    else {
+        return `<${prefix}:${tag}><${prefix}:${fieldTitle}/>${bbox}</${prefix}:${tag}>`;
+    }
 };
 
 TC.filter.Intersects = function (geometryName, geometry, opt_srsName) {

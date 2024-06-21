@@ -76,6 +76,7 @@
     white-space: nowrap;
     overflow: hidden;
 }
+
 .tc-ctl-wlm .tc-ctl-wlm-elm:last-of-type:first-of-type .tc-ctl-wlm-lyr {
     width: 100%;
 }
@@ -87,19 +88,19 @@
     overflow: hidden;
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-path span {
-    display: block;
-    margin-top: 0.3em;
-}
-
-    .tc-ctl-wlm .tc-ctl-wlm-path span:first-child {
+    .tc-ctl-wlm .tc-ctl-wlm-path span {
         display: block;
-        margin-top: 0;
+        margin-top: 0.3em;
     }
 
-    .tc-ctl-wlm .tc-ctl-wlm-path span:only-child {
-        display: inline;
-    }
+        .tc-ctl-wlm .tc-ctl-wlm-path span:first-child {
+            display: block;
+            margin-top: 0;
+        }
+
+        .tc-ctl-wlm .tc-ctl-wlm-path span:only-child {
+            display: inline;
+        }
 
 .tc-ctl-wlm li:only-child .tc-ctl-wlm-path {
     width: calc(95% - 0.6em);
@@ -197,7 +198,7 @@
     align-items: center;
     justify-content: space-between;
     width: 90%;
-    margin-top:3px;
+    margin-top: 3px;
 }
 
 .tc-ctl-wlm li:only-child .tc-ctl-wlm-input {
@@ -238,9 +239,9 @@
     min-width: 1.4em;
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-input input[type=checkbox]:before {
-    line-height: 1.4em;
-}
+    .tc-ctl-wlm .tc-ctl-wlm-input input[type=checkbox]:before {
+        line-height: 1.4em;
+    }
 
 .tc-ctl-wlm .tc-ctl-wlm-btn-info.tc-checked {
     color: var(--sec-btn-hl-color);
@@ -274,6 +275,15 @@
     margin: 0.5em 0 0.2em 0;
 }
 
+.tc-ctl-wlm .tc-ctl-wlm-legend span {
+    vertical-align: bottom;
+    line-height: 20px;
+}
+
+.tc-ctl-wlm .tc-ctl-wlm-legend img {
+    vertical-align: bottom;
+}
+
 .tc-ctl-wlm .tc-ctl-wlm-metadata ul {
     list-style-type: none;
     padding: 0;
@@ -291,6 +301,11 @@
 
 .tc-ctl-wlm .tc-ctl-wlm-legend p {
     margin: 0;
+}
+
+.tc-ctl-wlm .tc-ctl-wlm-legend div {
+    display: grid;
+    row-gap: 5px;
 }
 
 .tc-ctl-wlm-custom-legend {
@@ -329,10 +344,11 @@
     margin-left: 0.5em;
     margin-right: 0.5em;
 }
-.tc-ctl-wlm-input sitna-button.tc-loading {
-    animation: pulsation 2s infinite;
-    -webkit-animation: pulsation 2s infinite;
-}
+
+    .tc-ctl-wlm-input sitna-button.tc-loading {
+        animation: pulsation 2s infinite;
+        -webkit-animation: pulsation 2s infinite;
+    }
 
 .tc-ctl-wlm-tools {
     display: flex;
@@ -343,9 +359,9 @@
         display: none;
     }
 
-    li.tc-ctl-wlm-elm:focus {
-        outline: none;
-    }
+li.tc-ctl-wlm-elm:focus {
+    outline: none;
+}
 
 .tc-ctl-wlm .tc-ctl-wlm-tools sitna-button.tc-ctl-wlm-btn-more {
     order: 1000;
@@ -427,4 +443,16 @@
     .tc-ctl-wlm .tc-ctl-wlm-dd {
         font-size: 14px;
     }
+}
+
+
+.img-magnifier-glass {
+    position: absolute;
+    border: 3px solid #000;
+    border-radius: 50%;
+    cursor: none;
+    /*Set the size of the magnifier glass:*/
+    width: 100px;
+    height: 100px;
+}
 }

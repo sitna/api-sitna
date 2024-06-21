@@ -10,7 +10,6 @@ class Attribution extends Control {
     constructor() {
         super(...arguments);
         const self = this;
-        self.div.classList.add(self.CLASS);
 
         self.apiAttribution = '';
         self.mainDataAttribution = null;
@@ -20,13 +19,9 @@ class Attribution extends Control {
         }
     }
 
-    getClassName() {
-        return 'tc-ctl-attrib';
-    }
-
     register(map) {
         const self = this;
-        const result = Control.prototype.register.call(self, map);
+        const result = super.register.call(self, map);
 
         self.apiAttribution = self.map.options.attribution || self.apiAttribution;
 
@@ -209,25 +204,30 @@ class Attribution extends Control {
         self.template = module.default;
     }
 
-    render(callback) {
+    async render(callback) {
         const self = this;
 
-        return self._set1stRenderPromise(self.renderData({
+        await self.renderData({
             api: typeof self.apiAttribution === 'function' ? self.apiAttribution.apply(self) : self.getLocaleString(self.apiAttribution),
             mainData: self.mainDataAttribution,
             otherData: self.dataAttributions,
             isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(Consts.classes.COLLAPSED) : true,
             lang: self.map?.options.locale
         }, function () {
-            const cmd = self.div.querySelector('.' + self.CLASS + '-cmd');
-            cmd && cmd.addEventListener(Consts.event.CLICK, function () {
-                self.toggleOtherAttributions();
-            }, { passive: true });
+            self.addUIEventListeners();
 
             if (typeof callback === 'function') {
                 callback();
             }
-        }));
+        });
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        const cmd = self.div.querySelector('.' + self.CLASS + '-cmd');
+        cmd && cmd.addEventListener(Consts.event.CLICK, function () {
+            self.toggleOtherAttributions();
+        }, { passive: true });
     }
 
     toggleOtherAttributions() {
@@ -237,5 +237,6 @@ class Attribution extends Control {
     }
 }
 
+Attribution.prototype.CLASS = 'tc-ctl-attrib';
 TC.control.Attribution = Attribution;
 export default Attribution;

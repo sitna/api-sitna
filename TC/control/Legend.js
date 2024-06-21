@@ -1,38 +1,31 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
 import MapContents from './MapContents';
-
+import './LayerLegend';
 TC.control = TC.control || {};
+const layerLoaded = [];
 
-const Legend = function () {
-    MapContents.apply(this, arguments);
-};
+class Legend extends MapContents {
 
-TC.inherit(Legend, MapContents);
-
-(function () {
-    var ctlProto = Legend.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-legend';
-
-    ctlProto.register = function (map) {
+    register(map) {
         const self = this;
 
         map.on(Consts.event.VIEWCHANGE, function (e) {
             const view = e.view;
             const onLayerAdd = self.loadGraphics.bind(self);
 
-            if (view === Consts.view.THREED) {                
+            if (view === Consts.view.THREED) {
                 map.on(Consts.event.LAYERADD, onLayerAdd);
             } else if (view === Consts.view.DEFAULT) {
                 map.off(Consts.event.LAYERADD, onLayerAdd);
             }
         });
 
-        return MapContents.prototype.register.call(self, map);
-    };
+        return super.register.call(self, map);
 
-    ctlProto.loadTemplates = async function () {
+    }
+
+    async loadTemplates() {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-legend.mjs');
         const nodeTemplatePromise = import('../templates/tc-ctl-legend-node.mjs');
@@ -41,9 +34,9 @@ TC.inherit(Legend, MapContents);
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-node'] = (await nodeTemplatePromise).default;
         self.template = template;
-    };
+    }
 
-    ctlProto.loadGraphics = function () {
+    loadGraphics() {
         const self = this;
         self.getLayerUIElements().forEach(function (li) {
             const layer = self.map.getLayer(li.dataset.layerId);
@@ -57,9 +50,10 @@ TC.inherit(Legend, MapContents);
                 });
             }
         });
-    };
+        return self;
+    }
 
-    ctlProto.updateScale = function () {
+    updateScale() {
         const self = this;
         const inScale = self.CLASS + '-node-inscale';
         const outOfScale = self.CLASS + '-node-outofscale';
@@ -67,11 +61,11 @@ TC.inherit(Legend, MapContents);
         self.getLayerUIElements().forEach(function (li) {
             const layer = self.map.getLayer(li.dataset.layerId);
 
-            if (layer && !layer.customLegend ) {
+            if (layer && !layer.customLegend) {
                 let layersInScale = false;
-                const lis = li.querySelectorAll('li');
+                const lis = li.querySelectorAll('li > li');
                 lis.forEach(function (l) {
-                    if (l.classList.contains(self.CLASS + '-node-visible')) {
+                    if (l.classList.contains(self.CLASS + '-node-visible') && l.querySelectorAll("img").length) {
                         const uid = l.dataset.layerUid;
                         if (layer.isVisibleByScale(uid)) {
                             layersInScale = true;
@@ -97,9 +91,10 @@ TC.inherit(Legend, MapContents);
                 li.classList.toggle(outOfScale, !layersInScale);
             }
         });
-    };
+        return self;
+    }
 
-    ctlProto.update = function () {
+    update() {
         const self = this;
 
         self.getLayerUIElements().forEach(function (li) {
@@ -123,7 +118,7 @@ TC.inherit(Legend, MapContents);
                             break;
                         case Consts.visibility.HAS_VISIBLE:
                             l.classList.remove(visible, notVisible);
-                            l.classList.add(hasVisible);                            
+                            l.classList.add(hasVisible);
                             break;
                         case null:
                             // No encuentro nodo: no visible
@@ -133,7 +128,7 @@ TC.inherit(Legend, MapContents);
                         default:
                             // Estado no definido: por defecto visible
                             l.classList.remove(notVisible, hasVisible);
-                            l.classList.add(visible);                            
+                            l.classList.add(visible);
                             break;
                     }
                 });
@@ -142,13 +137,15 @@ TC.inherit(Legend, MapContents);
             }
         });
         self.updateScale();
-    };
 
-    ctlProto.updateLayerTree = function (layer) {
-        var self = this;        
+        return self;
+    }
+
+    async updateLayerTree(layer) {
+        const self = this;
 
         if (!layer.isBase && !layer.options.stealth) {
-            
+
             //// 09/04/2019 GLS: ignoramos el atributo que venga en la capa porque en la leyenda queremos que el árbol se muestre siempre y 
             //// nos ahorramos el tener que pasarlo en el estado del mapa
             if (layer.hideTree || layer.options.hideTree) {
@@ -157,12 +154,18 @@ TC.inherit(Legend, MapContents);
                 //que es donde se guarda cacheada la estructura del albol de capas hijas.
                 /*layer.tree = null;
                 layer.hideTree = layer.options.hideTree = false;*/
-            }      
-
+            }                  
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(Consts.classes.HIDDEN);            
-            var params = layer.getNestedTree ? layer.getNestedTree() : layer.getTree();//self.layerTrees[layer.id];
+            //var params;
+            const layerLegend = document.createElement('sitna-layer-legend');
+            layerLegend.dataset.layerId = layer.id;
+            layerLoaded.push(layer.id);
+            var params = layer.type === Consts.layerType.WMS?
+                { customLegend: layerLegend.outerHTML } :
+                (layer.getNestedTree ? layer.getNestedTree() : layer.getTree());
             if (layer._title && layer._title !== layer.title)
-                params = Object.assign(params,{ "title": layer._title });
+                params = Object.assign(params, { "title": layer._title });
+            
             self.getRenderedHtml(self.CLASS + '-node', params)
                 .then(function (out) {
                     const parser = new DOMParser();
@@ -176,41 +179,58 @@ TC.inherit(Legend, MapContents);
                             li.innerHTML = newLi.innerHTML;
                             li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                         }
-                        
+
                     }
                     else {
                         newLi.dataset.layerId = layer.id;
-                        ul.insertBefore(newLi, ul.firstChild);
-                    }
+                        const loadOrder = self.map.workLayers.filter((wl) => layerLoaded.includes(wl.id)).map((wl => wl.id)).reverse()
+                        const getReferenceElement = (index) => {
+                            if (index === 0) return ul.firstChild;
+                            if (loadOrder.length - 1 === index) return ul.lastElementChild;
+                            const layerId = loadOrder[index+1];
+                            const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
+                            return referenceElement || getReferenceElement(++index);
 
+                        };
+                        ul.insertBefore(newLi, getReferenceElement(loadOrder.indexOf(layer.id)));
+                    }
                     self.update();
                 })
                 .catch(function (err) {
                     TC.error(err);
                 });
         }
-    };
+        return self;
+    }
 
-    ctlProto.removeLayer = function (layer) {
+    removeLayer(layer) {
+        const self = this;
         if (!layer.isBase) {
-            MapContents.prototype.removeLayer.call(this, layer);
+            super.removeLayer.call(self, layer);
         }
-    };
+        return self;
+    }
 
-    ctlProto.updateLayerVisibility = function (layer) {
-        var self = this;
+    updateLayerVisibility(layer) {
+        const self = this;
         self.getLayerUIElements().forEach(function (li) {
             if (li.dataset.layerId === layer.id) {
                 li.classList.toggle(self.CLASS + '-node-notvisible', !layer.getVisibility());
             }
         });
-    };
+        return self;
+    }
 
-    ctlProto.getLayerUIElements = function () {
+    //getLayerUIElements(tagNode) {
+    //    const self = this;
+    //    return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll((tagNode ? tagNode:"li")+'.' + self.CLASS + '-node');
+    //}
+    getLayerUIElements() {
         const self = this;
-        return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('li.' + self.CLASS + '-node');
-    };
-})();
+        return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('sitna-layer-legend, li.' + self.CLASS + '-node');
+    }
+}
 
+Legend.prototype.CLASS = 'tc-ctl-legend';
 TC.control.Legend = Legend;
 export default Legend;

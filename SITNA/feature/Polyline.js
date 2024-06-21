@@ -1,4 +1,5 @@
-﻿import Feature from './Feature';
+﻿import Consts from '../../TC/Consts';
+import Feature from './Feature';
 
 /**
  * Entidad geográfica que representa una línea de varios segmentos en el mapa.
@@ -124,10 +125,9 @@ class Polyline extends Feature {
 
     constructor(coords, options) {
         super(coords, options);
-        const self = this;
 
-        if (!self.wrap.isNative(coords)) {
-            self.wrap.createPolyline(coords, options);
+        if (!this.wrap.isNative(coords)) {
+            this.wrap.createPolyline(coords, options);
         }
     }
 
@@ -148,11 +148,10 @@ class Polyline extends Feature {
      * @returns {SITNA.feature.Polyline} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
         if (Array.isArray(coords) && !Array.isArray(coords[0])) {
             coords = [coords];
         }
-        return super.setCoordinates.call(self, coords);
+        return super.setCoordinates.call(this, coords);
     }
 
     setCoords(coords) {
@@ -172,8 +171,11 @@ class Polyline extends Feature {
      * @returns {number} Longitud total de la línea en metros.
      */
     getLength(options) {
-        const self = this;
-        return self.wrap.getLength({ coordinates: self.getCoordinates(options) });
+        return this.wrap.getLength({ coordinates: this.getCoordinates(options) });
+    }
+
+    getGeometryType() {
+        return Consts.geom.POLYLINE;
     }
 }
 

@@ -4,14 +4,24 @@ const elementName = 'sitna-component';
 
 class Component extends HTMLElement {
 
+    // Diccionario de estilos precargados para evitar FOUC
+    static #preloadedStyles = new Map();
+
     constructor() {
         super();
-        const self = this;
-        self.attachShadow({ mode: 'open' });
-        const link = document.createElement('link');
-        link.setAttribute('rel', 'stylesheet');
-        link.href = `${Component.#getStylePath()}${self.elementName}.css`;
-        self.shadowRoot.appendChild(link);
+        this.attachShadow({ mode: 'open' });
+        const styleText = Component.#preloadedStyles.get(this.elementName);
+        if (styleText) {
+            const style = document.createElement('style');
+            style.innerText = styleText;
+            this.shadowRoot.appendChild(style);
+        }
+        else {
+            const link = document.createElement('link');
+            link.setAttribute('rel', 'stylesheet');
+            link.href = `${Component.#getStylePath()}${this.elementName}.css`;
+            this.shadowRoot.appendChild(link);
+        }
     }
 
     get elementName() {
@@ -22,14 +32,11 @@ class Component extends HTMLElement {
         return `${TC.apiLocation}css/ui/`;
     }
 
-    static preloadStyle(elmName) {
-        if (globalThis.document) {
-            const link = document.createElement('link');
-            link.setAttribute('rel', 'preload');
-            link.setAttribute('as', 'style');
-            link.href = `${Component.#getStylePath()}${elmName}.css`;
-            document.head.appendChild(link);
-        }
+    static async preloadStyle(elmName) {
+        const response = await TC.ajax({
+            url: `${Component.#getStylePath()}${elmName}.css`
+        });
+        Component.#preloadedStyles.set(elmName, response.data);
     }
 }
 

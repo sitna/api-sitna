@@ -42,7 +42,6 @@
 
 .tc-ctl-search-loading {
     float: right;
-    -webkit-animation: spin 2s linear infinite;
     animation: spin 2s linear infinite;
     position: relative;
     right: 1em;
@@ -104,8 +103,8 @@ button.tc-ctl-btn.tc-ctl-search-btn {
         text-align: center;
         text-indent: 0;
         line-height: 2em;
-        font-family: mapskin;
-        content: '\e003';
+        font-family: var(--icon-font-family);
+        content: var(--icon-search);
         left: 0;
         top: 0;
     }

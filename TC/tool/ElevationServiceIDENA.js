@@ -12,9 +12,8 @@ class ElevationServiceIDENA extends ElevationService {
         self.minimumElevation = self.options.minimumElevation || -9998;
     }
 
-    request(options) {
+    request(options = {}) {
         const self = this;
-        options = options || {};
         const geometryOptions = {
             coordinates: options.coordinates,
             type: Consts.geom.POLYLINE

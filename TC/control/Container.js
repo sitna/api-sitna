@@ -3,63 +3,73 @@ import Control from '../Control';
 
 TC.control = TC.control || {};
 
-const Container = function () {
-    var self = this;
+class Container extends Control {
+    constructor() {
+        super(...arguments);
 
-    Control.apply(self, arguments);    
+        this.controlOptions = this.options.controls;
 
-    self.controlOptions = self.options.controls || [];
+        this.ctlCount = this.controlOptions.length;
+        this.defaultSelection = this.options.defaultSelection;
 
-    self.ctlCount = self.controlOptions instanceof Array ? self.controlOptions.length : Object.keys(self.controlOptions).length;    
-    self.defaultSelection = self.options.defaultSelection;
+        this._ctlPromises = new Array(this.ctlCount);
+    }
 
-    self._ctlPromises = new Array(self.ctlCount);
-};
+    async register(map) {
+        const ctlRegister = super.register.call(this, map);
 
-TC.inherit(Container, Control);
-
-(function () {
-    var ctlProto = Container.prototype;
-
-    ctlProto.register = async function (map) {
-        const self = this;
-        const ctlRegister = Control.prototype.register.call(self, map);
-
-        self.uids = new Array(self.ctlCount);
-        self.uids.forEach(function (_elm, idx, arr) {
-            arr[idx] = self.getUID();
+        this.uids = new Array(self.ctlCount);
+        this.uids.forEach((_elm, idx, arr) => {
+            arr[idx] = this.getUID();
         });
 
-        await Promise.all([ctlRegister, self.renderPromise()]);
-        const ctl = await self.onRender();
+        await Promise.all([ctlRegister, this.renderPromise()]);
+        const ctl = await this.onRender();
         return ctl;
-    };
+    }
 
-    ctlProto.onRender = function () {
+    mergeOptions(...options) {
+        const newOptions = super.mergeOptions(...options);
+        const controlOptions = options
+            .map(opts => opts.controls ?? [])
+            .map(opts => {
+                if (!Array.isArray(opts)) {
+                    return Object.keys(opts).map(key => {
+                        const ctlOptions = { ...opts[key] };
+                        delete ctlOptions.position;
+                        return { [key]: ctlOptions, position: opts[key].position };
+                    });
+                }
+                return opts;
+            });
+        newOptions.controls = controlOptions[controlOptions.length - 1];
+        return newOptions;
+    }
+
+    onRender() {
         return Promise.resolve(this);
-    };
+    }
 
-    ctlProto.render = function (_callback) { };
+    async render(_callback) { }
 
-    ctlProto.getControl = function (idx) {
-        var promise = this._ctlPromises[idx];
-        if (!promise) {
-            return Promise.reject(Error('No control found'));            
+    async getControl(idx) {
+        const ctl = await this._ctlPromises[idx];
+        if (!ctl) {
+            throw Error('No control found');
         }
+        return ctl;
+    }
 
-        return promise;
-    };
-
-    ctlProto.getControls = function () {
+    getControls() {
         return Promise.all(this._ctlPromises);
-    };
+    }
 
-    ctlProto.onControlDisable = function (_control) {
-    };
+    onControlDisable(_control) {
+    }
 
-    ctlProto.onControlEnable = function (_control) {
-    };
-})();
+    onControlEnable(_control) {
+    }
+}
 
 TC.control.Container = Container;
 export default Container;

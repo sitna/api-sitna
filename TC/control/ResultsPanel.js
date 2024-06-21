@@ -1,6 +1,17 @@
-﻿import TC from '../../TC';
+﻿(function () {
+    var requestAnimationFrame =
+        window.requestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.msRequestAnimationFrame;
+    window.requestAnimationFrame = requestAnimationFrame;
+})();
+
+
+import TC from '../../TC';
 import Consts from '../Consts';
-import Control from '../Control';
+import Util from '../Util';
+import InfoDisplay from './InfoDisplay';
 import Point from '../../SITNA/feature/Point';
 /*import mainTemplate from '../templates/tc-ctl-rpanel.mjs';
 import tableTemplate from '../templates/tc-ctl-rpanel-table.mjs';
@@ -17,65 +28,72 @@ Consts.event.RESULTSPANELMAX = 'resultspanelmax.tc';
 Consts.event.RESULTSPANELCLOSE = 'resultspanelclose.tc';
 Consts.event.RESULTSPANELRESIZE = 'resultspanelresize.tc';
 
-const ResultsPanel = function () {
-    var self = this;
+const isElementVisible = function (elm) {
+    const computedStyle = getComputedStyle(elm);
+    return elm && !elm.hidden && computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden';
+};
 
-    Control.apply(self, arguments);
+const hideResizeHandlers = function (ctl) {
+    document.querySelectorAll('.' + ctl.CLASS + '-resize-handler').forEach((el) => {
+        el.classList.add(Consts.classes.HIDDEN);
+    });
+};
 
-    self.wrap = new TC.wrap.control.ResultsPanel(self);
+const formatYAxis = function (d, locale) {
+    let y = parseInt(d.toFixed(0)) || 0;
+    return y.toLocaleString(locale) + ' m';
+};
 
-    self.data = {};
-    self.classes = {
-        SHOW_IN: 'tc-show-in',
-        SHOW_OUT: 'tc-show-out',
-        RESIZABLE: 'tc-resizable',
-        POSITION_BOTTOM: 'tc-pos-bottom',
-        POSITION_TOP: 'tc-pos-top'
-    };
-
-    self.content = self.contentType.TABLE;
-
-    self._toolContainerSelector = `.${self.CLASS}-tools`;
-
-    if (TC.Util.isEmptyObject(self.options)) {
-        self.options = { content: "table" };
-    }
-
-    if (self.options || { content: "table" }) {
-        if (self.options.content)
-            self.content = self.contentType[self.options.content.toUpperCase()];
-
-        if (self.options.chart)
-            self.chart = self.options.chart;
-
-        if (self.options.table)
-            self.table = self.options.table;
-
-        if (self.options.save)
-            self.save = self.options.save;
-
-        if (self.options.share)
-            self.share = self.options.share;
+const collidingManagement = {
+    add: function (currentPanel) {
+        const pbody = currentPanel.div.querySelector(".tc-ctl-rpanel-sidebar-body");
+        pbody.style.bottom = "";
+        const bottom = currentPanel.map.getControlsByClass(ResultsPanel)
+            .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
+            .filter(panel => pbody.colliding(panel.div.querySelector(".tc-ctl-rpanel-sidebar-body"))).reduce((prevVal, currVal) => {
+                return prevVal + currVal.div.querySelector(".tc-ctl-rpanel-sidebar-body").clientHeight
+            }, 0);
+        if (bottom) pbody.style.bottom = bottom + "px";
+    },
+    remove: function (currentPanel) {
+        currentPanel.map.getControlsByClass(ResultsPanel)
+            .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
+            .forEach((panel) => {
+                panel.div.querySelector(".tc-ctl-rpanel-sidebar-body").style.bottom = "";
+            });
 
     }
 };
 
-TC.inherit(ResultsPanel, Control);
+const getTime = function (timeFrom, timeTo) {
+    var diff = timeTo - timeFrom;
+    var d = {};
+    var daysDifference = Math.floor(diff / 1000 / 60 / 60 / 24);
+    diff -= daysDifference * 1000 * 60 * 60 * 24;
 
-(function () {
+    var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
+    diff -= hoursDifference * 1000 * 60 * 60;
 
-    const ctlProto = ResultsPanel.prototype;
+    d.h = hoursDifference + daysDifference * 24;
 
-    ctlProto.CLASS = 'tc-ctl-rpanel';
+    var minutesDifference = Math.floor(diff / 1000 / 60);
+    diff -= minutesDifference * 1000 * 60;
 
-    ctlProto.COLLIDING_PRIORITY = {
+    d.m = minutesDifference;
+
+    d.s = Math.floor(diff / 1000);
+
+    return Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
+};
+
+class ResultsPanel extends InfoDisplay {
+    COLLIDING_PRIORITY = {
         IGNORE: 0,
         LOW: 1,
         MEDIUM: 2,
         HIGH: 3
     };
-
-    ctlProto.CHART_SIZE = {
+    CHART_SIZE = {
         MIN_HEIGHT: 75,
         MAX_HEIGHT: 128,
 
@@ -83,72 +101,105 @@ TC.inherit(ResultsPanel, Control);
         MEDIUM_WIDTH: 310,
         MAX_WIDTH: 445
     };
-
-    const isElementVisible = function (elm) {
-        const computedStyle = getComputedStyle(elm);
-        return elm && !elm.hidden && computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden';
+    contentType = {
+        TABLE: {
+            fnOpen: ResultsPanel.prototype.openTable,
+            collapsedClass: `.${ResultsPanel.prototype.CLASS}-minimized-max-table`
+        },
+        CHART: {
+            fnOpen: ResultsPanel.prototype.openChart,
+            collapsedClass: `.${ResultsPanel.prototype.CLASS}-minimized-max-chart`
+        }
     };
+    #titles;
 
-    ctlProto.isVisible = function () {
+    constructor() {
+        super(...arguments);
         const self = this;
-        const bodyElm = self.div.querySelector('.tc-ctl-rpanel-sidebar-body');
-        const maximizeElm = self.div.querySelector('.tc-ctl-rpanel-minimized-max');
+
+        self.#titles = self.options.titles;
+        self.wrap = new TC.wrap.control.ResultsPanel(self);
+
+        self.data = {};
+        self.classes = {
+            SHOW_IN: 'tc-show-in',
+            SHOW_OUT: 'tc-show-out',
+            RESIZABLE: 'tc-resizable',
+            POSITION_BOTTOM: 'tc-pos-bottom',
+            POSITION_TOP: 'tc-pos-top'
+        };
+
+        self.content = self.contentType.TABLE;
+
+        self._toolContainerSelector = `.${self.CLASS}-tools`;
+
+        if (Util.isEmptyObject(self.options)) {
+            self.options = { content: "table" };
+        }
+
+        if (self.options || { content: "table" }) {
+            if (self.options.content)
+                self.content = self.contentType[self.options.content.toUpperCase()];
+
+            if (self.options.chart)
+                self.chart = self.options.chart;
+
+            if (self.options.table)
+                self.table = self.options.table;
+
+            if (self.options.save)
+                self.save = self.options.save;
+
+            if (self.options.share)
+                self.share = self.options.share;
+
+        }
+    }
+
+    isVisible() {
+        const bodyElm = this.div.querySelector('.tc-ctl-rpanel-sidebar-body');
+        const maximizeElm = this.div.querySelector('.tc-ctl-rpanel-minimized-max');
         return isElementVisible(bodyElm) || isElementVisible(maximizeElm);
-    };
+    }
 
-    ctlProto.isMinimized = function () {
-        const self = this;
-        const bodyElm = self.div.querySelector('.tc-ctl-rpanel-sidebar-body');
-        const maximizeElm = self.div.querySelector('.tc-ctl-rpanel-minimized-max');
+    isMinimized() {
+        const bodyElm = this.div.querySelector('.tc-ctl-rpanel-sidebar-body');
+        const maximizeElm = this.div.querySelector('.tc-ctl-rpanel-minimized-max');
         return isElementVisible(maximizeElm) && !isElementVisible(bodyElm);
-    };
+    }
 
-    const manageClassList = function (classElement, toAdd, toRemove) {
-        const self = this;
-
-        const elm = self.div.querySelector('.' + classElement);
+    #manageClassList(classElement, toAdd, toRemove) {
+        const elm = this.div.querySelector('.' + classElement);
         if (elm) {
             elm.classList.add(toAdd);
             elm.classList.remove(toRemove);
         }
-    };
+    }
 
-    ctlProto.show = function (classElement) {
-        const self = this;
-
-        const elm = self.div.querySelector('.' + classElement);
+    show(classElement) {
+        const elm = this.div.querySelector('.' + classElement);
         if (elm && elm.style.display === 'none') {
             elm.style.display = '';
         }
 
-        manageClassList.call(self, classElement, self.classes.SHOW_IN, self.classes.SHOW_OUT);
-    };
+        this.#manageClassList(classElement, this.classes.SHOW_IN, this.classes.SHOW_OUT);
+    }
 
-    ctlProto.hide = function (classElement) {
-        const self = this;
+    hide(classElement) {
+        this.#manageClassList(classElement, this.classes.SHOW_OUT, this.classes.SHOW_IN);
 
-        manageClassList.call(self, classElement, self.classes.SHOW_OUT, self.classes.SHOW_IN);
-
-        const elm = self.div.querySelector('.' + classElement);
+        const elm = this.div.querySelector('.' + classElement);
         if (elm) {
             elm.style.display = 'none';
         }
-    };
+    }
 
-    ctlProto.doVisible = function () {
-        const self = this;
+    doVisible() {
+        this.div.classList.remove(Consts.classes.HIDDEN);
+        this.show('tc-ctl-rpanel-sidebar-body');
+    }
 
-        self.div.classList.remove(Consts.classes.HIDDEN);
-        self.show('tc-ctl-rpanel-sidebar-body');
-    };
-
-    const hideResizeHandlers = function (ctl) {
-        document.querySelectorAll('.' + ctl.CLASS + '-resize-handler').forEach((el) => {
-            el.classList.add(Consts.classes.HIDDEN);
-        });
-    };
-
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-rpanel.mjs');
         const tableTemplatePromise = import('../templates/tc-ctl-rpanel-table.mjs');
@@ -159,9 +210,9 @@ TC.inherit(ResultsPanel, Control);
         template[self.CLASS + '-table'] = (await tableTemplatePromise).default;
         template[self.CLASS + '-chart'] = (await chartTemplatePromise).default;
         self.template = template;
-    };
+    }
 
-    const _addItemTool = function (classNamePartial, localeKey, actionFn) {
+    #addItemTool(classNamePartial, localeKey, actionFn) {
         const self = this;
         self.addItemTool({
             renderFn: function (container) {
@@ -178,137 +229,142 @@ TC.inherit(ResultsPanel, Control);
                 button.text = text;
                 button.classList.add(className);
                 return button;
-            },            
+            },
             actionFn: actionFn
         });
     }
 
-    ctlProto.render = function (callback) {
+    async render(callback) {
         const self = this;
 
         self.div.classList.add(Consts.classes.HIDDEN);
 
-        return Control.prototype.render.call(self, function () {
+        await super.render.call(self);
 
-            /* --- LEGACY --- */
-            self.mainTitleElm = self.div.querySelector('.tc-ctl-rpanel-title-text') ||
-                self.div.querySelector('.prpanel-title-text');
+        /* --- LEGACY --- */
+        self.mainTitleElm = self.div.querySelector('.tc-ctl-rpanel-title-text') ||
+            self.div.querySelector('.prpanel-title-text');
 
-            /* --- LEGACY --- */
-            self.minimizeButton = self.div.querySelector('.tc-ctl-rpanel-btn-min') ||
-                self.div.querySelector('.prcollapsed-slide-submenu-min');
-            self.minimizeButton.addEventListener('click', function () {
-                self.minimize();
-            });
+        /* --- LEGACY --- */
+        self.minimizeButton = self.div.querySelector('.tc-ctl-rpanel-btn-min') ||
+            self.div.querySelector('.prcollapsed-slide-submenu-min');
+        self.minimizeButton.addEventListener('click', function () {
+            self.minimize();
+        });
 
-            /* --- LEGACY --- */
-            self.closeButton = self.div.querySelector('.tc-ctl-rpanel-btn-close') ||
-                self.div.querySelector('.prcollapsed-slide-submenu-close');
-            self.closeButton.addEventListener('click', function () {
-                self.close();
-                const resizedTarget = self.div.querySelector(`${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
-                if (resizedTarget) {
-                    // si el usuario cierra el panel desde el aspa, eliminamos el rastro del redimensionado para empezar de cero
-                    delete resizedTarget.style.removeProperty("width");
-                    delete resizedTarget.style.removeProperty("height");
-                    delete resizedTarget.dataset.chartSizeWidth;
-                    delete resizedTarget.dataset.chartSizeHeight;
-                    delete resizedTarget.dataset.panelSizeWidth;
-                    delete resizedTarget.dataset.panelSizeHeight;
-                }
-            });
-
-            /* --- LEGACY --- */
-            self.maximizeButton = self.div.querySelector('.tc-ctl-rpanel-minimized-max') ||
-                self.div.querySelector('.prcollapsed-max');
-            self.maximizeButton.addEventListener('click', function () {
-                self.maximize();
-            });
-            //<sitna-button variant="minimal" class="tc-ctl-rpanel-btn-csv" hidden text="{{i18n "export.excel"}}"></sitna-button>
-            if (self.save) {
-                _addItemTool.apply(self, ['-btn-csv', 'export.excel', function () {
-                    self.exportToExcel();
-                }]);
-            }
-            
-            if (self.options.download && self.options.content === "table") {
-                _addItemTool.apply(self,['-btn-dwn', 'download', function () {
-                    if (TC.Util.isFunction(self.options.download)) {
-                        self.options.download.apply(self, []);
-                    }
-                }]);
-            }
-            if (self.options.share) {
-                _addItemTool.apply(self, ['-btn-share', 'shareQuery', function () {
-                    if (self.caller) {
-                        self.caller.showShareDialog();
-                    }
-                }]);
-            }
-            if (self.content) {
-                self.content = self.content;
-
-                if (self.options.titles) {
-
-                    if (self.options.titles.main) {
-                        self.mainTitleElm.setAttribute('title', self.options.titles.main);
-                        self.mainTitleElm.innerHTML = self.options.titles.main;
-                    }
-
-                    if (self.options.titles.max) {
-                        self.maximizeButton.setAttribute('title', self.options.titles.max);
-                    }
-                } else {
-                    self.mainTitleElm.setAttribute('title', self.getLocaleString("rsp.title"));
-                    self.mainTitleElm.innerHTML = self.getLocaleString("rsp.title");
-                }
-            }
-
-            /* --- LEGACY --- */
-            self.infoDiv = self.div.querySelector('.tc-ctl-rpanel-info') ||
-                self.div.querySelector('.tc-ctl-p-result-info');
-            /* --- LEGACY --- */
-            self.tableDiv = self.div.querySelector('.tc-ctl-rpanel-table') || 
-                self.div.querySelector('.tc-ctl-p-result-table');
-            //self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
-            /* --- LEGACY --- */
-            self.menuDiv = self.div.querySelector('.tc-ctl-rpanel-menu') || 
-                self.div.querySelector('.tc-ctl-p-result-menu');
-
-            if (TC.browserFeatures.touch()) {
-                TC.Util.swipe(self.div, {
-                    left: function () {
-                        self.minimize();
-                    }
-                });
-            }
-
-            if (!TC.Util.detectMobile()) {
-                const doResizable = !(Object.prototype.hasOwnProperty.call(self.options, "resize") && !self.options.resize);
-                switch (true) {
-                    case self.options.content === "chart" && doResizable: // si es un perfil de elevación
-                    case self.options.resize: // si está configurado a true
-                    case self.options.content === "table" && self.infoDiv && self.infoDiv.childElementCount > 0 && doResizable: // si es una tabla y es el renderizado de GFI
-                        self.resizable = true;
-                        self.div.classList.add(self.classes.RESIZABLE);
-                        break;
-                    default:
-                        self.resizable = false;
-                        break;
-                }
-            } else {
-                hideResizeHandlers(self);
-            }
-
-            if (callback && typeof callback === "function") {
-                callback();
+        /* --- LEGACY --- */
+        self.closeButton = self.div.querySelector('.tc-ctl-rpanel-btn-close') ||
+            self.div.querySelector('.prcollapsed-slide-submenu-close');
+        self.closeButton.addEventListener('click', function () {
+            self.close();
+            const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+            if (resizedTarget) {
+                // si el usuario cierra el panel desde el aspa, eliminamos el rastro del redimensionado para empezar de cero
+                delete resizedTarget.style.removeProperty("width");
+                delete resizedTarget.style.removeProperty("height");
+                delete resizedTarget.dataset.chartSizeWidth;
+                delete resizedTarget.dataset.chartSizeHeight;
+                delete resizedTarget.dataset.panelSizeWidth;
+                delete resizedTarget.dataset.panelSizeHeight;
             }
         });
-    };
 
-    ctlProto.renderPanelResizable = function (options) {
+        /* --- LEGACY --- */
+        self.maximizeButton = self.div.querySelector('.tc-ctl-rpanel-minimized-max') ||
+            self.div.querySelector('.prcollapsed-max');
+        self.maximizeButton.addEventListener('click', function () {
+            self.maximize();
+        });
+        //<sitna-button variant="minimal" class="tc-ctl-rpanel-btn-csv" hidden text="{{i18n "export.excel"}}"></sitna-button>
+        if (self.save) {
+            self.#addItemTool('-btn-csv', 'export.excel', function () {
+                self.exportToExcel();
+            });
+        }
+
+        if (self.options.download && self.options.content === "table") {
+            self.#addItemTool('-btn-dwn', 'download', function () {
+                if (Util.isFunction(self.options.download)) {
+                    self.options.download.apply(self, []);
+                }
+            });
+        }
+        if (self.options.share) {
+            self.#addItemTool('-btn-share', 'shareQuery', function () {
+                if (self.caller) {
+                    self.caller.showShareDialog();
+                }
+            });
+        }
+        if (self.content) {
+            self.content = self.content;
+
+            if (self.#titles) {
+                self.setTitles(self.#titles);
+            } else {
+                self.mainTitleElm.setAttribute('title', self.getLocaleString("rsp.title"));
+                self.mainTitleElm.innerHTML = self.getLocaleString("rsp.title");
+            }
+        }
+
+        /* --- LEGACY --- */
+        self.infoDiv = self.div.querySelector('.tc-ctl-rpanel-info') ||
+            self.div.querySelector('.tc-ctl-p-result-info');
+        /* --- LEGACY --- */
+        self.tableDiv = self.div.querySelector('.tc-ctl-rpanel-table') ||
+            self.div.querySelector('.tc-ctl-p-result-table');
+        //self.$divChart = self._$div.find('.' + self.CLASS + '-chart');
+        /* --- LEGACY --- */
+        self.menuDiv = self.div.querySelector('.tc-ctl-rpanel-menu') ||
+            self.div.querySelector('.tc-ctl-p-result-menu');
+
+        if (TC.browserFeatures.touch()) {
+            Util.swipe(self.div, {
+                left: function () {
+                    self.minimize();
+                }
+            });
+        }
+
+        if (!Util.detectMobile()) {
+            const doResizable = !(Object.prototype.hasOwnProperty.call(self.options, "resize") && !self.options.resize);
+            switch (true) {
+                case self.options.content === "chart" && doResizable: // si es un perfil de elevación
+                case self.options.resize: // si está configurado a true
+                case self.options.content === "table" && self.infoDiv && self.infoDiv.childElementCount > 0 && doResizable: // si es una tabla y es el renderizado de GFI
+                    self.resizable = true;
+                    self.div.classList.add(self.classes.RESIZABLE);
+                    break;
+                default:
+                    self.resizable = false;
+                    break;
+            }
+        } else {
+            hideResizeHandlers(self);
+        }
+
+        if (callback && typeof callback === "function") {
+            callback();
+        }
+        return self;
+    }
+
+    setTitles(titles = {}) {
+        if (titles.main) {
+            this.mainTitleElm.setAttribute('title', titles.main);
+            this.mainTitleElm.innerHTML = titles.main;
+            this.#titles.main = titles.main;
+        }
+
+        if (titles.max) {
+            this.maximizeButton.setAttribute('title', titles.max);
+            this.#titles.max = titles.max;
+        }
+        return this;
+    }
+
+    renderPanelResizable(options = {}) {
         const self = this;
-        options = options || {};
         import('interactjs').then(function (module) {
             const interact = module.default;
             const target = "." + self.classes.RESIZABLE;
@@ -393,14 +449,14 @@ TC.inherit(ResultsPanel, Control);
                         ]
                     });
 
-                if (options.callback && TC.Util.isFunction(options.callback)) {
+                if (options.callback && Util.isFunction(options.callback)) {
                     options.callback();
                 }
             }
         });
-    };
+    }
 
-    ctlProto.getResizableChartSize = function (target) {
+    getResizableChartSize(target) {
         if (target) {
             let chartWrapperBounding = target.querySelector('.tc-chart.c3').getBoundingClientRect();
             const newSize = {
@@ -409,22 +465,20 @@ TC.inherit(ResultsPanel, Control);
             };
             return newSize;
         }
-    };
+    }
 
-    ctlProto.getResultsPanelFromElement = function (element) {
-        const self = this;
-
-        let resultsPanels = self.map.getControlsByClass(ResultsPanel);
+    getResultsPanelFromElement(element) {
+        let resultsPanels = this.map.getControlsByClass(ResultsPanel);
         for (var i = 0; i < resultsPanels.length; i++) {
-            if (resultsPanels[i].div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`) === element) {
+            if (resultsPanels[i].div.querySelector(`.${this.classes.RESIZABLE}.tc-ctl-rpanel-main`) === element) {
                 return resultsPanels[i];
             }
         }
 
         return null;
-    };
+    }
 
-    ctlProto.onResize = function (e) {
+    onResize(e) {
         const self = this;
         const target = e.target;
         if (target.querySelector('.tc-chart.c3')) {
@@ -434,6 +488,9 @@ TC.inherit(ResultsPanel, Control);
                 let resultsPanel = self.getResultsPanelFromElement(target);
                 if (resultsPanel) {
                     resultsPanel.chart.chart.resize(newSize);
+                    const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+                    resizedTarget.dataset.chartSizeWidth = newSize.width;
+                    resizedTarget.dataset.chartSizeHeight = newSize.height;
                 }
             }
         }
@@ -443,9 +500,9 @@ TC.inherit(ResultsPanel, Control);
                 height: target.getBoundingClientRect().height
             }
         });
-    };
+    }
 
-    ctlProto.minimize = function () {
+    minimize() {
         const self = this;
 
         const collapsedElm = self.div.querySelector(self.content.collapsedClass);
@@ -458,9 +515,10 @@ TC.inherit(ResultsPanel, Control);
             self.map.trigger(Consts.event.RESULTSPANELMIN, { control: self });
             collidingManagement.remove(self);
         }
-    };
+        return self;
+    }
 
-    ctlProto.maximize = function () {
+    maximize() {
         const self = this;
 
         const collapsedElm = self.div.querySelector(self.content.collapsedClass);
@@ -473,16 +531,17 @@ TC.inherit(ResultsPanel, Control);
             self.map.trigger(Consts.event.RESULTSPANELMAX, { control: self });
             collidingManagement.add(self);
         }
-    };
+        return self;
+    }
 
-    ctlProto.close = function () {
+    close() {
         const self = this;
 
         self.div.classList.add(Consts.classes.HIDDEN);
 
         if (self.chart && self.chart.chart) {
             // preservamos el tamaño redimensionado por el usuario
-            const resizedTarget = self.div.querySelector(`${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+            const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
             if (resizedTarget && resizedTarget.style && resizedTarget.style.width && resizedTarget.style.height) {
                 const chartElement = resizedTarget.querySelector('.tc-chart');
                 const chartBounding = chartElement.getBoundingClientRect();
@@ -510,15 +569,19 @@ TC.inherit(ResultsPanel, Control);
             if (resizable) {
                 resizable.style = "";
             }
+            if (self.currentFeature) {
+                self.currentFeature.toggleSelectedStyle(false);
+            }
             self.map.trigger(Consts.event.RESULTSPANELCLOSE, { control: self, feature: self.currentFeature });
 
             //URI: Resetear el bottom de los paneles 
             collidingManagement.remove(self);
-            
-        }
-    };
 
-    ctlProto.openChart = function (data) {
+        }
+        return self;
+    }
+
+    openChart(data) {
         const self = this;
 
         self.onOpen();
@@ -548,25 +611,20 @@ TC.inherit(ResultsPanel, Control);
                 self.elevationProfileChartData = data;
                 self.renderElevationProfileChart({
                     data: data,
-                    div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
+                    div: self.div.querySelector('.' + self.CLASS + '-chart')
                 });
             }
         }
-    };
+        return self;
+    }
 
-    const formatYAxis = function (d, locale) {
-        let y = parseInt(d.toFixed(0)) || 0;
-        return y.toLocaleString(locale) + ' m';
-    };
-
-    ctlProto.renderElevationProfileChart = async function (options) {
+    async renderElevationProfileChart(options = {}) {
         const self = this;
-        options = options || {};
         const c3 = (await import(/* webpackMode: "lazy-once" */ 'c3')).default;
         const data = options.data;
         data.ele = data.ele.map(val => val === null ? 0 : val);
         const div = options.div;
-        let locale = TC.Util.getMapLocale(self.map);
+        let locale = Util.getMapLocale(self.map);
 
         const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
         self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
@@ -591,191 +649,181 @@ TC.inherit(ResultsPanel, Control);
                 max: formatYAxis(data.secondaryElevationProfileChartData[0].max, locale)
             };
         }
+        const out = await self.getRenderedHtml(self.CLASS + '-chart', templateData);
 
-        self.getRenderedHtml(ctlProto.CLASS + '-chart', templateData, function (out) {
+        div.innerHTML = out;
+        div.style.display = '';
 
-            div.innerHTML = out;
-            div.style.display = '';
+        if (self.#titles) {
 
-            if (self.options.titles) {
+            if (self.#titles.main) {
+                const titleElm = self.div.querySelector('.tc-ctl-rpanel-title-text');
+                titleElm.setAttribute('title', self.#titles.main);
+                titleElm.innerHTML = self.#titles.main;
+            }
 
-                if (self.options.titles.main) {
-                    const titleElm = self.div.querySelector('.tc-ctl-rpanel-title-text');
-                    titleElm.setAttribute('title', self.options.titles.main);
-                    titleElm.innerHTML = self.options.titles.main;
+            if (self.#titles.max) {
+                self.div.querySelector('.tc-ctl-rpanel-minimized-max').setAttribute('title', self.#titles.max);
+            }
+        }
+
+        var legendOptions = { show: false };
+        if (hasSecondaryElevationProfileChartData) {
+            legendOptions = {
+                position: 'inset',
+                inset: {
+                    anchor: "bottom-left",
+                    x: -55,
+                    y: -30,
+                    step: 1
                 }
-
-                if (self.options.titles.max) {
-                    self.div.querySelector('.tc-ctl-rpanel-minimized-max').setAttribute('title', self.options.titles.max);
-                }
-            }
-
-            var legendOptions = { show: false };
-            if (hasSecondaryElevationProfileChartData) {
-                legendOptions = {
-                    position: 'inset',
-                    inset: {
-                        anchor: "bottom-left",
-                        x: -55,
-                        y: -30,
-                        step: 1
-                    }
-                };
-            }
-            let chartOptions = TC.Util.extend({
-                bindto: div.querySelector('.tc-chart'),
-                padding: {
-                    top: 13, // por el nuevo diseño del tooltip añado 13  //data.secondaryElevationProfileChartData[0] ? 10 : 0,
-                    right: 15,
-                    bottom: 0,
-                    left: 45
-                },
-                legend: legendOptions
-            }, self.createChartOptions(data));
-
-            // preservamos el tamaño redimensionado por el usuario
-            const resizedTarget = self.div.querySelector(`${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
-            if (resizedTarget &&
-                resizedTarget.dataset.chartSizeWidth && parseInt(resizedTarget.dataset.chartSizeWidth) > 0 &&
-                resizedTarget.dataset.chartSizeHeight && parseInt(resizedTarget.dataset.chartSizeHeight) > 0) {
-                TC.Util.extend(chartOptions.size, { width: resizedTarget.dataset.chartSizeWidth, height: resizedTarget.dataset.chartSizeHeight });
-
-                if (resizedTarget.dataset.panelSizeWidth && parseInt(resizedTarget.dataset.panelSizeWidth) > 0 &&
-                    resizedTarget.dataset.panelSizeHeight && parseInt(resizedTarget.dataset.panelSizeHeight) > 0) {
-                    resizedTarget.style.width = resizedTarget.dataset.panelSizeWidth;
-                    resizedTarget.style.height = resizedTarget.dataset.panelSizeHeight;
-                }
-            }
-            if (self.chart.tooltip) {
-                chartOptions.tooltip = {
-                    position: function (_data, _width, _height, element) {
-                        let container = document.querySelector('.c3-tooltip-container');
-                        let chartOffsetX = document.querySelector(".c3").getBoundingClientRect().left;
-                        let graphOffsetX = document.querySelector(".c3 g.c3-axis-y").getBoundingClientRect().right;
-                        let tooltipWidth = container.clientWidth;
-                        let x = parseInt(d3.mouse(element)[0]) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);
-
-                        // alto del tooltipOnBottom
-                        let xAxisHeight = document.querySelector(".c3 g.c3-axis-x").getBoundingClientRect().height + 2;
-                        let onBottom = container.querySelector(`.${self.classes.POSITION_BOTTOM}`);
-                        if (onBottom && xAxisHeight) {
-                            onBottom.style.height = xAxisHeight + 'px';
-                        }
-                        return { top: 0, left: x };
-                    },
-                    contents: function (d) {
-                        var fn = self.chart.tooltip;
-                        if (typeof fn !== "function")
-                            fn = TC.Util.getFnFromString(self.chart.tooltip);
-                        return fn.call(eval(self.chart.ctx), d);
-                    }
-                };
-            }
-
-            if (self.chart && self.chart.onmouseout) {
-                chartOptions.onmouseout = function () {
-                    var fn = self.chart.onmouseout;
-                    if (typeof fn !== "function")
-                        fn = TC.Util.getFnFromString(self.chart.onmouseout);
-                    fn.call(eval(self.chart.ctx));
-                };
-            }
-
-            chartOptions.onrendered = function () {
-                if (TC.Util.isFunction(chartOptions._onrendered)) {
-                    chartOptions._onrendered.call(this);
-                }
-                self.map.trigger(Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this });
             };
+        }
+        let chartOptions = Util.extend({
+            bindto: div.querySelector('.tc-chart'),
+            padding: {
+                top: 13, // por el nuevo diseño del tooltip añado 13  //data.secondaryElevationProfileChartData[0] ? 10 : 0,
+                right: 15,
+                bottom: 0,
+                left: 45
+            },
+            legend: legendOptions
+        }, self.createChartOptions(data));
 
-            if (!c3._isOverriden) {
-                // GLS: Override de la función generateDrawLine y generateDrawArea para establecer otro tipo de interpolación en la línea
-                c3.chart.internal.fn.generateDrawLine = function (lineIndices, isSub) {
-                    var $$ = this, config = $$.config,
-                        line = $$.d3.svg.line(),
-                        getPoints = $$.generateGetLinePoints(lineIndices, isSub),
-                        yScaleGetter = isSub ? $$.getSubYScale : $$.getYScale,
-                        xValue = function (d) { return (isSub ? $$.subxx : $$.xx).call($$, d); },
-                        yValue = function (d, i) {
-                            return config.data_groups.length > 0 ? getPoints(d, i)[0][1] : yScaleGetter.call($$, d.id)(d.value);
-                        };
-                    line = config.axis_rotated ? line.x(yValue).y(xValue) : line.x(xValue).y(yValue);
-                    if (!config.line_connectNull) { line = line.defined(function (d) { return d.value != null; }); }
-                    return function (d) {
-                        var values = config.line_connectNull ? $$.filterRemoveNull(d.values) : d.values,
-                            x = isSub ? $$.x : $$.subX, y = yScaleGetter.call($$, d.id), x0 = 0, y0 = 0, path;
-                        if ($$.isLineType(d)) {
-                            if (config.data_regions[d.id]) {
-                                path = $$.lineWithRegions(values, x, y, config.data_regions[d.id]);
-                            } else {
-                                if ($$.isStepType(d)) { values = $$.convertValuesToStep(values); }
-                                path = line.interpolate('linear')(values);
-                            }
-                        } else {
-                            if (values[0]) {
-                                x0 = x(values[0].x);
-                                y0 = y(values[0].value);
-                            }
-                            path = config.axis_rotated ? "M " + y0 + " " + x0 : "M " + x0 + " " + y0;
-                        }
-                        return path ? path : "M 0 0";
-                    };
-                };
-                c3.chart.internal.fn.generateDrawArea = function (areaIndices, isSub) {
-                    var $$ = this, config = $$.config, area = $$.d3.svg.area(),
-                        getPoints = $$.generateGetAreaPoints(areaIndices, isSub),
-                        yScaleGetter = isSub ? $$.getSubYScale : $$.getYScale,
-                        xValue = function (d) { return (isSub ? $$.subxx : $$.xx).call($$, d); },
-                        value0 = function (d, i) {
-                            return config.data_groups.length > 0 ? getPoints(d, i)[0][1] : yScaleGetter.call($$, d.id)(0);
-                        },
-                        value1 = function (d, i) {
-                            return config.data_groups.length > 0 ? getPoints(d, i)[1][1] : yScaleGetter.call($$, d.id)(d.value);
-                        };
-                    area = config.axis_rotated ? area.x0(value0).x1(value1).y(xValue) : area.x(xValue).y0(value0).y1(value1);
-                    if (!config.line_connectNull) {
-                        area = area.defined(function (d) { return d.value !== null; });
-                    }
-                    return function (d) {
-                        var values = config.line_connectNull ? $$.filterRemoveNull(d.values) : d.values,
-                            x0 = 0, y0 = 0, path;
-                        if ($$.isAreaType(d)) {
-                            if ($$.isStepType(d)) { values = $$.convertValuesToStep(values); }
-                            path = area.interpolate('linear')(values);
-                        } else {
-                            if (values[0]) {
-                                x0 = $$.x(values[0].x);
-                                y0 = $$.getYScale(d.id)(values[0].value);
-                            }
-                            path = config.axis_rotated ? "M " + y0 + " " + x0 : "M " + x0 + " " + y0;
-                        }
-                        return path ? path : "M 0 0";
-                    };
-                };
-                c3._isOverriden = true;
+        // preservamos el tamaño redimensionado por el usuario
+        const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+        if (resizedTarget &&
+            resizedTarget.dataset.chartSizeWidth && parseInt(resizedTarget.dataset.chartSizeWidth) > 0 &&
+            resizedTarget.dataset.chartSizeHeight && parseInt(resizedTarget.dataset.chartSizeHeight) > 0) {
+            Util.extend(chartOptions.size, { width: resizedTarget.dataset.chartSizeWidth, height: resizedTarget.dataset.chartSizeHeight });
+
+            if (resizedTarget.dataset.panelSizeWidth && parseInt(resizedTarget.dataset.panelSizeWidth) > 0 &&
+                resizedTarget.dataset.panelSizeHeight && parseInt(resizedTarget.dataset.panelSizeHeight) > 0) {
+                resizedTarget.style.width = resizedTarget.dataset.panelSizeWidth;
+                resizedTarget.style.height = resizedTarget.dataset.panelSizeHeight;
             }
+        }
+        if (self.chart.tooltip) {
+            chartOptions.tooltip = {
+                position: function (_data, _width, _height, element) {
+                    let container = document.querySelector('.c3-tooltip-container');
+                    let chartOffsetX = document.querySelector(".c3").getBoundingClientRect().left;
+                    let graphOffsetX = document.querySelector(".c3 g.c3-axis-y").getBoundingClientRect().right;
+                    let tooltipWidth = container.clientWidth;
+                    let x = parseInt(d3.mouse(element)[0]) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);
 
-            self.chart.chart = c3.generate(chartOptions);
-        });
-    };
+                    // alto del tooltipOnBottom
+                    let xAxisHeight = document.querySelector(".c3 g.c3-axis-x").getBoundingClientRect().height + 2;
+                    let onBottom = container.querySelector(`.${self.classes.POSITION_BOTTOM}`);
+                    if (onBottom && xAxisHeight) {
+                        onBottom.style.height = xAxisHeight + 'px';
+                    }
+                    return { top: 0, left: x };
+                },
+                contents: function (d) {
+                    var fn = self.chart.tooltip;
+                    if (typeof fn !== "function")
+                        fn = Util.getFnFromString(self.chart.tooltip);
+                    return fn.call(eval(self.chart.ctx), d);
+                }
+            };
+        }
 
-    const closeOpenedTableResultsPanel = function () {
+        if (self.chart && self.chart.onmouseout) {
+            chartOptions.onmouseout = function () {
+                var fn = self.chart.onmouseout;
+                if (typeof fn !== "function")
+                    fn = Util.getFnFromString(self.chart.onmouseout);
+                fn.call(eval(self.chart.ctx));
+            };
+        }
+
+        chartOptions.onrendered = function () {
+            if (Util.isFunction(chartOptions._onrendered)) {
+                chartOptions._onrendered.call(this);
+            }
+            self.map.trigger(Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this });
+        };
+
+        if (!c3._isOverriden) {
+            // GLS: Override de la función generateDrawLine y generateDrawArea para establecer otro tipo de interpolación en la línea
+            c3.chart.internal.fn.generateDrawLine = function (lineIndices, isSub) {
+                var $$ = this, config = $$.config,
+                    line = $$.d3.svg.line(),
+                    getPoints = $$.generateGetLinePoints(lineIndices, isSub),
+                    yScaleGetter = isSub ? $$.getSubYScale : $$.getYScale,
+                    xValue = function (d) { return (isSub ? $$.subxx : $$.xx).call($$, d); },
+                    yValue = function (d, i) {
+                        return config.data_groups.length > 0 ? getPoints(d, i)[0][1] : yScaleGetter.call($$, d.id)(d.value);
+                    };
+                line = config.axis_rotated ? line.x(yValue).y(xValue) : line.x(xValue).y(yValue);
+                if (!config.line_connectNull) { line = line.defined(function (d) { return d.value != null; }); }
+                return function (d) {
+                    var values = config.line_connectNull ? $$.filterRemoveNull(d.values) : d.values,
+                        x = isSub ? $$.x : $$.subX, y = yScaleGetter.call($$, d.id), x0 = 0, y0 = 0, path;
+                    if ($$.isLineType(d)) {
+                        if (config.data_regions[d.id]) {
+                            path = $$.lineWithRegions(values, x, y, config.data_regions[d.id]);
+                        } else {
+                            if ($$.isStepType(d)) { values = $$.convertValuesToStep(values); }
+                            path = line.interpolate('linear')(values);
+                        }
+                    } else {
+                        if (values[0]) {
+                            x0 = x(values[0].x);
+                            y0 = y(values[0].value);
+                        }
+                        path = config.axis_rotated ? "M " + y0 + " " + x0 : "M " + x0 + " " + y0;
+                    }
+                    return path ? path : "M 0 0";
+                };
+            };
+            c3.chart.internal.fn.generateDrawArea = function (areaIndices, isSub) {
+                var $$ = this, config = $$.config, area = $$.d3.svg.area(),
+                    getPoints = $$.generateGetAreaPoints(areaIndices, isSub),
+                    yScaleGetter = isSub ? $$.getSubYScale : $$.getYScale,
+                    xValue = function (d) { return (isSub ? $$.subxx : $$.xx).call($$, d); },
+                    value0 = function (d, i) {
+                        return config.data_groups.length > 0 ? getPoints(d, i)[0][1] : yScaleGetter.call($$, d.id)(0);
+                    },
+                    value1 = function (d, i) {
+                        return config.data_groups.length > 0 ? getPoints(d, i)[1][1] : yScaleGetter.call($$, d.id)(d.value);
+                    };
+                area = config.axis_rotated ? area.x0(value0).x1(value1).y(xValue) : area.x(xValue).y0(value0).y1(value1);
+                if (!config.line_connectNull) {
+                    area = area.defined(function (d) { return d.value !== null; });
+                }
+                return function (d) {
+                    var values = config.line_connectNull ? $$.filterRemoveNull(d.values) : d.values,
+                        x0 = 0, y0 = 0, path;
+                    if ($$.isAreaType(d)) {
+                        if ($$.isStepType(d)) { values = $$.convertValuesToStep(values); }
+                        path = area.interpolate('linear')(values);
+                    } else {
+                        if (values[0]) {
+                            x0 = $$.x(values[0].x);
+                            y0 = $$.getYScale(d.id)(values[0].value);
+                        }
+                        path = config.axis_rotated ? "M " + y0 + " " + x0 : "M " + x0 + " " + y0;
+                    }
+                    return path ? path : "M 0 0";
+                };
+            };
+            c3._isOverriden = true;
+        }
+
+        self.chart.chart = c3.generate(chartOptions);
+    }
+
+    #closeOpenedTableResultsPanel() {
+        this.map.getControlsByClass(ResultsPanel)
+            .filter((ctl) => ctl !== this && ctl.isVisible())
+            .filter((ctl) => ctl.options.content !== 'chart')
+            .forEach((ctl) => ctl.close());
+    }
+
+    openTable() {
         const self = this;
-
-        self.map.getControlsByClass(ResultsPanel)
-            .filter(function (ctl) {
-                return ctl !== self && ctl.isVisible();
-            })
-            .filter(function (ctl) {
-                return ctl.options.content !== 'chart';
-            })
-            .forEach(function (ctl) {
-                ctl.close();
-            });
-    };
-
-    ctlProto.openTable = function () {
-        var self = this;
 
         self.onOpen();
         self.div.classList.remove(Consts.classes.HIDDEN);
@@ -862,9 +910,9 @@ TC.inherit(ResultsPanel, Control);
                                 });
                             });
                         }
-                        closeOpenedTableResultsPanel.call(self);
+                        self.#closeOpenedTableResultsPanel();
 
-                        const titleBar=self.div.querySelector('.tc-ctl-rpanel-title');
+                        const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
                         self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
 
                         self.map.trigger(Consts.event.DRAWTABLE, { control: self });
@@ -882,30 +930,9 @@ TC.inherit(ResultsPanel, Control);
                 self.show('tc-ctl-rpanel-sidebar-body');
             }
         }
-    };
-
-    const collidingManagement = {
-        add: function (currentPanel) {
-            const pbody = currentPanel.div.querySelector(".tc-ctl-rpanel-sidebar-body");
-            pbody.style.bottom = "";
-            const bottom = currentPanel.map.getControlsByClass(ResultsPanel)
-                .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
-                .filter(panel => pbody.colliding(panel.div.querySelector(".tc-ctl-rpanel-sidebar-body"))).reduce((prevVal, currVal) => {
-                    return prevVal + currVal.div.querySelector(".tc-ctl-rpanel-sidebar-body").clientHeight
-                }, 0);
-            if (bottom) pbody.style.bottom = bottom + "px";
-        },
-        remove: function (currentPanel) {
-            currentPanel.map.getControlsByClass(ResultsPanel)
-                .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
-                .forEach((panel) => {
-                    panel.div.querySelector(".tc-ctl-rpanel-sidebar-body").style.bottom = "";
-                });
-
-        }
     }
 
-    ctlProto.open = function (html, container) {
+    open(html, container) {
         const self = this;
 
         self.onOpen();
@@ -914,24 +941,27 @@ TC.inherit(ResultsPanel, Control);
         const toCheck = container || self.div.querySelector('.tc-ctl-rpanel-table');
         var checkIsRendered = function () {
             var clientRect = toCheck.getBoundingClientRect();
-            if (clientRect && clientRect.width > 100) {
-                window.cancelAnimationFrame(this.requestIsRendered);
+            if (clientRect && clientRect.width > 30 && clientRect.height > 0) {
+                //window.cancelAnimationFrame(this.requestIsRendered);
 
                 const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
                 self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
-                //closeOpenedTableResultsPanel.call(self);
+                //self.#closeOpenedTableResultsPanel();
                 this.map.trigger(Consts.event.DRAWTABLE, { control: self });
             }
         };
-
+        //checkIsRendered.apply(self);
         self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
 
         const chartElm = self.div.querySelector('.tc-ctl-rpanel-chart');
-        chartElm.style.display = 'none';
+        //chartElm.style.display = 'none';
+        //chartElm.innerHTML = '';
         const tableElm = self.div.querySelector('.tc-ctl-rpanel-table');
-        tableElm.style.display = 'none';
+        //tableElm.style.display = 'none';
+        //tableElm.innerHTML = '';
         const infoElm = self.div.querySelector('.tc-ctl-rpanel-info');
-        infoElm.style.display = 'none';
+        //infoElm.style.display = 'none';
+        //infoElm.innerHTML = '';
 
         if (html) {
             if (container) {
@@ -959,16 +989,14 @@ TC.inherit(ResultsPanel, Control);
 
         const maximizeElm = self.div.querySelector('.tc-ctl-rpanel-minimized-max');
 
-        if (self.options.titles) {
+        if (self.#titles) {
 
-            if (self.options.titles.main) {
-                const titleElm = self.div.querySelector('.tc-ctl-rpanel-title-text');
-                titleElm.setAttribute('title', self.options.titles.main);
-                titleElm.innerHTML = self.options.titles.main;
+            if (self.#titles.main) {
+                self.setTitles(self.#titles);
             }
 
-            if (self.options.titles.max) {
-                maximizeElm.setAttribute('title', self.options.titles.max);
+            if (self.#titles.max) {
+                maximizeElm.setAttribute('title', self.#titles.max);
             }
         }
 
@@ -987,10 +1015,11 @@ TC.inherit(ResultsPanel, Control);
         self.show('tc-ctl-rpanel-sidebar-body');
         self.hide('tc-ctl-rpanel-minimized-max');
         //URI: Evitar solapamentos entre paneles en modo móvil
-        collidingManagement.add(self);   
-    };
+        collidingManagement.add(self);
+        return self;
+    }
 
-    ctlProto.onOpen = function () {
+    onOpen() {
         const self = this;
         if (self.resizable) {
             self.renderPanelResizable({ target: self.div, preserveAspectRatio: true });
@@ -998,15 +1027,15 @@ TC.inherit(ResultsPanel, Control);
         else {
             hideResizeHandlers(self);
         }
-    };
+    }
 
-    ctlProto.loadDataOnChart = function (data) {
+    loadDataOnChart(data) {
         const self = this;
         const endFn = function () {
             self.elevationProfileChartData = data;
             self.renderElevationProfileChart({
                 data: data,
-                div: self.div.querySelector('.' + ctlProto.CLASS + '-chart')
+                div: self.div.querySelector('.' + self.CLASS + '-chart')
             });
         };
         // puede llegar aquí después de borrar un track.
@@ -1018,13 +1047,12 @@ TC.inherit(ResultsPanel, Control);
         else {
             endFn();
         }
-    };
+    }
 
-    ctlProto.createChartOptions = function (options) {
+    createChartOptions(options = {}) {
         const self = this;
         var result = {};
-        options = options || {};
-        const locale = options.locale || TC.Util.getMapLocale(self.map);
+        const locale = options.locale || Util.getMapLocale(self.map);
         switch (options.chartType) {
             default:
                 if (options.ele != null) {
@@ -1112,7 +1140,7 @@ TC.inherit(ResultsPanel, Control);
                         },
                         onresize: function () {
                             let size;
-                            let targetNode = this.config.bindto.closest(`${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+                            let targetNode = this.config.bindto.closest(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
                             if (targetNode) {
                                 size = self.getResizableChartSize(targetNode);
                             } else {
@@ -1243,7 +1271,7 @@ TC.inherit(ResultsPanel, Control);
                                 if (point) {
                                     point = point.slice(0, 2);
                                     if (self.map.crs !== self.map.options.utmCrs) {
-                                        point = TC.Util.reproject(point, self.map.options.utmCrs, self.map.crs);
+                                        point = Util.reproject(point, self.map.options.utmCrs, self.map.crs);
                                     }
                                     self.map.zoomToFeatures([new Point(point, {})]);
                                 }
@@ -1371,30 +1399,9 @@ TC.inherit(ResultsPanel, Control);
                 break;
         }
         return result;
-    };
+    }
 
-    const getTime = function (timeFrom, timeTo) {
-        var diff = timeTo - timeFrom;
-        var d = {};
-        var daysDifference = Math.floor(diff / 1000 / 60 / 60 / 24);
-        diff -= daysDifference * 1000 * 60 * 60 * 24;
-
-        var hoursDifference = Math.floor(diff / 1000 / 60 / 60);
-        diff -= hoursDifference * 1000 * 60 * 60;
-
-        d.h = hoursDifference + daysDifference * 24;
-
-        var minutesDifference = Math.floor(diff / 1000 / 60);
-        diff -= minutesDifference * 1000 * 60;
-
-        d.m = minutesDifference;
-
-        d.s = Math.floor(diff / 1000);
-
-        return TC.Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
-    };
-
-    ctlProto.getElevationChartTooltip = function (data) {
+    getElevationChartTooltip(data) {
         const self = this;
 
         const locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
@@ -1428,28 +1435,28 @@ TC.inherit(ResultsPanel, Control);
 
 
         return elevationDiv + distanceAndTimeDiv;
-    };
+    }
 
-    ctlProto.getTableContainer = function () {
+    getTableContainer() {
         return this.tableDiv;
-    };
+    }
 
-    ctlProto.getInfoContainer = function () {
+    getInfoContainer() {
         return this.infoDiv;
-    };
+    }
 
-    ctlProto.getMenuElement = function () {
+    getMenuElement() {
         return this.menuDiv;
-    };
+    }
 
-    ctlProto.getContainerElement = function () {
+    getContainerElement() {
         return this.div.querySelector('.tc-ctl-rpanel-sidebar-body');
-    };
+    }
 
-    ctlProto.register = function (map) {
+    async register(map) {
         const self = this;
 
-        const result = Control.prototype.register.call(self, map);
+        await super.register.call(self, map);
 
         self.wrap.register(map);
 
@@ -1498,10 +1505,10 @@ TC.inherit(ResultsPanel, Control);
         //    });
         //});
 
-        return result;
-    };
+        return self;
+    }
 
-    ctlProto.exportToExcel = function () {
+    exportToExcel() {
         const self = this;
 
         var rows = [self.tableData.columns];
@@ -1519,23 +1526,13 @@ TC.inherit(ResultsPanel, Control);
             const ExcelExport = module.default;
             const exporter = new ExcelExport();
             var fileName = self.save.fileName ? self.save.fileName : 'resultados.xls';
-            var title = self.options.titles && self.options.titles.main ? self.options.titles.main : null;
+            var title = self.#titles && self.#titles.main ? self.#titles.main : null;
             exporter.Save(fileName, rows, title);
         });
-    };
+    }
+}
 
-    ctlProto.contentType = {
-        TABLE: {
-            fnOpen: ctlProto.openTable,
-            collapsedClass: `.${ctlProto.CLASS}-minimized-max-table`
-        },
-        CHART: {
-            fnOpen: ctlProto.openChart,
-            collapsedClass: `.${ctlProto.CLASS}-minimized-max-chart`
-        }
-    };
-})();
-
+ResultsPanel.prototype.CLASS = 'tc-ctl-rpanel';
 TC.control.ResultsPanel = ResultsPanel;
 TC.mix(ResultsPanel, itemToolContainer);
 export default ResultsPanel;

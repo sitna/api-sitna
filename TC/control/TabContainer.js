@@ -35,81 +35,22 @@
 
 import TC from '../../TC';
 import Consts from '../Consts';
+import Util from '../Util';
 import Container from './Container';
 
 TC.control = TC.control || {};
 
-const TabContainer = function () {
-    const self = this;
+class TabContainer extends Container {
 
-    Container.apply(self, arguments);
-
-    self._classSelector = '.' + self.CLASS;
-};
-
-TC.inherit(TabContainer, Container);
-
-(function () {
-    var ctlProto = TabContainer.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-tctr';
-
-    ctlProto.onRender = async function () {
-        const self = this;
-
-        self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
-        self.div.querySelector('h2').innerHTML = self.title;
-
-        self.controlOptions.forEach((ctl, i) => {
-            let ctlName = "";
-            let ctlOptions = {};
-
-            // GLS: 20/01/2020 código compatibilidad hacia atrás
-            if (ctl.name !== undefined && ctl.options !== undefined) {
-                console.log('Gestionamos config de tabContainer antiguo');
-
-                ctlName = ctl.name;
-                ctlOptions = ctl.options;
-            } else {
-                ctlName = Object.keys(ctl).find(key => key !== "title");
-                ctlOptions = ctl[ctlName];
-            }
-
-            self._ctlPromises[i] = self.map.addControl(ctlName, TC.Util.extend({
-                id: self.uids[i],
-                div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
-            }, ctlOptions));
-        });
-
-        const writeTitle = async function (ctl, idx) {
-            await ctl.renderPromise();
-            const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
-            var parent = ctl.div;
-            do {
-                parent = parent.parentElement;
-            }
-            while (parent && !parent.matches(self._classSelector));
-            parent.querySelector(`sitna-tab[for="${self.id}-sel-${idx}"]`).text = title;
-        };
-
-        const controls = await Promise.all(self._ctlPromises);
-        for (var i = 0, len = controls.length; i < len; i++) {
-            const ctl = controls[i];
-            ctl.containerControl = self;
-            await writeTitle(ctl, i);
-        }
-        return self;
-    };
-
-    ctlProto.loadTemplates = async function () {
+    async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-tctr.mjs');
         self.template = module.default;
-    };
+    }
 
-    ctlProto.render = function (callback) {
+    render(callback) {
         const self = this;
-        return self._set1stRenderPromise(self.renderData({
+        return self.renderData({
             controlId: self.id,
             title: self.title,
             deselectableTabs: self.options.deselectableTabs,
@@ -151,18 +92,66 @@ TC.inherit(TabContainer, Container);
             if (typeof callback === 'function') {
                 callback();
             }
-        }));
-    };
+        });
+    }
 
-    ctlProto.selectTab = function (index) {
+    async onRender() {
+        const self = this;
+
+        self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
+        self.div.querySelector('h2').innerHTML = self.title;
+
+        self.controlOptions.forEach((ctl, i) => {
+            let ctlName = "";
+            let ctlOptions = {};
+
+            // GLS: 20/01/2020 código compatibilidad hacia atrás
+            if (ctl.name !== undefined && ctl.options !== undefined) {
+                console.log('Gestionamos config de tabContainer antiguo');
+
+                ctlName = ctl.name;
+                ctlOptions = ctl.options;
+            } else {
+                ctlName = Object.keys(ctl).find(key => key !== "title");
+                ctlOptions = ctl[ctlName];
+            }
+
+            self._ctlPromises[i] = self.map.addControl(ctlName, Util.extend({
+                id: self.uids[i],
+                div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
+            }, ctlOptions));
+        });
+
+        const classSelector = `.${self.CLASS}`;
+        const writeTitle = async function (ctl, idx) {
+            await ctl.renderPromise();
+            const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
+            var parent = ctl.div;
+            do {
+                parent = parent.parentElement;
+            }
+            while (parent && !parent.matches(classSelector));
+            parent.querySelector(`sitna-tab[for="${self.id}-sel-${idx}"]`).text = title;
+        };
+
+        const controls = await Promise.all(self._ctlPromises);
+        for (var i = 0, len = controls.length; i < len; i++) {
+            const ctl = controls[i];
+            ctl.containerControl = self;
+            await writeTitle(ctl, i);
+        }
+        return self;
+    }
+
+    selectTab(index) {
         const self = this;
         const tab = self.div.querySelectorAll('sitna-tab')[index];
         if (tab) {
             tab.selected = true;
         }
-    };
+    }
 
-    ctlProto.onControlDisable = function (control) {
+    onControlDisable(control) {
         const self = this;
         self.getControls().then(controls => {
             const controlIndex = controls.indexOf(control);
@@ -179,8 +168,9 @@ TC.inherit(TabContainer, Container);
                 }
             }
         });
-    };
-})();
+    }
+}
 
+TabContainer.prototype.CLASS = 'tc-ctl-tctr';
 TC.control.TabContainer = TabContainer;
 export default TabContainer;

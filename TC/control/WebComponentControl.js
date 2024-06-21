@@ -15,7 +15,7 @@ class WebComponentControl extends HTMLElement {
     template;
     control;
     #onBySelectorMap = new WeakMap();
-    static CLASS = 'tc-ctl';
+    #downloadDialog;
 
     constructor() {
         super();
@@ -24,11 +24,10 @@ class WebComponentControl extends HTMLElement {
         self.map = null;
         self.isActive = false;
         self.isDisabled = false;
-        self.CLASS = self.getClassName();
 
         var len = arguments.length;
 
-        self.options = Util.extend({}, len > 1 ? arguments[1] : arguments[0]);
+        self.options = self.mergeOptions(len > 1 ? arguments[1] : arguments[0]);
 
         const divOption = self.options.div || arguments[0];
         if (divOption) {
@@ -45,7 +44,7 @@ class WebComponentControl extends HTMLElement {
 
     connectedCallback() {
         const self = this;
-        self.classList.add(WebComponentControl.CLASS, self.CLASS);
+        self.classList.add(WebComponentControl.prototype.CLASS, self.CLASS);
         if (self.map instanceof BasicMap) {
             return;
         }
@@ -97,8 +96,8 @@ class WebComponentControl extends HTMLElement {
         this.unregister();
     }
 
-    getClassName() {
-        return this.CLASS;
+    mergeOptions(...options) {
+        return Util.extend({}, ...options);
     }
 
     initProperty(name) {
@@ -123,24 +122,16 @@ class WebComponentControl extends HTMLElement {
 
     render(callback) {
         const self = this;
-        return self._set1stRenderPromise(self.renderData(null, function () {
+        return self.renderData(null, function () {
             self.addUIEventListeners();
             if (typeof callback === 'function') {
                 callback();
             }
-        }));
+        });
     }
 
     async loadTemplates() {
 
-    }
-
-    _set1stRenderPromise(promise) {
-        const self = this;
-        if (!self._firstRender) {
-            self._firstRender = promise;
-        }
-        return promise;
     }
 
     async renderData(data, callback) {
@@ -163,7 +154,9 @@ class WebComponentControl extends HTMLElement {
             self.template[self.CLASS] = template;
         }
 
-        const html = await self.getRenderedHtml(self.CLASS, data);
+        const renderPromise = self.getRenderedHtml(self.CLASS, data);
+        self._firstRender ??= renderPromise;
+        const html = await renderPromise;
         self.innerHTML = html;
         if (!self.parentElement && self.div) {
             self.div.appendChild(self);
@@ -171,7 +164,7 @@ class WebComponentControl extends HTMLElement {
         if (self.map) {
             self.trigger(Consts.event.CONTROLRENDER);
         }
-        if (TC.Util.isFunction(callback)) {
+        if (Util.isFunction(callback)) {
             callback();
         }
     }
@@ -184,7 +177,7 @@ class WebComponentControl extends HTMLElement {
                 return '';
             }
             const html = template(data);
-            if (TC.Util.isFunction(callback)) {
+            if (Util.isFunction(callback)) {
                 callback(html);
             }
             return html;
@@ -203,13 +196,12 @@ class WebComponentControl extends HTMLElement {
         }
     }
 
-    async #processTemplates(options) {
+    async #processTemplates(options = {}) {
         const self = this;
-        options = options || {};
         const templates = self.template;
 
         const templatePromises = [];
-        for (var key in templates) {
+        for (let key in templates) {
             const templateName = key;
             let template = templates[templateName];
             if (typeof template === 'string') {
@@ -237,7 +229,7 @@ class WebComponentControl extends HTMLElement {
         }
 
         await Promise.all(templatePromises);
-        for (var key in templates) {
+        for (let key in templates) {
             const t = templates[key];
             if (t && key !== options.className) {
                 Handlebars.registerPartial(key, templates[key]);
@@ -297,11 +289,7 @@ class WebComponentControl extends HTMLElement {
         return self;
     }
 
-    deactivate(stopChain) {
-        if (arguments.length === 0) {
-            stopChain = false;
-        }
-
+    deactivate(stopChain = false) {
         const self = this;
         self.isActive = false;
         if (self.map) {
@@ -338,9 +326,8 @@ class WebComponentControl extends HTMLElement {
         return self;
     }
 
-    disable(options) {
+    disable(options = {}) {
         const self = this;
-        options = options || {};
         self.isDisabled = true;
         self.classList.add(Consts.classes.DISABLED);
         let message = self.getLocaleString('disabledControl');
@@ -437,12 +424,12 @@ class WebComponentControl extends HTMLElement {
 
     async getDownloadDialog() {
         const self = this;
-        self._downloadDialog = self._downloadDialog || self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
-        if (!self._downloadDialog) {
-            self._downloadDialog = await self.map.addControl('FeatureDownloadDialog');
+        self.#downloadDialog ??= self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
+        if (!self.#downloadDialog) {
+            self.#downloadDialog = await self.map.addControl('FeatureDownloadDialog');
         }
-        self._downloadDialog.caller = self;
-        return self._downloadDialog;
+        self.#downloadDialog.caller = self;
+        return self.#downloadDialog;
     }
 
     async getElevationTool() {
@@ -474,7 +461,7 @@ class WebComponentControl extends HTMLElement {
             if (self.map) {
                 const mapElevation = await self.map.getElevationTool();
                 if (mapElevation) {
-                    self.elevation = new TC.tool.Elevation(TC.Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
+                    self.elevation = new TC.tool.Elevation(Util.extend(true, {}, mapElevation.options, self.options.displayElevation));
                 }
                 else {
                     self.elevation = new TC.tool.Elevation(self.options.displayElevation);
@@ -615,10 +602,11 @@ class WebComponentControl extends HTMLElement {
             const module = await import('./' + ctorName);
             TC.control[ctorName] = module.default;
         }
-        return new TC.control[ctorName](null, options);
+        return new TC.control[ctorName](void (0), options);
     }
 }
 
+WebComponentControl.prototype.CLASS = 'tc-ctl';
 customElements.get(elementName) || customElements.define(elementName, WebComponentControl);
 TC.control.WebComponentControl = WebComponentControl;
 export default WebComponentControl;

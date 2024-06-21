@@ -114,6 +114,11 @@ class GeometryFeatureInfo extends FeatureInfoCommons {
                 }
 
             }
+            if (options.coords && options.featureCount === 0) {
+                //esto significa que se ha borrado la ultima feature
+                self.popup.hide();
+            }
+            else
             self.renderData(options, function () {
                 if (services.length) {
                     self.insertLinks();

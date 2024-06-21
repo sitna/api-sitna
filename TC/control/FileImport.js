@@ -13,7 +13,6 @@ import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 
 TC.control = TC.control || {};
-TC.Util = Util;
 
 const elementName = 'sitna-file-import';
 
@@ -27,7 +26,7 @@ class FileImport extends WebComponentControl {
         const self = this;
         self.LAYER_METADATA_STORE_KEY_PREFIX = 'TC.fileLayerMetadata.';
 
-        self._dialogDiv = TC.Util.getDiv(self.options.dialogDiv);
+        self._dialogDiv = Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
@@ -75,7 +74,7 @@ class FileImport extends WebComponentControl {
             },
             {
                 accept: {
-                    [Consts.mimeType.SHAPEFILE]: ['.shp', '.dbf', '.prj', '.cst', '.cpg']
+                    [Consts.mimeType.SHAPEFILE]: ['.shp', '.dbf', '.prj', '.cst', '.cpg', '.shx']
                 }
             },
             {
@@ -87,7 +86,7 @@ class FileImport extends WebComponentControl {
 
         if (Array.isArray(self.options.formats)) {
             self.formats = self.options.formats;
-            const mimeTypes = self.format.map(f => TC.Util.getMimeTypeFromUrl(f));
+            const mimeTypes = self.format.map(f => Util.getMimeTypeFromUrl(f));
             self.fileTypes = self.fileTypes.filter(ft => {
                 ft.accept.keys.some(key => mimeTypes.includes(key));
             });
@@ -106,10 +105,6 @@ class FileImport extends WebComponentControl {
         self.dataAttributions = [];
 
         self.exportsState = true;
-    }
-
-    getClassName() {
-        return 'tc-ctl-file';
     }
 
     register(map) {
@@ -179,7 +174,7 @@ class FileImport extends WebComponentControl {
                         if (coordinates && coordinates.every(function (coord) {
                             return Math.abs(coord[0]) <= 180 && Math.abs(coord[1]) <= 90; // Parecen geográficas
                         })) {
-                            feature.setCoords(TC.Util.reproject(geom, geogCrs, self.map.crs));
+                            feature.setCoords(Util.reproject(geom, geogCrs, self.map.crs));
                         }
                     }
 
@@ -202,7 +197,7 @@ class FileImport extends WebComponentControl {
                     }
                     return map.addLayer({
                         id: id,
-                        title: fileName,
+                        title: fileName || fileSystemFile,
                         owner: self,
                         type: Consts.layerType.VECTOR,
                         file: fileName,
@@ -218,8 +213,10 @@ class FileImport extends WebComponentControl {
                 for (var i = 0; i < targetLayers.length; i++) {
                     const targetLayer = targetLayers[i];
                     const mapLayer = self.map.getLayer(targetLayer) || await addLayer(targetLayer.id);
-                    const metadata = await self.loadLayerMetadata(mapLayer);
-                    if (!metadata || metadata.groupIndex === groupIndex) {
+                    // Guarda metadatos de la capa extraídos de archivo (por ejemplo, info de tabla de GeoPackage)
+                    mapLayer.setFeatureTypeMetadata(e.metadata);
+                    const fileMetadata = await self.loadLayerMetadata(mapLayer);
+                    if (!fileMetadata || fileMetadata.groupIndex === groupIndex) {
                         targetLayers[i] = mapLayer;
                     }
                     else {
@@ -234,8 +231,13 @@ class FileImport extends WebComponentControl {
                 targetLayers.forEach(async function (layer) {
                     if (fileHandle) {
                         layer._fileHandle = fileHandle;
+                        //layer.file = fileHandle.name;
+                        layer.fileSystemFile = fileHandle.name;
                         if (e.additionalFileHandles) {
                             layer._additionalFileHandles = e.additionalFileHandles;
+                        }
+                        else {
+                            delete layer._additionalFileHandles;
                         }
                         await self.saveLayerMetadata(layer);
                     }
@@ -275,24 +277,17 @@ class FileImport extends WebComponentControl {
             .on(Consts.event.FEATURESIMPORTERROR, function (e) {
                 var dictKey;
                 var fileName = e.file.name;
-                if (fileName.toLowerCase().substr(fileName.length - 4) === '.kmz') {
-                    dictKey = 'fileImport.error.reasonKmz';
-                }
-                else {
-                    dictKey = 'fileImport.error.reasonUnknown';
-                }
-
+                dictKey = 'fileImport.error.reasonUnknown';
                 TC.error(e.message ? self.getLocaleString(e.message) : self.getLocaleString(dictKey, { fileName: fileName }), Consts.msgErrorMode.TOAST);
-
                 var reader = new FileReader();
                 reader.onload = function (event) {
                     TC.error("Nombre del archivo: " + fileName + " \n Contenido del archivo: \n\n" + event.target.result, Consts.msgErrorMode.EMAIL, "Error en la subida de un archivo");
                 };
                 self.subtrackPendingFile();
             })
-            .on(Consts.event.FEATURESIMPORTPARTIAL, function (e) {
-                self.map.toast(self.getLocaleString("fileImport.partial.problem", { fileName: e.file.name, table: e.table, reason: e.reason }), { type: Consts.msgType.ERROR });
-            })
+            //.on(Consts.event.FEATURESIMPORTPARTIAL, function (e) {
+            //    self.map.toast(self.getLocaleString("fileImport.partial.problem", { fileName: e.file.name, table: e.table, reason: e.reason }), { type: Consts.msgType.ERROR });
+            //})
             .on(Consts.event.FEATURESIMPORTWARN, function (e) {
                 self.map.toast(self.getLocaleString("fileImport.geomEmpty", { fileName: e.file.name }), { type: Consts.msgType.WARNING });
             })
@@ -311,6 +306,13 @@ class FileImport extends WebComponentControl {
                 if (idx >= 0) {
                     ownLayers.splice(idx, 1);
                 }
+            })
+            .on(Consts.event.FILESAVE, function (e) {
+                self.map.workLayers.forEach(l => {
+                    l._fileHandle?.isSameEntry(e.fileHandle).then(_isSameEntry => {
+                        self.saveLayerMetadata(l);
+                    });
+                });
             });
 
         map.loaded(() => {
@@ -331,64 +333,64 @@ class FileImport extends WebComponentControl {
         self.template = template;
     }
 
-    render() {
+    async render() {
         const self = this;
-        return self._set1stRenderPromise(new Promise(function (resolve, _reject) {
-            self.renderData({ formats: self.formats }, function () {
-                const fileInput = self.querySelector('input[type=file]');
-                // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
-                fileInput.addEventListener(Consts.event.CLICK, async function (e) {
-                    const input = this;
-                    // Envolvemos el input en un form
-                    const form = document.createElement('form');
-                    const parent = input.parentElement;
-                    parent.insertBefore(form, input);
-                    form.appendChild(input);
-                    form.reset();
-                    // Desenvolvemos el input del form
-                    form.insertAdjacentElement('afterend', input);
-                    parent.removeChild(form);
 
-                    if (Util.isFunction(window.showOpenFilePicker)) {
-                        e.preventDefault();
-                        let fileHandles;
-                        try {
-                            fileHandles = await window.showOpenFilePicker({
-                                multiple: true
-                            });
+        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
+
+        await self.renderData({ formats: self.formats });
+
+        self.addUIEventListeners();
+        self.renderRecentFileList();
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        const fileInput = self.querySelector('input[type=file]');
+        // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
+        fileInput.addEventListener(Consts.event.CLICK, async function (e) {
+            const input = this;
+            // Envolvemos el input en un form
+            const form = document.createElement('form');
+            const parent = input.parentElement;
+            parent.insertBefore(form, input);
+            form.appendChild(input);
+            form.reset();
+            // Desenvolvemos el input del form
+            form.insertAdjacentElement('afterend', input);
+            parent.removeChild(form);
+
+            if (Util.isFunction(window.showOpenFilePicker)) {
+                e.preventDefault();
+                let fileHandles;
+                try {
+                    fileHandles = await window.showOpenFilePicker({
+                        multiple: true
+                    });
+                }
+                catch (e) {
+                    if (e instanceof DOMException && window.parent !== window) {
+                        // No se permite ejecutar showOpenFilePicker si estamos en un frame con CORS
+                        let messageText = self.getLocaleString('cannotOpenFileIfEmbedded');
+                        if (self.options.enableDragAndDrop) {
+                            messageText += '<br/><br/>' + self.getLocaleString('alternativelyYouCanDropFile');
                         }
-                        catch (e) {
-                            if (e instanceof DOMException && window.parent !== window) {
-                                // No se permite ejecutar showOpenFilePicker si estamos en un frame con CORS
-                                let messageText = self.getLocaleString('cannotOpenFileIfEmbedded');
-                                if (self.options.enableDragAndDrop) {
-                                    messageText += '<br/><br/>' + self.getLocaleString('alternativelyYouCanDropFile');
-                                }
-                                self.map.toast(messageText, { type: Consts.msgType.WARNING });
-                            }
-                            else if (e.name !== 'AbortError') {
-                                throw e;
-                            }
-                        }
-                        if (fileHandles) {
-                            self.loadFiles(fileHandles);
-                        }
+                        self.map.toast(messageText, { type: Consts.msgType.WARNING });
                     }
-                });
-                fileInput.addEventListener('change', function (e) {
-                    if (self.map) {
-                        self.loadFiles(e.target.files);
+                    else if (e.name !== 'AbortError') {
+                        throw e;
                     }
-                });
-
-                self.renderRecentFileList();
-
-                self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
-                    self._dialogDiv.innerHTML = html;
-                    resolve(self);
-                });
-            });
-        }));
+                }
+                if (fileHandles) {
+                    self.loadFiles(fileHandles);
+                }
+            }
+        });
+        fileInput.addEventListener('change', function (e) {
+            if (self.map) {
+                self.loadFiles(e.target.files);
+            }
+        });
     }
 
     loadFiles(files) {
@@ -400,7 +402,7 @@ class FileImport extends WebComponentControl {
     async loadLayersFromFile(layers) {
         const self = this;
         // Verificamos si son capas propias y si son de archivo local serializadas
-        const ownLayers = layers.filter(l => self.getIdCount(l.id) && !l.options.owner && l.options.file);
+        const ownLayers = layers.filter(l => self.getIdCount(l.id) && !l.options.owner && l.file);
         if (ownLayers.length) {
             const fileHandles = [];
             const idCount = Math.max(...ownLayers.map(l => self.getIdCount(l.id)));
@@ -410,7 +412,6 @@ class FileImport extends WebComponentControl {
                 l.options.groupIndex = layersMetadata[idx]?.groupIndex;
             });
             const layerGroups = new Map();
-            const additionalFileHandleDictionary = new Map();
             for (var i = 0; i < layersMetadata.length; i++) {
                 const metadata = layersMetadata[i];
                 if (metadata?.fileHandle) {
@@ -425,9 +426,7 @@ class FileImport extends WebComponentControl {
                         group = [];
                         layerGroups.set(metadata.fileHandle, group);
                         fileHandles.push(metadata.fileHandle);
-                        if (metadata.additionalFileHandles) {
-                            additionalFileHandleDictionary.set(metadata.fileHandle, metadata.additionalFileHandles);
-                        }
+                        metadata.fileHandle._siblings = metadata.additionalFileHandles;
                     }
                     group.push(ownLayers[i]);
                 }
@@ -445,15 +444,18 @@ class FileImport extends WebComponentControl {
             const button = self._dialogDiv.querySelector('sitna-button.tc-ctl-file-dialog-ok');
 
             const endFn = handles => {
+                const mainHandle = handles[0];
+                const fileLayers = layerGroups.get(mainHandle);
+                fileLayers.forEach((l) => l._fileHandle = mainHandle);
                 self.map.loadFiles(handles, {
-                    layers: layerGroups.get(handles[0]),
+                    layers: fileLayers,
                     target: self
                 });
             };
 
             for (const fileHandle of layerGroups.keys()) {
                 let fileHandles = [fileHandle];
-                const additionalFileHandles = additionalFileHandleDictionary.get(fileHandle);
+                const additionalFileHandles = fileHandle._siblings;
                 if (additionalFileHandles) {
                     fileHandles = fileHandles.concat(additionalFileHandles);
                 }
@@ -517,7 +519,7 @@ class FileImport extends WebComponentControl {
                 layers: self.getLayers().map(function (layer) {
                     const layerState = {
                         title: layer.title,
-                        state: TC.Util.extend(layer.exportState(), { path: layer.features?.length ? layer.features[0].getPath() : undefined })
+                        state: Util.extend(layer.exportState(), { path: layer.features?.length ? layer.features[0].getPath() : undefined })
                     };
                     if (layer._fileHandle) {
                         layerState.file = layer._fileHandle.name;
@@ -536,7 +538,7 @@ class FileImport extends WebComponentControl {
             await self.loadLayersFromFile(self.map.workLayers);
             state.layers
                 .filter(function (layer) {
-                    return !self.map.workLayers.some(l => l.options.file && layer.file === l.options.file);
+                    return !self.map.workLayers.some(l => l.file && layer.file === l.file);
                 })
                 .forEach(function (layerData) {
                     layerPromises.push(self.map.addLayer({
@@ -653,11 +655,11 @@ class FileImport extends WebComponentControl {
 
     subtrackPendingFile() {
         const self = this;
-        window.dropFilesCounter--;
-        if (window.dropFilesCounter === 0) {
+        self.map.dropFilesCounter--;
+        if (self.map.dropFilesCounter === 0) {
             self.map.zoomToFeatures(self.map._bufferFeatures);
             self.map._bufferFeatures = [];
-            delete window.dropFilesCounter;
+            delete self.map.dropFilesCounter;
         }
         var li = self.map.getLoadingIndicator();
         if (li) {
@@ -691,6 +693,7 @@ class FileImport extends WebComponentControl {
 
 TC.mix(FileImport, layerOwner);
 
+FileImport.prototype.CLASS = 'tc-ctl-file';
 customElements.get(elementName) || customElements.define(elementName, FileImport);
 TC.control.FileImport = FileImport;
 export default FileImport;

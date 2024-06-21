@@ -1,6 +1,6 @@
 ﻿
 document.querySelectorAll('.tc-map').forEach(function (elm) {
-    const map = TC.Map.get(elm);
+    const map = SITNA.Map.get(elm);
 
     if (map && !map._layoutDone) {
 
@@ -22,7 +22,7 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 changes.forEach(function (item) {
                     var elem = item.apply;
                     var clickedElems = elem.elements instanceof Array ? elem.elements : [elem.elements];
-                    map = item.map || map || TC.Map.get(document.querySelector('.tc-map'));
+                    map = item.map || map || SITNA.Map.get(document.querySelector('.tc-map'));
                     map.div.addEventListener(elem.event, TC.EventTarget.listenerBySelector(clickedElems.join(), function () {
                         if (window.matchMedia(item.screenCondition).matches) { // si es una pantalla estrecha
                             elem.changes.forEach(function (change) {
@@ -219,9 +219,10 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 const addSwipe = function (direction) {
                     const selector = '.tc-' + direction + '-panel';
                     const className = 'tc-collapsed-' + direction;
-                    const options = { noSwipe: 'li,a' };
-                    options[direction] = function () {
-                        this.classList.add(className);
+                    const options = {
+                        [direction]: function () {
+                            this.classList.add(className);
+                        }
                     };
                     map.div.querySelectorAll(selector).forEach(function (panel) {
                         TC.Util.swipe(panel, options);
@@ -231,7 +232,8 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 addSwipe('left');
             }
         });
+
+        map._layoutDone = true;
     }
-    map._layoutDone = true;
 });
 

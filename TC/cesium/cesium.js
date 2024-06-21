@@ -48,6 +48,7 @@ import {
     , Math
     , Matrix3
     , Matrix4
+    , NearFarScalar 
     , PinBuilder
     , PolygonGeometry
     , PolygonHierarchy
@@ -137,6 +138,7 @@ const cesium = {
     , Math
     , Matrix3
     , Matrix4
+    , NearFarScalar 
     , PinBuilder
     , PolygonGeometry
     , PolygonHierarchy

@@ -10,8 +10,7 @@ TC.format = TC.format || {};
     }
 })(TC.format, function () {
         var WPS = {
-            buildExecuteQuery: function (options) {
-                options = options || {};
+            buildExecuteQuery: function (options = {}) {
                 const version = options.version || '1.0.0';
                 switch (version) {
                     case '0.4.0':
@@ -20,8 +19,7 @@ TC.format = TC.format || {};
                         return WPS.buildExecuteQuery100(options);
                 }
             },
-            buildExecuteQuery100: function (options) {
-                options = options || {};
+            buildExecuteQuery100: function (options = {}) {
                 var xml = [];
                 xml.push(
 `<?xml version= "1.0" encoding= "UTF-8" ?>
@@ -67,8 +65,7 @@ TC.format = TC.format || {};
                 );
                 return xml.join('');
             },
-            buildExecuteQuery040: function (options) {
-                options = options || {};
+            buildExecuteQuery040: function (options = {}) {
                 var xml = [];
                 xml.push(
 `<?xml version= "1.0" encoding= "UTF-8" ?>

@@ -1,0 +1,47 @@
+{{#*inline "inputNumber"}}
+<input type="number" class="tc-textbox" name="{{name}}" value="{{value}}" />
+{{/inline}}
+{{#if attributeProposal}}
+<tr class="tc-attr-edit-proposal">
+    <th>{{name}}</th>
+    <td>
+        {{#if type}}
+        {{#if (eq type "ingeger")}}{{> inputNumber}}
+        {{else if (eq type "float")}}{{> inputNumber}}
+        {{else if (eq type "boolean")}}
+        <sitna-toggle name="{{name}}" {{#if value}} checked{{/if}}></sitna-toggle>
+        {{else if (eq type "date")}}
+        <input type="date" class="tc-textbox" name="{{name}}" value="{{inputDate value}}" />
+        {{else if (eq type "time")}}
+        <input type="time" class="tc-textbox" name="{{name}}" value="{{inputTime value}}" />
+        {{else if (eq type "datetime")}}
+        <input type="datetime-local" class="tc-textbox" name="{{name}}" value="{{inputDatetime value}}" />
+        {{else}}
+        <input type="text" class="tc-textbox" name="{{name}}" value="{{value}}" />
+        {{/if}}
+        {{else}}
+        <select class="tc-combo tc-ctl-attr-edit-type tc-active">
+            <option value="text">{{i18n "text"}}</option>
+            <option value="number">{{i18n "number"}}</option>
+            <option value="boolean">{{i18n "boolean"}}</option>
+            <option value="date">{{i18n "date"}}</option>
+            <option value="time">{{i18n "time"}}</option>
+            <option value="datetime">{{i18n "datetime"}}</option>
+        </select>
+        <input type="text" class="tc-textbox" name="{{name}}" />
+        <input type="number" class="tc-textbox" name="{{name}}" />
+        <sitna-toggle name="{{name}}"></sitna-toggle>
+        <input type="date" class="tc-textbox" name="{{name}}" />
+        <input type="time" class="tc-textbox" name="{{name}}" />
+        <input type="datetime-local" class="tc-textbox" name="{{name}}" />
+        {{/if}}
+    </td>
+    {{#unless sealed}}
+    <td><sitna-button variant="minimal" icon="delete" text="{{i18n "removeAttribute"}}" class="tc-ctl-attr-edit-remove" data-key="{{name}}"></sitna-button></td>
+    {{/unless}}
+</tr>
+{{else}}
+<tr class="tc-attr-edit-new">
+    <th colspan="3"><input type="text" placeholder="{{i18n "addNewAttribute"}}" class="tc-textbox tc-ctl-attr-edit-new-key" /></th>
+</tr>
+{{/if}}

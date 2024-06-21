@@ -2,7 +2,6 @@
 import Util from '../Util';
 import Consts from '../Consts';
 
-TC.Util = Util;
 TC.control = TC.control || {};
 
 // Mixin
@@ -48,7 +47,7 @@ TC.control.infoShare = {
         const self = this;
         const dialogDiv = self.getDiv(divElement);
         const shareDialog = dialogDiv.querySelector('.' + self.CLASS + '-share-dialog');
-        TC.Util.showModal(shareDialog, {
+        Util.showModal(shareDialog, {
             openCallback: function () {
                 self.onShowShareDialog(shareDialog).then(function () {
                     self.map.trigger(Consts.event.DIALOG, { control: self._shareCtl, action: "share" });

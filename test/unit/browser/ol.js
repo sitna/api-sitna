@@ -152,12 +152,18 @@ describe('Tests de ol.js', function () {
                             radius: 6
                         }
                     }
+                },
+                getCRS: function () {
+                    return this.crs;
                 }
             }
         };
         var feature = {
             wrap: {
-                feature: new ol.Feature({ geometry: new ol.geom.Point([0, 0]), '3D length': 23 })
+                feature: new ol.Feature({ geometry: new ol.geom.Point([0, 0]), '3D length': 23 }),
+                cloneFeature: function () {
+                    return this.feature.clone();
+                }
             },
             getGeometryStride: function () {
                 return 2;

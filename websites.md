@@ -8,6 +8,7 @@
   * [Toponymy](https://administracionelectronica.navarra.es/toponimia/?lang=en "Official Toponymy of Navarre")
   * [Map Comparator](https://comparamapas.navarra.es/?lang=en "Navarre Maps and Orthophotos Comparison")
   * [Forest Planning](https://administracionelectronica.navarra.es/VisorOrdenacionForestal/default.aspx?lang=en)
+  * [Geology, Cavities, Springs and Geotechnics](https://administracionelectronica.navarra.es/geologiaVisor/?lang=en)
 
 * [Tracasa Instrumental](https://itracasa.es/)'s developments for town councils in Navarre:
   * GeoPamplona. [City Viewer](https://sig.pamplona.es/?lang=en "Corporate GIS - Pamplona Town Council")
@@ -34,13 +35,13 @@
     * [Registro de Viviendas](https://administracionelectronica.navarra.es/GN.RegistroViviendas.InternetUI/ListadoViviendas.aspx "Dwelling Registry. Government of Navarre")
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Point Viewer. Government of Navarre")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Postal Addresses in Navarre")
-    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Fishing Permits")    
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI "Registry for Navarre's I+D+i System")
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/ "Navarre Employment Service Training Offers")
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire "Air Quality")
   * Authenticated access:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Personal Health Folder. Government of Navarre")
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Building Evaluation Report Registry. Government of Navarre")
+    * [Escenarios de pesca en la Región Ciprinícola](https://administracionelectronica.navarra.es/PescaCiprinidos/default.aspx "Fishing Permits")    
 
 * [SILME](http://www.silme.es/)'s developments for Consell Insular de Menorca:
   * [IDE Menorca](http://ide.cime.es/visor/?lang=en-US "Spatial Data Infrastructure of Minorca")

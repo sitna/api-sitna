@@ -4,33 +4,47 @@ import Control from '../Control';
 
 TC.control = TC.control || {};
 
-const SWCacheClient = function () {
-    const self = this;
-    Control.apply(this, arguments);
-    self.serviceWorkerEnabled = false;
-    self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || true;
+const addMessageEventListener = function (resolve, reject, cacheName, action, eventName) {
+    var MESSAGE = 'message';
+    var messageHandler = function messageHandler(event) {
+        if (event.data.name === cacheName) {
+            if (event.data.action === action && event.data.event === eventName) {
+                resolve(cacheName);
+            }
+            else if (event.data.event === 'error') {
+                reject(Error(`Error message from service worker [${event.data.url} - ${event.data.action} - ${event.data.name}]`));
+            }
+            if (event.data.event !== 'progress') {
+                navigator.serviceWorker.removeEventListener(MESSAGE, messageHandler);
+            }
+        }
+    };
+    navigator.serviceWorker.addEventListener(MESSAGE, messageHandler);
 };
 
-TC.inherit(SWCacheClient, Control);
+class SWCacheClient extends Control {
+    SW_URL = 'tc-cb-service-worker.js';
+    #swPromise;
 
-(function () {
-
-    var ctlProto = SWCacheClient.prototype;
-
-    ctlProto.CLASS = 'tc-ctl-swcc';
-    ctlProto.SW_URL = 'tc-cb-service-worker.js';
-
-    ctlProto.register = function (map) {
+    constructor() {
+        super(...arguments);
         const self = this;
 
-        const result = Control.prototype.register.call(self, map);
+        self.serviceWorkerEnabled = false;
+        self.serviceWorkerIsRequired = self.options.serviceWorkerIsRequired || true;
+    }
+
+    register(map) {
+        const self = this;
+
+        const result = super.register.call(self, map);
 
         // Si el navegador es compatible, añadimos el service worker.
-        self._swPromise = new Promise(function (resolve, reject) {
+        self.#swPromise = new Promise(function (resolve, reject) {
             if (navigator.serviceWorker) {
 
                 navigator.serviceWorker.register(self.SW_URL, {
-                    scope: './'
+                    updateViaCache: 'none'
                 }).then(
                     function (reg) {
                         self.serviceWorkerEnabled = true;
@@ -49,12 +63,12 @@ TC.inherit(SWCacheClient, Control);
                         console.error('Could not register service worker: ' + reason);
                     });
             }
-            else {                
+            else {
                 reject(new Error("Browser does not support service workers"));
             }
         });
 
-        self._swPromise.catch(() => {
+        self.#swPromise.catch(() => {
             let unsafeProtocol = false;
             const isFrame = window.parent !== window;
             for (var scope = window; !unsafeProtocol; scope = scope.parent) {
@@ -82,73 +96,54 @@ TC.inherit(SWCacheClient, Control);
             }
         });
         return result;
-    };
+    }
 
-    ctlProto.getServiceWorker = function () {
-        if (!this._swPromise) {
+    getServiceWorker() {
+        const self = this;
+        if (!self.#swPromise) {
             return Promise.reject(new Error('No service worker available'));
         }
-        return this._swPromise;
-    };
+        return self.#swPromise;
+    }
 
-    var addMessageEventListener = function (resolve, reject, cacheName, action, eventName) {
-        var MESSAGE = 'message';
-        var messageHandler = function messageHandler(event) {
-            if (event.data.name === cacheName) {
-                if (event.data.action === action && event.data.event === eventName) {
-                    resolve(cacheName);
-                }
-                else if (event.data.event === 'error') {
-                    reject(Error(`Error message from service worker [${event.data.url} - ${event.data.action} - ${event.data.name}]`));
-                }
-                if (event.data.event !== 'progress') {
-                    navigator.serviceWorker.removeEventListener(MESSAGE, messageHandler);
-                }
-            }
-        };
-        navigator.serviceWorker.addEventListener(MESSAGE, messageHandler);
-    };
-
-    ctlProto.createCache = function (name, options) {
-        var self = this;
+    createCache(name, options = {}) {
+        const self = this;
         return new Promise(function (resolve, reject) {
             self.getServiceWorker().then(function (sw) {
                 var ACTION = 'create';
-                var opts = options || {};
                 addMessageEventListener(resolve, reject, name, ACTION, 'cached');
                 sw.postMessage({
                     action: ACTION,
                     name: name,
-                    requestId: opts.requestId,
-                    list: opts.urlList || [],
-                    silent: opts.silent
+                    requestId: options.requestId,
+                    list: options.urlList || [],
+                    silent: options.silent
                 });
             }, function () {
                 resolve(false);
             });
         });
-    };
+    }
 
-    ctlProto.deleteCache = function (name, options) {
-        var self = this;
+    deleteCache(name, options = {}) {
+        const self = this;
         return new Promise(function (resolve, reject) {
             self.getServiceWorker().then(function (sw) {
                 var ACTION = 'delete';
-                var opts = options || {};
                 addMessageEventListener(resolve, reject, name, ACTION, 'deleted');
                 sw.postMessage({
                     action: ACTION,
-                    requestId: opts.requestId,
+                    requestId: options.requestId,
                     name: name,
-                    silent: opts.silent
+                    silent: options.silent
                 });
             }, function () {
                 resolve(false);
             });
         });
-    };
+    }
+}
 
-})();
-
+SWCacheClient.prototype.CLASS = 'tc-ctl-swcc';
 TC.control.SWCacheClient = SWCacheClient;
 export default SWCacheClient;

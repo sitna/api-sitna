@@ -101,65 +101,61 @@ class Feature {
     #visibilityState = Consts.visibility.VISIBLE;
 
     constructor(coords, options) {
-        const self = this;
 
         let olFeatureId;
-        self.wrap = new TC.wrap.Feature();
-        self.wrap.parent = self;
-        if (self.wrap.isNative(coords)) {
-            self.wrap.feature = coords;
-            coords._wrap = self.wrap;
-            olFeatureId = self.wrap.getId();
-            self.geometry = self.wrap.getGeometry();
+        this.wrap = new TC.wrap.Feature();
+        this.wrap.parent = this;
+        if (this.wrap.isNative(coords)) {
+            this.wrap.feature = coords;
+            coords._wrap = this.wrap;
+            olFeatureId = this.wrap.getId();
+            this.geometry = this.wrap.getGeometry();
             if (coords._folders) {
-                self.folders = coords._folders;
+                this.folders = coords._folders;
             }
-            self.setData(self.wrap.getData());
+            this.setData(this.wrap.getData());
         }
 
-        var opts = self.options = Util.extend(true, {}, options);
+        var opts = this.options = Util.extend(true, {}, options);
 
-        self.id = olFeatureId || opts.id || TC.getUID();
-        if (self.wrap.feature && !olFeatureId) {
-            self.wrap.feature.setId(self.id);
+        this.id = olFeatureId || opts.id || TC.getUID();
+        if (this.wrap.feature && !olFeatureId) {
+            this.wrap.feature.setId(this.id);
         }
-        self.data = opts.data || self.data || null;
+        this.data = opts.data || this.data || null;
         if (opts.showsPopup === undefined) {
-            self.showsPopup = true;
+            this.showsPopup = true;
         }
         else {
-            self.showsPopup = opts.showsPopup;
+            this.showsPopup = opts.showsPopup;
         }
         if (opts.showPopup) {
-            self.autoPopup = true;
+            this.autoPopup = true;
         }
-        self.layer = opts.layer || null;
+        this.layer = opts.layer || null;
 
         if (opts.selected) {
-            self.select();
+            this.select();
         }
     }
 
     getPath() {
-        const self = this;
         let result = [];
 
-        if (self.folders) {
-            result = self.folders;
+        if (this.folders) {
+            result = this.folders;
         }
-        else if (self.options.group) {
-            result = [self.options.group];
+        else if (this.options.group) {
+            result = [this.options.group];
         }
         return result;
     }
 
     setVisibility(visible) {
-        const self = this;
-
         // Ocultamos el posible popup
-        if (!visible && self.showsPopup && self.layer) {
-            var popup = self.layer.map.getControlsByClass('TC.control.Popup').filter(function (popup) {
-                return popup.currentFeature === self;
+        if (!visible && this.showsPopup && this.layer) {
+            var popup = this.layer.map.getControlsByClass('TC.control.Popup').filter(function (popup) {
+                return popup.currentFeature === this;
             });
 
             if (popup.length > 0) {
@@ -170,13 +166,13 @@ class Feature {
             }
         }
 
-        if (visible && self.#visibilityState === Consts.visibility.NOT_VISIBLE ||
-            !visible && self.#visibilityState === Consts.visibility.VISIBLE) {
-            self.#visibilityState = visible ? Consts.visibility.VISIBLE : Consts.visibility.NOT_VISIBLE;
-            self.layer.wrap.setFeatureVisibility(self, visible);
+        if (visible && this.#visibilityState === Consts.visibility.NOT_VISIBLE ||
+            !visible && this.#visibilityState === Consts.visibility.VISIBLE) {
+            this.#visibilityState = visible ? Consts.visibility.VISIBLE : Consts.visibility.NOT_VISIBLE;
+            this.layer.wrap.setFeatureVisibility(this, visible);
         }
 
-        return self;
+        return this;
     }
 
     getVisibilityState() {
@@ -195,10 +191,9 @@ class Feature {
     }
 
     setId(id) {
-        const self = this;
-        self.id = id;
-        self.wrap.setId(id);
-        return self;
+        this.id = id;
+        this.wrap.setId(id);
+        return this;
     }
 
     getBounds() {
@@ -206,43 +201,40 @@ class Feature {
     }
 
     setStyle(style) {
-        const self = this;
         let newStyle;
         if (style === null) {
             newStyle = null;
         }
         else {
-            const mergedStyles = [self.getStyle(), style];
-            if (self.layer?.styles?.[self.STYLETYPE]) {
-                mergedStyles.unshift(self.layer.styles[self.STYLETYPE]);
+            const mergedStyles = [this.getStyle(), style];
+            if (this.layer?.styles?.[this.STYLETYPE]) {
+                mergedStyles.unshift(this.layer.styles[this.STYLETYPE]);
             }
-            if (self.layer?.map.options.styles?.[self.STYLETYPE]) {
-                mergedStyles.unshift(self.layer.map.options.styles[self.STYLETYPE]);
+            if (this.layer?.map.options.styles?.[this.STYLETYPE]) {
+                mergedStyles.unshift(this.layer.map.options.styles[this.STYLETYPE]);
             }
-            if (Cfg?.styles?.[self.STYLETYPE]) {
-                mergedStyles.unshift(Cfg.styles[self.STYLETYPE]);
+            if (Cfg?.styles?.[this.STYLETYPE]) {
+                mergedStyles.unshift(Cfg.styles[this.STYLETYPE]);
             }
             newStyle = Util.mergeStyles(...mergedStyles);
         }
-        self.wrap.setStyle(newStyle);
-        return self;
+        this.wrap.setStyle(newStyle);
+        return this;
     }
 
-    toggleSelectedStyle = function (condition) {
-        const self = this;
-        if (self.#hasSelectedStyle !== condition) {
-            self.#hasSelectedStyle = condition;
-            self.wrap.toggleSelectedStyle(condition);
+    toggleSelectedStyle(condition) {
+        if (this.#hasSelectedStyle !== condition) {
+            this.#hasSelectedStyle = condition;
+            this.wrap.toggleSelectedStyle(condition);
         }
-        return self;
+        return this;
     }
 
-    getLegend = function () {
-        const self = this;
-        if (!self._legend) {
-            self._legend = self.wrap.getLegend();
+    getLegend() {
+        if (!this._legend) {
+            this._legend = this.wrap.getLegend();
         }
-        return self._legend;
+        return this._legend;
     }
 
     /**
@@ -254,13 +246,15 @@ class Feature {
      */
     getCoordinates(options) {
         const self = this;
-        const sourceCrs = options?.geometryCrs || (self.layer?.map?.on3DView ? self.layer.map.view3D.crs:self.layer?.map?.crs);
-        const destCrs = options?.crs || self.layer?.map?.getCRS() || Cfg.utmCrs;
+        //const sourceCrs = options?.geometryCrs || (self.layer?.map?.on3DView ? self.layer.map.view3D.view2DCRS:self.layer?.map?.crs);
+        //const destCrs = options?.crs || self.layer?.map?.getCRS() || Cfg.utmCrs;
+        const sourceCrs = options?.geometryCrs || self.layer?.map?.crs;
+        const destCrs = options?.crs || self.layer?.map?.options.utmCrs || Cfg.utmCrs;
         self.geometry = self.wrap.getGeometry();
         if (sourceCrs && destCrs) {
-            return TC.Util.reproject(self.geometry, sourceCrs, destCrs);
+            return Util.reproject(this.geometry, sourceCrs, destCrs);
         }
-        return self.geometry;
+        return this.geometry;
     }
 
     /**
@@ -272,7 +266,6 @@ class Feature {
      * @returns {SITNA.feature.Feature} La propia entidad geográfica.
      */
     setCoordinates(coords) {
-        const self = this;
 
         const toNumberCoords = function (arr) {
             arr.forEach(function (elm, idx) {
@@ -281,7 +274,7 @@ class Feature {
                 }
                 else {
                     if (elm === null) {
-                        arr[idx] = 0;
+                        arr[idx] = null;
                     }
                     else if (typeof elm !== 'number') {
                         console.log('Warning: coordinate does not have number type');
@@ -295,9 +288,9 @@ class Feature {
             toNumberCoords(coords);
         }
 
-        self.geometry = coords;
-        self.wrap.setGeometry(coords);
-        return self;
+        this.geometry = coords;
+        this.wrap.setGeometry(coords);
+        return this;
     }
 
     getCoords() {
@@ -309,7 +302,6 @@ class Feature {
     }
 
     getCoordsArray() {
-        const self = this;
         const isPoint = function (elm) {
             return Array.isArray(elm) && elm.length >= 2 && typeof elm[0] === 'number' && typeof elm[1] === 'number';
         };
@@ -325,12 +317,11 @@ class Feature {
             }
             return acc;
         };
-        return flattenFn(self.getCoordinates());
+        return flattenFn(this.getCoordinates());
     }
 
-    getGeometryStride = function () {
-        const self = this;
-        const coordsArray = self.getCoordsArray();
+    getGeometryStride() {
+        const coordsArray = this.getCoordsArray();
         const firstCoord = coordsArray[0];
         if (firstCoord) {
             return firstCoord.length;
@@ -338,14 +329,17 @@ class Feature {
         return 0;
     }
 
+    getGeometryType() {
+        return null;
+    }
+
     removeZ() {
-        const self = this;
-        const coords = self.getCoordsArray();
+        const coords = this.getCoordsArray();
         if (coords[0]?.length > 2) {
             coords.forEach(c => c.length = 2);
-            self.setCoordinates(self.geometry);
+            this.setCoordinates(this.geometry);
         }
-        return self;
+        return this;
     }
 
     /**
@@ -356,13 +350,12 @@ class Feature {
      * @returns {Object} Diccionario de pares clave/valor con los atributos de la entidad geográfica.
      */
     getData() {
-        const self = this;
         let result = null;
-        if (self.data) {
-            result = self.data;
+        if (this.data) {
+            result = this.data;
         }
         else {
-            result = self.wrap.getData();
+            result = this.wrap.getData();
         }
         return result;
     }
@@ -376,53 +369,49 @@ class Feature {
      * @returns {SITNA.feature.Feature} La propia entidad geográfica.
      */
     setData(data) {
-        const self = this;
         if (typeof data === 'string') {
-            self.data = data;
+            this.data = data;
         }
         else {
-            self.data = Util.extend(self.data, data);
-            self.attributes = self.attributes || [];
+            this.data = Util.extend(this.data, data);
+            this.attributes = this.attributes || [];
             for (var key in data) {
-                let attr = self.attributes.find(attr => attr.name === key);
+                let attr = this.attributes.find(attr => attr.name === key);
                 if (attr) {
                     attr.value = data[key];
                 }
                 else {
-                    self.attributes.push({ name: key, value: data[key] });
+                    this.attributes.push({ name: key, value: data[key] });
                 }
             }
-            self.wrap.setData(data);
+            this.wrap.setData(data);
         }
-        return self;
+        return this;
     }
 
     unsetData(key) {
-        const self = this;
-        delete self.data[key];
-        const attr = (self.attributes || []).find(attr => attr.name === key);
+        delete this.data[key];
+        const attr = (this.attributes || []).find(attr => attr.name === key);
         if (attr) {
-            self.attributes.splice(self.attributes.indexOf(attr), 1);
+            this.attributes.splice(this.attributes.indexOf(attr), 1);
         }
-        self.wrap.unsetData(key);
-        return self;
+        this.wrap.unsetData(key);
+        return this;
     }
 
     clearData() {
-        const self = this;
-        self.data = {};
-        self.attributes = [];
-        self.wrap.clearData();
-        return self;
+        this.data = {};
+        this.attributes = [];
+        this.wrap.clearData();
+        return this;
     }
 
     getInfo(options) {
-        const self = this;
         let result = null;
-        const locale = options?.locale || self.layer?.map && Util.getMapLocale(self.layer.map);
-        const data = self.getData();
+        const locale = options?.locale || this.layer?.map && Util.getMapLocale(this.layer.map);
+        const data = this.getData();
         if (typeof data === 'object') {
-            var template = self.wrap.getTemplate();
+            var template = this.wrap.getTemplate();
             if (template) {
                 // GLS: Contemplo en la expresión regular la opción de que el nombre del campo se componga de $[aaa/abc/loQueMeInteresa] 
                 // (la expresión no está limitada a 2 niveles), hasta ahora se manejaba $[loQueMeInteresa]
@@ -453,7 +442,7 @@ class Feature {
                     }
                     else {
                         result = value !== undefined ?
-                            typeof value === "number" ? TC.Util.formatNumber(value, locale) : value
+                            typeof value === "number" ? Util.formatNumber(value, locale) : value
                             : '&mdash;';
                     }
                     return result;
@@ -555,9 +544,9 @@ class Feature {
             result = data;
         }
         if (!result) {
-            result = self.title;
-            if (self.group) {
-                result += ' ' + self.group;
+            result = this.title;
+            if (this.group) {
+                result += ' ' + this.group;
             }
         }
         if (!result) {
@@ -567,8 +556,7 @@ class Feature {
     }
 
     getTemplate() {
-        const self = this;
-        let result = self.wrap.getTemplate();
+        let result = this.wrap.getTemplate();
         if (result) {
             return result;
         }
@@ -576,12 +564,11 @@ class Feature {
     }
 
     clone() {
-        const self = this;
-        const nativeClone = self.wrap.cloneFeature();
-        nativeClone._wrap = self.wrap;
-        const result = new self.constructor(nativeClone, self.options);
-        if (self.folders) {
-            result.folders = self.folders.slice();
+        const nativeClone = this.wrap.cloneFeature();
+        nativeClone._wrap = this.wrap;
+        const result = new this.constructor(nativeClone, this.options);
+        if (this.folders) {
+            result.folders = this.folders.slice();
         }
         return result;
     }
@@ -590,13 +577,11 @@ class Feature {
         return this.wrap.getStyle();
     }
 
-    async showPopup(options) {
-        const self = this;
-        options = options || {};
+    async showPopup(options = {}) {
         const control = options instanceof Control ? options : options.control;
-        const map = self.layer?.map || control?.map;
+        const map = this.layer?.map || control?.map;
         if (map) {
-            let popup = control || self.popup;
+            let popup = control || this.popup;
             if (!popup) {
                 // Buscamos un popup existente que no esté asociado a un control.
                 var popups = map.getControlsByClass('TC.control.Popup');
@@ -611,13 +596,16 @@ class Feature {
             if (!popup) {
                 popup = await map.addControl('popup');
             }
-            popup.currentFeature = self;
+            if (popup.isVisible() && popup.currentFeature !== this) {
+                popup.hide();
+            }
+            popup.currentFeature = this;
             map.getControlsByClass('TC.control.Popup')
                 .filter(p => p !== popup && p.isVisible())
                 .forEach(p => p.hide());
             if (!popup.getContainerElement()) await popup.renderPromise();            
             popup.setDragged(false);
-            self.wrap.showPopup(Object.assign({}, options, { control: popup }));
+            this.wrap.showPopup(Object.assign({}, options, { control: popup }));
             map.trigger(Consts.event.POPUP, { control: popup });
             popup.fitToView(true);
             popup.contentDiv.querySelectorAll('img').forEach(img => img.addEventListener('load', () => popup.fitToView()));
@@ -626,36 +614,34 @@ class Feature {
         return null;
     }
 
-    async showResultsPanel(options) {
-        const self = this;
-        options = options || {};
+    async showResultsPanel(options = {}) {
         const control = options instanceof Control ? options : options.control;
-        const map = self.layer?.map || control?.map;
+        const map = this.layer?.map || control?.map;
         if (map) {
             let panel;
 
             var resultsPanelOptions = {
                 content: "table",
                 titles: {
-                    main: TC.Util.getLocaleString(map.options.locale, "rsp.title"),
-                    max: TC.Util.getLocaleString(map.options.locale, "rsp.title")
+                    main: Util.getLocaleString(map.options.locale, "rsp.title"),
+                    max: Util.getLocaleString(map.options.locale, "rsp.title")
                 }
             };
             var controlContainer = map.getControlsByClass(ControlContainer)[0];
             if (controlContainer) {
                 resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
                 //URI 24/01/2022 comprobar que ya existe un resultpanel para la feature en cuestión, sino se crea uno nuevo
-                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.currentFeature === self);
+                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.currentFeature === this);
                 if (!panel) panel = await controlContainer.addControl('resultsPanel', resultsPanelOptions);
             } else {
                 resultsPanelOptions.div = document.createElement('div');
                 map.div.appendChild(resultsPanelOptions.div);
                 //URI 24/01/2022 comprobar que ya existe un resultpanel para la feature en cuestión, sino se crea uno nuevo
-                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultsPanel => resultsPanel.currentFeature === self);
+                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultsPanel => resultsPanel.currentFeature === this);
                 if (!panel) panel = await map.addControl('resultsPanel', resultsPanelOptions);
             }
 
-            panel.currentFeature = self;
+            panel.currentFeature = this;
 
             // GLS: si contamos con el contenedor de controles no es necesario cerra el resto de paneles ya que no habrá solape excepto los paneles
             if (map.getControlsByClass(ControlContainer).length === 0) {
@@ -673,7 +659,7 @@ class Feature {
             });
 
             panel.menuDiv.innerHTML = '';
-            panel.open(options.html || self.getInfo({ locale: map.options.locale }), panel.getInfoContainer());
+            panel.open(options.html || this.getInfo({ locale: map.options.locale }), panel.getInfoContainer());
 
             const resizeObserver = new ResizeObserver(entries => {
                 for (let entry of entries) {
@@ -702,9 +688,7 @@ class Feature {
         return null;
     }
 
-    async showInfo(options) {
-        const self = this;
-        options = options || {};
+    async showInfo(options = {}) {
 
         if (!TC.control || !TC.control.FeatureInfoCommons) {
             const module = await import('../../TC/control/FeatureInfoCommons');
@@ -713,15 +697,15 @@ class Feature {
         }
 
         let html;
-        if (self.getTemplate()) {
-            html = self.getInfo();
+        if (this.getTemplate()) {
+            html = this.getInfo();
         }
         else {
-            if (typeof self.data === 'string') {
-                html = self.data;
+            if (typeof this.data === 'string') {
+                html = this.data;
             }
             else {
-                html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({ attributes: self.attributes, singleFeature: true });
+                html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({ attributes: this.attributes, singleFeature: true });
             }
         }
         const opts = Util.extend({}, options, { html: html });
@@ -731,53 +715,50 @@ class Feature {
             const Popup = (await import('../../TC/control/Popup')).default;
             const ResultsPanel = (await import('../../TC/control/ResultsPanel')).default;
             if (optionsControl instanceof Popup) {
-                control = await self.showPopup(opts);
+                control = await this.showPopup(opts);
             }
             else if (optionsControl instanceof ResultsPanel) {
-                control = await self.showResultsPanel(opts);
+                control = await this.showResultsPanel(opts);
             }
         }
         else {
-            if (self.layer.map.on3DView || self.layer.map.defaultInfoContainer === Consts.infoContainer.RESULTS_PANEL) {
-                control = await self.showResultsPanel(opts);
+            if (this.layer.map.on3DView || this.layer.map.defaultInfoContainer === Consts.infoContainer.RESULTS_PANEL) {
+                control = await this.showResultsPanel(opts);
             }
             else {
-                control = await self.showPopup(opts);
+                control = await this.showPopup(opts);
             }
         }
-        self.infoControl = control;
-        self.layer.features.filter((f) => f !== self).forEach((f) => f.toggleSelectedStyle(false));
-        self.toggleSelectedStyle(true);
+        this.infoControl = control;
+        this.toggleSelectedStyle(true);
         TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(control.getContainerElement());
     }
 
     select() {
-        const self = this;
-        self.#selected = true;
-        if (self.layer) {
-            self.layer.selectedFeatures.push(self);
+        this.#selected = true;
+        if (this.layer) {
+            this.layer.selectedFeatures.push(this);
         }
-        var selectionOptions = self.options.selection || {};
-        self.setStyle(Util.extend({}, Cfg.styles.selection[self.STYLETYPE], selectionOptions[self.STYLETYPE]));
+        var selectionOptions = this.options.selection || {};
+        this.setStyle(Util.extend({}, Cfg.styles.selection[this.STYLETYPE], selectionOptions[this.STYLETYPE]));
         //URI:Traer al frente
 
-        return self;
+        return this;
     }
 
     unselect() {
-        const self = this;
-        self.#selected = false;
+        this.#selected = false;
         // Volvemos al estilo por defecto
-        self.setStyle(self.options);
-        //self.setStyle(Object.assign({}, self.options, Cfg.styles[self.STYLETYPE]));
+        this.setStyle(this.options);
+        //this.setStyle(Object.assign({}, this.options, Cfg.styles[this.STYLETYPE]));
 
-        if (self.layer) {
-            const idx = self.layer.selectedFeatures.indexOf(self);
+        if (this.layer) {
+            const idx = this.layer.selectedFeatures.indexOf(this);
             if (idx >= 0) {
-                self.layer.selectedFeatures.splice(idx, 1);
+                this.layer.selectedFeatures.splice(idx, 1);
             }
         }
-        return self;
+        return this;
     }
 
     isSelected() {

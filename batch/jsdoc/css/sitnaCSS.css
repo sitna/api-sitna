@@ -33,6 +33,10 @@ body .toc .nav > li.active > a:focus {
     font-weight: bold;
 }
 
+body .toc .toc-nav {
+    width: 310px;
+}
+
 .dropdown-menu li a[href="SITNA.Map.html"] {
     font-weight: bold;
 }
