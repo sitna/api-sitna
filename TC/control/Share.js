@@ -1,7 +1,8 @@
 ﻿import TC from '../../TC';
-import Util from '../Util';
+import Util, { MapImage } from '../Util';
 import Consts from '../Consts';
 import MapInfo from './MapInfo';
+
 
 TC.control = TC.control || {};
 
@@ -13,6 +14,7 @@ class Share extends MapInfo {
     MOBILEFAV;
     NAVALERT;
     #dialogDiv;
+    #dialogConfirmDiv;
 
     constructor() {
         super(...arguments);
@@ -37,7 +39,7 @@ class Share extends MapInfo {
             const self = this;
             const input = self.div.querySelector('.tc-url input[type=text]');
             if (input) {
-                input.dataset.update = true;
+                input.dataset.update = true;                
             }
 
             delete self.map._controlStatesCache;
@@ -63,17 +65,19 @@ class Share extends MapInfo {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-share.mjs');
         const dialogTemplatePromise = import('../templates/tc-ctl-share-dialog.mjs');
+        const dialogConfirmTemplatePromise = import('../templates/tc-ctl-share-confirm-dialog.mjs');
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS + '-confirm-dialog'] = (await dialogConfirmTemplatePromise).default;
         self.template = template;
     }
 
     async render(callback) {
         const self = this;
-        self.#dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
-        await super.renderData.call(self, { controlId: self.id }, function () {
+        self.#dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);        
+        await super.renderData.call(self, { controlId: self.id, native: !!navigator.share }, function () {
 
             //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
             if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
@@ -100,35 +104,57 @@ class Share extends MapInfo {
         self.div.querySelector('h2').addEventListener('click', function (_e) {
             self.update();
         });
-
-        // Si el SO no es móvil, ocultamos el botón de compartir a WhatsApp
-        if (!Util.detectMobile()) {
-            self.div.querySelector(`sitna-button.${self.CLASS}-btn-whatsapp`).classList.add(Consts.classes.HIDDEN);
-        }
-
-        self.div.querySelector(`.${self.CLASS}-url-box button.${self.CLASS}-btn-shorten`).addEventListener('click', function (e) {
+                
+        self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`).addEventListener('click', function (e) {
             const btn = e.target;
-            self.#selectInputField(btn, true);
+            btn.disabled = true;
+            if (!btn.checked)
+                self.div.querySelector("input.tc-textbox.tc-url").dataset.update = true
+            self.#selectInputField(btn, btn.checked).then(() => {
+                btn.disabled = false;
+            })
         });
+        //copiar  al portapapeles
+        self.div.querySelectorAll(`.${self.CLASS}-url-box sitna-button.${self.CLASS}-btn-copy`).forEach(elm => {
+            elm.addEventListener('click', async function (_e) {
+                const btn = _e.target;
+                const input = btn.closest(".tc-ctl-share-url-box").querySelector("input.tc-textbox");
+                const chkShorten = self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`);
+                if (chkShorten) chkShorten.checked = !!input.dataset.shortened;
+                if (navigator.clipboard?.writeText) {
+                    _e.target.classList.add(Consts.classes.LOADING);
 
-        self.div.querySelectorAll(`.${self.CLASS}-url-box button.${self.CLASS}-btn-copy`).forEach(elm => {
-            elm.addEventListener('click', async function (e) {
-                const btn = e.target;
+                    await self.#selectInputField(btn, chkShorten?.checked, input);                    
 
-                await self.#selectInputField(btn);
+                    navigator.clipboard?.writeText(input.value).then(() => {
+                        _e.target.classList.remove(Consts.classes.LOADING);
+                        self.map.toast(self.getLocaleString('copied'), { type: Consts.msgType.INFO });
+                    }).catch((err) => {
+                        if (err.name !== "AbortError") {
+                            TC.error(err);
+                        }
+                        _e.target.classList.remove(Consts.classes.LOADING);
+                    });
 
-                document.execCommand('copy');
+                }
+                else {
+                    await self.#selectInputField(btn, chkShorten?.checked, input);
 
-                btn.textContent = self.getLocaleString('copied');
+                    document.execCommand('copy');
 
-                setTimeout(function () {
-                    btn.textContent = self.getLocaleString('copy');
-                    self.#unselectInputField();
-                }, 1000);
+                    _e.target.classList.add(Consts.classes.LOADING);
+
+                    setTimeout(function () {
+                        _e.target.classList.remove(Consts.classes.LOADING);
+                        self.#unselectInputField();
+                    }, 1000);
+                }
             });
         });
 
         self.div.querySelector('input[type=text]').addEventListener('click', function (e) {
+            const chk = self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`);
+            if (chk.checked && e.target.dataset.update) chk.checked = false;
             self.#selectInputField(e.target);
         });
 
@@ -191,18 +217,28 @@ class Share extends MapInfo {
         });
 
         //Compartir en Whatsapp
-        if (Util.detectMobile()) {
-            self.div.querySelector(`sitna-button.${self.CLASS}-btn-whatsapp`).addEventListener("click", function (_e) {
-                self.shortenedLink().then(async function (url) {
+        
+        self.div.querySelector(`sitna-button.${self.CLASS}-btn-whatsapp`).addEventListener("click", function (_e) {
+            self.shortenedLink().then(async function (url) {
+                var waText = Util.detectMobile() ? 'whatsapp://send?text=' : 'https://wa.me/?text=';                
+                if (Util.detectMobile()) {
                     var waText = 'whatsapp://send?text=';
                     if (url !== undefined) {
                         location.href = waText + encodeURIComponent(url);
                     } else {
                         location.href = waText + encodeURIComponent(await self.generateLink());
+                    }                    
+                }
+                else {
+                    var waText = 'https://wa.me/?text=';
+                    if (url !== undefined) {
+                        window.open(waText + encodeURIComponent(url),"_blank");
+                    } else {
+                        window.open(waText + encodeURIComponent(await self.generateLink()), "_blank");
                     }
-                });
+                }
             });
-        }
+        });
 
         //Guardar en marcadores
         self.div.querySelector(`sitna-button.${self.CLASS}-btn-bookmark`).addEventListener("click", async function (_e) {
@@ -230,11 +266,72 @@ class Share extends MapInfo {
                 alert((/Mac/i.test(navigator.userAgent) ? 'Cmd' : 'Ctrl') + self.NAVALERT);
             }
         });
+        //Compartir nativo
+        self.div.querySelector(`sitna-button.${self.CLASS}-btn-native`)?.addEventListener("click", async function (_e) {
+            _e.target.classList.add(Consts.classes.LOADING);
+            self.shortenedLink().then(async function (url) {
+                try {
+                    const sharedOps = {
+                        title: document.title,
+                        url: url
+                    }
+                    //obtenemos la descripcion
+                    sharedOps["text"] = document.querySelector("meta[name='description'][lang='" + self.map.options.locale + "'],meta[name='description'][lang='" + self.map.options.locale.substring(0, 2) + "']")?.getAttribute("content")
+                    if (navigator.userActivation?.isActive)
+                        await navigator.share(sharedOps);
+                    else {
+                        await self.confirmDialog(self.getLocaleString("shareURLConfirm"));
+                        await navigator.share(sharedOps);
+                    }
+                }
+                catch (err) {
+                    if (err && err.name !== "AbortError") {
+                        TC.error(err);
+                    }
+                }
+                _e.target.classList.remove(Consts.classes.LOADING);
+            });
+            
+        });
+        //Compartir PNG nativo
+        self.div.querySelector(`button.${self.CLASS}-btn-png-native`)?.addEventListener("click", async function (_e) {
+            _e.target.classList.add(Consts.classes.LOADING);
+            try {
+                self.#shareImage("image/png").then(() => {
+                    _e.target.classList.remove(Consts.classes.LOADING);
+                })
+            }
+            catch (err) {
+                if (err.name !== "AbortError") {
+                    TC.error(err);
+                }
+            }
+            _e.target.classList.remove(Consts.classes.LOADING);
+            _e.target.active = false;
+        });
+        //Compartir JPG nativo
+        self.div.querySelector(`button.${self.CLASS}-btn-jpg-native`)?.addEventListener("click", async function (_e) {
+            _e.target.classList.add(Consts.classes.LOADING);
+            try {
+                await self.#shareImage("image/jpeg").then(() => {
+                    _e.target.classList.remove(Consts.classes.LOADING);
+                })
+            }
+            catch (err) {
+                if (err.name !== "AbortError") {
+                    TC.error(err);
+                }
+            }
+            _e.target.classList.remove(Consts.classes.LOADING);
+            _e.target.active = false;
+        });
+        
+
     }
 
-    async #selectInputField(elm, shorten) {
+    async #selectInputField(elm, shorten, _input=null) {
         const self = this;
-        const input = elm.parentElement.querySelector("input[type=text]");
+        const input = _input || self.div.querySelector("input.tc-textbox.tc-url");
 
         if (shorten) {
             if (input.dataset.update || !input.dataset.shortened) {
@@ -272,6 +369,38 @@ class Share extends MapInfo {
 
             input.select();
         }
+    }
+
+    async #shareImage(format) {
+        const self = this;
+        var canvases = self.map.wrap.getCanvas();
+        var newCanvas = canvases.length > 1 ? Util.mergeCanvases(canvases) : canvases[0];
+        const includeQR = self.div.querySelector(`.${self.CLASS}-chk-qr`).checked;
+        const blob = await self.generateImage(format,true, includeQR);
+        const fileName = document.title + "." + format.substr(format.indexOf("/") + 1);
+        const file = new File([blob], fileName, { type: format })
+        const sharedData = {
+            title: fileName,
+            files: [file]
+        };
+        if (navigator.canShare(sharedData)) {
+            if (navigator.userActivation?.isActive)
+                return navigator.share(sharedData);
+            else {
+                try{
+                    await self.confirmDialog(self.getLocaleString("shareImageConfirm"));
+                    return navigator.share(sharedData);
+                }
+                catch(err){
+                    if (err && err.name)
+                        TC.error(err);
+                }                  
+            }            
+        }
+        else {
+            self.map.toast(self.getLocaleString("shareFileNotsupported"), { type: Consts.msgType.ERROR });
+        }
+        return;
     }
 
     #unselectInputField() {
@@ -349,6 +478,7 @@ class Share extends MapInfo {
         const self = this;
         const input = self.div.querySelector('.tc-url input[type=text]');
         if (input.value.trim().length === 0) {
+            self.updateUI();
             const link = await self.generateLink();
             self.registerListeners();
             input.value = link;
@@ -356,7 +486,7 @@ class Share extends MapInfo {
         }
     }
 
-    async generateLink() {
+    updateUI() {
         const self = this;
         const shareIconContainer = self.div.querySelector(`.${self.CLASS}-icons`);
         const textboxes = self.div.querySelectorAll(`.${self.CLASS}-url-box tc-textbox`);
@@ -368,8 +498,7 @@ class Share extends MapInfo {
             btn.classList.add(Consts.classes.LOADING);
             btn.disabled = true;
         });
-        alert.classList.add(Consts.classes.LOADING);
-        const result = await MapInfo.prototype.generateLink.call(self);
+        alert.classList.add(Consts.classes.LOADING);        
         textboxes.forEach(tb => tb.disabled = false);
         buttons.forEach(btn => {
             btn.disabled = false;
@@ -377,7 +506,38 @@ class Share extends MapInfo {
         });
         shareIconContainer.classList.remove(Consts.classes.LOADING);
         alert.classList.remove(Consts.classes.LOADING);
-        return result;
+    }
+
+    async generateLink() {
+        const self = this;        
+        return await MapInfo.prototype.generateLink.call(self);
+    }
+
+    async confirmDialog(message) {
+        const self = this;
+        return new Promise(async (resolve,reject) => {
+            if (!self.#dialogConfirmDiv) {
+                self.#dialogConfirmDiv = Util.getDiv();
+                document.body.appendChild(self.#dialogConfirmDiv);
+                self.#dialogConfirmDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-confirm-dialog', {message:message});                
+            }
+            else{
+                self.#dialogConfirmDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-confirm-dialog', {message:message});
+            }
+            const manageYesFnc=()=>{
+                Util.closeModal();
+                resolve();
+            };
+            const okBtn = self.#dialogConfirmDiv.querySelector(".tc-modal-ok");            
+            okBtn.addEventListener("click", manageYesFnc);
+            //okBtn.removeEventListener("click", resolve);                
+            Util.showModal(self.#dialogConfirmDiv.querySelector(`.${self.CLASS}-confirm-dialog`), {
+                closeCallback: () => {
+                    okBtn.removeEventListener("click", manageYesFnc);
+                    reject();
+                }
+            });
+        });
     }
 
 }
