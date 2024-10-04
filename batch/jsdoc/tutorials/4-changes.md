@@ -1,3 +1,7 @@
+### [4.3.0](https://github.com/sitna/api-sitna/releases/tag/v4.3.0)
+- Mejora del soporte a formatos GML, GeoPackage y Shapefile.
+- Refactorización y corrección de errores.
+
 ### [4.2.0](https://github.com/sitna/api-sitna/releases/tag/v4.2.0)
 - Añadido control para editar y guardar documentos geográficos en el sistema de archivos del dispositivo.
 - Nueva leyenda que muestra únicamente el contenido correspondiente a la zona visualizada en cada momento (no todo el posible a la escala del mapa).
