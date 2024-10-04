@@ -13,7 +13,7 @@ class Component extends HTMLElement {
         const styleText = Component.#preloadedStyles.get(this.elementName);
         if (styleText) {
             const style = document.createElement('style');
-            style.innerText = styleText;
+            style.textContent = styleText;
             this.shadowRoot.appendChild(style);
         }
         else {
