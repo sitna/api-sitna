@@ -84,6 +84,7 @@
     <Content Include="batch\cesium-webpack\main.js" />
     <Content Include="batch\cesium-webpack\webpack.config.js" />
     <Content Include="batch\cesium-webpack\webpack.release.config.js" />
+    <Content Include="batch\jsdoc\css\sandbox-toolbar.css" />
     <Content Include="batch\jsdoc\img\audio_name_prefix_regex.svg" />
     <Content Include="batch\jsdoc\img\audio_name_suffix_regex.svg" />
     <Content Include="batch\jsdoc\img\audio_value_prefix_regex.svg" />
@@ -101,6 +102,7 @@
     <Content Include="batch\jsdoc\img\video_value_prefix_regex.svg" />
     <Content Include="batch\jsdoc\img\video_value_suffix_regex.svg" />
     <Content Include="batch\jsdoc\css\sitnaCSS.css" />
+    <Content Include="batch\jsdoc\js\sandbox-toolbar.js" />
     <Content Include="batch\ol-webpack\main.js" />
     <Content Include="batch\ol-webpack\webpack.config.js" />
     <Content Include="css\compiler.js" />
@@ -109,6 +111,8 @@
     <Content Include="css\control\ImageMagnifier.css" />
     <Content Include="css\control\TrackEdit.css" />
     <Content Include="css\control\LayerLegend.css" />
+    <Content Include="css\img\icon-copy.svg" />
+    <Content Include="css\img\icon-share.svg" />
     <Content Include="css\img\tcCtlLayerLegendLoading.svg" />
     <Content Include="css\img\thumb-basemap-grey.png" />
     <Content Include="css\img\thumb-ortho2023.jpg" />
@@ -133,8 +137,10 @@
     <Content Include="examples\feature.MultiPoint.html" />
     <Content Include="examples\feature.Polygon.html" />
     <Content Include="examples\feature.Polyline.html" />
+    <Content Include="examples\sandbox.html" />
+    <Content Include="examples\sandbox.js" />
     <Content Include="lib\geopackagejs\dist\geopackage-browser.js" />
-    <Content Include="lib\ol\format\GML3.js" />
+    <Content Include="lib\ol\format\GML32.js" />
     <Content Include="lib\ol\format\GMLBase.js" />
     <Content Include="lib\ol\proj\epsg4326.js" />
     <Content Include="SITNA\format\BinaryFormat.js" />
@@ -403,6 +409,7 @@
     <Content Include="TC\ui\autocomplete.js" />
     <Content Include="TC\view\ThreeD.js" />
     <Content Include="webpack\util-fallback.js" />
+    <Content Include="webpack\webpack.config.sandbox.js" />
     <Content Include="workers\module-creator.js" />
     <Content Include="workers\tc-dft-web-worker.js" />
     <Content Include="workers\tc-jsonpack-web-worker.js" />
@@ -668,6 +675,8 @@
     <Content Include=".eslintrc" />
     <Content Include="libman.json" />
     <Content Include="resources\data\contornoEspana.json" />
+    <Content Include="batch\jsdoc\tutorials\5-examples.md" />
+    <Content Include="config\predefined-layers.json" />
     <None Include="Properties\PublishProfiles\local.pubxml" />
     <Content Include="layout\pamplona\config.json" />
     <Content Include="layout\pamplona\resources\es-ES.json" />
@@ -723,7 +732,6 @@
     <Content Include="TC\templates\tc-ctl-draw.hbs" />
     <Content Include="TC\templates\tc-ctl-dmm.hbs" />
     <Content Include="TC\templates\tc-ctl-edit.hbs" />
-    <Content Include="TC\templates\tc-ctl-edit-attr.hbs" />
     <Content Include="TC\templates\tc-ctl-edit-import.hbs" />
     <Content Include="TC\templates\tc-ctl-xwms.hbs" />
     <Content Include="TC\templates\tc-ctl-dldlog.hbs" />
@@ -810,6 +818,7 @@
     <Content Include="TC\templates\tc-ctl-attr-edit-row.hbs" />
     <Content Include="TC\templates\tc-ctl-attr-edit-new.hbs" />
     <Content Include="TC\templates\tc-ctl-attr-edit-table.hbs" />
+    <Content Include="TC\templates\tc-ctl-share-confirm-dialog.hbs" />
     <None Include="test\endToEnd\config\env\pro.json" />
     <None Include="test\endToEnd\config\env\vinet18.json" />
     <None Include="test\endToEnd\config\env\local.json" />
