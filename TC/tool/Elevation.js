@@ -120,38 +120,37 @@ class Elevation {
         const services = await self.getServices();
         const responses = new Array(services.length);
         responses.fill(false);
-        for (var i = 0, ii = services.length; i < ii; i++) {
-            const idx = i;
-            const srv = services[i];
 
-            // Creamos una promesa que se resuelve falle o no la petición
-            const request = async function () {
-                if (navigator.onLine) {
-                    try {
-                        const response = await srv.request(opts);
-                        if (done) {
-                            return null; // Ya no escuchamos a esta respuesta porque hemos terminado el proceso antes
-                        }
-                        else {
-                            return srv.parseResponse(response, opts);
-                        }
+        // Creamos una promesa que se resuelve falle o no la petición
+        const request = async function (srv) {
+            if (navigator.onLine) {
+                try {
+                    const response = await srv.request(opts);
+                    if (done) {
+                        return null; // Ya no escuchamos a esta respuesta porque hemos terminado el proceso antes
                     }
-                    catch (_e) {
-                        return null;
+                    else {
+                        return srv.parseResponse(response, opts);
                     }
                 }
-                return null;
+                catch (_e) {
+                    return null;
+                }
             }
-            let response;
-            try {
-                response = await request();
-            }
-            catch (error) {
-                console.error(error);
-            }
+            return null;
+        }
+        const requestPromises = services.map((srv) => request(srv));
 
+        for (var i = 0, ii = requestPromises.length; i < ii; i++) {
             if (!done) {
-                responses[idx] = response;
+                let response;
+                try {
+                    response = responses[i] = await requestPromises[i];
+                }
+                catch (error) {
+                    console.error(error);
+                }
+
                 if (response === null) {
                     // Respuesta fallida. Comprobamos si han fallado todas para terminar.
                     if (responses.every(r => r === null)) {

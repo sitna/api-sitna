@@ -42,8 +42,8 @@ class ElevationServiceGoogle extends ElevationService {
         //ahora google pide en la url de google maps una función función global que se llamará una vez que la API de Maps JavaScript se cargue por completo.
         let fnCallBackSV = "SV_" + (Math.random() + 1).toString(36).substring(7);
 
-        window[fnCallBackSV] = function () {
-            delete window[fnCallBackSV];
+        globalThis[fnCallBackSV] = function () {
+            delete globalThis[fnCallBackSV];
         }
 
         self.url += 'key=' + self.options.googleMapsKey + "&callback=" + fnCallBackSV;
@@ -54,7 +54,7 @@ class ElevationServiceGoogle extends ElevationService {
         self.maxRetries = Number.isInteger(self.options.maxRetries) ? self.options.maxRetries : 0;
     }
 
-    request(options = {}) {
+    async request(options = {}) {
         const self = this;
         if (!self.options.googleMapsKey) {
             return Promise.reject(Error('Missing Google Maps key'));
@@ -77,93 +77,80 @@ class ElevationServiceGoogle extends ElevationService {
 
         if (coordinateList.length > self.maxCoordinateCountPerRequest) {
             // Google no soporta tantos puntos por petición, dividimos la petición en varias
-            return new Promise(function (resolve, _reject) {
-                const chunks = [];
-                for (var i = 0, ii = coordinateList.length; i < ii; i += self.maxCoordinateCountPerRequest) {
-                    chunks.push(coordinateList.slice(i, i + self.maxCoordinateCountPerRequest));
-                }
-                upRequestId(requestId, chunks.length);
-                let retries = 0;
-                const subrequests = chunks.map(function subrequest(chunk) {
-                    const requestOptions = Util.extend({}, options, { coordinates: chunk, id: requestId });
-                    return new Promise(function (res, rej) {
-                        if (!currentRequestIds.has(requestId)) {
-                            res(cancelledResponse);
-                        }
-                        else {
-                            self.request(requestOptions)
-                                .then(function (result) {
-                                    if (result.status === 'OVER_QUERY_LIMIT') {
-                                        console.log("OVER_QUERY_LIMIT status reached for request " + requestId);
-                                        if (!currentRequestIds.has(requestId)) {
-                                            res(cancelledResponse);
-                                        }
-                                        else {
-                                            // Peticiones demasiado seguidas: esperamos y volvemos a pedir
-                                            if (!self.maxRetries || retries < self.maxRetries) {
-                                                retries = retries + 1;
-                                                setTimeout(function () {
-                                                    subrequest(chunk)
-                                                        .then(r => res(r))
-                                                        .catch(e => rej(e));
-                                                }, self.minRetryInterval);
-                                            }
-                                            else {
-                                                res(result);
-                                            }
-                                        }
+            const chunks = [];
+            for (var i = 0, ii = coordinateList.length; i < ii; i += self.maxCoordinateCountPerRequest) {
+                chunks.push(coordinateList.slice(i, i + self.maxCoordinateCountPerRequest));
+            }
+            upRequestId(requestId, chunks.length);
+            let retries = 0;
+            const subrequests = chunks.map(function subrequest(chunk) {
+                const requestOptions = Util.extend({}, options, { coordinates: chunk, id: requestId });
+                return new Promise(function (res, rej) {
+                    if (!currentRequestIds.has(requestId)) {
+                        res(cancelledResponse);
+                    }
+                    else {
+                        self.request(requestOptions)
+                            .then(function (result) {
+                                if (result.status === 'OVER_QUERY_LIMIT') {
+                                    console.log("OVER_QUERY_LIMIT status reached for request " + requestId);
+                                    if (!currentRequestIds.has(requestId)) {
+                                        res(cancelledResponse);
                                     }
                                     else {
-                                        res(result);
+                                        // Peticiones demasiado seguidas: esperamos y volvemos a pedir
+                                        if (!self.maxRetries || retries < self.maxRetries) {
+                                            retries = retries + 1;
+                                            setTimeout(function () {
+                                                subrequest(chunk)
+                                                    .then(r => res(r))
+                                                    .catch(e => rej(e));
+                                            }, self.minRetryInterval);
+                                        }
+                                        else {
+                                            res(result);
+                                        }
                                     }
-                                })
-                                .catch(e => rej(e));
-                        }
-                    });
-                });
-                Promise.all(subrequests).then(function mergeResponses(responses) {
-                    const results = Array.prototype.concat.apply([], responses
-                        .filter(r => r.status === 'OK')
-                        .map(r => r.elevations));
-                    downRequestId(requestId);
-                    resolve({
-                        status: 'OK',
-                        elevations: results
-                    });
+                                }
+                                else {
+                                    res(result);
+                                }
+                            })
+                            .catch(e => rej(e));
+                    }
                 });
             });
+            const responses = await Promise.all(subrequests);
+            const results = Array.prototype.concat.apply([], responses
+                .filter(r => r.status === 'OK')
+                .map(r => r.elevations));
+            downRequestId(requestId);
+            return {
+                status: 'OK',
+                elevations: results
+            };
         }
 
         if (options.crs && options.crs !== self.nativeCRS) {
             coordinateList = Util.reproject(coordinateList, options.crs, self.nativeCRS);
         }
 
-        return new Promise(function (resolve, _reject) {
-            const googleMapsIsLoaded = window.google && window.google.maps;
-            if (!googleMapsIsLoaded) {
-                TC.Cfg.proxyExceptions = TC.Cfg.proxyExceptions || [];
-                TC.Cfg.proxyExceptions.push(self.url);
-            }
-            TC.loadJS(
-                !googleMapsIsLoaded,
-                self.url,
-                function () {
-                    googleElevator = googleElevator || new google.maps.ElevationService();
-                    const coords = coordinateList.map(p => ({ lat: p[1], lng: p[0] }));
-                    googleElevator.getElevationForLocations({
-                        locations: coords
-                    }, function (elevations, status) {
-                        downRequestId(requestId);
-                        resolve({
-                            elevations: elevations,
-                            status: status
-                        });
-                    });
-                },
-                false,
-                true
-            );
+        const googleMapsIsLoaded = globalThis.google && globalThis.google.maps;
+        if (!googleMapsIsLoaded) {
+            TC.Cfg.proxyExceptions = TC.Cfg.proxyExceptions || [];
+            TC.Cfg.proxyExceptions.push(self.url);
+        }
+        await TC.loadJS(!googleMapsIsLoaded, self.url, null, false, true);
+        googleElevator ??= new google.maps.ElevationService();
+        const coords = coordinateList.map(p => ({ lat: p[1], lng: p[0] }));
+        const obj = await googleElevator.getElevationForLocations({
+            locations: coords
         });
+        downRequestId(requestId);
+        return {
+            status: 'OK',
+            elevations: obj.results
+        };
     }
 
     parseResponse(response, options) {

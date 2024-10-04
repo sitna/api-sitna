@@ -2,6 +2,7 @@ import ElevationService from './ElevationService';
 import Util from '../Util';
 
 const FALLBACK_RESOURCE_ID = 'ign_rge_alti_wld';
+const DELIMITER = '|';
 
 class ElevationServiceIGNFr extends ElevationService {
     #resourcesUrl = 'https://data.geopf.fr/altimetrie/resources?keywords=Altitude';
@@ -22,11 +23,21 @@ class ElevationServiceIGNFr extends ElevationService {
             coordinateList = Util.reproject(coordinateList, options.crs, this.nativeCRS);
         }
 
-        const lon = coordinateList.map((coord) => coord[0]).join('|');
-        const lat = coordinateList.map((coord) => coord[1]).join('|');
-        const requestUrl = `${this.url}?lon=${lon}&lat=${lat}&resource=${this.resourceId}&zonly=false`;
+        const requestObj = {
+            lon: coordinateList.map((coord) => coord[0]).join(DELIMITER),
+            lat: coordinateList.map((coord) => coord[1]).join(DELIMITER),
+            resource: this.resourceId,
+            delimiter: DELIMITER,
+            indent: 'false',
+            measures: 'false',
+            zonly: 'false'
+        };
 
-        return await (await this.getProxificationTool()).fetchJSON(requestUrl);
+        return await (await this.getProxificationTool()).fetchJSON(this.url, {
+            method: 'POST',
+            contentType: 'application/json',
+            body: JSON.stringify(requestObj)
+        });
     }
 
     parseResponse(response, options) {
