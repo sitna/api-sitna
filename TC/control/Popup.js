@@ -129,13 +129,13 @@ class Popup extends InfoDisplay {
         const self = this;
         const closeBtn = self.menuDiv.querySelector(`.${self.CLASS}-close`);
         if (closeBtn) {
-            closeBtn.addEventListener(Consts.event.CLICK, function () {
+            closeBtn.addEventListener('pointerup', function () {
                 self.hide();
             }, { passive: true });
         }
         const shareBtn = self.menuDiv.querySelector(`.${self.CLASS}-share`);
         if (shareBtn) {
-            shareBtn.addEventListener(Consts.event.CLICK, function () {
+            shareBtn.addEventListener('pointerup', function () {
                 if (self.caller) {
                     self.caller.showShareDialog();
                 }
