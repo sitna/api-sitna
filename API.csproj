@@ -112,6 +112,7 @@
     <Content Include="css\img\tcCtlLayerLegendLoading.svg" />
     <Content Include="css\img\thumb-basemap-grey.png" />
     <Content Include="css\img\thumb-ortho2023.jpg" />
+    <Content Include="css\img\thumb-orthophoto.jpg" />
     <Content Include="css\img\thumb-topo-pamplona.jpg" />
     <Content Include="css\ui\sitna-tab.css" />
     <Content Include="css\ui\sitna-toggle.css" />
@@ -133,9 +134,10 @@
     <Content Include="examples\feature.Polygon.html" />
     <Content Include="examples\feature.Polyline.html" />
     <Content Include="lib\geopackagejs\dist\geopackage-browser.js" />
-    <Content Include="lib\ol\format\GML.js" />
+    <Content Include="lib\ol\format\GML3.js" />
     <Content Include="lib\ol\format\GMLBase.js" />
     <Content Include="lib\ol\proj\epsg4326.js" />
+    <Content Include="SITNA\format\BinaryFormat.js" />
     <Content Include="SITNA\format\GeoPackage.js" />
     <Content Include="SITNA\format\Shapefile.js" />
     <Content Include="SITNA\ui\Tab.js" />
@@ -173,10 +175,16 @@
     <Content Include="SITNA\layer\Raster.js" />
     <Content Include="SITNA\layer\Vector.js" />
     <Content Include="TC\templates\compiler.js" />
+    <Content Include="TC\tool\FeatureTypeParser.js" />
+    <Content Include="batch\xsd-prefetch-module-creator.js" />
     <Content Include="TC\tool\OgcApiProcessesElevationService.js" />
     <Content Include="TC\view\ThreeDDraw.js" />
     <Content Include="test\unit\browser\control\FileEdit.js" />
     <Content Include="test\unit\browser\control\LanguageSelector.js" />
+    <Content Include="test\unit\browser\feature\Point.js" />
+    <Content Include="test\unit\browser\layer\Vector.js" />
+    <Content Include="test\unit\browser\TC\Cfg.js" />
+    <Content Include="test\unit\browser\TC\Consts.js" />
     <Content Include="webpack\cesium.webpack.config.debug.js" />
     <Content Include="webpack\cesium.webpack.config.js" />
     <Content Include="errors\rollbar.js" />
@@ -359,7 +367,7 @@
     <Content Include="css\img\thumb-ortho2019.jpg" />
     <Content Include="css\img\thumb-ortho2020.jpg" />
     <Content Include="css\img\thumb-ortho2021.jpg" />
-    <Content Include="css\img\thumb-orthophoto.jpg" />
+    <Content Include="css\img\thumb-ortho2023.jpg" />
     <Content Include="css\img\thumb-orthophoto_pnoa.jpg" />
     <Content Include="css\img\thumb-base_ortho.png" />
     <Content Include="TC\control\ProjectionSelector.js" />
@@ -387,7 +395,6 @@
     <Content Include="TC\templates\tc-ctl-finfo-buttons.hbs" />
     <Content Include="TC\templates\tc-ctl-finfo-object.hbs" />
     <Content Include="TC\templates\tc-ctl-geolocation-ext-dldlog.hbs" />
-    <Content Include="TC\templates\tc-ctl-wfsquery-table-object.hbs" />
     <Content Include="TC\tool\ElevationServiceGoogle.js" />
     <Content Include="TC\tool\ElevationServiceIGNEs.js" />
     <Content Include="TC\tool\ElevationServiceIGNFr.js" />
