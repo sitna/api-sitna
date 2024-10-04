@@ -30,15 +30,24 @@ const byName = function (name, equalsPredicate) {
     };
 };
 
+const findAttribute = (attributes, path, equalsPredicate) => {
+    let collection = attributes;
+    let attribute;
+    for (const name of path) {
+        attribute = collection?.find(byName(name, equalsPredicate));
+        if (attribute) {
+            collection = attribute.value;
+        }
+    }
+    return attribute;
+}
+
 class AttributesEdit extends WebComponentControl {
 
     #feature;
     #attributeData = [];
     #clientControl;
-    #onFeatureSelect;
-    #onDrawEnd;
-    #onDrawStart;
-    #onDrawCancel;
+    #clientControlAbortController;
     #selectors;
     attributeProposal;
 
@@ -48,17 +57,20 @@ class AttributesEdit extends WebComponentControl {
         super(...arguments);
 
         this.#selectors = {
+            BODY: `.${AttributesEdit.prototype.CLASS}-body`,
             ATTRIBUTE_VALUE: 'td input,td select,td sitna-toggle',
             NEW_ATTRIBUTE_KEY: `input.${AttributesEdit.prototype.CLASS}-new-key`,
             NEW_ATTRIBUTE_VALUE: `td.${AttributesEdit.prototype.CLASS}-new-value input,td.${AttributesEdit.prototype.CLASS}-new-value sitna-toggle`,
             TYPE_SELECT: `select.${AttributesEdit.prototype.CLASS}-type`,
             ATTRIBUTE_REMOVE: `td sitna-button.${AttributesEdit.prototype.CLASS}-remove`,
+            ITEM_ADD: `td sitna-button.${AttributesEdit.prototype.CLASS}-add`,
             NUMBER_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="number"]`,
             BOOLEAN_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value sitna-toggle`,
             DATE_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="date"]`,
             TIME_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="time"]`,
             DATETIME_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="datetime-local"]`,
-            TEXT_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="text"]`
+            TEXT_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="text"]`,
+            TOGGLE: `.${AttributesEdit.prototype.CLASS}-body > table sitna-toggle`
         }
     }
 
@@ -113,6 +125,7 @@ class AttributesEdit extends WebComponentControl {
                         layerMetadataItem = layerMetadata?.find(byName(key, equalsPredicate));
                     }
                     attributeData.type = layerMetadataItem?.type ?? getDataType(value);
+                    attributeData.optional = layerMetadataItem?.optional;
                     if (attributeData.type === 'object') {
                         attributeData.value = getFeatureMetadata(value, layerMetadataItem?.value, equalsPredicate);
                     }
@@ -130,7 +143,10 @@ class AttributesEdit extends WebComponentControl {
                     for (const targetItem of target) {
                         const sourceItem = source.find(byName(targetItem.name, equalsPredicate));
                         if (sourceItem) {
-                            const newItem = { name: targetItem.name };
+                            const newItem = { name: targetItem.name, sealed: !sourceItem.optional };
+                            if (sourceItem.multiple || targetItem.multiple) {
+                                newItem.multiple = true;
+                            }
                             if (Object.prototype.hasOwnProperty.call(targetItem, 'type') && !Object.prototype.hasOwnProperty.call(sourceItem, 'type')) {
                                 newItem.type = targetItem.type;
                             }
@@ -163,7 +179,11 @@ class AttributesEdit extends WebComponentControl {
                 if (!Array.isArray(metadata)) {
                     return metadata;
                 }
-                const result = {};
+                let result = {};
+                // Los metadatos de array tienen elementos name: indíce, convertimos a array
+                if (metadata.every((elm) => /^\d+$/.test(elm.name))) {
+                    result = [];
+                }
                 for (const item of metadata) {
                     let value;
                     if (item.type === 'object' || !item.type && Array.isArray(item.value)) {
@@ -172,9 +192,7 @@ class AttributesEdit extends WebComponentControl {
                     else {
                         value = item.value;
                     }
-                    // No consideramos los atributos XML, que son opcionales por defecto
-                    if (item.name
-                        && !item.optional) {
+                    if (item.name) {
                         result[item.name] = value;
                     }
                 }
@@ -220,22 +238,41 @@ class AttributesEdit extends WebComponentControl {
                     if (layerAttributeMetadata.length) {
                         const mergeAttributes = function (layerAttributes, featureAttributes) {
                             if (featureAttributes) {
+                                let lastIndex = 0;
+                                let result = layerAttributes.slice();
                                 for (const featureAttribute of featureAttributes) {
                                     const layerAttribute = layerAttributes.find(byName(featureAttribute.name, featureTypeMetadata.equals));
                                     if (layerAttribute) {
-                                        layerAttribute.name = featureAttribute.name;
-                                        layerAttribute.optional = false;
+                                        const newLayerAttribute = {
+                                            name: featureAttribute.name,
+                                            optional: !!layerAttribute.optional,
+                                            type: layerAttribute.type
+                                        };
+                                        if (layerAttribute.multiple) {
+                                            newLayerAttribute.multiple = true;
+                                        }
                                         if (layerAttribute.type === 'object') {
-                                            mergeAttributes(layerAttribute.value, featureAttributes.value);
+                                            newLayerAttribute.value = mergeAttributes(layerAttribute.value, featureAttribute.value);
                                         }
                                         else if (featureAttribute.value) {
-                                            layerAttribute.value = featureAttribute.value;
+                                            newLayerAttribute.value = featureAttribute.value;
                                         }
+                                        const resultIndex = result.findIndex(byName(featureAttribute.name, featureTypeMetadata.equals));
+                                        result[resultIndex] = newLayerAttribute;
+                                        lastIndex = resultIndex;
+                                    }
+                                    else {
+                                        result.splice(++lastIndex, 0, featureAttribute);
                                     }
                                 }
+                                // Criterio adoptado: 
+                                // Solamente devolvemos los atributos de la capa que están en todas las entidades existentes
+                                result = result.filter((attr) => featureAttributes.find(byName(attr.name, featureTypeMetadata.equals)));
+                                return result;
                             }
+                            return layerAttributes;
                         };
-                        mergeAttributes(layerAttributeMetadata, featureAttributeData);
+                        layerAttributeMetadata = mergeAttributes(layerAttributeMetadata, featureAttributeData);
                     }
                     else {
                         featureAttributeData.forEach(data => {
@@ -245,24 +282,44 @@ class AttributesEdit extends WebComponentControl {
                 }
 
                 const newData = {};
-                for (let attr of layerAttributeMetadata) {
-                    if (!attr.isId && !attr.optional) {
-                        // Añadimos los atributos que no tenga ya la entidad
-                        if (attr.name) {
-                            const featureAttrEntry = Object.entries(featureData).find(([key]) => {
-                                const equals = featureTypeMetadata?.equals ?? genericEquals;
-                                return equals(key, attr.name);
-                            });
-                            if (!featureAttrEntry) {
-                                let value = null;
-                                if (Object.prototype.hasOwnProperty.call(attr, 'value')) {
-                                    value = getDataFromMetadata(attr.value);
+                const addNewData = function (newData, layerAttributeMetadata) {
+                    for (let attr of layerAttributeMetadata) {
+                        if (!attr.isId) {
+                            // Añadimos los atributos que no tenga ya la entidad
+                            if (attr.name) {
+                                const featureAttrEntry = Object.entries(featureData).find(([key]) => {
+                                    const equals = featureTypeMetadata?.equals ?? genericEquals;
+                                    return equals(key, attr.name);
+                                });
+                                if (!featureAttrEntry) {
+                                    let value;
+                                    if (Object.prototype.hasOwnProperty.call(attr, 'value')) {
+                                        value = getDataFromMetadata(attr.value);
+                                    }
+                                    if (value === undefined && !attr.optional) {
+                                        if (attr.nonNullable) {
+                                            switch (attr.type) {
+                                                case 'boolean':
+                                                    value = false;
+                                                    break;
+                                                default:
+                                                    value = '';
+                                            }
+                                        }
+                                        else {
+                                            value = null;
+                                        }
+                                    }
+                                    newData[attr.name] = value;
+                                    if (attr.type === 'object') {
+                                        addNewData(value, attr.value);
+                                    }
                                 }
-                                newData[attr.name] = value;
                             }
                         }
                     }
-                }
+                };
+                addNewData(newData, layerAttributeMetadata);
                 if (Object.keys(newData).length) {
                     this.#feature.setData(newData);
                     featureData = this.#feature.getData();
@@ -276,7 +333,9 @@ class AttributesEdit extends WebComponentControl {
                         for (let i = 0; i < path.length - 1; i++) {
                             attributes = attributes[path[i]];
                         }
-                        delete attributes[path[path.length - 1]];
+                        if (attributes) {
+                            delete attributes[path[path.length - 1]];
+                        }
                     }
                 }
 
@@ -317,6 +376,7 @@ class AttributesEdit extends WebComponentControl {
         await this.renderData(renderObject, () => {
             this.#setAttributeElements();
             this.addUIEventListeners();
+            this.#setUndefinedToggles();
 
             if (this.#feature) {
                 this.show();
@@ -333,27 +393,49 @@ class AttributesEdit extends WebComponentControl {
 
     async addAttributeElement({ name, type, value }) {
         if (this.#feature) {
-            if (!name) {
+            let html;
+            if (name) {
+                const sealed = this.#feature.layer.type === Consts.layerType.WFS;
+                html = await this.getRenderedHtml(this.CLASS + '-row', { name, type, value, sealed });
+            }
+            else {
                 // Línea que espera un nuevo atributo. Comprobamos que no haya ya una.
                 if (this.querySelector(this.CLASS + '-new')) {
                     return;
                 }
+                html = await this.getRenderedHtml(this.CLASS + '-new');
             }
-            const sealed = this.#feature.layer.type === Consts.layerType.WFS;
-            const html = await this.getRenderedHtml(this.CLASS + '-row', { name, type, value, sealed });
             const buffer = document.createElement('tbody');
-            buffer.innerHTML = html;
+            buffer.insertAdjacentHTML('beforeend', html);
             this.#addUIEventListeners(buffer);
-            const anchor = this.querySelector(`.${this.CLASS}-body > table > tbody > tr:last-of-type`);
+            const anchor = this.querySelector(`${this.#selectors.BODY} > table > tbody > tr:last-of-type`);
             anchor.insertAdjacentElement('afterend', buffer.firstElementChild);
             this.#setAttributeElements();
         }
     }
 
-    removeAttributeElement(name) {
-        this.querySelectorAll(`.${this.CLASS}-body > table > tbody > tr[data-attribute-name="${name}"]`)
+    removeAttributeElement(path) {
+        const selector = `${this.#selectors.BODY} > table > tbody > ` + path
+            .map(name => `tr[data-attribute-name="${name}"]`)
+            .join(' ');
+        this.querySelectorAll(selector)
             .forEach((elm) => elm.remove());
         return this;
+    }
+
+    #setUndefinedToggles() {
+        if (this.#feature) {
+            const data = this.#feature.getData();
+            const toggles = this.div.querySelectorAll(this.#selectors.TOGGLE);
+            for (const toggle of toggles) {
+                let properties = data;
+                const path = this.#getPathFromElement(toggle);
+                for (const name of path) {
+                    properties = properties[name];
+                }
+                toggle.indeterminate = properties === undefined || properties === null;
+            }
+        }
     }
 
     #setAttributeElements() {
@@ -363,6 +445,19 @@ class AttributesEdit extends WebComponentControl {
 
     addUIEventListeners() {
         return this.#addUIEventListeners(this);
+    }
+
+    #getPathFromElement(element) {
+        let parent = element;
+        const path = [];
+        do {
+            parent = parent.parentElement;
+            if (parent?.matches('tr[data-attribute-name]')) {
+                path.unshift(parent.dataset.attributeName);
+            }
+        }
+        while (parent && !parent.matches(this.#selectors.BODY));
+        return path;
     }
 
     #addUIEventListeners(root) {
@@ -394,10 +489,26 @@ class AttributesEdit extends WebComponentControl {
         });
 
         const onRemoveButtonClick = function (_e) {
-            self.removeFeatureAttribute(this.dataset.key);
+            self.removeFeatureAttribute(self.#getPathFromElement(this));
         };
+
         root.querySelectorAll(self.#selectors.ATTRIBUTE_REMOVE).forEach(elm => {
             elm.addEventListener('click', onRemoveButtonClick);
+        });
+
+        const onAddButtonClick = function (_e) {
+            const path = self.#getPathFromElement(this);
+            const scrollTop = self.div.querySelector(self.#selectors.BODY).scrollTop;
+            self.addFeatureAttributeItem(path).then((newItem) => {
+                if (newItem) {
+                    const body = self.div.querySelector(self.#selectors.BODY);
+                    body.scrollTo(0, scrollTop);
+                }
+            });
+        };
+
+        root.querySelectorAll(self.#selectors.ITEM_ADD).forEach(elm => {
+            elm.addEventListener('click', onAddButtonClick);
         });
 
         root.querySelector(self.#selectors.NEW_ATTRIBUTE_KEY)?.addEventListener('change', function (_e) {
@@ -479,41 +590,34 @@ class AttributesEdit extends WebComponentControl {
     }
 
     set clientControl(value) {
-        if (this.#clientControl) {
-            if (this.#clientControl instanceof Modify) {
-                this.#clientControl.removeEventListener(Consts.event.FEATURESSELECT, this.#onFeatureSelect);
-                this.#clientControl.removeEventListener(Consts.event.FEATURESUNSELECT, this.#onFeatureSelect);
-            }
-            else if (this.#clientControl instanceof Draw) {
-                this.#clientControl.removeEventListener(Consts.event.DRAWEND, this.#onDrawEnd);
-                this.#clientControl.removeEventListener(Consts.event.DRAWSTART, this.#onDrawStart);
-                this.#clientControl.removeEventListener(Consts.event.DRAWCANCEL, this.#onDrawCancel);
-            }
-        }
+        // Quitamos los listener del control previo
+        this.#clientControlAbortController?.abort();
+        this.#clientControlAbortController = new AbortController();
+        const { signal } = this.#clientControlAbortController;
         this.#clientControl = value;
         if (this.#clientControl instanceof Modify) {
-            this.#onFeatureSelect = (_e) => {
+            const onFeatureSelect = (_e) => {
                 this.feature = this.clientControl.getSelectedFeatures()[0];
             };
-            this.#clientControl.addEventListener(Consts.event.FEATURESSELECT, this.#onFeatureSelect);
-            this.#clientControl.addEventListener(Consts.event.FEATURESUNSELECT, this.#onFeatureSelect);
-            this.#onFeatureSelect();
+            this.#clientControl.addEventListener(Consts.event.FEATURESSELECT, onFeatureSelect, { signal });
+            this.#clientControl.addEventListener(Consts.event.FEATURESUNSELECT, onFeatureSelect, { signal });
+            onFeatureSelect();
         }
         else if (this.#clientControl instanceof Draw) {
-            this.#onDrawEnd = (e) => {
+            const onDrawEnd = (e) => {
                 setTimeout(() => {
                     this.feature = e.detail?.feature;
                 }, 100);
             };
-            this.#clientControl.addEventListener(Consts.event.DRAWEND, this.#onDrawEnd);
-            this.#onDrawStart = this.#onDrawCancel = (_e) => {
+            this.#clientControl.addEventListener(Consts.event.DRAWEND, onDrawEnd, { signal });
+            const onDrawReset = (_e) => {
                 if (this.mode !== Consts.geom.POINT) {
                     this.feature = null;
                 }
             };
-            this.#clientControl.addEventListener(Consts.event.DRAWSTART, this.#onDrawStart);
-            this.#clientControl.addEventListener(Consts.event.DRAWCANCEL, this.#onDrawCancel);
-            this.#onDrawEnd({});
+            this.#clientControl.addEventListener(Consts.event.DRAWSTART, onDrawReset, { signal });
+            this.#clientControl.addEventListener(Consts.event.DRAWCANCEL, onDrawReset, { signal });
+            onDrawEnd({});
         }
     }
 
@@ -591,11 +695,11 @@ class AttributesEdit extends WebComponentControl {
         }
     }
 
-    removeFeatureAttribute(name) {
+    removeFeatureAttribute(path) {
         if (this.#feature) {
-            if (name) {
-                if (name === this.attributeProposal) {
-                    this.removeAttributeElement(name);
+            if (path.length) {
+                if (path.length ===1 && path[0] === this.attributeProposal) {
+                    this.removeAttributeElement(path);
                     this.attributeProposal = null;
                     this.addAttributeElement({});
                 }
@@ -605,30 +709,45 @@ class AttributesEdit extends WebComponentControl {
                         let warningMessage = 'removeAttribute.confirm';
                         let optionalAttribute = false;
                         if (featureTypeMetadata) {
-                            if (featureTypeMetadata.attributes.find(byName(name))?.optional) {
+                            const attribute = findAttribute(featureTypeMetadata.attributes, path, featureTypeMetadata.equals);
+                            if (attribute?.optional) {
                                 optionalAttribute = true;
                             }
                             else {
                                 warningMessage = 'deleteTableMetadata.warning';
                             }
                         }
-                        TC.confirm(this.getLocaleString(warningMessage, { name }), () => {
+                        TC.confirm(this.getLocaleString(warningMessage, { name: path.join(' › ') }), () => {
                             let featuresToChange = [this.#feature];
                             if (!optionalAttribute) {
                                 if (featureTypeMetadata) {
-                                    const idx = featureTypeMetadata.attributes.findIndex(byName(name));
+                                    let collection = featureTypeMetadata.attributes;
+                                    if (path.length > 1) {
+                                        const parentPath = path.slice(0, path.length - 1);
+                                        const parentAttr = findAttribute(featureTypeMetadata.attributes, parentPath, featureTypeMetadata.equals);
+                                        collection = parentAttr.value;
+                                    }
+                                    const idx = collection.findIndex(byName(path[path.length - 1]));
                                     if (idx >= 0) {
-                                        featureTypeMetadata.attributes.splice(idx, 1);
+                                        collection.splice(idx, 1);
                                         featuresToChange = layer.features;
                                     }
                                 }
                             }
                             featuresToChange.forEach((f) => {
-                                const featureData = f.getData();
+                                let featureData = f.getData();
+                                const name = path[path.length - 1];
+                                if (path.length === 1) {
+                                    f.unsetData(name);
+                                }
+                                else {
+                                    for (let i = 0, ii = path.length - 1; i < ii; i++) {
+                                        featureData = featureData[path[i]];
+                                    }
+                                }
                                 delete featureData[name];
-                                f.unsetData(name);
                             });
-                            this.removeAttributeElement(name);
+                            this.removeAttributeElement(path);
                             this.#triggerFeatureModify();
                         });
 
@@ -636,6 +755,67 @@ class AttributesEdit extends WebComponentControl {
                 }
             }
         }
+    }
+
+    #getValueFromAttributeDefinition(attribute) {
+        let result;
+        if (attribute.type === 'object') {
+            result = {};
+            if (attribute.value) {
+                for (const valueItem of attribute.value) {
+                    result[valueItem.name] = this.#getValueFromAttributeDefinition(valueItem);
+                }
+            }
+        }
+        return result;
+    }
+
+    async addFeatureAttributeItem(path) {
+        if (this.#feature) {
+            if (path.length) {
+                const layer = this.#feature.layer;
+                const featureTypeMetadata = await layer.getFeatureTypeMetadata();
+                const name = path[path.length - 1];
+                let featureData = this.#feature.getData();
+                for (let i = 0, ii = path.length - 1; i < ii; i++) {
+                    featureData = featureData[path[i]];
+                }
+                let value = featureData[name];
+                let newItem;
+                if (!Array.isArray(value)) {
+                    featureData[name] = [value];
+                    value = featureData[name];
+                }
+                if (featureTypeMetadata) {
+                    const attribute = findAttribute(featureTypeMetadata.attributes, path, featureTypeMetadata.equals);
+                    if (!attribute?.multiple) {
+                        return;
+                    }
+                    newItem = this.#getValueFromAttributeDefinition(attribute);
+                }
+                else {
+                    const previousItem = value[0];
+                    newItem = Util.extend(true, {}, previousItem);
+                    const clearValues = (obj) => {
+                        for (const key in obj) {
+                            const val = obj[key];
+                            if (val && typeof val === 'object') {
+                                clearValues(val);
+                            }
+                            else {
+                                obj[key] = undefined;
+                            }
+                        }
+                    };
+                    clearValues(newItem);
+                }
+                value.push(newItem);
+                this.#triggerFeatureModify();
+                await this.render();
+                return newItem;
+            }
+        }
+        return null;
     }
 
     #triggerFeatureModify() {
