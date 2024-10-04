@@ -78,6 +78,7 @@ import '../SITNA/feature/Polyline';
 import '../SITNA/feature/MultiPolyline';
 import '../SITNA/feature/Polygon';
 import '../SITNA/feature/MultiPolygon';
+import filterNs from './filter';
 import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
 
 TC.EventTarget = EventTarget;
@@ -85,620 +86,642 @@ TC.i18n = TC.i18n || i18n;
 TC.wrap = wrap;
 TC.control = TC.control || {};
 
-(function () {
 
-    /**
-     * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
-     * estar dentro de una función de callback pasada como parámetro al método {{#crossLink "TC.Map/loaded:method"}}{{/crossLink}}.</p>
-     * <p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
-     * @class TC.Map
-     * @constructor
-     * @async
-     * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
-     * @param {object} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global {{#crossLink "TC.Cfg"}}{{/crossLink}}.
-     * @param {string} [options.crs="EPSG:25830"] Código EPSG del sistema de referencia espacial del mapa.
-     * @param {array} [options.initialExtent] Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. 
-     * Esta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver TC.Cfg.{{#crossLink "TC.Cfg/crs:property"}}{{/crossLink}}).
-     * Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/initialExtent:property"}}{{/crossLink}}.
-     * @param {array} [options.maxExtent] Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/maxExtent:property"}}{{/crossLink}}.
-     * @param {string} [options.layout] URL de una carpeta de maquetación. Consultar TC.Cfg.{{#crossLink "TC.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
-     * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
-     * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
-     * @param {SITNA.control.MapControlOptions} [options.controls] Opciones de controles de mapa.
-     * @param {SITNA.layer.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
-     * @param {string} [options.locale="es-ES"] Código de idioma de la interfaz de usuario. Este código debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
-     * Los valores posibles son <code>es-ES</code>, <code>eu-ES</code> y <code>en-US</code>.
-     * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver TC.Cfg.{{#crossLink "TC.Cfg/proxy:property"}}{{/crossLink}}).
-     * @example
-     *     <div id="mapa"/>
-     *     <script>
-     *         // Crear un mapa con las opciones por defecto.
-     *         var map = new TC.Map("mapa");
-     *     </script>
-     * @example
-     *     <div id="mapa"/>
-     *     <script>
-     *         // Crear un mapa en el sistema de referencia WGS 84 con el de mapa de fondo.
-     *         var map = new TC.Map("mapa", {
-     *             crs: "EPSG:4326",
-     *             initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
-     *                 -2.84820556640625,
-     *                 41.78912492257675,
-     *                 -0.32135009765625,
-     *                 43.55789822064767
-     *             ],
-     *             maxExtent: [
-     *                 -2.84820556640625,
-     *                 41.78912492257675,
-     *                 -0.32135009765625,
-     *                 43.55789822064767
-     *             ],
-     *             baseLayers: [
-     * 				Consts.layer.IDENA_DYNBASEMAP
-     *             ]
-     *         });
-     *     </script>
-     * @example
-     *     <div id="mapa"></div>
-     *     <script>
-     *         // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.
-     *         var map = new TC.Map("mapa", {
-     *             workLayers: [
-     *                 {
-     *                     id: "topo_mallas",
-     *                     title: "Toponimia y mallas cartográficas",
-     *                     type: Consts.layerType.WMS,
-     *                     url: "//idena.navarra.es/ogc/wms",
-     *                     layerNames: "IDENA:toponimia,IDENA:mallas"
-     *                 }
-     *             ]
-     *         });
-     *     </script>
-     */
+/**
+ * <p>Objeto principal de la API, instancia un mapa dentro de un elemento del DOM. Nótese que el constructor es asíncrono, por tanto cualquier código que haga uso de este objeto debería
+ * estar dentro de una función de callback pasada como parámetro al método {{#crossLink "TC.Map/loaded:method"}}{{/crossLink}}.</p>
+ * <p>Puede consultar también online el <a href="../../examples/Map.1.html">ejemplo 1</a>, el <a href="../../examples/Map.2.html">ejemplo 2</a> y el <a href="../../examples/Map.3.html">ejemplo 3</a>.</p>
+ * @class TC.Map
+ * @constructor
+ * @async
+ * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
+ * @param {object} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global {{#crossLink "TC.Cfg"}}{{/crossLink}}.
+ * @param {string} [options.crs="EPSG:25830"] Código EPSG del sistema de referencia espacial del mapa.
+ * @param {array} [options.initialExtent] Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. 
+ * Esta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver TC.Cfg.{{#crossLink "TC.Cfg/crs:property"}}{{/crossLink}}).
+ * Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/initialExtent:property"}}{{/crossLink}}.
+ * @param {array} [options.maxExtent] Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/maxExtent:property"}}{{/crossLink}}.
+ * @param {string} [options.layout] URL de una carpeta de maquetación. Consultar TC.Cfg.{{#crossLink "TC.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
+ * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
+ * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
+ * @param {SITNA.control.MapControlOptions} [options.controls] Opciones de controles de mapa.
+ * @param {SITNA.layer.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
+ * @param {string} [options.locale="es-ES"] Código de idioma de la interfaz de usuario. Este código debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
+ * Los valores posibles son <code>es-ES</code>, <code>eu-ES</code> y <code>en-US</code>.
+ * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver TC.Cfg.{{#crossLink "TC.Cfg/proxy:property"}}{{/crossLink}}).
+ * @example
+ *     <div id="mapa"/>
+ *     <script>
+ *         // Crear un mapa con las opciones por defecto.
+ *         var map = new TC.Map("mapa");
+ *     </script>
+ * @example
+ *     <div id="mapa"/>
+ *     <script>
+ *         // Crear un mapa en el sistema de referencia WGS 84 con el de mapa de fondo.
+ *         var map = new TC.Map("mapa", {
+ *             crs: "EPSG:4326",
+ *             initialExtent: [ // Coordenadas en grados decimales, porque el sistema de referencia espacial es WGS 84.
+ *                 -2.84820556640625,
+ *                 41.78912492257675,
+ *                 -0.32135009765625,
+ *                 43.55789822064767
+ *             ],
+ *             maxExtent: [
+ *                 -2.84820556640625,
+ *                 41.78912492257675,
+ *                 -0.32135009765625,
+ *                 43.55789822064767
+ *             ],
+ *             baseLayers: [
+ * 				Consts.layer.IDENA_DYNBASEMAP
+ *             ]
+ *         });
+ *     </script>
+ * @example
+ *     <div id="mapa"></div>
+ *     <script>
+ *         // Crear un mapa que tenga como contenido las capas de toponimia y mallas cartográficas del WMS de IDENA.
+ *         var map = new TC.Map("mapa", {
+ *             workLayers: [
+ *                 {
+ *                     id: "topo_mallas",
+ *                     title: "Toponimia y mallas cartográficas",
+ *                     type: Consts.layerType.WMS,
+ *                     url: "//idena.navarra.es/ogc/wms",
+ *                     layerNames: "IDENA:toponimia,IDENA:mallas"
+ *                 }
+ *             ]
+ *         });
+ *     </script>
+ */
 
-    var currentState = null;
-    var previousState = null;
-    let stateIndex = 0;
-    let lastStateIndex = 0;
-    const _setupStateControl = function () {
-        const self = this;
+var currentState = null;
+var previousState = null;
+let stateIndex = 0;
+let lastStateIndex = 0;
 
-        var MIN_TIMEOUT_VALUE = 4;
-
-        // eventos a los que estamos suscritos para obtener el estado            
-        var events = [
-            Consts.event.LAYERADD,
-            Consts.event.LAYERORDER,
-            Consts.event.LAYERREMOVE,
-            //Consts.event.LAYEROPACITY, // Este evento lo vamos a tratar por separado, para evitar exceso de actualizaciones de estado.
-            Consts.event.LAYERVISIBILITY,
-            Consts.event.ZOOM,
-            Consts.event.BASELAYERCHANGE,
-            Consts.event.UPDATEPARAMS
-        ].join(' ');
-
-        // gestión siguiente - anterior
-
-        let eventsToMapChange = [
-            Consts.event.LAYERUPDATE,
-            Consts.event.FEATUREADD,
-            Consts.event.FEATUREREMOVE,
-            Consts.event.FEATUREMODIFY,
-            Consts.event.FEATURESADD,
-            Consts.event.FEATURESCLEAR,
-            Consts.event.UPDATEPARAMS
-        ].join(' ');
-
-        self.on(eventsToMapChange, () => self.trigger(Consts.event.MAPCHANGE));
-
-        // registramos el estado inicial                
-        self.replaceCurrent = true;
-        _addToHistory.call(self);
-
-        const fn_addToHistory = _addToHistory.bind(self);
-
-        // nos suscribimos a los eventos para registrar el estado en cada uno de ellos
-        self.on(events, fn_addToHistory);
-
-        // a la gestión del evento de opacidad le metemos un retardo, para evitar que haya un exceso de actualizaciones de estado.
-        var layerOpacityHandlerTimeout;
-        self.on(Consts.event.LAYEROPACITY, function (e) {
-            clearTimeout(layerOpacityHandlerTimeout);
-            layerOpacityHandlerTimeout = setTimeout(function () {
-                _addToHistory.call(self, e);
-            }, 500);
-        });
-
-        // gestión siguiente - anterior
-        window.addEventListener('popstate', function (e) {
-            var wait;
-            wait = self.loadingCtrl && self.loadingCtrl.addWait();
-            setTimeout(async function () {
-                if (e) {
-                    // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
-                    self.off(events, fn_addToHistory);
-
-                    var state = e.state;
-                    if (Object.prototype.toString.call(state) === '[object Object]') {
-                        state = await self.checkLocation();
-                    }
-
-                    // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
-                    _loadIntoMap.call(self, state).then(function () {
-                        setTimeout(function () {
-                            self.on(events, fn_addToHistory);
-                        }, 200);
-                        self.loadingCtrl && self.loadingCtrl.removeWait(wait);
-                    });
-                }
-            }, MIN_TIMEOUT_VALUE);
-        });
+if (!Array.prototype.findLastIndex) {
+    Array.prototype.findLastIndex = function (callback, thisArg) {
+        for (let i = this.length - 1; i >= 0; i--) {
+            if (callback.call(thisArg, this[i], i, this)) return i;
+        }
+        return -1;
     };
+}
 
-    const jsonPackSettleFunctions = {};
-    const getJsonPackWorker = function () {
-        const jsonPackWorkerUrl = URL.createObjectURL(wwBlob);
-        const jsonPackWorker = new Worker(jsonPackWorkerUrl);
-        jsonPackWorker.onmessage = function (e) {
-            const settleFunctions = jsonPackSettleFunctions[e.data.id];
-            if (settleFunctions) {
-                if (e.data.error) {
-                    settleFunctions.reject(e.data.error);
-                }
-                else {
-                    settleFunctions.resolve(e.data.result);
-                }
-                jsonPackWorker.terminate();
-                delete jsonPackSettleFunctions[e.data.id];
+const jsonPackSettleFunctions = {};
+const getJsonPackWorker = function () {
+    const jsonPackWorkerUrl = URL.createObjectURL(wwBlob);
+    const jsonPackWorker = new Worker(jsonPackWorkerUrl);
+    jsonPackWorker.onmessage = function (e) {
+        const settleFunctions = jsonPackSettleFunctions[e.data.id];
+        if (settleFunctions) {
+            if (e.data.error) {
+                settleFunctions.reject(e.data.error);
             }
-        };
-        return jsonPackWorker;
+            else {
+                settleFunctions.resolve(e.data.result);
+            }
+            jsonPackWorker.terminate();
+            delete jsonPackSettleFunctions[e.data.id];
+        }
     };
+    return jsonPackWorker;
+};
 
-    const jsonpackProcess = function (action, json) {
-        return new Promise(function (resolve, reject) {
-            const worker = getJsonPackWorker();
-            const workId = TC.getUID();
-            jsonPackSettleFunctions[workId] = { resolve: resolve, reject: reject };
+const jsonpackProcess = function (action, json) {
+    return new Promise(function (resolve, reject) {
+        const worker = getJsonPackWorker();
+        const workId = TC.getUID();
+        jsonPackSettleFunctions[workId] = { resolve, reject };
+        try {
             worker.postMessage({
                 id: workId,
                 action: action,
                 object: json
             });
-        });
-    };
+        }
+        catch (e) {
+            reject(e);
+        }
+    });
+};
 
-    const supportsFileSystemAccess = Util.isFunction(DataTransferItem.prototype.getAsFileSystemHandle);
-    const isStatefulLayer = function (layer) {
-        return layer.type === Consts.layerType.WMS ||
-            supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.file
-    };
+const supportsFileSystemAccess = Util.isFunction(DataTransferItem.prototype.getAsFileSystemHandle);
+const isStatefulLayer = (layer) => layer.type === Consts.layerType.WMS ||
+    supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.file && !layer.stealth;
 
-    const _addToHistory = async function (e) {
-        const self = this;
+const _addToHistory = async function (e) {
+    const self = this;
 
-        var { state, index } = await _getMapState.call(self);
-        if (self.replaceCurrent) {
-            window.history.replaceState(state, null, null);
-            delete self.replaceCurrent;
+    var { state, index } = await self.exportState();
+    if (self.replaceCurrent) {
+        window.history.replaceState(state, null, null);
+        delete self.replaceCurrent;
+        return;
+    } else {
+
+        /*if (self.registerState != undefined && !self.registerState) {
+            self.registerState = true;
             return;
-        } else {
+        }*/
 
-            /*if (self.registerState != undefined && !self.registerState) {
-                self.registerState = true;
-                return;
-            }*/
+        var saveState = function () {
+            previousState = currentState;
+            currentState = Util.utf8ToBase64(state);
+            // Si el estado es distinto y no hay un estado posterior actualmente
+            if (currentState !== previousState && index > lastStateIndex) {
+                lastStateIndex = index;
+                window.history.pushState(state, null, window.location.href.split('#').shift() + '#' + currentState);
+            }
+        };
 
-            var saveState = function () {
-                previousState = currentState;
-                currentState = Util.utf8ToBase64(state);
-                // Si el estado es distinto y no hay un estado posterior actualmente
-                if (currentState !== previousState && index > lastStateIndex) {
-                    lastStateIndex = index;
-                    window.history.pushState(state, null, window.location.href.split('#').shift() + '#' + currentState);
-                }
-            };
+        if (e) {
+            self.lastEventType = e.type;
 
-            if (e) {
-                self.lastEventType = e.type;
-
-                switch (true) {
-                    case e.type === Consts.event.BASELAYERCHANGE:
-                    case e.type === Consts.event.LAYERORDER:
-                    case e.type === Consts.event.ZOOM:
+            switch (true) {
+                case e.type === Consts.event.BASELAYERCHANGE:
+                case e.type === Consts.event.LAYERORDER:
+                case e.type === Consts.event.ZOOM:
+                    saveState();
+                    break;
+                case e.type === Consts.event.UPDATEPARAMS:
+                    // unicamente modifico el hash si la capa es WMS
+                    if (e.layer.type === Consts.layerType.WMS) {
                         saveState();
-                        break;
-                    case e.type === Consts.event.UPDATEPARAMS:
-                        // unicamente modifico el hash si la capa es WMS
-                        if (e.layer.type === Consts.layerType.WMS) {
-                            saveState();
-                        }
-                        break;
-                    case e.type.toLowerCase().indexOf("LAYER".toLowerCase()) > -1:
-                        // unicamente modifico el hash si la capa es WMS o vectorial de archivos locales
-                        if (isStatefulLayer(e.layer)) {
-                            saveState();
-                        }
-                        break;
-                }
-
-                self.trigger(Consts.event.MAPCHANGE);
-            }
-        }
-    };
-
-    const _getMapState = async function (options = {}) {
-        const self = this;
-        var state = {};
-        let index = stateIndex++;
-
-        if (self.crs !== self.options.crs) {
-            state.crs = self.crs;
-        }
-
-        var ext = self.getExtent();
-        for (var i = 0; i < ext.length; i++) {
-            if (Math.abs(ext[i]) > 180)
-                ext[i] = Math.floor(ext[i] * 1000) / 1000;
-        }
-        state.ext = ext;
-
-        //determinar capa base
-        let baseLayerData;
-
-        // ¿es una capa de respaldo?
-        if (self.baseLayers) {
-            baseLayerData = self.baseLayers
-                .filter(baseLayer => baseLayer.isRaster() && baseLayer.fallbackLayer)
-                .map(baseLayer => ({ baseLayer: baseLayer, fallbackLayerID: baseLayer.fallbackLayer.id }))
-                .find(baseLayerData => baseLayerData.fallbackLayerID === (self.baseLayer ? self.baseLayer.id : self.baseLayers[0].id));
-        }
-
-        if (baseLayerData) {
-            state.base = baseLayerData.baseLayer.id;
-        } else if (self.baseLayer || self.baseLayers && self.baseLayers[0]) {
-            state.base = (self.baseLayer || self.baseLayers[0]).id;
-        }
-
-        //capas cargadas
-        state.layers = [];
-
-        self.workLayers.forEach(function addLayerState(layer) {
-            if (layer.type === Consts.layerType.WMS && !layer.options.stateless) {
-                layer.layerNames = layer.names || layer.layerNames;
-                if (layer.layerNames && layer.layerNames.length || layer.hideTree === false) {
-                    const entry = {
-                        u: Util.isOnCapabilities(layer.url),
-                        n: Array.isArray(layer.names) ? layer.names.join(',') : layer.names,
-                        o: layer.getOpacity(),
-                        v: layer.getVisibility(),
-                        h: layer.options.hideTitle,
-                        ur: layer.unremovable,
-                        f: layer.filter && (layer.filter instanceof TC.filter.Filter ? layer.filter.getText() : layer.filter),
-                        t: layer.title,
-                        i: layer.id
-                    };
-                    //24/11/2021 URI: Añadir el hidetree si no tiene el valor por defecto que es true
-                    if (layer.hideTree === false) {
-                        entry.x = 0;
                     }
-                    const availableNames = Array.isArray(layer.availableNames) ? layer.availableNames.join(',') : layer.availableNames;
-                    if (entry.n !== availableNames)
-                        entry.a = availableNames;
-                    state.layers.push(entry);
-                }
-            }
-            else if (supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.file) {
-                const entry = {
-                    o: layer.getOpacity(),
-                    v: layer.getVisibility(),
-                    h: layer.options.hideTitle,
-                    ur: layer.unremovable,
-                    fn: layer.file,
-                    t: layer.title,
-                    i: layer.id
-                };
-                state.layers.push(entry);
-            }
-        });
-
-        if (self.on3DView && self.view3D.cameraControls) {
-            state.vw3 = self.view3D.cameraControls.getCameraState();
-        }
-
-        if (options.extraStates) {
-            Util.extend(state, options.extraStates);
-        }
-
-        if (!options.cacheResult && self._controlStatesCache) {
-            delete self._controlStatesCache;
-        }
-
-        if (self._controlStatesCache) {
-            return { state: self._controlStatesCache, index: index };
-        }
-
-        const packed = await jsonpackProcess('pack', state);
-        if (options.cacheResult) {
-            self._controlStatesCache = packed;
-        }
-        return { state: packed, index: index };
-    };
-
-    const _loadIntoMap = function (stringOrJson) {
-        const self = this;
-        const promises = [];
-
-        if (!stringOrJson) {
-            return Promise.resolve();
-        }
-
-        if (!self.loadingctrl) {
-            self.loadingCtrl = self.getLoadingIndicator();
-        }
-
-        if (!self.hasWait) {
-            self.hasWait = self.loadingCtrl && self.loadingCtrl.addWait();
-        }
-
-        // GLS lo añado para poder gestionar el final de la actualización de estado y volver a suscribirme a los eventos del mapa
-        return new Promise(function (resolve, _reject) {
-            var resolved = function () {
-                self.loadingCtrl && self.loadingCtrl.removeWait(self.hasWait);
-                delete self.hasWait;
-                resolve();
-            };
-
-            let objPromise;
-            if (typeof stringOrJson === "string") {
-                objPromise = new Promise(function (res, rej) {
-                    jsonpackProcess('unpack', stringOrJson)
-                        .then(obj => res(obj))
-                        .catch(_err => res(JSON.parse(stringOrJson)))
-                        .catch(err => {
-                            TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
-                            rej(err);
-                        });
-                });
-            } else {
-                objPromise = Promise.resolve(stringOrJson);
+                    break;
+                case e.type.toLowerCase().indexOf("LAYER".toLowerCase()) > -1:
+                    // unicamente modifico el hash si la capa es WMS o vectorial de archivos locales y no stealth
+                    if (isStatefulLayer(e.layer)) {
+                        saveState();
+                    }
+                    break;
             }
 
-            objPromise.then(function (obj) {
-                // CRS
-                if (obj.crs && obj.crs !== self.crs ||
-                    typeof obj.crs === 'undefined' && self.crs !== self.options.crs) {
-                    promises.push(self.setProjection({
-                        crs: obj.crs || self.options.crs,
-                        oldCrs: self.crs,
-                        extent: obj.ext,
-                        baseLayer: self.getLayer(obj.base)
-                    }));
+            self.trigger(Consts.event.MAPCHANGE);
+        }
+    }
+};
+
+const _loadIntoMap = async function (stringOrJson) {
+    const self = this;
+    const promises = [];
+
+    if (!stringOrJson) {
+        return;
+    }
+
+    await self.wait(async () => {
+        let obj;
+        if (typeof stringOrJson === "string") {
+            try {
+                obj = await jsonpackProcess('unpack', stringOrJson);
+            }
+            catch (err) {
+                try {
+                    obj = JSON.parse(stringOrJson);
                 }
-                else {
-                    //capa base
-                    if (obj.base != self.getBaseLayer().id) {
-                        if (self.getLayer(obj.base)) {
-                            self.setBaseLayer(obj.base);
-                        }
-                        const firstOption = self.baseLayers.filter(function (baseLayer) {
-                            return baseLayer.options.fallbackLayer === obj.base;
-                        })[0];
-                        if (firstOption) {
-                            const fbPromise = self.addLayer(firstOption.getFallbackLayer());
-                            promises.push(fbPromise);
-                            fbPromise.then(function (newLayer) {
-                                self.setBaseLayer(newLayer);
-                            });
-                        }
-                    }
-
-                    //extent
-                    if (obj.ext) {
-                        promises.push(self.setExtent(obj.ext, { animate: false }));
-                    }
+                catch (err2) {
+                    TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
+                    return;
                 }
+            }
+        } else {
+            obj = stringOrJson;
+        }
 
-                obj.layers = obj.layers || obj.capas || [];
-
-                if (obj.layers.length > 0) {
-
-                    for (var i = 0; i < obj.layers.length; i++) {
-                        var stateLayer = obj.layers[i];
-
-                        var layerInConfig = false;
-                        let lyrCfg;
-                        for (var j = 0; j < self.options.workLayers.length; j++) {
-
-                            lyrCfg = Util.extend({}, self.options.workLayers[j], { map: self });
-
-                            if (stateLayer.u === lyrCfg.url &&
-                                stateLayer.i === lyrCfg.id) {
-                                layerInConfig = true;
-                                lyrCfg.renderOptions = { "opacity": stateLayer.o, "hide": !stateLayer.v };
-                                lyrCfg.unremovable = stateLayer.ur;
-                                lyrCfg.title = stateLayer.t;
-                                lyrCfg.hideTree = Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true;
-                                if (stateLayer.n)
-                                    lyrCfg.layerNames = stateLayer.n;
-                                if (stateLayer.a)
-                                    lyrCfg.availableNames = stateLayer.a;
-                                promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
-                                    layer.setVisibility(this.v);
-                                    layer.setOpacity(this.o, true);
-                                }.bind(stateLayer)));
-                            }
-                        }
-
-                        if (!layerInConfig) {
-                            const lyrCfg = {
-                                id: stateLayer.i || TC.getUID(),
-                                hideTitle: stateLayer.h,
-                                unremovable: stateLayer.ur,
-                                title: stateLayer.t,
-                                hideTree: Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true,
-                                renderOptions: {
-                                    opacity: stateLayer.o,
-                                    hide: !stateLayer.v
-                                }
-                            };
-                            if (stateLayer.fn) {
-                                // Capa de archivo serializada
-                                lyrCfg.type = Consts.layerType.VECTOR;
-                                lyrCfg.file = stateLayer.fn;
-                            }
-                            else {
-                                lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
-                                lyrCfg.layerNames = stateLayer.n ? stateLayer.n.split(',') : [];
-                            }
-                            promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
-                                var rootNode = layer.wrap.getRootLayerNode();
-                                layer.title = rootNode.Title || rootNode.title;
-                                /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
-                                esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
-                                este evento y producía un push en el state innecesario*/
-                                layer.setOpacity(this.o, true);
-                                layer.setVisibility(this.v);
-                            }.bind(stateLayer)));
-                        }
-                    }
+        // CRS
+        if (obj.crs && obj.crs !== self.crs ||
+            typeof obj.crs === 'undefined' && self.crs !== self.options.crs) {
+            promises.push(self.setProjection({
+                crs: obj.crs || self.options.crs,
+                oldCrs: self.crs,
+                extent: obj.ext,
+                baseLayer: self.getLayer(obj.base)
+            }));
+        }
+        else {
+            //capa base
+            if (obj.base != self.getBaseLayer().id) {
+                if (self.getLayer(obj.base)) {
+                    self.setBaseLayer(obj.base);
                 }
-
-                //eliinar las capas añadidas al mapa que desaparecen en el nuevo estado
-                self.workLayers
-                    .filter(layer => isStatefulLayer(layer) && !obj.layers.some(l => l.i === layer.id))
-                    .forEach(layer => self.removeLayer(layer));
-
-                Promise.all(promises)
-                    .then(function () {
-                        resolved();
-                    })
-                    .catch(function () {
-                        resolved();
+                const firstOption = self.baseLayers.filter(function (baseLayer) {
+                    return baseLayer.options.fallbackLayer === obj.base;
+                })[0];
+                if (firstOption) {
+                    const fbPromise = self.addLayer(firstOption.getFallbackLayer());
+                    promises.push(fbPromise);
+                    fbPromise.then(function (newLayer) {
+                        self.setBaseLayer(newLayer);
                     });
-            })
-                //.catch(err => resolved());
-                .catch(function () {
-                    resolved();
-                });
+                }
+            }
+
+            //extent
+            if (obj.ext) {
+                promises.push(self.setExtent(obj.ext, { animate: false }));
+            }
+        }
+
+        obj.layers = obj.layers || obj.capas || [];
+
+        if (obj.layers.length > 0) {
+
+            for (var i = 0; i < obj.layers.length; i++) {
+                var stateLayer = obj.layers[i];
+
+                var layerInConfig = false;
+                let lyrCfg;
+                for (var j = 0; j < self.options.workLayers.length; j++) {
+
+                    lyrCfg = Util.extend({}, self.options.workLayers[j], { map: self });
+
+                    if (stateLayer.u === lyrCfg.url &&
+                        stateLayer.i === lyrCfg.id) {
+                        layerInConfig = true;
+                        lyrCfg.renderOptions = { "opacity": stateLayer.o, "hide": !stateLayer.v };
+                        lyrCfg.unremovable = stateLayer.ur;
+                        lyrCfg.title = stateLayer.t;
+                        lyrCfg.hideTree = Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true;
+                        if (stateLayer.n)
+                            lyrCfg.layerNames = stateLayer.n;
+                        if (stateLayer.a)
+                            lyrCfg.availableNames = stateLayer.a;
+                        promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
+                            layer.setVisibility(this.v);
+                            layer.setOpacity(this.o, true);
+                        }.bind(stateLayer)));
+                    }
+                }
+
+                if (!layerInConfig) {
+                    const lyrCfg = {
+                        id: stateLayer.i || TC.getUID(),
+                        hideTitle: stateLayer.h,
+                        unremovable: stateLayer.ur,
+                        title: stateLayer.t,
+                        hideTree: Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true,
+                        renderOptions: {
+                            opacity: stateLayer.o,
+                            hide: !stateLayer.v
+                        }
+                    };
+                    if (stateLayer.fn) {
+                        // Capa de archivo serializada
+                        lyrCfg.type = Consts.layerType.VECTOR;
+                        lyrCfg.file = stateLayer.fn;
+                    }
+                    else {
+                        lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
+                        lyrCfg.layerNames = stateLayer.n ? stateLayer.n.split(',') : [];
+                    }
+                    promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
+                        var rootNode = layer.wrap.getRootLayerNode();
+                        layer.title = rootNode.Title || rootNode.title;
+                        /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
+                        esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
+                        este evento y producía un push en el state innecesario*/
+                        layer.setOpacity(this.o, true);
+                        layer.setVisibility(this.v);
+                    }.bind(stateLayer)));
+                }
+            }
+        }
+
+        //eliinar las capas añadidas al mapa que desaparecen en el nuevo estado
+        self.workLayers
+            .filter(layer => isStatefulLayer(layer) && !obj.layers.some(l => l.i === layer.id))
+            .forEach(layer => self.removeLayer(layer));
+
+        try {
+            await Promise.all(promises);
+        }
+        catch (_e) { }
+    });
+};
+
+const getAvailableBaseLayer = function (id) {
+    const ablCollection = this instanceof TC.Map ? this.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
+    return ablCollection.filter(function (abl) {
+        return abl.id === id;
+    })[0];
+};
+
+var toasts = {};
+var toastHide = function () {
+    const toast = this;
+    var container = toast;
+    do {
+        container = container.parentElement;
+    }
+    while (container && !container.matches('.' + Consts.classes.TOAST_CONTAINER));
+    const text = toast.innerHTML;
+    toast.classList.add(Consts.classes.HIDDEN);
+    if (toasts[text] !== undefined) {
+        toasts[text] = undefined;
+    }
+    setTimeout(function () {
+        if (toast.parentElement) {
+            toast.parentElement.removeChild(toast);
+        }
+        if (container && !container.querySelector('.' + Consts.classes.TOAST) && container.parentElement) {
+            container.parentElement.removeChild(container);
+        }
+    }, 1000);
+};
+
+// iPad iOS7 bug fix
+var mapHeightNeedsFix = false;
+var setHeightFix = function (div) {
+    if (/iPad/i.test(navigator.userAgent)) {
+        var ih = window.innerHeight;
+        var mh = div.getBoundingClientRect.height;
+        var dh = matchMedia('only screen and (orientation : landscape)').matches ? 20 : 0;
+        if (mh === ih + dh) {
+            mapHeightNeedsFix = true;
+        }
+    }
+    var fix = function () {
+        div.classList.toggle(Consts.classes.IPAD_IOS7_FIX, matchMedia('only screen and (orientation : landscape)').matches);
+    };
+    if (mapHeightNeedsFix) {
+        fix();
+        window.addEventListener('resize', fix);
+    }
+    else {
+        window.removeEventListener('resize', fix);
+    }
+};
+
+var isRaster = function (layer) {
+    return typeof layer === 'string' ||
+        layer.type !== Consts.layerType.VECTOR && layer.type !== Consts.layerType.KML && layer.type !== Consts.layerType.WFS;
+};
+
+const _checkMaxFeatures = async function (numMaxfeatures, urlData, data) {
+    try {
+        const response = await urlData.mapLayer.proxificationTool.fetchXML(urlData.url, {
+            data: data,
+            contentType: 'application/xml',
+            type: 'POST'
         });
-    };
-
-    const getReduceByValueFunction = function (prop, value) {
-        return function (prev, cur, idx) {
-            return cur[prop] === value ? idx : prev;
+        if (response instanceof XMLDocument) {
+            const exception = response.querySelector("ExceptionReport Exception");
+            if (exception) {
+                return{
+                    errors: [{
+                        key: Consts.WFSErrors.INDETERMINATE,
+                        params: {
+                            err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
+                        }
+                    }]
+                };
+            }
+        }
+        var featFounds = parseInt(response.querySelector("FeatureCollection").getAttribute("numberMatched") || response.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);
+        if (Number.isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
+            return {
+                errors: [{
+                    key: Consts.WFSErrors.MAX_NUM_FEATURES
+                }]
+            };
+        }
+        else if (featFounds === 0) {
+            return {
+                errors: [{
+                    key: Consts.WFSErrors.NO_FEATURES
+                }]
+            };
+        }
+        return featFounds;
+    }
+    catch(e) {
+        return {
+            errors: [{
+                key: Consts.WFSErrors.INDETERMINATE,
+                params: { err: e.name, errorThrown: e.message }
+            }]
         };
-    };
+    }
+};
 
-    const getReduceByZIndexFunction = function (zIndex) {
-        return function (prev, cur, idx) {
-            return cur.zIndex <= zIndex ? idx : prev;
-        };
-    };
+const _makePostCall = function (objLayer, data) {
+    return new Promise(function (resolve) {
+        objLayer.mapLayer.proxificationTool.fetch(objLayer.url, {
+            data: data,
+            contentType: 'application/xml',
+            type: 'POST'
+        }).then(function (response) {
+            if (response instanceof XMLDocument) {
+                const exception = response.querySelector("ExceptionReport Exception");
+                if (exception) {
+                    resolve({
+                        errors: [{
+                            key: Consts.WFSErrors.INDETERMINATE,
+                            params: {
+                                err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
+                            }
+                        }]
+                    });
+                    return;
+                }
+            }
+            resolve({ response: response });
+        }).catch(function (e) {
+            resolve({
+                errors: [{
+                    key: Consts.WFSErrors.INDETERMINATE,
+                    params: { err: e.name, errorThrown: e.message }
+                }]
+            });
+            return;
+        });
+    });
+};
 
-    const getAvailableBaseLayer = function (id) {
-        const ablCollection = this instanceof TC.Map ? this.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
-        return ablCollection.filter(function (abl) {
-            return abl.id === id;
-        })[0];
-    };
+const getFiltersForLayers = async function (layer, availableLayers, filter) {
+    //obtenemos el describe featuretype de cada capa
+    let featureTypeSchemas = await layer.describeFeatureType(availableLayers);
+    var returnObject = {};
+    if (availableLayers.length === 1) {
+        var obj = {};
+        obj[availableLayers[0]] = featureTypeSchemas;
+        featureTypeSchemas = obj;
+    }
+    //buscamos las geometrías por cada respuesta
+    for (var layerName in featureTypeSchemas) {
+        let _filter;
+        var geometryFields = [];
+        const schema = featureTypeSchemas[layerName];
+        for (var k in schema) {
+            const attribute = schema[k];
+            if (Util.isGeometry(attribute.type) && !attribute.nillable && !attribute.minOccurs) {
+                //if (/^gml:\w+PropertyType$/.test(attribute.type) && !attribute.nillable && !attribute.minOccurs) {
+                geometryFields.push(k);
+            }
+        }
+        //Si solo hay un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
+        //para poner el nombre de la geometría
+        if (geometryFields.length <= 1) {
+            const recursive = (filter, geomName) => {
+                if (filter instanceof filterNs.LogicalNary) {
+                    filter.conditions.forEach((condition) => recursive(condition, geomName));
+                }
+                else if (filter instanceof filterNs.Spatial) {
+                    filter.geometryName = geomName;
+                    return filter;
+                }
+            };
+            _filter = Object.assign(new filter.constructor(), recursive(filter, geometryFields.length === 0 ? null : geometryFields[0]));
+        }
+        //Si has mas de un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
+        //para duplicar el filtro con los nombres de las geometrias y los emvolvemos en un filtro OR
+        else if (geometryFields.length > 1) {
+            const changeGeometryName = function (filter, geometryName) {
+                if (Object.prototype.hasOwnProperty.call(filter, 'geometryName')) {
+                    filter.geometryName = geometryName;
+                }
+                if (Object.prototype.hasOwnProperty.call(filter, 'condition')) {
+                    changeGeometryName(filter.condition);
+                }
+                filter.conditions?.forEach((c) => changeGeometryName(c));
+                return filter;
+            };
+            // Hacemos estructura tan complicada porque si en OpenLayers una de las geometrías es nula, da igual
+            // que la otra cumpla el filtro, aunque se agregen los filtros con Or no da resultados.
+            const compoundFilters = geometryFields.map((name) => {
+                const spatialFilter = changeGeometryName(filter.clone(), name);
+                const nullFilter = new filterNs.isNull(name);
+                return new filterNs.Or(nullFilter, spatialFilter);
+            });
+            _filter = new filterNs.And(...compoundFilters);
+        }
+        //ahora construimos el objeto que de vuelta
+        returnObject[layerName] = _filter;
+    }
+    return returnObject;
+};
 
-    TC.Map = TC.Map || function (div, options) {
-        ///<summary>
-        ///Constructor
-        ///</summary>
-        ///<param name="div" type="HTMLElement|string">Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.</param>
-        ///<param name="options" type="object" optional="true">Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global TC.Cfg.</param>
-        ///<returns type="TC.Map"></returns>
-        ///<field name='isReady' type='boolean'>Indica si todos los controles del mapa están cargados.</field>
-        ///<field name='isLoaded' type='boolean' default='false'>Indica si todos los controles y todas las capas del mapa están cargados.</field>
-        ///<field name='activeControl' type='TC.Control'>Control que está activo en el mapa, y que por tanto responderá a los eventos de ratón en su área de visualización.</field>
-        ///<field name='layers' type='array' elementType='TC.Layer'>Lista de todas las capas base cargadas en el mapa.</field>
-        ///<field name='controls' type='array' elementType='TC.Control'>Lista de todos los controles del mapa.</field>
+const recentFileEntrySemaphore = Util.createSemaphore();
+
+
+class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
+    ///<summary>
+    ///Constructor
+    ///</summary>
+    ///<param name="div" type="HTMLElement|string">Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.</param>
+    ///<param name="options" type="object" optional="true">Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global TC.Cfg.</param>
+    ///<returns type="TC.Map"></returns>
+    ///<field name='isReady' type='boolean'>Indica si todos los controles del mapa están cargados.</field>
+    ///<field name='isLoaded' type='boolean' default='false'>Indica si todos los controles y todas las capas del mapa están cargados.</field>
+    ///<field name='activeControl' type='TC.Control'>Control que está activo en el mapa, y que por tanto responderá a los eventos de ratón en su área de visualización.</field>
+    ///<field name='layers' type='array' elementType='TC.Layer'>Lista de todas las capas base cargadas en el mapa.</field>
+    ///<field name='controls' type='array' elementType='TC.Control'>Lista de todos los controles del mapa.</field>
+
+    static _instances = [];
+
+    /**
+     * Indica si todos los controles del mapa están cargados.
+     * @property isReady
+     * @type boolean
+     * @default false
+     */
+    isReady = false;
+
+    /**
+     * Indica si todos los controles y todas las capas del mapa están cargados.
+     * @property isLoaded
+     * @type boolean
+     * @default false
+     */
+    isLoaded = false;
+
+    /**
+     * Lista de todos los controles del mapa.
+     * @property controls
+     * @type array
+     * @default []
+     */
+    controls = [];
+
+    /**
+     * Control que está activo en el mapa, y que por tanto responderá a los eventos de ratón en su área de visualización.
+     * @property activeControl
+     * @type TC.Control
+     * @default null
+     */
+    activeControl = null;
+
+    /**
+     * Lista de todas las capas cargadas en el mapa.
+     * @property layers
+     * @type array
+     * @default []
+     */
+    layers = [];
+
+    /**
+     * Lista de todas las capas base cargadas en el mapa.
+     * @property baseLayers
+     * @type array
+     * @default []
+     */
+    baseLayers = [];
+
+    /**
+     * Lista de todas las capas de trabajo cargadas en el mapa.
+     * @property workLayers
+     * @type array
+     * @default []
+     */
+    workLayers = [];
+
+    /**
+     * Capa base actual del mapa.
+     * @property baseLayer
+     * @type TC.Layer
+     */
+    baseLayer = null;
+
+    /**
+     * Capa donde se dibujan las entidades geográficas si no se especifica la capa explícitamente. Se instancia en el momento de añadir la primera entidad.
+     * @property #vectors
+     * @type TC.layer.Vector
+     * @default null
+     */
+    #vectors = null;
+
+    /**
+     * Elemento del DOM donde se ha creado el mapa.
+     * @property div
+     * @type HTMLElement
+     */
+    div = null;
+
+    RECENT_FILES_STORE_KEY_PREFIX = 'TC.fileImportRecent.';
+
+    recentFiles = [];
+    recentFileCount = 8;
+
+    // Para gestionar zoomToMarkers
+    _markerPromises = [];
+
+    #layerBuffer;
+    #extraStates;
+
+    constructor(div, options = {}) {
+        super();
         const self = this;
-        TC.EventTarget.call(self);
-        TC.Map._instances.push(self);
+        BasicMap._instances.push(this);
 
         //TC.Object.apply(self, arguments);
 
-        /**
-         * Indica si todos los controles del mapa están cargados.
-         * @property isReady
-         * @type boolean
-         * @default false
-         */
-        self.isReady = false;
+        let loadingLayerCount = 0;
+        this.div = Util.getDiv(div);
 
-        /**
-         * Indica si todos los controles y todas las capas del mapa están cargados.
-         * @property isLoaded
-         * @type boolean
-         * @default false
-         */
-        self.isLoaded = false;
-
-        /**
-         * Lista de todos los controles del mapa.
-         * @property controls
-         * @type array
-         * @default []
-         */
-        self.controls = [];
-
-        /**
-         * Control que está activo en el mapa, y que por tanto responderá a los eventos de ratón en su área de visualización.
-         * @property activeControl
-         * @type TC.Control
-         * @default null
-         */
-        self.activeControl = null;
-
-        /**
-         * Lista de todas las capas cargadas en el mapa.
-         * @property layers
-         * @type array
-         * @default []
-         */
-        self.layers = [];
-
-        /**
-         * Lista de todas las capas base cargadas en el mapa.
-         * @property baseLayers
-         * @type array
-         * @default []
-         */
-        self.baseLayers = [];
-
-        /**
-         * Lista de todas las capas de trabajo cargadas en el mapa.
-         * @property workLayers
-         * @type array
-         * @default []
-         */
-        self.workLayers = [];
-
-        /**
-         * Capa base actual del mapa.
-         * @property baseLayer
-         * @type TC.Layer
-         */
-        self.baseLayer = null;
-
-        /**
-         * Capa donde se dibujan las entidades geográficas si no se especifica la capa explícitamente. Se instancia en el momento de añadir la primera entidad.
-         * @property vectors
-         * @type TC.layer.Vector
-         * @default null
-         */
-        self.vectors = null;
-
-        var loadingLayerCount = 0;
-        /**
-         * Elemento del DOM donde se ha creado el mapa.
-         * @property div
-         * @type HTMLElement
-         */
-        self.div = Util.getDiv(div);
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
          * @event MAPLOAD
@@ -710,17 +733,17 @@ TC.control = TC.control || {};
         /**
          * Se va a añadir una capa al mapa.
          * @event BEFORELAYERADD
-         * @param {TC.Layer} layer Capa que se va a añadir.
+         * @param {SITNA.layer.Layer} layer Capa que se va a añadir.
          */
         /**
          * Se ha añadido una capa al mapa.
          * @event LAYERADD
-         * @param {TC.Layer} layer Capa que se ha añadido.
+         * @param {SITNA.layer.Layer} layer Capa que se ha añadido.
          */
         /**
          * Se ha eliminado una capa del mapa.
          * @event LAYERREMOVE
-         * @param {TC.Layer} layer Capa que se ha eliminado.
+         * @param {SITNA.layer.Layer} layer Capa que se ha eliminado.
          */
         /**
          * Se ha cambiado de posición una capa en la lista de capas del mapa.
@@ -732,46 +755,65 @@ TC.control = TC.control || {};
         /**
          * Se va a actualizar una capa del mapa: se van a modificar sus entidades o se va solicitar una nueva imagen.
          * @event BEFORELAYERUPDATE
-         * @param {TC.Layer} layer Capa que va a actualizarse.
+         * @param {SITNA.layer.Layer} layer Capa que va a actualizarse.
          */
         /**
          * Se ha actualizado una capa del mapa: se ha modificado sus entidades o se ha cargado una imagen nueva.
          * @event LAYERUPDATE
-         * @param {TC.Layer} layer Capa que se ha actualizado.
+         * @param {SITNA.layer.Layer} layer Capa que se ha actualizado.
          */
         /**
          * Ha habido un error al cargar la capa, bien porque no se ha podido obtener su capabilities o porque no soporta CRS compatibles.
          * @event LAYERERROR
-         * @param {TC.Layer} layer Capa que sufre el error.
+         * @param {SITNA.layer.Layer} layer Capa que sufre el error.
          */
         /**
          * Se ha establecido una nueva capa como mapa base.
          * @event BASELAYERCHANGE
-         * @param {TC.Layer} layer Capa que es el nuevo mapa base.
+         * @param {SITNA.layer.Layer} layer Capa que es el nuevo mapa base.
          */
         /**
          * Se va a actualizar alguna capa del mapa.
          * @event BEFOREUPDATE
          */
 
-        self.RECENT_FILES_STORE_KEY_PREFIX = 'TC.fileImportRecent.';
-        self.recentFiles = [];
-        self.recentFileCount = 8;
+        this.div.classList.add(Consts.classes.LOADING, Consts.classes.MAP);
 
-        self.div.classList.add(Consts.classes.LOADING, Consts.classes.MAP);
+        if (!TC.ready) {
+            TC.Cfg = Util.extend({}, TC.Defaults, Cfg);
+            TC.ready = true;
+        }
 
-        // Para gestionar zoomToMarkers
-        self._markerPromises = [];
+        // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
+        if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
+            for (var allowed in TC.Cfg.controls.search.allowedSearchTypes) {
+                if (!Object.prototype.hasOwnProperty.call(options.controls.search.allowedSearchTypes, allowed)) {
+                    options.controls.search.allowedSearchTypes[allowed] = false;
+                }
+            }
+        }
 
-        self._layerBuffer = {
+        // Añado las capas disponibles a la configuración general
+
+        /**
+         * Objeto de opciones del constructor.
+         * @property options
+         * @type object
+         */
+        mergeOptions.call(self, options);
+
+        self.id = options.id || TC.getUID({ prefix: 'map-' });
+
+        self.crossOrigin = self.options.crossOrigin;
+
+        const setupStateControl = self.#setupStateControl;
+        self.#layerBuffer = {
             layers: [],
             contains: function (id) {
-                return this.layers.some(function (l) {
-                    return l.id === id;
-                });
+                return this.layers.some((l) => l.id === id);
             },
             getIndex: function (id) {
-                return this.layers.reduce(getReduceByValueFunction('id', id), -1);
+                return this.layers.findLastIndex((l) => l.id === id);
             },
             add: function (id, zIndex, isBase) {
                 const obj = {
@@ -814,9 +856,7 @@ TC.control = TC.control || {};
                     }
                 }
                 else {
-                    map.workLayers = map.layers.filter(function (l) {
-                        return !l.isBase;
-                    });
+                    map.workLayers = map.layers.filter((l) => !l.isBase);
                 }
             },
             reject: function (map, error) {
@@ -824,25 +864,25 @@ TC.control = TC.control || {};
                 layerObj.mapLayer = null;
                 layerObj.pending = false;
                 layerObj.rejected = true;
-                var index = map.options.baseLayers.map(l => l.id).indexOf(error.layerId);
+                var index = map.options.baseLayers.map((l) => l.id).indexOf(error.layerId);
                 if (index >= 0) {
                     map.baseLayers.splice(index, 1);
                 }
             },
             getResolvedWorkLayerIndex: function (_map, id) {
-                return this.layers.filter(function (l) {
-                    return l.id === id || !l.isBase && l.pending === false;
-                }).reduce(getReduceByValueFunction('id', id), -1);
+                return this.layers
+                    .filter((l) => l.id === id || !l.isBase && l.pending === false)
+                    .findLastIndex((l) => l.id === id);
             },
             getResolvedVisibleLayerIndex: function (map, id) {
-                var index = this.getResolvedWorkLayerIndex(map, id);
-                if (map.baseLayer) {
+                let index = this.getResolvedWorkLayerIndex(map, id);
+                if (index >= 0 && map.baseLayer) {
                     index = index + 1;
                 }
                 return index;
             },
             getIndexForZIndex: function (zIndex) {
-                return this.layers.reduce(getReduceByZIndexFunction(zIndex), -1) + 1;
+                return this.layers.findLastIndex((l) => l.zIndex <= zIndex) + 1;
             },
             checkMapLoad: function (map) {
                 const self = this;
@@ -862,13 +902,10 @@ TC.control = TC.control || {};
                                 // como los callbacks a loaded se lanzan según el orden de suscripción, el de script.js de IDENA se lanza antes 
                                 // que el de la gestión del estado, lo que provoca que las capas añadidas por queryString no se registren.
                                 if (map.options.stateful) {
-                                    _setupStateControl.call(map);
+                                    setupStateControl.call(map);
                                 }
 
                                 map.isLoaded = true;
-                                // Si hay datos en cache es posible que salte el evento MAPREADY después de MAPLOAD.
-                                // Por eso quitamos la clase LOADING en un callback de ready().
-                                map.ready(() => map.div.classList.remove(Consts.classes.LOADING));
                                 map.trigger(Consts.event.MAPLOAD);
                             };
                             // tenemos estado 3d
@@ -931,37 +968,8 @@ TC.control = TC.control || {};
             }
         };
 
-        self._layerBuffer.layers = [];
-
-        if (!TC.ready) {
-            TC.Cfg = Util.extend({}, TC.Defaults, Cfg);
-            TC.ready = true;
-        }
-
-        // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
-        if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
-            for (var allowed in TC.Cfg.controls.search.allowedSearchTypes) {
-                if (!Object.prototype.hasOwnProperty.call(options.controls.search.allowedSearchTypes, allowed)) {
-                    options.controls.search.allowedSearchTypes[allowed] = false;
-                }
-            }
-        }
-
-        // Añado las capas disponibles a la configuración general
-
-        /**
-         * Objeto de opciones del constructor.
-         * @property options
-         * @type object
-         */
-        options = options || {};
-        mergeOptions.call(self, options);
-
-        self.id = options.id || TC.getUID({ prefix: 'map-' });
-
-        self.crossOrigin = self.options.crossOrigin;
-
         var init = async function () {
+            self.div.classList.remove(Consts.classes.LOADING);
 
             self.state = await self.checkLocation();
 
@@ -1015,9 +1023,21 @@ TC.control = TC.control || {};
              * @property crs
              * @type string
              */
-            self.crs = self.options.crs;
-            self.initialExtent = self.options.initialExtent;
-            self.maxExtent = self.options.maxExtent;
+            if (self.state?.crs) {
+                self.crs = self.state.crs;
+                self.initialExtent = Util.reprojectExtent(self.options.initialExtent, self.options.crs, self.crs);
+                if (self.options.maxExtent) {
+                    self.maxExtent = Util.reprojectExtent(self.options.maxExtent, self.options.crs, self.crs);
+                }
+                else {
+                    self.maxExtent = self.options.maxExtent;
+                }
+            }
+            else {
+                self.crs = self.options.crs;
+                self.initialExtent = self.options.initialExtent;
+                self.maxExtent = self.options.maxExtent;
+            }
 
             self.defaultInfoContainer = self.defaultInfoContainer || self.options.defaultInfoContainer;
             // Si no se ha especificado, definimos defaultInfoContainer en base al espacio disponible en pantalla.
@@ -1044,6 +1064,26 @@ TC.control = TC.control || {};
                             ctlPromises.push(self.addControl(name, ctlOptions));
                         }
                     }
+
+                    /*
+                     *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
+                     *  Parameters: OpenLayers.Layer, event name ('loadstart', 'loadend')
+                     */
+                    var _triggerLayersBeforeUpdateEvent = function (_e) {
+                        if (loadingLayerCount <= 0) {
+                            loadingLayerCount = 0;
+                            self.trigger(Consts.event.BEFOREUPDATE);
+                        }
+                        loadingLayerCount = loadingLayerCount + 1;
+                    };
+
+                    var _triggerLayersUpdateEvent = function (_e) {
+                        loadingLayerCount = loadingLayerCount - 1;
+                        if (loadingLayerCount <= 0) {
+                            loadingLayerCount = 0;
+                            self.trigger(Consts.event.UPDATE);
+                        }
+                    };
 
                     self.on(Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
                     self.on(Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
@@ -1156,129 +1196,7 @@ TC.control = TC.control || {};
             });
         };
 
-        mapProto.getMapState = async function (options) {
-            const self = this;
-
-            var stateObj = await _getMapState.call(self, options);
-            return Util.utf8ToBase64(stateObj.state);
-        };
-
-        mapProto.refreshMapState = async function (options) {
-            const self = this;
-
-            const { state } = await _getMapState.call(self, options);
-            const currentState = Util.utf8ToBase64(state);
-            window.history.replaceState(state, null, window.location.href.split('#').shift() + '#' + currentState);
-        };
-
-        mapProto.getPreviousMapState = function () {
-            return previousState;
-        };
-
-        mapProto.checkLocation = async function () {
-            const self = this;
-            var hash = window.location.hash;
-
-            if (hash && hash.length > 1) {
-                hash = hash.substr(1);
-
-                var obj;
-                try {
-                    obj = await jsonpackProcess('unpack', Util.base64ToUtf8(hash));
-                }
-                catch (error) {
-                    try {
-                        obj = JSON.parse(Util.base64ToUtf8(hash));
-                    }
-                    catch (err) {
-                        TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
-                        return;
-                    }
-                }
-
-                if (Util.detectIE() && window.location.href.length === 2047) {
-                    TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValidForEdge'), Consts.msgErrorMode.TOAST);
-                }
-
-                if (obj) {
-                    var inValidState = false;
-                    //chequeo la integriadad del objeto restaurado del State
-                    if (!Object.prototype.hasOwnProperty.call(obj, "ext")) {
-                        inValidState = true;
-                        obj.ext = self.options.initialExtent;
-                    }
-                    if (!Object.prototype.hasOwnProperty.call(obj, "base")) {
-                        inValidState = true;
-                        obj.base = self.options.defaultBaseLayer;
-                    }
-                    if (!Object.prototype.hasOwnProperty.call(obj, "layers")) {
-                        inValidState = true;
-                        obj.layers = [];
-                    }
-                    else {
-                        for (var i = obj.layers.length - 1; i >= 0; i--) {
-                            const stateLayer = obj.layers[i];
-                            if (!stateLayer ||
-                                !(Object.prototype.hasOwnProperty.call(stateLayer, "u") && Object.prototype.hasOwnProperty.call(stateLayer, "n") ||
-                                    Object.prototype.hasOwnProperty.call(stateLayer, "fn"))) {
-                                inValidState = true;
-                                obj.layers.length = obj.layers.length - 1;
-                                continue;
-                            }
-                            else if (!Object.prototype.hasOwnProperty.call(stateLayer, "o") ||
-                                !Object.prototype.hasOwnProperty.call(stateLayer, "v") ||
-                                !Object.prototype.hasOwnProperty.call(stateLayer, "h")) {
-                                inValidState = true;
-                                Util.extend(stateLayer, {
-                                    o: stateLayer.o || 1,
-                                    v: stateLayer.v || true,
-                                    h: stateLayer.h || false
-                                });
-                            }
-                        }
-                    }
-
-                    if (Object.prototype.hasOwnProperty.call(obj, "vw3")) {
-
-                        if (!obj.vw3) {
-                            inValidState = true;
-                        } else if (!obj.vw3.cp || obj.vw3.cp.length !== 3 ||
-                            !obj.vw3.chpr || obj.vw3.chpr.length !== 3 ||
-                            !obj.vw3.bcpd) {
-                            inValidState = true;
-                        }
-                    }
-
-                    if (inValidState)
-                        TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
-                    return obj;
-                }
-                TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
-            }
-            return;
-        };
-
-        /*
-        *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
-        *  Parameters: OpenLayers.Layer, event name ('loadstart', 'loadend')
-        */
-        var _triggerLayersBeforeUpdateEvent = function (_e) {
-            if (loadingLayerCount <= 0) {
-                loadingLayerCount = 0;
-                self.trigger(Consts.event.BEFOREUPDATE);
-            }
-            loadingLayerCount = loadingLayerCount + 1;
-        };
-
-        var _triggerLayersUpdateEvent = function (_e) {
-            loadingLayerCount = loadingLayerCount - 1;
-            if (loadingLayerCount <= 0) {
-                loadingLayerCount = 0;
-                self.trigger(Consts.event.UPDATE);
-            }
-        };
-
-        const locale = self.options.locale;
+        const locale = this.options.locale;
 
         TC.i18n.loadResources(!TC.i18n[locale], TC.apiLocation + 'resources/', locale).finally(function () {
             // Si no hay tamaño definido en el div, lo ponemos a pantalla completa
@@ -1541,181 +1459,435 @@ TC.control = TC.control || {};
             }
 
         };
-    };
+    }
 
-    TC.Map._instances = [];
+    #setupStateControl() {
+        const self = this;
 
-    TC.Map.get = function (elm) {
-        for (var i = 0, len = TC.Map._instances.length; i < len; i++) {
-            const instance = TC.Map._instances[i];
+        var MIN_TIMEOUT_VALUE = 4;
+
+        // eventos a los que estamos suscritos para obtener el estado            
+        var events = [
+            Consts.event.LAYERADD,
+            Consts.event.LAYERORDER,
+            Consts.event.LAYERREMOVE,
+            //Consts.event.LAYEROPACITY, // Este evento lo vamos a tratar por separado, para evitar exceso de actualizaciones de estado.
+            Consts.event.LAYERVISIBILITY,
+            Consts.event.ZOOM,
+            Consts.event.BASELAYERCHANGE,
+            Consts.event.UPDATEPARAMS
+        ].join(' ');
+
+        // gestión siguiente - anterior
+
+        let eventsToMapChange = [
+            Consts.event.LAYERUPDATE,
+            Consts.event.FEATUREADD,
+            Consts.event.FEATUREREMOVE,
+            Consts.event.FEATUREMODIFY,
+            Consts.event.FEATURESADD,
+            Consts.event.FEATURESCLEAR,
+            Consts.event.UPDATEPARAMS
+        ].join(' ');
+
+        self.on(eventsToMapChange, () => self.trigger(Consts.event.MAPCHANGE));
+
+        // registramos el estado inicial                
+        self.replaceCurrent = true;
+        _addToHistory.call(self);
+
+        const fn_addToHistory = _addToHistory.bind(self);
+
+        // nos suscribimos a los eventos para registrar el estado en cada uno de ellos
+        self.on(events, fn_addToHistory);
+
+        // a la gestión del evento de opacidad le metemos un retardo, para evitar que haya un exceso de actualizaciones de estado.
+        var layerOpacityHandlerTimeout;
+        self.on(Consts.event.LAYEROPACITY, function (e) {
+            clearTimeout(layerOpacityHandlerTimeout);
+            layerOpacityHandlerTimeout = setTimeout(function () {
+                _addToHistory.call(self, e);
+            }, 500);
+        });
+
+        // gestión siguiente - anterior
+        globalThis.addEventListener('popstate', function (e) {
+            self.wait(Util.getTimedPromise(async function () {
+                if (e) {
+                    // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
+                    self.off(events, fn_addToHistory);
+
+                    var state = e.state;
+                    if (Object.prototype.toString.call(state) === '[object Object]') {
+                        state = await self.checkLocation();
+                    }
+
+                    // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
+                    await _loadIntoMap.call(self, state);
+                    setTimeout(function () {
+                        self.on(events, fn_addToHistory);
+                    }, 200);
+                }
+            }, MIN_TIMEOUT_VALUE));
+        });
+    }
+
+    async exportState(options = {}) {
+        const self = this;
+        var state = {};
+        let index = stateIndex++;
+
+        if (self.crs !== self.options.crs) {
+            state.crs = self.crs;
+        }
+
+        var ext = self.getExtent();
+        for (var i = 0; i < ext.length; i++) {
+            if (Math.abs(ext[i]) > 180)
+                ext[i] = Math.floor(ext[i] * 1000) / 1000;
+        }
+        state.ext = ext;
+
+        //determinar capa base
+        let baseLayerData;
+
+        // ¿es una capa de respaldo?
+        if (self.baseLayers) {
+            baseLayerData = self.baseLayers
+                .filter(baseLayer => baseLayer.isRaster() && baseLayer.fallbackLayer)
+                .map(baseLayer => ({ baseLayer: baseLayer, fallbackLayerID: baseLayer.fallbackLayer.id }))
+                .find(baseLayerData => baseLayerData.fallbackLayerID === (self.baseLayer ? self.baseLayer.id : self.baseLayers[0].id));
+        }
+
+        if (baseLayerData) {
+            state.base = baseLayerData.baseLayer.id;
+        } else if (self.baseLayer || self.baseLayers && self.baseLayers[0]) {
+            state.base = (self.baseLayer || self.baseLayers[0]).id;
+        }
+
+        //capas cargadas
+        state.layers = [];
+
+        self.workLayers.forEach(function addLayerState(layer) {
+            if (layer.type === Consts.layerType.WMS && !layer.options.stateless) {
+                layer.layerNames = layer.names || layer.layerNames;
+                if (layer.layerNames && layer.layerNames.length || layer.hideTree === false) {
+                    const entry = {
+                        u: Util.isOnCapabilities(layer.url),
+                        n: Array.isArray(layer.names) ? layer.names.join(',') : layer.names,
+                        o: layer.getOpacity(),
+                        v: layer.getVisibility(),
+                        h: layer.options.hideTitle,
+                        ur: layer.unremovable,
+                        f: layer.filter && (layer.filter instanceof filterNs.Filter ? layer.filter.getText() : layer.filter),
+                        t: layer.title,
+                        i: layer.id
+                    };
+                    //24/11/2021 URI: Añadir el hidetree si no tiene el valor por defecto que es true
+                    if (layer.hideTree === false) {
+                        entry.x = 0;
+                    }
+                    const availableNames = Array.isArray(layer.availableNames) ? layer.availableNames.join(',') : layer.availableNames;
+                    if (entry.n !== availableNames)
+                        entry.a = availableNames;
+                    state.layers.push(entry);
+                }
+            }
+            else if (supportsFileSystemAccess &&
+                layer.type === Consts.layerType.VECTOR &&
+                layer.file &&
+                !layer.stealth) {
+                const entry = {
+                    o: layer.getOpacity(),
+                    v: layer.getVisibility(),
+                    h: layer.options.hideTitle,
+                    ur: layer.unremovable,
+                    fn: layer.file,
+                    t: layer.title,
+                    i: layer.id
+                };
+                state.layers.push(entry);
+            }
+        });
+
+        if (self.on3DView && self.view3D.cameraControls) {
+            state.vw3 = self.view3D.cameraControls.getCameraState();
+        }
+
+        const extraStates = options.extraStates ?? self.#extraStates;
+        if (extraStates) {
+            Util.extend(state, extraStates);
+        }
+
+        if (!options.cacheResult && self._controlStatesCache) {
+            delete self._controlStatesCache;
+        }
+
+        if (self._controlStatesCache) {
+            return { state: self._controlStatesCache, index: index };
+        }
+
+        const packed = await jsonpackProcess('pack', state);
+        if (options.cacheResult) {
+            self._controlStatesCache = packed;
+        }
+        return { state: packed, index: index };
+    }
+
+    async getMapState(options) {
+        const { state } = await this.exportState(options);
+        return Util.utf8ToBase64(state);
+    }
+
+    async refreshMapState(options) {
+        const { state } = await this.exportState(options);
+        const currentState = Util.utf8ToBase64(state);
+        window.history.replaceState(state, null, window.location.href.split('#').shift() + '#' + currentState);
+    }
+
+    addControlState(control) {
+        this.#extraStates ??= {};
+        this.#extraStates.ctl ??= [];
+        const controlState = control.exportState();
+        const index = this.#extraStates.ctl.findIndex((state) => state.id === control.id);
+        if (index < 0) {
+            this.#extraStates.ctl.push(controlState);
+        }
+        else {
+            this.#extraStates.ctl[index] = controlState;
+        }
+        this.refreshMapState();
+        return this;
+    }
+
+    removeControlState(control) {
+        const stateIndex = this.#extraStates?.ctl?.findIndex((state) => state.id === control.id);
+        if (stateIndex >= 0) {
+            this.#extraStates.ctl.splice(stateIndex, 1);
+            if (!this.#extraStates.ctl.length) {
+                delete this.#extraStates.ctl;
+                if (!Object.keys(this.#extraStates).length) {
+                    this.#extraStates = null;
+                }
+            }
+        }
+        this.refreshMapState();
+        return this;
+    }
+
+    getPreviousMapState() {
+        return previousState;
+    }
+
+    async checkLocation() {
+        var hash = window.location.hash;
+
+        if (hash && hash.length > 1) {
+            hash = hash.substr(1);
+
+            var obj;
+            try {
+                obj = await jsonpackProcess('unpack', Util.base64ToUtf8(hash));
+            }
+            catch (error) {
+                try {
+                    obj = JSON.parse(Util.base64ToUtf8(hash));
+                }
+                catch (err) {
+                    TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                    return;
+                }
+            }
+
+            if (Util.detectIE() && window.location.href.length === 2047) {
+                TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValidForEdge'), Consts.msgErrorMode.TOAST);
+            }
+
+            if (obj) {
+                var inValidState = false;
+                //chequeo la integriadad del objeto restaurado del State
+                if (!Object.prototype.hasOwnProperty.call(obj, "ext")) {
+                    inValidState = true;
+                    obj.ext = this.options.initialExtent;
+                }
+                if (!Object.prototype.hasOwnProperty.call(obj, "base")) {
+                    inValidState = true;
+                    obj.base = this.options.defaultBaseLayer;
+                }
+                if (!Object.prototype.hasOwnProperty.call(obj, "layers")) {
+                    inValidState = true;
+                    obj.layers = [];
+                }
+                else {
+                    for (var i = obj.layers.length - 1; i >= 0; i--) {
+                        const stateLayer = obj.layers[i];
+                        if (!stateLayer ||
+                            !(Object.prototype.hasOwnProperty.call(stateLayer, "u") && Object.prototype.hasOwnProperty.call(stateLayer, "n") ||
+                                Object.prototype.hasOwnProperty.call(stateLayer, "fn"))) {
+                            inValidState = true;
+                            obj.layers.length = obj.layers.length - 1;
+                            continue;
+                        }
+                        else if (!Object.prototype.hasOwnProperty.call(stateLayer, "o") ||
+                            !Object.prototype.hasOwnProperty.call(stateLayer, "v") ||
+                            !Object.prototype.hasOwnProperty.call(stateLayer, "h")) {
+                            inValidState = true;
+                            Util.extend(stateLayer, {
+                                o: stateLayer.o || 1,
+                                v: stateLayer.v || true,
+                                h: stateLayer.h || false
+                            });
+                        }
+                    }
+                }
+
+                if (Object.prototype.hasOwnProperty.call(obj, "vw3")) {
+
+                    if (!obj.vw3) {
+                        inValidState = true;
+                    } else if (!obj.vw3.cp || obj.vw3.cp.length !== 3 ||
+                        !obj.vw3.chpr || obj.vw3.chpr.length !== 3 ||
+                        !obj.vw3.bcpd) {
+                        inValidState = true;
+                    }
+                }
+
+                if (inValidState) {
+                    TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                }
+                return obj;
+            }
+            TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+        }
+    }
+
+    static get(elm) {
+        for (var i = 0, len = this._instances.length; i < len; i++) {
+            const instance = this._instances[i];
             if (instance.div === elm) {
                 return instance;
             }
         }
-    };
+    }
 
-    TC.inherit(TC.Map, TC.EventTarget);
-
-    var deleteTreeCache = function (layer) {
-        if (layer.type === Consts.layerType.WMS) {
-            layer.tree = null;
-        }
-    };
-
-    /*
-     * Función que mezcla opciones de mapa relativos a capa, teniendo cuidado de que puede haber objetos de opciones de capa o identificadores de capa.
-     * En este último caso, si no son la opción prioritaria, hay que sustituirlos por los objetos de definiciones de capa.
-     */
-    var mergeLayerOptions = function (optionsArray, propertyName) {
-        const self = this;
-        // lista de opciones de capa de los argumentos
-        var layerOptions = Array.prototype.slice.call(optionsArray).map(function (elm) {
-            var result = {};
-            if (elm) {
-                result[propertyName] = elm[propertyName];
-            }
-            return result;
-        });
-        if (propertyName === 'availableBaseLayers') console.log("layerOptions", layerOptions);
-        // añadimos las opciones de capa de la configuración general
-        var layerOption = {};
-        layerOption[propertyName] = TC.Cfg[propertyName];
-        layerOptions.unshift(layerOption);
-
-        //Si se han definido baseLayers en el visor, hay que hacer un merge con las predefinidas en la API
-        if (propertyName === 'baseLayers' && layerOptions[1]['baseLayers']) {
-            layerOption = layerOptions[1];
-
-            for (var i = 0; i < layerOption.baseLayers.length; i++) {
-                if (typeof layerOption.baseLayers[i] === 'object') {
-                    Util.extend(layerOption.baseLayers[i], getAvailableBaseLayer.call(self, layerOption.baseLayers[i].id));
-                }
-            }
+    getCrs() {
+        if (!this.on3DView) {
+            return this.crs;
         } else {
-            layerOptions.unshift(true); // Deep merge
-            layerOption = Util.extend.apply(this, layerOptions);
-            if (propertyName === 'availableBaseLayers') console.log("layerOption", layerOption);
+            return this.view3D.crs;
         }
+    }
 
-        return layerOption[propertyName];
-    };
+    getCRS() {
+        return this.getCrs();
+    }
 
-    const mergeControlOptions = function (controlOptions) {
-
-        if (controlOptions.controlContainer) {
-
-            if (Array.isArray(controlOptions.controlContainer.controls)) {
-
-                controlOptions.controlContainer.controls.forEach((ctl) => {
-                    Object.keys(ctl).filter((key) => key !== "position").forEach((name) => {
-                        if (controlOptions[name] !== undefined) {
-                            if (typeof ctl[name] === 'boolean') {
-                                ctl[name] = {};
-                            }
-                            Util.extend(ctl[name], controlOptions[name]);
-                            delete controlOptions[name];
-                        }
-                    });
-                });
-
-            } else {
-                // GLS compatibilidad hacia atrás
-
-                Object.keys(controlOptions).filter(function (key) {
-                    return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1;
-                }).forEach(function (key) {
-                    const containerControl = controlOptions.controlContainer.controls[key];
-                    if (typeof containerControl.options === 'boolean') {
-                        containerControl.options = {};
-                    }
-                    Util.extend(containerControl.options, controlOptions[key]);
-                    delete controlOptions[key];
-                });
-            }
-        }
-
-        return controlOptions;
-    };
-
-    const mergeOptions = function () {
-        const argArray = [true, {}, TC.Cfg].concat(Array.prototype.slice.call(arguments));
-        const result = this.options = Util.extend.apply(this, argArray);
-        // Concatenamos las colecciones availableBaseLayers
-        result.availableBaseLayers = TC.Cfg.availableBaseLayers.concat.apply(TC.Cfg.availableBaseLayers, Array.prototype.map.call(arguments, function (arg) {
-            return arg.availableBaseLayers || [];
-        }));
-        result.baseLayers = mergeLayerOptions.call(this, arguments, 'baseLayers');
-        result.workLayers = mergeLayerOptions.call(this, arguments, 'workLayers');
-
-        const controls = Array.prototype.slice.call(arguments)
-            .filter(elem => elem.controls)
-            .map(elem => elem.controls);
-        if (controls.length > 0) {
-            result.controls = Util.extend(true, result.controls, mergeControlOptions(Util.extend(true, controls[0], controls[1])));
-        }
-        return result;
-    };
-
-    var mapProto = TC.Map.prototype;
-
-    var crsLayerError = function (map, layer) {
-        var errorMessage = 'Layer "' + layer.title + '" ("' + layer.names + '"): ';
-        var reason;
-        if (layer.isValidFromNames()) {
-            reason = 'layerSrsNotCompatible';
-        } else {
-            reason = 'layerNameNotValid';
-        }
-        errorMessage += Util.getLocaleString(map.options.locale, reason);
-        TC.error(errorMessage);
-        map.trigger(Consts.event.LAYERERROR, { layer: layer, reason: reason });
-
-        const error = Error(errorMessage);
-        error.layerId = layer.id;
-        return error;
-    };
-
-    mapProto.getCrs = mapProto.getCRS = function () {
-        const self = this;
-
-        if (!self.on3DView) {
-            return self.crs;
-        } else {
-            return self.view3D.crs;
-        }
-    };
-
-    mapProto.setCrs = async function (crs, callback) {
-        const self = this;
-        await self.setProjection({ crs: crs });
+    async setCrs(crs, callback) {
+        await this.setProjection({ crs: crs });
         if (Util.isFunction(callback)) {
             callback(crs);
         }
         return crs;
-    };
+    }
 
-    const appendRasterEvents = function (layer) {
-        layer.wrap.$events.on(Consts.event.TILELOADERROR, function (event) {
-            if ((event.error.code && event.error.code.toString() != '404') && (event.error.text != 'offline')) {
-                const wrap = this;
-                if (!wrap._tileloaderror) {
-                    const path = layer.getPath();
-                    const title = path.length ? path[path.length - 1] : layer.title;
-                    layer.map.toast(Util.getLocaleString(layer.map.options.locale, 'tileload.error',
-                        { name: title, error: event.error.text }),
-                        { type: Consts.msgType.ERROR });
-                    wrap._tileloaderror = true;
-                    const onTileload = function (e) {
-                        if (e.tile.src && e.tile.src !== Consts.BLANK_IMAGE) {
-                            delete wrap._tileloaderror;
-                            wrap.$events.off(Consts.event.TILELOAD, onTileload);
-                        }
-                    };
-                    wrap.$events.on(Consts.event.TILELOAD, onTileload);
+    async #addBaseLayer(layer, currentCrs) {
+
+        const fitToInitialExtent = (fit) => {
+            if (fit) {
+                this.setExtent(this.initialExtent, { animate: false, contain: true });
+            }
+        };
+        if (!layer.isCompatible(currentCrs)) {
+            // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
+            // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
+            const onlineCapabilities = await layer.getCapabilitiesOnline();
+            layer.capabilities = onlineCapabilities;
+            if (!layer.isCompatible(currentCrs)) {
+                if (layer.type !== Consts.layerType.WMTS) {
+                    layer.mustReproject = true;
+                }
+                else {
+                    const compatibleMatrixSet = layer.wrap.getCompatibleMatrixSets(currentCrs)[0];
+                    if (compatibleMatrixSet) {
+                        layer.wrap.setMatrixSet(compatibleMatrixSet);
+                    }
+                    else {
+                        layer.mustReproject = (this?.state?.base === layer.id)?false:true;
+                    }
                 }
             }
-        });
-    };
+        }
+        if (this.state) {
+            layer.isDefault = this.state.base === layer.id ||
+                this.state.base === layer.options.fallbackLayer;
+        }
+        else if (typeof this.options.defaultBaseLayer === 'string') {
+            layer.isDefault = this.options.defaultBaseLayer === layer.id;
+        }
+        else if (typeof this.options.defaultBaseLayer === 'number') {
+            layer.isDefault = this.options.defaultBaseLayer === this.baseLayers.length;
+        }
+        if (layer.isDefault) {
+            let fit;
+            if (layer.mustReproject &&
+                (layer.type !== Consts.layerType.WMTS || !layer.wrap.getCompatibleMatrixSets(currentCrs)[0])) {
+                if (layer.options.fallbackLayer && layer.getFallbackLayer) {
+
+                    const l = await this.addLayer(layer.getFallbackLayer());
+                    if (l.isCompatible(this.getCrs())) {
+                        this.wrap.setBaseLayer(l.wrap.layer);
+                        this.baseLayer = l.wrap.parent;
+                        // GLS: Tema casita + initialExtent
+                        fitToInitialExtent(fit);
+
+                        return layer;
+                    }
+                    else {
+                        throw crsLayerError(this, layer);
+                    }
+                    
+                } else {
+                    throw crsLayerError(this, layer);
+                }
+            }
+            else {
+                fit = this.baseLayer === null;
+
+                const ollyr = await layer.wrap.getLayer();
+                this.wrap.setBaseLayer(ollyr);
+                this.baseLayer = layer;
+
+                // GLS: Tema casita + initialExtent
+                fitToInitialExtent(fit);
+
+                return layer;
+            }
+        }
+        else {
+            //self.baseLayers.push(lyr);
+            return layer;
+        }
+    }
+
+    async #addWorkLayer(layer, currentCrs) {
+        if (layer.isCompatible(currentCrs)) {
+            await layer.wrap.getLayer();
+            return layer;
+        }
+        else {
+            // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
+            // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
+            const onlineCapabilities = await layer.getCapabilitiesOnline();
+            layer.capabilities = onlineCapabilities;
+            if (layer.isCompatible(currentCrs)) {
+                await layer.wrap.getLayer();
+                return layer;
+            }
+            else {
+                throw crsLayerError(this, layer);
+            }
+        }
+    }
 
     /**
      * Añade una capa al mapa.
@@ -1725,16 +1897,10 @@ TC.control = TC.control || {};
      * @param {function} [callback] Función de callback.
      * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
      */
-    mapProto.addLayer = function (layer, callback) {
+    async addLayer(layer, callback) {
         const self = this;
 
-        const fitToInitialExtent = function (fit) {
-            if (fit) {
-                self.setExtent(self.initialExtent, { animate: false, contain: true });
-            }
-        };
-
-        const addLayerPromise = new Promise(function (resolve, reject) {
+        try {
 
             if (typeof layer === 'object') {
                 if (!layer.id)
@@ -1742,8 +1908,9 @@ TC.control = TC.control || {};
                 else {
                     //URI expresion regular para sacar el prefijo y el número del ID de la capa y setear  lista de prefijos
                     const groups = /(?<ctl>[-_\p{Letter}]+(\u002D\d)?\u002D)?(?<num>[\d]*)?/gu.exec(layer.id).groups;
-                    if (groups["num"] && groups["ctl"])
+                    if (groups["num"] && groups["ctl"]) {
                         TC.setUIDStart(parseInt(groups["num"]) + 1, { prefix: groups["ctl"] });
+                    }
                 }
 
             }
@@ -1753,17 +1920,16 @@ TC.control = TC.control || {};
                 zIndex = layer.stealth ? 1 : 0;
             }
 
-            self._layerBuffer.add(layer.id || layer, zIndex, layer.isBase);
+            self.#layerBuffer.add(layer.id || layer, zIndex, layer.isBase);
 
             if (self.getLayer(layer.id)) {
                 // Si ya existe capa con el mismo id, lanzamos error
                 const error = Error(`Layer "${layer.id}" already exists`);
                 error.layerId = layer.id;
-                reject(error);
-                return;
+                throw error;
             }
 
-            var lyr;
+            let lyr;
             if (typeof layer === 'string') {
                 lyr = new Raster(Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
             }
@@ -1783,161 +1949,65 @@ TC.control = TC.control || {};
                 }
             }
 
-            Promise.all([self.wrap.getMap(), lyr.wrap.getLayer()]).then(function () {
-
-                self.trigger(Consts.event.BEFORELAYERADD, { layer: lyr });
-
-                // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
-                var idx;
-                if (isRaster(lyr)) {
-                    appendRasterEvents(lyr);
-                    idx = self.wrap.indexOfFirstVector();
-                }
-                if (idx === -1) {
-                    idx = self.wrap.getLayerCount();
-                }
-
-                const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();
-                TC.loadProjDef({
-                    crs: currentCrs,
-                    callback: function () {
-                        const isCompatible = lyr.isCompatible(currentCrs);
-                        if (lyr.isBase) {
-                            const baseLayerEndFn = function () {
-                                if (self.state) {
-                                    lyr.isDefault = self.state.base === lyr.id ||
-                                        self.state.base === lyr.options.fallbackLayer;
-                                }
-                                else if (typeof self.options.defaultBaseLayer === 'string') {
-                                    lyr.isDefault = self.options.defaultBaseLayer === lyr.id;
-                                }
-                                else if (typeof self.options.defaultBaseLayer === 'number') {
-                                    lyr.isDefault = self.options.defaultBaseLayer === self.baseLayers.length;
-                                }
-                                if (lyr.isDefault) {
-                                    var fit;
-                                    if (lyr.mustReproject &&
-                                        (lyr.type !== Consts.layerType.WMTS || !lyr.wrap.getCompatibleMatrixSets(currentCrs)[0])) {
-                                        if (lyr.options.fallbackLayer && lyr.getFallbackLayer) {
-
-                                            self.addLayer(lyr.getFallbackLayer()).then(function (l) {
-                                                self.wrap.setBaseLayer(l.wrap.layer);
-                                                self.baseLayer = l.wrap.parent;
-                                                // GLS: Tema casita + initialExtent
-                                                fitToInitialExtent(fit);
-
-                                                resolve(lyr);
-                                            });
-                                        } else {
-                                            reject(crsLayerError(self, lyr));
-                                        }
-                                    }
-                                    else {
-                                        fit = self.baseLayer === null;
-
-                                        lyr.wrap.getLayer().then(function (ollyr) {
-                                            self.wrap.setBaseLayer(ollyr);
-                                            self.baseLayer = lyr;
-
-                                            // GLS: Tema casita + initialExtent
-                                            fitToInitialExtent(fit);
-
-                                            resolve(lyr);
-                                        });
-                                    }
-                                }
-                                else {
-                                    //self.baseLayers.push(lyr);
-                                    resolve(lyr);
-                                }
-                            };
-                            if (isCompatible) {
-                                baseLayerEndFn();
-                            }
-                            else {
-                                // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
-                                // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
-                                lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
-                                    lyr.capabilities = onlineCapabilities;
-                                    if (!lyr.isCompatible(currentCrs)) {
-                                        if (lyr.type !== Consts.layerType.WMTS) {
-                                            lyr.mustReproject = true;
-                                        }
-                                        else {
-                                            const compatibleMatrixSet = lyr.wrap.getCompatibleMatrixSets(currentCrs)[0];
-                                            if (compatibleMatrixSet) {
-                                                lyr.wrap.setMatrixSet(compatibleMatrixSet);
-                                            }
-                                            else {
-                                                lyr.mustReproject = true;
-                                            }
-                                        }
-                                    }
-                                    baseLayerEndFn();
-                                });
-                            }
-                        }
-                        else {
-                            if (isCompatible) {
-                                lyr.wrap.getLayer().then(function (_l) {
-                                    resolve(lyr);
-                                });
-                            }
-                            else {
-                                // Puede ser que sea una capa nueva en un capabilities nuevo que lo tenemos cacheado
-                                // Antes de lanzar error, nos aseguramos de que tenemos la versión nueva
-                                lyr.getCapabilitiesOnline().then(function (onlineCapabilities) {
-                                    lyr.capabilities = onlineCapabilities;
-                                    if (lyr.isCompatible(currentCrs)) {
-                                        lyr.wrap.getLayer().then(function (_l) {
-                                            resolve(lyr);
-                                        });
-                                    }
-                                    else {
-                                        reject(crsLayerError(self, lyr));
-                                    }
-                                });
-                            }
-                        }
-                    }
-                });
-            }, function (error) {
-                var err = new Error(error);
+            try {
+                await Promise.all([self.wrap.getMap(), lyr.wrap.getLayer()]);
+            }
+            catch (error) {
+                const err = error instanceof Error ? error : new Error(error);
                 err.layerId = layer.id;
-                reject(err);
-            });
-        });
-
-        return addLayerPromise
-            .then(function (l) {
-                self._layerBuffer.resolve(self, l, l.isBase);
-                if (!l.isBase) {
-                    self.wrap.insertLayer(l.wrap.layer, self._layerBuffer.getResolvedVisibleLayerIndex(self, l.id));
-                }
-                self.trigger(Consts.event.LAYERADD, { layer: l });
-                self._layerBuffer.checkMapLoad(self);
-                if (Util.isFunction(callback)) {
-                    callback(l);
-                }
-                return l;
-            }, function (err) {
-                self._layerBuffer.reject(self, err);
-                self._layerBuffer.checkMapLoad(self);
                 throw err;
-            });
-    };
+            }
+
+            self.trigger(Consts.event.BEFORELAYERADD, { layer: lyr });
+
+            // Nos aseguramos de que las capas raster se quedan por debajo de las vectoriales
+            let idx;
+            if (isRaster(lyr)) {
+                appendRasterEvents(lyr);
+                idx = self.wrap.indexOfFirstVector();
+            }
+            if (idx === -1) {
+                idx = self.wrap.getLayerCount();
+            }
+
+            let l;
+            const currentCrs = self.state && self.state.crs ? self.state.crs : self.getCRS();
+            await TC.loadProjDef({ crs: currentCrs });
+            if (lyr.isBase) {
+                l = await self.#addBaseLayer(lyr, currentCrs);
+            }
+            else {
+                l = await self.#addWorkLayer(lyr, currentCrs);
+            }
+
+            self.#layerBuffer.resolve(self, l, l.isBase);
+            if (!l.isBase) {
+                self.wrap.insertLayer(l.wrap.layer, self.#layerBuffer.getResolvedVisibleLayerIndex(self, l.id));
+            }
+            self.trigger(Consts.event.LAYERADD, { layer: l });
+            self.#layerBuffer.checkMapLoad(self);
+            if (Util.isFunction(callback)) {
+                callback(l);
+            }
+            return l;
+        }
+        catch (err) {
+            self.#layerBuffer.reject(self, err);
+            self.#layerBuffer.checkMapLoad(self);
+            throw err;
+        }
+    }
 
     /**
-    * Añade o actualiza una capa al mapa.
-    * @method addLayer
-    * @async
-    * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
-    * @param {function} [callback] Función de callback.
-    * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
-    */
-    mapProto.addOrUpdateLayer = async function (layer, callback) {
-        const self = this;
-        const currentLayer = self.getLayer(layer.id);
+     * Añade o actualiza una capa al mapa.
+     * @method addLayer
+     * @async
+     * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
+     * @param {function} [callback] Función de callback.
+     * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
+     */
+    async addOrUpdateLayer(layer, callback) {
+        const currentLayer = this.getLayer(layer.id);
         if (currentLayer) {
             //actualiza			
             const layerNamesAsArray = Array.isArray(layer.layerNames) ? layer.layerNames :
@@ -1966,10 +2036,10 @@ TC.control = TC.control || {};
             currentLayer.hideTree = layer.hideTree;
             return currentLayer;
         }
-        return await self.addLayer(layer, callback);
-    };
+        return await this.addLayer(layer, callback);
+    }
 
-    mapProto.removeLayer = async function (layer) {
+    async removeLayer(layer) {
         const self = this;
 
         if (layer.unremovable) {
@@ -2005,21 +2075,21 @@ TC.control = TC.control || {};
                     break;
                 }
             }
-            if (layer === self.vectors) {
-                self.vectors = null;
+            if (layer === self.#vectors) {
+                self.#vectors = null;
             }
         }
 
         const olLayer = await layer.wrap.getLayer();
         self.wrap.removeLayer(olLayer);
-        self._layerBuffer.remove(layer.id);
+        self.#layerBuffer.remove(layer.id);
         self.trigger(Consts.event.LAYERREMOVE, { layer: layer });
-        self._layerBuffer.checkMapLoad(self);
+        self.#layerBuffer.checkMapLoad(self);
         layer.map = null;
         return layer;
-    };
+    }
 
-    mapProto.insertLayer = async function (layer, idx, callback) {
+    async insertLayer(layer, idx, callback) {
         const self = this;
         var beforeIdx = -1;
         for (var i = 0; i < self.layers.length; i++) {
@@ -2059,27 +2129,27 @@ TC.control = TC.control || {};
             callback();
         }
         return layer;
-    };
+    }
 
-    mapProto.setLayerIndex = function (layer, idx) {
-        const self = this;
-        const olIdx = idx - self.baseLayers.length + 1;
-        self.wrap.setLayerIndex(layer.wrap.layer, olIdx);
-    };
+    setLayerIndex(layer, idx) {
+        const olIdx = idx - this.baseLayers.length + 1;
+        this.wrap.setLayerIndex(layer.wrap.layer, olIdx);
+        return this;
+    }
 
-    mapProto.putLayerOnTop = function (layer) {
-        var self = this;
-        var n = self.wrap.getLayerCount();
-        self.wrap.setLayerIndex(layer.wrap.layer, n - 1);
-    };
+    putLayerOnTop(layer) {
+        var n = this.wrap.getLayerCount();
+        this.wrap.setLayerIndex(layer.wrap.layer, n - 1);
+        return this;
+    }
 
     /*
-    *  setBaseLayer: Set a layer as base layer, it is added to layers collection it wasn't before
-    *  Parameters: TC.Layer or string, callback which accepts layer as parameter
-    *  Returns: TC.Layer promise
-    */
-    mapProto.setBaseLayer = async function (layer, callback) {
-        var self = this;
+     *  setBaseLayer: Set a layer as base layer, it is added to layers collection it wasn't before
+     *  Parameters: TC.Layer or string, callback which accepts layer as parameter
+     *  Returns: TC.Layer promise
+     */
+    async setBaseLayer(layer, callback) {
+        const self = this;
         var result = null;
         var found = false;
 
@@ -2150,14 +2220,13 @@ TC.control = TC.control || {};
             }
         }
         return result;
-    };
+    }
 
-    mapProto.setView = function (view) {
-        const self = this;
-
-        self.view = view;
-        self.trigger(Consts.event.VIEWCHANGE, { view: view });
-    };
+    setView(view) {
+        this.view = view;
+        this.trigger(Consts.event.VIEWCHANGE, { view: view });
+        return this;
+    }
 
     /*
      * Asigna un callback que se ejecutará cuando los controles del mapa se hayan cargado.
@@ -2165,17 +2234,16 @@ TC.control = TC.control || {};
      * @async
      * @param {function} [callback] Función a ejecutar.
      */
-    mapProto.ready = function (callback) {
-        var self = this;
+    ready(callback) {
         if (Util.isFunction(callback)) {
-            if (self.isReady) {
+            if (this.isReady) {
                 callback();
             }
             else {
-                self.one(Consts.event.MAPREADY, callback);
+                this.one(Consts.event.MAPREADY, callback);
             }
         }
-    };
+    }
 
     /*
      * Asigna un callback que se ejecutará cuando los controles y las capas iniciales del mapa se hayan cargado.
@@ -2183,48 +2251,44 @@ TC.control = TC.control || {};
      * @async
      * @param {function} [callback] Función a ejecutar.
      */
-    mapProto.loaded = function (callback) {
-        const self = this;
+    loaded(callback) {
         if (Util.isFunction(callback)) {
-            if (self.isLoaded) {
+            if (this.isLoaded) {
                 callback();
             }
             else {
-                self.one(Consts.event.MAPLOAD, callback);
+                this.one(Consts.event.MAPLOAD, callback);
             }
         }
-        return new Promise(resolve => {
-            if (self.isLoaded) {
+        return new Promise((resolve) => {
+            if (this.isLoaded) {
                 resolve();
             }
             else {
-                self.one(Consts.event.MAPLOAD, resolve);
+                this.one(Consts.event.MAPLOAD, resolve);
             }
         });
-    };
-
-
+    }
 
     /*
      * Devuelve un árbol de capas del mapa.
      * @method getLayerTree
      * @return {TC.LayerTree}
      */
-    mapProto.getLayerTree = function () {
-        const self = this;
+    getLayerTree() {
         const result = { baseLayers: [], workLayers: [] };
-        if (self.baseLayer) {
-            result.baseLayers[0] = self.baseLayer.getTree();
+        if (this.baseLayer) {
+            result.baseLayers[0] = this.baseLayer.getTree();
         }
-        for (var i = 0; i < self.workLayers.length; i++) {
-            const tree = self.workLayers[i].getTree();
+        for (var i = 0; i < this.workLayers.length; i++) {
+            const tree = this.workLayers[i].getTree();
 
             if (tree) {
                 result.workLayers.unshift(tree);
             }
         }
         return result;
-    };
+    }
 
     /**
      * Añade un control al mapa.
@@ -2234,47 +2298,29 @@ TC.control = TC.control || {};
      * @param {object} [options] Objeto de opciones de configuración del control. Consultar el parámetro de opciones del constructor del control.
      * @return {Promise} Promesa de objeto {{#crossLink "TC.Control"}}{{/crossLink}}
      */
-    mapProto.addControl = function (control, options) {
-        const self = this;
-
-        return new Promise(function (resolve, reject) {
-            const _addCtl = function (ctl) {
-                self.controls.push(ctl);
-                // Lo envolvemos en Promise.resolve para asegurarse compatibilidad hacia atrás con los controles que devuelven un $.Deferred.
-                return Promise.resolve(ctl.register(self))
-                    .then(function (c) {
-                        if (ctl.div) {
-                            if (!ctl.div.parentNode) {
-                                self.div.appendChild(ctl.div);
-                            }
-                        }
-                        self.trigger(Consts.event.CONTROLADD, { control: ctl });
-                        return c;
-                    })
-                    .catch(function (err) {
-                        reject(err instanceof Error ? err : Error(err));
-                    });
-            };
-            if (typeof control === 'string') {
-                const ctorName = control.substr(0, 1).toUpperCase() + control.substr(1);
-                const addStringControl = () => _addCtl(new TC.control[ctorName](void (0), options)).then(resolve);
-                if (!TC.Control || !TC.control[ctorName]) {
-                    import(/* webpackMode: "eager" */ './control/' + ctorName).then(function (module) {
-                        TC.control[ctorName] = module.default;
-                        addStringControl();
-                    });
-                }
-                else {
-                    addStringControl();
-                }
+    async addControl(control, options) {
+        let ctl;
+        if (typeof control === 'string') {
+            const ctorName = control.substr(0, 1).toUpperCase() + control.substr(1);
+            if (!TC.control?.[ctorName]) {
+                const module = await import(/* webpackMode: "eager" */ './control/' + ctorName);
+                TC.control[ctorName] ??= module.default;
             }
-            else {
-                _addCtl(control).then(function (ctl) {
-                    resolve(ctl);
-                });
+            ctl = new TC.control[ctorName](undefined, options);
+        }
+        else {
+            ctl = control;
+        }
+        this.controls.push(ctl);
+        await ctl.register(this);
+        if (ctl.div) {
+            if (!ctl.div.parentNode) {
+                this.div.appendChild(ctl.div);
             }
-        });
-    };
+        }
+        this.trigger(Consts.event.CONTROLADD, { control: ctl });
+        return ctl;
+    }
 
     /*
      * Devuelve la lista de controles que son de la clase especificada.
@@ -2282,8 +2328,7 @@ TC.control = TC.control || {};
      * @param {function|string} classObj Nombre de la clase o función constructora de la clase.
      * @return {array}
      */
-    mapProto.getControlsByClass = function (classObj) {
-        const self = this;
+    getControlsByClass(classObj) {
         let result = [];
         let obj = classObj;
         if (typeof classObj === 'string') {
@@ -2301,7 +2346,7 @@ TC.control = TC.control || {};
             }
         }
         if (Util.isFunction(obj)) {
-            self.controls.forEach(ctl => {
+            this.controls.forEach(ctl => {
                 if (ctl instanceof obj) {
                     result.push(ctl);
                 }
@@ -2309,63 +2354,70 @@ TC.control = TC.control || {};
         }
 
         return result;
-    };
+    }
 
-    mapProto.getControlById = function (id) {
-        const self = this;
-        for (var i = 0, len = self.controls.length; i < len; i++) {
-            const ctl = self.controls[i];
-            if (ctl.id === id) {
-                return ctl;
-            }
-        }
-        return null;
-    };
+    getControlById(id) {
+        return this.controls.find((ctl) => ctl.id === id) || null;
+    }
 
-    mapProto.getDefaultControl = function () {
-        const self = this;
-        var candidate;
-        if (self.options.defaultActiveControl) {
-            candidate = self.getControlsByClass('TC.control.' + self.options.defaultActiveControl.substr(0, 1).toUpperCase() + self.options.defaultActiveControl.substr(1))[0];
+    getDefaultControl() {
+        let candidate;
+        if (this.options.defaultActiveControl) {
+            candidate = this.getControlsByClass('TC.control.' + this.options.defaultActiveControl.substr(0, 1).toUpperCase() + this.options.defaultActiveControl.substr(1))[0];
         }
         if (!candidate) {
-            candidate = self.getControlsByClass(MultiFeatureInfo)[0];
+            candidate = this.getControlsByClass(MultiFeatureInfo)[0];
             if (candidate) {
                 candidate = candidate.lastCtrlActive;
             }
             else {
-                candidate = self.getControlsByClass(FeatureInfo)[0];
+                candidate = this.getControlsByClass(FeatureInfo)[0];
             }
         }
         return candidate;
-    };
+    }
 
     /*
      * Devuelve el primer control del mapa que sea de la clase {{#crossLink "TC.control.LoadingIndicator"}}{{/crossLink}}.
      * @method getLoadingIndicator
      * @return {TC.control.LoadingIndicator}
      */
-    mapProto.getLoadingIndicator = function () {
-        var result = null;
-        var ctls = this.getControlsByClass(LoadingIndicator);
+    getLoadingIndicator() {
+        let result = null;
+        let ctls = this.getControlsByClass(LoadingIndicator);
         if (ctls.length) {
             result = ctls[0];
         }
         return result;
-    };
+    }
 
-    mapProto.addResultsPanel = function (options) {
-        const self = this;
+    async wait(functionOrPromise) {
+        let result;
+        const promise = Util.isFunction(functionOrPromise) ? functionOrPromise() : functionOrPromise;
+        const li = this.getLoadingIndicator();
+        const waitId = li?.addWait();
+        try {
+            result = await promise;
+        }
+        catch (e) {
+            li?.removeWait(waitId);
+            throw e;
+        }
+        li?.removeWait(waitId);
+        return result;
+    }
+
+    addResultsPanel(options) {
         const opts = Object.assign({}, options);
-        const container = self.getControlsByClass(ControlContainer)[0];
+        const container = this.getControlsByClass(ControlContainer)[0];
         if (container) {
             opts.position = container.POSITION.RIGHT;
             return container.addControl('resultsPanel', opts);
         }
         else {
-            return self.addControl('resultsPanel', opts);
+            return this.addControl('resultsPanel', opts);
         }
-    };
+    }
 
     /*
      * Establece la extensión del mapa.
@@ -2375,9 +2427,9 @@ TC.control = TC.control || {};
      * @param {boolean} [options.animate=true] Establece si se realiza una animación al cambiar la extensión.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
-    mapProto.setExtent = function (extent, options, callback) {
+    setExtent(extent, options, callback) {
         return this.wrap.setExtent(extent, options, callback);
-    };
+    }
 
     /**
      * Obtiene la extensión actual del mapa.
@@ -2385,13 +2437,13 @@ TC.control = TC.control || {};
      * @return {array} Array de cuatro números que representan las coordenadas x mínima, y mínima, x máxima e y máxima respectivamente.
      * La unidad de las coordenadas es la correspondiente al CRS del mapa.
      */
-    mapProto.getExtent = function () {
+    getExtent() {
         return this.wrap.getExtent();
-    };
+    }
 
-    mapProto.getMaxExtent = function () {
+    getMaxExtent() {
         return this.maxExtent || null;
-    };
+    }
 
     /*
      * Establece el centro del mapa.
@@ -2400,30 +2452,28 @@ TC.control = TC.control || {};
      * @param {object} [options] Objeto de opciones.
      * @param {boolean} [options.animate=true] Establece si se realiza una animación al centrar.
      */
-    mapProto.setCenter = function (coord, options) {
+    setCenter(coord, options) {
         return this.wrap.setCenter(coord, options);
-    };
+    }
 
-    mapProto.getCenter = function () {
+    getCenter() {
         return this.wrap.getCenter();
-    };
+    }
 
-    mapProto.setRotation = function (rotation) {
+    setRotation(rotation) {
         this.wrap.setRotation(rotation);
-    };
+    }
 
-    mapProto.getRotation = function () {
+    getRotation() {
         return this.wrap.getRotation();
-    };
+    }
 
-    mapProto.getViewHTML = function () {
+    getViewHTML() {
         return this.wrap.getViewport();
-    };
+    }
 
-
-    mapProto.getCompatibleCRS = function (options = {}) {
-        const self = this;
-        const layers = options.layers || self.workLayers.concat(self.baseLayer);
+    getCompatibleCRS(options = {}) {
+        const layers = options.layers || this.workLayers.concat(this.baseLayer);
         const crsLists = layers
             .filter(function (layer) {
                 return layer.isRaster();
@@ -2437,9 +2487,9 @@ TC.control = TC.control || {};
                 return crsList.indexOf(elm) >= 0;
             });
         });
-    };
+    }
 
-    mapProto.loadProjections = async function (options = {}) {
+    async loadProjections(options = {}) {
         const crsList = options.crsList || [];
         const projectionDataList = await Promise.all(crsList
             .map((crs) => TC.getProjectionData({ crs: Util.getCRSCode(crs) })));
@@ -2451,7 +2501,7 @@ TC.control = TC.control || {};
                     crs: code,
                     def: projData.def,
                     name: projData.name,
-                    silent: index < array.length - 1 // Solo registramos proj4 en la última iteración
+                    silent: options.silent ?? index < array.length - 1 // Solo registramos proj4 en la última iteración
                 });
                 return {
                     code: code,
@@ -2464,9 +2514,9 @@ TC.control = TC.control || {};
             projList = projList.sort(Util.getSorterByProperty(options.orderBy));
         }
         return projList;
-    };
+    }
 
-    mapProto.setProjection = function (options = {}) {
+    setProjection(options = {}) {
         const self = this;
         const oldCrs = self.crs;
         return new Promise(function (resolve, reject) {
@@ -2566,11 +2616,12 @@ TC.control = TC.control || {};
                 }
             }
         });
-    };
+    }
 
-    mapProto.getMetersPerUnit = function () {
+
+    getMetersPerUnit() {
         return this.wrap.getMetersPerUnit();
-    };
+    }
 
     /**
      * Obtiene una coordenada a partir de una posición del área de visualización del mapa en píxeles.
@@ -2578,9 +2629,9 @@ TC.control = TC.control || {};
      * @param {array} xy Coordenada en píxeles de la posición en el área de visualización.
      * @return {array} Array de dos números que representa las coordenada del punto en las unidades correspondientes al CRS del mapa.
      */
-    mapProto.getCoordinateFromPixel = function (xy) {
+    getCoordinateFromPixel(xy) {
         return this.wrap.getCoordinateFromPixel(xy);
-    };
+    }
 
     /**
      * Obtiene una posición en el área de visualización a partir de una coordenada.
@@ -2588,9 +2639,9 @@ TC.control = TC.control || {};
      * @param {array} coord Coordenada en el mapa.
      * @return {array} Array de dos números que representa las posición del punto en píxeles.
      */
-    mapProto.getPixelFromCoordinate = function (coord) {
+    getPixelFromCoordinate(coord) {
         return this.wrap.getPixelFromCoordinate(coord);
-    };
+    }
 
     /**
      * Establece la extensión del mapa de forma que abarque todas las entidades geográficas pasadas por parámetro.
@@ -2602,7 +2653,7 @@ TC.control = TC.control || {};
      * @param {boolean} [options.animate=false] Realizar animación al hacer el zoom. 
      * El valor es la relación resultante de la diferencia de dimensiones entre la extensión ampliada y la original relativa a la original.
      */
-    mapProto.zoomToFeatures = function (features, options = {}) {
+    zoomToFeatures(features, options = {}) {
         const self = this;
         if (features.length > 0) {
             let bounds;
@@ -2660,9 +2711,10 @@ TC.control = TC.control || {};
                 self._on3DZoomTo({ extent: bounds });
             }
         }
-    };
+    }
 
-    mapProto._on3DZoomTo = function (options = {}) {
+
+    _on3DZoomTo(options = {}) {
         const self = this;
 
         if (self.on3DView && options.extent && options.extent.length === 4) {
@@ -2684,14 +2736,14 @@ TC.control = TC.control || {};
                 self.trigger(Consts.event.ZOOMTO, options);
             }
         }
-    };
+    }
 
     /*
      * Establece la extensión del mapa de forma que abarque todas los marcadores que existen en él.
      * El método espera a todos los marcadores pendientes de incluir, dado que el método {{#crossLink "TC.Map/addMarker:method"}}{{/crossLink}} es asíncrono.
      * @method zoomToMarkers
      */
-    mapProto.zoomToMarkers = function (options) {
+    zoomToMarkers(options) {
         var self = this;
         Promise.all(self._markerPromises).then(function () {
             var markers = [];
@@ -2710,9 +2762,9 @@ TC.control = TC.control || {};
             self.zoomToFeatures(markers, options);
             self._markerPromises = [];
         });
-    };
+    }
 
-    mapProto.zoomToLayer = function (layer, options = {}) {
+    zoomToLayer(layer, options = {}) {
         const self = this;
         layer = self.getLayer(layer);
         if (layer.isRaster()) {
@@ -2739,7 +2791,7 @@ TC.control = TC.control || {};
                 self.zoomToFeatures(layer.features, options);
             }
         }
-    };
+    }
 
     /*
      * Obtiene una capa por su identificador o devuelve la propia capa.
@@ -2747,33 +2799,24 @@ TC.control = TC.control || {};
      * @param {string|TC.Layer} layer Identificador de la capa u objeto de capa.
      * @return {TC.Layer}
      */
-    mapProto.getLayer = function (layer) {
-        const self = this;
+    getLayer(layer) {
         if (typeof layer === 'string') {
-            return self.layers.find(l => l.id === layer) || null;
+            return this.layers.find(l => l.id === layer) || null;
         }
-        if (layer instanceof Layer && layer.map === self) {
+        if (layer instanceof Layer && layer.map === this) {
             return layer;
         }
         return null;
-    };
+    }
 
-    var _getVectors = function (map) {
-        var result;
-        if (!map.vectors) {
-            result = map.addLayer({
-                id: TC.getUID(), title: TC.i18n[map.options.locale].vectorLayer, type: Consts.layerType.VECTOR
-            });
-            map.vectors = result;
-            result.then(function (vectors) {
-                map.vectors = vectors;
+    async #getMiscellaneousVectorsLayer() {
+        if (!this.#vectors) {
+            this.#vectors = await this.addLayer({
+                id: TC.getUID(), title: TC.i18n[this.options.locale].vectorLayer, type: Consts.layerType.VECTOR
             });
         }
-        else {
-            result = Promise.resolve(map.vectors);
-        }
-        return result;
-    };
+        return this.#vectors;
+    }
 
     /**
      * Añade un punto al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
@@ -2783,10 +2826,9 @@ TC.control = TC.control || {};
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {SITNA.feature.PointStyleOptions} [options] Opciones del punto.
      */
-    mapProto.addPoint = function (coord, options) {
-        var self = this;
+    addPoint(coord, options) {
         if (options && options.layer) {
-            var layer = self.getLayer(options.layer);
+            var layer = this.getLayer(options.layer);
             if (layer) {
                 layer.addPoint(coord, Util.extend(true, {}, options, { layer: layer }));
             }
@@ -2795,11 +2837,11 @@ TC.control = TC.control || {};
             }
         }
         else {
-            _getVectors(self).then(function (vectors) {
+            this.#getMiscellaneousVectorsLayer().then(function (vectors) {
                 vectors.addPoint(coord, options);
             });
         }
-    };
+    }
 
     /*
      * Añade un marcador puntual al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
@@ -2809,8 +2851,7 @@ TC.control = TC.control || {};
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
      * @param {TC.cfg.MarkerStyleOptions} [options] Opciones del marcador.
      */
-    mapProto.addMarker = async function (coord, options = {}, callback) {
-        const self = this;
+    async addMarker(coord, options = {}, callback) {
         let opts;
         if (Util.isFunction(options)) {
             callback = options;
@@ -2821,7 +2862,7 @@ TC.control = TC.control || {};
         }
         let markerPromise;
         if (opts.layer) {
-            var layer = self.getLayer(opts.layer);
+            var layer = this.getLayer(opts.layer);
             if (layer) {
                 markerPromise = layer.addMarker(coord, Util.extend(true, {}, opts, { layer: layer }));
             }
@@ -2831,18 +2872,18 @@ TC.control = TC.control || {};
         }
         else {
             // Se añade una promise más para evitar que zoomToMarkers salte antes de poblarse el array _markerPromises.
-            const vectorsPromise = _getVectors(self);
-            self._markerPromises.push(vectorsPromise)
+            const vectorsPromise = this.#getMiscellaneousVectorsLayer();
+            this._markerPromises.push(vectorsPromise)
             const vectors = await vectorsPromise;
             markerPromise = vectors.addMarker(coord, opts);
         }
-        self._markerPromises.push(markerPromise);
+        this._markerPromises.push(markerPromise);
         const marker = await markerPromise;
         if (Util.isFunction(callback)) {
             callback(marker);
         }
         return marker;
-    };
+    }
 
     /**
      * Añade una polilínea al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
@@ -2852,10 +2893,9 @@ TC.control = TC.control || {};
      * @param {array} coords Array de arrays de dos números representando las coordenadas de los vértices en las unidades del CRS del mapa.
      * @param {object} [options] Opciones de la polilínea.
      */
-    mapProto.addPolyline = function (coords, options) {
-        var self = this;
+    addPolyline(coords, options) {
         if (options && options.layer) {
-            var layer = self.getLayer(options.layer);
+            var layer = this.getLayer(options.layer);
             if (layer) {
                 layer.addPolyline(coords, Util.extend(true, {}, options, { layer: layer }));
             }
@@ -2864,11 +2904,11 @@ TC.control = TC.control || {};
             }
         }
         else {
-            _getVectors(self).then(function (vectors) {
+            this.#getMiscellaneousVectorsLayer().then(function (vectors) {
                 vectors.addPolyline(coords, options);
             });
         }
-    };
+    }
 
     /**
      * Añade un polígono al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
@@ -2879,10 +2919,9 @@ TC.control = TC.control || {};
      * El primer anillo es el exterior y el resto son islas. No es necesario cerrar los anillos (poner el mismo vértice al principio y al final).
      * @param {object} [options] Opciones del polígono.
      */
-    mapProto.addPolygon = function (coords, options) {
-        var self = this;
+    addPolygon(coords, options) {
         if (options && options.layer) {
-            var layer = self.getLayer(options.layer);
+            var layer = this.getLayer(options.layer);
             if (layer) {
                 layer.addPolygon(coords, Util.extend(true, {}, options, { layer: layer }));
             }
@@ -2891,15 +2930,14 @@ TC.control = TC.control || {};
             }
         }
         else {
-            _getVectors(self).then(function (vectors) {
+            this.#getMiscellaneousVectorsLayer().then(function (vectors) {
                 vectors.addPolygon(coords, options);
             });
         }
-    };
+    }
 
-    mapProto.removeFeatures = function (features) {
-        const self = this;
-        self
+    removeFeatures(features) {
+        this
             .workLayers
             .filter(wl => wl instanceof Vector)
             .map(function (layer) {
@@ -2909,152 +2947,137 @@ TC.control = TC.control || {};
                 };
             })
             .forEach(fg => fg.features.forEach(f => fg.layer.removeFeature(f)));
-    };
+    }
 
-
-    mapProto.getBaseLayer = function () {
+    getBaseLayer() {
         return this.baseLayer || this.baseLayers[0];
-    };
+    }
 
-    mapProto.getResolutions = function () {
+    getResolutions() {
         return this.wrap.getResolutions();
-    };
+    }
 
-    mapProto.getResolution = function () {
+    getResolution() {
         return this.wrap.getResolution();
-    };
+    }
 
-    mapProto.setResolution = function (resolution) {
+    setResolution(resolution) {
         return this.wrap.setResolution(resolution);
-    };
+    }
 
-    mapProto.exportFeatures = async function (features, options = {}) {
-        var self = this;
-        const featuresToExport = features.filter(f => !f.options.noExport);
-        var loadingCtl = self.getLoadingIndicator();
-        var waitId = loadingCtl && loadingCtl.addWait();
-        // Eliminamos las elevaciones nulas
-        // En GPX hay un bug con los valores cero, que hace que se tome el valor de elevación del punto previo, por eso ponemos NaN.
-        const elevSubst = options.format === Consts.format.GPX ? Number.NaN : 0;
-        featuresToExport.forEach(function (feature, idx) {
-            // Decodificamos entidades HTML de la feature
-            const data = feature.getData();
-            for (let key in data) {
-                if (/&(\w+|#\d{2,4});/g.test(key)) {
-                    const value = data[key];
-                    const newData = {};
-                    const elm = document.createElement('div');
-                    elm.innerHTML = key;
-                    newData[elm.innerText] = value;
-                    feature.unsetData(key);
-                    feature.setData(newData);
+    async exportFeatures(features, options = {}) {
+        return await this.wait(async () => {
+            const featuresToExport = features.filter(f => !f.options.noExport);
+            // Eliminamos las elevaciones nulas
+            // En GPX hay un bug con los valores cero, que hace que se tome el valor de elevación del punto previo, por eso ponemos NaN.
+            const elevSubst = options.format === Consts.format.GPX ? Number.NaN : 0;
+            featuresToExport.forEach(function (feature, idx) {
+                // Decodificamos entidades HTML de la feature
+                const data = feature.getData();
+                for (let key in data) {
+                    if (/&(\w+|#\d{2,4});/g.test(key)) {
+                        const value = data[key];
+                        const newData = {};
+                        const elm = document.createElement('div');
+                        elm.innerHTML = key;
+                        newData[elm.innerText] = value;
+                        feature.unsetData(key);
+                        feature.setData(newData);
+                    }
                 }
+                // Formateamos el valor de elevación
+                var flatCoords = feature.getCoords({ pointArray: true });
+                if (flatCoords.some(function (point) {
+                    return point[2] === null;
+                })) {
+                    const newFeature = feature.clone();
+                    newFeature.setId(feature.id);
+                    featuresToExport[idx] = feature = newFeature;
+                    flatCoords = feature.getCoords({ pointArray: true });
+                    flatCoords.forEach(function (point) {
+                        if (point[2] === null) {
+                            point[2] = elevSubst;
+                        }
+                    });
+                }
+            });
+
+            const format = options.format || "";
+
+            const mimeType = Consts.mimeType[options.format];
+            const zipExtRegex = /\.zip$/i;
+            const isZip = zipExtRegex.test(options.fileName);
+            let JSZip;
+            if (format === Consts.format.KMZ || isZip) {
+                JSZip = (await import("jszip")).default;
             }
-            // Formateamos el valor de elevación
-            var flatCoords = feature.getCoords({ pointArray: true });
-            if (flatCoords.some(function (point) {
-                return point[2] === null;
-            })) {
-                const newFeature = feature.clone();
-                newFeature.setId(feature.id);
-                featuresToExport[idx] = feature = newFeature;
-                flatCoords = feature.getCoords({ pointArray: true });
-                flatCoords.forEach(function (point) {
-                    if (point[2] === null) {
-                        point[2] = elevSubst;
+            if (isZip) {
+                const featureDictionary = new Map();
+                featuresToExport.forEach((feature) => {
+                    const fileName = feature.layer?.file;
+                    if (fileName) {
+                        let feats = featureDictionary.get(fileName);
+                        if (!feats) {
+                            feats = [];
+                            featureDictionary.set(fileName, feats);
+                        }
+                        feats.push(feature);
                     }
                 });
-            }
-        });
-        const format = options.format || "";
-        if (format === Consts.format.SHAPEFILE) {
-            const { default: shpFormat } = await import('../SITNA/format/Shapefile');
-            try {
-                const blob = await shpFormat.exportFeatures(featuresToExport, { crs: self.crs });
-                loadingCtl && loadingCtl.removeWait(waitId);
+
+                const getFormatFromFileName = (name) => Util.getFormatFromFileExtension(name.substr(name.lastIndexOf('.')));
+
+                const exportByFile = async (fileName, features) => {
+                    const format = getFormatFromFileName(fileName);
+                    return await this.exportFeatures(features, { format });
+                };
+
+                const entries = Array.from(featureDictionary.entries());
+                const dataCollection = await Promise.all(entries.map(elm => exportByFile(...elm)));
+                const zip = new JSZip();
+                for (var i = 0; i < dataCollection.length; i++) {
+                    const data = dataCollection[i];
+                    const fileName = entries[i][0];
+                    if (getFormatFromFileName(fileName) === Consts.format.SHAPEFILE) {
+                        // Caso especial: se devuelven varios archivos zipeados
+                        const readZip = new JSZip();
+                        const zipContent = await readZip.loadAsync(data);
+                        const zippedFiles = new Map();
+                        zipContent.forEach(function (fn, zippedFile) {
+                            zippedFiles.set(fn, zippedFile);
+                        });
+                        for (let [fn, zippedFile] of zippedFiles.entries()) {
+                            zip.file(fn, await zippedFile.async('blob'));
+                        }
+                    }
+                    else {
+                        zip.file(fileName, data);
+                    }
+                }
+                const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
                 return blob;
             }
-            catch (err) {
-                TC.error(err, [Consts.msgErrorMode.CONSOLE, Consts.msgErrorMode.TOAST]);
-                loadingCtl && loadingCtl.removeWait(waitId);
-            }
-        }
-        if (format === Consts.format.GEOPACKAGE) {
-            const { default: gpFormat } = await import('../SITNA/format/GeoPackage');
-            try {
-                const data = await gpFormat.exportFeatures(featuresToExport, { ...options, ...{ crs: self.crs } });
-                loadingCtl && loadingCtl.removeWait(waitId);
-                return data;
-            }
-            catch (err) {
-                TC.error(err, [Consts.msgErrorMode.CONSOLE, Consts.msgErrorMode.TOAST]);
-                loadingCtl && loadingCtl.removeWait(waitId);
-            }
-            return;
-        }
 
-        const mimeType = Consts.mimeType[options.format];
-        const zipExtRegex = /\.zip$/i;
-        const isZip = zipExtRegex.test(options.fileName);
-        let JSZip;
-        if (format === Consts.format.KMZ || isZip) {
-            JSZip = (await import("jszip")).default;
-        }
-        if (isZip) {
-            const featureDictionary = new Map();
-            featuresToExport.forEach((feature) => {
-                const fileName = feature.layer?.file;
-                if (fileName) {
-                    let feats = featureDictionary.get(fileName);
-                    if (!feats) {
-                        feats = [];
-                        featureDictionary.set(fileName, feats);
-                    }
-                    feats.push(feature);
-                }
-            });
 
-            const exportByFile = async function (fileName, features) {
-                const format = Util.getFormatFromFileExtension(fileName.substr(fileName.lastIndexOf('.')));
-                return await self.exportFeatures(features, { format });
-            };
-
-            const entries = Array.from(featureDictionary.entries());
-            const dataCollection = await Promise.all(entries.map(elm => exportByFile(...elm)));
-            const zip = new JSZip();
-            dataCollection.forEach((data, idx) => {
-                const fileName = entries[idx][0];
+            const data = await this.wrap.exportFeatures(featuresToExport, options);
+            if (format === Consts.format.KMZ) {
+                const zip = new JSZip();
+                const fileName = (options.fileName || 'doc') + '.kml';
                 zip.file(fileName, data);
-            });
-            const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
-            loadingCtl && loadingCtl.removeWait(waitId);
-            return blob;
-        }
+                const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
+                return blob;
+            }
+            return data;
+        });
+    }
 
-        const data = self.wrap.exportFeatures(featuresToExport, options);
-        if (format === Consts.format.KMZ) {
-            const zip = new JSZip();
-            const fileName = (options.fileName || 'doc') + '.kml';
-            zip.file(fileName, data);
-            const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
-            loadingCtl && loadingCtl.removeWait(waitId);
-            return blob;
-        }
-        loadingCtl && loadingCtl.removeWait(waitId);
-        return data;
-    };
-
-    mapProto.exportControlStates = function () {
-        const self = this;
-
-        return self.controls
-            .map(function (ctl) {
-                return ctl.exportState();
-            })
+    exportControlStates() {
+        return this.controls
+            .map((ctl) => ctl.exportState())
             .filter(function (state) {
                 // Quitamos los estados nulos o vacíos
                 if (state) {
-                    for (var key in state) {
+                    for (let key in state) {
                         if (Object.prototype.hasOwnProperty.call(state, key)) {
                             return true;
                         }
@@ -3062,45 +3085,20 @@ TC.control = TC.control || {};
                 }
                 return false;
             });
-    };
+    }
 
-    mapProto.importControlStates = function (controlStates) {
-        const self = this;
-
-        controlStates.forEach(function (state) {
-            const ctl = self.getControlById(state.id);
+    importControlStates(controlStates) {
+        controlStates.forEach((state) => {
+            const ctl = this.getControlById(state.id);
             if (ctl) {
-                self.loaded(function () {
+                this.loaded(function () {
                     ctl.importState(state);
                 });
             }
         });
-    };
+    }
 
-    var toasts = {};
-    var toastHide = function () {
-        const toast = this;
-        var container = toast;
-        do {
-            container = container.parentElement;
-        }
-        while (container && !container.matches('.' + Consts.classes.TOAST_CONTAINER));
-        const text = toast.innerHTML;
-        toast.classList.add(Consts.classes.HIDDEN);
-        if (toasts[text] !== undefined) {
-            toasts[text] = undefined;
-        }
-        setTimeout(function () {
-            if (toast.parentElement) {
-                toast.parentElement.removeChild(toast);
-            }
-            if (container && !container.querySelector('.' + Consts.classes.TOAST) && container.parentElement) {
-                container.parentElement.removeChild(container);
-            }
-        }, 1000);
-    };
-
-    mapProto.toastHide = function (text) {
+    toastHide(text) {
         var toastInfo = toasts[text];
         if (toastInfo) {
             clearTimeout(toastInfo.timeout);
@@ -3109,13 +3107,11 @@ TC.control = TC.control || {};
             }
             toastInfo.toast = null;
         }
-    };
+        return this;
+    }
 
-    mapProto.toast = function (text, options) {
-        const self = this;
-        var opts = options || {
-        };
-        var duration = opts.duration || TC.Cfg.toastDuration;
+    toast(text, options = {}) {
+        var duration = options.duration || TC.Cfg.toastDuration;
         var toastInfo = toasts[text];
         if (toastInfo) {
             clearTimeout(toastInfo.timeout);
@@ -3124,11 +3120,11 @@ TC.control = TC.control || {};
             }
             toastInfo.toast = null;
         }
-        var container = self.div.querySelector('.' + Consts.classes.TOAST_CONTAINER);
+        var container = this.div.querySelector('.' + Consts.classes.TOAST_CONTAINER);
         if (!container) {
             container = document.createElement('div');
             container.classList.add(Consts.classes.TOAST_CONTAINER);
-            (opts.container ? opts.container : self.div).appendChild(container);
+            (options.container ? options.container : this.div).appendChild(container);
         }
         const toast = document.createElement('div');
         const span = document.createElement('span');
@@ -3144,7 +3140,7 @@ TC.control = TC.control || {};
         };
 
         var className = '';
-        switch (opts.type) {
+        switch (options.type) {
             case Consts.msgType.INFO:
                 className = Consts.classes.INFO;
                 break;
@@ -3162,42 +3158,13 @@ TC.control = TC.control || {};
         toastInfo.timeout = setTimeout(function () {
             toastHide.call(toastInfo.toast);
         }, duration);
-    };
+    }
 
-    // iPad iOS7 bug fix
-    var mapHeightNeedsFix = false;
-    var setHeightFix = function (div) {
-        if (/iPad/i.test(navigator.userAgent)) {
-            var ih = window.innerHeight;
-            var mh = div.getBoundingClientRect.height;
-            var dh = matchMedia('only screen and (orientation : landscape)').matches ? 20 : 0;
-            if (mh === ih + dh) {
-                mapHeightNeedsFix = true;
-            }
-        }
-        var fix = function () {
-            div.classList.toggle(Consts.classes.IPAD_IOS7_FIX, matchMedia('only screen and (orientation : landscape)').matches);
-        };
-        if (mapHeightNeedsFix) {
-            fix();
-            window.addEventListener('resize', fix);
-        }
-        else {
-            window.removeEventListener('resize', fix);
-        }
-    };
-
-    var isRaster = function (layer) {
-        return typeof layer === 'string' ||
-            layer.type !== Consts.layerType.VECTOR && layer.type !== Consts.layerType.KML && layer.type !== Consts.layerType.WFS;
-    };
-
-    mapProto.exportImage = function () {
-        var self = this;
+    exportImage() {
         var result = null;
         var errorMsg = 'El mapa actual no es compatible con la exportación de imágenes';
-        var canvas = self.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
-        if (canvas && self.crossOrigin) {
+        var canvas = this.wrap.getViewport({ synchronous: true }).getElementsByTagName('canvas')[0];
+        if (canvas && this.crossOrigin) {
             try {
                 result = canvas.toDataURL();
             }
@@ -3209,14 +3176,36 @@ TC.control = TC.control || {};
             TC.error(errorMsg);
         }
         return result;
-    };
+    }
 
-    mapProto.loadFiles = function (files, options) {
-        const self = this;
-        self.wrap.loadFiles(files, options);
-    };
+    //parseFeatures(input) {
+    //    return this.wrap.parseFeatures(input);
+    //}
 
-    mapProto.getElevationTool = async function () {
+    loadFiles(files, options = {}) {
+        if (options.layers) {
+            const layerIds = new Set(options.layers.map((l) => l.id));
+            const onFeaturesImport = function (e) {
+                for (const layer of e.targetLayers) {
+                    layer.state = Layer.state.IDLE;
+                    this.trigger(Consts.event.LAYERUPDATE, { layer });
+                    layerIds.delete(layer.id);
+                    if (layerIds.size === 0) {
+                        this.off(Consts.event.FEATURESIMPORT, onFeaturesImport);
+                    }
+                }
+            };
+            this.on(Consts.event.FEATURESIMPORT, onFeaturesImport);
+            for (const layer of options.layers) {
+                layer.state = Layer.state.LOADING;
+                this.trigger(Consts.event.BEFORELAYERUPDATE, { layer });
+            }
+        }
+        this.wrap.loadFiles(files, options);
+        return this;
+    }
+
+    async getElevationTool() {
         const self = this;
         if (!self.elevation && !self.options.elevation) {
             return null;
@@ -3247,206 +3236,9 @@ TC.control = TC.control || {};
             self.elevation = new TC.tool.Elevation(elevationOptions);
         }
         return self.elevation;
-    };
+    }
 
-
-    const _checkMaxFeatures = function (numMaxfeatures, urlData, data) {
-        return new Promise(function (resolve) {
-            urlData.mapLayer.proxificationTool.fetchXML(urlData.url, {
-                data: data,
-                contentType: 'application/xml',
-                type: 'POST'
-            }).then(function (response) {
-                if (response instanceof XMLDocument) {
-                    const exception = response.querySelector("ExceptionReport Exception");
-                    if (exception) {
-                        resolve({
-                            errors: [{
-                                key: Consts.WFSErrors.INDETERMINATE,
-                                params: {
-                                    err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
-                                }
-                            }]
-                        });
-                        return;
-                    }
-                }
-                var featFounds = parseInt(response.querySelector("FeatureCollection").getAttribute("numberMatched") || response.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);
-                if (Number.isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
-                    resolve({
-                        errors: [{
-                            key: Consts.WFSErrors.MAX_NUM_FEATURES
-                        }]
-                    });
-                    return;
-                }
-                else if (featFounds === 0) {
-                    resolve({
-                        errors: [{
-                            key: Consts.WFSErrors.NO_FEATURES
-                        }]
-                    });
-                    return;
-                }
-                else
-                    resolve(featFounds);
-
-            }).catch(function (e) {
-                //return Promise.reject(error);
-
-                resolve({
-                    errors: [{
-                        key: Consts.WFSErrors.INDETERMINATE,
-                        params: { err: e.name, errorThrown: e.message }
-                    }]
-                });
-                return;
-            });
-
-            //TC.ajax({
-            //    url: url,
-            //    data: data,
-            //    contentType: 'application/xml',
-            //    responseType: 'application/xml',
-            //    method: 'POST'
-            //}).then(function (response) {
-            //    const responseData = response.data;
-            //    if (responseData instanceof XMLDocument) {
-            //        const exception = responseData.querySelector("ExceptionReport Exception")
-            //        if (exception) {
-            //            resolve({
-            //                errors: [{
-            //                    key: Consts.WFSErrors.INDETERMINATE,
-            //                    params: {
-            //                        err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
-            //                    }
-            //                }]
-            //            })
-            //            return;
-            //        }
-            //    }
-            //    var featFounds = parseInt(responseData.querySelector("FeatureCollection").getAttribute("numberMatched") || responseData.querySelector("FeatureCollection").getAttribute("numberOfFeatures"), 10);                
-            //    if (Number.isNaN(featFounds) || featFounds > parseInt(numMaxfeatures, 10)) {
-            //        resolve({
-            //            errors: [{
-            //                key: Consts.WFSErrors.MAX_NUM_FEATURES
-            //            }]
-            //        });
-            //        return;
-            //    }
-            //    else if (featFounds === 0) {
-            //        resolve({
-            //            errors: [{
-            //                key: Consts.WFSErrors.NO_FEATURES
-            //            }]
-            //        });
-            //        return;
-            //    }
-            //    else
-            //        resolve(featFounds);
-
-            //}, function (e) {
-            //    resolve({
-            //        errors: [{
-            //            key: Consts.WFSErrors.INDETERMINATE,
-            //            params: { err: e.name, errorThrown: e.message }
-            //        }]
-            //    });
-            //    return;
-            //});
-        });
-    };
-
-    const _makePostCall = function (objLayer, data) {
-        return new Promise(function (resolve) {
-            objLayer.mapLayer.proxificationTool.fetch(objLayer.url, {
-                data: data,
-                contentType: 'application/xml',
-                type: 'POST'
-            }).then(function (response) {
-                if (response instanceof XMLDocument) {
-                    const exception = response.querySelector("ExceptionReport Exception");
-                    if (exception) {
-                        resolve({
-                            errors: [{
-                                key: Consts.WFSErrors.INDETERMINATE,
-                                params: {
-                                    err: exception.getAttribute("exceptionCode"), errorThrown: exception.querySelector("ExceptionText").textContent
-                                }
-                            }]
-                        });
-                        return;
-                    }
-                }
-                resolve({ response: response });
-            }).catch(function (e) {
-                resolve({
-                    errors: [{
-                        key: Consts.WFSErrors.INDETERMINATE,
-                        params: { err: e.name, errorThrown: e.message }
-                    }]
-                });
-                return;
-            });
-        });
-    };
-
-    const magicFunction = async function (layer, availableLayers, filter) {
-        //obtenemos el describe featuretype de cada capa
-        let response = await layer.describeFeatureType(availableLayers);
-        var returnObject = {};
-        if (availableLayers.length === 1) {
-            var obj = {};
-            obj[availableLayers[0]] = response;
-            response = obj;
-        }
-        //buscamos las geometrías por cada respuesta
-        for (var layerName in response) {
-            let _filter;
-            var geometryFields = [];
-            for (var k in response[layerName]) {
-                if (Util.isGeometry(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
-                    //if (/^gml:\w+PropertyType$/.test(response[layerName][k].type) && !response[layerName][k].nillable && !response[layerName][k].minOccurs) {
-                    geometryFields.push(k);
-                }
-            }
-            //Si solo hay un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
-            //para poner el nombre de la geometría
-            if (geometryFields.length <= 1) {
-                const recursive = (filter, geomName) => {
-                    if (filter instanceof TC.filter.LogicalNary) {
-                        filter.conditions.forEach((condition) => recursive(condition, geomName));
-                    }
-                    else if (filter instanceof TC.filter.Spatial) {
-                        filter.geometryName = geomName;
-                        return filter;
-                    }
-                };
-                _filter = Object.assign(new filter.constructor(), recursive(filter, geometryFields.length === 0 ? null : geometryFields[0]));
-            }
-            //Si has mas de un campo de tipo geometría bsucamos recursivamente entre en los filtros logicos And y or a la caza de filtros espaciales
-            //para duplicar el filtro con los nombres de las geometrias y los emvolvemos en un filtro OR
-            else if (geometryFields.length > 1) {
-                const recursive = (filter, geomNames) => {
-                    if (filter instanceof TC.filter.LogicalNary) {
-                        filter.conditions.forEach((condition) => recursive(condition, geomNames));
-                    }
-                    else if (filter instanceof TC.filter.Spatial) {
-                        return TC.filter.or.apply(null, geomNames.reduce((acc, curr) => {
-                            acc.push(new TC.filter[filter.getTagName()](curr, filter.geometry, filter.srsName));
-                            return acc;
-                        }, []));
-                    }
-                };
-                _filter = Object.assign(new filter.constructor(), recursive(filter, geometryFields));
-            }
-            //ahora construimos el objeto que de vuelta
-            returnObject[layerName] = _filter;
-        }
-        return returnObject;
-    };
-
-    mapProto.extractFeatures = function (options = {}) {
+    extractFeatures(options = {}) {
         const self = this;
         const arrPromises = [];
         const filter = options.filter;
@@ -3469,30 +3261,23 @@ TC.control = TC.control || {};
                 return Consts.SRSDOWNLOAD_GEOJSON_KML;
             return Util.toURNCRS(self.getCRS());
         };
-        const _postOrDownload = function (objlayer, data) {
-            return new Promise(function (resolve) {
-                if (!download) {
-                    _makePostCall(objlayer, data).then(function (response) {
-                        if (response.errors && response.errors.length > 0) {
-                            response.errors[0].params.serviceTitle = objlayer.service.mapLayers.reduce(function (prev, cur) {
-                                return prev || cur.title;
-                            }, '') || _getServiceTitle(objlayer.service);
-                            resolve(response);
-                        }
-                        else {
-                            resolve(response);
-                        }
-                    });
+        const _postOrDownload = async function (objlayer, data) {
+            if (!download) {
+                const response = await _makePostCall(objlayer, data);
+                if (response.errors && response.errors.length > 0) {
+                    response.errors[0].params.serviceTitle = objlayer.service.mapLayers.reduce(function (prev, cur) {
+                        return prev || cur.title;
+                    }, '') || _getServiceTitle(objlayer.service);
                 }
-                else {
-                    objlayer.mapLayer.proxificationTool.cacheHost.getAction(objlayer.url).then(function (cacheAction) {
-                        resolve({
-                            url: cacheAction.action(objlayer.url),
-                            data: data
-                        });
-                    });
-                }
-            });
+                return response;
+            }
+            else {
+                const cacheAction = await objlayer.mapLayer.proxificationTool.cacheHost.getAction(objlayer.url);
+                return {
+                    url: cacheAction.action(objlayer.url),
+                    data: data
+                };
+            }
         };
         layersToExtract.forEach(function (layer) {
             if (!layer.getVisibility() || self.workLayers.indexOf(layer) < 0 || layer.type !== Consts.layerType.WMS) {
@@ -3585,47 +3370,45 @@ TC.control = TC.control || {};
                     }
                     const operationUrl = capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post.href;
 
-                    Promise.all([
-                        magicFunction(service.mapLayers[0], availableLayers, filter)//clonar filtro
-                    ]).then(function (response) {
-                        var filter = response[0]; //1
-                        if (_numMaxFeatures) {
-                            _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer: service.mapLayers[0] }, Util.WFSQueryBuilder(filter, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
-                                if (response.errors && response.errors.length > 0) {
-                                    switch (response.errors[0].key) {
-                                        case Consts.WFSErrors.INDETERMINATE:
-                                            response.errors[0].params.serviceTitle = service.mapLayers.reduce((prev, cur) => prev || cur.title, '') || _getServiceTitle(service);
-                                            break;
-                                        case Consts.WFSErrors.MAX_NUM_FEATURES:
-                                            response.errors[0].params = { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) };
-                                            break;
-                                        case Consts.WFSErrors.NO_FEATURES:
-                                            response.errors[0].params = { serviceTitle: _getServiceTitle(service) };
-                                            break;
+                    getFiltersForLayers(service.mapLayers[0], availableLayers, filter)//clonar filtro
+                        .then(function (filters) {
+                            if (_numMaxFeatures) {
+                                _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer: service.mapLayers[0] }, Util.WFSQueryBuilder(filters, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
+                                    if (response.errors && response.errors.length > 0) {
+                                        switch (response.errors[0].key) {
+                                            case Consts.WFSErrors.INDETERMINATE:
+                                                response.errors[0].params.serviceTitle = service.mapLayers.reduce((prev, cur) => prev || cur.title, '') || _getServiceTitle(service);
+                                                break;
+                                            case Consts.WFSErrors.MAX_NUM_FEATURES:
+                                                response.errors[0].params = { limit: _numMaxFeatures, serviceTitle: _getServiceTitle(service) };
+                                                break;
+                                            case Consts.WFSErrors.NO_FEATURES:
+                                                response.errors[0].params = { serviceTitle: _getServiceTitle(service) };
+                                                break;
+                                        }
+                                        resolve(response);
                                     }
-                                    resolve(response);
-                                }
-                                else {
-                                    _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
-                                        resolve(Object.assign({ service: service, errors: errors }, response));
-                                    });
-                                }
-                            });
-                        }
-                        else {
-                            _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filter, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
-                                resolve(Object.assign({ service: service, errors: errors }, response));
+                                    else {
+                                        _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filters, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
+                                            resolve(Object.assign({ service: service, errors: errors }, response));
+                                        });
+                                    }
+                                });
+                            }
+                            else {
+                                _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filters, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
+                                    resolve(Object.assign({ service: service, errors: errors }, response));
 
+                                });
+                            }
+                        }).catch(function (e) {
+                            resolve({
+                                errors: [{
+                                    key: Consts.WFSErrors.INDETERMINATE,
+                                    params: { err: e.name, errorThrown: e.message, serviceTitle: _getServiceTitle(service) }
+                                }]
                             });
-                        }
-                    }).catch(function (e) {
-                        resolve({
-                            errors: [{
-                                key: Consts.WFSErrors.INDETERMINATE,
-                                params: { err: e.name, errorThrown: e.message, serviceTitle: _getServiceTitle(service) }
-                            }]
                         });
-                    });
                 }, function (e) {
                     var service = null;
                     for (var title in services)
@@ -3637,23 +3420,23 @@ TC.control = TC.control || {};
             }));
         });
         return arrPromises;
-    };
+    }
 
-    mapProto.updateSize = function () {
+    updateSize() {
         this.wrap.updateSize();
-    };
+        return this;
+    }
 
-    mapProto.linkTo = function (map) {
+    linkTo(map) {
         this.wrap.linkTo(map);
-    };
+        return this;
+    }
 
-
-    mapProto.loadRecentFiles = async function () {
-        const self = this;
+    async loadRecentFiles() {
         const recentFilePromises = [];
-        for (var i = 0; i < self.recentFileCount; i++) {
+        for (var i = 0; i < this.recentFileCount; i++) {
             recentFilePromises.push(localforage
-                .getItem(self.RECENT_FILES_STORE_KEY_PREFIX + i)
+                .getItem(this.RECENT_FILES_STORE_KEY_PREFIX + i)
                 .catch(err => console.warn(err)));
         }
         const results = [];
@@ -3662,11 +3445,11 @@ TC.control = TC.control || {};
                 results.push(entry);
             }
         }
-        self.recentFiles = results;
+        this.recentFiles = results;
         return results;
-    };
+    }
 
-    mapProto.storeRecentFiles = async function (entries) {
+    async storeRecentFiles(entries) {
         const self = this;
         entries = entries || self.recentFiles;
         for (var i = 0; i < self.recentFileCount; i++) {
@@ -3683,11 +3466,9 @@ TC.control = TC.control || {};
             }
         }
         self.recentFiles = entries;
-    };
+    }
 
-    const recentFileEntrySemaphore = Util.createSemaphore();
-
-    mapProto.addRecentFileEntry = async function (newEntry) {
+    async addRecentFileEntry(newEntry) {
         // Evitamos llamadas concurrentes, porque si se está cargando un KML con múltiples capas
         // se crea una condición de carrera al añadir el archivo a la lista
         await recentFileEntrySemaphore.acquire();
@@ -3719,15 +3500,14 @@ TC.control = TC.control || {};
         await self.storeRecentFiles(self.recentFiles);
         self.trigger(Consts.event.RECENTFILEADD, { file: newEntry });
         recentFileEntrySemaphore.release();
-    };
+    }
 
-    mapProto.removeRecentFileEntry = async function (index) {
-        const self = this;
-        self.recentFiles.splice(index, 1);
-        await self.storeRecentFiles(self.recentFiles);
-    };
+    async removeRecentFileEntry(index) {
+        this.recentFiles.splice(index, 1);
+        await this.storeRecentFiles(this.recentFiles);
+    }
 
-    mapProto.loadRecentFileEntry = async function (index) {
+    async loadRecentFileEntry(index) {
         const self = this;
         const entry = self.recentFiles[index];
         if (entry) {
@@ -3763,9 +3543,148 @@ TC.control = TC.control || {};
             }
         }
         return null;
-    };
+    }
+}
 
-})();
+var deleteTreeCache = function (layer) {
+    if (layer.type === Consts.layerType.WMS) {
+        layer.tree = null;
+    }
+};
+
+/*
+    * Función que mezcla opciones de mapa relativos a capa, teniendo cuidado de que puede haber objetos de opciones de capa o identificadores de capa.
+    * En este último caso, si no son la opción prioritaria, hay que sustituirlos por los objetos de definiciones de capa.
+    */
+var mergeLayerOptions = function (optionsArray, propertyName) {
+    const self = this;
+    // lista de opciones de capa de los argumentos
+    var layerOptions = Array.prototype.slice.call(optionsArray).map(function (elm) {
+        var result = {};
+        if (elm) {
+            result[propertyName] = elm[propertyName];
+        }
+        return result;
+    });
+    if (propertyName === 'availableBaseLayers') console.log("layerOptions", layerOptions);
+    // añadimos las opciones de capa de la configuración general
+    var layerOption = {};
+    layerOption[propertyName] = TC.Cfg[propertyName];
+    layerOptions.unshift(layerOption);
+
+    //Si se han definido baseLayers en el visor, hay que hacer un merge con las predefinidas en la API
+    if (propertyName === 'baseLayers' && layerOptions[1]['baseLayers']) {
+        layerOption = layerOptions[1];
+
+        for (var i = 0; i < layerOption.baseLayers.length; i++) {
+            if (typeof layerOption.baseLayers[i] === 'object') {
+                Util.extend(layerOption.baseLayers[i], getAvailableBaseLayer.call(self, layerOption.baseLayers[i].id));
+            }
+        }
+    } else {
+        layerOptions.unshift(true); // Deep merge
+        layerOption = Util.extend.apply(this, layerOptions);
+        if (propertyName === 'availableBaseLayers') console.log("layerOption", layerOption);
+    }
+
+    return layerOption[propertyName];
+};
+
+const mergeControlOptions = function (controlOptions) {
+
+    if (controlOptions.controlContainer) {
+
+        if (Array.isArray(controlOptions.controlContainer.controls)) {
+
+            controlOptions.controlContainer.controls.forEach((ctl) => {
+                Object.keys(ctl).filter((key) => key !== "position").forEach((name) => {
+                    if (controlOptions[name] !== undefined) {
+                        if (typeof ctl[name] === 'boolean') {
+                            ctl[name] = {};
+                        }
+                        Util.extend(ctl[name], controlOptions[name]);
+                        delete controlOptions[name];
+                    }
+                });
+            });
+
+        } else {
+            // GLS compatibilidad hacia atrás
+
+            Object.keys(controlOptions).filter(function (key) {
+                return Object.keys(controlOptions.controlContainer.controls).indexOf(key) > -1;
+            }).forEach(function (key) {
+                const containerControl = controlOptions.controlContainer.controls[key];
+                if (typeof containerControl.options === 'boolean') {
+                    containerControl.options = {};
+                }
+                Util.extend(containerControl.options, controlOptions[key]);
+                delete controlOptions[key];
+            });
+        }
+    }
+
+    return controlOptions;
+};
+
+const mergeOptions = function () {
+    const argArray = [true, {}, TC.Cfg].concat(Array.prototype.slice.call(arguments));
+    const result = this.options = Util.extend.apply(this, argArray);
+    // Concatenamos las colecciones availableBaseLayers
+    result.availableBaseLayers = TC.Cfg.availableBaseLayers.concat.apply(TC.Cfg.availableBaseLayers, Array.prototype.map.call(arguments, function (arg) {
+        return arg.availableBaseLayers || [];
+    }));
+    result.baseLayers = mergeLayerOptions.call(this, arguments, 'baseLayers');
+    result.workLayers = mergeLayerOptions.call(this, arguments, 'workLayers');
+
+    const controls = Array.prototype.slice.call(arguments)
+        .filter(elem => elem.controls)
+        .map(elem => elem.controls);
+    if (controls.length > 0) {
+        result.controls = Util.extend(true, result.controls, mergeControlOptions(Util.extend(true, controls[0], controls[1])));
+    }
+    return result;
+};
+
+var crsLayerError = function (map, layer) {
+    var errorMessage = 'Layer "' + layer.title + '" ("' + layer.names + '"): ';
+    var reason;
+    if (layer.isValidFromNames()) {
+        reason = 'layerSrsNotCompatible';
+    } else {
+        reason = 'layerNameNotValid';
+    }
+    errorMessage += Util.getLocaleString(map.options.locale, reason);
+    TC.error(errorMessage);
+    map.trigger(Consts.event.LAYERERROR, { layer: layer, reason: reason });
+
+    const error = Error(errorMessage);
+    error.layerId = layer.id;
+    return error;
+};
+
+const appendRasterEvents = function (layer) {
+    layer.wrap.$events.on(Consts.event.TILELOADERROR, function (event) {
+        if ((event.error.code && event.error.code.toString() != '404') && (event.error.text != 'offline')) {
+            const wrap = this;
+            if (!wrap._tileloaderror) {
+                const path = layer.getPath();
+                const title = path.length ? path[path.length - 1] : layer.title;
+                layer.map.toast(Util.getLocaleString(layer.map.options.locale, 'tileload.error',
+                    { name: title, error: event.error.text }),
+                    { type: Consts.msgType.ERROR });
+                wrap._tileloaderror = true;
+                const onTileload = function (e) {
+                    if (e.tile.src && e.tile.src !== Consts.BLANK_IMAGE) {
+                        delete wrap._tileloaderror;
+                        wrap.$events.off(Consts.event.TILELOAD, onTileload);
+                    }
+                };
+                wrap.$events.on(Consts.event.TILELOAD, onTileload);
+            }
+        }
+    });
+};
 
 /**
  * Árbol de capas del mapa.
@@ -3784,5 +3703,5 @@ TC.control = TC.control || {};
  * @type array
  */
 
-const BasicMap = TC.Map;
+TC.Map = BasicMap;
 export default BasicMap;
