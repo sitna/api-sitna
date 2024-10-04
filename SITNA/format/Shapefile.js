@@ -1,4 +1,5 @@
-﻿import Consts from '../../TC/Consts';
+﻿import BinaryFormat, { FieldNameError } from './BinaryFormat';
+import Consts from '../../TC/Consts';
 import Util from '../../TC/Util';
 import Point from '../feature/Point';
 import Polygon from '../feature/Polygon';
@@ -6,7 +7,7 @@ import MultiPolygon from '../feature/MultiPolygon';
 import Polyline from '../feature/Polyline';
 import MultiPolyline from '../feature/MultiPolyline';
 
-const defaultEncoding = "ISO-8859-1";
+const defaultEncoding = 'ISO-8859-1';
 
 const dbfDataType = {
     CHARACTER: 'C',
@@ -56,18 +57,18 @@ const dbfDataTypes = new Map([
     [Consts.dataType.SMALLINT, dbfDataType.NUMERIC],
     [Consts.dataType.MEDIUMINT, dbfDataType.NUMERIC],
     [Consts.dataType.INTEGER, dbfDataType.NUMERIC],
-    [Consts.dataType.FLOAT, dbfDataType.FLOAT],
-    [Consts.dataType.DOUBLE, dbfDataType.DOUBLE],
+    [Consts.dataType.FLOAT, dbfDataType.NUMERIC], // Librería dbf no soporta tipos numéricos distintos de NUMERIC
+    [Consts.dataType.DOUBLE, dbfDataType.NUMERIC], // Librería dbf no soporta tipos numéricos distintos de NUMERIC
     [Consts.dataType.STRING, dbfDataType.CHARACTER],
     [Consts.dataType.DATE, dbfDataType.DATE],
     [Consts.dataType.DATETIME, dbfDataType.TIMESTAMP]
 ]);
 
-
 const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
     if (!shp || !prj || !dbf) {
         throw 'fileImport.shapeImcomplete';
     }
+    const fileNameWithoutExtension = fileName.replace(/\.shp$/i, '');
 
     const { default: shpjs } = await import('@sitna/shpjs/dist/shp');
     const shapes = await shpjs.combine([
@@ -124,16 +125,9 @@ const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
         ];
         // El parser no añade ids, los añadimos nosotros.
         collection.features.forEach((f, i) => {
-            f.id = `${fileName}.${i + 1}`;
+            f.id = `${fileNameWithoutExtension}.${i + 1}`;
         });
         collection.metadata = { ...metadata, ...{ geometries } };
-        collection.metadata.geometries = [
-            {
-                name: 'geometry',
-                type: Util.getGeometryType(geometryType),
-                originalType: geometryType
-            }
-        ];
         return collection;
     });
 };
@@ -189,48 +183,63 @@ const exportFeatures = async function (features, options = {}) {
         import('@aleffabricio/shp-write/index'),
         import('dbf')
     ]);
+
     let layerId;
     for (layerId in layerIds) {
         //agrupar las features por tipos
         const groups = layerIds[layerId].reduce(fillGroupMap, new Map());
         for (let [geometryType, featureList] of groups.entries()) {
+
+            if (!options.adaptNames) {
+                for (const feature of featureList) {
+                    for (const name in feature.data) {
+                        if (name.length > 10 || !/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(name)) {
+                            throw new FieldNameError('Field "' + name + '" is invalid', { cause: name });
+                        }
+                    }
+                }
+            }
+
             const firstFeature = featureList[0] ?? {};
             const featureTypeMetadata = await firstFeature.layer?.getFeatureTypeMetadata();
 
-            const dbfMetadata = featureTypeMetadata?.attributes.map((attr) => {
-                if (attr.name.length > 10 || !/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(attr.name)) {
-                    throw Error('Field "' + attr.name + '" is invalid');
-                }
-                if (featureTypeMetadata.origin === Consts.format.SHAPEFILE && attr.originalType) {
+            const dbfMetadata = featureTypeMetadata
+                ?.attributes
+                .filter((attr) => !attr.isId)
+                .filter((attr) => !attr.optional || featureList.some((feat) => Object.prototype.hasOwnProperty.call(feat.data, attr.name)))
+                .map((attr) => {
+                    const name = attr.name;
+                    if (featureTypeMetadata.origin === Consts.format.SHAPEFILE && attr.originalType) {
+                        return {
+                            name,
+                            type: attr.originalType.dataType,
+                            size: attr.originalType.length - attr.originalType.decimalCount,
+                            decimalCount: attr.originalType.decimalCount
+                        };
+                    }
+                    const type = dbfDataTypes.get(attr.type) || dbfDataType.CHARACTER;
+                    let size;
+                    switch (type) {
+                        case dbfDataType.CHARACTER:
+                            size = 254;
+                            break;
+                        case dbfDataType.LOGICAL:
+                            size = 1;
+                            break;
+                        case dbfDataType.DATE:
+                            size = 8;
+                            break;
+                        case dbfDataType.NUMERIC:
+                        case dbfDataType.FLOAT:
+                            size = 18;
+                            break;
+                    }
                     return {
-                        name: attr.name,
-                        type: attr.originalType.dataType,
-                        size: attr.originalType.length
+                        name,
+                        type,
+                        size
                     };
-                }
-                const type = dbfDataTypes.get(attr.type) || dbfDataType.CHARACTER;
-                let size;
-                switch (type) {
-                    case dbfDataType.CHARACTER:
-                        size = 254;
-                        break;
-                    case dbfDataType.LOGICAL:
-                        size = 1;
-                        break;
-                    case dbfDataType.DATE:
-                        size = 8;
-                        break;
-                    case dbfDataType.NUMBER:
-                    case dbfDataType.FLOAT:
-                        size = 18;
-                        break;
-                }
-                return {
-                    name: attr.name,
-                    type,
-                    size
-                };
-            });
+                });
 
             arrPromises.push(new Promise(function (resolve) {
                 const data = featureList.reduce(function (prev, curr) {
@@ -241,8 +250,9 @@ const exportFeatures = async function (features, options = {}) {
                             val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
                             val;
                     }
-                    if (curr.getStyle().label && !curr.data.name)
+                    if (curr.getStyle().label && !curr.data.name) {
                         data.name = curr.getStyle().label;
+                    }
                     return prev.concat([data]);
                 }, []);
                 const geometries = featureList.reduce(function (prev, curr) {
@@ -253,16 +263,27 @@ const exportFeatures = async function (features, options = {}) {
                     //si el sistema de referencia es distinto a EPSG:4326 reproyecto las geometrias							
                     return prev.concat([curr.geometry]);
                 }, []);
+
+                const fileName = layerId + (groups.size > 1 ? '_' + geometryType : '');
                 //generamos el un shape mas sus allegados por grupo
-                // No pasamos los atributos a shpWrite porque no tiene en cuenta metadatos, usamos dbf para ello
-                shpWrite.write([]
-                    , geometryType
-                    , geometries
-                    , function (_empty, content) {
-                        content.dbf = dbf.structure(data, dbfMetadata);
-                        const fileName = layerId + (groups.size > 1 ? '_' + geometryType : '');
-                        resolve({ fileName, content });
-                    });
+                if (dbfMetadata) {
+                    // No pasamos los atributos a shpWrite porque no tiene en cuenta metadatos, usamos dbf para ello
+                    shpWrite.write([]
+                        , geometryType
+                        , geometries
+                        , function (_empty, content) {
+                            content.dbf = dbf.structure(data, dbfMetadata);
+                            resolve({ fileName, content });
+                        });
+                }
+                else {
+                    shpWrite.write(data
+                        , geometryType
+                        , geometries
+                        , function (_empty, content) {
+                            resolve({ fileName, content });
+                        });
+                }
             }));
         }
     }
@@ -286,7 +307,88 @@ const exportFeatures = async function (features, options = {}) {
     return await zip.generateAsync({ type: "blob" });
 };
 
-export default {
-    importFile,
-    exportFeatures
-};
+class Shapefile extends BinaryFormat {
+    #shapeParts = {};
+
+    async readFeatures(source, options = {}) {
+        let result = null;
+        let fileName = options.fileName;
+        const getExtension = (fileName) => fileName.substring(fileName.lastIndexOf(".") + 1);
+        const getFileNameWithoutExtension = (fileName) => fileName.substring(0, fileName.lastIndexOf("."));
+        const fileNameWithoutExtension = getFileNameWithoutExtension(fileName) || fileName;
+        fileName = fileName.match(/^(?:spaSITNA)?(.+)/i)[1];
+
+        // Factoría de deferreds (promesas que tienen métodos resolve y reject).
+        const defer = () => {
+            const methods = {}
+            return Object.assign(
+                new Promise((resolve, reject) => Object.assign(methods, { resolve, reject })),
+                methods
+            );
+        };
+
+        const resolveFile = (shapeParams, fileName, data) => {
+            shapeParams[getExtension(fileName)] = data;
+            const deferred = shapeParams.deferreds[shapeParams.fileNames.indexOf(fileName)];
+            if (deferred) {
+                deferred.resolve();
+            }
+        };
+
+        //este objeto tiene una referencia al objeto del atributo "filename" del objeto zipCompressed
+        let shpParams = null;
+        //Si no tiene información referente al shp actual lo inicializo
+        if (!Object.prototype.hasOwnProperty.call(this.#shapeParts, fileNameWithoutExtension)) {
+            const fileNames = options
+                .fileNames
+                .filter((fn) => fn.startsWith(fileNameWithoutExtension))
+                .filter((fn) => /\.(shp|dbf|str|cst|cpg|prj|shx|idx|sbn|xml)$/ig.test(fn));
+
+            shpParams = this.#shapeParts[fileNameWithoutExtension] = {
+                fileNames,
+                deferreds: fileNames.map(() => defer())
+            };
+        }
+        else {
+            //Si ya hay información del shp la recupero
+            shpParams = this.#shapeParts[fileNameWithoutExtension];
+        }
+        if (/\.(shx|idx|sbn|xml)$/ig.test(fileName)) {
+            // Estos archivos no los leo
+            resolveFile(shpParams, fileName, null);
+            result = true;
+        }
+        //los ficheros de texto los leo, guardo la promesa en un array para cuando estén todos
+        else if (/\.(cst|cpg|prj)$/ig.test(fileName)) {
+            resolveFile(shpParams, fileName, new TextDecoder().decode(source));
+            result = true;
+        }
+        //los ficheros binarios los leo, guardo la promesa en un array para cuando estén todos
+        else if (/\.(shp|dbf|str)$/ig.test(fileName)) {
+            resolveFile(shpParams, fileName, source);
+            result = true;
+
+            if (/\.(shp)$/ig.test(fileName)) {
+                shpParams.fileName = fileName;
+                await Promise.all(shpParams.deferreds);
+                const collections = await importFile(shpParams);
+                delete this.#shapeParts[fileNameWithoutExtension];
+                return collections.map((collection) => {
+                    const features = this.readGeoJsonFeatures(collection, options);
+                    features.forEach((feat) => this.featureMetadata.set(feat, collection.metadata));
+                    return features;
+                });
+            }
+        }
+        return result;
+    }
+
+    async writeFeatures(features, options = {}) {
+        return await exportFeatures(features.map((f) => f._wrap.parent), {
+            crs: options.featureProjection,
+            adaptNames: options.adaptNames
+        });
+    }
+}
+
+export default Shapefile;

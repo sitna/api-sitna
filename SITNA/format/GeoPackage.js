@@ -1,11 +1,5 @@
-﻿import {
-    GeoPackageAPI,
-    FeatureColumn,
-    GeometryColumns,
-    DataTypes,
-    BoundingBox,
-    GeometryData
-} from '../../lib/geopackagejs/dist/geopackage-browser';
+﻿import BinaryFormat, { FieldNameError } from './BinaryFormat';
+import WKT from 'ol/format/WKT';
 import Consts from '../../TC/Consts';
 import Util from '../../TC/Util';
 import Point from '../feature/Point';
@@ -15,35 +9,40 @@ import MultiPolyline from '../feature/MultiPolyline';
 import Polygon from '../feature/Polygon';
 import MultiPolygon from '../feature/MultiPolygon';
 
-const dataTypes = new Map([
-    [DataTypes.BOOLEAN, Consts.dataType.BOOLEAN],
-    [DataTypes.TINYINT, Consts.dataType.TINYINT],
-    [DataTypes.SMALLINT, Consts.dataType.SMALLINT],
-    [DataTypes.MEDIUMINT, Consts.dataType.MEDIUMINT],
-    [DataTypes.INT, Consts.dataType.INTEGER],
-    [DataTypes.INTEGER, Consts.dataType.INTEGER],
-    [DataTypes.FLOAT, Consts.dataType.FLOAT],
-    [DataTypes.DOUBLE, Consts.dataType.DOUBLE],
-    [DataTypes.REAL, Consts.dataType.DOUBLE],
-    [DataTypes.TEXT, Consts.dataType.STRING],
-    [DataTypes.DATE, Consts.dataType.DATE],
-    [DataTypes.DATETIME, Consts.dataType.DATETIME]
-]);
-const gpDataTypes = new Map([
-    [Consts.dataType.BOOLEAN, DataTypes.BOOLEAN],
-    [Consts.dataType.TINYINT, DataTypes.TINYINT],
-    [Consts.dataType.SMALLINT, DataTypes.SMALLINT],
-    [Consts.dataType.MEDIUMINT, DataTypes.MEDIUMINT],
-    [Consts.dataType.INTEGER, DataTypes.INTEGER],
-    [Consts.dataType.FLOAT, DataTypes.FLOAT],
-    [Consts.dataType.DOUBLE, DataTypes.DOUBLE],
-    [Consts.dataType.STRING, DataTypes.TEXT],
-    [Consts.dataType.DATE, DataTypes.DATE],
-    [Consts.dataType.DATETIME, DataTypes.DATETIME]
-]);
+let dataTypes;
+let gpDataTypes;
+
+const sanitizeName = function (name) {
+    let sanitizedName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (!/^[a-z]/.test(sanitizedName)) {
+        sanitizedName = 'gp_' + sanitizedName;
+    }
+    return sanitizedName;
+}
 
 const exportFeatures = async function (features, options = {}) {
+    const {
+        GeoPackageAPI,
+        FeatureColumn,
+        GeometryColumns,
+        DataTypes,
+        BoundingBox,
+        GeometryData
+    } = await import('../../lib/geopackagejs/dist/geopackage-browser');
     const featuresToExport = features.filter(f => !f.options.noExport);
+
+    gpDataTypes ??= new Map([
+        [Consts.dataType.BOOLEAN, DataTypes.BOOLEAN],
+        [Consts.dataType.TINYINT, DataTypes.TINYINT],
+        [Consts.dataType.SMALLINT, DataTypes.SMALLINT],
+        [Consts.dataType.MEDIUMINT, DataTypes.MEDIUMINT],
+        [Consts.dataType.INTEGER, DataTypes.INTEGER],
+        [Consts.dataType.FLOAT, DataTypes.FLOAT],
+        [Consts.dataType.DOUBLE, DataTypes.DOUBLE],
+        [Consts.dataType.STRING, DataTypes.TEXT],
+        [Consts.dataType.DATE, DataTypes.DATE],
+        [Consts.dataType.DATETIME, DataTypes.DATETIME]
+    ]);
 
     const fillGroupMap = function (groupMap, feature) {
         const key = Object.keys(feature.getData()).toString();
@@ -69,7 +68,7 @@ const exportFeatures = async function (features, options = {}) {
     };
     const getFieldDataTypeByMetadata = function (metadata, name) {
         if (metadata) {
-            const attr = metadata?.attributes.find(c => c.name === name);
+            const attr = metadata?.attributes?.find(c => c.name === name);
             if (attr) {
                 if (metadata.origin === Consts.format.GEOPACKAGE) {
                     return attr.originalType;
@@ -114,6 +113,35 @@ const exportFeatures = async function (features, options = {}) {
         }
     }
 
+    let currentId = 1;
+    const getSafeId = function (id) {
+        let result = id;
+        if (typeof id === 'string') {
+            // Probamos el formato xyz.123
+            result = parseInt(id.substring(id.lastIndexOf(".") + 1));
+            if (Number.isNaN(result)) {
+                result = currentId++;
+            }
+        }
+        return result;
+    };
+
+    const getSafeFeature = function (feature) {
+        let result = feature;
+        if (feature.wrap.feature.getGeometry()?.getLayout?.().length > 2) {
+            if (feature.getCoordsArray().some((coord) => coord[2] === null)) {
+                result = feature.clone();
+                result.getCoordsArray().forEach((coord) => {
+                    if (coord[2] === null) {
+                        coord[2] = 0;
+                    }
+                });
+                result.setCoordinates(result.geometry);
+            }
+        }
+        return result;
+    };
+
     var srs_id = currentCrs.substr(currentCrs.indexOf(":") + 1);
     if (!myPackage.spatialReferenceSystemDao.queryForId(srs_id)) {
         var newSRS = myPackage.spatialReferenceSystemDao.createObject();
@@ -131,8 +159,11 @@ const exportFeatures = async function (features, options = {}) {
     //const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1); 
     const layers = featuresToExport.reduce(function (rv, feature) {
         var id = typeof feature.id === "string" ? feature.id.substr(0, feature.id.lastIndexOf(".")) : options.fileName;
+        if (!id) {
+            id = feature.layer?.id || 'layer';
+        }
         //var id = feature.layer ? (typeof (feature.layer) === "string" ? feature.layer : feature.layer.id) : feature.id.substr(0, feature.id.lastIndexOf("."));
-        (rv[id] = rv[id] || []).push(feature);
+        (rv[id] = rv[id] || []).push(getSafeFeature(feature));
         return rv;
     }, {});
     let layerId;
@@ -177,11 +208,11 @@ const exportFeatures = async function (features, options = {}) {
                 return newType;
             }, 'Geometry');
 
-            const tableName = layerId + (groups.size > 1 ? "_" + groupIndex++ : "");// + (timestamp ? "_" + timestamp : "");
+            const tableName = sanitizeName(layerId + (groups.size > 1 ? "_" + groupIndex++ : ""));// + (timestamp ? "_" + timestamp : "");
             var columns = [];
             //var dataColumns = [];
-            const pkColumn = featureTypeMetadata?.attributes.find(c => c.isId);
-            const pkColumnName = pkColumn?.name ?? 'id';
+            const pkColumn = featureTypeMetadata?.attributes?.find(c => c.isId);
+            const pkColumnName = sanitizeName(pkColumn?.name ?? 'id');
 
             if (pkColumn || Object.prototype.hasOwnProperty.call(featuresToExport[0], "id") ||
                 Object.prototype.hasOwnProperty.call(featuresToExport[0], "ID")) {
@@ -201,10 +232,13 @@ const exportFeatures = async function (features, options = {}) {
             }
 
             for (var x in firstFeature.data || firstFeature.attributes || {}) {
-                var fieldName = firstFeature.attributes && firstFeature.attributes[x] ? firstFeature.attributes[x].name : x;
-                if (fieldName.toLowerCase() === pkColumnName) continue;
-                var fieldValue = firstFeature.data[fieldName];
-                const c = FeatureColumn.createColumn(i++, fieldName, fieldDataType(featureTypeMetadata, fieldName, fieldValue));
+                const attributeName = firstFeature.attributes && firstFeature.attributes[x] ? firstFeature.attributes[x].name : x;
+                if (!/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(attributeName)) {
+                    throw new FieldNameError('Field "' + attributeName + '" is invalid', { cause: attributeName });
+                }
+                if (attributeName.toLowerCase() === pkColumnName) continue;
+                var fieldValue = firstFeature.data[attributeName];
+                const c = FeatureColumn.createColumn(i++, attributeName, fieldDataType(featureTypeMetadata, attributeName, fieldValue));
                 columns.push(c);
                 //dataColumns.push(c);
             }
@@ -232,23 +266,31 @@ const exportFeatures = async function (features, options = {}) {
                 const featureRow = featureDao.newRow();
                 const geometryData = new GeometryData();
                 geometryData.setSrsId(srs_id);
-                const geometry = wkx.Geometry.parse('SRID=' + srs_id + ';' + new ol.format.WKT().writeFeature(feature.wrap.feature));
+                const geometry = wkx.Geometry.parse('SRID=' + srs_id + ';' + new WKT().writeFeature(feature.wrap.feature));
                 //const geometry=(hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))))(new ol.format.WKB().writeGeometry(feature.wrap.feature.getGeometry(),{featureProjection:currentCrs,dataProjection:currentCrs}));
                 geometryData.setGeometry(geometry);
                 featureRow.setValueWithColumnName(featureRow.geometryColumn.name, geometryData);
-                if (Object.prototype.hasOwnProperty.call(feature, "id") ||
-                    Object.prototype.hasOwnProperty.call(feature, "ID"))
-                    featureRow.setValueWithColumnName(pkColumnName, typeof feature.id === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
-                else if (Object.prototype.hasOwnProperty.call(feature.data, "id") ||
-                    Object.prototype.hasOwnProperty.call(feature.data, "ID"))
-                    featureRow.setValueWithColumnName(pkColumnName, typeof feature.id === "string" ? feature.id.substring(feature.id.lastIndexOf(".") + 1) : feature.id);
+                if (Object.prototype.hasOwnProperty.call(feature, "id")) {
+                    featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.id));
+                }
+                else if (Object.prototype.hasOwnProperty.call(feature, "ID")) {
+                    featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.ID));
+                }
+                else if (Object.prototype.hasOwnProperty.call(feature.data, "id")) {
+                    featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.data.id));
+                }
+                else if (Object.prototype.hasOwnProperty.call(feature.data, "ID")) {
+                    featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.data.ID));
+                }
                 for (var y in feature.data || feature.attributes) {
-                    const fieldName = firstFeature.attributes && firstFeature.attributes[y] ? firstFeature.attributes[x].name : y;
-                    if (fieldName === pkColumnName) {
+                    const attributeName = firstFeature.attributes && firstFeature.attributes[y] ? firstFeature.attributes[x].name : y;
+                    if (attributeName.toLowerCase() === pkColumnName) {
                         continue;
                     }
-                    const fieldValue = getSerializableValue(feature.data[fieldName], columns.find(c => c.name === fieldName).dataType);
-                    featureRow.setValueWithColumnName(fieldName, fieldValue);
+                    const fieldValue = getSerializableValue(feature.data[attributeName], columns.find(c => c.name === attributeName).dataType);
+                    if (typeof fieldValue !== 'object') {
+                        featureRow.setValueWithColumnName(attributeName, fieldValue);
+                    }
                 }
                 if (featureDao.columns.indexOf("name") >= 0 && !feature.data.name) {
                     featureRow.setValueWithColumnName("name", feature.getStyle().label);
@@ -263,13 +305,33 @@ const exportFeatures = async function (features, options = {}) {
 };
 
 const importFile = async function (buffer) {
+    const {
+        GeoPackageAPI,
+        DataTypes
+    } = await import('../../lib/geopackagejs/dist/geopackage-browser');
+
+    dataTypes ??= new Map([
+        [DataTypes.BOOLEAN, Consts.dataType.BOOLEAN],
+        [DataTypes.TINYINT, Consts.dataType.TINYINT],
+        [DataTypes.SMALLINT, Consts.dataType.SMALLINT],
+        [DataTypes.MEDIUMINT, Consts.dataType.MEDIUMINT],
+        [DataTypes.INT, Consts.dataType.INTEGER],
+        [DataTypes.INTEGER, Consts.dataType.INTEGER],
+        [DataTypes.FLOAT, Consts.dataType.FLOAT],
+        [DataTypes.DOUBLE, Consts.dataType.DOUBLE],
+        [DataTypes.REAL, Consts.dataType.DOUBLE],
+        [DataTypes.TEXT, Consts.dataType.STRING],
+        [DataTypes.DATE, Consts.dataType.DATE],
+        [DataTypes.DATETIME, Consts.dataType.DATETIME]
+    ]);
+
     const myPackage = await GeoPackageAPI.open(buffer);
     const vectorLayers = myPackage.getFeatureTables();
     const numTables = vectorLayers.length;
     var notLoaded = 0;
     const results = [];
 
-    if (vectorLayers.length > 1) self.parent.dropFilesCounter = self.parent.dropFilesCounter + vectorLayers.length - 1;
+    //if (vectorLayers.length > 1) self.parent.dropFilesCounter = self.parent.dropFilesCounter + vectorLayers.length - 1;
     for (var i = 0; i < vectorLayers.length; i++) {
         const tableMetadata = myPackage.getInfoForTable(myPackage.getFeatureDao(vectorLayers[i]));
         const arr = [];
@@ -318,7 +380,7 @@ const getFeatureTypeMetadata = function (tableMetadata) {
     return {
         name: tableMetadata.tableName,
         origin: Consts.format.GEOPACKAGE,
-        originalData: tableMetadata,
+        originalMetadata: tableMetadata,
         geometries: [
             {
                 name: tableMetadata.geometryColumns.geometryColumn,
@@ -338,7 +400,36 @@ const getFeatureTypeMetadata = function (tableMetadata) {
     };
 };
 
-export default {
-    exportFeatures,
-    importFile
-};
+class GeoPackage extends BinaryFormat {
+
+    async readFeatures(source, options) {
+        const jsonCollection = await importFile(new Uint8Array(source));
+        return jsonCollection
+            .map((jsonObj) => {
+                const features = this.readGeoJsonFeatures(jsonObj, options);
+                features.forEach((feat) => this.featureMetadata.set(feat, jsonObj.metadata));
+                return features;
+            })
+            .flat();
+    }
+
+    async writeFeatures(features, options = {}) {
+        return await exportFeatures(features.map((f) => f._wrap.parent), { crs: options.featureProjection });
+    }
+
+    groupFeatures(features) {
+        const result = {};
+        features.forEach((feat) => {
+            const featureMetadata = this.featureMetadata.get(feat);
+            if (featureMetadata) {
+                if (!Object.prototype.hasOwnProperty.call(result, featureMetadata.name)) {
+                    result[featureMetadata.name] = [];
+                }
+                result[featureMetadata.name].push(feat);
+            }
+        });
+        return result;
+    }
+}
+
+export default GeoPackage;
