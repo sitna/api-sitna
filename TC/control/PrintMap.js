@@ -652,12 +652,14 @@ class PrintMap extends MapInfo {
                     self._viewDiv.innerHTML = html;
                 });
 
-                self.getRenderedHtml(self.CLASS + '-tools', null, function (html) {
+                self.getRenderedHtml(self.CLASS + '-tools', { canShare:!!navigator.share }, function (html) {
                     div.insertAdjacentHTML('beforeend', html);
 
                     div.querySelector('.' + self.CLASS + '-btn-close').addEventListener('click', resetPrinting);
 
-                    div.querySelector('.' + self.CLASS + '-btn-pdf').addEventListener('click', self.createPdf.bind(self));
+                    div.querySelector('.' + self.CLASS + '-btn-pdf').addEventListener('click', self.downloadPdf.bind(self));
+
+                    div.querySelector('.' + self.CLASS + '-btn-share')?.addEventListener('click', self.sharePdf.bind(self));
                 });
             }
 
@@ -717,394 +719,358 @@ class PrintMap extends MapInfo {
     getContainer() {
         return this.map.on3DView ? this.map.view3D.container : this.map.div
     }
+    static imageErrorHandling (imageUrl) {
+        TC.error(self.getLocaleString('print.error'));
+        TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
+    };
+    getLogo() {
 
-    async createPdf() {
         const self = this;
+        const layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
 
-        var loadingCtrl = self.map.getLoadingIndicator();
-        var hasWait = loadingCtrl.addWait();
-        await import("pdfmake/build/pdfmake");
-        let pdfFonts = await import("pdfmake/build/vfs_fonts");
-        pdfMake.vfs = pdfFonts.pdfMake.vfs;
-        let result;
-        var canvases = self.map.wrap.getCanvas();
-        self.canvas = Util.mergeCanvases(canvases);
-        //self.canvas = Util.mergeCanvases(self.map.wrap.getCanvas());
-        var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
-        var printLayout = layout.layoutPDF;
-
-        const createPDF = function (printLayout) {
-            var filename = window.location.host + '_';
-            var title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
-
-            if (title) {
-                filename += title;
-            } else {
-                var currentDate = Util.getFormattedDate(new Date().toString(), true);
-                filename += currentDate;
-            }
-
-            try {
-                pdfMake.createPdf(printLayout).download(filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf');
-            } catch (error) {
-                self.map.toast(self.getLocaleString('print.error'), { type: Consts.msgType.ERROR });
-                TC.error(error.message + '  ' + error.stack, Consts.msgErrorMode.EMAIL);
-            }
-
-            loadingCtrl.removeWait(hasWait);
+        const onLogoError = function () {
+            var logoColumn = getLogoColumn(layout);
+            delete logoColumn.image;
+            logoColumn.text = "";
+            logoColumn.width = 0;
+            return logoColumn;
         };
 
-        const imageErrorHandling = function (imageUrl) {
-            TC.error(self.getLocaleString('print.error'));
-            TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
-        };
+        if (self.options.logo) {
+            return Util.imgToDataUrl(self.options.logo).then(function (result) {
+                const canvas = result.canvas;
+                const dataUrl = result.dataUrl;
 
-        const getLogo = function () {
-
-            const onLogoError = function () {
                 var logoColumn = getLogoColumn(layout);
-                delete logoColumn.image;
-                logoColumn.text = "";
-                logoColumn.width = 0;
+                //URI: si no se define la anchura en el layout calcula la anchura en función de proporción entre ancho y alto de la imagen y el alto de su posición en el PDF
+                if (!logoColumn.width)
+                    logoColumn.width = (canvas.width / canvas.height) * logoColumn.height;
+                logoColumn.image = dataUrl;
                 return logoColumn;
-            };
 
-            if (self.options.logo) {
-                return Util.imgToDataUrl(self.options.logo).then(function (result) {
-                    const canvas = result.canvas;
-                    const dataUrl = result.dataUrl;
+            }, function () {
+                imageErrorHandling(self.options.logo);
 
-                    var logoColumn = getLogoColumn(layout);
-                    //URI: si no se define la anchura en el layout calcula la anchura en función de proporción entre ancho y alto de la imagen y el alto de su posición en el PDF
-                    if (!logoColumn.width)
-                        logoColumn.width = (canvas.width / canvas.height) * logoColumn.height;
-                    logoColumn.image = dataUrl;
-                    return logoColumn;
-
-                }, function () {
-                    imageErrorHandling(self.options.logo);
-
-                    return onLogoError();
-                });
-            } else {
                 return onLogoError();
-            }
+            });
+        } else {
+            return onLogoError();
+        }
+    };
+    getScaleBar() {
+        const self = this;
+        var scaleBarColumn = getScaleBarColumn(getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4"));
+        const onError = function () {
+            delete scaleBarColumn.image;
+            scaleBarColumn.text = "";
+            scaleBarColumn.width = "auto";
+            return scaleBarColumn;
         };
-        const getScaleBar = function () {
-            var scaleBarColumn = getScaleBarColumn(layout);
-            const onError = function () {
-                delete scaleBarColumn.image;
-                scaleBarColumn.text = "";
-                scaleBarColumn.width = "auto";
-                return scaleBarColumn;
-            };
 
-            if (self.map.on3DView) {
-                scaleBarColumn.table = { widths: [0], body: [{ border: [false, false, false, false], text: "" }] };
-                //scaleBarColumn.table = {
-                //    widths: [layout.layoutPDF.pageSize.width - layout.layoutPDF.pageMargins[0] - layout.layoutPDF.pageMargins[2] - layout.logoWidth],
-                //    body: [
-                //        [{ border: [false, false, false, false], text: formatCameraData(), fontSize: 10, alignment: 'right' }]
-                //    ]
-                //};
-            }
-            else {
-                let scaleCtrl = self.map.getControlsByClass(ScaleBar)[0];
-                if (scaleCtrl) {
-                    var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
-                    var bounding = elem[0].getBoundingClientRect();
-                    if (bounding) {
-                        var styling = getComputedStyle(elem[0], null);
-                        var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
-                        var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
+        if (self.map.on3DView) {
+            scaleBarColumn.table = { widths: [0], body: [{ border: [false, false, false, false], text: "" }] };
+            //scaleBarColumn.table = {
+            //    widths: [layout.layoutPDF.pageSize.width - layout.layoutPDF.pageMargins[0] - layout.layoutPDF.pageMargins[2] - layout.logoWidth],
+            //    body: [
+            //        [{ border: [false, false, false, false], text: formatCameraData(), fontSize: 10, alignment: 'right' }]
+            //    ]
+            //};
+        }
+        else {
+            let scaleCtrl = self.map.getControlsByClass(ScaleBar)[0];
+            if (scaleCtrl) {
+                var elem = document.getElementsByClassName("ol-scale-line-inner"); // no cogemos el DIV del control ya que contiene los bordes y suman al ancho total
+                var bounding = elem[0].getBoundingClientRect();
+                if (bounding) {
+                    var styling = getComputedStyle(elem[0], null);
+                    var leftBorder = parseInt(styling.getPropertyValue('border-left-width').replace('px', '')) || 0;
+                    var rightBorder = parseInt(styling.getPropertyValue('border-right-width').replace('px', '')) || 0;
 
-                        scaleBarColumn.table = {
-                            widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
-                            body: [
-                                [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
-                            ]
-                        };
+                    scaleBarColumn.table = {
+                        widths: [((bounding.width > bounding.height ? bounding.width : bounding.height) - leftBorder - rightBorder) * 0.75], // lo pasamos a pt
+                        body: [
+                            [{ border: [true, false, true, true], text: scaleCtrl.getText(), fontSize: 10, alignment: 'center' }]
+                        ]
+                    };
 
-                        scaleBarColumn.layout = {
-                            paddingLeft: function (_i, _node) { return 0; },
-                            paddingRight: function (_i, _node) { return 0; },
-                            paddingTop: function (_i, _node) { return 0; },
-                            paddingBottom: function (_i, _node) { return 0; }
-                        };
+                    scaleBarColumn.layout = {
+                        paddingLeft: function (_i, _node) { return 0; },
+                        paddingRight: function (_i, _node) { return 0; },
+                        paddingTop: function (_i, _node) { return 0; },
+                        paddingBottom: function (_i, _node) { return 0; }
+                    };
 
 
-                    } else {
-                        return onError();
-                    }
                 } else {
                     return onError();
                 }
+            } else {
+                return onError();
             }
-            return scaleBarColumn;
+        }
+        return scaleBarColumn;
 
 
+    };
+
+    getLegend() {
+        const self = this;
+        var content = [];
+        let result;
+        var layers = self.map.workLayers.filter(function (layer) {
+            return layer.type === Consts.layerType.WMS && layer.getVisibility();
+        });
+        var legendByGroup = [];
+
+        var _process = function (value, parentLayer, treeLevel) {
+            if (parentLayer.isVisibleByScale(value.name)) { //Si la capa es visible, la mostramos en la leyenda
+
+                //Para las capas cargadas por POST (por ejemplo la búsquedas de Comercio Pamplona)
+                if (parentLayer.options && parentLayer.options.params && parentLayer.options.params.base64LegendSrc) {
+                    const srcBase64 = parentLayer.options.params.base64LegendSrc;
+                    result.push({ title: value.title, level: treeLevel, srcBase64: srcBase64 });
+                }
+                else if (value.legend?.length) {
+                    value.legend.forEach(l => {
+                        result.push({ title: value.title, level: treeLevel, src: l.src, name: value.name });
+                    });
+                }
+                else {
+                    result.push({ title: value.title, level: treeLevel, src: "", name: value.name });
+                }
+
+            }
         };
-        //const formatCameraData = function () {
-        //    const cameraData = self.map.view3D.getCameraData();
-        //    return self.getLocaleString("printCameraCoords", {
-        //        x: Util.formatCoord(cameraData.latitude, Consts.DEGREE_PRECISION),
-        //        y: Util.formatCoord(cameraData.longitude, Consts.DEGREE_PRECISION),
-        //        z: Util.formatCoord(cameraData.height, Consts.METER_PRECISION),
-        //        head: Math.round(cameraData.heading),
-        //        pitch: Math.round(cameraData.pitch),
-        //    })
-        //}
-        const getLegend = function () {
-            var content = [];
-            var layers = self.map.workLayers.filter(function (layer) {
-                return layer.type === Consts.layerType.WMS && layer.getVisibility();
-            });
-            var legendByGroup = [];
-
-            var _process = function (value, parentLayer, treeLevel) {
-                if (parentLayer.isVisibleByScale(value.name)) { //Si la capa es visible, la mostramos en la leyenda
-
-                    //Para las capas cargadas por POST (por ejemplo la búsquedas de Comercio Pamplona)
-                    if (parentLayer.options && parentLayer.options.params && parentLayer.options.params.base64LegendSrc) {
-                        const srcBase64 = parentLayer.options.params.base64LegendSrc;
-                        result.push({ title: value.title, level: treeLevel, srcBase64: srcBase64 });
-                    }
-                    else if (value.legend?.length) {
-                        value.legend.forEach(l => {
-                            result.push({ title: value.title, level: treeLevel, src: l.src, name: value.name });
-                        });
-                    }
-                    else {
-                        result.push({ title: value.title, level: treeLevel, src: "", name: value.name });
-                    }
-
+        var _traverse = function (o, func, parentLayer, treeLevel) {
+            if (Array.isArray(o)) {
+                for (var i = 0; i < o.length; i++) {
+                    _traverse(o[i], func, parentLayer, treeLevel);
                 }
-            };
-            var _traverse = function (o, func, parentLayer, treeLevel) {
-                if (Array.isArray(o)) {
-                    for (var i = 0; i < o.length; i++) {
-                        _traverse(o[i], func, parentLayer, treeLevel);
+            } else {
+                if (o && Object.prototype.hasOwnProperty.call(o, 'children') && o.children.length > 0) {
+                    if (o.title || o.name) {
+                        result.push({ header: o.title || o.name, level: treeLevel });
                     }
-                } else {
-                    if (o && Object.prototype.hasOwnProperty.call(o, 'children') && o.children.length > 0) {
-                        if (o.title || o.name) {
-                            result.push({ header: o.title || o.name, level: treeLevel });
-                        }
-                        _traverse(o.children, func, parentLayer, ++treeLevel);
-                    }
+                    _traverse(o.children, func, parentLayer, ++treeLevel);
                 }
-
-                if (o && Object.prototype.hasOwnProperty.call(o, 'children') && o.children.length === 0) {
-                    func.apply(this, [o, parentLayer, treeLevel]);
-                    treeLevel--;
-                }
-            };
-            const getImageAsNode = function (base64data) {
-                return new Promise(function (resolve, reject) {
-                    var i = new Image(); 
-                    i.crossOrigin = 'anonymous';
-                    i.onload = function () {
-                        resolve(i);
-                    };
-                    i.onerror = function (err) {
-                        reject(err);
-                    }
-                    i.src = base64data;
-                })
-
             }
-            const pngOrSVG = function (image) {
-                const imageWidth = image.width * 0.75;//item.image.canvas.width / 2;
-                const imageHeight = image.height * 0.75;//(imageWidth * item.image.canvas.height / item.image.canvas.width);
-                const data = {
-                    "width": imageWidth,
-                    "height": imageHeight,
-                    "margin": [0, 0, 0, 2]
-                }
-                data[image.base64 ? "image" : "svg"] = image.base64 ? image.base64 : image.svg;
-                return data; 
-            }
-            var _getLegendImages = function (_layers) {
-                return _layers.map((_layer,index) => {                    
-                    
-                    return new Promise(function (resolve, _reject) {
-                        _layer.getLegend().then(async function (legend) {
-                            var layers = legendByGroup[index].layers;
-                            //layers = layers.filter((layer) => layer.src || layer.srcBase64);
-                            await Promise.all(layers.map(async (layer) => {
-                                const layerLegend = legend[0].find((l) => l.layerName === layer.name || _layer.names.length === legend[0].length);
-                                //eliminar aquellos que no tengan visibilidad por 
-                                if (!layerLegend) {
-                                    const i = legendByGroup[index].layers.findIndex((l) => l.title === layer.title)
-                                    if (i) {
-                                        legendByGroup[index].layers.splice(i, 1);
-                                        return;
-                                    }
-                                }
-                                if (layerLegend?.src) {
-                                    const imageNode = await getImageAsNode(layerLegend.src);
-                                    layer.image = [{ base64: layerLegend.src, height: imageNode.height, width: imageNode.width }];
-                                }
-                                else if (layerLegend?.rules?.length) {
-                                    layer.image = await Promise.all(layerLegend.rules.map(async (rule) => {
-                                        const src = await CreateSymbolizer(rule);
-                                        const image = await getImageAsNode(src);
-                                        const imageDetail = Util.imgTagToDataUrl(image, 'image/png');
-                                        return { base64: imageDetail.base64, height: image.height, width: image.width, title: rule.title || rule.name };
-                                    }));
-                                }
-                            }));
-                            resolve();
-                        }).catch(async (_err) => {
-                            for (var i = 0; i < legendByGroup.length; i++) {
-                                var layers = legendByGroup[i].layers;
 
-                                for (var j = 0; j < layers.length; j++) {
-                                    await (async function (k, l) {
-                                        var layer = legendByGroup[k].layers[l];
-                                        var src = layer.src || layer.srcBase64;
-                                        if (src) {
-                                            const imageNode = await getImageAsNode(src);
-                                            const imageDetail = Util.imgTagToDataUrl(imageNode, 'image/png');
-                                            layer.image = [{ base64: imageDetail.base64, height: imageNode.height, width: imageNode.width }];                                            
-                                        }
-                                    })(i, j);
+            if (o && Object.prototype.hasOwnProperty.call(o, 'children') && o.children.length === 0) {
+                func.apply(this, [o, parentLayer, treeLevel]);
+                treeLevel--;
+            }
+        };
+        const getImageAsNode = function (base64data) {
+            return new Promise(function (resolve, reject) {
+                var i = new Image();
+                i.crossOrigin = 'anonymous';
+                i.onload = function () {
+                    resolve(i);
+                };
+                i.onerror = function (err) {
+                    reject(err);
+                }
+                i.src = base64data;
+            })
+
+        }
+        const removeWS = function (layerName) {
+            return layerName?.substr(layerName.indexOf(":") + 1);
+        }
+        const pngOrSVG = function (image) {
+            const imageWidth = image.width * 0.75;//item.image.canvas.width / 2;
+            const imageHeight = image.height * 0.75;//(imageWidth * item.image.canvas.height / item.image.canvas.width);
+            const data = {
+                "width": imageWidth,
+                "height": imageHeight,
+                "margin": [0, 0, 0, 2]
+            }
+            data[image.base64 ? "image" : "svg"] = image.base64 ? image.base64 : image.svg;
+            return data;
+        }
+        var _getLegendImages = function (_layers) {
+            return _layers.map((_layer, index) => {
+
+                return new Promise(function (resolve, _reject) {
+                    _layer.getLegend().then(async function (legend) {
+                        var layers = legendByGroup[index].layers;
+                        //layers = layers.filter((layer) => layer.src || layer.srcBase64);
+                        await Promise.all(layers.map(async (layer) => {
+                            const layerLegend = legend.filter((l) => l)?.[0]?.find((l) => removeWS(l.layerName) === removeWS(layer.name));
+                            //legend.filter((l) => l)?.[0]?.find((l) => l.layerName === layer.name || _layer.names.length === legend[0].length);
+                            //eliminar aquellos que no tengan visibilidad por 
+                            if (!layerLegend) {
+                                const i = legendByGroup[index].layers.findIndex((l) => l.title === layer.title)
+                                if (i) {
+                                    legendByGroup[index].layers.splice(i, 1);
+                                    return;
                                 }
                             }
-                            resolve();
-                        });                        
+                            if (layerLegend?.src) {
+                                const imageNode = await getImageAsNode(layerLegend.src);
+                                layer.image = [{ base64: layerLegend.src, height: imageNode.height, width: imageNode.width }];
+                            }
+                            else if (layerLegend?.rules?.length) {
+                                const symbols = await CreateSymbolizer(layerLegend.rules, _layer);
+                                const images = await Promise.all(symbols.map(async (symbol) => {
+                                    const image = await getImageAsNode(symbol.src);
+                                    const imageDetail = Util.imgTagToDataUrl(image, 'image/png');
+                                    return { base64: imageDetail.base64, height: image.height, width: image.width, title: symbol.value };
+                                }));
+                                layer.image = images?.filter((symbol) => symbol);
+                            }
+                        }));
+                        resolve();
+                    }).catch(async (_err) => {
+                        for (var i = 0; i < legendByGroup.length; i++) {
+                            var layers = legendByGroup[i].layers;
+
+                            for (var j = 0; j < layers.length; j++) {
+                                await (async function (k, l) {
+                                    var layer = legendByGroup[k].layers[l];
+                                    var src = layer.src || layer.srcBase64;
+                                    if (src) {
+                                        const imageNode = await getImageAsNode(src);
+                                        const imageDetail = Util.imgTagToDataUrl(imageNode, 'image/png');
+                                        layer.image = [{ base64: imageDetail.base64, height: imageNode.height, width: imageNode.width }];
+                                    }
+                                })(i, j);
+                            }
+                        }
+                        resolve();
                     });
                 });
-            };
-            layers.forEach(function (layer) {
-                result = [];
-                if (!layer.layerNames || layer.layerNames.length === 0) return;
-                var hideTree = layer.hideTree;
+            });
+        };
+        layers.forEach(function (layer) {
+            result = [];
+            if (!layer.layerNames || layer.layerNames.length === 0) return;
+            var hideTree = layer.hideTree;
 
-                layer.tree = null;
-                layer.hideTree = true;
+            layer.tree = null;
+            layer.hideTree = true;
 
-                _traverse(layer.getNestedTree(), _process, layer, 0);
+            _traverse(layer.getNestedTree(), _process, layer, 0);
 
-                layer.hideTree = hideTree;
+            layer.hideTree = hideTree;
 
-                if (result.length > 0) {
-                    legendByGroup.push({ title: layer.title, layers: result });
-                }
-            });            
+            if (result.length > 0) {
+                legendByGroup.push({ title: layer.title, layers: result });
+            }
+        });
 
-            return new Promise(function (resolve, reject) {
-                Promise.all(_getLegendImages(layers)).then(function () {
+        return new Promise(function (resolve, reject) {
+            Promise.all(_getLegendImages(layers)).then(function () {
 
-                    const getGroupTable = function (group, index) {
-                        var rows = [[{ text: group.title, fontSize: 13, style: ["tablegroup"], margin: [0, index > 0 ? 10 : 0, 0, 2] }]];
-                        var indentation = 10;
-                        rows = rows.concat(group.layers.filter(function (item) {
-                            return Object.prototype.hasOwnProperty.call(item, 'header') && item.header.trim().toLowerCase() !== group.title.trim().toLowerCase();
-                        }).map(function (item, _index) {
-                            return [{ text: item.header.trim(), fontSize: Math.max(9, 14 - item.level), margin: [indentation * item.level, 0, 0, 2] }];
-                        }));
+                const getGroupTable = function (group, index) {
+                    var rows = [[{ text: group.title, fontSize: 13, style: ["tablegroup"], margin: [0, index > 0 ? 10 : 0, 0, 2] }]];
+                    var indentation = 10;
+                    rows = rows.concat(group.layers.filter(function (item) {
+                        return Object.prototype.hasOwnProperty.call(item, 'header') && item.header.trim().toLowerCase() !== group.title.trim().toLowerCase();
+                    }).map(function (item, _index) {
+                        return [{ text: item.header.trim(), fontSize: Math.max(9, 14 - item.level), margin: [indentation * item.level, 0, 0, 2] }];
+                    }));
 
-                        const headerRows = rows.length;
-                        var headerItem = null;
-                        var itemIndex = null;
+                    const headerRows = rows.length;
+                    var headerItem = null;
+                    var itemIndex = null;
 
-                        const getLayerTable = function (item, _index) {
-                            if (item.header) {
-                                headerItem = item;
+                    const getLayerTable = function (item, _index) {
+                        if (item.header) {
+                            headerItem = item;
 
-                                if (itemIndex) {
-                                    itemIndex = null;
-                                }
-                            } else {
-                                if (!itemIndex) {
-                                    itemIndex = 1;
-                                }
+                            if (itemIndex) {
+                                itemIndex = null;
+                            }
+                        } else {
+                            if (!itemIndex) {
+                                itemIndex = 1;
+                            }
 
-                                var position;
-                                if (headerItem) {
-                                    var headerIndex = rows.map(item => item[0].text || "").indexOf(headerItem.header);
-                                    position = headerIndex + itemIndex++;
-                                }
-                                if (item.image?.length) {
-                                    const ul = [{
-                                        "text": item.title,
-                                        "fontSize": Math.max(9, 14 - item.level),
-                                        "margin": [0 - indentation, 0, 0, 5]
-                                    }];
-                                    item.image.forEach((image) => {
-                                        itemIndex++;                                                                                
-                                        if (image.title) {
-                                            ul.push({
-                                                columns: [
-                                                    pngOrSVG(image),
-                                                    {
-                                                        "text": image.title,
-                                                        "fontSize": Math.max(9, 14 - item.level),
-                                                        "width": "*",
-                                                        "margin": [5, 2, 0, 2]
-                                                    }]
-                                            });
-                                        }
-                                        else
-                                            ul.push(pngOrSVG(image));
-                                    });
-                                    const dataLayer = [{
-                                        "ul": ul,
-                                        "type": "none",
-                                        "margin": [indentation * item.level, 0, 0, 2],
-                                    }];
-
-                                    if (position) {
-                                        rows.splice(position, 0, dataLayer);
-                                        //rows.splice(position + 1, 0, imageLayer);
-                                    } else {
-                                        rows.push(dataLayer);
-                                        //rows.push(imageLayer);
+                            var position;
+                            if (headerItem) {
+                                var headerIndex = rows.map(item => item[0].text || "").indexOf(headerItem.header);
+                                position = headerIndex + itemIndex++;
+                            }
+                            if (item.image?.length) {
+                                const ul = [{
+                                    "text": item.title,
+                                    "fontSize": Math.max(9, 14 - item.level),
+                                    "margin": [0 - indentation, 0, 0, 5]
+                                }];
+                                item.image.forEach((image) => {
+                                    itemIndex++;
+                                    if (image.title) {
+                                        ul.push({
+                                            columns: [
+                                                pngOrSVG(image),
+                                                {
+                                                    "text": image.title,
+                                                    "fontSize": Math.max(9, 14 - item.level),
+                                                    "width": "*",
+                                                    "margin": [5, 2, 0, 2]
+                                                }]
+                                        });
                                     }
+                                    else
+                                        ul.push(pngOrSVG(image));
+                                });
+                                const dataLayer = [{
+                                    "ul": ul,
+                                    "type": "none",
+                                    "margin": [indentation * item.level, 0, 0, 2],
+                                }];
 
+                                if (position) {
+                                    rows.splice(position, 0, dataLayer);
+                                    //rows.splice(position + 1, 0, imageLayer);
                                 } else {
-                                    const data = [{
-                                        text: item.title,
-                                        fontSize: 11,
-                                        margin: [indentation * item.level, 0, 0, 2]
-                                    }];
+                                    rows.push(dataLayer);
+                                    //rows.push(imageLayer);
+                                }
 
-                                    if (position) {
-                                        rows.splice(position, 0, data);
-                                    } else {
-                                        rows.push(data);
-                                    }
+                            } else {
+                                const data = [{
+                                    text: item.title,
+                                    fontSize: 11,
+                                    margin: [indentation * item.level, 0, 0, 2]
+                                }];
+
+                                if (position) {
+                                    rows.splice(position, 0, data);
+                                } else {
+                                    rows.push(data);
                                 }
                             }
-                        };
-
-                        group.layers.forEach(getLayerTable);
-
-                        content.push({
-                            layout: 'noBorders',
-                            table: {
-                                dontBreakRows: true,
-                                keepWithHeaderRows: 1,
-                                headerRows: headerRows,
-                                body: rows
-                            }
-                        });
+                        }
                     };
-                    //URI: eliminar leyenda vacía por extent
-                    legendByGroup=legendByGroup.filter((group) => group.layers.some((layer) => layer.image?.length))
 
-                    legendByGroup.map(function (group, index) {
-                        return {
-                            groupIndex: index,
-                            height: group.layers.filter(function (item) {
-                                return item.image;
-                            }).reduce(function (prev, current, index, vector) {
-                                return prev + vector[index].image.reduce((prev, current) => { return prev + current.height }, 0);
-                            }, 0)
-                            }
-                        })
-                        .sort(function (a, b) {
+                    group.layers.forEach(getLayerTable);
+
+                    content.push({
+                        layout: 'noBorders',
+                        table: {
+                            dontBreakRows: true,
+                            keepWithHeaderRows: 1,
+                            headerRows: headerRows,
+                            body: rows
+                        }
+                    });
+                };
+                //URI: eliminar leyenda vacía por extent
+                legendByGroup = legendByGroup.filter((group) => group.layers.some((layer) => layer.image?.length))
+
+                legendByGroup.map(function (group, index) {
+                    return {
+                        groupIndex: index,
+                        height: group.layers.filter(function (item) {
+                            return item.image;
+                        }).reduce(function (prev, current, index, vector) {
+                            return prev + vector[index].image.reduce((prev, current) => { return prev + current.height }, 0);
+                        }, 0)
+                    }
+                })
+                    .sort(function (a, b) {
                         if (a.height > b.height) {
                             return 1;
                         }
@@ -1116,91 +1082,170 @@ class PrintMap extends MapInfo {
                         getGroupTable(legendByGroup[groupWithHeight.groupIndex], index)
                     });
 
-                    resolve(content);
+                resolve(content);
 
-                }, function () {
-                    reject([]);
-                });
+            }, function () {
+                reject([]);
             });
-        };
-        const drawQR = function () {
-            // GLS: añadimos el QR
-            //QR
-            const cb = self.div.querySelector(`.${self.CLASS}-image-qr`);
-            if (!cb.disabled && cb.checked) {
-                const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
-                qrTarget.innerHTML = '';
-                return self.makeQRCode(qrTarget, options.qrCode.sideLength).then(function (qrCodeBase64) {
-                    if (qrCodeBase64) {
-                        return Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, { width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
-                            return mapCanvas;
-                        });
-                    } else {
-                        return self.canvas;
-                    }
-                });
-            } else {
-                return self.canvas;
-            }
-        };
+        });
+    };
+    drawQR() {
+        const self = this;
+        // GLS: añadimos el QR
+        //QR
+        const cb = self.div.querySelector(`.${self.CLASS}-image-qr`);
+        if (!cb.disabled && cb.checked) {
+            const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
+            qrTarget.innerHTML = '';
+            return self.makeQRCode(qrTarget, options.qrCode.sideLength).then(function (qrCodeBase64) {
+                if (qrCodeBase64) {
+                    return Util.addToCanvas(self.canvas, qrCodeBase64, { x: self.canvas.width - options.qrCode.sideLength, y: self.canvas.height - options.qrCode.sideLength }, { width: options.qrCode.sideLength, height: options.qrCode.sideLength }).then(function (mapCanvas) {
+                        return mapCanvas;
+                    });
+                } else {
+                    return self.canvas;
+                }
+            });
+        } else {
+            return self.canvas;
+        }
+    };
 
-        const basics = [getLogo, function () {
+    generateFileName() {
+        const self = this;
+        var filename = window.location.host + '_';
+        var title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+
+        if (title) {
+            filename += title;
+        } else {
+            var currentDate = Util.getFormattedDate(new Date().toString(), true);
+            filename += currentDate;
+        }
+
+        return filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf';
+    };
+
+    async sharePdf(e) {
+        const self = this;
+        const btn = e.target;
+        btn.classList.add(Consts.classes.LOADING);
+        const pdfDocGenerator = await self.createPdf();
+        pdfDocGenerator.getBlob(async (blob) => {            
+            const file = new File([blob], self.generateFileName(), { type: "application/pdf" })
+            const sharedData = {
+                title: file.name,
+                files: [file]
+            };
+            if (navigator.canShare && navigator.canShare(sharedData)) {
+                if (navigator.userActivation?.isActive) {
+                    await navigator.share(sharedData);
+                }
+                else {
+                    //este escenario no se contempla salvo que se pare la ejecución entre el click del botón y método share
+                    console.log("este escenario no se contempla salvo que se pare la ejecución entre el click del botón y método share");
+                }                
+            }
+            else {
+                self.map.toast(self.getLocaleString("shareFileNotsupported"), { type: Consts.msgType.ERROR });
+            }
+            btn.classList.remove(Consts.classes.LOADING);
+        });
+    }
+    async downloadPdf(e) {
+        const self = this;
+
+        const btn = e.target;
+        btn.classList.add(Consts.classes.LOADING);
+        const pdfDocGenerator = await self.createPdf();
+
+        await pdfDocGenerator.download(self.generateFileName());
+        btn.classList.remove(Consts.classes.LOADING);
+    }
+    async createPdf() {
+        const self = this;
+
+        var loadingCtrl = self.map.getLoadingIndicator();
+        var hasWait = loadingCtrl.addWait();
+        await import("pdfmake/build/pdfmake");
+        let pdfFonts = await import("pdfmake/build/vfs_fonts");
+        pdfMake.vfs = pdfFonts.pdfMake.vfs;        
+        var canvases = self.map.wrap.getCanvas();
+        self.canvas = Util.mergeCanvases(canvases);
+        //self.canvas = Util.mergeCanvases(self.map.wrap.getCanvas());
+        var layout = getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4");
+        var printLayout = layout.layoutPDF;
+
+        const createPDF = function (printLayout) {            
+
+            var pdfDocGenerator;
+
+            try {
+                pdfDocGenerator = pdfMake.createPdf(printLayout)//.download(filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf');
+            } catch (error) {
+                self.map.toast(self.getLocaleString('print.error'), { type: Consts.msgType.ERROR });
+                TC.error(error.message + '  ' + error.stack, Consts.msgErrorMode.EMAIL);
+            }
+
+            loadingCtrl.removeWait(hasWait);
+
+            return pdfDocGenerator;
+        };
+        
+        const basics = [self.getLogo, function () {
             var titleColumn = getTitleColumn(layout);
             titleColumn.text = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
             return titleColumn;
-        }, getScaleBar, drawQR];
+        }, self.getScaleBar, self.drawQR];
+        
+        const basicsDone = await Promise.all(basics.map(function (fn) {
+            return fn.apply(self);
+        }))
+        if (basicsDone[2].table) { // GLS: ajustamos el ancho del título para arrinconar la escala
+            const totalWidth = layout.layoutPDF.pageSize.width - (layout.layoutPDF.pageMargins[0] + layout.layoutPDF.pageMargins[2]);
+            const logoWidth = layout.layoutPDF.content[0].columns[0].width || 0;
+            const scaleBarColumn = layout.layoutPDF.content[0].columns[2];
+            const scaleBarWidth = scaleBarColumn.table.widths[0] + 2;
+            const titleColumn = layout.layoutPDF.content[0].columns[1];
+            titleColumn.width = totalWidth - logoWidth - scaleBarWidth;
+            if (logoWidth === 0) {
+                // Si no hay logo reajustamos texto de título y margen de barra de escala
+                titleColumn.alignment = "left";
+                scaleBarColumn.margin[3] = 2;
+            }
+        }
 
-        Promise.all(basics.map(function (fn) {
-            return fn();
-        })).then(function (basicsDone) {
+        var mapPlace = getMap(layout);
+        var canvas = basicsDone[3] || self.canvas;
 
-            if (basicsDone[2].table) { // GLS: ajustamos el ancho del título para arrinconar la escala
-                const totalWidth = layout.layoutPDF.pageSize.width - (layout.layoutPDF.pageMargins[0] + layout.layoutPDF.pageMargins[2]);
-                const logoWidth = layout.layoutPDF.content[0].columns[0].width || 0;
-                const scaleBarColumn = layout.layoutPDF.content[0].columns[2];
-                const scaleBarWidth = scaleBarColumn.table.widths[0] + 2;
-                const titleColumn = layout.layoutPDF.content[0].columns[1];
-                titleColumn.width = totalWidth - logoWidth - scaleBarWidth;
-                if (logoWidth === 0) {
-                    // Si no hay logo reajustamos texto de título y margen de barra de escala
-                    titleColumn.alignment = "left";
-                    scaleBarColumn.margin[3] = 2;
+        mapPlace.image = canvas.toDataURL();
+
+        if (self.#hasLegendToPrint() && // GLS: validamos que haya capas visibles por escala 
+            printLayout.content.length === 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
+
+            const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+            printLayout.content.push({
+                pageBreak: 'before',
+                pageOrientation: (self.options.legend && self.options.legend.orientation) || ORIENTATION.PORTRAIT,
+                text: title.length > 0 ? title : '',
+                fontSize: 14,
+                margin: [0, 20, 0, 10]
+            });
+            printLayout.styles = {
+                "tablegroup": {
+                    bold: true
                 }
             }
+            printLayout.defaultStyle = {
+                alignment: 'left'
+            };
 
-            var mapPlace = getMap(layout);
-            var canvas = basicsDone[3] || self.canvas;
-
-            mapPlace.image = canvas.toDataURL();
-
-            if (self.#hasLegendToPrint() && // GLS: validamos que haya capas visibles por escala 
-                printLayout.content.length === 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
-
-                const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
-                printLayout.content.push({
-                    pageBreak: 'before',
-                    pageOrientation: (self.options.legend && self.options.legend.orientation) || ORIENTATION.PORTRAIT,
-                    text: title.length > 0 ? title : '',
-                    fontSize: 14,
-                    margin: [0, 20, 0, 10]
-                });
-                printLayout.styles = {
-                    "tablegroup": {
-                        bold: true
-                    }
-                }
-                printLayout.defaultStyle = {
-                    alignment: 'left'
-                }
-
-                getLegend().then(function (content) {
-                    printLayout.content = printLayout.content.concat(content);
-                    createPDF(printLayout);
-                });
-            } else {
-                createPDF(printLayout);
-            }
-        });
+            const legendContent = await self.getLegend();
+            printLayout.content = printLayout.content.concat(legendContent);
+            return createPDF(printLayout);
+        } else {
+            return createPDF(printLayout);
+        }   
     }
 
     manageMaxLengthExceed(maxLengthExceed) {
