@@ -5,17 +5,27 @@ const elementName = "sitna-toggle";
 class Toggle extends Component {
 
     #checkbox;
+    #label;
 
     constructor() {
         super();
         this.#checkbox = document.createElement('input');
         this.#checkbox.setAttribute('type', 'checkbox');
+        this.#checkbox.setAttribute('id', 'cb');
         this.#checkbox.addEventListener('change', (_e) => {
             this.checked = this.#checkbox.checked;
             const event = new Event('change', { bubbles: true });
             this.dispatchEvent(event);
         });
         this.shadowRoot.appendChild(this.#checkbox);
+
+        this.#label = document.createElement('label');
+        this.#label.setAttribute('for', 'cb');
+        this.shadowRoot.appendChild(this.#label);
+
+        const template = document.createElement('template');
+        template.innerHTML = '<slot></slot>'
+        this.#label.appendChild(template.content.cloneNode(true));
     }
 
     connectedCallback() {
@@ -89,8 +99,23 @@ class Toggle extends Component {
         this.toggleAttribute('checked', !!value);
     }
 
+    get indeterminate() {
+        return this.#checkbox.indeterminate;
+    }
+
+    set indeterminate(value) {
+        const bool = !!value;
+        this.#checkbox.classList.toggle('indeterminate', bool);
+        this.#checkbox.indeterminate = bool;
+    }
+
+    click() {
+        this.#checkbox.click();
+    }
+
     #onCheckedChange() {
         this.#checkbox.checked = this.checked;
+        this.indeterminate = false;
     }
 
     get checkedIconText() {
