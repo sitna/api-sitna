@@ -1,6 +1,6 @@
 ﻿import TC from '../../TC';
 import Consts from '../Consts';
-import Util from '../Util';
+import Util, { MapImage } from '../Util';
 import Control from '../Control';
 import Proxification from '../tool/Proxification';
 
@@ -313,6 +313,41 @@ class MapInfo extends Control {
 
             self.registeredListeners = true;
         }
+    }
+    async generateImage(format, asBlob, QR) {
+        const self = this;
+        var canvases = self.map.wrap.getCanvas();
+        var newCanvas = canvases.length > 1 ? Util.mergeCanvases(canvases) : Util.cloneCanvas(canvases[0]);
+        if (QR) {
+            const codeContainerId = 'qrcode';
+            var codeContainer = document.getElementById(codeContainerId);
+            if (codeContainer) {
+                codeContainer.innerHTML = '';
+            }
+            else {
+                codeContainer = document.createElement('div');
+                codeContainer.setAttribute('id', codeContainerId);
+                document.body.appendChild(codeContainer);
+            }
+
+            codeContainer.style.top = '-200px';
+            codeContainer.style.left = '-200px';
+            codeContainer.style.position = 'absolute';
+            const qrCodeBase64 = await self.makeQRCode(codeContainer, 87);
+            if (qrCodeBase64) {
+                var ctx = newCanvas.getContext("2d");
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(newCanvas.width - 91, newCanvas.height - 91, 91, 91);
+
+                newCanvas = await Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 });
+            } else {
+                throw "Error generando QR";
+            }
+        }
+        if (asBlob)
+            return MapImage.getBlobPromise(newCanvas, format);
+        else
+            return MapImage.getDataURL(newCanvas, format);
     }
 }
 
