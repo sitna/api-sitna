@@ -13,7 +13,7 @@ import MultiMarker from '../feature/MultiMarker';
 import MultiPolyline from '../feature/MultiPolyline';
 import MultiPolygon from '../feature/MultiPolygon';
 import Circle from '../feature/Circle';
-import wwBlob from '../../workers/tc-dft-web-worker-blob.mjs';
+import FeatureTypeParser from '../../TC/tool/FeatureTypeParser';
 
 TC.Layer = Layer;
 TC.layer = TC.layer || {};
@@ -41,7 +41,7 @@ const getMergedLegendImage = function (images) {
     const widths = svgs.map(str => parseFloat(str.match(/ width="([\d\.]*)"/)[1]));
     const heights = svgs.map(str => parseFloat(str.match(/ height="([\d\.]*)"/)[1]));
     const width = widths.reduce((acc, cur) => acc + cur + margin, 0);
-    const height = Math.max.apply(Math, heights);
+    const height = Math.max(...heights);
     const offsetSvgs = svgs
         .map((str, idx) => {
             const result = str.replace('<svg xmlns="http://www.w3.org/2000/svg"', `<svg x="${offset}" y="${(height - heights[idx]) / 2}" `);
@@ -110,6 +110,7 @@ class Vector extends Layer {
     #capabilitiesPromise = null;
     #allowedGeometryTypes = new Set();
     #featureTypeMetadata;
+    #featureTypeParser;
 
     constructor() {
         super(...arguments);
@@ -398,7 +399,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<number[]>|Array.<SITNA.feature.Point>} coordsOrPoints - Los elementos de esta lista son cualquiera de los que acepta el método [addPoint]{@link SITNA.layer.Vector#addPoint}.
      * @param {SITNA.feature.PointOptions} [options] - Este parámetro se ignora si `coordsOrPointArray` contiene instancias de {@link SITNA.feature.Point}.
-     * @returns {Promise<SITNA.feature.Point>} Array de puntos.
+     * @returns {Promise<SITNA.feature.Point[]>} Array de puntos.
      * @see [Ejemplo de uso](../examples/feature.Point.html)
      */
     addPoints(coordsOrPointArray, options) {
@@ -787,8 +788,9 @@ class Vector extends Layer {
         return self.url + '?service=WFS&' + 'version=' + version + '&request=DescribeFeatureType&typename=' + featureType.join(',') + '&outputFormat=' + encodeURIComponent(self.capabilities.Operations.DescribeFeatureType.outputFormat);
     }
 
-    describeFeatureType(layerName, callback, error) {
+    async describeFeatureType(layerName, callback, error) {
         const self = this;
+        let result;
         if (!layerName) {
             layerName = self.featureType;
         }
@@ -801,122 +803,60 @@ class Vector extends Layer {
                 return Object.assign(vi, temp);
             }, {});
         };
-        const result = new Promise(function (resolve, reject) {
-            self.getCapabilitiesPromise()
-                .then(function (capabilities) {
-                    if (!capabilities.Operations.DescribeFeatureType) {
-                        reject("No esta disponible el método describeFeatureType");
-                        return;
-                    }
-                    if (Object.prototype.hasOwnProperty.call(window, 'Worker')) {
-                        const wwInit = function () {
-                            if (!self.WebWorkerDFT) {
-                                const workerUrl = URL.createObjectURL(wwBlob);
-                                self.WebWorkerDFT = new Worker(workerUrl);
-                            }
-                            self.WebWorkerDFT.onmessage = async function (e) {
-                                if (!(e.data instanceof Object)) {
-                                    var data = await self.proxificationTool.fetchXML(e.data);
-                                    self.WebWorkerDFT.postMessage({
-                                        url: e.data,
-                                        response: data.documentElement.outerHTML
-                                    });
-                                    return;
-                                }
-                                if (e.data.state === 'success') {
-                                    let key = Object.keys(e.data.DFTCollection).join(",");
-                                    if (TC.describeFeatureType[key]) {
-                                        if (typeof TC.describeFeatureType[key] === "function") {
-                                            TC.describeFeatureType[key].call(null, e.data.DFTCollection);
-                                        }
-                                    }
-                                    else {
-                                        throw "No se encuentra la clave " + key + " en la colección";
-                                    }
-                                    TC.describeFeatureType = Object.assign(TC.describeFeatureType, e.data.DFTCollection);
-                                }
-                                else {
-                                    throw "Ha habido problemas procesando el Describe feature type";
-                                    //reject("loquesea");
-                                }
-                            };
-                        };
-                        const wwProcess = async function (layers, callback) {
-                            wwInit();
-                            var data = await self.proxificationTool.fetchXML(self.getDescribeFeatureTypeUrl(layers || self.featureType));
-                            //checkear si excepciones del servidor
-                            if (data.querySelector("Exception") || data.querySelector("exception")) {
-                                throw (data.querySelector("Exception") || data.querySelector("exception")).textContent.trim();
-                            }
-                            self.WebWorkerDFT.postMessage({
-                                layerName: layers,
-                                xml: data.documentElement.outerHTML,
-                                url: TC.apiLocation.indexOf("http") >= 0 ? TC.apiLocation : document.location.protocol + TC.apiLocation
-                            });
-                            TC.describeFeatureType[layers instanceof Array ? layers.join(",") : layers] = callback;
-                        };
-
-                        //si no es una array convierto en Array
-                        if (!(layerName instanceof Array)) layerName = layerName.split(",");
-                        //si tiene distinto Namespace separo las pediciones describeFeatureType										
-                        var arrPromises = Object.entries(layerName.reduce(function (vi, va) {
-                            let preffix = va.substring(0, va.indexOf(":"));
-                            if (!vi[preffix]) {
-                                let temp = {};
-                                temp[preffix] = [va];
-                                return Object.assign(vi, temp);
-                            } else {
-                                vi[preffix].push(va);
-                                return vi;
-                            }
-                        }, {})).map(function (params) {
-                            var layers = params[1];
-                            return new Promise(async function (resolve, reject) {
-                                if (TC.describeFeatureType[layers]) {
-                                    resolve(_getStoredFeatureTypes(layers, TC.describeFeatureType));
-                                    return;
-                                }
-                                try {
-                                    await wwProcess(layers, function (data) {
-                                        resolve(data);
-                                    });
-                                }
-                                catch (err) {
-                                    reject(err);
-                                }
-                            });
-                        });
-                        Promise.all(arrPromises).then(function (response) {
-                            let objReturned = response.reduce(function (vi, va) {
-                                return Object.assign(vi, va);
-                            }, {});
-
-                            //si solo hay un objeto devuelvo directamente los atributos	de este				
-                            resolve(Object.keys(objReturned).length === 1 ? objReturned[Object.keys(objReturned)[0]] : objReturned);
-                        }).catch(reject);
-                    }
-                    else {
-                        reject("No esta disponible el WebWorker");
-                    }
-                })
-                .catch(err => reject(err));
-        });
-        result.then(
-            function (data) {
-                if (Util.isFunction(callback)) {
-                    callback(data);
-                }
-            },
-            function (errorText) {
-                if (Util.isFunction(error)) {
-                    error(errorText);
-                }
+        try {
+            const capabilities = await self.getCapabilitiesPromise();
+            if (!capabilities.Operations.DescribeFeatureType) {
+                throw Error("No esta disponible el método describeFeatureType");
             }
-        );
+            self.#featureTypeParser ??= new FeatureTypeParser();
+            const dftProcess = async function (layers) {
+                var data = await self.proxificationTool.fetchXML(self.getDescribeFeatureTypeUrl(layers || self.featureType));
+                return await self.#featureTypeParser.parseFeatureTypeDescription(data, layers);
+            };
+
+            //si no es una array convierto en Array
+            if (!(layerName instanceof Array)) layerName = layerName.split(",");
+            //si tiene distinto Namespace separo las pediciones describeFeatureType										
+            var arrPromises = Object.entries(layerName.reduce(function (vi, va) {
+                let prefix = va.substring(0, va.indexOf(":"));
+                if (!vi[prefix]) {
+                    let temp = {};
+                    temp[prefix] = [va];
+                    return Object.assign(vi, temp);
+                } else {
+                    vi[prefix].push(va);
+                    return vi;
+                }
+            }, {})).map(function (params) {
+                var layers = params[1];
+                if (self.#featureTypeParser.getFeatureTypeDescription(layers)) {
+                    return _getStoredFeatureTypes(layers, self.#featureTypeParser.getFeatureTypeDescriptions());
+                }
+                return dftProcess(layers);
+            });
+            const response = await Promise.all(arrPromises);
+            let objReturned = response.reduce(function (vi, va) {
+                return Object.assign(vi, va);
+            }, {});
+
+            //si solo hay un objeto devuelvo directamente los atributos	de este				
+            result = Object.keys(objReturned).length === 1 ? objReturned[Object.keys(objReturned)[0]] : objReturned;
+
+            if (Util.isFunction(callback)) {
+                callback(result);
+            }
+        }
+        catch (e) {
+            if (Util.isFunction(error)) {
+                error(e);
+            }
+            throw e;
+        }
+
         return result;
     }
 
-    import = function (options) {
+    import(options) {
         this.wrap.import(options);
     }
 
@@ -1112,7 +1052,7 @@ class Vector extends Layer {
     }
 
     async getFeatureTypeMetadata() {
-        if (!this.#featureTypeMetadata) {
+        if (this.type === Consts.layerType.WFS && !this.#featureTypeMetadata) {
             try {
                 const featureTypeDescription = await this.describeFeatureType();
                 this.#featureTypeMetadata = {
@@ -1153,25 +1093,29 @@ class Vector extends Layer {
                             return Consts.dataType.STRING;
                     }
                 }
-                for (let key in featureTypeDescription) {
-                    const attribute = featureTypeDescription[key];
+                for (let name in featureTypeDescription) {
+                    const attribute = featureTypeDescription[name];
                     const geometryType = Util.getGeometryType(attribute.type);
                     if (geometryType) {
                         const geometryMetadata = {
-                            name: attribute.name,
+                            name,
                             originalType: attribute.type
                         };
-                        if (typeof geometryType !== 'boolean') {
-                            geometryMetadata.type = geometryType
-                        }
+                        geometryMetadata.type = geometryType;
                         this.#featureTypeMetadata.geometries.push(geometryMetadata);
                     }
                     else {
                         const attributeMetadata = {
-                            name: attribute.name,
+                            name,
                             type: getType(attribute.type),
                             originalType: attribute.type
                         };
+                        if (typeof attribute.type === 'string' && attribute.type.substring(attribute.type.indexOf(':') + 1) === 'ID') {
+                            attributeMetadata.isId = true;
+                        }
+                        if (attribute['@minOccurs'] === 0) {
+                            attributeMetadata.optional = true;
+                        }
                         this.#featureTypeMetadata.attributes.push(attributeMetadata);
                     }
                 }
@@ -1215,7 +1159,8 @@ class Vector extends Layer {
                     autoPopup: f.autoPopup,
                     showsPopup: f.showsPopup
                 };
-                let layerStyle = self.styles?.[f.STYLETYPE];
+                let layerStyle = self.styles?.[f.STYLETYPE] ||
+                    self.map?.options?.styles?.[f.STYLETYPE] || TC.Cfg.styles?.[f.STYLETYPE];
                 if (options.exportStyles === undefined || options.exportStyles) {
                     layerStyle = Util.extend({}, layerStyle);
                     for (var key in layerStyle) {
