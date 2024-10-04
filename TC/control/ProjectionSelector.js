@@ -132,7 +132,7 @@ class ProjectionSelector extends Control {
                     const button = document.createElement('button');
                     button.setAttribute('type', 'button');
                     button.classList.add(self.#cssClasses.LOAD_CRS_BUTTON);
-                    button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
+                    button.textContent = self.getLocaleString('showOnTheFlyProjections');
                     li.appendChild(button);
                     ul.appendChild(li);
                 }
@@ -140,7 +140,7 @@ class ProjectionSelector extends Control {
                 // Mostramos un aviso si no hay CRS compatibles
                 if (ul.querySelectorAll('li').length === 0) {
                     const li = document.createElement('li');
-                    li.innerHTML = self.getLocaleString('thereAreNoCompatibleCRS');
+                    li.textContent = self.getLocaleString('thereAreNoCompatibleCRS');
                     ul.appendChild(li);
                 }
                 const visibleLi = ul.querySelectorAll('li:not(.' + Consts.classes.HIDDEN + ')');
