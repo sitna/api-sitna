@@ -133,82 +133,79 @@ class ExternalWMS extends Control {
                 TC.alert(self.getLocaleString('serviceAlreadyAdded'));
             }
             else {
-                var loadingCtrl = self.map.getLoadingIndicator();
-                loadingCtrl.show();
-                var params = Util.getQueryStringParams(url);
+                self.map.wait(async () => {
+                    var params = Util.getQueryStringParams(url);
 
-                if (!/https?:\/\/|\/\//i.test(url)) {
-                    url = "//" + url;
-                }
-
-                //Extraemos sólo los parámetros adicionales
-                var unwantedParams = ["version", "service", "request"];
-                var urlWithoutParams = removeParamsFromUrl(url, Object.keys(params));
-
-                for (var item in params) {
-                    if (unwantedParams.indexOf(item.toLowerCase()) >= 0) {
-                        delete params[item];
+                    if (!/https?:\/\/|\/\//i.test(url)) {
+                        url = "//" + url;
                     }
-                }
 
-                const addButton = self.div.querySelector('button');
-                addButton.setAttribute('type', 'button');
-                addButton.disabled = true;
+                    //Extraemos sólo los parámetros adicionales
+                    var unwantedParams = ["version", "service", "request"];
+                    var urlWithoutParams = removeParamsFromUrl(url, Object.keys(params));
 
-                var obj = {
-                    id: 'xwms' + (++self.count),
-                    //"title": "Servicio externo",
-                    type: 'WMS',
-                    url: urlWithoutParams,
-                    hideTree: false,
-                    queryParams: params
-                };
-                //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
-                for (var i = 0; i < self.options.suggestions.length; i++) {
-                    var _current = self.options.suggestions[i].items.filter(item => item.url === url);
-                    if (_current.length > 0 && _current[0].layerNames) {
-                        obj.layerNames = _current[0].layerNames;
-                        break;
+                    for (var item in params) {
+                        if (unwantedParams.indexOf(item.toLowerCase()) >= 0) {
+                            delete params[item];
+                        }
                     }
-                }
 
-                var layer = new Raster(obj);
-                layer.getCapabilitiesPromise().then(function (cap) {
-                    if (typeof cap.Capability === 'undefined') {
-                        TC.alert(self.getLocaleString('noLayersFoundInService'));
-                        loadingCtrl.hide();
-                        addButton.disabled = false;
-                        return;
-                    } else {
-                        var root = cap.Capability.Layer;
-                        if (root.CRS && root.CRS.indexOf(self.map.crs) === -1 && !self.allowReprojection) {
-                            //no soportado. avisar y fallar
-                            TC.alert(self.getLocaleString('serviceSrsNotCompatible'));
-                            loadingCtrl.hide();
+                    const addButton = self.div.querySelector('button');
+                    addButton.setAttribute('type', 'button');
+                    addButton.disabled = true;
+
+                    var obj = {
+                        id: 'xwms' + (++self.count),
+                        //"title": "Servicio externo",
+                        type: 'WMS',
+                        url: urlWithoutParams,
+                        hideTree: false,
+                        queryParams: params
+                    };
+                    //URI: recorremos las opciones buscando el servicio que se va a agregar a ver si tiene parametro layerNames
+                    for (var i = 0; i < self.options.suggestions.length; i++) {
+                        var _current = self.options.suggestions[i].items.filter(item => item.url === url);
+                        if (_current.length > 0 && _current[0].layerNames) {
+                            obj.layerNames = _current[0].layerNames;
+                            break;
+                        }
+                    }
+
+                    var layer = new Raster(obj);
+                    try {
+                        const cap = await layer.getCapabilitiesPromise();
+                        if (typeof cap.Capability === 'undefined') {
+                            TC.alert(self.getLocaleString('noLayersFoundInService'));
                             addButton.disabled = false;
                             return;
-                        }
-
-                        self.map.trigger(Consts.event.EXTERNALSERVICEADDED, { layer: layer });
-                        self.div.querySelector('input').value = '';
-
-                        const selectedOptions = [];
-                        self.div.querySelectorAll('select option').forEach(function (option) {
-                            if (option.value.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '')) {
-                                selectedOptions.push(option);
+                        } else {
+                            var root = cap.Capability.Layer;
+                            if (root.CRS && root.CRS.indexOf(self.map.crs) === -1 && !self.allowReprojection) {
+                                //no soportado. avisar y fallar
+                                TC.alert(self.getLocaleString('serviceSrsNotCompatible'));
+                                addButton.disabled = false;
+                                return;
                             }
-                        });
-                        self.markServicesAsSelected(selectedOptions);
-                        self.#addedUrls.push(url);
-                        loadingCtrl.hide();
+
+                            self.map.trigger(Consts.event.EXTERNALSERVICEADDED, { layer: layer });
+                            self.div.querySelector('input').value = '';
+
+                            const selectedOptions = [];
+                            self.div.querySelectorAll('select option').forEach(function (option) {
+                                if (option.value.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '')) {
+                                    selectedOptions.push(option);
+                                }
+                            });
+                            self.markServicesAsSelected(selectedOptions);
+                            self.#addedUrls.push(url);
+                            addButton.disabled = false;
+                        }
+                    }
+                    catch (error) {
+                        TC.alert(self.getLocaleString('serviceCouldNotBeLoaded') + ":\n" + error);
                         addButton.disabled = false;
                     }
-                },
-                    function (error) {
-                        TC.alert(self.getLocaleString('serviceCouldNotBeLoaded') + ":\n" + error);
-                        loadingCtrl.hide();
-                        addButton.disabled = false;
-                    });
+                });
             }
         }
         return self;
