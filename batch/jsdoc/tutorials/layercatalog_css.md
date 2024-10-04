@@ -72,7 +72,7 @@ A continuación se describen todas las clases CSS que definen la estructura y/o 
 	 </li>
    </ul>
  </div>
- <div class="tc-ctl-lcat-info tc-hidden"><a class="tc-ctl-lcat-info-close"></a>
+ <div class="tc-ctl-lcat-info tc-hidden"><sitna-button variant="minimal" icon="close" class="tc-ctl-lcat-info-close"></sitna-button>
    <h2>Información de capa</h2>
    <h3 class="tc-ctl-lcat-title"></h3>
  </div>
