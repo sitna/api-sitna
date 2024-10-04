@@ -25,19 +25,19 @@ function tXml(S, options) {
     var openBracketCC = "<".charCodeAt(0);
     var closeBracket = ">";
     var closeBracketCC = ">".charCodeAt(0);
-    var minus = "-";
+    //var minus = "-";
     var minusCC = "-".charCodeAt(0);
-    var slash = "/";
+    //var slash = "/";
     var slashCC = "/".charCodeAt(0);
-    var exclamation = '!';
+    //var exclamation = '!';
     var exclamationCC = '!'.charCodeAt(0);
-    var singleQuote = "'";
+    //var singleQuote = "'";
     var singleQuoteCC = "'".charCodeAt(0);
-    var doubleQuote = '"';
+    //var doubleQuote = '"';
     var doubleQuoteCC = '"'.charCodeAt(0);
-    var openSquareBracket = "[";
+    //var openSquareBracket = "[";
     var openSquareBracketCC = "[".charCodeAt(0);
-    var closeSquareBracket = "]";
+    //var closeSquareBracket = "]";
     var closeSquareBracketCC = "]".charCodeAt(0);
 
     /**
@@ -538,9 +538,9 @@ console.log("MILLISECONDS",end2-start2);
         if (layer.Layer) {
             var children = layer.Layer[1] ? layer.Layer : [layer.Layer];
             layer.Layer = children;
-            for (var i = 0, len = children.length; i < len; i++) {
-                children[i].parent = layer;
-                processWMSLayer(children[i], newCrsList);
+            for (const child of children) {
+                child.parent = layer;
+                processWMSLayer(child, newCrsList);
             }
         }
     };
