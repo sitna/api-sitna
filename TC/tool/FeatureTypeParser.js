@@ -4,21 +4,18 @@ import Proxification from './Proxification';
 import wwBlob from '../../workers/tc-dft-web-worker-blob.mjs';
 
 class FeatureTypeParser {
-    static #worker;
     #proxificationTool;
     #featureTypeDescriptions = {};
 
     #init() {
-        if (!FeatureTypeParser.#worker) {
-            const workerUrl = URL.createObjectURL(wwBlob);
-            FeatureTypeParser.#worker = new Worker(workerUrl);
-        }
+        const workerUrl = URL.createObjectURL(wwBlob);
+        const worker = new Worker(workerUrl);
         if (!this.#proxificationTool) {
             this.#proxificationTool = new Proxification(TC.proxify);
         }
-        FeatureTypeParser.#worker.addEventListener('message', async (e) => {
+        worker.addEventListener('message', async (e) => {
             if (!(e.data instanceof Object)) {
-                return await this.#requestSchema(e.data);
+                return await this.#requestSchema(worker, e.data);
             }
             if (e.data.state === 'success') {
                 this.#featureTypeDescriptions = Object.assign(this.#featureTypeDescriptions, this.#getDftCollection(e.data.dftCollection));
@@ -28,12 +25,13 @@ class FeatureTypeParser {
                 //reject("loquesea");
             }
         });
+        return worker;
     }
 
-    async #requestSchema(url) {
+    async #requestSchema(worker, url) {
         const { default: xsdDictionary } = await import('./xsdDocuments.mjs');
         if (xsdDictionary.has(url)) {
-            FeatureTypeParser.#worker.postMessage({
+            worker.postMessage({
                 type: 'getSchema',
                 url,
                 xml: xsdDictionary.get(url)
@@ -42,14 +40,14 @@ class FeatureTypeParser {
         else {
             try {
                 const doc = await this.#proxificationTool.fetchXML(url);
-                FeatureTypeParser.#worker.postMessage({
+                worker.postMessage({
                     type: 'getSchema',
                     url,
                     xml: doc.documentElement.outerHTML
                 });
             }
             catch (_e) {
-                FeatureTypeParser.#worker.postMessage({
+                worker.postMessage({
                     type: 'getSchema',
                     url,
                     xml: '<xsd:schema></xsd:schema>'
@@ -59,7 +57,8 @@ class FeatureTypeParser {
     }
 
     getFeatureTypeDescription(layerName) {
-        return this.#featureTypeDescriptions[layerName];
+        const name = Array.isArray(layerName) ? layerName[0] : layerName;
+        return this.#featureTypeDescriptions[name];
     }
 
     getFeatureTypeDescriptions() {
@@ -75,12 +74,12 @@ class FeatureTypeParser {
     }
 
     async parseFeatureTypeDescription(doc, layerNames) {
-        this.#init();
+        const worker = this.#init();
         //checkear si excepciones del servidor
         if (doc.querySelector("Exception") || doc.querySelector("exception")) {
             throw (doc.querySelector("Exception") || doc.querySelector("exception")).textContent.trim();
         }
-        const messagePromise = Util.getPromiseFromEvent(FeatureTypeParser.#worker, 'message', {
+        const messagePromise = Util.getPromiseFromEvent(worker, 'message', {
             resolvePredicate: function (e) {
                 if (e.data instanceof Object && e.data.state === 'success') {
                     if (Object.keys(e.data.dftCollection).join() === Array.isArray(layerNames) ? layerNames.join() : layerNames) {
@@ -91,7 +90,7 @@ class FeatureTypeParser {
             },
             rejectPredicate: (e) => e.data instanceof Object && e.data.state !== 'success'
         });
-        FeatureTypeParser.#worker.postMessage({
+        worker.postMessage({
             type: 'describeFeatureType',
             layerName: layerNames,
             xml: doc.documentElement.outerHTML,
@@ -124,7 +123,6 @@ class FeatureTypeParser {
     }
 
     async parseSchemas(doc, featureType) {
-        this.#init();
         const schemaLocationsValue = doc.documentElement.getAttribute('xsi:schemaLocation');
         if (schemaLocationsValue) {
             const schemaDoc = this.#getSchemaDoc(doc);
