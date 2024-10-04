@@ -423,12 +423,6 @@ TC.tool.Proxification = function (proxy, options = {}) {
         }
     };
 
-    const HostCacheItem = function () {
-        this.key = "";
-        this.action = null;
-        this.actionName = "";
-    };
-
     const HostCache = function () {
         var toHost = function (src) {
             var url = srcToURL(src);
@@ -609,7 +603,7 @@ TC.tool.Proxification = function (proxy, options = {}) {
         self._image.getImgTag(src, options).then(function (img) {
             resolve(img, self._actionHTTP);
         }, function (error) {
-            if (error === self._image.ErrorType.PROTOCOL || error === self._image.ErrorType.UNEXPECTEDCONTENTTYPE) {
+            if (error === self._image.ErrorType.PROTOCOL || error === self._image.ErrorType.UNEXPECTEDCONTENTTYPE || error === self._image.ErrorType.METHODNOTALLOWED) {
                 reject(error);
             } else {
                 _byProxy.call(self, toHTTPS(src), options, resolve, reject);
@@ -654,7 +648,8 @@ TC.tool.Proxification = function (proxy, options = {}) {
             NOTFOUNDED: 'notfounded',
             UNEXPECTED: 'unexpected',
             OFFLINE: 'offline',
-            UNEXPECTEDCONTENTTYPE: 'Un_Expected_ContentType'
+            UNEXPECTEDCONTENTTYPE: 'Un_Expected_ContentType',
+            METHODNOTALLOWED:'Method_Not_Allowed'
         },
         validContentType: ["image/png", "image/jpeg", "image/tiff", "image/gif", "image/bmp", "image/svg+xml", "image/webp","image/avif"],
         checkHttpStatus: function (src) {
@@ -664,12 +659,15 @@ TC.tool.Proxification = function (proxy, options = {}) {
             }
 
             return fetch(src, { credentials: 'omit' })
+                .then(toolProto._fetch.validateResponse.bind())
                 .then(toolProto._fetch.validateContentType.bind(toolProto, self.validContentType))
                 .then(function (response) {
                     return { status: response.status, statusText: response.statusText };
                 })
                 .catch(function (error) {
                     if (error.message === self.ErrorType.UNEXPECTEDCONTENTTYPE)
+                        return error;
+                    else if (error.status)
                         return error;
                     return { statusText: self.ErrorType.UNEXPECTED};
                 });
@@ -733,7 +731,7 @@ TC.tool.Proxification = function (proxy, options = {}) {
                                 } else {
                                     if (error.status === 400) {
                                         reject(self.ErrorType.PROTOCOL);
-                                    }                                    
+                                    }
                                     else {
                                         reject(error);
                                     }
@@ -798,7 +796,12 @@ TC.tool.Proxification = function (proxy, options = {}) {
                         } else {
                             if (error.status === 400) {
                                 reject(self.ErrorType.PROTOCOL);
-                            } else {
+                            }
+                            //URI: En caso de error 405 (method not allowed) no tiene sentido proxificar
+                            else if (error.status === 405) {
+                                reject(self.ErrorType.METHODNOTALLOWED);
+                            }
+                            else {
                                 reject(error);
                             }
                         }
@@ -926,12 +929,16 @@ TC.tool.Proxification = function (proxy, options = {}) {
                                 }, function (error) {
                                     if (options.exportable && error === self._image.ErrorType.CORS || self._isServiceWorker() || self._isSecureURL(self._location) && self.preventMixedContent) {
                                         // Si la imagen debe ser exportable y en la solicitud por HTTPS tenemos error de CORS, deducimos que por HTTP pasará lo mismo
-                                        if (error === self._image.ErrorType.PROTOCOL && options.ignoreProxification) {
+                                        if (error === self._image.ErrorType.PROTOCOL && options.ignoreProxification || error?.status === 405) {
                                             _reject(error);
-                                        } else {
+                                        }
+                                        else {
                                             _byProxy.call(self, src, options, _caching, _reject);
                                         }
-                                    } else {
+                                    } else if (error.status === 405) {
+                                        _reject(error);
+                                    }
+                                    else {
                                         _currentHTTPS.call(self, src, options, _caching, _reject);
                                     }
                                 });
@@ -940,6 +947,13 @@ TC.tool.Proxification = function (proxy, options = {}) {
                     };
 
                     makeRequest(options);
+                });
+                cache._actionPromise.catch(function (error) {
+                    if (!error.status || error.status >= 400) {
+                        reject(error);
+                    } else {
+                        resolve(self.fetch(src, options));
+                    }
                 });
             }
         });        
@@ -1084,8 +1098,6 @@ TC.tool.Proxification = function (proxy, options = {}) {
         }
 
         var _makeRequest = function (url, options, actions, cache) {
-            var request;
-
             // fetch no incluye por defecto las cookies de autenticación, hay que indicarlo.
             //options.credentials = 'include';
 
@@ -1259,13 +1271,7 @@ TC.tool.Proxification = function (proxy, options = {}) {
                         }
                     }
                 });
-                cache._actionPromise.catch(function (error) {
-                    if (!error.status || error.status >= 400) {
-                        reject(error);
-                    } else {
-                        resolve(self.fetch(url, options));
-                    }
-                });
+                cache._actionPromise.catch(error => reject(error));
             });
         }
     };
