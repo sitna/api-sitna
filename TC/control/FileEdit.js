@@ -7,6 +7,7 @@ import Geometry from '../Geometry';
 import Util from '../Util';
 import filter from '../filter';
 import Toggle from '../../SITNA/ui/Toggle';
+import Layer from '../../SITNA/layer/Layer';
 import Point from '../../SITNA/feature/Point';
 import MultiPoint from '../../SITNA/feature/MultiPoint';
 import '../../SITNA/feature/Marker';
@@ -16,6 +17,7 @@ import '../../SITNA/feature/MultiPoint';
 import '../../SITNA/feature/MultiMarker';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import { FieldNameError } from '../../SITNA/format/BinaryFormat';
 
 TC.control = TC.control || {};
 TC.Geometry = Geometry;
@@ -168,7 +170,7 @@ class FileEdit extends WebComponentControl {
                 ctl.addItemTool({
                     renderFn: function (container, layerId) {
                         const layer = self.map.getLayer(layerId);
-                        if (layer.type !== Consts.layerType.VECTOR) {
+                        if (layer?.type !== Consts.layerType.VECTOR) {
                             return;
                         }
                         const className = self.CLASS + '-btn-edit';
@@ -181,15 +183,17 @@ class FileEdit extends WebComponentControl {
                             checkbox.uncheckedIconText = editIconText;
                             checkbox.dataset.layerId = layerId;
                         }
+                        checkbox.disabled = layer.state === Layer.state.LOADING;
                         return checkbox;
                     },
-                    updateEvents: [Consts.event.CONTROLACTIVATE, Consts.event.CONTROLDEACTIVATE],
+                    updateEvents: [Consts.event.BEFORELAYERUPDATE, Consts.event.LAYERUPDATE, Consts.event.CONTROLACTIVATE, Consts.event.CONTROLDEACTIVATE],
                     updateFn: function (_e) {
                         const checkbox = this;
                         const layer = self.map.getLayer(checkbox.dataset.layerId);
                         self.getLayer().then(function (ownLayer) {
                             checkbox.checked = ownLayer === layer;
                         });
+                        checkbox.disabled = !layer || layer.state === Layer.state.LOADING;
                     },
                     actionFn: function () {
                         const checkbox = this;
@@ -241,7 +245,7 @@ class FileEdit extends WebComponentControl {
             const editControl = await self.getEditControl();
             editControl.addEventListener(Edit.event.MODECHANGE, async function (e) {
                 const featureTypeMetadata = await editControl.layer?.getFeatureTypeMetadata();
-                const geometryType = featureTypeMetadata?.geometries[0].type;
+                const geometryType = featureTypeMetadata?.geometries?.[0].type;
                 if (geometryType) {
                     const userPreferences = self.#getUserPreferences(editControl.layer);
                     if (!userPreferences.allowOtherGeometryTypes) {
@@ -249,19 +253,22 @@ class FileEdit extends WebComponentControl {
                         const mode = this.mode;
                         switch (mode) {
                             case Edit.mode.ADDPOINT:
-                                if (geometryType !== Consts.geom.POINT &&
+                                if (geometryType !== Consts.geom.GEOMETRY &&
+                                    geometryType !== Consts.geom.POINT &&
                                     geometryType !== Consts.geom.MULTIPOINT) {
                                     geometryTypeConflict = true;
                                 }
                                 break;
                             case Edit.mode.ADDLINE:
-                                if (geometryType !== Consts.geom.POLYLINE &&
+                                if (geometryType !== Consts.geom.GEOMETRY &&
+                                    geometryType !== Consts.geom.POLYLINE &&
                                     geometryType !== Consts.geom.MULTIPOLYLINE) {
                                     geometryTypeConflict = true;
                                 }
                                 break;
                             case Edit.mode.ADDPOLYGON:
-                                if (geometryType !== Consts.geom.POLYGON &&
+                                if (geometryType !== Consts.geom.GEOMETRY &&
+                                    geometryType !== Consts.geom.POLYGON &&
                                     geometryType !== Consts.geom.MULTIPOLYGON) {
                                     geometryTypeConflict = true;
                                 }
@@ -489,10 +496,22 @@ class FileEdit extends WebComponentControl {
                         return false;
                     };
 
-                    const data = await self.map.exportFeatures(features, {
-                        fileName: fileSystemFileName,
-                        format: format
-                    });
+                    let data;
+                    try {
+                        data = await self.map.exportFeatures(features, {
+                            fileName: fileSystemFileName,
+                            format: format
+                        });
+                    }
+                    catch (e) {
+                        if (e instanceof FieldNameError) {
+                            TC.error(self.getLocaleString('fileWrite.fieldNameError', { name: e.cause }), [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
+                        }
+                        else {
+                            TC.error(e);
+                        }
+                        return;
+                    }
 
                     let writeOk;
                     if (layer._additionalFileHandles?.length && data.type === 'application/zip') {
