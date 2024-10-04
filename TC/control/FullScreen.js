@@ -5,66 +5,10 @@ import Util from '../Util';
 
 TC.control = TC.control || {};
 
-const key = {
-    fullscreenEnabled: 0,
-    fullscreenElement: 1,
-    requestFullscreen: 2,
-    exitFullscreen: 3,
-    fullscreenchange: 4,
-    fullscreenerror: 5
-};
-
-const webkit = [
-    'webkitFullscreenEnabled',
-    'webkitFullscreenElement',
-    'webkitRequestFullscreen',
-    'webkitExitFullscreen',
-    'webkitfullscreenchange',
-    'webkitfullscreenerror'
-];
-
-const moz = [
-    'mozFullScreenEnabled',
-    'mozFullScreenElement',
-    'mozRequestFullScreen',
-    'mozCancelFullScreen',
-    'mozfullscreenchange',
-    'mozfullscreenerror'
-];
-
-const ms = [
-    'msFullscreenEnabled',
-    'msFullscreenElement',
-    'msRequestFullscreen',
-    'msExitFullscreen',
-    'MSFullscreenChange',
-    'MSFullscreenError'
-];
-
 const document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
 
-const vendor = 'fullscreenEnabled' in document && Object.keys(key) ||
-    webkit[0] in document && webkit ||
-    moz[0] in document && moz ||
-    ms[0] in document && ms ||
-    [];
-
 class FullScreen extends Control {
-    fscreen = {
-        inFullscreen: false,
-        requestFullscreen: element => element[vendor[key.requestFullscreen]](),
-        get exitFullscreen() { return document[vendor[key.exitFullscreen]].bind(document); },
-        addEventListener: (type, handler, options) => document.addEventListener(vendor[key[type]], handler, options),
-        removeEventListener: (type, handler, options) => document.removeEventListener(vendor[key[type]], handler, options),
-        get fullscreenEnabled() { return Boolean(document[vendor[key.fullscreenEnabled]]); },
-        set fullscreenEnabled(val) { },
-        get fullscreenElement() { return document[vendor[key.fullscreenElement]]; },
-        set fullscreenElement(val) { },
-        get onfullscreenchange() { return document[("on" + vendor[key.fullscreenchange]).toLowerCase()]; },
-        set onfullscreenchange(handler) { document[("on" + vendor[key.fullscreenchange]).toLowerCase()] = handler; },
-        get onfullscreenerror() { return document["on" + vendor[key.fullscreenerror].toLowerCase()]; },
-        set onfullscreenerror(handler) { document["on" + vendor[key.fullscreenerror].toLowerCase()] = handler; }
-    };
+    #byBtn = false;
 
     async register(map) {
         const self = this;
@@ -72,74 +16,63 @@ class FullScreen extends Control {
 
         const btn = self.div.querySelector('.' + self.CLASS + '-btn');
 
-        if (self.fscreen.fullscreenEnabled) {
+        if (document.fullscreenEnabled) {
 
-            const doFullscreenChange = () => {
-                btn.classList.toggle(Consts.classes.ACTIVE, self.fscreen.inFullscreen);
-                btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString("fscreen.tip.return") : self.getLocaleString("fscreen.tip"));
+            const onFullscreenChange = () => {
+                const isFullScreen = btn.classList.toggle(Consts.classes.ACTIVE, self.isFullScreen() || self.isElementFullScreen());
+                const titleKey = isFullScreen ?
+                    (self.isElementFullScreen() ? 'fscreen.tip.return' : 'fscreen.tip.keyboard') :
+                    'fscreen.tip';
+                btn.setAttribute('title', self.getLocaleString(titleKey));
             };
 
-            self.fscreen.addEventListener('fullscreenchange', () => {
-                self.fscreen.inFullscreen = self.fscreen.fullscreenElement !== null;
-                doFullscreenChange();
-            }, false);
+            document.addEventListener('fullscreenchange', onFullscreenChange, false);
 
             btn.addEventListener('click', function () {
-                self.byBtn = true;
-                if (!self.fscreen.inFullscreen) {
-                    self.fscreen.requestFullscreen(document.body);
+                self.#byBtn = true;
+                if (self.isFullScreen()) {
+                    document.exitFullscreen();
                 } else {
-                    self.fscreen.exitFullscreen();
+                    document.body.requestFullscreen();
                 }
             }, false);
 
             if (!Util.detectMobile()) {
                 window.addEventListener('resize', () => {
-                    if (self.byBtn) {
-                        self.byBtn = false;
+                    if (self.#byBtn) {
+                        self.#byBtn = false;
                         return;
                     }
 
-                    const windowWidth = window.innerWidth * window.devicePixelRatio;
-                    const windowHeight = window.innerHeight * window.devicePixelRatio;
-                    const screenWidth = window.screen.width;
-                    const screenHeight = window.screen.height;
-
-                    if (windowWidth / screenWidth >= 0.95 && windowHeight / screenHeight >= 0.95) {
-                        self.fscreen.inFullscreen = true;
-                    } else {
-                        self.fscreen.inFullscreen = false;
-                    }
-
-                    doFullscreenChange();
+                    onFullscreenChange();
 
                     let header = document.body.getElementsByTagName('header');
-                    if (self.fscreen.inFullscreen) {
-                        btn.setAttribute('disabled', 'disabled');
-
-                        if (header.length > 0) {
-                            header[0].classList.add("tc-ctl-fscreenToHeader");
+                    if (self.isFullScreen()) {
+                        if (!self.isElementFullScreen()) {
+                            btn.disabled = true;
                         }
 
-                        self.map.div.classList.add("tc-ctl-fscreenToMap");
+                        if (header.length > 0) {
+                            header[0].classList.add(self.CLASS + '-to-header');
+                        }
+
+                        self.map.div.classList.add(self.CLASS + '-to-map');
                         if (self.map.view3D) {
-                            self.map.view3D.container.classList.add("tc-ctl-fscreenToMap");
+                            self.map.view3D.container.classList.add(self.CLASS + '-to-map');
                         }
 
                     } else {
-                        btn.removeAttribute('disabled');
+                        btn.disabled = false;
 
                         if (header.length > 0) {
-                            header[0].classList.remove("tc-ctl-fscreenToHeader");
+                            header[0].classList.remove(self.CLASS + '-to-header');
                         }
 
-                        self.map.div.classList.remove("tc-ctl-fscreenToMap");
+                        self.map.div.classList.remove(self.CLASS + '-to-map');
                         if (self.map.view3D) {
-                            self.map.view3D.container.classList.remove("tc-ctl-fscreenToMap");
+                            self.map.view3D.container.classList.remove(self.CLASS + '-to-map');
                         }
                     }
-
-                    btn.setAttribute('title', self.fscreen.inFullscreen ? self.getLocaleString('fscreen.tip.keyboard') : self.getLocaleString("fscreen.tip"));
 
                     const resizeEvent = document.createEvent('HTMLEvents');
                     resizeEvent.initEvent('resize', false, false);
@@ -154,10 +87,22 @@ class FullScreen extends Control {
         return self;
     }
 
+    isFullScreen() {
+        const windowWidth = window.innerWidth * window.devicePixelRatio;
+        const windowHeight = window.innerHeight * window.devicePixelRatio;
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+
+        return windowWidth / screenWidth >= 0.95 && windowHeight / screenHeight >= 0.95;
+    }
+
+    isElementFullScreen() {
+        return document.fullscreenElement !== null;
+    }
+
     async loadTemplates() {
-        const self = this;
         const module = await import('../templates/tc-ctl-fscreen.mjs');
-        self.template = module.default;
+        this.template = module.default;
     }
 }
 
