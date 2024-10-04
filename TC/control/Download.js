@@ -46,7 +46,8 @@ class Download extends MapInfo {
         const self = this;
         await super.renderData.call(self, {
             controlId: self.id,
-            deselectableTabs: self.options.deselectableTabs
+            deselectableTabs: self.options.deselectableTabs,
+            clipboard: !!navigator?.clipboard?.write
         }, function () {
             const firstTab = self.div.querySelector(`.tc-ctl-tctr-select sitna-tab:first-of-type`);
             if (firstTab && firstTab.attributes["for"]) {
@@ -72,6 +73,9 @@ class Download extends MapInfo {
                 }
             };
         });
+        self.div.querySelector('.' + self.CLASS + '-image select').addEventListener("change", function (e) {
+            self.div.querySelector(".tc-ctl-clipboard-btn").disabled = !ClipboardItem.supports(e.target.value);
+        });
     }
 
     async register(map) {
@@ -83,6 +87,7 @@ class Download extends MapInfo {
 
         self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', () => self.#download()), { passive: true });
         self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', (evt) => self.#showHelp(evt)), { passive: true });
+        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-clipboard-btn', () => self.#copyImage()), { passive: true });
 
         self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (e) {
             if (e.target.checked) {
@@ -102,99 +107,59 @@ class Download extends MapInfo {
         return self;
     }
 
-    #downLoadImage(format) {
+    async #downLoadImage(format) {
         const self = this;
         const li = self.map.getLoadingIndicator();
         const wait = li && li.addWait();
-        const extent = self.map.getExtent();
-        const doneQR = new Promise(function (resolve, _reject) {
-            var canvases = self.map.wrap.getCanvas();
-            var newCanvas = canvases.length > 1 ? Util.mergeCanvases(canvases) : canvases[0];
 
-            var sb = self.map.getControlsByClass(ScaleBar);
-            if (sb && !self.map.on3DView) {
-                self.drawScaleBarIntoCanvas({ canvas: newCanvas, fill: true });
-            }
-
-            if (!self.#activeElement.querySelector(`.${self.CLASS}-image-qr:disabled`) &&
-                self.#activeElement.querySelector(`.${self.CLASS}-image-qr:checked`)) {
-                const codeContainerId = 'qrcode';
-                var codeContainer = document.getElementById(codeContainerId);
-                if (codeContainer) {
-                    codeContainer.innerHTML = '';
-                }
-                else {
-                    codeContainer = document.createElement('div');
-                    codeContainer.setAttribute('id', codeContainerId);
-                    document.body.appendChild(codeContainer);
-                }
-
-                codeContainer.style.top = '-200px';
-                codeContainer.style.left = '-200px';
-                codeContainer.style.position = 'absolute';
-
-                self.makeQRCode(codeContainer, 87).then(function (qrCodeBase64) {
-                    if (qrCodeBase64) {
-                        var ctx = newCanvas.getContext("2d");
-                        ctx.fillStyle = "#ffffff";
-                        ctx.fillRect(newCanvas.width - 91, newCanvas.height - 91, 91, 91);
-
-                        Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 }).then(function (mapCanvas) {
-                            resolve(mapCanvas);
-                        });
-                    } else {
-                        li && li.removeWait(wait);
-                    }
-                });
-            } else {
-                resolve(newCanvas);
-            }
-        });
-
-        doneQR.then(function (_canvas) {
-            const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + Util.getFormattedDate(new Date().toString(), true);
-            const fileExtension = '.' + format.split('/')[1];
+        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr:disabled`) &&
+            self.#activeElement.querySelector(`.${self.CLASS}-image-qr:checked`);
+        const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + Util.getFormattedDate(new Date().toString(), true);
+        const fileExtension = '.' + format.split('/')[1];
+        if (self.#activeElement.querySelector(`.${self.CLASS}-image-wld:checked`) && !self.map.on3DView) {            
             const worldFileExtension = format === Consts.mimeType.JPEG ? '.jgw' : '.pgw';
-            if (self.#activeElement.querySelector(`.${self.CLASS}-image-wld:checked`) && !self.map.on3DView) {
-                import('jszip').then(module => {
-                    const JSZip = module.default;
-                    const xScale = (extent[2] - extent[0]) / _canvas.width;
-                    const ySkew = 0;
-                    const xSkew = 0;
-                    const yScale = (extent[1] - extent[3]) / _canvas.height;
-                    const xOrigin = extent[0];
-                    const yOrigin = extent[3];
-                    const zip = new JSZip();
-                    _canvas.toBlob(function (blob) {
-                        zip.file(fileName + fileExtension, blob);
-                        zip.file(fileName + worldFileExtension, `${toFixed(xScale)}
+            const blob = await self.generateImage(format, true, includeQR);
+            const extent = self.map.getExtent();
+            import('jszip').then(async (module) => {
+                const JSZip = module.default;
+                var canvases = self.map.wrap.getCanvas();
+                var newCanvas = canvases.length > 1 ? Util.mergeCanvases(canvases) : canvases[0];
+                const xScale = (extent[2] - extent[0]) / newCanvas.width;
+                const ySkew = 0;
+                const xSkew = 0;
+                const yScale = (extent[1] - extent[3]) / newCanvas.height;
+                const xOrigin = extent[0];
+                const yOrigin = extent[3];
+                const zip = new JSZip();                
+                zip.file(fileName + fileExtension, blob);
+                zip.file(fileName + worldFileExtension, `${toFixed(xScale)}
 ${ySkew.toFixed(1)}
 ${xSkew.toFixed(1)}
 ${toFixed(yScale)}
 ${toFixed(xOrigin)}
 ${toFixed(yOrigin)}`);
-                        zip.generateAsync({ type: "blob" }).then(function (blob) {
-                            Util.downloadBlob(fileName + ".zip", blob);
-                            li && li.removeWait(wait);
-                        }, function (err) {
-                            TC.error(self.getLocaleString('dl.export.map.error') + ': ' + err.message);
-                            li && li.removeWait(wait);
-                        });
-                    }, format);
+                zip.generateAsync({ type: "blob" }).then(function (blob) {
+                    Util.downloadBlob(fileName + ".zip", blob);
+                    li && li.removeWait(wait);
+                }, function (err) {
+                    TC.error(self.getLocaleString('dl.export.map.error') + ': ' + err.message);
+                    li && li.removeWait(wait);
                 });
-            }
-            else {
-                try {
-                    const res = _canvas.toDataURL(format);
-                    Util.downloadDataURI(fileName + fileExtension, format, res);
-                } catch (e) {
-                    TC.error(self.getLocaleString('dl.export.map.error') + ': ' + e.message);
-                }
-                li && li.removeWait(wait);
-            }
-        });
-    }
+            });
 
+        }
+        else {
+            
+            try {
+                const dataURL = await self.generateImage(format, false, includeQR);
+                Util.downloadDataURI(fileName + fileExtension, format, dataURL);
+            } catch (e) {
+                TC.error(self.getLocaleString('dl.export.map.error') + ': ' + e.message);
+            }
+            li && li.removeWait(wait);
+        }
+    }
+    
 /*
  * Descarga las features de las capas de trabajo actualmente seleccionadas. Comprueba que el número de features a descargar
  * no excede el límite impuesto por el servidor.
@@ -258,6 +223,29 @@ ${toFixed(yOrigin)}`);
         });
     }
 
+    async #copyImage() {
+        const self = this;
+        const li = self.map.getLoadingIndicator();
+        const wait = li && li.addWait();
+        const format=this.#activeElement.querySelector('select').value;
+        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr:disabled`) &&
+            self.#activeElement.querySelector(`.${self.CLASS}-image-qr:checked`);
+        const blob = await self.generateImage(format, true, includeQR);
+        const clipboardItemData = {
+            [blob.type]: blob
+        };
+        const clipboardItem = new ClipboardItem(clipboardItemData);
+        try {
+            await navigator.clipboard.write([clipboardItem]);
+            li && li.removeWait(wait);
+            self.map.toast(self.getLocaleString('copiedClipboard'), { type: Consts.msgType.INFO });
+        }
+        catch (e) {
+            TC.error(e.message);
+            li && li.removeWait(wait);
+        }
+    }
+
     #download() {
         let format = '';
         if (this.#activeElement) {
@@ -299,7 +287,6 @@ ${toFixed(yOrigin)}`);
         }
         self.map.toast(errorMsg, { type: Consts.msgType.WARNING });
     }
-
     
     #showHelp = function (evt) {
         const self = this;
