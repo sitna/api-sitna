@@ -261,7 +261,7 @@ class LayerLegend extends WebComponentControl {
         if (!self.#layer.availableNames.some((layername) => self.#layer.isVisibleByScale(layername))) {
             self.innerHTML = "";
             return
-        };
+        }
         self.innerHTML = "";
         self.#layer.map.magnifier.hideMagnifier();
         self.classList.add(loadingClassName);
@@ -296,9 +296,9 @@ class LayerLegend extends WebComponentControl {
             self.renderData(tree, function () {
                 self.classList.remove(loadingClassName);
                 self.querySelector(".tc-ctl-legend-node").dataset["layerId"] = self.dataset.layerId;
-                self.#layer.map.getControlsByClass(TC.control.Legend)[0].update();
+                self.#layer.map?.getControlsByClass(TC.control.Legend)[0].update();
 
-                self.#layer.map.magnifier.addNode(self.querySelectorAll(".tc-ctl-legend-watch img"), 4);
+                self.#layer.map?.magnifier.addNode(self.querySelectorAll(".tc-ctl-legend-watch img"), 4);
                 //self.#layer.map.magnifier.#hideMagnifier();
             });
         }
