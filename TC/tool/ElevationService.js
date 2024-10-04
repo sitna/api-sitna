@@ -52,7 +52,7 @@ class ElevationService {
     async request(options = {}) {
         const self = this;
         if (options.dataInputs || options.body) {
-            const WPS = await import('../format/WPS');
+            const { default: WPS } = await import('../format/WPS');
             const data = {
                 process: options.process || self.process,
                 dataInputs: options.dataInputs,
