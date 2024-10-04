@@ -8,6 +8,7 @@ import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import { FieldNameError } from '../../SITNA/format/BinaryFormat';
 
 TC.control = TC.control || {};
 
@@ -67,7 +68,6 @@ class FeatureDownloadDialog extends Control {
                 });
 
                 if (self.options.elevation?.resolution) {
-
                     modalBody.querySelectorAll(self.#selectors.INTERPOLATION_RADIO).forEach((radio) => radio.addEventListener('change', function (_e) {
                         const idDiv = modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE);
                         idDiv.classList.toggle(Consts.classes.HIDDEN);
@@ -79,7 +79,7 @@ class FeatureDownloadDialog extends Control {
                         self.#interpolationDistance = e.target.value;
                     });
                 }
-            }
+            }            
         }
     }
 
@@ -234,38 +234,46 @@ class FeatureDownloadDialog extends Control {
 
             //checkear si son features con datos complejos
             var cancel = false;
-            if (format !== Consts.format.GEOJSON && opts.format !== Consts.format.WKT && features.some(function (feat) {
-                for (var attr in feat.getData()) {
-                    if (feat.data[attr] instanceof Object)
-                        return true;
+            if (format !== Consts.format.GEOJSON &&
+                opts.format !== Consts.format.WKT &&
+                format !== Consts.format.GML &&
+                features.some(function (feat) {
+                    for (var attr in feat.getData()) {
+                        if (feat.data[attr] instanceof Object)
+                            return true;
+                    }
+                    return false;
+                })) {
+                if (!options.acceptedDataDestruction) {
+                    await TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.complexAttr"), format),
+                        () => {
+                            options.acceptedDataDestruction = true;
+                        },
+                        () => {
+                            cancel = true;
+                        });
                 }
-                return false;
-            }))
-                await TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.complexAttr"), format), null,
-                    function () {
-                        cancel = true;
-                    });
+            }
             if (cancel) {
                 return;
             }
 
-            const li = self.map.getLoadingIndicator();
-            const waitId = li && li.addWait();
-
-
-            Util.closeModal();
-            self.#addElevationAndInterpolation(features, {
-                displayElevation: self.#displayElevation,
-                elevation: self.#displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
-            }).then(
-                function (proccessedFeatures) {
+            await self.map.wait(async () => {
+                Util.closeModal();
+                try {
+                    const proccessedFeatures = await self.#addElevationAndInterpolation(features, {
+                        displayElevation: self.#displayElevation,
+                        elevation: self.#displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
+                    });
                     const innerFileName = opts.fileName ||
                         (opts.title ? opts.title.toLowerCase().replace(/ /g, '_') : 'download');
                     let fileName = opts.fileName || innerFileName + ' ' + Util.getFormattedDate(new Date().toString(), true);
-                    self.map.exportFeatures(proccessedFeatures, {
-                        fileName: innerFileName,
-                        format
-                    }).then(data => {
+                    try {
+                        const data = await self.map.exportFeatures(proccessedFeatures, {
+                            fileName: innerFileName,
+                            format,
+                            adaptNames: options.adaptNames
+                        })
                         fileName = fileName || TC.getUID();
                         switch (format) {
                             case Consts.format.SHAPEFILE:
@@ -283,9 +291,29 @@ class FeatureDownloadDialog extends Control {
                                 break;
                             }
                         }
-                    });
-                },
-                function (error) {
+                    }
+                    catch (e) {
+                        if (e instanceof FieldNameError) {
+                            const message = self.getLocaleString('fileWrite.fieldNameError', { name: e.cause });
+                            if (options.adaptNames) {
+                                TC.error(message, [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
+                            }
+                            else {
+                                TC.confirm(self.getLocaleString('fileWrite.fieldNameWarning'), () => {
+                                    const newOpts = { ...options };
+                                    newOpts.adaptNames = true;
+                                    self.download(newOpts);
+                                }, () => {
+                                    self.map.toast(message, { type: Consts.msgType.INFO });
+                                });
+                            }
+                        }
+                        else {
+                            TC.error(e);
+                        }
+                    }
+                }
+                catch (error) {
                     self.open(features, opts);
                     if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
                         TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
@@ -293,8 +321,6 @@ class FeatureDownloadDialog extends Control {
                     }
                     TC.error(self.getLocaleString('elevation.error'));
                 }
-            ).finally(function () {
-                li && li.removeWait(waitId);
             });
         };
 
