@@ -7,7 +7,7 @@ import '../../SITNA/ui/Toggle';
 import MapContents from './MapContents';
 import Vector from '../../SITNA/layer/Vector';
 import itemToolContainer from './itemToolContainer';
-import { LayerLegend, CreateSymbolizer } from './LayerLegend';
+import { CreateSymbolizer } from './LayerLegend';
 import ImageMagnifier from './ImageMagnifier';
 
 TC.control = TC.control || {};
@@ -399,7 +399,7 @@ class WorkLayerManager extends TOC {
                                 if (!layerData.legend[0][i]) layerData.legend[0][i] = {};
                                 if (legendObjets[0][i].rules)
                                     layerData.legend[0][i].symbols = await Promise.all(await legendObjets[0][i].rules
-                                        .map(async (rule, index) => {
+                                        .map(async (rule) => {
                                             return {
                                                 src: await CreateSymbolizer(rule),
                                                 title: rule.title || rule.name
