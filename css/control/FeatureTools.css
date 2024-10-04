@@ -25,7 +25,7 @@
         margin-top: 0.15em;
         z-index: 10010;
         transition: all .2s ease;
-    }        
+    }
 
         .tc-ctl-ftools button.tc-icon-btn:before {
             position: absolute;
@@ -57,7 +57,7 @@
 
     .tc-ctl-ftools button.tc-ctl-ftools-zoom-btn:before {
         font-family: var(--icon-font-family);
-        content: "\e91d";
+        content: var(--icon-extent);
     }
 
     .tc-ctl-ftools button.tc-ctl-ftools-elev-btn:before {
@@ -82,7 +82,7 @@ table.tc-ctl-ftools-zoom {
     table.tc-ctl-ftools-zoom a {
         cursor: pointer;
     }
-    
+
     table.tc-ctl-ftools-zoom label,
     table.tc-ctl-ftools-zoom input,
     table.tc-ctl-ftools-zoom video,

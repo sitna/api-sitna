@@ -142,7 +142,7 @@ div.tc-ctl-toc-tree > div.tc-ctl-toc-empty.tc-hidden {
         left: 13px;
     }*/
 }
-@media screen and (pointer:coarse) {
+@media screen and (pointer:coarse),screen and (max-height:40em) {
     .tc-ctl-toc li.tc-ctl-toc-node input[type=checkbox].tc-toggle:before {
         line-height: 1.4em;
     }
@@ -151,7 +151,7 @@ div.tc-ctl-toc-tree > div.tc-ctl-toc-empty.tc-hidden {
         border-width: 4px;
     }
 }
-@media screen and (pointer:coarse) and (min-device-width: 1024px),(pointer:coarse) and (min-device-height: 1024px) {
+@media screen and (pointer:coarse) and (min-device-width: 1024px), screen and (pointer:coarse) and (min-device-height: 1024px){
     .tc-ctl-toc-branch li.tc-ctl-toc-node {
         padding-left: 33px;
     }
@@ -161,9 +161,8 @@ div.tc-ctl-toc-tree > div.tc-ctl-toc-empty.tc-hidden {
         height: 18px;
         left: 13px;
     }
-
 }
-@media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
+@media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height:40em) {
     .tc-ctl-toc li.tc-ctl-toc-node > button.tc-ctl-toc-collapse-btn {
         left: 0;
         width: 20px;

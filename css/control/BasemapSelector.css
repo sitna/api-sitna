@@ -72,8 +72,9 @@
     cursor: pointer;
     border: var(--thumb-border-width) solid var(--thumb-border-color);
     border-radius: var(--border-radius);
-    height: 4rem;
-    width: 4rem;
+    height: 4.5rem;
+    width: 4.5rem;
+    box-sizing: border-box;
     background-size: cover;
     background-repeat: no-repeat;
 }
@@ -107,7 +108,7 @@
         left: calc(-1 * var(--thumb-border-width));
         color: var(--thumb-text-color);
         text-shadow: 0.1em 0.1em 0 var(--thumb-text-shadow-color), 0.1em -0.1em 0 var(--thumb-text-shadow-color), -0.1em 0.1em 0 var(--thumb-text-shadow-color), -0.1em -0.1em 0 var(--thumb-text-shadow-color);
-        height: 3.36rem;
+        height: calc(3.9rem - 2 * var(--thumb-border-width));
         width: 4rem;
     }
 
@@ -168,40 +169,6 @@
     display: inline-block;
     margin-left: 0.5em;
 }
-
-.tc-ctl-bms .tc-ctl-bms-metadata a,
-.tc-ctl-bms-more-dialog .tc-ctl-bms-metadata a {
-    display: inline-block;
-    position: relative;
-    text-indent: -1000vw;
-    margin-right: 1.2em;
-    height: 1.5em;
-}
-
-    .tc-ctl-bms .tc-ctl-bms-metadata a:before,
-    .tc-ctl-bms-more-dialog .tc-ctl-bms-metadata a:before {
-        font-family: 'FontAwesome';
-        font-size: 1.4em;
-        content: '\f016';
-        position: absolute;
-        text-indent: 0;
-        top: 0;
-        left: 0;
-    }
-
-    .tc-ctl-bms .tc-ctl-bms-metadata a[type='text/xml']:after, .tc-ctl-bms .tc-ctl-bms-metadata a[type='text/html']:after,
-    .tc-ctl-bms-more-dialog .tc-ctl-bms-metadata a[type='text/xml']:after, .tc-ctl-bms-more-dialog .tc-ctl-bms-metadata a[type='text/html']:after {
-        content: attr(title);
-        position: absolute;
-        text-indent: 0;
-        bottom: 0.2em;
-        left: 0.3em;
-        border-radius: 0.1em;
-        background-color: var(--main-hl-color);
-        color: #fff;
-        padding: 0 0.2em 0 0.2em;
-        font-size: 0.6em;
-    }
 
 .tc-ctl-bms-more-dialog .tc-ctl-bms-node label span {
     color: var(--thumb-text-color);
@@ -318,6 +285,28 @@ ul.tc-ctl-bms-branch input[type=radio] {
         background-color: var(--main-hl-color);
         border: 1px solid;
         border-color: var(--main-hl-color);
+    }
+
+.tc-ctl-bms-crs-code {
+    display: inline-block;
+    font-weight: bold;
+    background-color: var(--sec-divider-color);
+    color: var(--text-sec-color);
+    padding: 0.1em 0.2em;
+    border-radius: calc(var(--border-radius) / 2);
+}
+
+.tc-ctl-bms-crs-desc {
+    display: inline-block;
+    margin-left: 1em;
+}
+
+    .tc-ctl-bms-crs-desc.tc-loading {
+        width: min(50%, 20em);
+        height: 1em;
+        background-color: var(--sec-divider-color);
+        border-radius: var(--border-radius);
+        animation: soft-pulsation 1.2s infinite;
     }
 
 @media screen and (min-width: 42em) {

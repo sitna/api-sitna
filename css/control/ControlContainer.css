@@ -74,7 +74,7 @@
     max-width: -moz-fit-content;
     max-width: -webkit-fit-content;
     max-width: fit-content;
-    display: table;
+    display: block;
     overflow: hidden;
     pointer-events: none;
     /*para edge*/

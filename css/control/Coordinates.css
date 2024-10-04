@@ -86,7 +86,7 @@
     }
 }
 
-@media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (min--moz-device-pixel-ratio:0) and (min-height: 40em) {
+@media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (max-resolution: 1dppx) and (min-height: 40em) {
     .tc-ctl-coords {
         top: 0;
         left: 0;
@@ -137,8 +137,9 @@ div.tc-ctl-coords-main {
 }
 
     .tc-ctl-coords button.tc-ctl-coords-crs:before {
-        font-family: mapskin;
-        content: '\e01a';
+        font-family: var(--icon-font-family);
+        content: var(--icon-edit);
+        transform: scaleX(-1);
         margin-right: 0.3em;
     }
 

@@ -22,6 +22,6 @@ a.tc-icon-btn.tc-ctl-print-btn:hover, a.tc-icon-btn.tc-ctl-print-btn:active {
     width: 1.2em;
     height: 1.2em;
     font-family: var(--icon-font-family);
-    content: '\e91b';
+    content: var(--icon-print);
     margin-right: 0.2em;
 }

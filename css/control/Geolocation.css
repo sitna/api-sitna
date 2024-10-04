@@ -15,33 +15,6 @@
     background-image: url(../img/track-marker-icon-end.png);
 }
 
-.tc-ctl-geolocation .tc-ctl-geolocation-locate {
-    float: right;
-    margin-left: 0.5em;
-}
-
-    .tc-ctl-geolocation .tc-ctl-geolocation-locate label {
-        vertical-align: bottom;
-        line-height: 2em;
-        margin-right: 0.3em;
-    }
-
-    .tc-ctl-geolocation .tc-ctl-geolocation-locate button {
-        height: 2em;
-        width: 13em;
-    }
-
-        .tc-ctl-geolocation .tc-ctl-geolocation-locate button:before {
-            font-family: FontAwesome;
-            content: "\f041";
-            margin-right: 0.5em;
-        }
-
-/*.tc-ctl-geolocation .tc-ctl-geolocation-locate .tc-ctl-geolocation-locate-hide {
-        background-color: #630101;
-        border-color: #630101;
-    }*/
-
 .tc-ctl-geolocation .tc-ctl-geolocation-select {
     padding-top: 0.5em;
     margin-bottom: 0.5em;
@@ -250,11 +223,6 @@
         color: #ccc;
     }
 
-    /*.tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > button.tc-btn-simulate:before {
-        font-family: FontAwesome;
-        content: "\f008";
-    }*/
-
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button#elevation:before {
         font-family: var(--icon-font-family);
         content: var(--icon-profile);
@@ -276,8 +244,8 @@
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-cancel:before {
-        font-family: FontAwesome;
-        content: "\f00d";
+        font-family: var(--icon-font-family);
+        content: var(--icon-close);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-export:before {
@@ -298,17 +266,18 @@ input#tc-ctl-geolocation-track-available-srch {
 .tc-ctl-geolocation .tc-ctl-geolocation-track-search-icon {
     position: relative;
     margin-top: 4px;
-    right: 21px;
+    right: 1em;
     color: #ccc;
     font-style: normal;
     width: 1em;
+    height: 1em;
     float: right;
     top: 20px;
 }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-search-icon:before {
-        font-family: FontAwesome;
-        content: "\f002";
+        font-family: var(--icon-font-family);
+        content: var(--icon-search);
     }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-title, .tc-ctl-geolocation .tc-ctl-geolocation-track-waypoint {
@@ -322,8 +291,8 @@ input#tc-ctl-geolocation-track-available-srch {
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-add-wpt:before {
-    font-family: FontAwesome;
-    content: "\f08d";
+    font-family: var(--icon-font-family);
+    content: var(--icon-placemark);
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-import > input[type="file"] {

@@ -1,7 +1,7 @@
 ﻿
 .tc-ctl-dldlog-dl {
     padding: 0.5em;
-    background-image: linear-gradient(45deg, #ffffff 25%, #cccccc 25%, #cccccc 50%, #ffffff 50%, #ffffff 75%, #cccccc 75%, #cccccc 100%);
+    background-image: linear-gradient(45deg, var(--main-bg-color) 25%, var(--sec-divider-color) 25%, var(--sec-divider-color) 50%, var(--main-bg-color) 50%, var(--main-bg-color) 75%, var(--sec-divider-color) 75%, var(--sec-divider-color) 100%);
     /* background-size: 3.13px 3.13px; */
     background-size: 4.66px 4.66px;
     border-radius: 0.3em;

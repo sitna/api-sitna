@@ -80,3 +80,8 @@ sitna-file-edit.tc-ctl sitna-attributes-edit h2 {
     border-bottom: none;
     font-size: 1.1em;
 }
+
+/* Esta regla evita la barra de scroll horizontal en el cuerpo del editor de atributos */
+.tc-ctl-rpanel-body sitna-file-edit {
+    padding: 0.5em;
+}

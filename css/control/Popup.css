@@ -47,14 +47,14 @@
 
 .tc-ctl-popup:after {
     opacity: 0.6;
-    border-top-color: #fff;
+    border-top-color: var(--overlay-bg-color);
     border-width: 10px;
     left: 48px;
     margin-left: -10px;
 }
 
 .tc-ctl-popup:before {
-    border-top-color: #ccc;
+    border-top-color: var(--overlay-bg-color);
     border-width: 11px;
     left: 48px;
     margin-left: -11px;
@@ -65,7 +65,7 @@
 }
 
 .tc-ctl-popup.tc-drag {
-    background-color: rgba(255,255,255,0.4);
+    filter: opacity(0.4);
 }
 
 .tc-ctl-popup.tc-visible {
@@ -184,7 +184,7 @@
     background: transparent;
 }
 
-@media screen and (min-height: 40em) and (pointer: fine), screen and (min--moz-device-pixel-ratio:0) and (min-height:40em) {
+@media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height:40em) {
     .tc-ctl-popup-content {
         max-width: 40vw;
     }

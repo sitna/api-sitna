@@ -85,19 +85,19 @@
     background: var(--list-bg-color);
 }
 
-.tc-modal  ul.tc-ctl-omm-bl-list > li.tc-hidden {
-    display: none;
-}
+    .tc-modal ul.tc-ctl-omm-bl-list > li.tc-hidden {
+        display: none;
+    }
 
 .tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox] {
     display: none;
 }
 
-.tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox]:checked + div {
-    background-color: var(--main-hl-color);
-    border: 1px solid;
-    border-color: var(--main-hl-color);
-}
+    .tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox]:checked + div {
+        background-color: var(--main-hl-color);
+        border: 1px solid;
+        border-color: var(--main-hl-color);
+    }
 
 
 .tc-ctl-omm .tc-hidden {
@@ -117,13 +117,14 @@
 .tc-ctl-omm .tc-ctl-omm-list li.tc-disabled {
     animation: pulsation 2s infinite;
 }
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-toggle {
-        font-size: 1.5em;
-    }
 
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-icon-btn:before {
-        font-family: Mapskin;
-    }
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-toggle {
+    font-size: 1.5em;
+}
+
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-icon-btn:before {
+    font-family: Mapskin;
+}
 
 .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-edit:before {
     font-family: var(--icon-font-family);
@@ -132,7 +133,7 @@
 
 .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-view:before {
     font-family: var(--icon-font-family);
-    content: "\e912";
+    content: var(--icon-extent);
 }
 
 .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-delete:before {
@@ -145,10 +146,10 @@
     content: var(--icon-close);
 }
 
-    .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-save:before {
-        font-family: initial;
-        content: "\2714";
-    }
+.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-save:before {
+    font-family: initial;
+    content: "\2714";
+}
 
 .tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
     font-family: var(--icon-font-family);
@@ -164,10 +165,10 @@
     height: 2em;
 }
 
-.tc-ctl-omm .tc-ctl-omm-btn-new.tc-hidden {
-    display: inline-block;
-    position: absolute;
-}
+    .tc-ctl-omm .tc-ctl-omm-btn-new.tc-hidden {
+        display: inline-block;
+        position: absolute;
+    }
 
 .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw {
     background-color: var(--main-inactive-color);
@@ -222,9 +223,9 @@
     margin-top: 2em;
 }
 
-.tc-ctl-omm-dialog .tc-ctl-omm-tile-count.tc-hidden {
-    display: none;
-}
+    .tc-ctl-omm-dialog .tc-ctl-omm-tile-count.tc-hidden {
+        display: none;
+    }
 
 .tc-ctl-omm .tc-ctl-omm-progress-count {
     white-space: nowrap;
@@ -255,9 +256,9 @@
         margin-bottom: 0.5em;
     }
 
-.tc-ctl-omm-dialog .tc-ctl-omm-res-panel.tc-hidden {
-    display: none;
-}
+    .tc-ctl-omm-dialog .tc-ctl-omm-res-panel.tc-hidden {
+        display: none;
+    }
 
 .tc-ctl-omm-dialog .tc-ctl-omm-res {
     position: absolute;
