@@ -18,6 +18,8 @@
   *     // Creamos un mapa con el control de gestión de clics, con una función de callback personalizada
   *     var map = new SITNA.Map("mapa", {
   *         controls: {
+  *             // Quitamos del mapa el control que por defecto escucha los clics
+  *             featureInfo: false,
   *             click: {
   *                 active: true,
   *                 callback: function (coord) {
