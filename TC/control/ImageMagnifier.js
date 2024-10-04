@@ -11,6 +11,7 @@ const bottomClassName = 'tc-ctl-img-magnifier-bottom';
 const leftClassName = 'tc-ctl-img-magnifier-left';
 const rightClassName = 'tc-ctl-img-magnifier-right';
 const className = 'tc-ctl-img-magnifier';
+const classNameAvailable = 'tc-ctl-img-magnified';
 const noAnchorClassName = 'tc-ctl-img-magnifier-no-anchor';
 const bgClassName = 'tc-ctl-img-magnifier-bg';
 const elementName = 'sitna-image-magnifier';
@@ -126,18 +127,20 @@ class ImageMagnifier extends WebComponentControl {
             case nodes instanceof NodeList:
                 _nodes = _nodes.concat(Array.from(nodes));
                 break;
-        }
+        }        
         _nodes.forEach((node) => {
-            node.style.cursor = "pointer";
+            node.classList.add(classNameAvailable)
             node.oncontextmenu = (e) => e.preventDefault();
             node.title = self.#texts.textToOpen;
             node.addEventListener("pointerdown", function (event) {
-                event.preventDefault();                
-                self.#mouseEnterEvent(event, this, zoom);                
+                event.preventDefault();
+                if (!this.classList.contains(Consts.classes.NOT_AVAILABLE))
+                    self.#mouseEnterEvent(event, this, zoom);                
             });
             node.addEventListener("pointerup", function (event) {
                 event.preventDefault();
-                self.hideMagnifier();
+                if (!this.classList.contains(Consts.classes.NOT_AVAILABLE))
+                    self.hideMagnifier();
             });            
             node.addEventListener("mouseleave", function (event) {
                 if (event.relatedTarget !== self.#bgContent)
