@@ -373,7 +373,7 @@ class Feature {
             this.data = data;
         }
         else {
-            this.data = Util.extend(this.data, data);
+            this.data = { ...this.data, ...data };
             this.attributes = this.attributes || [];
             for (var key in data) {
                 let attr = this.attributes.find(attr => attr.name === key);
@@ -705,7 +705,11 @@ class Feature {
                 html = this.data;
             }
             else {
-                html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({ attributes: this.attributes, singleFeature: true });
+                html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({
+                    // Quitamos los atributos que son otras entidades (p.e. referencePoint)
+                    attributes: this.attributes.filter((attr) => !(attr.value instanceof Feature)),
+                    singleFeature: true
+                });
             }
         }
         const opts = Util.extend({}, options, { html: html });
