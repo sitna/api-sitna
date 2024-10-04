@@ -180,14 +180,24 @@ var Util = {
         var clone,
             target = arguments[0] || {},
             i = 1,
-            deep = false;
+            deep = false,
+            copyUndefinedValues = false;
 
         // Comprobar si hay que hacer copia profunda (primer parámetro === true)
         if (typeof target === 'boolean') {
             deep = target;
 
-            target = arguments[i] || {};
+            target = arguments[i] ?? {};
             i++;
+
+
+            // Comprobar si hay que copiar también las propiedades con valor undefined
+            if (typeof target === 'boolean') {
+                copyUndefinedValues = target;
+
+                target = arguments[i] ?? {};
+                i++;
+            }
         }
 
         // Handle case when target is a string or something (possible in deep copy)
@@ -220,10 +230,10 @@ var Util = {
                         }
 
                         // Never move original objects, clone them
-                        target[name] = Util.extend(deep, clone, copy);
+                        target[name] = Util.extend(deep, copyUndefinedValues, clone, copy);
 
                         // Don't bring in undefined values
-                    } else if (copy !== undefined) {
+                    } else if (copyUndefinedValues || copy !== undefined) {
                         target[name] = copy;
                     }
                 }
@@ -1828,6 +1838,7 @@ var Util = {
         return newCanvas;
     },
 
+
     calculateAspectRatioFit: function (srcWidth, srcHeight, maxWidth, maxHeight) {
         var ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight);
 
@@ -2106,7 +2117,6 @@ var Util = {
                             getGmlCoordinates(feature.geometry[0]) +
                             "</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>";
                 }
-                break;
             case "2.0":
             default:
                 switch (true) {
@@ -2119,7 +2129,6 @@ var Util = {
                             getGmlCoordinates(feature.geometry[0]) +
                             "</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon>";
                 }
-                break;
         }
     },
 
@@ -2299,6 +2308,7 @@ var Util = {
             case 'gml:PolygonPropertyType':
             case 'LinearRingPropertyType':
             case 'PolygonPropertyType':
+            case 'gml:Polygon':
             case 'Polygon':
             case 'POLYGON':
                 return Consts.geom.POLYGON;
@@ -2306,6 +2316,7 @@ var Util = {
             case 'gml:MultiSurfacePropertyType':
             case 'MultiPolygonPropertyType':
             case 'MultiSurfacePropertyType':
+            case 'gml:MultiPolygon':
             case 'MultiPolygon':
             case 'MULTIPOLYGON':
                 return Consts.geom.MULTIPOLYGON;
@@ -2313,6 +2324,7 @@ var Util = {
             case 'gml:CurvePropertyType':
             case 'LineStringPropertyType':
             case 'CurvePropertyType':
+            case 'gml:LineString':
             case 'LineString':
             case 'LINESTRING':
                 return Consts.geom.POLYLINE;
@@ -2320,16 +2332,19 @@ var Util = {
             case 'gml:MultiCurvePropertyType':
             case 'MultiLineStringPropertyType':
             case 'MultiCurvePropertyType':
+            case 'gml:MultiLineString':
             case 'MultiLineString':
             case 'MULTILINESTRING':
                 return Consts.geom.MULTIPOLYLINE;
             case 'gml:PointPropertyType':
             case 'PointPropertyType':
+            case 'gml:Point':
             case 'Point':
             case 'POINT':
                 return Consts.geom.POINT;
             case 'gml:MultiPointPropertyType':
             case 'MultiPointPropertyType':
+            case 'gml:MultiPoint':
             case 'MultiPoint':
             case 'MULTIPOINT':
                 return Consts.geom.MULTIPOINT;
@@ -2530,7 +2545,41 @@ var Util = {
         t = t.replace(/(u|ú|ü)/gi, "(u|ú|ü)");
         t = t.replace(/n/gi, "(n|ñ)");
         return t;
-    }
+    },
+
+    fontSupported: function (font) {        
+        var width;
+        var body = document.body;
+
+        var container = document.createElement('span');
+        container.innerHTML = Array(100).join('wi');
+        container.style.cssText = [
+            'position:absolute',
+            'width:auto',
+            'font-size:128px',
+            'left:-99999px'
+        ].join(' !important;');
+
+        var getWidth = function (fontFamily) {
+            container.style.fontFamily = fontFamily;
+
+            body.appendChild(container);
+            width = container.clientWidth;
+            body.removeChild(container);
+
+            return width;
+        };
+
+        // Pre compute the widths of monospace, serif & sans-serif
+        // to improve performance.
+        var monoWidth = getWidth('monospace');
+        var serifWidth = getWidth('serif');
+        var sansWidth = getWidth('sans-serif');
+
+        return monoWidth !== getWidth(font + ',monospace') ||
+            sansWidth !== getWidth(font + ',sans-serif') ||
+            serifWidth !== getWidth(font + ',serif');
+    },
 };
 
 const _queryHeaderConstructor = function (capabilities) {
@@ -2584,6 +2633,19 @@ if (window.HTMLElement) {
                 (rect2.left <= rect1.right && rect1.right <= rect2.right);
         });
     };
+}
+export class MapImage {
+
+    //-- Obtenci�n de DataURL de la imagen del mapa
+    static getDataURL(mapCanvas, mimeType) {
+        return mapCanvas.toDataURL(mimeType);
+    }
+
+    //-- Obtenci�n de Blob de la imagen del mapa
+    static getBlobPromise(mapCanvas, mimeType) {        
+        const toBlob = resolve => mapCanvas.toBlob(blob => resolve(blob), mimeType);
+        return new Promise(toBlob);
+    }
 }
 
 TC.Util = Util;
