@@ -691,9 +691,9 @@ class Feature {
     async showInfo(options = {}) {
 
         if (!TC.control || !TC.control.FeatureInfoCommons) {
-            const module = await import('../../TC/control/FeatureInfoCommons');
+            const { default: FeatureInfoCommons } = await import('../../TC/control/FeatureInfoCommons');
             TC.control = TC.control || {};
-            TC.control.FeatureInfoCommons = module.default;
+            TC.control.FeatureInfoCommons = FeatureInfoCommons;
         }
 
         let html;
@@ -712,8 +712,8 @@ class Feature {
         let control;
         if (options.control && TC.control) {
             const optionsControl = options.control;
-            const Popup = (await import('../../TC/control/Popup')).default;
-            const ResultsPanel = (await import('../../TC/control/ResultsPanel')).default;
+            const { default: Popup } = await import('../../TC/control/Popup');
+            const { default: ResultsPanel } = await import('../../TC/control/ResultsPanel');
             if (optionsControl instanceof Popup) {
                 control = await this.showPopup(opts);
             }
