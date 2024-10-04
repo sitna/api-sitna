@@ -16,6 +16,7 @@ class WebComponentControl extends HTMLElement {
     control;
     #onBySelectorMap = new WeakMap();
     #downloadDialog;
+    #listeners = {};
 
     constructor() {
         super();
@@ -491,8 +492,7 @@ class WebComponentControl extends HTMLElement {
             }
             return callback.call(self, cbParameter);
         }.bind(this);
-        self._listeners = self._listeners || [];
-        const stack = self._listeners[evt] = this._listeners[evt] || new Map();
+        const stack = self.#listeners[evt] = self.#listeners[evt] || new Map();
         stack.set(callback, result);
         return result;
     }
@@ -518,7 +518,7 @@ class WebComponentControl extends HTMLElement {
         const eventList = events.split(' ');
         if (callback) {
             eventList.forEach(function (evt) {
-                const stack = self._listeners[evt];
+                const stack = self.#listeners[evt];
                 if (stack && stack.has(callback)) {
                     self.removeEventListener(evt, stack.get(callback));
                 }
@@ -526,7 +526,7 @@ class WebComponentControl extends HTMLElement {
         }
         else {
             eventList.forEach(function (evt) {
-                const stack = self._listeners[evt];
+                const stack = self.#listeners[evt];
                 if (stack) {
                     stack.forEach(function (cb) {
                         self.removeEventListener(evt, cb);
