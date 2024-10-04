@@ -5,10 +5,30 @@ import Util from '../Util';
 import Modify from './Modify';
 import Draw from './Draw';
 import Toggle from '../../SITNA/ui/Toggle';
+import Feature from '../../SITNA/feature/Feature';
 
 TC.control = TC.control || {};
 
 const elementName = 'sitna-attributes-edit';
+
+const getDataType = (value) => {
+    if (value === null) {
+        return;
+    }
+    let type = typeof value;
+    if (type === 'number') {
+        type = Consts.dataType.FLOAT;
+    }
+    return type;
+};
+
+const genericEquals = (n1, n2) => n1 === n2;
+const byName = function (name, equalsPredicate) {
+    const equals = equalsPredicate ?? genericEquals;
+    return function (obj) {
+        return equals(obj.name, name);
+    };
+};
 
 class AttributesEdit extends WebComponentControl {
 
@@ -22,11 +42,12 @@ class AttributesEdit extends WebComponentControl {
     #selectors;
     attributeProposal;
 
+    static PROPOSAL = 'proposal';
+
     constructor() {
         super(...arguments);
-        const self = this;
 
-        self.#selectors = {
+        this.#selectors = {
             ATTRIBUTE_VALUE: 'td input,td select,td sitna-toggle',
             NEW_ATTRIBUTE_KEY: `input.${AttributesEdit.prototype.CLASS}-new-key`,
             NEW_ATTRIBUTE_VALUE: `td.${AttributesEdit.prototype.CLASS}-new-value input,td.${AttributesEdit.prototype.CLASS}-new-value sitna-toggle`,
@@ -50,150 +71,258 @@ class AttributesEdit extends WebComponentControl {
     }
 
     async loadTemplates() {
-        const self = this;
-        const mainTemplatePromise = await import('../templates/tc-ctl-attr-edit.mjs');
-        const rowTemplatePromise = await import('../templates/tc-ctl-attr-edit-row.mjs');
-        const newRowTemplatePromise = await import('../templates/tc-ctl-attr-edit-new.mjs');
+        const mainTemplatePromise = import('../templates/tc-ctl-attr-edit.mjs');
+        const tableTemplatePromise = import('../templates/tc-ctl-attr-edit-table.mjs');
+        const rowTemplatePromise = import('../templates/tc-ctl-attr-edit-row.mjs');
+        const newRowTemplatePromise = import('../templates/tc-ctl-attr-edit-new.mjs');
         const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-row'] = (await rowTemplatePromise).default;
-        template[self.CLASS + '-new'] = (await newRowTemplatePromise).default;
-        self.template = template;
+        template[this.CLASS] = (await mainTemplatePromise).default;
+        template[this.CLASS + '-table'] = (await tableTemplatePromise).default;
+        template[this.CLASS + '-row'] = (await rowTemplatePromise).default;
+        template[this.CLASS + '-new'] = (await newRowTemplatePromise).default;
+        this.template = template;
     }
 
     async render(callback) {
-        const self = this;
-
         const renderObject = {
-            attributeProposal: self.attributeProposal
+            attributeProposal: this.attributeProposal
         };
 
-        if (self.#feature) {
-            let featureData = self.#feature.getData();
-            const layer = self.#feature.layer;
-            self.#attributeData = [];
+        if (this.#feature) {
+            let featureData = this.#feature.getData();
+            const layer = this.#feature.layer;
+            this.#attributeData = [];
+
+            const getFeatureMetadata = function (featureData, layerMetadata, equalsPredicate) {
+                const result = [];
+                if (!featureData) {
+                    return layerMetadata;
+                }
+                for (var key in featureData) {
+                    const value = featureData[key];
+                    // Algunas entidades pueden tener otras entidades como propiedades
+                    // Las saltamos para evitar bucles infinitos
+                    if (value instanceof Feature) {
+                        continue;
+                    }
+                    const attributeData = {
+                        name: key
+                    }
+                    let layerMetadataItem;
+                    if (Array.isArray(layerMetadata)) {
+                        layerMetadataItem = layerMetadata?.find(byName(key, equalsPredicate));
+                    }
+                    attributeData.type = layerMetadataItem?.type ?? getDataType(value);
+                    if (attributeData.type === 'object') {
+                        attributeData.value = getFeatureMetadata(value, layerMetadataItem?.value, equalsPredicate);
+                    }
+                    else {
+                        attributeData.value = value;
+                    }
+                    result.push(attributeData);
+                }
+                return result;
+            };
+
+            const mergeFeatureMetadata = function (target, source, greedy, equalsPredicate) {
+                let result = null;
+                if (Array.isArray(target) && Array.isArray(source)) {
+                    for (const targetItem of target) {
+                        const sourceItem = source.find(byName(targetItem.name, equalsPredicate));
+                        if (sourceItem) {
+                            const newItem = { name: targetItem.name };
+                            if (Object.prototype.hasOwnProperty.call(targetItem, 'type') && !Object.prototype.hasOwnProperty.call(sourceItem, 'type')) {
+                                newItem.type = targetItem.type;
+                            }
+                            else if (targetItem.type === sourceItem.type || !Object.prototype.hasOwnProperty.call(targetItem, 'type')) {
+                                newItem.type = sourceItem.type;
+                            }
+                            newItem.value = mergeFeatureMetadata(targetItem.value, sourceItem.value, false, equalsPredicate);
+                            if (newItem.value === null) {
+                                if (sourceItem.value === targetItem.value) {
+                                    newItem.value = targetItem.value;
+                                }
+                                else {
+                                    if (greedy && targetItem.value === undefined) {
+                                        newItem.value = sourceItem.value;
+                                    }
+                                    else {
+                                        newItem.value = undefined;
+                                    }
+                                }
+                            }
+                            result ??= [];
+                            result.push(newItem);
+                        }
+                    }
+                }
+                return result;
+            };
+
+            const getDataFromMetadata = function (metadata) {
+                if (!Array.isArray(metadata)) {
+                    return metadata;
+                }
+                const result = {};
+                for (const item of metadata) {
+                    let value;
+                    if (item.type === 'object' || !item.type && Array.isArray(item.value)) {
+                        value = getDataFromMetadata(item.value);
+                    }
+                    else {
+                        value = item.value;
+                    }
+                    // No consideramos los atributos XML, que son opcionales por defecto
+                    if (item.name
+                        && !item.optional) {
+                        result[item.name] = value;
+                    }
+                }
+                return result;
+            }
+
+            let layerAttributeMetadata = [];
+            let geometriesMetadata;
+            let featureTypeMetadata;
             if (layer) {
-                let layerAttributeMetadata;
+                layerAttributeMetadata = [];
                 try {
-                    const featureTypeMetadata = await layer.getFeatureTypeMetadata();
+                    featureTypeMetadata = await layer.getFeatureTypeMetadata();
                     layerAttributeMetadata = featureTypeMetadata.attributes;
+                    geometriesMetadata = featureTypeMetadata.geometries;
                     renderObject.sealed = layer.type === Consts.layerType.WFS;
                 }
                 catch (_e) { }
-                const allOtherFeatures = layer.features.filter(f => f !== self.#feature);
-                if (!layerAttributeMetadata && !Object.keys(featureData).length) {
-                    // Inferimos estructura de atributos de otras entidades del mismo tipo
-                    layerAttributeMetadata = [];
-                    const getCommonAttributeData = function (features) {
-                        return features
-                            .map(f => {
-                                const result = [];
-                                const featureData = f.getData();
-                                for (var key in featureData) {
-                                    const value = featureData[key];
-                                    const attributeData = {
-                                        name: key
-                                    }
-                                    if (value !== null) {
-                                        attributeData.value = value;
-                                        attributeData.type = typeof value;
-                                    }
-                                    result.push(attributeData);
+
+                const featuresToCheck = Object.keys(featureData).length ? layer.features : layer.features.filter((f) => f !== this.#feature);
+                // Inferimos estructura de atributos de otras entidades del mismo tipo
+                const getCommonAttributeData = function (features) {
+                    return features
+                        .map((f) => f.getData())
+                        .map(getFeatureMetadata)
+                        .reduce((accAttributeMetadata, currentAttributeMetadata, featureIndex) => {
+                            if (featureIndex > 0) {
+                                if (accAttributeMetadata === null) {
+                                    return null;
                                 }
-                                return result;
-                            })
-                            .reduce((attributeData, currentAttributeData, featureIndex) => {
-                                if (featureIndex > 0) {
-                                    let newAttributeData = null;
-                                    if (attributeData === null) {
-                                        return null;
-                                    }
-                                    currentAttributeData.forEach((attr, idx) => {
-                                        const prevAttr = attributeData[idx];
-                                        if (attr.name === prevAttr?.name) {
-                                            const newAttr = { name: attr.name };
-                                            if (Object.prototype.hasOwnProperty.call(attr, 'type') && !Object.prototype.hasOwnProperty.call(prevAttr, 'type')) {
-                                                newAttr.type = attr.type;
-                                            }
-                                            else if (attr.type === prevAttr.type || !Object.prototype.hasOwnProperty.call(attr, 'type')) {
-                                                newAttr.type = prevAttr.type;
-                                            }
-                                            newAttributeData ??= [];
-                                            newAttributeData.push(newAttr);
-                                            if (Object.prototype.hasOwnProperty.call(prevAttr, 'value')) {
-                                                if (attr.value === prevAttr.value) {
-                                                    newAttr.value = attr.value;
-                                                }
-                                            }
+                                return mergeFeatureMetadata(accAttributeMetadata, currentAttributeMetadata);
+                            }
+                            return currentAttributeMetadata;
+                        }, null);
+                };
+                // Para obtener la estructura de atributos primero miramos en todas las entidades de la capa
+                // Si no hay estructura común miramos solamente en las entidades de la misma geometría
+                let featureAttributeData = getCommonAttributeData(featuresToCheck);
+                if (!featureAttributeData) {
+                    featureAttributeData = getCommonAttributeData(featuresToCheck.filter(f => f instanceof this.#feature.constructor));
+                }
+                if (featureAttributeData) {
+                    if (layerAttributeMetadata.length) {
+                        const mergeAttributes = function (layerAttributes, featureAttributes) {
+                            if (featureAttributes) {
+                                for (const featureAttribute of featureAttributes) {
+                                    const layerAttribute = layerAttributes.find(byName(featureAttribute.name, featureTypeMetadata.equals));
+                                    if (layerAttribute) {
+                                        layerAttribute.name = featureAttribute.name;
+                                        layerAttribute.optional = false;
+                                        if (layerAttribute.type === 'object') {
+                                            mergeAttributes(layerAttribute.value, featureAttributes.value);
                                         }
-                                    });
-                                    return newAttributeData;
+                                        else if (featureAttribute.value) {
+                                            layerAttribute.value = featureAttribute.value;
+                                        }
+                                    }
                                 }
-                                return currentAttributeData;
-                            }, null);
-                    };
-                    // Para obtener la estructura de atributos primero miramos en todas las entidades de la capa
-                    // Si no hay estructura común miramos solamente en las entidades de la misma geometría
-                    let featureAttributeData = getCommonAttributeData(allOtherFeatures);
-                    if (!featureAttributeData) {
-                        featureAttributeData = getCommonAttributeData(allOtherFeatures.filter(f => f instanceof self.#feature.constructor));
+                            }
+                        };
+                        mergeAttributes(layerAttributeMetadata, featureAttributeData);
                     }
-                    if (featureAttributeData) {
+                    else {
                         featureAttributeData.forEach(data => {
                             layerAttributeMetadata.push({ ...data });
                         });
                     }
                 }
-                // Recogemos los atributos no geométricos y definimos la geometría
+
                 const newData = {};
                 for (let attr of layerAttributeMetadata) {
-                    if (!self.#isGeometryType(attr.type) && !attr.isId) {
+                    if (!attr.isId && !attr.optional) {
                         // Añadimos los atributos que no tenga ya la entidad
-                        if (!Object.prototype.hasOwnProperty.call(featureData, attr.name)) {
-                            let value = null;
-                            if (Object.prototype.hasOwnProperty.call(attr, 'value')) {
-                                value = attr.value;
+                        if (attr.name) {
+                            const featureAttrEntry = Object.entries(featureData).find(([key]) => {
+                                const equals = featureTypeMetadata?.equals ?? genericEquals;
+                                return equals(key, attr.name);
+                            });
+                            if (!featureAttrEntry) {
+                                let value = null;
+                                if (Object.prototype.hasOwnProperty.call(attr, 'value')) {
+                                    value = getDataFromMetadata(attr.value);
+                                }
+                                newData[attr.name] = value;
                             }
-                            newData[attr.name] = value;
                         }
                     }
                 }
                 if (Object.keys(newData).length) {
-                    self.#feature.setData(newData);
-                    featureData = self.#feature.getData();
+                    this.#feature.setData(newData);
+                    featureData = this.#feature.getData();
                 }
-                for (let attr of layerAttributeMetadata) {
-                    if (!self.#isGeometryType(attr.type)) {
-                        self.#attributeData.push({
-                            name: attr.name,
-                            type: attr.type,
-                            value: featureData[attr.name]
-                        });
+
+                // Quitamos los atributos geométricos
+                if (geometriesMetadata) {
+                    for (const geomMetadata of geometriesMetadata) {
+                        const path = Array.isArray(geomMetadata.name) ? geomMetadata.name : [geomMetadata.name];
+                        let attributes = featureData;
+                        for (let i = 0; i < path.length - 1; i++) {
+                            attributes = attributes[path[i]];
+                        }
+                        delete attributes[path[path.length - 1]];
                     }
                 }
+
+                this.#attributeData = mergeFeatureMetadata(
+                    getFeatureMetadata(featureData, layerAttributeMetadata, featureTypeMetadata?.equals),
+                    layerAttributeMetadata.filter((item) => !item.isId), true, featureTypeMetadata?.equals);
             }
 
-            if (!self.#attributeData.length) {
-                for (var key in featureData) {
-                    self.#attributeData.push({
+            let attributeIndex = -1;
+            for (var key in featureData) {
+                const currentAttributeIndex = this.#attributeData.findIndex(byName(key));
+                const attribute = this.#attributeData[currentAttributeIndex];
+                if (attribute) {
+                    attributeIndex = currentAttributeIndex;
+                    if (attribute.type === 'object') {
+                        attribute.value = getFeatureMetadata(featureData[key], layerAttributeMetadata.find(byName(key))?.value, featureTypeMetadata?.equals);
+                    }
+                    else {
+                        attribute.value = featureData[key];
+                    }
+                }
+                else {
+                    const attributeValue = featureData[key];
+                    const featureAttribute = {
                         name: key,
-                        value: featureData[key]
-                    });
+                        value: attributeValue
+                    };
+                    if (attributeValue && typeof attributeValue === 'object') {
+                        featureAttribute.type = 'object';
+                    }
+                    this.#attributeData.splice(++attributeIndex, 0, featureAttribute);
                 }
             }
-            renderObject.data = self.#attributeData;
-            renderObject.sealed ??= self.sealed;
+            renderObject.value = this.#attributeData;
+            renderObject.sealed ??= this.sealed;
         }
 
-        await self.renderData(renderObject, function () {
-            self.#setAttributeElements();
-            self.addUIEventListeners();
+        await this.renderData(renderObject, () => {
+            this.#setAttributeElements();
+            this.addUIEventListeners();
 
-            if (self.#feature) {
-                self.show();
+            if (this.#feature) {
+                this.show();
             }
             else {
-                self.hide();
+                this.hide();
             }
 
             if (Util.isFunction(callback)) {
@@ -204,19 +333,26 @@ class AttributesEdit extends WebComponentControl {
 
     async addAttributeElement({ name, type, value }) {
         if (this.#feature) {
+            if (!name) {
+                // Línea que espera un nuevo atributo. Comprobamos que no haya ya una.
+                if (this.querySelector(this.CLASS + '-new')) {
+                    return;
+                }
+            }
             const sealed = this.#feature.layer.type === Consts.layerType.WFS;
             const html = await this.getRenderedHtml(this.CLASS + '-row', { name, type, value, sealed });
             const buffer = document.createElement('tbody');
             buffer.innerHTML = html;
             this.#addUIEventListeners(buffer);
-            const anchor = this.querySelector('table tr:last-of-type');
+            const anchor = this.querySelector(`.${this.CLASS}-body > table > tbody > tr:last-of-type`);
             anchor.insertAdjacentElement('afterend', buffer.firstElementChild);
             this.#setAttributeElements();
         }
     }
 
     removeAttributeElement(name) {
-        this.querySelector(`tr[data-attribute-name="${name}"]`)?.remove();
+        this.querySelectorAll(`.${this.CLASS}-body > table > tbody > tr[data-attribute-name="${name}"]`)
+            .forEach((elm) => elm.remove());
         return this;
     }
 
@@ -231,63 +367,47 @@ class AttributesEdit extends WebComponentControl {
 
     #addUIEventListeners(root) {
         const self = this;
+
         const onInputChange = function (_e) {
             if (self.#feature) {
                 const key = this.getAttribute('name');
                 if (key) {
-                    const value = this instanceof Toggle || this.getAttribute('type') === 'checkbox' ?
-                        this.checked : this.value;
-                    self.setFeatureAttribute(key, value);
+                    const attributePath = [];
+                    let elm = this;
+                    do {
+                        if (elm.dataset.attributeName) {
+                            attributePath.unshift(elm.dataset.attributeName);
+                        }
+                        elm = elm.parentElement;
+                    }
+                    while (elm && !(elm instanceof AttributesEdit));
+
+                    const inputType = this.getAttribute('type');
+                    const value = this instanceof Toggle || inputType === 'checkbox' ?
+                        this.checked : (inputType === 'number' ? this.valueAsNumber : this.value);
+                    self.setFeatureAttribute(attributePath, value);
                 }
             }
         };
         root.querySelectorAll(self.#selectors.ATTRIBUTE_VALUE).forEach(elm => {
             elm.addEventListener('change', onInputChange);
         });
+
         const onRemoveButtonClick = function (_e) {
-            if (self.#feature) {
-                const key = this.dataset.key;
-                if (key) {
-                    if (key === self.attributeProposal) {
-                        self.removeAttributeElement(key);
-                        self.attributeProposal = null;
-                    }
-                    else {
-                        TC.confirm(self.getLocaleString('removeAttribute.confirm', { name: key }), () => {
-                            const featureData = self.#feature.getData();
-                            delete featureData[key];
-                            self.#feature.unsetData(key);
-                            self.removeAttributeElement(key);
-                            self.#triggerFeatureModify();
-                        });
-                    }
-                }
-            }
+            self.removeFeatureAttribute(this.dataset.key);
         };
         root.querySelectorAll(self.#selectors.ATTRIBUTE_REMOVE).forEach(elm => {
             elm.addEventListener('click', onRemoveButtonClick);
         });
+
         root.querySelector(self.#selectors.NEW_ATTRIBUTE_KEY)?.addEventListener('change', function (_e) {
-            if (self.#feature) {
-                if (Object.keys(self.#feature.getData()).includes(this.value)) {
-                    self.map.toast(self.getLocaleString('attributeAlreadyExists.warning', this.value), { type: Consts.msgType.WARNING });
-                    this.value = '';
-                    return;
-                }
-                self.attributeProposal = this.value;
-                self.newAttributeElement.remove();
-                self.newAttributeElement = null;
-                self.addAttributeElement({ name: this.value });
-            }
+            self.#setProposalState(this.value).catch((err) => self.map.toast(err.message, { type: Consts.msgType.WARNING }));
         });
 
-        root.querySelector(self.#selectors.TYPE_SELECT)?.addEventListener('change', async function (_e) {
-            self.attributeProposal = null;
-            self.attributeProposalElement.remove();
-            self.attributeProposalElement = null;
-            await self.addAttributeElement({ name: this.dataset.attributeName, type: this.value });
-            await self.addAttributeElement({});
+        root.querySelector(self.#selectors.TYPE_SELECT)?.addEventListener('change', function (_e) {
+            self.#acceptProposal(this.value).catch((err) => TC.error(err));
         });
+
         const onNewValueChange = function (_e) {
             if (self.#feature) {
                 let newData = {};
@@ -359,49 +479,55 @@ class AttributesEdit extends WebComponentControl {
     }
 
     set clientControl(value) {
-        const self = this;
-        if (self.#clientControl) {
-            if (self.#clientControl instanceof Modify) {
-                self.#clientControl.off(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, self.#onFeatureSelect);
+        if (this.#clientControl) {
+            if (this.#clientControl instanceof Modify) {
+                this.#clientControl.removeEventListener(Consts.event.FEATURESSELECT, this.#onFeatureSelect);
+                this.#clientControl.removeEventListener(Consts.event.FEATURESUNSELECT, this.#onFeatureSelect);
             }
-            else if (self.#clientControl instanceof Draw) {
-                self.#clientControl.off(Consts.event.DRAWEND, self.#onDrawEnd);
-                self.#clientControl.off(Consts.event.DRAWSTART, self.#onDrawStart);
-                self.#clientControl.off(Consts.event.DRAWCANCEL, self.#onDrawCancel);
+            else if (this.#clientControl instanceof Draw) {
+                this.#clientControl.removeEventListener(Consts.event.DRAWEND, this.#onDrawEnd);
+                this.#clientControl.removeEventListener(Consts.event.DRAWSTART, this.#onDrawStart);
+                this.#clientControl.removeEventListener(Consts.event.DRAWCANCEL, this.#onDrawCancel);
             }
         }
-        self.#clientControl = value;
-        if (self.#clientControl instanceof Modify) {
-            self.#onFeatureSelect = function (_e) {
-                self.feature = self.#clientControl.getSelectedFeatures()[0];
+        this.#clientControl = value;
+        if (this.#clientControl instanceof Modify) {
+            this.#onFeatureSelect = (_e) => {
+                this.feature = this.clientControl.getSelectedFeatures()[0];
             };
-            self.#clientControl.on(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, self.#onFeatureSelect);
-            self.#onFeatureSelect();
+            this.#clientControl.addEventListener(Consts.event.FEATURESSELECT, this.#onFeatureSelect);
+            this.#clientControl.addEventListener(Consts.event.FEATURESUNSELECT, this.#onFeatureSelect);
+            this.#onFeatureSelect();
         }
-        else if (self.#clientControl instanceof Draw) {
-            self.#onDrawEnd = function (e) {
+        else if (this.#clientControl instanceof Draw) {
+            this.#onDrawEnd = (e) => {
                 setTimeout(() => {
-                    self.feature = e.feature;
+                    this.feature = e.detail?.feature;
                 }, 100);
             };
-            self.#clientControl.on(Consts.event.DRAWEND, self.#onDrawEnd);
-            self.#onDrawStart = self.#onDrawCancel = function (_e) {
+            this.#clientControl.addEventListener(Consts.event.DRAWEND, this.#onDrawEnd);
+            this.#onDrawStart = this.#onDrawCancel = (_e) => {
                 if (this.mode !== Consts.geom.POINT) {
-                    self.feature = null;
+                    this.feature = null;
                 }
             };
-            self.#clientControl.on(Consts.event.DRAWSTART, self.#onDrawStart);
-            self.#clientControl.on(Consts.event.DRAWCANCEL, self.#onDrawCancel);
-            self.#onDrawEnd({});
+            this.#clientControl.addEventListener(Consts.event.DRAWSTART, this.#onDrawStart);
+            this.#clientControl.addEventListener(Consts.event.DRAWCANCEL, this.#onDrawCancel);
+            this.#onDrawEnd({});
         }
     }
 
-    setFeatureAttribute(name, value) {
-        const self = this;
-        if (self.#feature) {
-            let newData = {};
-            newData[name] = value;
-            const attributeData = self.#attributeData.find(elm => elm.name === name);
+    setFeatureAttribute(nameOrPath, value) {
+        if (this.#feature) {
+            const path = Array.isArray(nameOrPath) ? nameOrPath : [nameOrPath];
+            const name = path[path.length - 1];
+            let newData = Util.extend(true, {}, this.#feature.getData());
+            let pointer = newData;
+            for (let i = 0; i < path.length - 1; i++) {
+                pointer = pointer[path[i]];
+            }
+            pointer[name] = value;
+            const attributeData = this.#attributeData.find(byName(name));
             if (attributeData) {
                 let parsedValue;
                 switch (attributeData.type) {
@@ -420,7 +546,7 @@ class AttributesEdit extends WebComponentControl {
                     case 'unsignedByte':
                         parsedValue = parseInt(value);
                         if (!Number.isNaN(parsedValue)) {
-                            newData[name] = parsedValue;
+                            pointer[name] = parsedValue;
                         }
                         break;
                     case 'double':
@@ -428,93 +554,149 @@ class AttributesEdit extends WebComponentControl {
                     case 'decimal':
                         parsedValue = parseFloat(value);
                         if (!Number.isNaN(parsedValue)) {
-                            newData[name] = parsedValue;
+                            pointer[name] = parsedValue;
                         }
                         break;
                     case 'date':
                         // Obtiene el valor yyyy-mm-dd
                         if (value) {
-                            newData[name] = new Date(value).toISOString().substr(0, 10);
+                            pointer[name] = new Date(value).toISOString().substr(0, 10);
                         }
                         else {
-                            newData[name] = value;
+                            pointer[name] = value;
                         }
                         break;
                     case 'dateTime':
                         // Obtiene el valor yyyy-mm-ddThh:mm:ss
                         if (value) {
-                            newData[name] = new Date(value).toISOString().substr(0, 19);
+                            pointer[name] = new Date(value).toISOString().substr(0, 19);
                         }
                         else {
-                            newData[name] = value;
+                            pointer[name] = value;
                         }
                         break;
                     case 'boolean':
-                        newData[name] = !!value;
+                        pointer[name] = !!value;
                         break;
                     case undefined:
                         break;
                     default:
-                        newData[name] = value;
+                        pointer[name] = value;
                         break;
                 }
             }
 
-            newData = Object.assign({}, self.#feature.getData(), newData);
-            self.#feature.setData(newData);
-            self.#triggerFeatureModify();
+            this.#feature.setData(newData);
+            this.#triggerFeatureModify();
+        }
+    }
+
+    removeFeatureAttribute(name) {
+        if (this.#feature) {
+            if (name) {
+                if (name === this.attributeProposal) {
+                    this.removeAttributeElement(name);
+                    this.attributeProposal = null;
+                    this.addAttributeElement({});
+                }
+                else {
+                    const layer = this.#feature.layer;
+                    layer.getFeatureTypeMetadata().then((featureTypeMetadata) => {
+                        let warningMessage = 'removeAttribute.confirm';
+                        let optionalAttribute = false;
+                        if (featureTypeMetadata) {
+                            if (featureTypeMetadata.attributes.find(byName(name))?.optional) {
+                                optionalAttribute = true;
+                            }
+                            else {
+                                warningMessage = 'deleteTableMetadata.warning';
+                            }
+                        }
+                        TC.confirm(this.getLocaleString(warningMessage, { name }), () => {
+                            let featuresToChange = [this.#feature];
+                            if (!optionalAttribute) {
+                                if (featureTypeMetadata) {
+                                    const idx = featureTypeMetadata.attributes.findIndex(byName(name));
+                                    if (idx >= 0) {
+                                        featureTypeMetadata.attributes.splice(idx, 1);
+                                        featuresToChange = layer.features;
+                                    }
+                                }
+                            }
+                            featuresToChange.forEach((f) => {
+                                const featureData = f.getData();
+                                delete featureData[name];
+                                f.unsetData(name);
+                            });
+                            this.removeAttributeElement(name);
+                            this.#triggerFeatureModify();
+                        });
+
+                    });
+                }
+            }
         }
     }
 
     #triggerFeatureModify() {
-        const self = this;
-        self.containerControl?.trigger(Consts.event.FEATUREMODIFY, {
-            feature: self.#feature,
-            layer: self.#feature.layer
+        this.containerControl?.trigger(Consts.event.FEATUREMODIFY, {
+            feature: this.#feature,
+            layer: this.#feature.layer
         });
     }
 
-    #isGeometryType(type) {
-        switch (type) {
-            case Consts.geom.POINT:
-            case Consts.geom.MULTIPOINT:
-            case Consts.geom.POLYLINE:
-            case Consts.geom.MULTIPOLYLINE:
-            case Consts.geom.POLYGON:
-            case Consts.geom.MULTIPOLYGON:
-            case Consts.geom.CIRCLE:
-            case Consts.geom.RECTANGLE:
-            case 'gml:LinearRingPropertyType':
-            case 'gml:PolygonPropertyType':
-            case 'LinearRingPropertyType':
-            case 'PolygonPropertyType':
-            case 'gml:MultiPolygonPropertyType':
-            case 'gml:MultiSurfacePropertyType':
-            case 'MultiPolygonPropertyType':
-            case 'MultiSurfacePropertyType':
-            case 'gml:LineStringPropertyType':
-            case 'gml:CurvePropertyType':
-            case 'LineStringPropertyType':
-            case 'CurvePropertyType':
-            case 'gml:MultiLineStringPropertyType':
-            case 'gml:MultiCurvePropertyType':
-            case 'MultiLineStringPropertyType':
-            case 'MultiCurvePropertyType':
-            case 'gml:PointPropertyType':
-            case 'gml:MultiPointPropertyType':
-            case 'PointPropertyType':
-            case 'MultiPointPropertyType':
-            case 'gml:BoxPropertyType':
-            case 'BoxPropertyType':
-            case 'gml:GeometryCollectionPropertyType':
-            case 'gml:GeometryAssociationType':
-            case 'gml:GeometryPropertyType':
-            case 'GeometryCollectionPropertyType':
-            case 'GeometryAssociationType':
-            case 'GeometryPropertyType':
-                return true;
-            default:
-                return false;
+    async #setProposalState(attributeName) {
+        if (this.#feature) {
+            const proposalInput = this.querySelector(this.#selectors.NEW_ATTRIBUTE_KEY);
+            let name = attributeName ?? proposalInput.value;
+            proposalInput.value = name;
+            const lcName = name.toLowerCase();
+            const existingAttr = Object.keys(this.#feature.getData()).find((key) => key.toLowerCase() === lcName);
+            if (existingAttr) {
+                const errorMessage = this.getLocaleString('attributeAlreadyExists.warning', { name: existingAttr });
+                proposalInput.value = '';
+                throw Error(errorMessage);
+            }
+            const featureTypeMetadata = await this.#feature.layer.getFeatureTypeMetadata();
+            if (!featureTypeMetadata || TC.confirm(this.getLocaleString('tableMetadataExists.warning'))) {
+                this.attributeProposal = proposalInput.value;
+                this.newAttributeElement.remove();
+                this.newAttributeElement = null;
+                this.addAttributeElement({ name: proposalInput.value, type: AttributesEdit.PROPOSAL });
+            }
+        }
+    }
+
+    async #acceptProposal(type) {
+        if (type) {
+            const name = this.attributeProposal;
+            this.attributeProposal = null;
+            this.attributeProposalElement.remove();
+            this.attributeProposalElement = null;
+            if (this.#feature) {
+                const value = type === Consts.dataType.BOOLEAN ? false : null;
+                const layer = this.#feature.layer;
+                const featureTypeMetadata = await layer.getFeatureTypeMetadata();
+                if (featureTypeMetadata) {
+                    const lcName = name.toLowerCase();
+                    const existingAttr = featureTypeMetadata.attributes.find((attr) => attr.name.toLowerCase() === lcName);
+                    if (existingAttr) {
+                        throw Error(this.getLocaleString('attributeAlreadyExists.warning', existingAttr));
+                    }
+                    featureTypeMetadata.attributes.push({ name, type, isId: false });
+                    layer.setFeatureTypeMetadata(featureTypeMetadata);
+                    layer
+                        .features
+                        .forEach((f) => {
+                            f.setData({ [name]: value });
+                        });
+                }
+                else {
+                    this.#feature.setData({ [name]: value });
+                }
+            }
+            await this.addAttributeElement({ name, type });
+            await this.addAttributeElement({});
         }
     }
 }
