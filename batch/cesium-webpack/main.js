@@ -28,7 +28,6 @@
     , EllipsoidGeodesic
     , EllipsoidTerrainProvider
     , Entity
-    , Event
     , EventHelper
     , GeographicTilingScheme
     , GeometryInstance
@@ -65,6 +64,7 @@
     , ScreenSpaceEventType
     , SkyAtmosphere
     , SkyBox
+    , createTaskProcessorWorker
     , TerrainProvider
     , TileAvailability
     , TileCoordinatesImageryProvider
@@ -120,7 +120,6 @@ export {
     , EllipsoidGeodesic
     , EllipsoidTerrainProvider
     , Entity
-    , Event
     , EventHelper
     , GeographicTilingScheme
     , GeometryInstance
@@ -157,6 +156,7 @@ export {
     , ScreenSpaceEventType
     , SkyAtmosphere
     , SkyBox
+    , createTaskProcessorWorker
     , TerrainProvider
     , TileAvailability
     , TileCoordinatesImageryProvider
