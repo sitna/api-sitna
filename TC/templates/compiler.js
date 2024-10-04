@@ -35,7 +35,7 @@ files
                     getTagHeight: true,
                     getHeader: true,
                     removeSpecialAttributeTag: true,
-                    formatDateOrNumber: true,
+                    formatDateNumberOrBoolean: true,
                     inputDate: true,
                     inputTime: true,
                     inputDatetime: true
