@@ -178,7 +178,8 @@ class FileEdit extends WebComponentControl {
                         if (!checkbox) {
                             const text = self.getLocaleString('editFeatures');
                             checkbox = new Toggle();
-                            checkbox.text = text;
+                            checkbox.setAttribute('title', text);
+                            checkbox.setAttribute('text', text);
                             checkbox.checkedIconText = editIconText;
                             checkbox.uncheckedIconText = editIconText;
                             checkbox.dataset.layerId = layerId;
@@ -500,7 +501,7 @@ class FileEdit extends WebComponentControl {
                     try {
                         data = await self.map.exportFeatures(features, {
                             fileName: fileSystemFileName,
-                            format: format
+                            format
                         });
                     }
                     catch (e) {
@@ -580,10 +581,7 @@ class FileEdit extends WebComponentControl {
                     l.file === layer.file);
             };
             endFn = async function () {
-                const data = await self.map.exportFeatures(features, {
-                    fileName: fileName,
-                    format: format
-                })
+                const data = await self.map.exportFeatures(features, { fileName, format });
                 cleanEditedLayerList();
                 switch (format) {
                     case Consts.format.SHAPEFILE:
@@ -611,22 +609,23 @@ class FileEdit extends WebComponentControl {
             if (!format) {
                 format = Util.getFormatFromFileExtension(layer.fileSystemFile.substr(layer.fileSystemFile.lastIndexOf('.')));
             }
+            if (format === Consts.format.GML) {
+                format = Consts.format.GML32;
+            }
             const filteredLayers = await filterFn(self.map.workLayers);
             features = filteredLayers
                 .map(l => l.features)
                 .flat();
+
             const siblings = filteredLayers.filter(l => l !== layer);
-            if (siblings.length) {
-                TC.confirm(self.getLocaleString("fileSave.otherLayers.confirm", {
-                    layerList: siblings.map(l => {
-                        if (l.features.length) {
-                            return l.features[0].getPath().join(self.TITLE_SEPARATOR);
-                        }
-                        return l.title;
-                    }).join(', ')
-                }), endFn);
-            }
-            else {
+            if (!siblings.length || TC.confirm(self.getLocaleString('fileSave.otherLayers.confirm', {
+                layerList: siblings.map(l => {
+                    if (l.features.length) {
+                        return l.features[0].getPath().join(self.TITLE_SEPARATOR);
+                    }
+                    return l.title;
+                }).join(', ')
+            }))) {
                 endFn();
             }
         }
