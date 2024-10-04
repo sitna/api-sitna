@@ -23,6 +23,8 @@ files
                     getId: true,
                     isArray: true,
                     isObject: true,
+                    isNumber: true,
+                    isBoolean: true,
                     formatNumber: true,
                     hasDisplayName: true,
                     isUrl: true,
