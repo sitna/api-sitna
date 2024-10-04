@@ -45,8 +45,9 @@ const hasOwn = {}.hasOwnProperty;
 const templateCache = new Map();
 
 const countDecimals = (value) => {
-    if (Math.floor(value) !== value)
-        return value.toString().split(".")[1].length || 0;
+    if (Math.floor(value) !== value) {
+        return value.toString().split('.')[1]?.length || 0;
+    }
     return 0;
 };
 
@@ -341,6 +342,9 @@ var Util = {
                 return n.toLocaleString(locale, { maximumFractionDigits: Math.min(6, countDecimals(n)) });
             }
         }
+        else if (t === 'undefined') {
+            return '';
+        }
         return value;
     },
 
@@ -557,6 +561,22 @@ var Util = {
         return result;
     },
 
+    parseNumber: function (value, locale) {
+        const format = new Intl.NumberFormat(locale);
+        const parts = format.formatToParts(12345.6);
+        const numerals = Array.from({ length: 10 }).map((_, i) => format.format(i));
+        const index = new Map(numerals.map((d, i) => [d, i]));
+        const groupSeparator = new RegExp(`[${parts.find(d => d.type === 'group').value}]`, 'g');
+        const decimalSeparator = new RegExp(`[${parts.find(d => d.type === 'decimal').value}]`);
+        const numeralCharacter = new RegExp(`[${numerals.join('')}]`, 'g');
+        const getIndex = (d) => index.get(d);
+        const parsedValue = value.trim()
+            .replace(groupSeparator, '')
+            .replace(decimalSeparator, '.')
+            .replace(numeralCharacter, getIndex);
+        return parsedValue ? +parsedValue : Number.NaN;
+    },
+
     parseCoords: function (text) {
         var result = null;
 
@@ -715,6 +735,45 @@ var Util = {
             result = result[0];
         }
         return result;
+    },
+
+    reprojectExtent: function ([minX, minY, maxX, maxY], sourceCrs, targetCrs) {
+        const steps = 10;
+        const stepWidth = (maxX - minX) / steps;
+        const stepHeight = (maxY - minY) / steps;
+        const coordinates = [];
+        let x, y;
+        x = minX;
+        var i;
+        for (i = 0; i < steps; i++) {
+            coordinates.push([x, maxY]);
+            x += stepWidth;
+        }
+        y = maxY
+        for (i = 0; i < steps; i++) {
+            coordinates.push([maxX, y]);
+            y -= stepHeight;
+        }
+        x = maxX;
+        for (i = 0; i < steps; i++) {
+            coordinates.push([x, minY]);
+            x -= stepWidth;
+        }
+        y = minY
+        for (i = 0; i < steps; i++) {
+            coordinates.push([minX, y]);
+            y += stepHeight;
+        }
+        const newCoords = Util.reproject(coordinates, sourceCrs, targetCrs);
+        const newXs = newCoords.map(c => c[0]);
+        const newYs = newCoords.map(c => c[1]);
+
+        return [
+            Math.min(...newXs),
+            Math.min(...newYs),
+            Math.max(...newXs),
+            Math.max(...newYs)
+        ];
     },
 
     getMetersPerDegree: function (extent) {
@@ -2184,6 +2243,7 @@ var Util = {
             case 'gml:GeometryPropertyType':
             case 'gml:MultiCurvePropertyType':
             case 'gml:CurvePropertyType':
+            case 'gml:AbstractGeometryType':
                 return true;
             default:
                 return false;
@@ -2279,10 +2339,11 @@ var Util = {
             case 'gml:GeometryCollectionPropertyType':
             case 'gml:GeometryAssociationType':
             case 'gml:GeometryPropertyType':
+            case 'gml:AbstractGeometryType':
             case 'GeometryCollectionPropertyType':
             case 'GeometryAssociationType':
             case 'GeometryPropertyType':
-                return true;
+                return Consts.geom.GEOMETRY;
             default:
                 return false;
         }
@@ -2387,7 +2448,7 @@ var Util = {
                     return Promise.resolve();
                 } else {
                     return new Promise((resolve, reject) => {
-                        queue.push({ resolve: resolve, reject: reject });
+                        queue.push({ resolve, reject });
                     });
                 }
             },
@@ -2398,6 +2459,7 @@ var Util = {
                     let promise = queue.shift();
                     promise.resolve();
                 }
+                return queue.length;
             },
             purge: function () {
                 let unresolvedCount = queue.length;
@@ -2413,6 +2475,52 @@ var Util = {
             }
         };
     },
+
+    getPromiseFromEvent: function (target, type, options = {}) {
+        return new Promise(function (resolve, reject) {
+            if (Util.isFunction(options.resolvedPredicate)) {
+                if (options.resolvedPredicate.call(target)) {
+                    resolve();
+                    return;
+                }
+            }
+            target.addEventListener(type, function handler(e) {
+                if (Util.isFunction(options.rejectPredicate)) {
+                    if (options.rejectPredicate.call(this, e)) {
+                        target.removeEventListener(type, handler);
+                        reject(e);
+                    }
+                }
+                if (Util.isFunction(options.resolvePredicate)) {
+                    if (options.resolvePredicate.call(this, e)) {
+                        target.removeEventListener(type, handler);
+                        resolve(e);
+                    }
+                }
+                else {
+                    target.removeEventListener(type, handler);
+                    resolve(e);
+                }
+            });
+        });
+    },
+
+    getTimedPromise: function (callback, time) {
+        return new Promise((resolve, reject) => {
+            setTimeout(async () => {
+                if (callback) {
+                    try {
+                        await callback();
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
+                }
+                resolve();
+            }, time);
+        });
+    },
+
     patternFn: function (t) {
         t = t.replace(/[^a-z\dáéíóúüñ]/gi, '\\' + '$&');
         t = t.replace(/(a|á)/gi, "(a|á)");
