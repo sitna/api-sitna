@@ -795,13 +795,8 @@ class Vector extends Layer {
             layerName = self.featureType;
         }
         const _getStoredFeatureTypes = function (layerName, collection) {
-            if (!(layerName instanceof Array))
-                layerName = layerName.split(",");
-            return layerName.reduce(function (vi, va) {
-                var temp = [];
-                temp[va] = collection[va];
-                return Object.assign(vi, temp);
-            }, {});
+            if (!Array.isArray(layerName)) layerName = layerName.split(',');
+            return layerName.reduce((acc, name) => Object.assign(acc, { [name]: collection[name] }), {});
         };
         try {
             const capabilities = await self.getCapabilitiesPromise();
@@ -815,7 +810,7 @@ class Vector extends Layer {
             };
 
             //si no es una array convierto en Array
-            if (!(layerName instanceof Array)) layerName = layerName.split(",");
+            if (!Array.isArray(layerName)) layerName = layerName.split(',');
             //si tiene distinto Namespace separo las pediciones describeFeatureType										
             var arrPromises = Object.entries(layerName.reduce(function (vi, va) {
                 let prefix = va.substring(0, va.indexOf(":"));
@@ -1069,6 +1064,8 @@ class Vector extends Layer {
                         case 'float':
                         case 'decimal':
                             return Consts.dataType.FLOAT;
+                        case 'boolean':
+                            return Consts.dataType.BOOLEAN;
                         case 'int':
                         case 'integer':
                         case 'byte':
@@ -1149,13 +1146,26 @@ class Vector extends Layer {
         var precision = Math.pow(10, (self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION) + 1);
         let commonStyles = null;
         const features = options.features || self.features;
+        const sanitizeData = (data) => {
+            if (data && typeof data === 'object') {
+                const result = {};
+                for (const key in data) {
+                    result[key] = sanitizeData(data[key]);
+                }
+                return result;
+            }
+            if (Util.isFunction(data)) {
+                return null;
+            }
+            return data;
+        };
         lObj.features = features
             .map(function (f) {
                 const fObj = {
                     id: f.id,
                     type: f.getGeometryType(),
                     geom: Util.compactGeometry(f.geometry, precision),
-                    data: f.getData(),
+                    data: sanitizeData(f.getData()),
                     autoPopup: f.autoPopup,
                     showsPopup: f.showsPopup
                 };
