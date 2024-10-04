@@ -143,7 +143,7 @@ class BasemapSelector extends MapContents {
         const self = this;
 
         const ctl = await super.register.call(self, map);
-        
+
         if (self.options.dialogMore) {
             map.on(Consts.event.VIEWCHANGE, function () {
                 self.#getMoreBaseLayers();
@@ -420,7 +420,7 @@ class BasemapSelector extends MapContents {
         button.addEventListener(Consts.event.CLICK, onclick, { passive: true });
         li.appendChild(button);
         parent.appendChild(li);
-        
+
         self.map.loadProjections({
             crsList: [crs],
             orderBy: 'name',
@@ -631,9 +631,9 @@ class BasemapSelector extends MapContents {
             self.#moreBaseLayersPromise = new Promise(function (resolve, _reject) {
 
                 // GLS: Carlos no quiere que se muestren los respectivos dinámicos así que los filtro.
-                var noDyn = TC.Cfg.availableBaseLayers
+                var noDyn = self.map.availableBaseLayers
                     .filter(function (lyr) {
-                        return TC.Cfg.availableBaseLayers
+                        return self.map.availableBaseLayers
                             .filter(l => l.fallbackLayer)
                             .map(l => l.fallbackLayer)
                             .indexOf(lyr.id) === -1;

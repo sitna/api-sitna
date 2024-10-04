@@ -56,7 +56,7 @@ class OverviewMap extends Control {
             };
 
             if (typeof layer === 'string') {
-                var lyrObj = findLayerById(layer, map.options.availableBaseLayers);
+                var lyrObj = findLayerById(layer, map.availableBaseLayers);
                 if (!Util.isPlainObject(lyrObj)) {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
                 }
@@ -122,7 +122,7 @@ class OverviewMap extends Control {
         self.wrap = new TC.wrap.control.OverviewMap(self);
         map.loaded(function () {
             self.defaultLayer = registerLayer(self.options.layer);
-            self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.options.availableBaseLayers[0]);
+            self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.availableBaseLayers[0]);
 
             self.#registerWrap().then(() => resetOVMapProjection({ crs: map.crs }));
 

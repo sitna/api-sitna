@@ -664,7 +664,7 @@ class OfflineMapMaker extends SWCacheClient {
                     return layerUrl === mapDef.url[mapDefLayer.urlIdx] && layer.layerNames === mapDefLayer.id && layer.matrixSet === mapDef.tms[mapDefLayer.tmsIdx];
                 };
                 // Añadimos al mapa las capas guardadas que no están por defecto
-                const missingLayers = map.options.availableBaseLayers
+                const missingLayers = map.availableBaseLayers
                     .filter((abl) => abl.type === Consts.layerType.WMTS) // Capas cacheables
                     .filter((abl) => { // Que estén en el mapa sin conexión
                         return mapDef.layers.some((l) => isSameLayer(abl, l));
@@ -1308,7 +1308,10 @@ class OfflineMapMaker extends SWCacheClient {
         self.extent = null;
         self.#loadedCount = 0;
         if (self.boxDraw) {
-            self.boxDraw.cancel();
+            self
+                .boxDraw
+                .cancel()
+                .deactivate();
         }
     }
 
