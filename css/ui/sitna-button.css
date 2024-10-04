@@ -79,7 +79,7 @@ button.active {
 
 button[data-icon]::before,
 button[data-icon-text]::before {
-    margin-right: 0.2em;
+    margin-right: 0.5em;
 }
 
 button.minimal[data-icon]::before,
@@ -141,15 +141,15 @@ button.icon {
         top: 0;
     }
 
-button.minimal {
-    background-color: transparent;
+:host([variant="minimal"]) button {
+    background-color: var(--glyph-bg-color);
     text-indent: -1000vw;
-    border-radius: 0;
     border: none;
+    border-radius: calc(var(--border-radius) / 2);
     padding: 0;
 }
 
-    button.minimal::before {
+    :host([variant="minimal"]) button::before {
         position: absolute;
         color: var(--glyph-color);
         font-size: 1em;
@@ -162,11 +162,11 @@ button.minimal {
         top: 0;
     }
 
-    button.minimal:disabled {
+    :host([variant="minimal"]) button:disabled {
         background-color: transparent;
     }
 
-        button.minimal:disabled::before {
+        :host([variant="minimal"]) button:disabled::before {
             color: var(--glyph-disabled-color);
         }
 
