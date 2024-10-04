@@ -175,9 +175,8 @@ class Geolocation extends Control {
     #elevationsCheckbox;
     #trackVisibility = true;
     #isFollowing = true;
-    #onWindowBlurred;
+    #windowEventsAbortController;
     #onWindowFocused;
-    #onWindowVisibility;
     #onResize;
     #elevationProfileCache = new Map();
     #elevationFromServiceCache = [];
@@ -205,13 +204,14 @@ class Geolocation extends Control {
 
         self._uiElementSelector = 'ol > li[data-id]';
         self._toolContainerSelector = `.${self.CLASS}-tools-active`;
+
+        self.wrap = new TC.wrap.control.Geolocation(self);
     }
 
     async register(map) {
         const self = this;
         await super.register(map);
 
-        self.wrap = new TC.wrap.control.Geolocation(self);
         self.wrap.register(map);
 
         if (self.options.fileEditing) {
@@ -1259,12 +1259,7 @@ class Geolocation extends Control {
                     }
                 });
                 const transitionEvent = function (_event) {
-                    if (!HTMLElement.prototype.scrollIntoView) {
-                        self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
-                    }
-                    else {
-                        listElement.scrollIntoView({ behavior: "smooth", block: "end" });
-                    }
+                    listElement.scrollIntoView({ behavior: "smooth", block: "end" });
                     listElement.removeEventListener("transitionend", transitionEvent, false);
                 };
                 listElement.addEventListener("transitionend", transitionEvent, false);
@@ -1669,114 +1664,83 @@ class Geolocation extends Control {
         }
     }
 
-    #setOnWindowBlurred() {
-        const self = this;
-        if (!self.#onWindowBlurred) {
-            self.#onWindowBlurred = function () {
-                const self = this;
-                self.#fromSessionToStorage();
-            }.bind(self);
-        }
-
-        if ('onpagehide' in window) {
-            window.addEventListener('pagehide', self.#onWindowBlurred, false);
-        } else {
-            window.addEventListener('blur', self.#onWindowBlurred, false);
-        }
+    #setOnWindowBlurred(signal) {
+        const onWindowBlurred = () => this.#fromSessionToStorage();
+        const eventName = ('onpagehide' in window) ? 'pagehide' : 'blur';
+        window.addEventListener(eventName, onWindowBlurred, { signal });
     }
 
-    #setOnWindowFocused() {
-        const self = this;
-        const fromStorageToSession = self.#fromStorageToSession;
-        if (!self.#onWindowFocused) {
-            self.#onWindowFocused = function () {
-                const self = this;
-                if (self.videoScreenOn && self.videoScreenOn.paused) {
-                    self.videoScreenOn.play();
-                }
-                fromStorageToSession.call(self);
-            }.bind(self);
-        }
+    #setOnWindowFocused(signal) {
+        this.#onWindowFocused ??= () => {
+            if (this.videoScreenOn && this.videoScreenOn.paused) {
+                this.videoScreenOn.play();
+            }
+            this.#fromStorageToSession();
+        };
 
-        if ('onpageshow' in window) {
-            window.addEventListener('pageshow', self.#onWindowFocused, false);
-        } else {
-            window.addEventListener('focus', self.#onWindowFocused, false);
-        }
+        const eventName = ('onpageshow' in window) ? 'pageshow' : 'focus';
+        window.addEventListener(eventName, this.#onWindowFocused, { signal });
     }
 
-    #setOnWindowVisibility() {
+    #setOnWindowVisibility(signal) {
         const self = this;
-        if (!self.#onWindowVisibility) {
-            self.#onWindowVisibility = async function () {
-                var self = this;
+        const onWindowVisibility = async () => {
 
-                var hidden = getHiddenProperty();
+            var hidden = getHiddenProperty();
 
-                if (!document[hidden]) {
-                    if (wakeLock !== null) {
-                        self.#keepWakeLock();
-                    }
-                    else {
-                        self.#onWindowFocused();
-                    }
+            if (!document[hidden]) {
+                if (wakeLock !== null) {
+                    self.#keepWakeLock();
                 }
-                else if (notifications) {
-                    if (navigator.serviceWorker &&
-                        //si se pulta shift + F5 el objeto controller de serviceWorkerContainer es null
-                        (navigator.serviceWorker.controller ||
-                            //entonces ontenemos el SW del control SWCache client si existe y miramos si está activo
-                            self.map.getControlsByClass(SWCacheClient).length && (await self.map.getControlsByClass(SWCacheClient)[0].getServiceWorker()).state === "activated"))
-                        try {
-                            const registration = await navigator.serviceWorker.ready;
-                            registration.showNotification(self.notificationConfig.title, Object.assign(self.notificationConfig, {
-                                actions: [{
-                                    action: "back",
-                                    title: self.getLocaleString("geo.trk.notification.backButton")
-                                }], data: {
-                                    "url": document.location.href
-                                }
-                            }));
-                        }
-                        catch (ex) {
-                            new Notification(self.notificationConfig.title, self.notificationConfig);
-                        }
-                    else {
+                else {
+                    self.#onWindowFocused();
+                }
+            }
+            else if (notifications) {
+                if (navigator.serviceWorker &&
+                    //si se pulta shift + F5 el objeto controller de serviceWorkerContainer es null
+                    (navigator.serviceWorker.controller ||
+                        //entonces ontenemos el SW del control SWCache client si existe y miramos si está activo
+                        self.map.getControlsByClass(SWCacheClient).length && (await self.map.getControlsByClass(SWCacheClient)[0].getServiceWorker()).state === "activated"))
+                    try {
+                        const registration = await navigator.serviceWorker.ready;
+                        registration.showNotification(self.notificationConfig.title, Object.assign(self.notificationConfig, {
+                            actions: [{
+                                action: "back",
+                                title: self.getLocaleString("geo.trk.notification.backButton")
+                            }], data: {
+                                "url": document.location.href
+                            }
+                        }));
+                    }
+                    catch (ex) {
                         new Notification(self.notificationConfig.title, self.notificationConfig);
                     }
+                else {
+                    new Notification(self.notificationConfig.title, self.notificationConfig);
                 }
-                if (!wakeLock && self.videoScreenOn) {
-                    console.log('video is: ' + self.videoScreenOn.paused);
-                }
+            }
+            if (!wakeLock && self.videoScreenOn) {
+                console.log('video is: ' + self.videoScreenOn.paused);
+            }
 
-            }.bind(self);
-        }
+        };
 
-        window.addEventListener('visibilitychange', self.#onWindowVisibility, false);
+        window.addEventListener('visibilitychange', onWindowVisibility, { signal });
     }
 
     #addWindowEvents() {
-        const self = this;
-        self.#setOnWindowVisibility();
-        self.#setOnWindowBlurred();
-        self.#setOnWindowFocused();
+        this.#windowEventsAbortController?.abort();
+        this.#windowEventsAbortController = new AbortController();
+        const { signal } = this.#windowEventsAbortController;
+        this.#setOnWindowVisibility(signal);
+        this.#setOnWindowBlurred(signal);
+        this.#setOnWindowFocused(signal);
     }
 
     #removeWindowEvents = function () {
-        const self = this;
-        window.removeEventListener('visibilitychange', self.#onWindowVisibility, false);
-        self.#onWindowVisibility = null;
-
-        if ('onpagehide' in window) {
-            window.removeEventListener('pagehide', self.#onWindowBlurred, false);
-        } else {
-            window.removeEventListener('blur', self.#onWindowBlurred, false);
-        }
-        if ('onpageshow' in window) {
-            window.removeEventListener('pageshow', self.#onWindowFocused, false);
-        } else {
-            window.removeEventListener('focus', self.#onWindowFocused, false);
-        }
+        this.#windowEventsAbortController?.abort();
+        this.#windowEventsAbortController = null;
     }
 
     #fromSessionToStorage() {
