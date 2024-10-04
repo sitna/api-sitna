@@ -1,3 +1,12 @@
+### [4.4.0](https://github.com/sitna/api-sitna/releases/tag/v4.4.0)
+- Rediseñado el control de compartir aprovechando las herramientas de compartición nativas del sistema operativo.
+- Añadida opción al control de descarga de imágenes para copiarlas al portapapeles en vez de descargarlas.
+- Añadida galería de ejemplos con buscador y sandbox añadida a la documentación.
+- Mejorado del soporte al formatos GML y datos INSPIRE.
+- Cambiados los servicios de modelo digital de terreno para la vista 3D.
+- La configuración de capas de servicios externos es editable en un archivo separado.
+- Corrección de errores.
+
 ### [4.3.0](https://github.com/sitna/api-sitna/releases/tag/v4.3.0)
 - Mejora del soporte a formatos GML, GeoPackage y Shapefile.
 - Refactorización y corrección de errores.
