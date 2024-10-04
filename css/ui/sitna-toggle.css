@@ -85,3 +85,7 @@ input[type=checkbox] {
         border-color: var(--btn-disabled-border-color);
         cursor: default;
     }
+
+        input[type=checkbox]:disabled:before {
+            color: var(--btn-disabled-color);
+        }
