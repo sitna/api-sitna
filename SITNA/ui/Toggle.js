@@ -19,11 +19,11 @@ class Toggle extends Component {
     }
 
     connectedCallback() {
-        this.text = this.text;
-        this.checked = this.checked;
-        this.checkedIconText = this.checkedIconText;
-        this.uncheckedIconText = this.uncheckedIconText;
-        this.disabled = this.disabled;
+        this.#onTextChange();
+        this.#onCheckedChange();
+        this.#onCheckedIconTextChange();
+        this.#onUncheckedIconTextChange();
+        this.#onDisabledChange();
     }
 
     static get observedAttributes() {
@@ -35,20 +35,20 @@ class Toggle extends Component {
             return;
         }
         if (name === 'disabled') {
-            this.disabled = this.disabled;
+            this.#onDisabledChange();
         }
         else if (name === 'checked') {
-            this.checked = this.checked;
+            this.#onCheckedChange();
         }
         if (oldValue !== newValue) {
             if (name === 'text') {
-                this.text = newValue;
+                this.#onTextChange();
             }
             if (name === 'checked-icon-text') {
-                this.checkedIconText = newValue;
+                this.#onCheckedIconTextChange();
             }
             if (name === 'unchecked-icon-text') {
-                this.uncheckedIconText = newValue;
+                this.#onUncheckedIconTextChange();
             }
         }
     }
@@ -62,45 +62,11 @@ class Toggle extends Component {
     }
 
     set text(value) {
-        this.#checkbox.setAttribute('title', value);
         this.setAttribute('text', value);
     }
 
-    get checkedIconText() {
-        return this.getAttribute('checked-icon-text');
-    }
-
-    get uncheckedIconText() {
-        return this.getAttribute('unchecked-icon-text');
-    }
-
-    #setDataValue(name, value) {
-        if (value) {
-            this.#checkbox.setAttribute('data-' + name, value);
-            this.setAttribute(name, value);
-        }
-        else {
-            delete this.#checkbox.removeAttribute('data-' + name);
-            this.removeAttribute(name);
-        }
-    }
-
-    set checkedIconText(value) {
-        this.#setDataValue('checked-icon-text', value);
-    }
-
-    set uncheckedIconText(value) {
-        this.#setDataValue('unchecked-icon-text', value);
-    }
-
-    get checked() {
-        return this.hasAttribute('checked');
-    }
-
-    set checked(value) {
-        const boolValue = !!value;
-        this.toggleAttribute('checked', boolValue);
-        this.#checkbox.checked = boolValue;
+    #onTextChange() {
+        this.#checkbox.setAttribute('title', this.text);
     }
 
     get disabled() {
@@ -108,9 +74,65 @@ class Toggle extends Component {
     }
 
     set disabled(value) {
-        const boolValue = !!value;
-        this.toggleAttribute('disabled', boolValue);
-        this.#checkbox.disabled = boolValue;
+        this.toggleAttribute('disabled', !!value);
+    }
+
+    #onDisabledChange() {
+        this.#checkbox.disabled = this.disabled;
+    }
+
+    get checked() {
+        return this.hasAttribute('checked');
+    }
+
+    set checked(value) {
+        this.toggleAttribute('checked', !!value);
+    }
+
+    #onCheckedChange() {
+        this.#checkbox.checked = this.checked;
+    }
+
+    get checkedIconText() {
+        return this.getAttribute('checked-icon-text');
+    }
+
+    set checkedIconText(value) {
+        this.#setOptionalAttribute('checked-icon-text', value);
+    }
+
+    #onCheckedIconTextChange() {
+        this.#setDataValue('checked-icon-text', this.checkedIconText);
+    }
+
+    get uncheckedIconText() {
+        return this.getAttribute('unchecked-icon-text');
+    }
+
+    set uncheckedIconText(value) {
+        this.#setOptionalAttribute('unchecked-icon-text', value);
+    }
+
+    #onUncheckedIconTextChange() {
+        this.#setDataValue('unchecked-icon-text', this.uncheckedIconText);
+    }
+
+    #setOptionalAttribute(name, value) {
+        if (value) {
+            this.setAttribute(name, value);
+        }
+        else {
+            this.removeAttribute(name);
+        }
+    }
+
+    #setDataValue(name, value) {
+        if (value) {
+            this.#checkbox.setAttribute('data-' + name, value);
+        }
+        else {
+            this.#checkbox.removeAttribute('data-' + name);
+        }
     }
 }
 

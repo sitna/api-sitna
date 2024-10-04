@@ -15,7 +15,7 @@ class Tab extends Component {
     }
 
     connectedCallback() {
-        this.text = this.text;
+        this.#onTextChange();
         this.toggleAttribute('selected', this.selected);
         this.#onSelectedChange();
     }
@@ -28,7 +28,10 @@ class Tab extends Component {
         if (oldValue === newValue) {
             return;
         }
-        if (name === 'selected') {
+        if (name === 'text') {
+            this.#onTextChange();
+        }
+        else if (name === 'selected') {
             this.#onSelectedChange();
         }
     }
@@ -42,15 +45,18 @@ class Tab extends Component {
     }
 
     set text(value) {
-        this.shadowRoot.removeChild(this.#text);
-        this.#text = document.createTextNode(value);
-        this.shadowRoot.appendChild(this.#text);
         if (value) {
             this.setAttribute('text', value);
         }
         else {
             this.removeAttribute('text');
         }
+    }
+
+    #onTextChange() {
+        this.shadowRoot.removeChild(this.#text);
+        this.#text = document.createTextNode(this.text);
+        this.shadowRoot.appendChild(this.#text);
     }
 
     get group() {

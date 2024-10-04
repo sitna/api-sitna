@@ -31,12 +31,12 @@ class Button extends Component {
     }
 
     connectedCallback() {
-        this.text = this.text;
-        this.variant = this.variant;
-        this.active = this.active;
-        this.disabled = this.disabled;
-        this.icon = this.icon;
-        this.iconText = this.iconText;
+        this.#onTextChange();
+        this.#onVariantChange(this.variant, this.variant);
+        this.#onActiveChange();
+        this.#onDisabledChange();
+        this.#onIconChange();
+        this.#onIconTextChange();
     }
 
     static get observedAttributes() {
@@ -48,24 +48,24 @@ class Button extends Component {
             return;
         }
         if (name === 'disabled') {
-            this.disabled = this.hasAttribute(name);
+            this.#onDisabledChange();
         }
         else if (name === 'active') {
-            this.active = this.hasAttribute(name);
+            this.#onActiveChange();
         }
         if (oldValue !== newValue) {
             switch (name) {
                 case 'text':
-                    this.text = newValue;
+                    this.#onTextChange();
                     break;
                 case 'icon':
-                    this.icon = newValue;
+                    this.#onIconChange();
                     break;
                 case 'variant':
-                    this.variant = newValue;
+                    this.#onVariantChange(oldValue, newValue);
                     break;
                 case 'icon-text':
-                    this.iconText = newValue;
+                    this.#onIconTextChange();
                     break;
                 case 'title':
                     if (this.hasAttribute(name)) {
@@ -75,7 +75,7 @@ class Button extends Component {
                     }
                     else {
                         if (this.#button.hasAttribute('title')) {
-                            this.text = this.text;
+                            this.#onTextChange();
                         }
                     }
                     break;
@@ -89,46 +89,21 @@ class Button extends Component {
         return elementName;
     }
 
-    get variant() {
-        return this.getAttribute('variant') || Button.variant.DEFAULT;
-    }
-
-    set variant(value) {
-        value = value || Button.varian.DEFAULT;
-
-        this.#button.classList.remove(this.variant);
-        if (value !== Button.variant.DEFAULT) {
-            this.#button.classList.add(value);
-            this.setAttribute('variant', value);
-        }
-        else {
-            this.removeAttribute('variant');
-        }
-        const text = this.text;
-        if (text && (value === Button.variant.ICON || value === Button.variant.MINIMAL || value === Button.variant.LINK)) {
-            this.#button.setAttribute('title', text);
-        }
-        else {
-            this.#button.removeAttribute('title');
-        }
-    }
-
     get text() {
         return this.getAttribute('text');
     }
 
     set text(value) {
-        this.#button.innerHTML = value ?? '';
-        if (value) {
-            this.setAttribute('text', value);
-        }
-        else {
-            this.removeAttribute('text');
-        }
+        this.#setOptionalAttribute('text', value);
+    }
+
+    #onTextChange() {
+        const text = this.text;
+        this.#button.innerHTML = text ?? '';
         const variant = this.variant;
         if (variant === Button.variant.ICON || variant === Button.variant.MINIMAL || variant === Button.variant.LINK) {
-            if (value) {
-                this.#button.setAttribute('title', value);
+            if (text) {
+                this.#button.setAttribute('title', text);
             }
             else {
                 this.#button.removeAttribute('title');
@@ -136,31 +111,39 @@ class Button extends Component {
         }
     }
 
-    get iconText() {
-        return this.getAttribute('icon-text');
-    }
-
-    #setDataValue(name, value) {
-        if (value) {
-            this.#button.setAttribute('data-' + name, value);
-            this.setAttribute(name, value);
-        }
-        else {
-            delete this.#button.removeAttribute('data-' + name);
-            this.removeAttribute(name);
-        }
-    }
-
-    set iconText(value) {
-        this.#setDataValue('icon-text', value);
-    }
-
     get icon() {
         return this.getAttribute('icon');
     }
 
     set icon(value) {
-        this.#setDataValue('icon', value);
+        this.#setOptionalAttribute('icon', value);
+    }
+
+    #onIconChange() {
+        this.#setDataValue('icon', this.icon);
+    }
+
+    get variant() {
+        return this.getAttribute('variant') || Button.variant.DEFAULT;
+    }
+
+    set variant(value) {
+        this.#setOptionalAttribute('variant', value);
+    }
+
+    #onVariantChange(oldValue, newValue) {
+        this.#button.classList.remove(oldValue);
+        newValue ??= Button.variant.DEFAULT;
+        if (newValue !== Button.variant.DEFAULT) {
+            this.#button.classList.add(newValue);
+        }
+        const text = this.text;
+        if (text && (newValue === Button.variant.ICON || newValue === Button.variant.MINIMAL || newValue === Button.variant.LINK)) {
+            this.#button.setAttribute('title', text);
+        }
+        else {
+            this.#button.removeAttribute('title');
+        }
     }
 
     get disabled() {
@@ -168,9 +151,11 @@ class Button extends Component {
     }
 
     set disabled(value) {
-        const boolValue = !!value;
-        this.toggleAttribute('disabled', boolValue);
-        this.#button.disabled = boolValue;
+        this.toggleAttribute('disabled', !!value);
+    }
+
+    #onDisabledChange() {
+        this.#button.disabled = this.disabled;
     }
 
     get active() {
@@ -178,9 +163,41 @@ class Button extends Component {
     }
 
     set active(value) {
-        const boolValue = !!value;
-        this.toggleAttribute('active', boolValue);
-        this.#button.classList.toggle('active', boolValue);
+        this.toggleAttribute('active', !!value);
+    }
+
+    #onActiveChange() {
+        this.#button.classList.toggle('active', this.active);
+    }
+
+    get iconText() {
+        return this.getAttribute('icon-text');
+    }
+
+    set iconText(value) {
+        this.#setOptionalAttribute('icon-text', value);
+    }
+
+    #onIconTextChange() {
+        this.#setDataValue('icon-text', this.iconText);
+    }
+
+    #setOptionalAttribute(name, value) {
+        if (value) {
+            this.setAttribute(name, value);
+        }
+        else {
+            this.removeAttribute(name);
+        }
+    }
+
+    #setDataValue(name, value) {
+        if (value) {
+            this.#button.setAttribute('data-' + name, value);
+        }
+        else {
+            this.#button.removeAttribute('data-' + name);
+        }
     }
 }
 
