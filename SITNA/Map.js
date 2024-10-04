@@ -127,15 +127,17 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
                 cadastralParcel: {}
             });
 
-            if (options && options.controls && options.controls.search) {
+            if (options?.controls?.search) {
                 const keys = Object.keys(options.controls.search);
 
-                const searchCfg = Util.extend(options.controls.search, { allowedSearchTypes: {} });
+                const searchCfg = { ...options.controls.search };
 
                 keys.forEach(function (key) {
-                    if (typeof options.controls.search[key] === "boolean" || Util.isPlainObject(options.controls.search[key])) {
-                        if (options.controls.search[key]) {
-                            searchCfg.allowedSearchTypes[key] = Util.isPlainObject(options.controls.search[key]) ? options.controls.search[key] : {};
+                    const searchOption = options.controls.search[key];
+                    if (typeof searchOption === "boolean" || Util.isPlainObject(searchOption)) {
+                        if (searchOption) {
+                            searchCfg.allowedSearchTypes ??= {};
+                            searchCfg.allowedSearchTypes[key] = Util.isPlainObject(searchOption) ? searchOption : {};
                         }
 
                         delete searchCfg[key];
