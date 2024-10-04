@@ -312,7 +312,7 @@ class MultiFeatureInfo extends FeatureInfoCommons {
             if (self.featureInfoControl) {
                 const input = self.div.querySelector(`input[value=${Consts.geom.POINT}]`);
                 if (input) {
-                    if (!enabled && (self.lineFeatureInfoControl.isActive || self.polygonFeatureInfoControl.isActive)) {
+                    if (!enabled && (self.lineFeatureInfoControl?.isActive || self.polygonFeatureInfoControl?.isActive)) {
                         // Si no hay capas válidas para línea o polígono volvemos a GFI por punto
                         self.featureInfoControl.activate();
                     }
@@ -322,13 +322,13 @@ class MultiFeatureInfo extends FeatureInfoCommons {
             if (self.lineFeatureInfoControl) {
                 const input = self.div.querySelector(`input[value=${Consts.geom.POLYLINE}]`);
                 if (input) {
-                    input.checked = self.lineFeatureInfoControl.isActive;
+                    input.checked = self.lineFeatureInfoControl?.isActive;
                 }
             }
             if (self.polygonFeatureInfoControl) {
                 const input = self.div.querySelector(`input[value=${Consts.geom.POLYGON}]`);
                 if (input) {
-                    input.checked = self.polygonFeatureInfoControl.isActive;
+                    input.checked = self.polygonFeatureInfoControl?.isActive;
                 }
             }
 
