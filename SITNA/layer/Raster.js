@@ -64,45 +64,6 @@ const LegendStatusEnum = {
     UNAVAILABLE: "unavailable"
 }
 
-const reprojectExtent = function ([minX, minY, maxX, maxY], sourceCrs, targetCrs) {
-    const steps = 10;
-    const stepWidth = (maxX - minX) / steps;
-    const stepHeight = (maxY - minY) / steps;
-    const coordinates = [];
-    let x, y;
-    x = minX;
-    var i;
-    for (i = 0; i < steps; i++) {
-        coordinates.push([x, maxY]);
-        x += stepWidth;
-    }
-    y = maxY
-    for (i = 0; i < steps; i++) {
-        coordinates.push([maxX, y]);
-        y -= stepHeight;
-    }
-    x = maxX;
-    for (i = 0; i < steps; i++) {
-        coordinates.push([x, minY]);
-        x -= stepWidth;
-    }
-    y = minY
-    for (i = 0; i < steps; i++) {
-        coordinates.push([minX, y]);
-        y += stepHeight;
-    }
-    const newCoords = Util.reproject(coordinates, sourceCrs, targetCrs);
-    const newXs = newCoords.map(c => c[0]);
-    const newYs = newCoords.map(c => c[1]);
-
-    return [
-        Math.min(...newXs),
-        Math.min(...newYs),
-        Math.max(...newXs),
-        Math.max(...newYs)
-    ];
-};
-
 /**
  * Capa de tipo raster, como la de un WMS o un WMTS.
  * @class Raster
@@ -1467,7 +1428,7 @@ class Raster extends Layer {
                 boxIntersections
                     .forEach(function combineExtent(ext, crs) {
                         if (TC.getProjectionData({ crs, sync: true }).unit?.startsWith('degree')) {
-                            const geoExtent = reprojectExtent(ext, crs, mapCrs);
+                            const geoExtent = Util.reprojectExtent(ext, crs, mapCrs);
                             extent[0] = Math.min(geoExtent[0], extent[0]);
                             extent[1] = Math.min(geoExtent[1], extent[1]);
                             extent[2] = Math.max(geoExtent[2], extent[2]);
@@ -1507,7 +1468,7 @@ class Raster extends Layer {
                             extent = [bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]];
                         }
                         if (!extent && isGeo && layerNode.WGS84BoundingBox) {
-                            extent = reprojectExtent(layerNode.WGS84BoundingBox, 'EPSG:4326', matrixSetNode.SupportedCRS);
+                            extent = Util.reprojectExtent(layerNode.WGS84BoundingBox, 'EPSG:4326', matrixSetNode.SupportedCRS);
                         }
                     }
                 }
@@ -2058,7 +2019,8 @@ class Raster extends Layer {
         if (self.type !== Consts.layerType.WMS)
             return null;
         //URI:Comprobamos que el servicio tiene cacheado la cmprobación si soporta leyenda JSON
-        var legendJSONSupported = Object.prototype.hasOwnProperty.call(TC.legendFormat, self.getGetMapUrl()) ? TC.legendFormat[self.getGetMapUrl()] : new Promise(async (resolve, reject) => {
+        const urlForGetMap = self.getGetMapUrl();
+        var legendJSONSupported = Object.prototype.hasOwnProperty.call(TC.legendFormat, urlForGetMap) ? TC.legendFormat[self.getGetMapUrl()] : new Promise(async (resolve, reject) => {
             const url = self.getLegendFormatUrl();
             if (url) {
                 try {
@@ -2069,23 +2031,23 @@ class Raster extends Layer {
                     response = response[0];
                     switch (true) {
                         case response.contentType.toLowerCase().includes("application/json"):
-                            TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.JSON;
+                            TC.legendFormat[urlForGetMap] = LegendStatusEnum.JSON;
                             resolve(LegendStatusEnum.JSON);
                             break;
                         case response.contentType.toLowerCase().includes("text/xml"):
                             if (response.responseText.includes('"OperationNotSupported"') ||
                                 response.responseText.includes('"MissingRights"')) {
                                 reject();
-                                TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.UNAVAILABLE;
+                                TC.legendFormat[urlForGetMap] = LegendStatusEnum.UNAVAILABLE;
                             }
                             else {
                                 resolve(LegendStatusEnum.PNG);
-                                TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.PNG;
+                                TC.legendFormat[urlForGetMap] = LegendStatusEnum.PNG;
                             }
                             break;
                         default:
                             reject();
-                            TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.UNAVAILABLE;
+                            TC.legendFormat[urlForGetMap] = LegendStatusEnum.UNAVAILABLE;
                             break;
                     }
 
@@ -2093,7 +2055,7 @@ class Raster extends Layer {
                 catch (err) {
                     if (err?.status >= 400) {
                         reject(err);
-                        TC.legendFormat[self.getGetMapUrl()] = LegendStatusEnum.UNAVAILABLE;
+                        TC.legendFormat[urlForGetMap] = LegendStatusEnum.UNAVAILABLE;
                         return;
                     }
 
@@ -2102,7 +2064,7 @@ class Raster extends Layer {
                 }
             }
         });
-        TC.legendFormat[self.getGetMapUrl()] = legendJSONSupported;
+        TC.legendFormat[urlForGetMap] = legendJSONSupported;
         //URI: Si es una promesa es que otra capa con la misma url de base ha hecho la petición y esa a la espera de obtenerla
         if (legendJSONSupported instanceof Promise)
             legendJSONSupported = await legendJSONSupported;
