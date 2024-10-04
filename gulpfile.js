@@ -269,6 +269,10 @@ function encapsulateWebWorkers(cb) {
     cb();
 }
 
+function prefetchXsd(cb) {
+    require('./batch/xsd-prefetch-module-creator.js').then(cb);
+}
+
 function examples() {
     return gulp.src([
         'examples/**/*.html',
@@ -457,7 +461,8 @@ function lint() {
             'sitna.js',
             'TC.js',
             'TC/**/*.js',
-            'SITNA/**/*.js'
+            'SITNA/**/*.js',
+            'workers/**/*.js'
         ])
         .pipe(eslint())
         .pipe(eslint.formatEach());
@@ -555,6 +560,7 @@ function startDevServer() {
     require('./css/compiler.js');
     compileTemplates(() => true);
     encapsulateWebWorkers(() => true);
+    prefetchXsd(() => true);
     ///////////////////////////////////////////
     const webpackConfig = require('./webpack/webpack.config.debug.js');
     const compiler = webpack(webpackConfig);
@@ -588,6 +594,7 @@ const noTests = gulp.series(
     clean,
     compileTemplates,
     encapsulateWebWorkers,
+    prefetchXsd,
     buildCsprojFilter,
     //bundleOLDebug,
     //bundleOLRelease,    
@@ -627,6 +634,7 @@ exports.copyResources = gulp.series(
     resources
 );
 exports.encapsulateWebWorkers = encapsulateWebWorkers;
+exports.prefetchXsd = prefetchXsd;
 exports.updateDependencies = npmUpdate;
 exports.noTests = noTests;
 exports.default = gulp.series(
