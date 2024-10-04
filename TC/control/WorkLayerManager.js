@@ -391,29 +391,26 @@ class WorkLayerManager extends TOC {
                 getLegendImgByPost(layer).then(async function (_src) {
 
                     try {
-                        const legendObject = layer.getLegend ? await layer.getLegend(true) : null;
-                        if (legendObject) {
+                        if (layer.availableNames?.some((name) => layer.getInfo(name).legend.length)) {
+                            const legendObject = layer.getLegend ? await layer.getLegend(true) : null;
+                            if (legendObject) {
 
-                            const legendObjets = legendObject//await layer.getLegend(true);
-                            for (var i = 0; i < (legendObjets[0]?.length || 0); i++) {
-                                if (!layerData.legend[0][i]) layerData.legend[0][i] = {};
-                                if (legendObjets[0][i].rules)
-                                    layerData.legend[0][i].symbols = await Promise.all(await legendObjets[0][i].rules
-                                        .map(async (rule) => {
-                                            return {
-                                                src: await CreateSymbolizer(rule),
-                                                title: rule.title || rule.name
+                                const legendObjects = legendObject//await layer.getLegend(true);
+                                for (var j = 0; j < (legendObjects?.length || 0); j++) {
+                                    for (var i = 0; i < (legendObjects[j]?.length || 0); i++) {
+                                        let index = i + j;
+                                        if (!layerData.legend[0][index]) layerData.legend[0][index] = {};
+                                        if (legendObjects[j][i].rules) {
+                                            layerData.legend[0][index].symbols = (await CreateSymbolizer(legendObjects[j][i].rules, layer)).map((obj) => { return { src: obj.src, title: obj.value } });
+                                        }                                    
+                                        else if (legendObjects[j][i].src) {
+                                            layerData.legend[0][index] = {
+                                                src: legendObjects[j][i].src,
+                                                title: legendObjects[j][i].title || legendObjects[j][i].name
                                             }
-                                        }));
-                                else if (legendObjets[0][i].src) {
-                                    layerData.legend[0][i] = {
-                                        src: legendObjets[0][i].src,
-                                        title: legendObjets[0][i].title || legendObjets[0][i].name
+                                        }
                                     }
                                 }
-
-                              //  }
-
                             }
                         }
                     }
