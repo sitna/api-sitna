@@ -44,8 +44,8 @@ import GeoPackage from '../../SITNA/format/GeoPackage';
 import Shapefile from '../../SITNA/format/Shapefile';
 import { transformGeometryWithOptions } from 'ol/format/Feature.js';
 import GML2 from 'ol/format/GML2';
-import GML3 from '../../lib/ol/format/GML3';
-import GML32 from 'ol/format/GML32';
+import GML3 from 'ol/format/GML3';
+import GML32 from '../../lib/ol/format/GML32';
 import {
     defaults,
     Draw,
@@ -515,7 +515,7 @@ ol.control.OverviewMap.prototype.updateBox_ = function () {
     self.boxOverlay_.handlePositionChanged();
 };
 
-class GML3CRS84 extends GML3 {
+class GML3CRS84 extends GML32 {
     constructor() {
         super({
             srsName: 'CRS:84'
@@ -533,21 +533,21 @@ class GML2CRS84 extends GML2 {
 }
 ol.format.GML2CRS84 = GML2CRS84;
 
-// Añadido el espacio de nombres de GML 3.2 al parser
-const gmlNamespace = 'http://www.opengis.net/gml';
-const gml32Namespace = 'http://www.opengis.net/gml/3.2';
-ol.format.GML3.prototype.GEOMETRY_FLAT_COORDINATES_PARSERS[gml32Namespace] = ol.format.GML3.prototype.GEOMETRY_FLAT_COORDINATES_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.FLAT_LINEAR_RINGS_PARSERS[gml32Namespace] = ol.format.GML3.prototype.FLAT_LINEAR_RINGS_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.GEOMETRY_PARSERS[gml32Namespace] = ol.format.GML3.prototype.GEOMETRY_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.MULTICURVE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.MULTICURVE_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.MULTISURFACE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.MULTISURFACE_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.CURVEMEMBER_PARSERS[gml32Namespace] = ol.format.GML3.prototype.CURVEMEMBER_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.SURFACEMEMBER_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SURFACEMEMBER_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.SURFACE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SURFACE_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.CURVE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.CURVE_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.ENVELOPE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.ENVELOPE_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.PATCHES_PARSERS[gml32Namespace] = ol.format.GML3.prototype.PATCHES_PARSERS[gmlNamespace];
-ol.format.GML3.prototype.SEGMENTS_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SEGMENTS_PARSERS[gmlNamespace];
+//// Añadido el espacio de nombres de GML 3.2 al parser
+//const gmlNamespace = 'http://www.opengis.net/gml';
+//const gml32Namespace = 'http://www.opengis.net/gml/3.2';
+//ol.format.GML3.prototype.GEOMETRY_FLAT_COORDINATES_PARSERS[gml32Namespace] = ol.format.GML3.prototype.GEOMETRY_FLAT_COORDINATES_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.FLAT_LINEAR_RINGS_PARSERS[gml32Namespace] = ol.format.GML3.prototype.FLAT_LINEAR_RINGS_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.GEOMETRY_PARSERS[gml32Namespace] = ol.format.GML3.prototype.GEOMETRY_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.MULTICURVE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.MULTICURVE_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.MULTISURFACE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.MULTISURFACE_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.CURVEMEMBER_PARSERS[gml32Namespace] = ol.format.GML3.prototype.CURVEMEMBER_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.SURFACEMEMBER_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SURFACEMEMBER_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.SURFACE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SURFACE_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.CURVE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.CURVE_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.ENVELOPE_PARSERS[gml32Namespace] = ol.format.GML3.prototype.ENVELOPE_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.PATCHES_PARSERS[gml32Namespace] = ol.format.GML3.prototype.PATCHES_PARSERS[gmlNamespace];
+//ol.format.GML3.prototype.SEGMENTS_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SEGMENTS_PARSERS[gmlNamespace];
 
 ol.proj.addEquivalentProjections(ol.proj.EPSG4326.PROJECTIONS);
 
@@ -1201,9 +1201,23 @@ TC.wrap.Map.prototype.setProjection = function (options = {}) {
  *  insertLayer: inserts OpenLayers layer at index
  *  Parameters: OpenLayers.Layer, number
  */
-TC.wrap.Map.prototype.insertLayer = function (olLayer, idx) {
-    var self = this;
-    var layers = self.map.getLayers();
+TC.wrap.Map.prototype.insertLayer = function (olLayer, indexOrObject) {
+    const self = this;
+    const layers = self.map.getLayers();
+    let idx;
+    if (typeof indexOrObject === 'number') {
+        // Se ha pasado un índice
+        idx = indexOrObject;
+    }
+    else {
+        // Se ha pasado un objeto con la lista de capas previas
+        idx = -1;
+        const layerArray = layers.getArray();
+        for (const previousLayer of indexOrObject.previousLayers) {
+            idx = Math.max(idx, layerArray.indexOf(previousLayer));
+        }
+        idx++;
+    }
     var alreadyExists = false;
     for (var i = 0; i < layers.getLength(); i++) {
         if (layers.item(i) === olLayer) {
@@ -1743,11 +1757,14 @@ var getFormatFromName = function (name, extractStyles) {
         case Consts.format.GML3:
             return new ol.format.GML3();
         case Consts.format.GML32:
-            return new ol.format.GML32();
+            return new ol.format.GML32({
+                featureNS: 'http://www.opengis.net/gml/3.2',
+                featureType: 'feature'
+            });
         case Consts.mimeType.GML:
         case Consts.format.GML:
             return new ol.format.GML({
-                featureNS: 'http://www.opengis.net/gml',
+                featureNS: 'http://www.opengis.net/gml/3.2',
                 featureType: 'feature'
             });
         case Consts.format.TOPOJSON:
@@ -1854,23 +1871,21 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
             //ol.format.KMLCustom,
             ol.format.KML,
             ol.format.GPX,
-            ol.format.GML32,
+            new ol.format.GML32({
+                featureNS: 'http://www.opengis.net/gml/3.2',
+                featureType: 'feature'
+            }),
             ol.format.GML2,
             ol.format.GML3CRS84,
             ol.format.GML2CRS84,
             ol.format.GML3,
-            ol.format.GML32,
             ol.format.GeoJSON,
-            function () {
-                return new ol.format.WKT({
-                    splitCollection: true
-                });
-            },
-            function () {
-                return new ol.format.WKB({
-                    splitCollection: true
-                });
-            },
+            new ol.format.WKT({
+                splitCollection: true
+            }),
+            new ol.format.WKB({
+                splitCollection: true
+            }),
             ol.format.TopoJSON,
             ol.format.GeoPackage,
             ol.format.Shapefile
@@ -1951,7 +1966,7 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
                 // Los shapefiles son multiarchivo, añado los demás fileHandles.
                 const nameBase = e.file.name.substring(0, e.file.name.lastIndexOf(".")).toLowerCase();
                 featuresImportEventData.additionalFileHandles = ['.dbf', '.prj', '.cst', '.cpg', '.shx']
-                    .map(ext => e.file._fileHandle?._siblings.find((fh) => fh.name.toLowerCase() === nameBase + ext))
+                    .map(ext => e.file._fileHandle?._siblings?.find((fh) => fh.name.toLowerCase() === nameBase + ext))
                     .filter(fh => !!fh)
                     .filter(fh => fh !== featuresImportEventData.fileHandle);
             }
@@ -6328,6 +6343,7 @@ TC.inherit(TC.wrap.parser.JSON, TC.wrap.Parser);
 TC.wrap.control.OverviewMap.prototype.register = async function (map) {
     const self = this;
 
+    await map.loaded(); // Para dar tiempo a que se instancie la capa de fondo
     const olLayer = await self.parent.layer.wrap.getLayer();
     self.ovMap = new ol.control.OverviewMap({
         target: self.parent.div,
@@ -8043,7 +8059,7 @@ TC.wrap.Feature.prototype.setGeometry = function (geometry) {
     const self = this;
     if (self.feature && self.feature.getGeometry) {
         var geom = self.feature.getGeometry();
-        var ctor;
+        let Ctor;
         var point,
             points,
             ringsOrPolylines,
@@ -8059,27 +8075,27 @@ TC.wrap.Feature.prototype.setGeometry = function (geometry) {
         switch (true) {
             case self.parent instanceof MultiPolygon_s:
                 isMultiPolygon = true;
-                ctor = ol.geom.MultiPolygon;
+                Ctor = ol.geom.MultiPolygon;
                 polygons = geometry;
                 if (Array.isArray(polygons)) {
                     ringsOrPolylines = geometry[0];
                 }
             case self.parent instanceof Polygon_s || self.parent instanceof MultiPolyline:
                 isPolygonOrMultiLineString = true;
-                ctor = ctor || (self.parent instanceof Polygon_s ? ol.geom.Polygon : ol.geom.MultiLineString);
+                Ctor = Ctor || (self.parent instanceof Polygon_s ? ol.geom.Polygon : ol.geom.MultiLineString);
                 ringsOrPolylines = isMultiPolygon ? ringsOrPolylines : geometry;
                 if (Array.isArray(ringsOrPolylines)) {
                     points = ringsOrPolylines[0];
                 }
             case self.parent instanceof Polyline || self.parent instanceof MultiPoint_s:
                 isLineString = true;
-                ctor = ctor || (self.parent instanceof Polyline ? ol.geom.LineString : ol.geom.MultiPoint);
+                Ctor = Ctor || (self.parent instanceof Polyline ? ol.geom.LineString : ol.geom.MultiPoint);
                 points = isPolygonOrMultiLineString ? points : geometry;
                 if (Array.isArray(points)) {
                     point = points[0];
                 }
             case self.parent instanceof Point_s:
-                ctor = ctor || ol.geom.Point;
+                Ctor = Ctor || ol.geom.Point;
                 point = isLineString ? point : geometry;
                 if (Array.isArray(point) && typeof point[0] === 'number' && typeof point[1] === 'number') {
                     let layout;
@@ -8098,7 +8114,7 @@ TC.wrap.Feature.prototype.setGeometry = function (geometry) {
                         geom.setCoordinates(geometry, layout);
                     }
                     else {
-                        geom = new ctor(geometry, layout);
+                        geom = new Ctor(geometry, layout);
                         self.feature.setGeometry(geom);
                     }
                 }
