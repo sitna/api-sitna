@@ -417,8 +417,11 @@ class Edit extends WebComponentControl {
         self.polygonDrawControlAttributesEditor = await self.getPolygonDrawControlAttributeEditor();
         self.polygonDrawControlAttributesEditor.clientControl = self.polygonDrawControl;
 
+        const featureUpdateTimestamps = new WeakMap();
         const addElevation = async function (feature) {
             if (self.map.options.elevation && feature.getGeometryStride() > 2) {
+                const timestamp = Date.now();
+                featureUpdateTimestamps.set(feature, timestamp);
                 let changed = false;
                 let elevationTool;
                 const cloneTree = function (tree) {
@@ -429,7 +432,8 @@ class Edit extends WebComponentControl {
                 }
                 const geometry = cloneTree(feature.geometry);
                 for (const point of Geometry.iterateCoordinates(geometry)) {
-                    if (!point[2]) {
+                    const z = point[2];
+                    if (z === undefined || z === null) {
                         elevationTool = elevationTool || await self.map.getElevationTool();
                         const newCoords = await elevationTool.getElevation({
                             coordinates: [point],
@@ -442,7 +446,11 @@ class Edit extends WebComponentControl {
                     }
                 }
                 if (changed) {
-                    feature.setCoordinates(geometry);
+                    const currentTimestamp = featureUpdateTimestamps.get(feature);
+                    // Nos aseguramos de que se actualiza solamente a la última versión de la geometría
+                    if (timestamp === currentTimestamp) {
+                        feature.setCoordinates(geometry);
+                    }
                 }
             }
         };
@@ -762,7 +770,7 @@ class Edit extends WebComponentControl {
                         const geometryType = Util.getGeometryType(attr.type);
                         if (geometryType) {
                             layerEditData.geometryName = attr.name;
-                            layerEditData.geometryType = typeof geometryType === 'boolean' ? null : geometryType;
+                            layerEditData.geometryType = geometryType === Consts.geom.GEOMETRY ? null : geometryType;
                         }
                         else {
                             layerEditData.attributes[key] = attr;
