@@ -1,0 +1,29 @@
+.example-sandbox.example-sandbox-modalbg
+{    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-wrap: wrap;
+	z-index:10000;
+}
+.example-sandbox .example-sandbox-modal
+{
+background-color: white;
+    width: 90%;
+    height: 90%;
+}
+.example-sandbox iframe{
+	width:100%;
+	height: 100%;
+}
+pre.code-toolbar > .toolbar .toolbar-item:last-child {
+    display: none;
+}
+.example-code pre.code-toolbar > .toolbar .toolbar-item:last-child {
+    display: inline-block;
+}
