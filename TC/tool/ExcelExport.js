@@ -1,4 +1,4 @@
-﻿import TC from '../../TC';
+import TC from '../../TC';
 import Util from '../Util';
 TC.tool = TC.tool || {};
 TC.tool.ExcelExport = function () {
@@ -204,16 +204,14 @@ TC.tool.ExcelExport = function () {
 
         dataString += '<tbody>';
 
-        //detectamos separador de miles y de coma en función de la confugración regional de la máquina
+        //detectamos separador de de coma en función de la confugración regional de la máquina
         let language = navigator.language.substring(0, 5);
-        var ds, ms;
+        var ds;
         try {
             ds = (1.1).toLocaleString(language).substring(1, 2);
-            ms = (1000).toLocaleString(language).substring(1, 2);
         }
         catch (ex) {
             ds = (1.1).toLocaleString("es-ES").substring(1, 2);
-            ms = (1000).toLocaleString("es-ES").substring(1, 2);
         }
 
         for (i = 1; i < arrData.length; i++) {
