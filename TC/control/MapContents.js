@@ -11,6 +11,8 @@ const isGetLegendGraphic = function (url) {
 };
 
 class MapContents extends Control {
+    #updateLayerTreeTimeouts = {};
+
     constructor() {
         super(...arguments);
         this.layerTrees = {};
@@ -21,7 +23,14 @@ class MapContents extends Control {
         if (!self.map) {
             throw Error('Cannot render: control has no map');
         }
-        await self.renderData(options ? Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree());
+        let renderOptions;
+        if (self.map?.isLoaded) {
+            renderOptions = options ? Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree()
+        }
+        else {
+            renderOptions = options;
+        }
+        await self.renderData(renderOptions);
         self.addUIEventListeners();
         if (Util.isFunction(callback)) {
             callback();
@@ -30,10 +39,10 @@ class MapContents extends Control {
 
     async register(map) {
         const self = this;
-        await Promise.all([Control.prototype.register.call(self, map), self.renderPromise()]);
-        for (var i = 0, len = map.layers.length; i < len; i++) {
-            self.updateLayerTree(map.layers[i]);
-        }
+        await super.register.call(self, map);
+        map.loaded(() => {
+            map.layers.forEach((layer) => self.updateLayerTree(layer));
+        });
 
         map
             .on(Consts.event.ZOOM + ' ' + Consts.event.PROJECTIONCHANGE, function () {
@@ -75,15 +84,14 @@ class MapContents extends Control {
             .on(Consts.event.VECTORUPDATE + ' ' + Consts.event.FEATUREADD + ' ' + Consts.event.FEATURESADD, function (e) {
                 const layer = e.layer;
                 // Se introduce un timeout porque pueden venir muchos eventos de este tipo seguidos y no tiene sentido actualizar con cada uno
-                self._updateLayerTreeTimeouts = self._updateLayerTreeTimeouts || {};
-                if (self._updateLayerTreeTimeouts[layer.id]) {
-                    clearTimeout(self._updateLayerTreeTimeouts[layer.id]);
+                if (self.#updateLayerTreeTimeouts[layer.id]) {
+                    clearTimeout(self.#updateLayerTreeTimeouts[layer.id]);
                 }
-                self._updateLayerTreeTimeouts[layer.id] = setTimeout(function () {
+                self.#updateLayerTreeTimeouts[layer.id] = setTimeout(function () {
                     if (self.map.workLayers.indexOf(layer) > -1) {
                         // GLS: Validamos si la capa que ha provocado el evento sigue en worklayers, si es borrada debido a la espera del timeout el TOC puede reflejar capas que ya no están
                         self.updateLayerTree(layer);
-                        delete self._updateLayerTreeTimeouts[layer.id];
+                        delete self.#updateLayerTreeTimeouts[layer.id];
                     }
                 }, 100);
             })
