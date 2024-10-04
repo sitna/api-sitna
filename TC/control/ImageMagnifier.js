@@ -12,7 +12,6 @@ const leftClassName = 'tc-ctl-img-magnifier-left';
 const rightClassName = 'tc-ctl-img-magnifier-right';
 const className = 'tc-ctl-img-magnifier';
 const noAnchorClassName = 'tc-ctl-img-magnifier-no-anchor';
-const fadeOutClassName = 'tc-ctl-img-magnifier-fadeOut';
 const bgClassName = 'tc-ctl-img-magnifier-bg';
 const elementName = 'sitna-image-magnifier';
 
@@ -31,7 +30,7 @@ class ImageMagnifier extends WebComponentControl {
         const self = this;
         self.#zoom = zoom;
         self.classList.add(Consts.classes.HIDDEN);
-        self.addEventListener("click", function (event) {
+        self.addEventListener("click", function (_event) {
             self.hideMagnifier();
         });
         self.#texts = texts;
@@ -43,7 +42,7 @@ class ImageMagnifier extends WebComponentControl {
             event.preventDefault();
             self.hideMagnifier();
         });
-        self.#bgContent.addEventListener("mouseleave", function (event) {
+        self.#bgContent.addEventListener("mouseleave", function (_event) {
             self.hideMagnifier();
         });
     }
@@ -112,7 +111,7 @@ class ImageMagnifier extends WebComponentControl {
     hideMagnifier() {
         const self = this;
         self.classList.add(Consts.classes.HIDDEN);
-    };
+    }
 
     addNode(nodes,zoom) {
         const self = this;
@@ -145,7 +144,7 @@ class ImageMagnifier extends WebComponentControl {
                     self.hideMagnifier();
             });
             if (TC.browserFeatures.touch())
-                node.addEventListener("touchmove", function (event) {
+                node.addEventListener("touchmove", function (_event) {
                     self.hideMagnifier();
                 })
             
