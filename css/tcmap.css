@@ -188,7 +188,9 @@
     --track-profile-original-color: var(--color-14);
     --track-profile-mdt-color: var(--color-15);
     --icon-font-family: 'sitna';
+    --icon-font-grid-size: 24px;
     --icon-close: '\e908';
+    --icon-clipboard: '\e902';
     --icon-delete: '\e90d';
     --icon-download: '\e902';
     --icon-download-all: '\e903';
