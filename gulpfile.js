@@ -16,7 +16,9 @@ var gulp = require('gulp'),
     fse = require('fs-extra'),
     os = require('os'),
     { exec, spawn } = require('child_process'),
-    path = require('path');
+    path = require('path'),
+    cheerio = require("cheerio"),
+    lunr=require('lunr');
 
 ////////// Gestión de errores ////////
 //var plumber = require('gulp-plumber');
@@ -139,6 +141,10 @@ function webpackApiDebug() {
     return run('npm run wp_dbg').exec();
 }
 
+function webpackSandbox() {
+    return run('npm run wp_snd').exec();
+}
+
 //function bundleCesiumDebug(cb) {
 //    sitnaBuild.projectFiles.push('lib/cesium/build/cesium-sitna.js');
 //    spawnProcess('webpack.cmd', ['--config', './webpack/cesium.webpack.config.debug.js'], cb);
@@ -197,9 +203,9 @@ function resources() {
 }
 
 function offlineScripts(cb) {
-    let target = sitnaBuild.targetPath + 'TC/config/';
+    let target = sitnaBuild.targetPath + 'config/';
     gulp.src([
-        'TC/config/*.js'
+        'config/*.js'
     ])
         .pipe(filter(sitnaBuild.projectFiles))
         .pipe(gulp.dest(target));
@@ -518,6 +524,46 @@ function docCSS() {
     return gulp.src(['./batch/jsdoc/css/*'])
         .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/css'));
 }
+function docJS() {
+    return gulp.src(['./batch/jsdoc/js/*'])
+        .pipe(gulp.dest(sitnaBuild.targetPath + 'doc/js'));
+}
+function docExamples(cb) {    
+    const dirs = fs.readdirSync('examples', { withFileTypes: false });    
+    const index=lunr(function () {
+        this.field('title', { boost: 1000 });
+        this.field('summary', { boost: 500 });
+        this.ref('id');
+    });
+    const store = {};    
+    dirs.forEach(file => {        
+        if (file.endsWith(".html")) {
+            try {
+                const data = fs.readFileSync('examples/' + file, 'utf8');
+                if (!data) return;
+                const $ = cheerio.load(data, null, true);
+                if ($("html title").length && $(".instructions").length) {
+                    const id = file;
+                    store[id] = {
+                        "id": id,
+                        "title": $("html title").text().replace("SITNA - Ejemplo de ", ""),
+                        "summary": $(".instructions:first-child").text()
+                    };
+                    index.add(Object.assign({}, store[id], { "title": store[id]["title"].replace(/\.|\~/gm, " ") }));
+                }
+                else
+                    console.log(file + " no es un ejemplo");
+            }
+            catch (err) {
+                console.error(err);
+                return;
+            }
+        }
+    });
+    fs.writeFileSync(sitnaBuild.targetPath + "doc/lunr-data.json", JSON.stringify({ index: index, store: store }), "utf8");    
+    cb();
+    
+}
 
 const buildCss = gulp.series(
     buildCsprojFilter,
@@ -575,12 +621,15 @@ function startDevServer() {
 const doc = gulp.series(
     docsite,
     docfiles,
-    docCSS
+    docCSS,
+    docJS,
+    docExamples
 );
 
 const bundleApi = gulp.parallel(
     webpackApi,
-    webpackApiDebug
+    webpackApiDebug,
+    webpackSandbox
 );
 
 const parallelTasks = gulp.parallel(
@@ -618,7 +667,8 @@ const noTests = gulp.series(
     copyLegacyLayout,
     copyLegacyStyleAssets,
     parallelTasks,
-    webpackApiDebug
+    webpackApiDebug,
+    webpackSandbox
 );
 
 exports.startDevServer = startDevServer;

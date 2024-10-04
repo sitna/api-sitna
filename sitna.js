@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.3.0
+ * @version 4.4.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -74,7 +74,7 @@ TC.wrap = wrap;
 globalThis.TC = globalThis.TC || TC;
 //window.JL = JL;
 
-TC.version = '4.3.0';
+TC.version = '4.4.0';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
