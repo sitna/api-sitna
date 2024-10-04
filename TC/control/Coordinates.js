@@ -71,17 +71,17 @@ class Coordinates extends ProjectionSelector {
 
         self.clear();
 
+        const _3dContainerListener = function (e) {
+            if (!self.isPointerOver(e)) {
+                self.clear();
+            }
+        };
+
         map.on(Consts.event.VIEWCHANGE, function (e) {
             const view = e.view;
             if (view === Consts.view.PRINTING) {
                 return;
             }
-
-            const _3dContainerListener = function (e) {
-                if (!self.isPointerOver(e)) {
-                    self.clear();
-                }
-            };
 
             if (view === Consts.view.THREED) {
                 self.isGeo = true;
