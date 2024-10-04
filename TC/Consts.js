@@ -273,6 +273,7 @@ Consts.layer = {
     IDENA_BASEMAP_GREY: 'mapabase_gris',
     IDENA_CADASTER: 'catastro',
     IDENA_CARTO: 'cartografia',
+    IDENA_ORTHOPHOTO2023: 'ortofoto2023',
     IDENA_ORTHOPHOTO2022: 'ortofoto2022',
     IDENA_ORTHOPHOTO2021: 'ortofoto2021',
     IDENA_ORTHOPHOTO2020: 'ortofoto2020',
@@ -286,6 +287,7 @@ Consts.layer = {
     IDENA_DYNBASEMAP: 'mapabase_dinamico',
     IDENA_DYNBASEMAP_GREY: 'mapabase_gris_dinamico',
     IDENA_DYNORTHOPHOTO: 'ortofoto_dinamico',
+    IDENA_DYNORTHOPHOTO2023: 'ortofoto2023_dinamico',
     IDENA_DYNORTHOPHOTO2022: 'ortofoto2022_dinamico',
     IDENA_DYNORTHOPHOTO2021: 'ortofoto2021_dinamico',
     IDENA_DYNORTHOPHOTO2020: 'ortofoto2020_dinamico',
@@ -370,7 +372,8 @@ Consts.geom = {
     MULTIPOLYLINE: 'multipolyline',
     MULTIPOLYGON: 'multipolygon',
     CIRCLE: 'circle',
-    RECTANGLE: 'rectangle'
+    RECTANGLE: 'rectangle',
+    GEOMETRY: 'geometry'
 };
 
 Consts.dataType = {
