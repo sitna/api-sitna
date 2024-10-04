@@ -97,7 +97,7 @@ class Coordinates extends ProjectionSelector {
 
                             self.clear();
 
-                            self.coordsToClick({ coordinate: [coords.lon, coords.lat, coords.ele], cssClass: self._cssClasses.THREEDMARKER });
+                            self.coordsToClick({ coordinate: [coords.lon, coords.lat, coords.ele], cssClass: self.#cssClasses.THREEDMARKER });
                         }
 
                         self.latLon = [coords.lat, coords.lon];
