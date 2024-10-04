@@ -43,7 +43,7 @@ class ControlContainer extends Container {
             self._ctlPromises[i] = self.map.addControl(ctlName, Util.extend({
                 id: self.uids[i],
                 div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
-            }, ctl[ctlName]));
+            }, ctl[ctlName].options || ctl[ctlName]));
         });
 
         await Promise.all(self._ctlPromises);
