@@ -23,6 +23,8 @@
 <body>
     <div id="mocha"></div>
     <script>
+        document.querySelector('title').textContent = 'Mocha - ' + new Date().toLocaleTimeString();
+
         mocha.setup({
             ui: 'bdd'
         });

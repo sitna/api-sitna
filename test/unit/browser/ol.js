@@ -174,7 +174,7 @@ describe('Tests de ol.js', function () {
         };
         var options = {
             fileName: 'prueba',
-            format: 'GML'
+            format: 'GML32'
         };
         it('debe poder generar GML', async function () {
             chai.expect(await TC.wrap.Map.prototype.exportFeatures.call(self, [feature], options)).to.be.a('string');
