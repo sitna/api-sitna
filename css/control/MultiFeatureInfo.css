@@ -92,16 +92,19 @@
 
 .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-dl:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
     content: var(--icon-download-all);
 }
 
 .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
     content: var(--icon-delete);
 }
 
 .tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-zoom:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
     content: '\e917';
 }
 

@@ -233,12 +233,14 @@ audio.tc-audio-attr {
 .tc-ctl-finfo-elev:before {
     margin-right: 0.5em;
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) / 2);
     content: var(--icon-elevation);
 }
 
 .tc-ctl-finfo-height:before {
     margin-right: 0.5em;
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) / 2);
     content: '\e919';
 }
 
@@ -279,8 +281,9 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
             display: none;
         }
 
-.tc-icon-btn.tc-ctl-finfo-btn-dl:before {
+.tc-map .tc-icon-btn.tc-ctl-finfo-btn-dl:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
     content: var(--icon-download-all);
 }
 
@@ -294,6 +297,8 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
 
         .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:before {
             font-family: var(--icon-font-family);
+            font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+            line-height: 1.3em;
             content: '\e91f';
         }
 
@@ -303,11 +308,13 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
 
 .tc-icon-btn.tc-ctl-finfo-btn-zoom-all:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
     content: '\e90e';
 }
 
 .tc-icon-btn.tc-ctl-finfo-btn-del-all:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
     content: var(--icon-delete);
 }
 

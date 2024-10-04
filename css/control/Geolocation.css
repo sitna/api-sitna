@@ -162,6 +162,7 @@
     .tc-ctl-geolocation .tc-button.tc-icon-button.tc-btn-delete-all:before {
         margin-right: 0.5em;
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-delete);
     }
 
@@ -225,16 +226,19 @@
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button#elevation:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-profile);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-delete:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-delete);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-edit:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: '\e92a';
     }
 
@@ -245,16 +249,19 @@
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-cancel:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-close);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-export:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-download);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li button.tc-btn-share:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-share);
     }
 
@@ -277,6 +284,7 @@ input#tc-ctl-geolocation-track-available-srch {
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-search-icon:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-search);
     }
 
@@ -292,6 +300,7 @@ input#tc-ctl-geolocation-track-available-srch {
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-add-wpt:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) / 2);
     content: var(--icon-placemark);
 }
 

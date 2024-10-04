@@ -15,6 +15,7 @@
 
 .tc-ctl-xwms-cnt > button:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) / 2);
     content: '\e904';
     margin-right: 0.5em;
 }

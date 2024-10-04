@@ -88,13 +88,13 @@
 
     .tc-ctl-dmm .tc-ctl-dmm-cmd button:after {
         position: absolute;
-        font-size: 1em;
         height: 100%;
         width: 100%;
         text-align: center;
         text-indent: 0;
         line-height: 2em;
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         left: 0;
         top: 0;
     }

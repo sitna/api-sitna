@@ -138,6 +138,7 @@ div.tc-ctl-coords-main {
 
     .tc-ctl-coords button.tc-ctl-coords-crs:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-edit);
         transform: scaleX(-1);
         margin-right: 0.3em;

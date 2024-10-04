@@ -15,6 +15,7 @@
     margin-bottom: 0.3em;
     flex-wrap: nowrap;
     justify-content: flex-start;
+    align-items:center;
 }
 
 .tc-ctl-legend-img {
@@ -79,4 +80,7 @@ div.tc-ctl-legend-tree li.tc-ctl-legend-empty {
     }
 .tc-ctl-legend li.tc-ctl-legend-node li.tc-ctl-legend-node li.tc-ctl-legend-node{
     font-size: calc(max(0.85em, 0.75rem));
+}
+.tc-ctl-legend span.tc-ctl-legend-txt{
+    font-size:0.75rem;
 }

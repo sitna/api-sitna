@@ -31,7 +31,7 @@ sitna-measurement .tc-ctl-msmt-val-crs {
 }
 
 sitna-measurement .tc-ctl-msmt-box sitna-toggle {
-    font-size: 1em;
+    font-size: calc(var(--icon-font-grid-size) / 2);
     margin-right: 0;
 }
 

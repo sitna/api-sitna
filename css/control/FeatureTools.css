@@ -52,26 +52,31 @@
 
     .tc-ctl-ftools button.tc-ctl-ftools-share-btn:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) * 0.75);
         content: var(--icon-share);
     }
 
     .tc-ctl-ftools button.tc-ctl-ftools-zoom-btn:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) * 0.75);
         content: var(--icon-extent);
     }
 
     .tc-ctl-ftools button.tc-ctl-ftools-elev-btn:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) * 0.75);
         content: var(--icon-elevation);
     }
 
     .tc-ctl-ftools button.tc-ctl-ftools-prof-btn:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) * 0.75);
         content: var(--icon-profile);
     }
 
     .tc-ctl-ftools button.tc-ctl-ftools-del-btn:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) * 0.75);
         content: var(--icon-delete);
     }
 

@@ -13,15 +13,21 @@
             border: none;
             background: none;
             color: var(--sec-btn-color);
-            font-size: 1.4em;
+            font-size: 24px;
         }
 
             .tc-ctl-bms h2 button.tc-icon-btn:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
                 font-family: var(--icon-font-family);
+                font-size: 0.75em;
                 content: '\e914';
-                width: 1.2em;
-                height: 1.2em;
+                width: 1.5em;
+                height: 1.5em;
             }
+
+.tc-modal.tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
+    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+    line-height: 1.5em;
+}
 
             .tc-ctl-bms h2 button.tc-icon-btn.tc-details:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view.tc-details:before {
                 content: '\e914';
@@ -229,10 +235,10 @@
 
 .tc-ctl-bms-more-node:after {
     font-family: var(--icon-font-family);
-    content: '\e905';
+    content: '\e904';
     position: absolute;
     color: #666666;
-    font-size: 3em;
+    font-size: calc(var(--icon-font-grid-size) * 1.5);
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
@@ -322,7 +328,7 @@ ul.tc-ctl-bms-branch input[type=radio] {
         top: 0;
         border: none;
         background: none;
-        font-size: 12px;
+        font-size: 16px;
         padding: 0;
     }
 }

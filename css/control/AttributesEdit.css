@@ -20,6 +20,10 @@
         min-width: 4em;
     }
 
+.tc-ctl-edit .tc-ctl-attr-edit-body table sitna-toggle {
+    font-size: 0.9em;
+}
+
 .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex {
     padding-left: 1em;
 }

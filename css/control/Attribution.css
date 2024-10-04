@@ -45,7 +45,7 @@
 }
 
 .tc-ctl-attrib .tc-github:before {
-    font-family: FontAwesome;
-    content: "\f09b";
-    font-size: 1em
+    font-family: var(--icon-font-family);
+    content: "\e92e";
+    font-size: calc(var(--icon-font-grid-size) / 2);
 }

@@ -125,6 +125,10 @@
     user-select: text;
 }
 
+    .tc-ctl-popup .tc-ctl-popup-content h4:has(+ table:only-of-type) {
+        max-width: 20vw;
+    }
+
 .ol-overlaycontainer-stopevent .tc-ctl-popup {
     bottom: 10px;
 }

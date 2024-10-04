@@ -157,19 +157,14 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     display: block;
     float: right;
     width: 1em;
-    height: 1em;
+    height: 1.5em;
     margin: 0em;
     cursor: pointer;
-    font-size: 1.6em;
+    font-size: 1.5em;
 }
 
     .tc-ctl-lcat .tc-ctl-lcat-info-close:hover {
         color: #000;
-    }
-
-    .tc-ctl-lcat .tc-ctl-lcat-info-close:after {
-        font-family: var(--icon-font-family);
-        content: var(--icon-close);
     }
 
 .tc-ctl-lcat .tc-ctl-lcat-info h3 {
@@ -179,11 +174,11 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
 
     .tc-ctl-lcat .tc-ctl-lcat-info h3:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-info);
         font-weight: normal;
         color: #600;
         margin-right: 0.3em;
-        font-size: 0.9em;
     }
 
 .tc-ctl-lcat-info h4 {
@@ -299,7 +294,7 @@ div.tc-ctl-lcat-legend {
         border: none;
         background: none;
         color: var(--sec-btn-color);
-        font-size: 1.4em;
+        font-size: var(--icon-font-grid-size);
     }
 
 .tc-ctl-lcat-node .tc-incompatible:before {
@@ -319,6 +314,7 @@ div.tc-ctl-lcat-legend {
 
 .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree:before {
     font-family: var(--icon-font-family);
+    font-size: 1em;
     content: '\e91c';
 }
 
@@ -454,7 +450,7 @@ div.tc-ctl-lcat-legend {
 
     .tc-ctl-lcat-tree ul input[type="checkbox"].tc-ctl-lcat-btn-info:before,
     .tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info:before {
-        font-size: 0.8em;
+        font-size: 0.75em;
         font-family: var(--icon-font-family);
         content: var(--icon-info);
     }
@@ -549,7 +545,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         top: -2px;
         border: none;
         background: none;
-        font-size: 14px;
+        font-size: 12px;
         outline: none;
         padding: 0;
     }
@@ -558,9 +554,9 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         display: block;
         float: right;
         width: 1em;
-        height: 1em;
+        height: 1.5em;
         cursor: pointer;
-        font-size: 1.2em;
+        font-size: 1.25em;
         margin-top: 0.2 em;
     }
 

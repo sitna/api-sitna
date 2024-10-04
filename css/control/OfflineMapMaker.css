@@ -118,42 +118,12 @@
     animation: pulsation 2s infinite;
 }
 
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-toggle {
-    font-size: 1.5em;
+.tc-ctl-omm .tc-ctl-omm-list li sitna-toggle {
+    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
 }
 
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-icon-btn:before {
-    font-family: Mapskin;
-}
-
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-edit:before {
-    font-family: var(--icon-font-family);
-    content: var(--icon-edit);
-}
-
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-view:before {
-    font-family: var(--icon-font-family);
-    content: var(--icon-extent);
-}
-
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-delete:before {
-    font-family: var(--icon-font-family);
-    content: var(--icon-delete);
-}
-
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
-    font-family: var(--icon-font-family);
-    content: var(--icon-close);
-}
-
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-save:before {
-    font-family: initial;
-    content: "\2714";
-}
-
-.tc-ctl-omm .tc-ctl-omm-list li button.tc-btn-cancel:before {
-    font-family: var(--icon-font-family);
-    content: var(--icon-close);
+.tc-ctl-omm .tc-ctl-omm-list li sitna-button {
+    font-size: calc(var(--icon-font-grid-size) * 0.75);
 }
 
 .tc-ctl-omm .tc-ctl-omm-btn-new, .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl {

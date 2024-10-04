@@ -5,26 +5,27 @@
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-modify:before {
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
     content: var(--icon-select);
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-point:before {
     letter-spacing: 0.2em;
-    font-size: 1.2em;
+    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
     font-family: var(--icon-font-family);
     content: '\e90a';
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-line:before {
     letter-spacing: 0.2em;
-    font-size: 1.2em;
+    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
     font-family: var(--icon-font-family);
     content: '\e90b';
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-polygon:before {
     letter-spacing: 0.2em;
-    font-size: 1.2em;
+    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
     font-family: var(--icon-font-family);
     content: '\e90c';
 }
@@ -147,6 +148,7 @@
 
     .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-import:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: '\e901';
     }
 
@@ -158,6 +160,7 @@
 
     .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-dl:before {
         font-family: var(--icon-font-family);
+        font-size: calc(var(--icon-font-grid-size) / 2);
         content: var(--icon-download);
     }
 
@@ -245,7 +248,7 @@
 
         .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] + label:before {
             font-family: var(--icon-font-family);
-            font-size: 1.2em;
+            font-size: calc(var(--icon-font-grid-size) / 2);
             margin-left: 0.5em;
             display: inline-block;
             font-weight: normal;

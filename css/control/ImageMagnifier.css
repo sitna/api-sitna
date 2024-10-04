@@ -55,5 +55,7 @@
     .tc-ctl.tc-ctl-img-magnifier.tc-ctl-img-magnifier-left:before {        
         right: 12px;
     }
-    
- 
+
+img.tc-ctl-img-magnified:not(.tc-legend-not-available) {
+    cursor: pointer
+}

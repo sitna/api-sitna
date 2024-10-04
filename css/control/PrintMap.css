@@ -44,10 +44,12 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
 }
 
 .tc-ctl-prnmap-printing .tc-ctl-prnmap-tools {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.25em;
     position: fixed;
     top: 0;
     right: 0.5em;
-    width: 2em;
     height: 1em;
     text-align: right;
     padding-right: 0.1em;
@@ -133,16 +135,21 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
         z-index: 100000;
     }
 
-.tc-ctl-prnmap-btn-pdf {
-    position: absolute;
+.tc-ctl-prnmap-btn-pdf {    
     width: 1em;
 }
 
-    .tc-ctl-prnmap-btn-pdf:before {
-        font-family: var(--icon-font-family);
-        content: var(--icon-print);
-        font-size: 0.9em;
-    }
+.tc-ctl-prnmap-btn-pdf:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-print);
+    font-size: 0.9em;
+}
+
+.tc-ctl-prnmap-btn-share:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-share);
+    font-size: 0.9em
+}
 
 .tc-ctl-prnmap-btn:before {
     color: #fff;
@@ -150,6 +157,11 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     font-family: var(--icon-font-family);
     content: var(--icon-print);
     margin-right: 0.5em;
+}
+
+.tc-ctl-prnmap-btn-share.tc-loading,
+.tc-ctl-prnmap-btn-pdf.tc-loading {
+    animation: pulse-animation 1s infinite;
 }
 
 

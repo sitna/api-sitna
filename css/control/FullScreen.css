@@ -49,12 +49,12 @@ body:fullscreen {
         height: 100%;
     }
 
-/*.tc-ctl-fscreenToHeader {
+/*.tc-ctl-fscreen-to-header {
     display: none !important;
     height: 0 !important;
 }*/
 
-.tc-ctl-fscreenToMap {
+.tc-ctl-fscreen-to-map {
     top: 0 !important;
     height: 100% !important;
 }

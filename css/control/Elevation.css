@@ -20,11 +20,13 @@
 .tc-ctl-elev-pair-elev-orig th:before {
     margin-right: 0.5em;
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) / 2);
     content: var(--icon-elevation);
 }
 
 .tc-ctl-elev-pair-height th:before {
     margin-right: 0.5em;
     font-family: var(--icon-font-family);
+    font-size: calc(var(--icon-font-grid-size) / 2);
     content: '\e919';
 }
