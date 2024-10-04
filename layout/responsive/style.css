@@ -848,6 +848,12 @@ div.tc-ctl-download .tc-ctl-download-btn:before {
     content: "\f019";
 }
 
+
+div.tc-ctl-download .tc-ctl-clipboard-btn:before {
+    font-family: 'FontAwesome';
+    content: "\f0ea";
+}
+
 .tc-ctl-dmm-tool {
     position: relative;
 }
@@ -2436,8 +2442,12 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         position: absolute;
     }
 
-    .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-info, .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-table, .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-chart {
+    .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-table, .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-chart {
         max-height: 45vh;
+    }
+
+    .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-info {
+        max-height: 85vh;
     }
 
     .tc-ctl-rpanel .tc-ctl-rpanel-info .tc-ctl-mod-attr {
