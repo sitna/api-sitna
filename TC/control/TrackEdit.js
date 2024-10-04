@@ -112,44 +112,47 @@ class TrackEdit extends FileEdit {
                                 }
                             });
 
-                        lineCtl
-                            .on(Consts.event.POINT + ' ' + Consts.event.DRAWUNDO + ' ' + Consts.event.DRAWREDO, async function (_e) {
-                                if (lineCtl.layer === ctl.trackLayer) {
-                                    // Añadimos al dibujo las Z que faltan
-                                    const sketch = lineCtl.wrap.getSketch();
-                                    let changed = false;
-                                    const elevationTool = await self.map.getElevationTool();
-                                    for (const point of Geometry.iterateCoordinates(sketch.geometry)) {
-                                        if (!point[2]) {
-                                            const newCoords = await elevationTool.getElevation({
-                                                coordinates: [point]
-                                            });
-                                            if (newCoords?.length) {
-                                                changed = true;
-                                                point[2] = newCoords[0][2];
-                                            }
+                        const onDraw = async function (_e) {
+                            if (lineCtl.layer === ctl.trackLayer) {
+                                // Añadimos al dibujo las Z que faltan
+                                const sketch = lineCtl.getSketch().clone();
+                                let changed = false;
+                                const elevationTool = await self.map.getElevationTool();
+                                for (const point of Geometry.iterateCoordinates(sketch.geometry)) {
+                                    const z = point[2];
+                                    if (z === null || z === undefined) {
+                                        const newCoords = await elevationTool.getElevation({
+                                            coordinates: [point]
+                                        });
+                                        if (newCoords?.length) {
+                                            changed = true;
+                                            point[2] = newCoords[0][2];
                                         }
                                     }
-                                    if (changed) {
-                                        sketch.setCoordinates(sketch.geometry);
-                                    }
-                                    if (isSeparateLine(lineCtl)) {
-                                        // No es un dibujo válido porque no continua línea, luego no dibujamos perfil
-                                        return
-                                    }
-                                    ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
-                                        forceRefresh: true,
-                                        feature: sketch
-                                    });
                                 }
-                            })
-                            .on(Consts.event.DRAWCANCEL, function (_e) {
-                                if (lineCtl.layer === ctl.trackLayer) {
-                                    ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
-                                        forceRefresh: true
-                                    });
+                                if (changed) {
+                                    sketch.setCoordinates(sketch.geometry);
                                 }
-                            });
+                                if (isSeparateLine(lineCtl)) {
+                                    // No es un dibujo válido porque no continua línea, luego no dibujamos perfil
+                                    return
+                                }
+                                ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
+                                    forceRefresh: true,
+                                    feature: sketch
+                                });
+                            }
+                        };
+                        lineCtl.addEventListener(Consts.event.POINT, onDraw);
+                        lineCtl.addEventListener(Consts.event.DRAWUNDO, onDraw);
+                        lineCtl.addEventListener(Consts.event.DRAWREDO, onDraw);
+                        lineCtl.addEventListener(Consts.event.DRAWCANCEL, function (_e) {
+                            if (lineCtl.layer === ctl.trackLayer) {
+                                ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
+                                    forceRefresh: true
+                                });
+                            }
+                        });
                     });
                 });
 
@@ -212,7 +215,7 @@ class TrackEdit extends FileEdit {
                 // Añadimos código para impedir segmentos separados en la ruta
                 editCtlPromise.then(editCtl => {
                     editCtl.getLineDrawControl().then(lineDrawCtl => {
-                        lineDrawCtl.on(Consts.event.DRAWSTART, function (_e) {
+                        lineDrawCtl.addEventListener(Consts.event.DRAWSTART, function (_e) {
                             if (isSeparateLine(lineDrawCtl)) {
                                 // Cancelamos dibujo y avisamos
                                 lineDrawCtl.new();
@@ -264,5 +267,5 @@ class TrackEdit extends FileEdit {
 
 TrackEdit.prototype.CLASS = 'tc-ctl-tedit';
 customElements.get(elementName) || customElements.define(elementName, TrackEdit);
-TC.control.FileEdit = FileEdit;
+TC.control.TrackEdit = TrackEdit;
 export default TrackEdit;
