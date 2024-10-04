@@ -63,7 +63,7 @@ class Legend extends MapContents {
 
             if (layer && !layer.customLegend) {
                 let layersInScale = false;
-                const lis = li.querySelectorAll('li > li');
+                const lis = li.querySelectorAll('li.' + self.CLASS + '-leaf');
                 lis.forEach(function (l) {
                     if (l.classList.contains(self.CLASS + '-node-visible') && l.querySelectorAll("img").length) {
                         const uid = l.dataset.layerUid;
@@ -144,7 +144,9 @@ class Legend extends MapContents {
     async updateLayerTree(layer) {
         const self = this;
 
-        if (!layer.isBase && !layer.options.stealth) {
+        if (!layer.isBase &&
+            !layer.options.stealth &&
+            layer.availableNames?.some((name) => layer.getInfo(name).legend.length)) {
 
             //// 09/04/2019 GLS: ignoramos el atributo que venga en la capa porque en la leyenda queremos que el árbol se muestre siempre y 
             //// nos ahorramos el tener que pasarlo en el estado del mapa
@@ -156,13 +158,19 @@ class Legend extends MapContents {
                 layer.hideTree = layer.options.hideTree = false;*/
             }                  
             self.div.querySelector('.' + self.CLASS + '-empty').classList.add(Consts.classes.HIDDEN);            
-            //var params;
-            const layerLegend = document.createElement('sitna-layer-legend');
-            layerLegend.dataset.layerId = layer.id;
-            layerLegend.dataset.layerUid = layer.getTree().uid;
-            layerLoaded.push(layer.id);
-            var params = layer.type === Consts.layerType.WMS?
-                { customLegend: layerLegend.outerHTML } :
+            //si ya se ha renderiazado en control lagerlegend no es necesario renderiazarlo de nuevo, se depulicaría leyenda
+            if (layerLoaded.includes(layer.id)) return;
+            let layerLegend;
+            layerLegend = self.div.querySelector('sitna-layer-legend#stl-' + layer.id);
+            if (!layerLegend) {
+                layerLegend = document.createElement('sitna-layer-legend');
+                layerLegend.id = "stl-" + layer.id;
+                layerLegend.dataset.layerId = layer.id;
+                layerLegend.containerControl = self;
+                layerLoaded.push(layer.id);
+            }
+            var params = layer.type === Consts.layerType.WMS ?
+                { customLegend: layerLegend.innerHTML } :
                 (layer.getNestedTree ? layer.getNestedTree() : layer.getTree());
             if (layer._title && layer._title !== layer.title) {
                 params = Object.assign(params, { "title": layer._title });
@@ -170,33 +178,35 @@ class Legend extends MapContents {
             
             try {
                 const html = await self.getRenderedHtml(self.CLASS + '-node', params);
-                const parser = new DOMParser();
-                const newLi = parser.parseFromString(html, 'text/html').body.firstChild;
-                const uid = newLi.dataset.layerUid;
+                layerLegend.innerHTML = html;//parser.parseFromString(out, 'text/html').body.firstChild;
+                const uid = layerLegend.dataset.layerUid;
                 const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
-                const lis = ul.querySelectorAll('*[data-layer-uid="' + uid + '"]');
+                const lis = ul.querySelectorAll('li[data-layer-uid="' + uid + '"]');
                 if (lis.length === 1) {
                     const li = lis[0];
-                    if (li.innerHTML !== newLi.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
-                        li.innerHTML = newLi.innerHTML;
-                        li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
+                    if (li.innerHTML !== layerLegend.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
+                        li.innerHTML = layerLegend.innerHTML;
+                        li.setAttribute('class', layerLegend.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                     }
 
-                }
-                else {
-                    newLi.dataset.layerId = layer.id;
-                    const loadOrder = self.map.workLayers.filter((wl) => layerLoaded.includes(wl.id)).map((wl => wl.id)).reverse()
-                    const getReferenceElement = (index) => {
-                        if (index === 0) return ul.firstChild;
-                        if (loadOrder.length - 1 === index) return ul.lastElementChild;
-                        const layerId = loadOrder[index + 1];
-                        const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
-                        return referenceElement || getReferenceElement(++index);
+                    }
+                    else {
+                        layerLegend.dataset.layerId = layer.id;
+                        const loadOrder = self.map.workLayers.filter((wl) => layerLoaded.includes(wl.id)).map((wl => wl.id)).reverse()
+                        const getReferenceElement = (index) => {
+                            if (index === 0) return ul.firstChild;
+                            if (loadOrder.length - 1 === index) return ul.lastElementChild;
+                            const layerId = loadOrder[index+1];
+                            const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
+                            return referenceElement || getReferenceElement(++index);
 
                     };
-                    ul.insertBefore(newLi, getReferenceElement(loadOrder.indexOf(layer.id)));
-                }
-                self.update();
+                    ul.insertBefore(layerLegend, getReferenceElement(loadOrder.indexOf(layer.id)));
+                    layerLegend.addEventListener('update', (e) => {                        
+                        self.map?.magnifier?.addNode(e.srcElement.querySelectorAll(".tc-ctl-legend-watch img"), 4);
+                        self.update();
+                    });
+                }                
             }
             catch (err) {
                 TC.error(err);
@@ -209,6 +219,7 @@ class Legend extends MapContents {
         const self = this;
         if (!layer.isBase) {
             super.removeLayer.call(self, layer);
+            layerLoaded.splice(layerLoaded.indexOf(layer.id),1);
         }
         return self;
     }
