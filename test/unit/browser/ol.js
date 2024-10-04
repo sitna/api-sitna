@@ -26,12 +26,12 @@ describe('Tests de ol.js', function () {
         var gml2 = new ol.format.GML2();
         var text = 'texto demo';
         var shouldReturnEmptyFeature = function (format) {
-            var node = document.createElement('nodo');
+            var node = document.createElement('NODO');
             return format.readFeatureElement(node, [{}]);
         };
         var shouldReturnProperty = function (format) {
-            var nodeName = 'nodo';
-            var parent = document.createElement('nodo');
+            var nodeName = 'NODO';
+            var parent = document.createElement('NODO');
             var child = document.createElement(nodeName);
             var textNode = document.createTextNode(text);
             child.appendChild(textNode);
@@ -176,8 +176,8 @@ describe('Tests de ol.js', function () {
             fileName: 'prueba',
             format: 'GML'
         };
-        it('debe poder generar GML', function () {
-            chai.expect(TC.wrap.Map.prototype.exportFeatures.call(self, [feature], options)).to.be.a('string');
+        it('debe poder generar GML', async function () {
+            chai.expect(await TC.wrap.Map.prototype.exportFeatures.call(self, [feature], options)).to.be.a('string');
         });
     });
 

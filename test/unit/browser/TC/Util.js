@@ -73,4 +73,59 @@
             expect(TC.Util.addURLParameters(`${absoluteFolderUrl}?${parameterName}=${parameterValue}`, parameter)).to.equal(`${absoluteFolderUrl}?${parameterName}=${parameterValue}`);
         });
     });
+
+    describe('getPromiseFromEvent', function () {
+        it('se resuelve sin predicados', async function () {
+            const img = new Image();
+            const promise = TC.Util.getPromiseFromEvent(img, 'load');
+            img.src = TC.Consts.BLANK_IMAGE;
+            const e = await promise;
+            expect(e).to.be.instanceof(Event);
+        });
+        it('se resuelve cuando se cumple el predicado de resolución', async function () {
+            const img = new Image();
+            const promise = TC.Util.getPromiseFromEvent(img, 'load', {
+                resolvePredicate: () => true
+            });
+            img.src = TC.Consts.BLANK_IMAGE;
+            const e = await promise;
+            expect(e).to.be.instanceof(Event);
+        });
+        it('se rechaza cuando se cumple el predicado de rechazo', async function () {
+            const img = new Image();
+            const promise = TC.Util.getPromiseFromEvent(img, 'load', {
+                rejectPredicate: () => true
+            });
+            img.src = TC.Consts.BLANK_IMAGE;
+            try {
+                await promise;
+            }
+            catch (e) {
+                expect(e).to.be.instanceof(Event);
+            }
+        });
+        it('se rechaza cuando se cumplen ambos predicados', async function () {
+            const img = new Image();
+            const promise = TC.Util.getPromiseFromEvent(img, 'load', {
+                resolvePredicate: () => true,
+                rejectPredicate: () => true
+            });
+            img.src = TC.Consts.BLANK_IMAGE;
+            try {
+                await promise;
+            }
+            catch (e) {
+                expect(e).to.be.instanceof(Event);
+            }
+        });
+        it('se resuelve cuando se cumple el predicado de resolución previa', async function () {
+            const img = new Image();
+            const promise = TC.Util.getPromiseFromEvent(img, 'load', {
+                resolvedPredicate: () => true
+            });
+            img.src = TC.Consts.BLANK_IMAGE;
+            const e = await promise;
+            expect(e).to.be.undefined;
+        });
+    });
 });
