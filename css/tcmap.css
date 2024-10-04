@@ -209,6 +209,7 @@
     --icon-extent: '\e917';
     --icon-filter: '\e931';
     --icon-print: '\e91b';
+    --icon-placemark: '\e932';
 }
 
 .tc-map :-ms-input-placeholder, .tc-ctl :-ms-input-placeholder, .tc-modal :-ms-input-placeholder { /* Edge */
