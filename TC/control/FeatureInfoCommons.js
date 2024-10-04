@@ -86,12 +86,14 @@ class FeatureInfoCommons extends Click {
         const clickRegisterPromise = super.register.call(self, map);
         self.#createLayers();
 
+        await self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || Consts.infoContainer.POPUP);
+
         map.loaded(function () {
             const shareCtl = map.getControlsByClass('TC.control.Share')[0];
             if (shareCtl) {
                 self.loadSharedFeature(shareCtl.loadParamFeature());
             }
-            self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || Consts.infoContainer.POPUP);
+            //self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || Consts.infoContainer.POPUP);
         });
 
         map
@@ -1091,7 +1093,8 @@ class FeatureInfoCommons extends Click {
     importState(state) {
         const self = this;
         self.#layersPromise.then(function () {
-            self.resultsLayer.importState(state.layer);
+            if (state.layer)
+                self.resultsLayer.importState(state.layer);
             if (state.query) {
                 self.importQuery(state.query);
             }
@@ -1281,12 +1284,30 @@ class FeatureInfoCommons extends Click {
         }
     }
 
-    static async renderFeatureAttributeTable(options) {
+    static async renderFeatureAttributeTable(options = {}) {
         const self = this;
         if (!self.#staticMethodMock.template) {
             self.#staticMethodMock.template = await self.loadTemplates();
         }
-        return await self.prototype.getRenderedHtml.call(self.#staticMethodMock, cssClassName + '-attr', options);
+        const renderOptions = { ...options };
+        const filterAttributes = (attributes) => {
+            const result = {};
+            for (const key in attributes) {
+                const val = attributes[key];
+                if (val instanceof Feature) {
+                    continue;
+                }
+                if (val && Util.isPlainObject(val)) {
+                    result[key] = filterAttributes(val);
+                }
+                else {
+                    result[key] = val;
+                }
+            }
+            return result;
+        };
+        renderOptions.attributes = filterAttributes(options.attributes);
+        return await self.prototype.getRenderedHtml.call(self.#staticMethodMock, cssClassName + '-attr', renderOptions);
     }
 
     static async renderFeatureAttribute(options) {
