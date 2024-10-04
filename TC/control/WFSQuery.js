@@ -117,6 +117,8 @@ const loadingCssClass = Consts.classes.LOADING;
 const hiddenCssClass = Consts.classes.HIDDEN;
 const spatialCssClass = 'tc-spatial';
 
+const CONTENT = '#text';
+
 var modalBody = null;
 var timer = null;
 var timerAutocomplete = null;
@@ -171,11 +173,11 @@ const filterByOperation = {
     },
     starts: {
         Ctor: filter.like,
-        key: 'query.startsBy'
+        key: 'query.startsWith'
     },
     ends: {
         Ctor: filter.like,
-        key: 'query.endsBy'
+        key: 'query.endsWith'
     },
     btw: {
         Ctor: filter.between,
@@ -209,39 +211,23 @@ const checkInputType = function (type) {
 };
 
 
-const _loadDatePolyFill = function () {
-    return new Promise(function (resolve, _reject) {
-        if (typeof IMask !== "undefined") {
-            setTimeout(function () {
-                resolve();
-            }, 10);
-        }
-        else {
-            TC.loadJS(true,
-                [TC.apiLocation + '/lib/polyfill/imask'],
-                function () {
-                    console.log("Imask loaded");
-                    resolve();
-                });
-        }
-    });
+const _loadDatePolyFill = async function () {
+    if (typeof IMask !== "undefined") {
+        await Util.getTimedPromise(null, 10);
+    }
+    else {
+        await TC.loadJS(true, [TC.apiLocation + '/lib/polyfill/imask']);
+        console.log("Imask loaded");
+    }
 };
-const _loadNumberPolyFill = function () {
-    return new Promise(function (resolve, _reject) {
-        if (typeof IMask !== "undefined") {
-            setTimeout(function () {
-                resolve();
-            }, 10);
-        }
-        else {
-            TC.loadJS(true,
-                [TC.apiLocation + '/lib/polyfill/imask'],
-                function () {
-                    console.log("Imask loaded");
-                    resolve();
-                });
-        }
-    });
+const _loadNumberPolyFill = async function () {
+    if (typeof IMask !== "undefined") {
+        await Util.getTimedPromise(null, 10);
+    }
+    else {
+        await TC.loadJS(true, [TC.apiLocation + '/lib/polyfill/imask']);
+        console.log("Imask loaded");
+    }
 };
 
 let dateInputMask = null;
@@ -374,8 +360,10 @@ var _manageComplexTypes = function (type, form) {
     var html = '';
     html += '<option value="">' + getLocaleString('query.chooseAttrCombo') + '</option>';
     for (var key in type) {
-        if (!type[key].type || Util.isGeometry(type[key].type)) continue;
-        html += '<option value="' + (type[key].name || key) + '">' + key + '</option>';
+        const prop = type[key];
+        if (!prop.type) continue;
+        html += '<option value="' + (prop.name || key) + '"' + (Util.isGeometry(prop.type) ? ` class="tc-ctl-wfsquery-opt-geom"` : '') + '>' +
+            (key === CONTENT ? '[' + getLocaleString('content') + ']' : key) + '</option>';
     }
     var container = document.createElement("div");
     container.insertAdjacentHTML('beforeend', '<select class="' + this.className + '" name="' + this.name + '">' + html + '</select>');
@@ -410,16 +398,18 @@ const _changeAttributeEvent = function (form, data) {
     textSection.classList.add(hiddenCssClass);
     geomSection.classList.add(hiddenCssClass);
     whereSection.classList.add(hiddenCssClass);
-    if (!data[this.selectedOptions[0].value.substring(this.selectedOptions[0].value.indexOf(":") + 1)]) {
+    if (!data[this.selectedOptions[0].value]) {
         opSection.classList.add(hiddenCssClass);
         return;
     }
-    type = data[this.selectedOptions[0].value.substring(this.selectedOptions[0].value.indexOf(":") + 1)].type;
+    type = data[this.selectedOptions[0].value].type;
     opSection.classList.remove(hiddenCssClass);
     TC.UI.autocomplete.call(valueField, "destroy");
     //$(valueField).unbind("keydown");
     destroyNumberMask();
     valueField.type = "search";
+    valueField.removeAttribute('step');
+    valueField.removeAttribute('inputmode');
     switch (true) {
         case !type:
             console.log("type es nulo");
@@ -469,10 +459,14 @@ const _changeAttributeEvent = function (form, data) {
                 }
                 else {
                     valueField.type = "number";
-                    if (type.indexOf("int") >= 0 || type.indexOf("long") >= 0)
-                        valueField.step = "1";
-                    else
-                        valueField.step = "0.0001";
+                    if (type.indexOf("int") >= 0 || type.indexOf("long") >= 0) {
+                        valueField.step = 1;
+                        valueField.setAttribute('inputmode', 'numeric');
+                    }
+                    else {
+                        valueField.step = 'any';
+                        valueField.setAttribute('inputmode', 'decimal');
+                    }
                 }
             }
             break;
@@ -487,7 +481,8 @@ const _changeAttributeEvent = function (form, data) {
             }
             _createDateMask(valueField);
             break;
-        case type.indexOf("string") >= 0: {
+        case type.indexOf("string") >= 0:
+        case type === 'gml:ID': {
             textSection.classList.remove(hiddenCssClass);
             whereSection.classList.remove(hiddenCssClass, spatialCssClass);
 
@@ -626,9 +621,9 @@ const _onBeforeApplyQuery = function (e) {
     }
 };
 
-const createFilterCondition = function (valueField, field, operation, type) {
-    let value = _getValue(valueField);
-    let valueToShow = _getValueToShow(valueField);
+const createFilterCondition = function (fieldValue, field, operation, type) {
+    let value = _getValue(fieldValue);
+    let valueToShow = _getValueToShow(fieldValue);
     switch (true) {
         case type.indexOf("int") >= 0:
             valueToShow = parseInt(value, 10);
@@ -989,8 +984,8 @@ class WFSQuery extends Control {
                             button.remove();
                             button = null;
                         }
-                        const layer = map.getLayer(layerId);
-                        if (layer.type === Consts.layerType.WMS || layer.type === Consts.layerType.WFS) {
+                        const layer = map.getLayer(layerId); 
+                        if (layer?.type === Consts.layerType.WMS || layer?.type === Consts.layerType.WFS) {
                             const text = self.getLocaleString('query.tooltipMagnifBtn');
                             button = new Button();
                             button.variant = Button.variant.MINIMAL;
@@ -1035,6 +1030,8 @@ class WFSQuery extends Control {
                             _cache.current.name = "";
                             _cache.current.filter = [];
                             self.modalDialog = null;
+                            //self.resultsPanel?.close();
+                            //self.drawControl?.layer.clearFeatures();
                         }
                         else if (_cache.current?.layer === layer && !_cache.current.filter.length) {
                             _cache.current.name = "";
@@ -1116,11 +1113,11 @@ class WFSQuery extends Control {
         const self = this;
         var option = form.querySelector('.tc-ctl-wfsquery input[type="radio"]:checked');
 
-        if (dateInputMask && !dateInputMask.masked.isComplete) {
-            if (/^(?=\d)(?:(?:31(?!.(?:0?[2469]|11))|(?:30|29)(?!.0?2)|29(?=.0?2.(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(?:\x20|$))|(?:2[0-8]|1\d|0?[1-9]))([-.\/])(?:1[012]|0?[1-9])\1(?:1[6-9]|[2-9]\d)?\d\d(?:(?=\x20\d)\x20|$))?(((0?[1-9]|1[012])(:[0-5]\d){0,2}(\x20[AP]M))|([01]\d|2[0-3])(:[0-5]\d){1,2})?$/.test(str) === false)
-                self.showMessage(getLocaleString("query.msgNoValidDate"));
-            return false;
-        }
+        //if (dateInputMask && !dateInputMask.masked.isComplete) {
+        //    if (/^(?=\d)(?:(?:31(?!.(?:0?[2469]|11))|(?:30|29)(?!.0?2)|29(?=.0?2.(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(?:\x20|$))|(?:2[0-8]|1\d|0?[1-9]))([-.\/])(?:1[012]|0?[1-9])\1(?:1[6-9]|[2-9]\d)?\d\d(?:(?=\x20\d)\x20|$))?(((0?[1-9]|1[012])(:[0-5]\d){0,2}(\x20[AP]M))|([01]\d|2[0-3])(:[0-5]\d){1,2})?$/.test(str) === false)
+        //        self.showMessage(getLocaleString("query.msgNoValidDate"));
+        //    return false;
+        //}
         if (option.length === 0) {
             self.showMessage(getLocaleString("query.msgNoCondition"));
             return false;
@@ -1131,10 +1128,12 @@ class WFSQuery extends Control {
         }
         var number;
         if (form.querySelectorAll('input[type=\'number\']').length && (number = form.querySelector('input[type=\'number\']')) !== null && !number.checkValidity()) {
-            if (number.step === "1")
-                self.showMessage(getLocaleString("query.msgNoValidNumberMustInt"));
-            else
-                self.showMessage(getLocaleString("query.msgNoValidNumber"));
+            if (number.getAttribute('inputmode') === 'numeric') {
+                self.showMessage(getLocaleString('query.msgNoValidNumberMustInt'));
+            }
+            else {
+                self.showMessage(getLocaleString('query.msgNoValidNumber'));
+            }
             return false;
         }
         if (form.querySelector('input.tc-textbox').value.trim() === "" && (option.value !== "empty" && option.value !== "null")) {
@@ -1298,6 +1297,9 @@ class WFSQuery extends Control {
         if (_cache.current.layer && _cache.current.name && _cache.current.title && queryFilter) {
             var _url = await _cache.current.layer.getWFSURL();
             self.definitiveFilters = [queryFilter];
+            if (_cache.queried && _cache.queried.layer !== _cache.current.layer) {
+                _cache.queried.filter.reduce((i, c) => i.concat(c.geometry || []), []).forEach((geom) => self.drawControl?.layer.removeFeature(geom));
+            }
             _cache.queried = _cache.current;
             await self.#createResultPanel(_cache.current.title);
             _cache.current.layer.proxificationTool.cacheHost.getAction(_url).then(function (cacheHost) {
@@ -1423,8 +1425,8 @@ class WFSQuery extends Control {
         const self = this;
 
         if (state.queryResult) {
-            let wait = self.map.getLoadingIndicator().addWait();
-            self.map.loaded(function () {
+            this.map?.wait(async () => {
+                await self.map.loaded();
                 let sharedQueryToSearch = JSON.parse(state.queryResult);
                 if (sharedQueryToSearch.wms && sharedQueryToSearch.filter) {
                     let wmsLayer = self.map.workLayers.filter(l => l.url && l.url === sharedQueryToSearch.wms.url &&
@@ -1436,15 +1438,13 @@ class WFSQuery extends Control {
 
                         self.setQueryToSearch({ doZoom: sharedQueryToSearch.doZoom });
 
-                        _cache.current.layer.describeFeatureType(_cache.current.name).then(function (data) {
-                            self.#manageDescribeFeature(data, false);
-                            self.#sendQuery(sharedQueryToSearch.filter);
-                            // registramos el estado compartido por si se comparte de nuevo sin hacer uso del control
-                            self.setQueryToSearch({ filter: sharedQueryToSearch.filter, doZoom: sharedQueryToSearch.doZoom });
-                            _cache.current.filter = [filter.Filter.fromText(sharedQueryToSearch.filter)];
-                            _cache.queried = _cache.current = Object.assign({}, _cache.current, { filter: [..._cache.current.filter] });
-                            self.map.getLoadingIndicator().removeWait(wait);
-                        });
+                        const data = await _cache.current.layer.describeFeatureType(_cache.current.name);
+                        self.#manageDescribeFeature(data, false);
+                        self.#sendQuery(sharedQueryToSearch.filter);
+                        // registramos el estado compartido por si se comparte de nuevo sin hacer uso del control
+                        self.setQueryToSearch({ filter: sharedQueryToSearch.filter, doZoom: sharedQueryToSearch.doZoom });
+                        _cache.current.filter = [filter.Filter.fromText(sharedQueryToSearch.filter)];
+                        _cache.queried = _cache.current = Object.assign({}, _cache.current, { filter: [..._cache.current.filter] });
                     }
                 } else {
                     alert('shared query error');
@@ -1511,10 +1511,7 @@ class WFSQuery extends Control {
                                 }
                             }
                         }
-                        if (dataType && dataType instanceof Object) {
-                            console.log("aki lo que sea");
-                        }
-                        j++;
+                        j++;                                         
                     }
                 }
 
@@ -1608,92 +1605,98 @@ class WFSQuery extends Control {
 
     }
 
-    showGeometryPanel(mode, start = true) {
-        const self = this;
-        return new Promise(async function (resolve) {
-            Util.closeModal();
-            if (!self.geometryPanel) {
-                const ctlOptions = {
-                    titles: {
-                        main: self.getLocaleString('query.spatialFilter')
-                    }
-                };
-                const ctlContainer = self.map.getControlsByClass(ControlContainer)[0];
-                if (ctlContainer) {
-                    ctlOptions.position = ctlContainer.POSITION.RIGHT;
-                    self.geometryPanel = await ctlContainer.addControl('resultsPanel', ctlOptions);
-                }
-                else {
-                    self.geometryPanel = await self.map.addControl('resultsPanel', ctlOptions);
-                }
-                self.map
-                    .on(Consts.event.RESULTSPANELCLOSE, function onResultsPanelClose(e) {
-                        if (e.control === self.geometryPanel) {
-                            setTimeout(() => self.drawControl.cancel(), 500); // timeout para evitar una llamada indeseada a GFI.
-                            Util.showModal(self.modalDialog, {
-                                closeCallback: () => self.clearFilters()
-                            });
-                        }
-                    });
-                const html = await self.getRenderedHtml(self.CLASS + '-geom');
-                self.geometryPanel.open(html);
-                self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn-ok`).addEventListener(Consts.event.CLICK, function () {
-                    self.geometryPanel.close();
-                }, { passive: true });
-                if (!self.drawControl) {
-                    self.drawControl = await self.map.addControl('draw', {
-                        div: self.geometryPanel.getTableContainer().querySelector(`.${self.CLASS}-geom-draw`),
-                        styles: self.styles
-                    });
-                    resolve(self.drawControl.layer);
-                    self.drawControl.on(Consts.event.DRAWEND, function (e) {
-                        e.feature.showsPopup = false;
-                        self.geometryPanel.close();
+    #getFieldPath() {
+        return Array.from(this.getForm().querySelectorAll('.tc-combo'))
+            .map((elm) => elm.value)
+            .join('/');
+    }
 
-                        const op = self.modalDialog.querySelector(`input[name="${self.id}-condition"]:checked`).value;
-                        let spatialFilter;
-                        switch (op) {
-                            case 'intersects':
-                                spatialFilter = new filter.Intersects(null, e.feature, self.map.crs);
-                                break;
-                            default:
-                                spatialFilter = new filter.Within(null, e.feature, self.map.crs);
-                        }
-                        spatialFilter._abbr = op;
-                        switch (e.target.mode) {
-                            case 'polygon':
-                                spatialFilter._valueToShow = self.getLocaleString('polygon');
-                                break;
-                            case 'line':
-                            case 'polyline':
-                                spatialFilter._valueToShow = self.getLocaleString('line');
-                                break;
-                            case 'rectangle':
-                                spatialFilter._valueToShow = self.getLocaleString('box');
-                                break;
-                        }
-                        _cache.current.filter.push(spatialFilter);
-                        self.#renderFilterConditions();
+    async showGeometryPanel(mode, start = true) {
+        const self = this;
+        let result;
+        Util.closeModal();
+        if (!self.geometryPanel) {
+            const ctlOptions = {
+                titles: {
+                    main: self.getLocaleString('query.spatialFilter')
+                }
+            };
+            const ctlContainer = self.map.getControlsByClass(ControlContainer)[0];
+            if (ctlContainer) {
+                ctlOptions.position = ctlContainer.POSITION.RIGHT;
+                self.geometryPanel = await ctlContainer.addControl('resultsPanel', ctlOptions);
+            }
+            else {
+                self.geometryPanel = await self.map.addControl('resultsPanel', ctlOptions);
+            }
+            self.map
+                .on(Consts.event.RESULTSPANELCLOSE, function onResultsPanelClose(e) {
+                    if (e.control === self.geometryPanel) {
+                        setTimeout(() => self.drawControl.cancel(), 500); // timeout para evitar una llamada indeseada a GFI.
                         Util.showModal(self.modalDialog, {
                             closeCallback: () => self.clearFilters()
                         });
-                    });
-                    self.drawControl.on(Consts.event.DRAWCANCEL, function (e) {
-                        e.ctrl.deactivate();
-                    });
-                }
-            }
-            else {
-                self.geometryPanel.open();
-                resolve(self.drawControl.layer);
-            }
-            self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-draw`).classList.toggle(Consts.classes.HIDDEN, !mode);
-            self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn`).classList.toggle(Consts.classes.HIDDEN, !!mode);
-            if (mode) {
-                self.drawControl.setMode(mode, start);
-            }
-        });
+                    }
+                });
+            const html = await self.getRenderedHtml(self.CLASS + '-geom');
+            self.geometryPanel.open(html);
+            self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn-ok`).addEventListener(Consts.event.CLICK, function () {
+                self.geometryPanel.close();
+            }, { passive: true });
+            if (!self.drawControl) {
+                self.drawControl = await self.map.addControl('draw', {
+                    div: self.geometryPanel.getTableContainer().querySelector(`.${self.CLASS}-geom-draw`),
+                    styles: self.styles
+                });                
+                result = await self.drawControl.getLayer();
+                self.drawControl.on(Consts.event.DRAWEND, function (e) {
+                    e.feature.showsPopup = false;
+                    self.geometryPanel.close();
 
+                    const op = self.modalDialog.querySelector(`input[name="${self.id}-condition"]:checked`).value;
+                    const field = self.#getFieldPath();
+                    let spatialFilter;                    
+                    switch (op) {
+                        case 'intersects':
+                            spatialFilter = new filter.Intersects(field, e.feature, self.map.crs);
+                            break;
+                        default:
+                            spatialFilter = new filter.Within(field, e.feature, self.map.crs);
+                    }
+                    spatialFilter._abbr = op;
+                    switch (e.target.mode) {
+                        case 'polygon':
+                            spatialFilter._valueToShow = self.getLocaleString('polygon');
+                            break;
+                        case 'line':
+                        case 'polyline':
+                            spatialFilter._valueToShow = self.getLocaleString('line');
+                            break;
+                        case 'rectangle':
+                            spatialFilter._valueToShow = self.getLocaleString('box');
+                            break;
+                    }
+                    _cache.current.filter.push(spatialFilter);
+                    self.#renderFilterConditions();
+                    Util.showModal(self.modalDialog, {
+                        closeCallback: () => self.clearFilters()
+                    });
+                });
+                self.drawControl.on(Consts.event.DRAWCANCEL, function (e) {
+                    e.ctrl.deactivate();
+                });
+            }
+        }
+        else {
+            self.geometryPanel.open();
+            result = self.drawControl.layer;
+        }
+        self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-draw`).classList.toggle(Consts.classes.HIDDEN, !mode);
+        self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn`).classList.toggle(Consts.classes.HIDDEN, !!mode);
+        if (mode) {
+            self.drawControl.setMode(mode, start);
+        }
+        return result;
     }
 
     #manageDescribeFeature(data, renderForm) {
@@ -1766,9 +1769,9 @@ class WFSQuery extends Control {
                                 if (!self.#validate(form)) {
                                     return;
                                 }
-                                var field = [].reduce.call(form.querySelectorAll('.tc-combo'), function (vi, va) {
-                                    return vi + (vi ? "/" : "") + va.value;
-                                }, '');
+                                let field = self.#getFieldPath();
+                                const contentPathEnd = '/' + CONTENT;
+                                if (field.endsWith(contentPathEnd)) field = field.substring(0, field.indexOf(contentPathEnd));
                                 const checkedOp = form.querySelector('.tc-ctl-wfsquery input[type="radio"]:checked');
                                 var op = checkedOp.value;
 
@@ -1851,17 +1854,22 @@ class WFSQuery extends Control {
     async #chooseLeafLayer(layer, layerName, dialog) {
         const self = this;
         try {
-            const data = await layer.describeFeatureType(layerName)
+            const data = await layer.describeFeatureType(layerName);
             const form = await self.#manageDescribeFeature(data, true);
             return ({ attributes: data, form: form });
         }
         catch (err) {
             var tbody = dialog.getElementsByClassName("tc-modal-body")[0];
             tbody.classList.remove(loadingCssClass);
-            if (!err)
+            if (!err) {
                 tbody.insertAdjacentHTML('beforeend', "<div class=\"tc-ctl-wfsquery-message tc-msg-warning\">" + getLocaleString("query.LayerNotAvailable") + "</div>");
-            else
+            }
+            else if (err.data?.state === 'error') {
+                tbody.insertAdjacentHTML('beforeend', "<div class=\"tc-ctl-wfsquery-message tc-msg-error\">" + getLocaleString("query.errorUndefined") + "</div>");
+            }
+            else {
                 tbody.insertAdjacentHTML('beforeend', "<div class=\"tc-ctl-wfsquery-message tc-msg-error\">" + err + "</div>");
+            }
             throw err;
         }
     }
@@ -1889,7 +1897,7 @@ class WFSQuery extends Control {
                 self.clearFilters();
                 const data = await self.#chooseLeafLayer(state.layer, state.name, dialog);
                 const comboAttr = data.form.querySelector(".tc-combo[name='attributes']");
-                const geomName = Object.entries(data.attributes).find((d) => Util.isGeometry(d[1].type))[0];
+                const geomName = Object.entries(data.attributes).find((d) => Util.isGeometry(d[1].type))?.[0];
                 if (comboAttr) {
                     var index = Object.keys(data.attributes).filter((k) => k !== "FEATURE").indexOf(filters[0].propertyName || geomName);
                     comboAttr.options[index + 1].selected = true;
@@ -1904,7 +1912,7 @@ class WFSQuery extends Control {
                     const type = data.attributes[f.propertyName || geomName].type;
                     const valueField = await self.#makeInputField(f, _opAbbr, data, geomName);
                     if (!(f instanceof filter.Spatial)) {
-                        createFilterCondition(valueField, f.propertyName, _opAbbr, type);
+                        createFilterCondition(valueField, f.propertyName.substring(f.propertyName.indexOf(':') + 1), _opAbbr, type);
                     }
                 }
                 self.#renderFilterConditions();
@@ -2051,10 +2059,12 @@ class WFSQuery extends Control {
             case type.indexOf("long") >= 0:
             case type.indexOf("decimal") >= 0:
                 valueField.type = "number";
-                if (type.indexOf("int") >= 0 || type.indexOf("long") >= 0)
-                    valueField.step = "1";
-                else
-                    valueField.step = "0.0001";
+                if (type.indexOf("int") >= 0 || type.indexOf("long") >= 0) {
+                    valueField.step = 1;
+                }
+                else {
+                    valueField.step = 'any';
+                }
                 break;
             case type.indexOf("dateTime") >= 0:
             case type.indexOf("date") >= 0:
