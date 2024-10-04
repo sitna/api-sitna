@@ -404,14 +404,10 @@ class LayerCatalog extends ProjectionSelector {
                 li.querySelector('span,h5').dataset.tooltip = '';
 
                 const reDraw = function (element) {
-                    return new Promise(function (resolve, _reject) {
-                        setTimeout(function () {
-                            element.setAttribute('offsetHeight', element.offsetHeight);
-                            element.setAttribute('offsetWidth', element.offsetWidth);
-
-                            resolve();
-                        }, redrawTime);
-                    });
+                    return Util.getTimedPromise(function () {
+                        element.setAttribute('offsetHeight', element.offsetHeight);
+                        element.setAttribute('offsetWidth', element.offsetWidth);
+                    }, redrawTime);
                 };
 
                 reDraw(li).then(function () {
@@ -777,53 +773,49 @@ class LayerCatalog extends ProjectionSelector {
         });
     }
 
-    renderBranch(layer, callback, promiseRenderResolve) {
+    async renderBranch(layer, callback, promiseRenderResolve) {
         const self = this;
 
         self.sourceLayers.unshift(layer);
-        layer.getCapabilitiesPromise()
-            .then(function (_result) {
+        try {
+            await layer.getCapabilitiesPromise();
 
-                self.getRenderedHtml(self.CLASS + '-branch', getLayerTree(this), function (html) {
-                    var template = document.createElement('template');
-                    template.innerHTML = html;
+            const html = await self.getRenderedHtml(self.CLASS + '-branch', getLayerTree(layer));
+            var template = document.createElement('template');
+            template.innerHTML = html;
 
-                    const branch = self.div.querySelector('.' + self.CLASS + '-branch');
-                    var newChild = template.content ? template.content.firstChild : template.firstChild;
-                    var oldChild = branch.querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + this.id + '"]');
+            const branch = self.div.querySelector('.' + self.CLASS + '-branch');
+            var newChild = template.content ? template.content.firstChild : template.firstChild;
+            var oldChild = branch.querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + layer.id + '"]');
 
-                    if (oldChild) {
-                        branch.replaceChild(newChild, oldChild);
-                    } else {
-                        branch.insertAdjacentElement('afterbegin', newChild);
-                    }
+            if (oldChild) {
+                branch.replaceChild(newChild, oldChild);
+            } else {
+                branch.insertAdjacentElement('afterbegin', newChild);
+            }
 
-                    self.#addLogicToNode(newChild, this);
+            self.#addLogicToNode(newChild, layer);
 
-                    if (branch.childElementCount === 1) {
-                        promiseRenderResolve();
-                    }
+            if (branch.childElementCount === 1) {
+                promiseRenderResolve();
+            }
 
-                    if (Util.isFunction(callback)) {
-                        // pasamos el callback el item 
-                        callback(self.sourceLayers[self.sourceLayers.map(l => l && l.id).indexOf(this.id)]);
-                    }
+            if (Util.isFunction(callback)) {
+                // pasamos el callback el item 
+                callback(self.sourceLayers[self.sourceLayers.map(l => l && l.id).indexOf(layer.id)]);
+            }
+        }
+        catch (_err) {
+            var index = self.layers.map(l => l.id).indexOf(layer.id);
+            self.layers.splice(index, 1);
 
-                }.bind(this));
+            var errorMessage = self.getLocaleString("lyrCtlg.errorLoadingNode", { serviceName: layer.title });
+            var liError = self.div.querySelector('.' + self.CLASS + '-branch').querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + layer.id + '"]');
+            liError.classList.add('tc-error');
+            liError.setAttribute('title', errorMessage);
 
-            }.bind(layer))
-            .catch(function (_error) {
-                var index = self.layers.map(l => l.id).indexOf(this.id);
-                self.layers.splice(index, 1);
-
-                var errorMessage = self.getLocaleString("lyrCtlg.errorLoadingNode", { serviceName: this.title });
-                var liError = self.div.querySelector('.' + self.CLASS + '-branch').querySelector('li.' + self.CLASS + '-loading-node[data-layer-id="' + this.id + '"]');
-                liError.classList.add('tc-error');
-                liError.setAttribute('title', errorMessage);
-
-                self.map.toast(errorMessage, { type: Consts.msgType.ERROR });
-
-            }.bind(layer));
+            self.map.toast(errorMessage, { type: Consts.msgType.ERROR });
+        }
     }
 
     getLayerRootNode(layer) {
@@ -1081,16 +1073,11 @@ class LayerCatalog extends ProjectionSelector {
     setProjection(options = {}) {
         const self = this;
 
-        TC.loadProjDef({
-            crs: options.crs,
-            callback: function () {
-                self.map.setProjection(options).then(function () {
-                    if (self.#layerToAdd) {
-                        self.map.addLayer(self.#layerToAdd);
-                    }
-                    Util.closeModal();
-                });
+        self.map.setProjection(options).then(function () {
+            if (self.#layerToAdd) {
+                self.map.addLayer(self.#layerToAdd);
             }
+            Util.closeModal();
         });
     }
 

@@ -95,18 +95,17 @@ class Measurement extends WebComponentControl {
         this.render();
     }
 
-    setMode(value) {
+    async setMode(value) {
         const self = this;
-        return new Promise(function (resolve, _reject) {
-            const oldMode = self.mode;
-            if (oldMode === value) {
-                self.renderPromise().then(() => resolve(value));
-            }
-            else {
-                self.mode = value;
-                self.render().then(() => resolve(value));
-            }
-        });
+        const oldMode = self.mode;
+        if (oldMode === value) {
+            await self.renderPromise();
+        }
+        else {
+            self.mode = value;
+            await self.render();
+        }
+        return value;
     }
 
     get units() {

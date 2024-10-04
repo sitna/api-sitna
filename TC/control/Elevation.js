@@ -218,12 +218,10 @@ class Elevation extends Control {
                 return;
             }
         }
-        const li = self.map.getLoadingIndicator();
-        const waitId = li && li.addWait();
         const render = function (elevCoordLines, options) {
             let elevLines = elevCoordLines;
             let maxElevation = Number.NEGATIVE_INFINITY;
-            let minElevation = Number.POSITIVE_INFINITY;            
+            let minElevation = Number.POSITIVE_INFINITY;
             if (self.map.getCRS() !== self.map.options.utmCrs) {
                 elevLines = Util.reproject(elevCoordLines, self.map.getCRS(), self.map.options.utmCrs);
             }
@@ -295,82 +293,82 @@ class Elevation extends Control {
             renderProfile(elevationData);
         };
 
-        const tool = await self.getElevationTool();
+        await self.map?.wait(async () => {
 
-        if (options.originalElevation) {
-            render(lines, options);
-        }
-        if (options.onlyOriginalElevation) {
-            li && li.removeWait(waitId);
-            return;
-        }
+            const tool = await self.getElevationTool();
 
-        const timestamp = Date.now();
-        self.#depTimestamp = timestamp;
-        const elevationOptionsTemplate = {
-            crs: self.map.getCRS()
-        };
-
-        if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
-            elevationOptionsTemplate.resolution = tool.options.resolution;
-        }
-        const sampleNumber = Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") ? tool.options.sampleNumber : 0;
-        if (sampleNumber > 0) {
-            elevationOptionsTemplate.resolution = 0;
-        }
-
-        // Repartimos las muestras proporcionalmente entre todas las líneas
-        const sampleNumberCollection = new Array(lines.length);
-        sampleNumberCollection.fill(sampleNumber);
-        if (sampleNumber > 0) {
-            const lineDistances = new Array(lines.length);
-            let totalDistance = 0;
-            lines.forEach((line, idx) => {
-                const pl = new Polyline(line);
-                const lineDistance = pl.getLength();
-                lineDistances[idx] = lineDistance;
-                totalDistance += lineDistance;
-            });
-            sampleNumberCollection.forEach((sn, idx, arr) => {
-                arr[idx] = Math.floor(sn * lineDistances[idx] / totalDistance);
-            });
-        }
-        const interpolatedLines = lines.map((line, idx) => {
-            const interpolationOptions = Object.assign({}, elevationOptionsTemplate, {
-                sampleNumber: sampleNumberCollection[idx]
-            });
-            return Geometry.interpolate(line, interpolationOptions);
-        });
-
-        const elevationPromises = interpolatedLines.map((interpolatedLine, idx) => {
-            const elevationOptions = Object.assign({}, elevationOptionsTemplate, {
-                coordinates: interpolatedLine,
-                partialCallback: function (elevCoords) {
-                    if (timestamp === self.#depTimestamp) { // Evitamos que una petición anterior machaque una posterior
-                        interpolatedLines[idx] = elevCoords;
-                        render(interpolatedLines, {
-                            isSecondary: Object.keys(options).length === 0 ? false : true,
-                            ignoreCaching: options.ignoreCaching
-                        });
-                    }
-                },
-                resolution: 0,
-                sampleNumber: 0
-            });
-            return tool.getElevation(elevationOptions);
-        });
-
-        try {
-            await Promise.all(elevationPromises);
-            if (options.callback && Util.isFunction(options.callback)) {
-                options.callback();
+            if (options.originalElevation) {
+                render(lines, options);
             }
-            li?.removeWait(waitId);
-        }
-        catch (_error) {
-            self.resetElevationProfile();
-            li?.removeWait(waitId);
-        }
+            if (options.onlyOriginalElevation) {
+                return;
+            }
+
+            const timestamp = Date.now();
+            self.#depTimestamp = timestamp;
+            const elevationOptionsTemplate = {
+                crs: self.map.getCRS()
+            };
+
+            if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
+                elevationOptionsTemplate.resolution = tool.options.resolution;
+            }
+            const sampleNumber = Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") ? tool.options.sampleNumber : 0;
+            if (sampleNumber > 0) {
+                elevationOptionsTemplate.resolution = 0;
+            }
+
+            // Repartimos las muestras proporcionalmente entre todas las líneas
+            const sampleNumberCollection = new Array(lines.length);
+            sampleNumberCollection.fill(sampleNumber);
+            if (sampleNumber > 0) {
+                const lineDistances = new Array(lines.length);
+                let totalDistance = 0;
+                lines.forEach((line, idx) => {
+                    const pl = new Polyline(line);
+                    const lineDistance = pl.getLength();
+                    lineDistances[idx] = lineDistance;
+                    totalDistance += lineDistance;
+                });
+                sampleNumberCollection.forEach((sn, idx, arr) => {
+                    arr[idx] = Math.floor(sn * lineDistances[idx] / totalDistance);
+                });
+            }
+            const interpolatedLines = lines.map((line, idx) => {
+                const interpolationOptions = Object.assign({}, elevationOptionsTemplate, {
+                    sampleNumber: sampleNumberCollection[idx]
+                });
+                return Geometry.interpolate(line, interpolationOptions);
+            });
+
+            const elevationPromises = interpolatedLines.map((interpolatedLine, idx) => {
+                const elevationOptions = Object.assign({}, elevationOptionsTemplate, {
+                    coordinates: interpolatedLine,
+                    partialCallback: function (elevCoords) {
+                        if (timestamp === self.#depTimestamp) { // Evitamos que una petición anterior machaque una posterior
+                            interpolatedLines[idx] = elevCoords;
+                            render(interpolatedLines, {
+                                isSecondary: Object.keys(options).length === 0 ? false : true,
+                                ignoreCaching: options.ignoreCaching
+                            });
+                        }
+                    },
+                    resolution: 0,
+                    sampleNumber: 0
+                });
+                return tool.getElevation(elevationOptions);
+            });
+
+            try {
+                await Promise.all(elevationPromises);
+                if (options.callback && Util.isFunction(options.callback)) {
+                    options.callback();
+                }
+            }
+            catch (_error) {
+                self.resetElevationProfile();
+            }
+        });
     }
 
     async createProfilePanel() {

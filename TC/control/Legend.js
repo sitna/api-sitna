@@ -159,46 +159,48 @@ class Legend extends MapContents {
             //var params;
             const layerLegend = document.createElement('sitna-layer-legend');
             layerLegend.dataset.layerId = layer.id;
+            layerLegend.dataset.layerUid = layer.getTree().uid;
             layerLoaded.push(layer.id);
             var params = layer.type === Consts.layerType.WMS?
                 { customLegend: layerLegend.outerHTML } :
                 (layer.getNestedTree ? layer.getNestedTree() : layer.getTree());
-            if (layer._title && layer._title !== layer.title)
+            if (layer._title && layer._title !== layer.title) {
                 params = Object.assign(params, { "title": layer._title });
+            }
             
-            self.getRenderedHtml(self.CLASS + '-node', params)
-                .then(function (out) {
-                    const parser = new DOMParser();
-                    const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
-                    const uid = newLi.dataset.layerUid;
-                    const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
-                    const lis = ul.querySelectorAll('li[data-layer-uid="' + uid + '"]');
-                    if (lis.length === 1) {
-                        const li = lis[0];
-                        if (li.innerHTML !== newLi.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
-                            li.innerHTML = newLi.innerHTML;
-                            li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
-                        }
-
+            try {
+                const html = await self.getRenderedHtml(self.CLASS + '-node', params);
+                const parser = new DOMParser();
+                const newLi = parser.parseFromString(html, 'text/html').body.firstChild;
+                const uid = newLi.dataset.layerUid;
+                const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
+                const lis = ul.querySelectorAll('*[data-layer-uid="' + uid + '"]');
+                if (lis.length === 1) {
+                    const li = lis[0];
+                    if (li.innerHTML !== newLi.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
+                        li.innerHTML = newLi.innerHTML;
+                        li.setAttribute('class', newLi.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                     }
-                    else {
-                        newLi.dataset.layerId = layer.id;
-                        const loadOrder = self.map.workLayers.filter((wl) => layerLoaded.includes(wl.id)).map((wl => wl.id)).reverse()
-                        const getReferenceElement = (index) => {
-                            if (index === 0) return ul.firstChild;
-                            if (loadOrder.length - 1 === index) return ul.lastElementChild;
-                            const layerId = loadOrder[index+1];
-                            const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
-                            return referenceElement || getReferenceElement(++index);
 
-                        };
-                        ul.insertBefore(newLi, getReferenceElement(loadOrder.indexOf(layer.id)));
-                    }
-                    self.update();
-                })
-                .catch(function (err) {
-                    TC.error(err);
-                });
+                }
+                else {
+                    newLi.dataset.layerId = layer.id;
+                    const loadOrder = self.map.workLayers.filter((wl) => layerLoaded.includes(wl.id)).map((wl => wl.id)).reverse()
+                    const getReferenceElement = (index) => {
+                        if (index === 0) return ul.firstChild;
+                        if (loadOrder.length - 1 === index) return ul.lastElementChild;
+                        const layerId = loadOrder[index + 1];
+                        const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
+                        return referenceElement || getReferenceElement(++index);
+
+                    };
+                    ul.insertBefore(newLi, getReferenceElement(loadOrder.indexOf(layer.id)));
+                }
+                self.update();
+            }
+            catch (err) {
+                TC.error(err);
+            }
         }
         return self;
     }

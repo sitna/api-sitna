@@ -123,8 +123,6 @@ class MapInfo extends Control {
     }
 
     async shortenedLink() {
-        let wait;
-
         //const generateLinkWithoutParams = async function () {
         //    var url = await this.generateLink();
         //    var start = url.indexOf('?');
@@ -160,29 +158,26 @@ class MapInfo extends Control {
 
         const onError = () => {
             this.map.toast(this.getLocaleString("urlTooLongForShortener"), { type: Consts.msgType.ERROR });
-            this.map.getLoadingIndicator().removeWait(wait);
             return "";
         };
 
-        const url = await this.generateLink();
-        if (url.length > this.QR_MAX_URL_LENGTH && url.length < this.SHORTEN_URL_LENGTH) {
-
-            wait = this.map.getLoadingIndicator().addWait();
-
-            const response = await shortenUrl(url);
-            if (response && response.responseText) {
-                this.map.getLoadingIndicator().removeWait(wait);
-                return response.responseText.replace('http://', 'https://');
+        return await this.map?.wait(async () => {
+            const url = await this.generateLink();
+            if (url.length > this.QR_MAX_URL_LENGTH && url.length < this.SHORTEN_URL_LENGTH) {
+                const response = await shortenUrl(url);
+                if (response && response.responseText) {
+                    return response.responseText.replace('http://', 'https://');
+                } else {
+                    return onError();
+                }
             } else {
-                return onError();
-            }
-        } else {
-            if (url.length >= this.SHORTEN_URL_LENGTH) {
-                return onError();
-            }
+                if (url.length >= this.SHORTEN_URL_LENGTH) {
+                    return onError();
+                }
 
-            return "";
-        }
+                return "";
+            }
+        });
     }
 
     async makeQRCode(codeContainer, width) {

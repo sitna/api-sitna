@@ -82,7 +82,7 @@ class Download extends MapInfo {
         self.map.crossOrigin = 'anonymous';
 
         self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', () => self.#download()), { passive: true });
-        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', () => self.#showHelp()), { passive: true });
+        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', (evt) => self.#showHelp(evt)), { passive: true });
 
         self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (e) {
             if (e.target.checked) {
@@ -201,29 +201,26 @@ ${toFixed(yOrigin)}`);
  */
 
     #downloadFeatures(format) {
-        const self = this;
-        const li = self.map.getLoadingIndicator();
-        const wait = li && li.addWait();
-
-        const _filterBuilder = function () {
-            if (self.map.on3DView) {
-                return new filter.Within(null, new Polygon(self.map.view3D.getFovCoords(self.map.view3D.crs)), self.map.view3D.crs);
+        this.map?.wait(async () => {
+            const _filterBuilder = () => {
+                if (this.map.on3DView) {
+                    return new filter.Within(null, new Polygon(this.map.view3D.getFovCoords(this.map.view3D.crs)), this.map.view3D.crs);
+                }
+                else {
+                    return new filter.bbox(this.map.getExtent(), this.map.getCRS());
+                }
             }
-            else {
-                return new filter.bbox(self.map.getExtent(), self.map.getCRS());
-            }
-        }
 
-        const arrPromises = self.map.extractFeatures({
-            filter: _filterBuilder(),
-            outputFormat: format,
-            download: true
-        });
-        Promise.all(arrPromises).then(async function (responseArray) {
+            const arrPromises = this.map.extractFeatures({
+                filter: _filterBuilder(),
+                outputFormat: format,
+                download: true
+            });
+            const responseArray = await Promise.all(arrPromises);
 
             var responses = responseArray.filter(item => !!item);
             if (responses.length === 0) {
-                self.#showAlert({ key: Consts.WFSErrors.NO_LAYERS }, wait);
+                this.#showAlert({ key: Consts.WFSErrors.NO_LAYERS });
                 return;
             }
             var arrDownloads = [];
@@ -232,7 +229,7 @@ ${toFixed(yOrigin)}`);
                 if (responses[i].errors && responses[i].errors.length) {
                     for (var j = 0; j < responses[i].errors.length; j++) {
                         var error = responses[i].errors[j];
-                        self.#showAlert(error, wait);
+                        this.#showAlert(error);
                     }
                     continue;
                 }
@@ -248,36 +245,33 @@ ${toFixed(yOrigin)}`);
                 if (err.key === Consts.DownloadError.MIMETYPE_NOT_SUPORTED) {
                     const service = responseArray.find(response => response.data === err.data).service;
                     const params = {
-                        plural: service.layers.length > 1 ? self.getLocaleString("dl.format.notSupported.plural") : "",
-                        layerNames: service.layers.reduce(function (vi, va, i, array) {
-                            return (vi instanceof Array ? vi : [vi]).concat([va.title]).join(i < array.length - 1 ? ", " : " " + self.getLocaleString("dl.format.notSupported.conjunction") + " ");
+                        plural: service.layers.length > 1 ? this.getLocaleString("dl.format.notSupported.plural") : "",
+                        layerNames: service.layers.reduce((vi, va, i, array) => {
+                            return (vi instanceof Array ? vi : [vi]).concat([va.title]).join(i < array.length - 1 ? ", " : " " + this.getLocaleString("dl.format.notSupported.conjunction") + " ");
                         }, []),
                         serviceTitle: service.mapLayers[0].title,
                         format: format
                     };
-                    self.map.toast(Util.formatTemplate(self.getLocaleString("dl.format.notSupported"), params), { type: Consts.msgType.ERROR });
+                    this.map.toast(Util.formatTemplate(this.getLocaleString("dl.format.notSupported"), params), { type: Consts.msgType.ERROR });
                 }
             }
-
-            li && li.removeWait(wait);
         });
     }
 
     #download() {
-        const self = this;
         let format = '';
-        if (self.#activeElement) {
-            format = self.#activeElement.querySelector('select').value;
+        if (this.#activeElement) {
+            format = this.#activeElement.querySelector('select').value;
         }
         if (format.indexOf('image') > -1) {
-            self.#downLoadImage(format);
+            this.#downLoadImage(format);
         }
         else {
-            self.#downloadFeatures(format);
+            this.#downloadFeatures(format);
         }
     }
 
-    #showAlert(error, wait) {
+    #showAlert(error) {
         const self = this;
         const alert = self.div.querySelector('.tc-alert-warning:not(.' + self.CLASS + '-alert)');
         var errorMsg;
@@ -298,15 +292,12 @@ ${toFixed(yOrigin)}`);
                 errorMsg = self.getLocaleString("wfs.IndeterminateError");
                 self.map.toast(errorMsg, { type: Consts.msgType.ERROR });
                 TC.error(Util.formatTemplate("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}", { error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), Consts.msgErrorMode.CONSOLE);
-                self.map.getLoadingIndicator().removeWait(wait);
                 return;
             default:
                 errorMsg = self.getLocaleString("wfs." + error.key, error.params);
                 break;
         }
         self.map.toast(errorMsg, { type: Consts.msgType.WARNING });
-
-        self.map.getLoadingIndicator().removeWait(wait);
     }
 
     

@@ -35,7 +35,6 @@ import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Point from '../../SITNA/feature/Point';
 import Marker from '../../SITNA/feature/Marker';
-import md5 from 'md5';
 
 TC.control = TC.control || {};
 
@@ -170,7 +169,6 @@ class Geolocation extends Control {
     notificationConfig = {};
     storageCrs = 'EPSG:4326';
     snappingTolerance;
-    featuresToShare = [];
     #dialogDiv;
     #shareDialogDiv;
     #interpolationPanel;
@@ -185,6 +183,7 @@ class Geolocation extends Control {
     #elevationFromServiceCache = [];
     #startMarker;
     #finishMarker;
+    #drawing;
 
     constructor() {
         super(...arguments);
@@ -360,10 +359,10 @@ class Geolocation extends Control {
                 }
             };
 
-            if (self.working && Util.isFunction(self.working.then)) {
-                self.working.then(featuresImport(e));
-            } else {
-                self.working = true;
+            if (self.#drawing) {
+                self.#drawing.then(featuresImport(e));
+            }
+            else {
                 featuresImport(e);
             }
 
@@ -374,7 +373,7 @@ class Geolocation extends Control {
                 self.elevationChartData.coords = Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
                 if (self.elevationChartData.secondaryElevationProfileChartData && self.elevationChartData.secondaryElevationProfileChartData.length)
                     self.elevationChartData.secondaryElevationProfileChartData.forEach((secElevChartData) => {
-                        secElevChartData.eleCoordinates = Util.reproject(secElevChartData.eleCoordinates, e.oldCrs, e.newCrs);
+                        secElevChartData.coords = Util.reproject(secElevChartData.coords, e.oldCrs, e.newCrs);
                     });
             }
         });
@@ -458,7 +457,6 @@ class Geolocation extends Control {
     }
 
     async loadTemplates() {
-        const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-geolocation.mjs');
         const trackNodeTemplatePromise = import('../templates/tc-ctl-geolocation-track-node.mjs');
         const trackSnappingTemplatePromise = import('../templates/tc-ctl-geolocation-track-snapping-node.mjs');
@@ -468,32 +466,29 @@ class Geolocation extends Control {
         const shareDialogTemplatePromise = import('../templates/tc-ctl-geolocation-share-dialog.mjs');
 
         const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-track-node'] = (await trackNodeTemplatePromise).default;
-        template[self.CLASS + '-track-snapping-node'] = (await trackSnappingTemplatePromise).default;
-        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
-        template[self.CLASS + '-tracking-toast'] = (await trackingToastTemplatePromise).default;
-        template[self.CLASS + '-ext-dldlog'] = (await downloadDialogTemplatePromise).default;
-        template[self.CLASS + '-share-dialog'] = (await shareDialogTemplatePromise).default;
-        self.template = template;
+        template[this.CLASS] = (await mainTemplatePromise).default;
+        template[this.CLASS + '-track-node'] = (await trackNodeTemplatePromise).default;
+        template[this.CLASS + '-track-snapping-node'] = (await trackSnappingTemplatePromise).default;
+        template[this.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[this.CLASS + '-tracking-toast'] = (await trackingToastTemplatePromise).default;
+        template[this.CLASS + '-ext-dldlog'] = (await downloadDialogTemplatePromise).default;
+        template[this.CLASS + '-share-dialog'] = (await shareDialogTemplatePromise).default;
+        this.template = template;
     }
 
     async render(callback) {
-        const self = this;
-
-        self.#dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
-        await self.getDownloadDialog();
+        this.#dialogDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-dialog', null);
+        await this.getDownloadDialog();
         const template = document.createElement('template');
-        template.innerHTML = await self.getRenderedHtml(self.CLASS + '-ext-dldlog', { controlId: self.id });
-        self._downloadDialogExtNode = template.content ? template.content.firstChild : template.firstChild;
-        self.#shareDialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-share-dialog', {});
+        template.innerHTML = await this.getRenderedHtml(this.CLASS + '-ext-dldlog', { controlId: this.id });
+        this._downloadDialogExtNode = template.content ? template.content.firstChild : template.firstChild;
+        this.#shareDialogDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-share-dialog', {});
 
-        await self.renderData({ controlId: self.id }, function () {
-            self.addUIEventListeners();
-            if (Util.isFunction(callback)) {
-                callback();
-            }
-        });
+        await this.renderData({ controlId: this.id });
+        this.addUIEventListeners();
+        if (Util.isFunction(callback)) {
+            callback();
+        }
     }
 
     addUIEventListeners() {
@@ -502,6 +497,293 @@ class Geolocation extends Control {
             self.removeAllTracks(e.target);
             e.stopPropagation();
         });
+
+        self.div.querySelector('.' + self.CLASS + '-track-panel-help').addEventListener('click', function () {
+            self.#showAlert();
+        });
+
+        if (globalThis.File && globalThis.FileReader && globalThis.FileList && globalThis.Blob) {
+            self.track.trackImportFile.addEventListener(Consts.event.CLICK, async function (e) {
+                if (Util.isFunction(window.showOpenFilePicker)) {
+                    // Gestión vía File System Access API
+                    e.preventDefault();
+                    let fileHandles;
+                    try {
+                        fileHandles = await window.showOpenFilePicker({
+                            types: self.const.supportedFileExtensions.map(txt => {
+                                const result = {
+                                    accept: {}
+                                };
+                                result.accept[Consts.mimeType[txt.substr(1).toUpperCase()]] = [txt];
+                                return result;
+                            })
+                        });
+                    }
+                    catch (e) {
+                        if (e instanceof DOMException && window.parent !== window) {
+                            // No se permite ejecutar showOpenFilePicker si estamos en un frame con CORS
+                            let messageText = self.getLocaleString('cannotOpenFileIfEmbedded');
+                            self.map.toast(messageText, { type: Consts.msgType.WARNING });
+                        }
+                        else if (e.name !== 'AbortError') {
+                            throw e;
+                        }
+                    }
+                    if (fileHandles) {
+                        self.loadFile(fileHandles[0], { control: self });
+                    }
+                }
+
+                // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
+                // Envolvemos el input en un form
+                const input = this;
+                const form = document.createElement('form');
+                const parent = input.parentElement;
+                parent.insertBefore(form, input);
+                form.appendChild(input);
+                //form.reset();
+                // Desenvolvemos el input del form
+                form.insertAdjacentElement('afterend', input);
+                parent.removeChild(form);
+            });
+
+            self.track.trackImportFile.addEventListener('change', function (e) {
+                self.loadFile(e.target.files[0]);
+            });
+        }
+
+        self.track.activateButton.addEventListener('click', function () {
+            self.activateGeotracking();
+        });
+        self.track.deactivateButton.addEventListener('click', function () {
+            self.deactivateGeotracking();
+        });
+
+        const filter = function (searchTerm) {
+            searchTerm = searchTerm.toLowerCase();
+            //tc-ctl-geolocation-track-available-empty
+            const lis = Array.from(self.track.trackList.querySelectorAll('li'));
+            lis.forEach(function (li) {
+                li.style.display = 'none';
+            });
+            const trackLis = lis.filter(function (li) {
+                return li.matches('li:not([class]),li.' + Consts.classes.CHECKED);
+            });
+
+            const searchIcon = self.div.querySelector(`.${self.CLASS}-track-search-icon`);
+            if (searchTerm.length === 0) {
+                trackLis.forEach(function (li) {
+                    li.style.display = '';
+                });
+                searchIcon.style.visibility = 'visible';
+            } else {
+                searchIcon.style.visibility = 'hidden';
+                var r = new RegExp(searchTerm, 'i');
+                trackLis.forEach(function (li) {
+                    li.style.display = r.test(li.querySelector(self.const.selector.ACTIVATOR).text) ? '' : 'none';
+                });
+
+                if (!trackLis.some(function (li) {
+                    return li.style.display === '';
+                })) {
+                    lis.forEach(function (li) {
+                        if (li.matches('[class^="tc-ctl-geolocation-track-not"]')) {
+                            li.style.display = '';
+                        }
+                    });
+                }
+            }
+        };
+        const trackSearchListener = function () {
+            filter(this.value.toLowerCase().trim());
+        };
+        self.track.trackSearch.addEventListener("keyup", trackSearchListener);
+        self.track.trackSearch.addEventListener("search", trackSearchListener);
+
+        // en el panel
+        self.track.trackSave.addEventListener('click', self.saveTrack.bind(self));
+        self.track.trackAdd.addEventListener('click', self.addWaypoint.bind(self));
+
+        const list = self.div.querySelector(`.${self.CLASS}-track-available-lst`);
+        const sel = self.const.selector;
+
+        //list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.SIMULATE, function (e) {
+        //    var wait = self.getLoadingIndicator().addWait();
+
+        //    e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
+
+        //    self.#loadTrack(e.target).then(function () { //Para evitar el bloqueo de la interfaz en móviles
+        //        self.getLoadingIndicator().removeWait(wait);
+        //    });
+        //}));
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.ACTIVATOR, function (e) {
+            self.map?.wait(self.#drawTrack(e.target));
+        }));
+
+        const getParentListElement = function (elm) {
+            let result = elm;
+            while (result.tagName !== 'LI') {
+                result = result.parentElement;
+            }
+            return result;
+        };
+
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.EDIT}`, function (e) {
+            self.#editName(true, e.target);
+        }));
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.DELETE}`, function (e) {
+            self.removeTrack(getParentListElement(e.target)).then(function (deleted) {
+                if (deleted && !self.availableTracks.length) {
+                    self.div.querySelector(self.const.selector.DELETEALL).disabled = true;
+                }
+            })
+        }));
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.SAVE}`, function (e) {
+            const li = getParentListElement(e.target);
+            var newName = li.querySelector('input').value;
+            if (newName.trim().length === 0) {
+                TC.alert(self.getLocaleString('geo.trk.edit.alert'));
+            }
+            else {
+                self.editTrackName(li.dataset.uid, li.querySelector('input').value);
+                self.#editName(false, e.target);
+            }
+        }));
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.CANCEL}`, function (e) {
+            self.#editName(false, e.target);
+        }));
+
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.SHARE}`, function (e) {
+            self.#setTrackToShare(getParentListElement(e.target)).then(function () {
+                self.showShareDialog(self.#shareDialogDiv);
+            });
+        }));
+
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.EXPORT}`, function (e) {
+            const parent = getParentListElement(e.target);
+            e.target.setAttribute('disabled', "");
+
+            self.export(parent).then((features) => {
+                self.getDownloadDialog().then(function (dialog) {
+                    const options = self.getDownloadDialogOptions(self.#getDownloadFileName(parent));
+                    dialog.open(features.map((f) => { f.uid = parent.dataset.uid; return f; }), options);
+
+                    e.target.removeAttribute('disabled');
+                });
+            });
+        }));
+
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.STOP}`, function (e) {
+            //self.uiSimulate(false, e.target);
+            self.wrap.simulateTrackEnd();
+            const btnPause = e.target.parentElement.querySelector(sel.PAUSE);
+            btnPause.classList.add(self.const.className.PLAY);
+            btnPause.setAttribute('title', self.getLocaleString('tr.lst.start'));
+            if (!self.simulationStopped)
+                e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
+            self.simulationSpeed = 1;
+            self.simulationStopped = true;
+        }));
+
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.PAUSE}`, function (e) {
+            self.simulate_paused = !e.target.classList.contains(self.const.className.PLAY);
+            if (self.simulate_paused)
+                self.simulate_pausedElapse = -1;
+            else {
+
+                if (self.simulationStopped) {
+                    e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
+                    self.map?.wait(self.#loadTrack(e.target).then(() => { //Para evitar el bloqueo de la interfaz en móviles
+                        self.simulationStopped = false;
+                    }));
+                }
+
+
+            }
+
+            e.target.setAttribute('title', self.getLocaleString(self.simulate_paused ? 'tr.lst.play' : 'tr.lst.pause'));
+            e.target.classList.toggle(self.const.className.PLAY, !!self.simulate_paused);
+        }));
+
+        var lapse = 0.5;
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.BACKWARD}`, function (e) {
+            if (self.simulationSpeed === 1)
+                self.simulationSpeed = lapse;
+            else self.simulationSpeed = self.simulationSpeed / 2;
+
+            e.target.parentElement.querySelector(`.${self.CLASS} ${sel.FORWARD}`).disabled = false;
+
+            e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulationSpeed < 1 ? '/ ' + 1 / self.simulationSpeed : 'x ' + self.simulationSpeed;
+
+            if (self.simulationSpeed === 0.000244140625) {
+                e.target.disabled = true;
+            }
+        }));
+
+        list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.FORWARD}`, function (e) {
+            self.simulationSpeed = self.simulationSpeed / lapse;
+
+            e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulationSpeed < 1 ? '/ ' + 1 / self.simulationSpeed : 'x ' + self.simulationSpeed;
+
+            e.target.parentElement.querySelector(`.${self.CLASS} ${sel.BACKWARD}`).disabled = false;
+
+            if (self.simulationSpeed === 4096) {
+                e.target.disabled = true;
+            }
+        }));
+
+
+        // popup
+        self.track.trackContinue.addEventListener('click', function () {
+            // cerramos popup y continuamos con el track de session y almacenando en session
+            Util.closeModal();
+            // al obtener la posición se almacena en session y continuamos almacenando en session mientras se mueve
+            self.setGeotracking();
+        });
+        self.track.trackRenew.addEventListener('click', function () {
+            // eliminamos el track actual de session - restablecemos el geotracking
+            delete self.geotrackingSession;
+            Util.storage.setSessionLocalValue(self.const.localStorageKey.GEOTRACKINGTEMP, undefined);
+            localforage
+                .removeItem(self.const.localStorageKey.GEOTRACKINGTEMP)
+                .catch(err => console.warn(err));
+            // cerramos el popup
+            Util.closeModal();
+            // al obtener la posición se almacena en session y continuamos almacenando en session mientras se mueve
+            self.setGeotracking();
+        });
+        self.track.trackClose.addEventListener('click', function () {
+            self.#deactivateGeotrackingState();
+        });
+        //self.track.trackAddSegment.addEventListener('click', function () {
+        //    TC.alert('pendiente');
+        //    // cerramos el popup
+        //    Util.closeModal();
+        //});
+
+        // popup advertencia
+        self.track.trackAdvertisementOK.addEventListener('click', function () {
+
+            const checkboxes = document.body.querySelectorAll('input[name*="Advertisement"]:checked');
+
+            if (checkboxes.length > 0) {
+                localforage
+                    .setItem(checkboxes[0].getAttribute('name'), false)
+                    .catch(err => console.warn(err));
+            }
+
+            Util.closeModal();
+        });
+
+        self.track.renderTrack = self.div.querySelector('#tc-ctl-geolocation-track-render-' + self.id);
+        self.track.renderTrack.addEventListener('change', function () {
+            if (self.track.activateButton.classList.contains(Consts.classes.HIDDEN)) {
+                self.geotrackingLayer.setVisibility(this.checked);
+            }
+
+            self.#trackVisibility = this.checked;
+        });
+
     }
 
     #getDownloadFileName = function (elem) {
@@ -573,15 +855,14 @@ class Geolocation extends Control {
         const self = this;
         if (!self.isDisabled) {
             if (options.fileName && options.features && options.features.length > 0) {
-                const wait = self.getLoadingIndicator().addWait();
-                self.importedFileName = options.fileName;
-                const addPromises = [];
-                for (var i = 0, len = options.features.length; i < len; i++) {
-                    addPromises.push(self.trackLayer.addFeature(options.features[i]));
-                }
-                Promise.all(addPromises).then(function () {
-                    self.wrap.processImportedFeatures({
-                        wait: wait,
+                self.map?.wait(async () => {
+                    self.importedFileName = options.fileName;
+                    const addPromises = [];
+                    for (var i = 0, len = options.features.length; i < len; i++) {
+                        addPromises.push(self.trackLayer.addFeature(options.features[i]));
+                    }
+                    await Promise.all(addPromises);
+                    await self.wrap.processImportedFeatures({
                         notReproject: options.notReproject,
                         fileHandle: options.fileHandle
                     });
@@ -600,6 +881,7 @@ class Geolocation extends Control {
                             // abrimos el panel de herramientas
                             self.map.trigger(Consts.event.TOOLSOPEN);
                         }
+                        self.map.addControlState(self);
                     }
                 });
             }
@@ -642,9 +924,6 @@ class Geolocation extends Control {
                 return fObj;
             });
 
-            if (options.setFeaturesToShare) {
-                self.featuresToShare = features;
-            }
             return features;
         } else {
             throw Error('No track uid');
@@ -854,11 +1133,15 @@ class Geolocation extends Control {
                             });
                         });
 
-                        if (radioDlSource[0].classList.contains(Consts.classes.DISABLED) ||
-                            document.querySelector('.' + self.CLASS + '-ext-dldlog input[type=radio]:checked').value === RADIO_MDT) {
-                            const mdtRadio = radioDlSource[1];
-                            mdtRadio.checked = true;
-                            mdtRadio.dispatchEvent(new Event('change'));
+                        const ownCheckedRadio = document.querySelector('.' + self.CLASS + '-ext-dldlog input[type=radio]:checked');
+                        // Condición necesaria, porque el cuadro de diálogo puede no ser el propio (p. e. descarga desde el perfil de elevación)
+                        if (ownCheckedRadio) {
+                            if (radioDlSource[0].classList.contains(Consts.classes.DISABLED) ||
+                                ownCheckedRadio.value === RADIO_MDT) {
+                                const mdtRadio = radioDlSource[1];
+                                mdtRadio.checked = true;
+                                mdtRadio.dispatchEvent(new Event('change'));
+                            }
                         }
                     }
 
@@ -914,514 +1197,200 @@ class Geolocation extends Control {
         self.track.deactivateButton.classList.add(Consts.classes.HIDDEN);
     }
 
-    renderData(data, callback) {
+    async renderData(data, callback) {
         const self = this;
 
         const sel = self.const.selector;
 
-        return super.renderData(data, function () {
+        await super.renderData(data);
 
-            //const options = self.div.querySelectorAll(`.${self.CLASS}-panel`);
-            //self.div.querySelectorAll('.' + self.CLASS + '-select span').forEach(function (span) {
-            //    span.addEventListener(Consts.event.CLICK, function (e) {
-            //        var label = e.target;
-            //        while (label && label.tagName !== 'LABEL') {
-            //            label = label.parentElement;
-            //        }
-            //        const newFormat = label.querySelector(`input[type=radio][name="${self.id}-mode"]`).value;
+        self.track = {
+            activateButton: self.div.querySelector(`.${self.CLASS}-track-ui-activate`),
+            deactivateButton: self.div.querySelector(`.${self.CLASS}-track-ui-deactivate`),
+            trackSearch: self.div.querySelector(`.${self.CLASS}-track-available-srch`),
+            trackImportFile: self.div.querySelector(`.${self.CLASS}-track-import`),
+            trackSave: self.div.querySelector(`.${self.CLASS}-track-save`),
+            trackAdd: self.div.querySelector(`.${self.CLASS}-track-add-wpt`),
+            trackContinue: self.#dialogDiv.querySelector(`.${self.CLASS}-track-continue`),
+            trackRenew: self.#dialogDiv.querySelector(`.${self.CLASS}-track-new`),
+            trackClose: self.#dialogDiv.querySelector(`.${self.CLASS}-continue-track-dialog button.tc-modal-close`),
+            //trackAddSegment: self.div.querySelector('#tc-ctl-geolocation-track-segment'),
+            trackAdvertisementOK: self.#dialogDiv.querySelector(`.${self.CLASS}-track-advert-ok`)
+        };
 
-            //        options.forEach(function (option) {
-            //            option.classList.toggle(Consts.classes.HIDDEN, !option.matches('.' + self.CLASS + '-' + newFormat));
-            //        });
-            //    }, { passive: true });
-            //});
+        self.track.trackList = self.div.querySelector(`.${self.CLASS}-track-available-lst`);
 
-            self.track = {
-                activateButton: self.div.querySelector(`.${self.CLASS}-track-ui-activate`),
-                deactivateButton: self.div.querySelector(`.${self.CLASS}-track-ui-deactivate`),
-                trackSearch: self.div.querySelector(`.${self.CLASS}-track-available-srch`),
-                trackImportFile: self.div.querySelector(`.${self.CLASS}-track-import`),
-                trackSave: self.div.querySelector(`.${self.CLASS}-track-save`),
-                trackAdd: self.div.querySelector(`.${self.CLASS}-track-add-wpt`),
-                trackContinue: self.#dialogDiv.querySelector(`.${self.CLASS}-track-continue`),
-                trackRenew: self.#dialogDiv.querySelector(`.${self.CLASS}-track-new`),
-                trackClose: self.#dialogDiv.querySelector(`.${self.CLASS}-continue-track-dialog button.tc-modal-close`),
-                //trackAddSegment: self.div.querySelector('#tc-ctl-geolocation-track-segment'),
-                trackAdvertisementOK: self.#dialogDiv.querySelector(`.${self.CLASS}-track-advert-ok`)
-            };
+        self.track.trackToolPanelOpened = self.div.querySelector(`.${self.CLASS}-track-panel-block input[type="checkbox"]`);
 
-            self.track.trackList = self.div.querySelector(`.${self.CLASS}-track-available-lst`);
+        self.track.trackName = self.div.querySelector(`.${self.CLASS}-track-title`);
 
-            self.track.trackToolPanelOpened = self.div.querySelector(`.${self.CLASS}-track-panel-block input[type="checkbox"]`);
+        self.track.trackWPT = self.div.querySelector(`.${self.CLASS}-track-waypoint`);
 
-            self.div.querySelector('.' + self.CLASS + '-track-panel-help').addEventListener('click', function () {
-                self.#showAlert();
-            });
+        if (Util.detectMobile()) {
+            if (matchMedia('screen and (max-height: 50em) and (max-width: 50em)').matches)
+                self.track.trackToolPanelOpened.checked = false;
+        }
 
-            self.track.trackName = self.div.querySelector(`.${self.CLASS}-track-title`);
+        if (globalThis.File && globalThis.FileReader && globalThis.FileList && globalThis.Blob) {
+            self.track.trackImportFile.disabled = false;
+        } else {
+            console.log('no es posible la importación');
+        }
 
-            self.track.trackWPT = self.div.querySelector(`.${self.CLASS}-track-waypoint`);
+        self.uiSimulate = function (_simulate, elm) {
+            if (elm) {
 
-            if (Util.detectMobile()) {
-                if (matchMedia('screen and (max-height: 50em) and (max-width: 50em)').matches)
-                    self.track.trackToolPanelOpened.checked = false;
-            }
-
-            if (window.File && window.FileReader && window.FileList && window.Blob) {
-                self.track.trackImportFile.disabled = false;
-                self.track.trackImportFile.addEventListener(Consts.event.CLICK, async function (e) {
-                    if (Util.isFunction(window.showOpenFilePicker)) {
-                        // Gestión vía File System Access API
-                        e.preventDefault();
-                        let fileHandles;
-                        try {
-                            fileHandles = await window.showOpenFilePicker({
-                                types: self.const.supportedFileExtensions.map(txt => {
-                                    const result = {
-                                        accept: {}
-                                    };
-                                    result.accept[Consts.mimeType[txt.substr(1).toUpperCase()]] = [txt];
-                                    return result;
-                                })
-                            });
-                        }
-                        catch (e) {
-                            if (e instanceof DOMException && window.parent !== window) {
-                                // No se permite ejecutar showOpenFilePicker si estamos en un frame con CORS
-                                let messageText = self.getLocaleString('cannotOpenFileIfEmbedded');
-                                self.map.toast(messageText, { type: Consts.msgType.WARNING });
-                            }
-                            else if (e.name !== 'AbortError') {
-                                throw e;
-                            }
-                        }
-                        if (fileHandles) {
-                            self.loadFile(fileHandles[0], { control: self });
-                        }
-                    }
-
-                    // GLS: Eliminamos el archivo subido, sin ello no podemos subir el mismo archivo seguido varias veces
-                    // Envolvemos el input en un form
-                    const input = this;
-                    const form = document.createElement('form');
-                    const parent = input.parentElement;
-                    parent.insertBefore(form, input);
-                    form.appendChild(input);
-                    //form.reset();
-                    // Desenvolvemos el input del form
-                    form.insertAdjacentElement('afterend', input);
-                    parent.removeChild(form);
-                });
-
-                self.track.trackImportFile.addEventListener('change', function (e) {
-                    self.loadFile(e.target.files[0]);
-                });
-            } else {
-                console.log('no es posible la importación');
-            }
-
-            self.track.activateButton.addEventListener('click', function () {
-                self.activateGeotracking();
-            });
-            self.track.deactivateButton.addEventListener('click', function () {
-                self.deactivateGeotracking();
-            });
-
-            const filter = function (searchTerm) {
-                searchTerm = searchTerm.toLowerCase();
-                //tc-ctl-geolocation-track-available-empty
-                const lis = Array.from(self.track.trackList.querySelectorAll('li'));
-                lis.forEach(function (li) {
-                    li.style.display = 'none';
-                });
-                const trackLis = lis.filter(function (li) {
-                    return li.matches('li:not([class]),li.' + Consts.classes.CHECKED);
-                });
-
-                const searchIcon = self.div.querySelector(`.${self.CLASS}-track-search-icon`);
-                if (searchTerm.length === 0) {
-                    trackLis.forEach(function (li) {
-                        li.style.display = '';
-                    });
-                    searchIcon.style.visibility = 'visible';
-                } else {
-                    searchIcon.style.visibility = 'hidden';
-                    var r = new RegExp(searchTerm, 'i');
-                    trackLis.forEach(function (li) {
-                        li.style.display = r.test(li.querySelector(self.const.selector.ACTIVATOR).text) ? '' : 'none';
-                    });
-
-                    if (!trackLis.some(function (li) {
-                        return li.style.display === '';
-                    })) {
-                        lis.forEach(function (li) {
-                            if (li.matches('[class^="tc-ctl-geolocation-track-not"]')) {
-                                li.style.display = '';
-                            }
-                        });
-                    }
-                }
-            };
-            const trackSearchListener = function () {
-                filter(this.value.toLowerCase().trim());
-            };
-            self.track.trackSearch.addEventListener("keyup", trackSearchListener);
-            self.track.trackSearch.addEventListener("search", trackSearchListener);
-
-            // en el panel
-            self.track.trackSave.addEventListener('click', self.saveTrack.bind(self));
-            self.track.trackAdd.addEventListener('click', self.addWaypoint.bind(self));
-
-            const list = self.div.querySelector(`.${self.CLASS}-track-available-lst`);
-
-            // en lista
-            const editName = function (edit, elm) {
-                if (elm.tagName !== 'LI') {
-                    elm = elm.parentElement.parentElement;
-                }
-
-                const input = elm.querySelector('input');
-                const btn = elm.querySelector(self.const.selector.ACTIVATOR);
-
-                if (edit) {
-
-                    input.classList.remove(Consts.classes.HIDDEN);
-                    input.focus();
-                    input.value = btn.text;
-                    btn.classList.add(Consts.classes.HIDDEN);
-                    elm.dataset.title = elm.title;
-                    elm.title = "";
-
-                    //elm.querySelector(sel.SIMULATE).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EDIT).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.DELETE).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.ACTIVATOR).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EXPORT).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.SHARE).classList.add(Consts.classes.HIDDEN);
-
-                    elm.querySelector(sel.SAVE).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.CANCEL).classList.remove(Consts.classes.HIDDEN);
-                } else {
-
-                    input.classList.add(Consts.classes.HIDDEN);
-                    btn.classList.remove(Consts.classes.HIDDEN);
-                    elm.title = elm.dataset.title;
-                    delete elm.dataset.title;
-
-                    //elm.querySelector(sel.SIMULATE).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EDIT).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.DELETE).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.ACTIVATOR).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.EXPORT).classList.remove(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.SHARE).classList.remove(Consts.classes.HIDDEN);
-
-                    elm.querySelector(sel.SAVE).classList.add(Consts.classes.HIDDEN);
-                    elm.querySelector(sel.CANCEL).classList.add(Consts.classes.HIDDEN);
-                }
-            };
-
-            self.uiSimulate = function (_simulate, elm) {
-                if (elm) {
-
-                    var cnt = elm.tagName === 'LI' ? elm : elm.parentNode;
-                    const btnPause = cnt.querySelector(sel.PAUSE);
-                    btnPause.classList.add(self.const.className.PLAY);
-                    btnPause.setAttribute('title', self.getLocaleString("tr.lst.start"));
-                    self.simulationStopped = true;
-
-                }
-            };
-
-            //list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.SIMULATE, function (e) {
-            //    var wait = self.getLoadingIndicator().addWait();
-
-            //    e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
-
-            //    loadTrack(self, e.target).then(function () { //Para evitar el bloqueo de la interfaz en móviles
-            //        self.getLoadingIndicator().removeWait(wait);
-            //    });
-            //}));
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(sel.ACTIVATOR, function (e) {
-                var wait = self.getLoadingIndicator().addWait();
-
-                drawTrack(self, e.target).then(function () {
-                    self.getLoadingIndicator().removeWait(wait);
-                });
-            }));
-
-            self.on(self.const.event.IMPORTEDTRACK, function (e) {
-                if (!self.isDisabled) {
-                    const listElement = self.track.trackList.querySelector('li[data-id="' + e.index + '"]');
-                    drawTrack(self, listElement.querySelector(sel.ACTIVATOR)).then(function () {
-                        if (self.loadingState) {
-                            delete self.loadingState;
-                            delete self.toShare;
-                        }
-                    });
-                    const transitionEvent = function (_event) {
-                        if (!HTMLElement.prototype.scrollIntoView) {
-                            self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
-                        }
-                        else {
-                            listElement.scrollIntoView({ behavior: "smooth", block: "end" });
-                        }
-                        listElement.removeEventListener("transitionend", transitionEvent, false);
-                    };
-                    listElement.addEventListener("transitionend", transitionEvent, false);
-                } else {
-                    self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: Consts.msgType.WARNING });
-                }
-            });
-
-            const _stopOtherTracks = function (self, trackLiId) {
-                self.track.trackList.querySelectorAll('li[data-id]').forEach(function (listItem) {
-                    if (listItem.dataset.id !== trackLiId) {
-                        //const btnSimulate = listItem.querySelector(sel.SIMULATE);
-                        const btnPause = listItem.querySelector(sel.PAUSE);
-                        self.simulationStopped = true;
-
-                        //btnSimulate.classList.remove(self.const.className.SIMULATIONACTIVATED);
-                        //btnSimulate.setAttribute('title', self.getLocaleString("tr.lst.simulate"));
-                        btnPause.classList.add(self.const.className.PLAY);
-                        btnPause.setAttribute('title', self.getLocaleString("tr.lst.start"));
-
-                        //self.uiSimulate(false, listItem);
-                        editName(false, listItem);
-                    }
-                });
-
-                // para el resize no me va bien aquí
-                //self.clear(self.const.layer.TRACK);
-            };
-
-            const drawTrack = function (self, btnDraw) {
-                return new Promise(function (resolve, _reject) {
-
-                    const trackLi = btnDraw.parentElement.parentElement;
-
-                    setTimeout(function () {
-                        if (trackLi.classList.contains(Consts.classes.CHECKED)) {
-                            //self.uiSimulate(false, btnDraw);
-
-                            self.clear(self.const.layer.TRACK);
-
-                            btnDraw.removeAttribute('title');
-                            //
-                        }
-                        else if (self.getSelectedTrackItem()) { // GLS: si hay elemento seleccionado actuamos
-                            _stopOtherTracks(self, trackLi.dataset.id);
-                            self.working = self.drawTrack(trackLi);
-                        } else {
-                            self.working = self.drawTrack(trackLi);
-                        }
-
-                        /* GLS: 15/02/2019 Preparamos la feature por si se comparte, necesito hacerlo aquí 
-                           porque la gestión en asíncrona y todo el flujo de exportación es síncrono */
-                        if (trackLi.classList.contains(Consts.classes.CHECKED)) {
-                            self.#prepareFeaturesToShare({ uid: trackLi.dataset.uid, setFeaturesToShare: true }).then(function () {
-                                resolve();
-                            });
-                        } else {
-                            resolve();
-                        }
-                    }, 0);
-                });
-            };
-
-            const loadTrack = function (self, btnSimulate) {
-                return new Promise(function (resolve, _reject) {
-                    setTimeout(function () {
-                        const trackLi = btnSimulate.closest("li");
-                        const selectedTrackItem = self.getSelectedTrackItem();
-                        _stopOtherTracks(self, trackLi.dataset.id);
-                        //self.uiSimulate(false, selectedTrackItem);
-                        //self.uiSimulate(true, btnSimulate);
-
-                        // para el resize con película mejor así
-                        if (selectedTrackItem && trackLi.dataset.id !== selectedTrackItem.dataset.id) {
-                            self.clear(self.const.layer.TRACK);
-                        }
-
-                        self.simulate_paused = false;
-                        self.simulateTrack(trackLi);
-
-                        resolve();
-                    }, 0);
-                });
-            };
-
-            const getParentListElement = function (elm) {
-                let result = elm;
-                while (result.tagName !== 'LI') {
-                    result = result.parentElement;
-                }
-                return result;
-            };
-
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.EDIT}`, function (e) {
-                editName(true, e.target);
-            }));
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.DELETE}`, function (e) {
-                self.removeTrack(getParentListElement(e.target)).then(function (deleted) {
-                    if (deleted && !self.availableTracks.length) {
-                        self.div.querySelector(self.const.selector.DELETEALL).disabled = true;
-                    }
-                })
-            }));
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.SAVE}`, function (e) {
-                const li = getParentListElement(e.target);
-                var newName = li.querySelector('input').value;
-                if (newName.trim().length === 0) {
-                    TC.alert(self.getLocaleString('geo.trk.edit.alert'));
-                }
-                else {
-                    self.editTrackName(li.dataset.uid, li.querySelector('input').value);
-                    editName(false, e.target);
-                }
-            }));
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.CANCEL}`, function (e) {
-                editName(false, e.target);
-            }));
-
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.SHARE}`, function (e) {
-                self.#setTrackToShare(getParentListElement(e.target)).then(function () {
-                    self.showShareDialog(self.#shareDialogDiv);
-                });
-            }));
-
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.EXPORT}`, function (e) {
-                const parent = getParentListElement(e.target);
-                e.target.setAttribute('disabled', "");
-
-                self.export(parent).then((features) => {
-                    self.getDownloadDialog().then(function (dialog) {
-                        const options = self.getDownloadDialogOptions(self.#getDownloadFileName(parent));
-                        dialog.open(features.map((f) => { f.uid = parent.dataset.uid; return f; }), options);
-
-                        e.target.removeAttribute('disabled');
-                    });
-                });
-            }));
-
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.STOP}`, function (e) {
-                //self.uiSimulate(false, e.target);
-                self.wrap.simulateTrackEnd();
-                const btnPause = e.target.parentElement.querySelector(sel.PAUSE);
+                var cnt = elm.tagName === 'LI' ? elm : elm.parentNode;
+                const btnPause = cnt.querySelector(sel.PAUSE);
                 btnPause.classList.add(self.const.className.PLAY);
-                btnPause.setAttribute('title', self.getLocaleString('tr.lst.start'));
-                if (!self.simulationStopped)
-                    e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
-                self.simulationSpeed = 1;
+                btnPause.setAttribute('title', self.getLocaleString("tr.lst.start"));
                 self.simulationStopped = true;
-            }));
 
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.PAUSE}`, function (e) {
-                self.simulate_paused = !e.target.classList.contains(self.const.className.PLAY);
-                if (self.simulate_paused)
-                    self.simulate_pausedElapse = -1;
-                else {
+            }
+        };
 
-                    if (self.simulationStopped) {
-                        var wait = self.getLoadingIndicator().addWait();
-                        e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
-                        loadTrack(self, e.target).then(function () { //Para evitar el bloqueo de la interfaz en móviles
-                            self.getLoadingIndicator().removeWait(wait);
-                            self.simulationStopped = false;
-                        });
+        self.on(self.const.event.IMPORTEDTRACK, function (e) {
+            if (!self.isDisabled) {
+                const listElement = self.track.trackList.querySelector('li[data-id="' + e.index + '"]');
+                self.#drawTrack(listElement.querySelector(self.const.selector.ACTIVATOR)).then(function () {
+                    if (self.loadingState) {
+                        delete self.loadingState;
+                        self.toShare = null;
                     }
-
-
-                }
-
-                e.target.setAttribute('title', self.getLocaleString(self.simulate_paused ? 'tr.lst.play' : 'tr.lst.pause'));
-                e.target.classList.toggle(self.const.className.PLAY, !!self.simulate_paused);
-            }));
-
-            var lapse = 0.5;
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.BACKWARD}`, function (e) {
-                if (self.simulationSpeed === 1)
-                    self.simulationSpeed = lapse;
-                else self.simulationSpeed = self.simulationSpeed / 2;
-
-                e.target.parentElement.querySelector(`.${self.CLASS} ${sel.FORWARD}`).disabled = false;
-
-                e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulationSpeed < 1 ? '/ ' + 1 / self.simulationSpeed : 'x ' + self.simulationSpeed;
-
-                if (self.simulationSpeed === 0.000244140625) {
-                    e.target.disabled = true;
-                }
-            }));
-
-            list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.FORWARD}`, function (e) {
-                self.simulationSpeed = self.simulationSpeed / lapse;
-
-                e.target.parentElement.querySelector(sel.SPEED).textContent = self.simulationSpeed < 1 ? '/ ' + 1 / self.simulationSpeed : 'x ' + self.simulationSpeed;
-
-                e.target.parentElement.querySelector(`.${self.CLASS} ${sel.BACKWARD}`).disabled = false;
-
-                if (self.simulationSpeed === 4096) {
-                    e.target.disabled = true;
-                }
-            }));
-
-
-            // popup
-            self.track.trackContinue.addEventListener('click', function () {
-                // cerramos popup y continuamos con el track de session y almacenando en session
-                Util.closeModal();
-                // al obtener la posición se almacena en session y continuamos almacenando en session mientras se mueve
-                self.setGeotracking();
-            });
-            self.track.trackRenew.addEventListener('click', function () {
-                // eliminamos el track actual de session - restablecemos el geotracking
-                delete self.geotrackingSession;
-                Util.storage.setSessionLocalValue(self.const.localStorageKey.GEOTRACKINGTEMP, undefined);
-                localforage
-                    .removeItem(self.const.localStorageKey.GEOTRACKINGTEMP)
-                    .catch(err => console.warn(err));
-                // cerramos el popup
-                Util.closeModal();
-                // al obtener la posición se almacena en session y continuamos almacenando en session mientras se mueve
-                self.setGeotracking();
-            });
-            self.track.trackClose.addEventListener('click', function () {
-                self.#deactivateGeotrackingState();
-            });
-            //self.track.trackAddSegment.addEventListener('click', function () {
-            //    TC.alert('pendiente');
-            //    // cerramos el popup
-            //    Util.closeModal();
-            //});
-
-            // popup advertencia
-            self.track.trackAdvertisementOK.addEventListener('click', function () {
-
-                const checkboxes = document.body.querySelectorAll('input[name*="Advertisement"]:checked');
-
-                if (checkboxes.length > 0) {
-                    localforage
-                        .setItem(checkboxes[0].getAttribute('name'), false)
-                        .catch(err => console.warn(err));
-                }
-
-                Util.closeModal();
-            });
-
-            self.track.renderTrack = self.div.querySelector('#tc-ctl-geolocation-track-render-' + self.id);
-            self.track.renderTrack.addEventListener('change', function () {
-                if (self.track.activateButton.classList.contains(Consts.classes.HIDDEN)) {
-                    self.geotrackingLayer.setVisibility(this.checked);
-                }
-
-                self.#trackVisibility = this.checked;
-            });
-
-            self.#bindTracks();
-
-            if (Util.isFunction(callback)) {
-                callback();
+                });
+                const transitionEvent = function (_event) {
+                    if (!HTMLElement.prototype.scrollIntoView) {
+                        self.track.trackList.scrollTop = e.index * listElement.offsetHeight;
+                    }
+                    else {
+                        listElement.scrollIntoView({ behavior: "smooth", block: "end" });
+                    }
+                    listElement.removeEventListener("transitionend", transitionEvent, false);
+                };
+                listElement.addEventListener("transitionend", transitionEvent, false);
+            } else {
+                self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: Consts.msgType.WARNING });
             }
         });
+
+        self.#bindTracks();
+
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+    }
+
+    #loadTrack(btnSimulate) {
+        return Util.getTimedPromise(() => {
+            const trackLi = btnSimulate.closest("li");
+            const selectedTrackItem = this.getSelectedTrackItem();
+            this.#stopOtherTracks(trackLi.dataset.id);
+            //self.uiSimulate(false, selectedTrackItem);
+            //self.uiSimulate(true, btnSimulate);
+
+            // para el resize con película mejor así
+            if (selectedTrackItem && trackLi.dataset.id !== selectedTrackItem.dataset.id) {
+                this.clear(this.const.layer.TRACK);
+            }
+
+            this.simulate_paused = false;
+            this.simulateTrack(trackLi);
+        }, 0);
+    }
+
+    async #drawTrack(btnDraw) {
+
+        const trackLi = btnDraw.parentElement.parentElement;
+
+        if (trackLi.classList.contains(Consts.classes.CHECKED)) {
+            //this.uiSimulate(false, btnDraw);
+
+            this.clear(this.const.layer.TRACK);
+
+            btnDraw.removeAttribute('title');
+            //
+        }
+        else {
+            if (this.getSelectedTrackItem()) { // GLS: si hay elemento seleccionado actuamos
+                this.#stopOtherTracks(trackLi.dataset.id);
+            }
+            this.#drawing = this.drawTrack(trackLi);
+            await this.#drawing;
+        }
+
+        /* GLS: 15/02/2019 Preparamos la feature por si se comparte, necesito hacerlo aquí 
+            porque la gestión en asíncrona y todo el flujo de exportación es síncrono */
+        if (trackLi.classList.contains(Consts.classes.CHECKED)) {
+            await this.#prepareFeaturesToShare({ uid: trackLi.dataset.uid });
+        }
+    }
+
+    #stopOtherTracks(trackLiId) {
+        this.track.trackList.querySelectorAll('li[data-id]').forEach((listItem) => {
+            if (listItem.dataset.id !== trackLiId) {
+                //const btnSimulate = listItem.querySelector(self.const.selector.SIMULATE);
+                const btnPause = listItem.querySelector(this.const.selector.PAUSE);
+                this.simulationStopped = true;
+
+                //btnSimulate.classList.remove(this.const.className.SIMULATIONACTIVATED);
+                //btnSimulate.setAttribute('title', this.getLocaleString("tr.lst.simulate"));
+                btnPause.classList.add(this.const.className.PLAY);
+                btnPause.setAttribute('title', this.getLocaleString("tr.lst.start"));
+
+                //this.uiSimulate(false, listItem);
+                this.#editName(false, listItem);
+            }
+        });
+
+        // para el resize no me va bien aquí
+        //this.clear(this.const.layer.TRACK);
+    }
+
+    // en lista
+    #editName(edit, elm) {
+        if (elm.tagName !== 'LI') {
+            elm = elm.parentElement.parentElement;
+        }
+
+        const input = elm.querySelector('input');
+        const sel = this.const.selector;
+        const btn = elm.querySelector(sel.ACTIVATOR);
+
+        if (edit) {
+
+            input.classList.remove(Consts.classes.HIDDEN);
+            input.focus();
+            input.value = btn.text;
+            btn.classList.add(Consts.classes.HIDDEN);
+            elm.dataset.title = elm.title;
+            elm.title = "";
+
+            //elm.querySelector(sel.SIMULATE).classList.add(Consts.classes.HIDDEN);
+            elm.querySelector(sel.EDIT).classList.add(Consts.classes.HIDDEN);
+            elm.querySelector(sel.DELETE).classList.add(Consts.classes.HIDDEN);
+            elm.querySelector(sel.ACTIVATOR).classList.add(Consts.classes.HIDDEN);
+            elm.querySelector(sel.EXPORT).classList.add(Consts.classes.HIDDEN);
+            elm.querySelector(sel.SHARE).classList.add(Consts.classes.HIDDEN);
+
+            elm.querySelector(sel.SAVE).classList.remove(Consts.classes.HIDDEN);
+            elm.querySelector(sel.CANCEL).classList.remove(Consts.classes.HIDDEN);
+        } else {
+
+            input.classList.add(Consts.classes.HIDDEN);
+            btn.classList.remove(Consts.classes.HIDDEN);
+            elm.title = elm.dataset.title;
+            delete elm.dataset.title;
+
+            //elm.querySelector(sel.SIMULATE).classList.remove(Consts.classes.HIDDEN);
+            elm.querySelector(sel.EDIT).classList.remove(Consts.classes.HIDDEN);
+            elm.querySelector(sel.DELETE).classList.remove(Consts.classes.HIDDEN);
+            elm.querySelector(sel.ACTIVATOR).classList.remove(Consts.classes.HIDDEN);
+            elm.querySelector(sel.EXPORT).classList.remove(Consts.classes.HIDDEN);
+            elm.querySelector(sel.SHARE).classList.remove(Consts.classes.HIDDEN);
+
+            elm.querySelector(sel.SAVE).classList.add(Consts.classes.HIDDEN);
+            elm.querySelector(sel.CANCEL).classList.add(Consts.classes.HIDDEN);
+        }
     }
 
     #getCurrentPoints = function () {
@@ -1430,11 +1399,10 @@ class Geolocation extends Control {
     }
 
     async #setTrackToShare(li) {
-        const self = this;
-        await self.getShareDialog(self.#shareDialogDiv);
-        const features = await self.#prepareFeaturesToShare({ uid: li.dataset.uid, setFeaturesToShare: false });
-        self.toShare = {
-            trackName: li.querySelector(self.const.selector.ACTIVATOR).text,
+        await this.getShareDialog(this.#shareDialogDiv);
+        const features = await this.#prepareFeaturesToShare({ uid: li.dataset.uid });
+        this.toShare = {
+            trackName: li.querySelector(this.const.selector.ACTIVATOR).text,
             features: features
         };
     }
@@ -1444,11 +1412,9 @@ class Geolocation extends Control {
     }
 
     deactivate() {
-        const self = this;
-
         Util.closeModal();
-        self.clearSelection();
-        self.deactivateGeotracking();
+        this.clearSelection();
+        this.deactivateGeotracking();
         //super.deactivate();
     }
 
@@ -1534,7 +1500,7 @@ class Geolocation extends Control {
         return self.track._infoPanelPromise;
     }
 
-    renderInfoNewPosition = function (d) {
+    renderInfoNewPosition(d) {
         const self = this;
 
         self.getRenderedHtml(self.CLASS + '-tracking-toast', self.#setFormatInfoNewPosition(d.pd), function (html) {
@@ -2162,7 +2128,7 @@ class Geolocation extends Control {
         const self = this;
         const secProfileData = self.elevationChartData?.secondaryElevationProfileChartData?.[0];
 
-        if (secProfileData?.ele && !secProfileData?.eleCoordinates) {
+        if (secProfileData?.ele && !secProfileData?.coords) {
 
             // Aplanamos a una lista de puntos
             let level = -2;
@@ -2172,7 +2138,7 @@ class Geolocation extends Control {
                 levelElm = levelElm[0];
             }
             while (Array.isArray(levelElm));
-            secProfileData.eleCoordinates = sourceCoordinates
+            secProfileData.coords = sourceCoordinates
                 .flat(level)
                 .map((c, i) => [c[0], c[1], secProfileData.ele[i]]);
         }
@@ -2230,13 +2196,14 @@ class Geolocation extends Control {
     async drawTrack(li, _activateSnapping) {
         const self = this;
 
-        self.clear(self.const.layer.TRACK);
+        this.clear(self.const.layer.TRACK);
 
-        self.#updateGeotrackingToolsState();
-        self.setSelectedTrack(li);
-        await self.drawTrackData(li);
-        await self.displayTrackProfile(li);
-        self.activate();
+        this.#updateGeotrackingToolsState();
+        this.setSelectedTrack(li);
+        await this.drawTrackData(li);
+        this.map.addControlState(this);
+        await this.displayTrackProfile(li);
+        this.activate();
     }
 
     #getElevationProfileFromCache(uid) {
@@ -2426,51 +2393,48 @@ class Geolocation extends Control {
     }
 
     clear(layerType) {
-        const self = this;
-
-        if (self.#onResize) {
-            window.removeEventListener("resize", self.#onResize, false);
-            self.#onResize = undefined;
+        if (this.#onResize) {
+            window.removeEventListener("resize", this.#onResize, false);
+            this.#onResize = undefined;
         }
 
-        if (layerType === self.const.layer.TRACK) {
-
-            self.trackLayer.clearFeatures();
-            self.endPointLayer.clearFeatures();
-            self.#startMarker = null;
-            self.#finishMarker = null;
-            delete self.trackLayer._fileHandle;
-            delete self.trackLayer.file;
-            delete self.trackLayer.fileSystemFile;
+        if (layerType === this.const.layer.TRACK) {
+            this.map?.removeControlState(this);
+            this.trackLayer.clearFeatures();
+            this.endPointLayer.clearFeatures();
+            this.#startMarker = null;
+            this.#finishMarker = null;
+            delete this.trackLayer._fileHandle;
+            delete this.trackLayer.file;
+            delete this.trackLayer.fileSystemFile;
 
             // gráfico perfil de elevación
-            self.getElevationControl().then(elevCtl => elevCtl && elevCtl.closeElevationProfile());
-            delete self.elevationChartData;
+            this.getElevationControl().then(elevCtl => elevCtl && elevCtl.closeElevationProfile());
+            delete this.elevationChartData;
 
             // overlay de la simulación
-            self.wrap.simulateTrackEnd();
+            this.wrap.simulateTrackEnd();
 
-            self.wrap.clear();
+            this.wrap.clear();
 
             // eliminamos la selección en la lista de tracks
-            self.track.trackList.querySelectorAll('li').forEach(function (li) {
+            this.track.trackList.querySelectorAll('li').forEach(function (li) {
                 li.classList.remove(Consts.classes.CHECKED);
             });
 
-            self.map.trigger(self.const.event.CLEARTRACK);
+            this.map.trigger(this.const.event.CLEARTRACK);
 
-            self.featuresToShare = [];
-
-            if (!self.loadingState) {
-                delete self.toShare;
+            if (!this.loadingState) {
+                this.toShare = null;
             }
 
             //Control.prototype.deactivate.call(self);
 
         } else {
-            self.geotrackingLayer.clearFeatures();
-            self.gpsLayer.clearFeatures();
+            this.geotrackingLayer.clearFeatures();
+            this.gpsLayer.clearFeatures();
         }
+        return this;
     }
 
     #onLayerError() {
@@ -2499,16 +2463,13 @@ class Geolocation extends Control {
         let message = options.message || self.getLocaleString("geo.trk.save.alert");
 
         const save = async function (layer) {
-            let wait;
-            wait = self.getLoadingIndicator().addWait();
-
             let trackName = options.importedFileName || self.track.trackName.value.trim();
 
             let tracks = await self.getAvailableTracks();
 
             let formatted = self.wrap.formattedToStorage(layer, true, options.notReproject);
 
-            let clean = function (wait) {
+            let clean = function () {
                 self.track.trackName.value = '';
                 self.track.trackName.disabled = true;
                 self.track.trackSave.disabled = true;
@@ -2516,8 +2477,6 @@ class Geolocation extends Control {
                 self.track.trackWPT.value = '';
                 self.track.trackWPT.disabled = true;
                 self.track.trackAdd.disabled = true;
-
-                self.getLoadingIndicator().removeWait(wait);
 
                 self.#updateGeotrackingToolsState();
             };
@@ -2554,54 +2513,9 @@ class Geolocation extends Control {
                 newTrack.fileHandle = options.fileHandle;
             }
 
-            const getHashToCompare = function (trackObject) {
-                // reemplazamos los ids contenidos en la geomtría que provocan falsos negativos.
-                let toGetHash = JSON.parse(JSON.stringify(trackObject));
-                const regex = /(\"id\"\s?\:\s?\"[a-z0-9]+\")/gi;
-                toGetHash.data = toGetHash.data.replace(regex, '""');
-
-                return md5(JSON.stringify(toGetHash));
-            };
-
-            const jsonFormat = new ol.format.GeoJSON();
-
-            const serializeFeatures = function (features) {
-                // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
-                let precision = Math.pow(10, Consts.DEGREE_PRECISION + 1);
-
-                features.forEach(function (feature) {
-                    let geom = Util.explodeGeometry(Util.compactGeometry(feature.getGeometry().getCoordinates(), precision));
-                    feature.getGeometry().setCoordinates(geom);
-                });
-
-                return jsonFormat.writeFeatures(features);
-            };
-
-            let hash = getHashToCompare(newTrack);
-
-            let sameTrackUID;
+            let sameTrack;
             if (mustAdd) {
-                // Guardamos un track si no existe ya
-                sameTrackUID = tracks.map(function (savedTrack) {
-                    let clonedTrack = JSON.parse(JSON.stringify(savedTrack));
-                    delete clonedTrack.uid;
-                    delete clonedTrack.profile;
-
-                    if (hash === getHashToCompare(clonedTrack)) {
-                        return savedTrack.uid;
-                    } else {
-                        // validamos si se trata de un track exportado/importado ya que se compacta la geometría
-                        clonedTrack.data = serializeFeatures(jsonFormat.readFeatures(clonedTrack.data));
-                        if (hash === md5(JSON.stringify(clonedTrack))) {
-                            return savedTrack.uid;
-                        } else {
-                            return null;
-                        }
-                    }
-
-                }).find(function (uid) {
-                    return uid !== null;
-                });
+                sameTrack = await self.#getMatchingTrack(newTrack);
             }
 
             const getTrackIndex = async function (uid) {
@@ -2619,7 +2533,7 @@ class Geolocation extends Control {
                 return index;
             };
 
-            if (!sameTrackUID) {
+            if (!sameTrack) {
                 if (mustAdd) {
                     newTrack.uid = options.uid || self.createTrackUID();
                     tracks.push(newTrack);
@@ -2630,34 +2544,54 @@ class Geolocation extends Control {
                     await self.setStoredTracks(tracks);
                     self.map.toast(message, { duration: 3000 });
 
-                    clean(wait);
+                    clean();
 
                     const index = await getTrackIndex(newTrack.uid);
                     return index;
                 }
                 catch (error) {
                     TC.alert(self.getLocaleString("geo.error.savelocalstorage") + ': ' + error.message);
-                    clean(wait);
+                    clean();
                     throw error;
                 }
             } else {
                 console.log('Ya existe un track con ese mismo hash');
 
-                clean(wait);
+                clean();
 
-                const index = await getTrackIndex(sameTrackUID);
+                const index = await getTrackIndex(sameTrack.uid);
                 return index;
             }
         };
 
         if (self.importedFileName || options.uid) {
-            return await save(self.trackLayer);
+            return await self.map.wait(save(self.trackLayer));
         }
         if (self.track.trackName.value.trim().length === 0) {
             self.track.trackName.value = new Date().toLocaleString();
-            return await save(self.geotrackingLayer);
         }
-        return await save(self.geotrackingLayer);
+        return await self.map.wait(save(self.geotrackingLayer));
+    }
+
+    async #getMatchingTrack(track) {
+        const jsonFormat = new ol.format.GeoJSON();
+
+        const serializeFeatures = function (features) {
+            // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
+            let precision = Math.pow(10, Consts.DEGREE_PRECISION + 1);
+
+            features.forEach(function (feature) {
+                let geom = Util.explodeGeometry(Util.compactGeometry(feature.getGeometry().getCoordinates(), precision));
+                feature.getGeometry().setCoordinates(geom);
+            });
+
+            return jsonFormat.writeFeatures(features);
+        };
+
+        const trackData = serializeFeatures(jsonFormat.readFeatures(track.data));
+        const tracks = await this.getAvailableTracks();
+        return tracks.find((savedTrack) => track.name === savedTrack.name &&
+            trackData === serializeFeatures(jsonFormat.readFeatures(savedTrack.data)));
     }
 
     addWaypoint() {
@@ -2668,24 +2602,22 @@ class Geolocation extends Control {
             waypointName = new Date().toLocaleString();
         }
 
-        const wait = self.getLoadingIndicator().addWait();
+        self.map?.wait(async () => {
+            self.#updateGeotrackingToolsState();
 
-        self.#updateGeotrackingToolsState();
+            self.wrap.addWaypoint(self.currentPoint.position, {
+                name: waypointName,
+                ele: self.currentPoint.heading,
+                time: new Date().getTime() // GLS: lo quito ya que hemos actualizado la función que gestiona la fechas para la exportación a GPX - espera la fecha en segundos -> / 1000 // para la exportación a GPX - espera la fecha en segundos
+            });
 
-        self.wrap.addWaypoint(self.currentPoint.position, {
-            name: waypointName,
-            ele: self.currentPoint.heading,
-            time: new Date().getTime() // GLS: lo quito ya que hemos actualizado la función que gestiona la fechas para la exportación a GPX - espera la fecha en segundos -> / 1000 // para la exportación a GPX - espera la fecha en segundos
+            self.track.trackWPT.value = '';
+            self.track.trackWPT.disabled = true;
+            self.track.trackAdd.disabled = true;
+
+            // cada vez que se añade un waypoint almacenamos en sessionStorage
+            Util.storage.setSessionLocalValue(self.const.localStorageKey.GEOTRACKINGTEMP, self.wrap.formattedToStorage(self.geotrackingLayer).features);
         });
-
-        self.track.trackWPT.value = '';
-        self.track.trackWPT.disabled = true;
-        self.track.trackAdd.disabled = true;
-
-        // cada vez que se añade un waypoint almacenamos en sessionStorage
-        Util.storage.setSessionLocalValue(self.const.localStorageKey.GEOTRACKINGTEMP, self.wrap.formattedToStorage(self.geotrackingLayer).features);
-
-        self.getLoadingIndicator().removeWait(wait);
     }
 
     async editTrackName(trackId, newName) {
@@ -2701,7 +2633,7 @@ class Geolocation extends Control {
         }
     }
 
-    removeTrack = function (li, options) {
+    removeTrack(li, options) {
         const self = this;
 
         return new Promise(function (resolve, _reject) {
@@ -2741,7 +2673,7 @@ class Geolocation extends Control {
         });
     }
 
-    removeAllTracks = function (button) {
+    removeAllTracks(button) {
         const self = this;
         TC.confirm(self.getLocaleString('geo.trk.delete.all.alert'), function () {
             self.div.querySelectorAll(`.${self.CLASS}-track-available-lst li[data-id]`).forEach(function (li) {
@@ -2749,9 +2681,9 @@ class Geolocation extends Control {
                 button.disabled = true;
             })
         });
-    };
+    }
 
-    setSelectedTrack = function (li) {
+    setSelectedTrack(li) {
         const self = this;
 
         if (!self.isActive) {
@@ -2779,50 +2711,48 @@ class Geolocation extends Control {
         btn.setAttribute('title', li.getAttribute('title'));
 
         if (!self.loadingState) {
-            delete self.toShare;
+            self.toShare = null;
         }
     }
 
-    getSelectedTrackItem = function () {
+    getSelectedTrackItem() {
         const self = this;
         return self.track.trackList.querySelector('li.' + Consts.classes.CHECKED);
     }
 
     clearSelectedTrack() {
-        const self = this;
-
-        const selected = self.getSelectedTrackItem();
+        const selected = this.getSelectedTrackItem();
         if (selected) {
 
-            if (self.#onResize) {
-                window.removeEventListener('resize', self.#onResize, false);
-                self.#onResize = undefined;
+            if (this.#onResize) {
+                window.removeEventListener('resize', this.#onResize, false);
+                this.#onResize = undefined;
             }
 
             selected.classList.remove(Consts.classes.CHECKED);
             selected.setAttribute('title', selected.textContent);
-            selected.querySelector(self.const.selector.ACTIVATOR).removeAttribute('title');
+            selected.querySelector(this.const.selector.ACTIVATOR).removeAttribute('title');
 
-            delete self.toShare;
+            this.toShare = null;
+            this.map?.removeControlState(this);
         }
     }
 
     clearSelection() {
-
-        self.wrap.deactivateSnapping();
-        var selected = self.getSelectedTrackItem();
+        this.wrap.deactivateSnapping();
+        var selected = this.getSelectedTrackItem();
         if (selected) {
-            self.clearSelectedTrack();
+            this.clearSelectedTrack();
         }
-        if (self.resultsPanelChart) {
+        if (this.resultsPanelChart) {
 
-            self.resultsPanelChart.div.removeEventListener('mouseover', self.resultsPanelChart.deactivateSnapping);
-            self.resultsPanelChart.div.removeEventListener('mouseout', self.resultsPanelChart.activateSnapping);
+            this.resultsPanelChart.div.removeEventListener('mouseover', this.resultsPanelChart.deactivateSnapping);
+            this.resultsPanelChart.div.removeEventListener('mouseout', this.resultsPanelChart.activateSnapping);
 
-            self.resultsPanelChart.close();
+            this.resultsPanelChart.close();
         }
 
-        self.clear(self.const.layer.TRACK);
+        this.clear(this.const.layer.TRACK);
     }
 
     async drawTrackData(li) {
@@ -3017,31 +2947,16 @@ class Geolocation extends Control {
         const self = this;
 
         if (self.trackLayer && self.track || self.toShare) {
-            let state = {
+            const state = {
                 id: self.id
             };
-            if (!self.toShare || self.toShare && !self.toShare.doZoom) { // caso compartir general                
-                self.toShare = { doZoom: false };
-                let clonedToShare = Object.assign({}, self.toShare);
-                let features = self.trackLayer.features;
-
-                if (features.length > 0 && self.featuresToShare && self.featuresToShare.length > 0) {
-                    clonedToShare.features = self.featuresToShare;
-                } else {
-                    const layerState = self.trackLayer.exportState({
-                        features: features
-                    });
-
-                    clonedToShare.features = layerState.features;
-                }
-
+            if (self.toShare) { // caso de compartir desde el propio control
+                state.trackResult = JSON.stringify(self.toShare);
+            } else { // caso compartir general
                 const selectedTrackItem = self.getSelectedTrackItem();
                 if (selectedTrackItem) {
-                    clonedToShare.trackName = selectedTrackItem.querySelector(self.const.selector.ACTIVATOR).text;
+                    state.trackResult = JSON.stringify({ trackName: selectedTrackItem.querySelector(self.const.selector.ACTIVATOR).text });
                 }
-                state.trackResult = JSON.stringify(clonedToShare);
-            } else { // compartir desde lista de rutas                
-                state.trackResult = JSON.stringify(self.toShare);
             }
 
             return state;
@@ -3054,47 +2969,63 @@ class Geolocation extends Control {
     importState(state) {
         const self = this;
         if (self.map) {
-            if (state.trackResult && state.trackResult.length) {
+            if (state.trackResult?.length) {
                 self.enable();
                 let sharedTrackResult = JSON.parse(state.trackResult);
 
-                if (sharedTrackResult.features && sharedTrackResult.features.length > 0) {
-                    const promises = new Array(sharedTrackResult.features.length);
-                    sharedTrackResult.features.forEach(function (f, idx) {
-                        const featureOptions = { data: f.data, id: f.id, showsPopup: f.showsPopup };
-                        var geom = f.geom; // El redondeo hace que ya no podamos validar con los tracks existentes.
-                        switch (f.type) {
-                            case Consts.geom.POLYLINE:
-                                promises[idx] = new Polyline(geom, featureOptions);
-                                break;
-                            case Consts.geom.MULTIPOLYLINE:
-                                promises[idx] = new MultiPolyline(geom, featureOptions);
-                                break;
-                            case Consts.geom.MARKER:
-                                promises[idx] = new Marker(geom, featureOptions);
-                                break;
-                            case Consts.geom.POINT:
-                                promises[idx] = new Point(geom, featureOptions);
-                                break;
+                const getTrackElement = (track) => self.track.trackList.querySelector('li[data-uid="' + track.uid + '"]');
+
+                self.map.wait(async () => {
+                    if (sharedTrackResult.features) {
+                        const promises = new Array(sharedTrackResult.features.length);
+                        sharedTrackResult.features.forEach(function (f, idx) {
+                            const featureOptions = { data: f.data, id: f.id, showsPopup: f.showsPopup };
+                            var geom = f.geom; // El redondeo hace que ya no podamos validar con los tracks existentes.
+                            switch (f.type) {
+                                case Consts.geom.POLYLINE:
+                                    promises[idx] = new Polyline(geom, featureOptions);
+                                    break;
+                                case Consts.geom.MULTIPOLYLINE:
+                                    promises[idx] = new MultiPolyline(geom, featureOptions);
+                                    break;
+                                case Consts.geom.MARKER:
+                                    promises[idx] = new Marker(geom, featureOptions);
+                                    break;
+                                case Consts.geom.POINT:
+                                    promises[idx] = new Point(geom, featureOptions);
+                                    break;
+                            }
+                        });
+
+                        if (Object.prototype.hasOwnProperty.call(sharedTrackResult, "doZoom")) {
+                            self.loadingState = true;
                         }
-                    });
 
-                    if (Object.prototype.hasOwnProperty.call(sharedTrackResult, "doZoom")) {
-                        self.loadingState = true;
-                        self.toShare = { doZoom: sharedTrackResult.doZoom };
-                    }
-
-                    Promise.all(promises).then(function (tcFeatures) {
-                        var options = { features: tcFeatures, fileName: sharedTrackResult.trackName, notReproject: true, isShared: true };
-                        if (!self.availableTracks) {
-                            self.getStoredTracks().then(function () {
-                                self.importTrack(options);
-                            });
-                        } else {
+                        const tcFeatures = await Promise.all(promises);
+                        const jsonFormat = new ol.format.GeoJSON();
+                        const importedTrack = {
+                            data: jsonFormat.writeFeatures(tcFeatures.map((f) => f.wrap.feature)),
+                            name: sharedTrackResult.trackName
+                        };
+                        const existingTrack = await self.#getMatchingTrack(importedTrack);
+                        if (existingTrack) {
+                            await self.drawTrack(getTrackElement(existingTrack));
+                        }
+                        else {
+                            var options = { features: tcFeatures, fileName: sharedTrackResult.trackName, notReproject: true, isShared: true };
+                            await self.getAvailableTracks();
                             self.importTrack(options);
                         }
-                    });
-                }
+                    }
+                    else { // No hay objeto features. Asumimos que es un estado no compartido.
+                        const tracks = await self.getAvailableTracks();
+                        const track = tracks.find((t) => t.name === sharedTrackResult.trackName);
+                        if (track) {
+                            await self.#bindTracks();
+                            await self.drawTrack(getTrackElement(track));
+                        }
+                    }
+                });
             }
         }
     }

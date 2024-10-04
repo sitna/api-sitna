@@ -75,76 +75,67 @@ class FeatureInfo extends FeatureInfoCommons {
         return ctl;
     }
 
-    callback(coords, _xy) {
+    async callback(coords, _xy) {
         const self = this;
 
         self.querying = true;
-        return new Promise(function (resolve, _reject) {
-            const elevationTool = self.getElevationTool();
-            elevationTool.then(function (tool) {
-                if (tool) {
-                    self.elevationRequest = tool.getElevation({
-                        crs: self.map.crs,
-                        coordinates: [coords]
-                    });
-                }
-            });
-
-            if (self.map && self.filterLayer) {
-                //aquí se pone el puntito temporal
-                var title = self.getLocaleString('featureInfo');
-                var markerOptions = Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
-                self.filterLayer.clearFeatures();
-                self.highlightedFeature = null;
-                self.filterFeature = null;
-                self.filterLayer.addMarker(coords, markerOptions).then(function afterMarkerAdd(marker) {
-                    ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
-                    ////o sea
-                    ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
-                    ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
-                    //if (self.lastFeatureCount === null) {
-                    //    self.map.putLayerOnTop(self.filterLayer);
-                    //    self.filterFeature = marker;
-                    //}
-                    //else {
-                    //    self.filterLayer.clearFeatures();
-                    //}
-                    self.map.putLayerOnTop(self.filterLayer);
-                    self.filterFeature = marker;
-
-                    elevationTool.then(function (tool) {
-                        self.renderResults({ coords: marker.geometry, displayElevation: tool, loading: true }, function () {
-                            self.displayResults();
-                        });
-                    });
-
-                    var visibleLayers = false;
-                    for (var i = 0; i < self.map.workLayers.length; i++) {
-                        var layer = self.map.workLayers[i];
-                        if (layer.type === Consts.layerType.WMS) {
-                            if (layer.getVisibility() && layer.names.length > 0) {
-                                visibleLayers = true;
-                                break;
-                            }
-                        }
-                    }
-                    self.queryResolution = self.map.getResolution();
-                    if (visibleLayers) {
-                        self.wrap.getFeatureInfo(coords, self.queryResolution).then(() => resolve());
-                    }
-                    else {
-                        // Metemos setTimeout para salirnos del hilo. Sin él se corre el riesgo de que se ejecute esto antes del evento BEFOREFEATUREINFO
-                        setTimeout(function () {
-                            self.responseCallback({ coords: coords });
-                            resolve();
-                        });
-                    }
+        const elevationTool = self.getElevationTool();
+        elevationTool.then(function (tool) {
+            if (tool) {
+                self.elevationRequest = tool.getElevation({
+                    crs: self.map.crs,
+                    coordinates: [coords]
                 });
             }
-            else {
-                resolve();
-            }
         });
+
+        if (self.map && self.filterLayer) {
+            //aquí se pone el puntito temporal
+            var title = self.getLocaleString('featureInfo');
+            var markerOptions = Util.extend({}, self.map.options.styles.marker, self.markerStyle, { title: title, set: title, showsPopup: false });
+            self.filterLayer.clearFeatures();
+            self.highlightedFeature = null;
+            self.filterFeature = null;
+            const marker = await self.filterLayer.addMarker(coords, markerOptions);
+            ////cuando se queda el puntito es porque esto sucede tras el cierre de la popup
+            ////o sea
+            ////lo normal es que primero se ejecute esto, y luego se procesen los eventos FEATUREINFO o NOFEATUREINFO
+            ////pero en el caso raro (la primera vez), ocurre al revés. Entonces, ya se habrá establecido lastFeatureCount (no será null)
+            //if (self.lastFeatureCount === null) {
+            //    self.map.putLayerOnTop(self.filterLayer);
+            //    self.filterFeature = marker;
+            //}
+            //else {
+            //    self.filterLayer.clearFeatures();
+            //}
+            self.map.putLayerOnTop(self.filterLayer);
+            self.filterFeature = marker;
+
+            elevationTool.then(function (tool) {
+                self.renderResults({ coords: marker.geometry, displayElevation: tool, loading: true }, function () {
+                    self.displayResults();
+                });
+            });
+
+            var visibleLayers = false;
+            for (var i = 0; i < self.map.workLayers.length; i++) {
+                var layer = self.map.workLayers[i];
+                if (layer.type === Consts.layerType.WMS) {
+                    if (layer.getVisibility() && layer.names.length > 0) {
+                        visibleLayers = true;
+                        break;
+                    }
+                }
+            }
+            self.queryResolution = self.map.getResolution();
+            if (visibleLayers) {
+                await self.wrap.getFeatureInfo(coords, self.queryResolution);
+            }
+            else {
+                // Metemos setTimeout para salirnos del hilo. Sin él se corre el riesgo de que se ejecute esto antes del evento BEFOREFEATUREINFO
+                await Util.getTimedPromise(() => self.responseCallback({ coords: coords }));
+            }
+        }
     }
 
     sendRequest(filter) {

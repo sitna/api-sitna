@@ -208,10 +208,6 @@ class WFSEdit extends SWCacheClient {
         };
     }
 
-    getClassName() {
-        return 'tc-ctl-wfsedit';
-    }
-
     async register(map) {
         const self = this;
 
@@ -880,52 +876,43 @@ class WFSEdit extends SWCacheClient {
     }
 
     async cacheLayer(layer) {
-        const self = this;
-        await self.getServiceWorker();
+        await this.getServiceWorker();
         if (navigator.onLine) {
             const gfUrl = layer.wrap.getGetFeatureUrl();
             const dftUrl = await layer.getDescribeFeatureTypeUrl();
             if (gfUrl && dftUrl) {
-                await self.createCache(self.#getStoragePrefix(layer), {
+                await this.createCache(this.#getStoragePrefix(layer), {
                     urlList: [gfUrl, dftUrl]
                 });
             }
         }
     }
 
-    getFeatureType(layer) {
-        const self = this;
-        return new Promise(function (resolve, reject) {
-            layer = layer || self.layer;
-            const li = self.map.getLoadingIndicator();
-            const waitId = li && li.addWait();
-            layer.describeFeatureType()
-                .then(function (attributes) {
-                    const layerEditData = self.getLayerEditData(layer);
-                    // recogemos los atributos no geométricos y definimos la geometría
-                    layerEditData.attributes = {};
-                    let key;
-                    for (key in attributes) {
-                        const attr = attributes[key];
-                        const geometryType = Util.getGeometryType(attr.type);
-                        if (geometryType) {
-                            layerEditData.geometryName = attr.name;
-                            layerEditData.geometryType = typeof geometryType === 'boolean' ? null : geometryType;
-                        }
-                        else {
-                            layerEditData.attributes[key] = attr;
-                        }
-                    }
-                    for (key in layerEditData.attributes) {
-                        const attr = layerEditData.attributes[key];
-                        attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
-                    }
-                    resolve(layerEditData);
-                })
-                .catch(function (err) {
-                    reject(err);
-                })
-                .finally(() => li && li.removeWait(waitId));
+    async getFeatureType(layer) {
+        return await this.map?.wait(async () => {
+            layer = layer || this.layer;
+            const attributes = await layer.describeFeatureType();
+
+            const layerEditData = this.getLayerEditData(layer);
+            // recogemos los atributos no geométricos y definimos la geometría
+            layerEditData.attributes = {};
+            let key;
+            for (key in attributes) {
+                const attr = attributes[key];
+                const geometryType = Util.getGeometryType(attr.type);
+                if (geometryType) {
+                    layerEditData.geometryName = attr.name;
+                    layerEditData.geometryType = geometryType === Consts.geom.GEOMETRY ? null : geometryType;
+                }
+                else {
+                    layerEditData.attributes[key] = attr;
+                }
+            }
+            for (key in layerEditData.attributes) {
+                const attr = layerEditData.attributes[key];
+                attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
+            }
+            return layerEditData;
         });
     }
 
@@ -980,73 +967,66 @@ class WFSEdit extends SWCacheClient {
         }
     }
 
-    openEditSession() {
+    async openEditSession() {
         const self = this;
         if (!self.layer) {
-            return Promise.reject(Error('No layer set for editing'));
+            throw Error('No layer set for editing');
         }
-        return new Promise(function (resolve, reject) {
+        let layerEditData;
+        try {
+            layerEditData = await self.getFeatureType(); // Obtenemos datos de los atributos y la geometría
+        }
+        catch (err) {
+            if (self.layer && self.layer.type === Consts.layerType.VECTOR) {
+                const editControl = await self.getEditControl();
+                editControl.activate();
+                self.#setEditState(true);
+                editControl.mode = Edit.mode.MODIFY;
+                return;
+            }
+            else {
+                throw err;
+            }
+        }
 
-            self.getFeatureType() // Obtenemos datos de los atributos y la geometría
-                .then(function (layerEditData) {
+        const editControl = await self.getEditControl();
+        const editableLayer = await self.getEditableLayer(self.layer);
+        editControl.setLayer(editableLayer);
+        switch (layerEditData.geometryType) {
+            case Consts.geom.MULTIPOLYLINE:
+            case Consts.geom.MULTIPOLYGON:
+                editControl.setComplexGeometry(true);
+                break;
+            default:
+                editControl.setComplexGeometry(false);
+                break;
+        }
+        editControl.activate();
+        self.#setEditState(true);
+        self.#setChangedState();
 
-                    self.getEditControl().then(function (editControl) {
-                        self.getEditableLayer(self.layer).then(function (editableLayer) {
-                            editControl.setLayer(editableLayer);
-                            switch (layerEditData.geometryType) {
-                                case Consts.geom.MULTIPOLYLINE:
-                                case Consts.geom.MULTIPOLYGON:
-                                    editControl.setComplexGeometry(true);
-                                    break;
-                                default:
-                                    editControl.setComplexGeometry(false);
-                                    break;
-                            }
-                            editControl.activate();
-                            self.#setEditState(true);
-                            self.#setChangedState();
+        const modes = [Edit.mode.MODIFY, Edit.mode.OTHER];
+        switch (layerEditData.geometryType) {
+            case Consts.geom.POINT:
+                modes.push(Edit.mode.ADDPOINT);
+                break;
+            case Consts.geom.POLYLINE:
+            case Consts.geom.MULTIPOLYLINE:
+                modes.push(Edit.mode.ADDLINE);
+                //modes.push(Edit.mode.CUT);
+                break;
+            case Consts.geom.POLYGON:
+            case Consts.geom.MULTIPOLYGON:
+                modes.push(Edit.mode.ADDPOLYGON);
+                //modes.push(Edit.mode.CUT);
+                break;
+            default:
+                break;
+        }
+        editControl.setModes(modes);
+        editControl.mode = Edit.mode.MODIFY;
 
-                            const modes = [Edit.mode.MODIFY, Edit.mode.OTHER];
-                            switch (layerEditData.geometryType) {
-                                case Consts.geom.POINT:
-                                    modes.push(Edit.mode.ADDPOINT);
-                                    break;
-                                case Consts.geom.POLYLINE:
-                                case Consts.geom.MULTIPOLYLINE:
-                                    modes.push(Edit.mode.ADDLINE);
-                                    //modes.push(Edit.mode.CUT);
-                                    break;
-                                case Consts.geom.POLYGON:
-                                case Consts.geom.MULTIPOLYGON:
-                                    modes.push(Edit.mode.ADDPOLYGON);
-                                    //modes.push(Edit.mode.CUT);
-                                    break;
-                                default:
-                                    break;
-                            }
-                            editControl.setModes(modes);
-                            editControl.mode = Edit.mode.MODIFY;
-
-                            self.#addAuxLayersToMap()
-                                .then(() => resolve())
-                                .catch((err) => reject(err));
-                        });
-                    });
-                })
-                .catch(function (err) {
-                    if (self.layer && self.layer.type === Consts.layerType.VECTOR) {
-                        self.getEditControl().then(function (editControl) {
-                            editControl.activate();
-                            self.#setEditState(true);
-                            editControl.mode = Edit.mode.MODIFY;
-                            resolve();
-                        });
-                    }
-                    else {
-                        reject(err);
-                    }
-                });
-        });
+        await self.#addAuxLayersToMap();
     }
 
     async closeEditSession() {
@@ -1365,72 +1345,74 @@ class WFSEdit extends SWCacheClient {
         });
     }
 
-    applyEdits() {
+    async applyEdits() {
         const self = this;
         if (self.layer) {
             const layerEditData = self.getLayerEditData();
             if (layerEditData.serializable) {
                 self.isSyncing = true;
                 self.#setSyncState();
-                const li = self.map.getLoadingIndicator();
-                const waitId = li && li.addWait();
-                // Copiamos modificadas para ponerle el nombre de atributo de geometría descrito en DescribeFeatureType.
-                const modified = layerEditData.modifiedFeaturesLayer.features.map(function (feature) {
-                    const unmodifiedFeature = layerEditData.beforeEditLayer.features.filter(f => f.id === feature.id)[0];
-                    let newData;
-                    let newGeometry;
-                    if (unmodifiedFeature) {
-                        newGeometry = Geometry.equals(feature.geometry, unmodifiedFeature.geometry) ?
-                            null : feature.geometry;
-                        newData = {};
-                        for (var key in feature.data) {
-                            if (key !== 'id') {
-                                const oldValue = unmodifiedFeature.data[key];
-                                const newValue = feature.data[key];
-                                if (oldValue !== newValue) {
-                                    newData[key] = newValue;
+                self.map?.wait(async () => {
+                    // Copiamos modificadas para ponerle el nombre de atributo de geometría descrito en DescribeFeatureType.
+                    const modified = layerEditData.modifiedFeaturesLayer.features.map(function (feature) {
+                        const unmodifiedFeature = layerEditData.beforeEditLayer.features.filter(f => f.id === feature.id)[0];
+                        let newData;
+                        let newGeometry;
+                        if (unmodifiedFeature) {
+                            newGeometry = Geometry.equals(feature.geometry, unmodifiedFeature.geometry) ?
+                                null : feature.geometry;
+                            newData = {};
+                            for (var key in feature.data) {
+                                if (key !== 'id') {
+                                    const oldValue = unmodifiedFeature.data[key];
+                                    const newValue = feature.data[key];
+                                    if (oldValue !== newValue) {
+                                        newData[key] = newValue;
+                                    }
                                 }
                             }
                         }
-                    }
-                    else {
-                        newGeometry = feature.geometry;
-                        newData = feature.data;
-                    }
-                    const result = new feature.constructor(newGeometry, { geometryName: layerEditData.geometryName });
-                    result.setData(newData);
-                    result.setId(feature.id);
-                    return result;
-                });
-                self.getEditableLayer(self.layer)
-                    .then(function (l) {
-                        l.applyEdits(layerEditData.addedFeaturesLayer.features, modified, layerEditData.removedFeaturesLayer.features)
-                            .then(function (_response) {
-                                if (self.layer.type === Consts.layerType.WMS) {
-                                    self.layer.refresh();
-                                }
-                                layerEditData.beforeEditLayer.clearFeatures();
-                                l.features.forEach(f => {
-                                    const beLayerFeatures = layerEditData.beforeEditLayer.features;
-                                    beLayerFeatures[beLayerFeatures.length] = f.clone();
-                                });
-                                self.deleteCache(self.#getStoragePrefix()).then(function () {
-                                    self.cacheLayer(l).finally(function () {
-                                        self.isSyncing = false;
-                                        li && li.removeWait(waitId);
-                                        // Las acciones a realizar a partir de este punto son las mismas que al descartar una edición
-                                        self.discardEdits();
-                                        self.map.toast(self.getLocaleString('changesSuccessfullySyncedWithServer'), { type: Consts.msgType.INFO });
-                                    });
-                                });
-                            })
-                            .catch(function (obj) {
-                                self.isSyncing = false;
-                                self.#setSyncState();
-                                li && li.removeWait(waitId);
-                                TC.error(self.getLocaleString('errorSyncingChanges', { code: obj.code, reason: obj.reason }), [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
-                            });
+                        else {
+                            newGeometry = feature.geometry;
+                            newData = feature.data;
+                        }
+                        const result = new feature.constructor(newGeometry, { geometryName: layerEditData.geometryName });
+                        result.setData(newData);
+                        result.setId(feature.id);
+                        return result;
                     });
+                    const editableLayer = await self.getEditableLayer(self.layer);
+                    try {
+                        await editableLayer.applyEdits(layerEditData.addedFeaturesLayer.features, modified, layerEditData.removedFeaturesLayer.features);
+                        if (self.layer.type === Consts.layerType.WMS) {
+                            self.layer.refresh();
+                        }
+                        layerEditData.beforeEditLayer.clearFeatures();
+                        editableLayer.features.forEach(f => {
+                            const beLayerFeatures = layerEditData.beforeEditLayer.features;
+                            beLayerFeatures[beLayerFeatures.length] = f.clone();
+                        });
+                        await self.deleteCache(self.#getStoragePrefix());
+                        const endProcess = function () {
+                            self.isSyncing = false;
+                            // Las acciones a realizar a partir de este punto son las mismas que al descartar una edición
+                            self.discardEdits();
+                            self.map.toast(self.getLocaleString('changesSuccessfullySyncedWithServer'), { type: Consts.msgType.INFO });
+                        };
+                        try {
+                            await self.cacheLayer(editableLayer);
+                            endProcess();
+                        }
+                        catch (e) {
+                            endProcess();
+                        }
+                    }
+                    catch (obj) {
+                        self.isSyncing = false;
+                        self.#setSyncState();
+                        TC.error(self.getLocaleString('errorSyncingChanges', { code: obj.code, reason: obj.reason }), [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
+                    }
+                });
             }
         }
     }

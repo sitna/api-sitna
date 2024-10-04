@@ -200,8 +200,8 @@ class Attribution extends Control {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-attrib.mjs');
-        self.template = module.default;
+        const { default: template } = await import('../templates/tc-ctl-attrib.mjs');
+        self.template = template;
     }
 
     async render(callback) {

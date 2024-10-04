@@ -932,34 +932,30 @@ class PrintMap extends MapInfo {
                             var layers = legendByGroup[index].layers;
                             //layers = layers.filter((layer) => layer.src || layer.srcBase64);
                             await Promise.all(layers.map(async (layer) => {
-                                return new Promise(async function (resolve, reject) {                                    
-                                    const layerLegend = legend.filter((l) => l)?.[0]?.find((l) => l.layerName === layer.name || _layer.names.length === legend[0].length);
-                                    //eliminar aquellos que no tengan visibilidad por 
-                                    if (!layerLegend) {
-                                        const i = legendByGroup[index].layers.findIndex((l) => l.title === layer.title)
-                                        if (i) {
-                                            legendByGroup[index].layers.splice(i, 1);
-                                            resolve();
-                                            return;
-                                        }
+                                const layerLegend = legend[0].find((l) => l.layerName === layer.name || _layer.names.length === legend[0].length);
+                                //eliminar aquellos que no tengan visibilidad por 
+                                if (!layerLegend) {
+                                    const i = legendByGroup[index].layers.findIndex((l) => l.title === layer.title)
+                                    if (i) {
+                                        legendByGroup[index].layers.splice(i, 1);
+                                        return;
                                     }
-                                    if (layerLegend?.src) {
-                                        const imageNode = await getImageAsNode(layerLegend.src);
-                                        layer.image = [{ base64: layerLegend.src, height: imageNode.height, width: imageNode.width }];
-                                    }
-                                    else if (layerLegend?.rules?.length) {
-                                        layer.image = await Promise.all(layerLegend.rules.map(async (rule) => {
-                                            const src = await CreateSymbolizer(rule);                                            
-                                            const image = await getImageAsNode(src);
-                                            const imageDetail = Util.imgTagToDataUrl(image, 'image/png');
-                                            return { base64: imageDetail.base64, height: image.height, width: image.width, title: rule.title || rule.name };
-                                        }));
-                                    }
-                                    resolve();
-                                });
-                            }))                            
+                                }
+                                if (layerLegend?.src) {
+                                    const imageNode = await getImageAsNode(layerLegend.src);
+                                    layer.image = [{ base64: layerLegend.src, height: imageNode.height, width: imageNode.width }];
+                                }
+                                else if (layerLegend?.rules?.length) {
+                                    layer.image = await Promise.all(layerLegend.rules.map(async (rule) => {
+                                        const src = await CreateSymbolizer(rule);
+                                        const image = await getImageAsNode(src);
+                                        const imageDetail = Util.imgTagToDataUrl(image, 'image/png');
+                                        return { base64: imageDetail.base64, height: image.height, width: image.width, title: rule.title || rule.name };
+                                    }));
+                                }
+                            }));
                             resolve();
-                        }).catch(async (err) => {
+                        }).catch(async (_err) => {
                             for (var i = 0; i < legendByGroup.length; i++) {
                                 var layers = legendByGroup[i].layers;
 

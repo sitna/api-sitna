@@ -27,13 +27,24 @@ class LanguageOption extends HTMLElement {
     }
 
     connectedCallback() {
-        const self = this;
-        self.shortCode = self.shortCode;
-        self.description = self.description;
+        this.#onShortCodeChange();
+        this.#onDescriptionChange();
     }
 
     static get observedAttributes() {
         return ['full-code', 'short-code', 'description', 'href'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (oldValue === newValue) {
+            return;
+        }
+        if (name === 'short-code') {
+            this.#onShortCodeChange();
+        }
+        else if (name === 'description') {
+            this.#onDescriptionChange();
+        }
     }
 
     get fullCode() {
@@ -50,16 +61,19 @@ class LanguageOption extends HTMLElement {
     }
 
     set shortCode(value) {
-        const self = this;
-        self.setAttribute('short-code', value);
-        self.#link.dataset.langCode = value;
+        this.setAttribute('short-code', value);
+    }
+
+    #onShortCodeChange() {
+        const shortCode = this.shortCode;
+        this.#link.dataset.langCode = shortCode;
         let parent = self;
         do {
             parent = parent.parentElement;
         }
         while (parent && !(parent instanceof LanguageSelector));
-        self.#link.href = parent?.getUrl(value);
-        self.#link.innerHTML = value;
+        this.#link.href = parent?.getUrl(shortCode);
+        this.#link.innerHTML = shortCode;
     }
 
     get description() {
@@ -67,9 +81,11 @@ class LanguageOption extends HTMLElement {
     }
 
     set description(value) {
-        const self = this;
-        self.setAttribute('description', value);
-        self.#link.setAttribute('title', value);
+        this.setAttribute('description', value);
+    }
+
+    #onDescriptionChange() {
+        this.#link.setAttribute('title', this.description);
     }
 
     get href() {

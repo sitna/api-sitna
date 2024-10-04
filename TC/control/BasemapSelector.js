@@ -185,7 +185,7 @@ class BasemapSelector extends MapContents {
     async render(callback) {
         const self = this;
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
-        await super.render.call(self, callback, Util.extend({}, self.options, { controlId: self.id }));
+        await super.render(callback, Util.extend({}, self.options, { controlId: self.id }));
         return self;
     }
 
@@ -396,6 +396,50 @@ class BasemapSelector extends MapContents {
         });
     }
 
+    #addProjectionButton(options = {}) {
+        const self = this;
+        const { crs, parent, layer, onclick } = options;
+        const blCRSList = layer.getCompatibleCRS();
+        const isFallback = !blCRSList.find((blcrs) => Util.CRSCodesEqual(blcrs, crs));
+
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.setAttribute('type', 'button');
+        button.dataset.crsCode = Util.getCRSCode(crs);
+        const codeSpan = document.createElement('span');
+        codeSpan.classList.add(self.CLASS + '-crs-code');
+        codeSpan.innerHTML = crs;
+        const descriptionSpan = document.createElement('span');
+        descriptionSpan.classList.add(self.CLASS + '-crs-desc', Consts.classes.LOADING);
+        button.appendChild(codeSpan);
+        button.appendChild(descriptionSpan);
+        if (isFallback) {
+            button.classList.add(Consts.classes.WARNING);
+            li.classList.add(Consts.classes.HIDDEN);
+        }
+        button.addEventListener(Consts.event.CLICK, onclick, { passive: true });
+        li.appendChild(button);
+        parent.appendChild(li);
+        
+        self.map.loadProjections({
+            crsList: [crs],
+            orderBy: 'name',
+            silent: true
+        }).then(function ([projObj]) {
+            const description = projObj?.name ?? '';
+            if (isFallback) {
+                // Es un CRS del fallback
+                descriptionSpan.innerHTML = description;
+                if (layer.fallbackLayer) {
+                    button.dataset.fallbackLayerId = layer.fallbackLayer.id;
+                }
+            } else {
+                descriptionSpan.innerHTML = self.getLocaleString('changeMapToCrs', { crs: description });
+            }
+            descriptionSpan.classList.remove(Consts.classes.LOADING);
+        });
+    }
+
     showProjectionChangeDialog(options = {}) {
         const self = this;
         const layer = options.layer;
@@ -406,108 +450,75 @@ class BasemapSelector extends MapContents {
 
         dialog.classList.remove(Consts.classes.HIDDEN);
 
+        const onChangeCrsClick = function (e) {
+
+            Util.closeModal();
+            const btn = e.currentTarget;
+            const crs = 'EPSG:' + btn.dataset.crsCode;
+
+            // dependerá del que esté activo
+            const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
+            dialog.classList.add(Consts.classes.HIDDEN);
+
+            const layer = self.getLayer(dialog.dataset.layerId);
+            if (layer) {
+                if (crs) {
+                    // setProjection puede bloquear UI, así que lo metemos en un timeout con espera
+                    self.map.wait(Util.getTimedPromise(() => {
+                        self.map.setProjection({
+                            crs: crs,
+                            baseLayer: layer
+                        });
+                    }, 20));
+                }
+                else {
+                    const fallbackLayer = self.getFallbackLayer(btn.dataset.fallbackLayerId);
+                    if (fallbackLayer) {
+                        self.map.setBaseLayer(fallbackLayer);
+                    }
+                }
+            }
+        };
+
         dialog.dataset.layerId = layer.id;
         const ul = dialog.querySelector('ul.' + self.CLASS + '-crs-list');
         ul.innerHTML = '';
-        self.map.loadProjections({
-            crsList: self.map.getCompatibleCRS({
-                layers: self.map.workLayers.concat(layer),
-                includeFallbacks: true
-            }),
-            orderBy: 'name'
-        }).then(function (projList) {
-            var hasFallbackCRS = false;
-            const fragment = document.createDocumentFragment();
-
-            const onChangeCrsClick = function (e) {
-
-                Util.closeModal();
-                const btn = e.target;
-                const crs = btn.dataset.crsCode;
-
-                // dependerá del que esté activo
-                const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
-                dialog.classList.add(Consts.classes.HIDDEN);
-
-                const layer = self.getLayer(dialog.dataset.layerId);
-                if (layer) {
-                    if (crs) {
-                        TC.loadProjDef({
-                            crs: crs,
-                            callback: function () {
-                                self.map.setProjection({
-                                    crs: crs,
-                                    baseLayer: layer
-                                });
-                            }
-                        });
-                    }
-                    else {
-                        const fallbackLayer = self.getFallbackLayer(btn.dataset.fallbackLayerId);
-                        if (fallbackLayer) {
-                            self.map.setBaseLayer(fallbackLayer);
-                        }
-                    }
-                }
-            };
-            projList
-                .forEach(function (projObj) {
-                    const li = document.createElement('li');
-                    const button = document.createElement('button');
-                    button.setAttribute('type', 'button');
-
-                    if (blCRSList.filter(function (crs) {
-                        return Util.CRSCodesEqual(crs, projObj.code);
-                    }).length === 0) {
-                        // Es un CRS del fallback
-                        hasFallbackCRS = true;
-
-                        button.innerHTML = projObj.name + ' (' + projObj.code + ')';
-                        if (options.layer.fallbackLayer) {
-                            button.dataset.fallbackLayerId = options.layer.fallbackLayer.id;
-                        }
-                        button.dataset.crsCode = projObj.code;
-                        button.classList.add(Consts.classes.WARNING);
-                        li.classList.add(Consts.classes.HIDDEN);
-                    } else {
-                        button.innerHTML = self.getLocaleString('changeMapToCrs', { crs: projObj.name + ' (' + projObj.code + ')' });
-                        button.dataset.crsCode = projObj.code;
-                    }
-
-                    button.addEventListener(Consts.event.CLICK, onChangeCrsClick, { passive: true });
-
-
-                    li.appendChild(button);
-                    fragment.appendChild(li);
-                });
-
-            if (options.fallbackLayer) {
-                const li = document.createElement('li');
-                const button = document.createElement('button');
-                button.setAttribute('type', 'button');
-                button.innerHTML = self.getLocaleString('reprojectOnTheFly');
-                button.dataset.fallbackLayerId = options.fallbackLayer.id;
-                button.addEventListener(Consts.event.CLICK, onChangeCrsClick, { passive: true });
-                li.appendChild(button);
-                fragment.appendChild(li);
-            }
-
-            if (hasFallbackCRS) {
-                const li = document.createElement('li');
-                const button = document.createElement('button');
-                button.setAttribute('type', 'button');
-                button.classList.add(self.#cssClasses.LOAD_CRS_BUTTON);
-                button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
-                button.addEventListener(Consts.event.CLICK, function (_e) {
-                    self.loadFallbackProjections();
-                }, { passive: true });
-                li.appendChild(button);
-                fragment.appendChild(li);
-            }
-            ul.appendChild(fragment);
-
-            modalBody.classList.remove(Consts.classes.LOADING);
+        const crsList = self.map.getCompatibleCRS({
+            layers: self.map.workLayers.concat(layer),
+            includeFallbacks: true
         });
+        const hasFallbackCRS = crsList.some((crs) => blCRSList.find((blcrs) => Util.CRSCodesEqual(blcrs, crs)));
+
+        for (const crs of crsList) {
+            self.#addProjectionButton({ crs, parent: ul, layer, onclick: onChangeCrsClick });
+        }
+
+        if (options.fallbackLayer) {
+            const li = document.createElement('li');
+            const button = document.createElement('button');
+            button.setAttribute('type', 'button');
+            button.innerHTML = self.getLocaleString('reprojectOnTheFly');
+            button.dataset.fallbackLayerId = options.fallbackLayer.id;
+            button.addEventListener(Consts.event.CLICK, onChangeCrsClick, { passive: true });
+            li.appendChild(button);
+            ul.appendChild(li);
+        }
+
+        if (hasFallbackCRS) {
+            const li = document.createElement('li');
+            const button = document.createElement('button');
+            button.setAttribute('type', 'button');
+            button.classList.add(self.#cssClasses.LOAD_CRS_BUTTON);
+            button.innerHTML = self.getLocaleString('showOnTheFlyProjections');
+            button.addEventListener(Consts.event.CLICK, function (_e) {
+                self.loadFallbackProjections();
+            }, { passive: true });
+            li.appendChild(button);
+            ul.appendChild(li);
+        }
+
+        modalBody.classList.remove(Consts.classes.LOADING);
+
         dialog.querySelector('.' + self.CLASS + '-name').innerHTML = layer.title || layer.name;
         Util.showModal(dialog);
     }
@@ -673,36 +684,28 @@ class BasemapSelector extends MapContents {
                     }
                 };
 
-                Promise.all(noDyn.map(function (baseLayer, i) {
-                    return new Promise(function (res, _rej) {
-                        if (baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS) {
-                            var promise = self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
-                            promise.then(
-                                function () {
-                                    addLayer.call(baseLayer, i).then(res);
-                                },
-                                function (_fail) {
-                                    self.#moreBaseLayers.splice(i, 1, null);
-                                    if (Util.isFunction(partialCallback)) {
-                                        partialCallback(i);
-                                    }
-                                    res();
-                                });
-                        } else {
-                            addLayer.call(baseLayer, i).then(res);
+                Promise.all(noDyn.map(async function (baseLayer, i) {
+                    if (baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS) {
+                        try {
+                            await (self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise());
                         }
-                    });
+                        catch (_fail) {
+                            self.#moreBaseLayers.splice(i, 1, null);
+                            if (Util.isFunction(partialCallback)) {
+                                partialCallback(i);
+                            }
+                            return;
+                        }
+                    }
+                    await addLayer.call(baseLayer, i);
                 })).finally(resolvePromise);
             });
 
         } else if (self.#moreBaseLayers) {
 
-            return new Promise(function (resolve, _reject) {
-                Promise.all(self.#moreBaseLayers.filter(function (baseLayer) {
-                    return baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS;
-                }).map(function (baseLayer) {
-                    return self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise();
-                })).then(function () {
+            return Promise.all(self.#moreBaseLayers
+                .filter((baseLayer) => baseLayer.type === Consts.layerType.WMS || baseLayer.type === Consts.layerType.WMTS)
+                .map((baseLayer) => self.map.on3DView ? getTo3DVIew(baseLayer) : baseLayer.getCapabilitiesPromise())).then(function () {
 
                     self.#moreBaseLayers = self.#moreBaseLayers.map(function (baseLayer) {
 
@@ -721,9 +724,8 @@ class BasemapSelector extends MapContents {
                         return baseLayer;
                     });
 
-                    resolve(self.moreBaseLayers);
+                    return self.#moreBaseLayers;
                 });
-            });
         }
 
         return self.#moreBaseLayersPromise;
