@@ -849,17 +849,18 @@ class Edit extends WebComponentControl {
 
     isFeatureAllowed(feature) {
         const self = this;
+        const modes = self.getModes();
         switch (true) {
             case feature instanceof Point:
-                return self.modes.includes(Edit.mode.ADDPOINT);
+                return modes.includes(Edit.mode.ADDPOINT);
             case feature instanceof Polyline:
-                return self.modes.includes(Edit.mode.ADDLINE);
+                return modes.includes(Edit.mode.ADDLINE);
             case feature instanceof MultiPolyline:
-                return self.modes.includes(Edit.mode.ADDLINE) && self.isMultiple;
+                return modes.includes(Edit.mode.ADDLINE) && self.isMultiple;
             case feature instanceof Polygon:
-                return self.modes.includes(Edit.mode.ADDPOLYGON);
+                return modes.includes(Edit.mode.ADDPOLYGON);
             case feature instanceof MultiPolygon:
-                return self.modes.includes(Edit.mode.ADDPOLYGON) && self.isMultiple;
+                return modes.includes(Edit.mode.ADDPOLYGON) && self.isMultiple;
             default:
                 return true;
         }
