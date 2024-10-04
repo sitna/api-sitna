@@ -99,6 +99,12 @@ TC.filter.Filter.prototype.toString = function () {
     return this.write();
 };
 
+TC.filter.Filter.prototype.clone = function () {
+    const result = new this.constructor();
+    Object.assign(result, this);
+    return result;
+};
+
 TC.filter.Filter.prototype.readFilterCondition_ = function (text) {
     this.setTagName(text);
     return this.readInnerCondition_(text);    
@@ -208,6 +214,12 @@ TC.filter.LogicalNary = function (tagName, _conditions) {
 };
 TC.inherit(TC.filter.LogicalNary, TC.filter.Filter);
 
+TC.filter.LogicalNary.prototype.clone = function () {
+    const result = TC.filter.Filter.prototype.clone.call(this);
+    this.conditions = this.conditions.map((f) => f.clone());
+    return result;
+};
+
 TC.filter.And = function (_conditions) {
     var params = ['And'].concat(Array.prototype.slice.call(arguments));
     TC.filter.LogicalNary.apply(this, params);
@@ -233,6 +245,13 @@ TC.filter.Not = function (condition) {
     
 };
 TC.inherit(TC.filter.Not, TC.filter.Filter);
+
+
+TC.filter.Not.prototype.clone = function () {
+    const result = TC.filter.Filter.clone.call(this);
+    result.condition = this.condition.clone();
+    return result;
+};
 
 TC.filter.Filter.prototype.write = function () {
     const prefix = this._defaultPrefixNS;
@@ -505,6 +524,12 @@ TC.filter.Spatial = function (tagName, geometryName, geometry, opt_srsName) {
     this.wrap = new TC.wrap.Filter(this);
 };
 
+TC.filter.Spatial.prototype.clone = function () {
+    const result = TC.filter.Filter.prototype.clone.call(this);
+    result.wrap = new TC.wrap.Filter(result);
+    return result;
+}
+
 TC.wrap.Filter = function (filter) {
     this.parent = filter;
 };
@@ -550,13 +575,19 @@ TC.filter.bbox = function () {
         return new TC.filter.Bbox(arguments[0], arguments[1], arguments[2]);
 };
 
-TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
+TC.filter.BBOX = TC.filter.Bbox = function (geometryName, extent, opt_srsName) {
     TC.filter.Filter.call(this, 'BBOX');
     this.geometryName = geometryName;
     this.extent = extent;
     this.srsName = opt_srsName;
 };
 TC.inherit(TC.filter.Bbox, TC.filter.Spatial);
+
+TC.filter.Bbox.prototype.clone = function () {
+    const result = TC.filter.Spatial.prototype.clone.call(this);
+    result.extent = this.extent.slice();
+    return result;
+};
 
 TC.filter.Bbox.prototype.write = function () {
     const srsName = typeof (this.srsName) !== "undefined" ? " srsName=\"" + this.srsName + "\"" : "";
