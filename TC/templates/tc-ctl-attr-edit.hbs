@@ -1,13 +1,4 @@
 <h2>{{i18n "featureAttributes"}}</h2>
 <div class="tc-ctl-attr-edit-body">
-    <table>
-        <tbody>
-            {{#data}}
-            {{> tc-ctl-attr-edit-row sealed=../sealed }}
-            {{/data}}
-            {{#unless sealed}}
-            {{> tc-ctl-attr-edit-row }}
-            {{/unless}}
-        </tbody>
-    </table>
+    {{> tc-ctl-attr-edit-table }}
 </div>

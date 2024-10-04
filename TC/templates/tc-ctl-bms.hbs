@@ -5,10 +5,12 @@
         {{> tc-ctl-bms-node controlId=../controlId}}
         {{/each}}
         {{#if dialogMore}}
-        <li class="tc-ctl-bms-node"><label class="tc-ctl-bms-more-node" title="{{i18n "moreBackgroundMaps"}}"><input type="radio" name="{{controlId}}-bm" value="moreLayers"><span></span></label>
-        <div class="tc-ctl-bms-info">
-            <h3>{{i18n "moreBackgroundMaps"}}</h3>
-        </div></li>
+        <li class="tc-ctl-bms-node">
+            <label class="tc-ctl-bms-more-node" title="{{i18n "moreBackgroundMaps"}}"><input type="radio" name="{{controlId}}-bm" value="moreLayers"><span></span></label>
+            <div class="tc-ctl-bms-info">
+                <h3>{{i18n "moreBackgroundMaps"}}</h3>
+            </div>
+        </li>
         {{/if}}
     </ul>
 </div>
