@@ -1,10 +1,14 @@
 <table>
     <tbody>
         {{#value}}
-        {{> tc-ctl-attr-edit-row sealed=../sealed }}
+            {{#if name}}
+                {{> tc-ctl-attr-edit-row }}
+            {{else}}
+                {{> tc-ctl-attr-edit-row name=@index value=this }}
+            {{/if}}
         {{/value}}
         {{#unless sealed}}
-        {{> tc-ctl-attr-edit-row }}
+            {{> tc-ctl-attr-edit-new }}
         {{/unless}}
     </tbody>
 </table>

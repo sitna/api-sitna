@@ -1,27 +1,53 @@
 <h2>{{i18n "share"}}</h2>
 <div>
-    <div class="tc-ctl-share-icons">
-        <sitna-button variant="minimal" class="tc-ctl-share-btn-email" text="{{i18n "sendMapByEmail"}}"></sitna-button>
-        <sitna-button variant="minimal" class="tc-ctl-share-btn-qr" text="{{i18n "createQrCode"}}"></sitna-button>
-        <sitna-button variant="minimal" class="tc-ctl-share-btn-facebook" text="{{i18n "shareMapToFacebook"}}"></sitna-button>
-        <sitna-button variant="minimal" class="tc-ctl-share-btn-twitter" text="{{i18n "shareMapToTwitter"}}"></sitna-button>
-        <sitna-button variant="minimal" class="tc-ctl-share-btn-whatsapp" text="{{i18n "shareMapToWhatsapp"}}"></sitna-button>
-        <sitna-button variant="minimal" class="tc-ctl-share-btn-bookmark" text="{{i18n "addToBookmarks"}}"></sitna-button>
-    </div>
+
     <div class="tc-ctl-share-select">
         <sitna-tab class="tc-ctl-share-select-url" text="{{i18n "shareLink"}}" title="{{i18n "shareLink"}}" selected group="{{controlId}}-format" for="{{controlId}}-format-url"></sitna-tab>
         <sitna-tab class="tc-ctl-share-select-iframe" text="{{i18n "embedMap"}}" title="{{i18n "embedMap"}}" group="{{controlId}}-format" for="{{controlId}}-format-iframe"></sitna-tab>
+        {{#if native}}
+        <sitna-tab class="tc-ctl-share-select-image" text="{{i18n "image"}}" title="{{i18n "shareMapAsImage"}}" group="{{controlId}}-format" for="{{controlId}}-format-image"></sitna-tab>
+        {{/if}}
     </div>
     <div id="{{controlId}}-format-url" class="tc-ctl-share-url-box tc-group tc-url">
         <input type="text" class="tc-textbox tc-url" readonly data-toggle="tooltip" data-placement="top" title="{{i18n "shareLink.tip.1"}}" />
-        <button type="button" class="tc-button hide tc-ctl-share-btn-shorten" title="{{i18n "shareLink.tip.3"}}">{{i18n "shorten"}}</button>
-        <button type="button" class="tc-button hide tc-ctl-share-btn-copy" title="{{i18n "shareLink.tip.2"}}">{{i18n "copy"}}</button>
+        <input class="tc-toggle tc-ctl-share-btn-shorten" type="checkbox" id="{{controlId}}-format-url-shorten" title="{{i18n "shareLink.tip.3"}}">
+        <label for="{{controlId}}-format-url-shorten">{{i18n "shorten"}}</label>        
+        <div class="tc-ctl-share-icons">
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-copy" text="{{i18n "shareLink.tip.2"}}"></sitna-button>
+            {{#if native}}
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-native" text="{{i18n "shareURL"}}"></sitna-button>
+            {{/if}}
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-email" text="{{i18n "sendMapByEmail"}}"></sitna-button>
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-qr" text="{{i18n "createQrCode"}}"></sitna-button>
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-whatsapp" text="{{i18n "shareMapToWhatsapp"}}"></sitna-button>
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-twitter" text="{{i18n "shareMapToTwitter"}}"></sitna-button>
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-facebook" text="{{i18n "shareMapToFacebook"}}"></sitna-button>
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-bookmark" text="{{i18n "addToBookmarks"}}"></sitna-button>
+        </div>
     </div>
     <div id="{{controlId}}-format-iframe" class="tc-ctl-share-url-box tc-group tc-iframe tc-hidden">
         <input type="text" class="tc-textbox tc-iframe" readonly data-toggle="tooltip" data-placement="top" title="{{i18n "embedMap.tip.1"}}" />
-        <button type="button" class="tc-button hide tc-ctl-share-btn-copy" title="{{i18n "embedMap.tip.2"}}">{{i18n "copy"}}</button>
+        <div class="tc-ctl-share-icons">
+            <sitna-button variant="minimal" class="tc-ctl-share-btn-copy" text="{{i18n "embedMap.tip.2"}}"></sitna-button>
+        </div>
+        </div>
+
+    {{#if native}}
+        <div id="{{controlId}}-format-image" class="tc-ctl-share-url-box tc-group tc-image tc-hidden">
+            <div class="tc-ctl-share-icons">
+                <div>
+                    <input class="tc-toggle tc-ctl-share-chk-qr" type="checkbox" id="{{controlId}}-qr" title="{{i18n "createQrCodeToImage"}}">
+                    <label for="{{controlId}}-qr" class="tc-ctl-share-label-qr">{{i18n "appendQRCode"}}</label>
+                </div>
+                <button class="tc-ctl-share-btn-png-native" data-format="PNG" title="{{i18n "sharePNG"}}"></button>
+                <button class="tc-ctl-share-btn-jpg-native" data-format="JPG" title="{{i18n "shareJPG"}}"></button>
+                <!--<sitna-button variant="minimal" class="tc-ctl-share-btn-png-native" text="{{i18n "sharePNG"}}"></sitna-button>
+    <sitna-button variant="minimal" class="tc-ctl-share-btn-jpg-native" text="{{i18n "shareJPG"}}"></sitna-button>-->
+            </div>
+        </div>
+        {{/if}}
+
+        <div class="tc-ctl-share-alert tc-alert tc-alert-warning tc-hidden">
+            <p>{{i18n "tooManyLayersLoaded" true}}</p>
+        </div>
     </div>
-    <div class="tc-ctl-share-alert tc-alert tc-alert-warning tc-hidden">
-        <p>{{i18n "tooManyLayersLoaded" true}}</p>
-    </div>    
-</div>

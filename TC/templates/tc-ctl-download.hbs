@@ -21,6 +21,9 @@
         </div>
 
         <div class="tc-group tc-group tc-ctl-download-cnt" style="text-align:right;">
+            {{#if clipboard}}
+            <button type="button" class="tc-ctl-clipboard-btn tc-button tc-icon-button" title="{{i18n "copyImageFromCurrentMap"}}" name="descargar">{{i18n "copyClipboard"}}</button>
+            {{/if}}
             <button type="button" class="tc-ctl-download-btn tc-button tc-icon-button" title="{{i18n "downloadImageFromCurrentMap"}}" name="descargar">{{i18n "download"}}</button>
         </div>
         <div class="tc-ctl-download-alert tc-alert tc-alert-warning tc-hidden">
