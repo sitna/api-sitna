@@ -34,6 +34,7 @@ import {
     , EventHelper
     , GeographicTilingScheme
     , GeometryInstance
+    , getImagePixels
     , Globe
     , GroundPrimitive
     , HeadingPitchRange
@@ -70,6 +71,7 @@ import {
     , TileCoordinatesImageryProvider
     , TileProviderError
     , TimeIntervalCollection
+    , createTaskProcessorWorker
     , Transforms
     , TrustedServers
     , VerticalOrigin
@@ -124,6 +126,7 @@ const cesium = {
     , EventHelper
     , GeographicTilingScheme
     , GeometryInstance
+    , getImagePixels
     , Globe
     , GroundPrimitive
     , HeadingPitchRange
@@ -160,6 +163,7 @@ const cesium = {
     , TileCoordinatesImageryProvider
     , TileProviderError
     , TimeIntervalCollection
+    , createTaskProcessorWorker
     , Transforms
     , TrustedServers
     , VerticalOrigin
@@ -300,6 +304,7 @@ cesium.ImageryLayer.prototype._requestImagery = function (imagery) {
 
 // requerido para que pasar por el algoritmo de proxificación
 cesium.Resource.prototype._fetchImage = cesium.Resource.prototype.fetchImage;
+
 cesium.Resource.prototype.fetchImage = function () {
     if (this.tcLayer) {
         let self = this;
@@ -310,11 +315,14 @@ cesium.Resource.prototype.fetchImage = function () {
         this.tcLayer.getWebGLUrl.call(this.tcLayer, this.url)
             .then(function (params) {
                 self.url = params.url;
-                let image = params.image ? new Promise((resolve) => { resolve(params.image) }) : cesium.Resource.prototype._fetchImage.apply(self, options);
-                if (image) {
+                let image;
+                if (params.image) {
+                    image = new Promise((resolve) => { resolve(params.image) })
                     image.then(deferred.resolve);
-                } else {
-                    deferred.reject(TOO_MANY_PARALLEL_REQUESTS);
+                }
+                else {
+                    self.request.throttleByServer = false;
+                    cesium.Resource.prototype._fetchImage.apply(self, options).then(deferred.resolve, deferred.reject);
                 }
             })
             .catch(function (error) {
@@ -326,5 +334,39 @@ cesium.Resource.prototype.fetchImage = function () {
         return cesium.Resource.prototype._fetchImage.apply(this, arguments);
     }
 };
+
+//cesium.Resource.prototype.fetchImage = function () {
+//    if (this.tcLayer) {
+//        let self = this;
+//        let options = arguments;
+
+//        let deferred = cesium.when.defer();
+
+//        this.tcLayer.getWebGLUrl.call(this.tcLayer, this.url)
+//            .then(function (params) {
+//                self.url = params.url;
+//                let image;
+//                if (params.image)
+//                    image = new Promise((resolve) => { resolve(params.image) })
+//                else {
+//                    self.request.throttleByServer = false;
+//                    image = cesium.Resource.prototype._fetchImage.apply(self, options);
+//                }
+                    
+//                if (image) {
+//                    image.then(deferred.resolve);
+//                } else {
+//                    deferred.reject(TOO_MANY_PARALLEL_REQUESTS);
+//                }
+//            })
+//            .catch(function (error) {
+//                deferred.reject(error);
+//            });
+
+//        return deferred.promise;
+//    } else {
+//        return cesium.Resource.prototype._fetchImage.apply(this, arguments);
+//    }
+//};
 
 export default cesium;
