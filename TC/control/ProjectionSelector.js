@@ -165,14 +165,7 @@ class ProjectionSelector extends Control {
     }
 
     setProjection(options = {}) {
-        const self = this;
-
-        TC.loadProjDef({
-            crs: options.crs,
-            callback: function () {
-                self.map.setProjection(options);
-            }
-        });
+        this.map.setProjection(options);
     }
 
     loadFallbackProjections() {
