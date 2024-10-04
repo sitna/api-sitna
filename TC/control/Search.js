@@ -2050,7 +2050,7 @@ class Search extends Control {
     POL_LABEL = 'Pol: ';
     PAR_LABEL = 'Par: ';
 
-    UTMX_LEN = 6;
+    UTMX_LEN = 7;
     UTMY_LEN = 7;
 
     availableSearchTypes = {};
@@ -3483,9 +3483,8 @@ class Search extends Control {
 
     #loadAllowedSearchTypes() {
         const self = this;
-        const defaults = Defaults.controls.search?.allowedSearchTypes || {};
         // Consolidamos los tipos de búsqueda que están directamente en el objeto de opciones con los de allowedSearchTypes.
-        let allowedSearchTypesOptions = Object.assign({}, defaults, self.options);
+        let allowedSearchTypesOptions = { ...self.options };
         delete allowedSearchTypesOptions.allowedSearchTypes;
         Object.assign(allowedSearchTypesOptions, self.options.allowedSearchTypes);
 
@@ -3506,15 +3505,21 @@ class Search extends Control {
         changeProperty('placename', Consts.searchType.PLACENAME);
         changeProperty('placenamemunicipality', Consts.searchType.PLACENAMEMUNICIPALITY);
 
+        // Nos quedamos solamente con las opciones de tipo de búsqueda
+        allowedSearchTypesOptions = Object.fromEntries(Object.entries(allowedSearchTypesOptions)
+            .filter(([key]) => Object.values(Consts.searchType).find(v => v === key)));
+
+        // Verificamos si hay definidos tipos de busca permitidos en la configuración.
+        // Si no hay, tomamos la configuración por defecto
+        if (!Object.keys(allowedSearchTypesOptions).length) {
+            allowedSearchTypesOptions = Defaults.controls.search?.allowedSearchTypes || {};
+        }
+
         if (self.options.customSearchTypes) {
             self.options.customSearchTypes.forEach(searchType => {
                 self.addAllowedSearchType(self.getUID(), searchType);
             });
         }
-
-        // Nos quedamos solamente con las opciones de tipo de búsqueda
-        allowedSearchTypesOptions = Object.fromEntries(Object.entries(allowedSearchTypesOptions)
-            .filter(([key]) => Object.values(Consts.searchType).find(v => v === key)));
 
         const keys = Object.keys(allowedSearchTypesOptions);
 
@@ -4349,47 +4354,38 @@ class Search extends Control {
     }
 
     #drawPoint(id) {
-        const self = this;
-
-        let wait = self.loading.addWait();
-
-        var point = self.getPoint(id);
-        var title;
-        var promise;
-
-        if (point) {
-            title = self.getLabel(id);
-            promise = self.layer.addMarker(point, Util.extend({}, self.map.options.styles.point, { title: title, group: title }));
-        } else {
-            var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
-            id = self.LAT + match[2] + self.LON + match[1];
-            point = self.getPoint(id);
+        this.map?.wait(async () => {
+            let point = this.getPoint(id);
+            let title;
+            let markerPromise;
 
             if (point) {
-                title = self.getLabel(id);
-                promise = self.layer.addMarker(point, Util.extend({}, self.map.options.styles.point, { title: title, group: title }));
+                title = this.getLabel(id);
+                markerPromise = this.layer.addMarker(point, Util.extend({}, this.map.options.styles.point, { title: title, group: title }));
+            } else {
+                var match = /^Lat((?:[+-]?)\d+(?:\.\d+)?)Lon((?:[+-]?)\d+(?:\.\d+)?)$/.exec(id);
+                id = this.LAT + match[2] + this.LON + match[1];
+                point = this.getPoint(id);
 
-                self.textInput.value = title;
+                if (point) {
+                    title = this.getLabel(id);
+                    markerPromise = this.layer.addMarker(point, Util.extend({}, this.map.options.styles.point, { title: title, group: title }));
+
+                    this.textInput.value = title;
+                }
             }
-        }
-        const promiseTemp = new Promise((resolve) => {
-            setTimeout(() => { resolve(); }, 100)
-        })
-        Promise.all([promise, promiseTemp]).then(function (param) {
-            self.map.trigger(Consts.event.LAYERUPDATE, {
-                layer: self.layer, newData: param[0]
+            const [marker] = await Promise.all([markerPromise, Util.getTimedPromise(null, 100)]);
+            this.map.trigger(Consts.event.LAYERUPDATE, {
+                layer: this.layer, newData: marker
             });
 
-            self.map.trigger(Consts.event.FEATURESADD, {
-                layer: self.layer, features: [param[0]]
+            this.map.trigger(Consts.event.FEATURESADD, {
+                layer: this.layer, features: [marker]
             });
 
 
-            self.map.zoomToFeatures([param[0]]);
-
-            self.loading.removeWait(wait);
+            this.map.zoomToFeatures([marker]);
         });
-
     }
 
     getCoordinatesQuery(id) {
