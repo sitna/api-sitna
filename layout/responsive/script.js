@@ -144,7 +144,7 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
 
             toolsPanel.addEventListener(SITNA.Consts.event.CLICK, function (e) {
                 let tab = e.target;
-                if (tab.tagName === "BUTTON" && tab.closest("div.tc-ctl." + SITNA.Consts.classes.COLLAPSED)) {
+                if ((tab.tagName === "BUTTON" || tab.tagName === "SITNA-BUTTON" || tab.tagName === "SITNA-TOGGLE") && tab.closest("div.tc-ctl." + SITNA.Consts.classes.COLLAPSED)) {
                     tab = tab.parentElement;
                 }
                 if (tab.tagName === ('H2')) {
