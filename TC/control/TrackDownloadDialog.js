@@ -25,7 +25,7 @@ class TrackDownloadDialog extends FeatureDownloadDialog {
     addUIEventListeners() {
         super.addUIEventListeners();
         if (this.modalBody) {
-            this.modalBody.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio][name$="-dldlog-source"]', function (e) {
+            this.modalBody.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio][name$="-dldlog-source"]', function (_e) {
 
             }));
         }
