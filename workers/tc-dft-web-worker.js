@@ -26,19 +26,19 @@ function tXml(S, options) {
     var openBracketCC = "<".charCodeAt(0);
     var closeBracket = ">";
     var closeBracketCC = ">".charCodeAt(0);
-    var minus = "-";
+    //var minus = "-";
     var minusCC = "-".charCodeAt(0);
-    var slash = "/";
+    //var slash = "/";
     var slashCC = "/".charCodeAt(0);
-    var exclamation = '!';
+    //var exclamation = '!';
     var exclamationCC = '!'.charCodeAt(0);
-    var singleQuote = "'";
+    //var singleQuote = "'";
     var singleQuoteCC = "'".charCodeAt(0);
-    var doubleQuote = '"';
+    //var doubleQuote = '"';
     var doubleQuoteCC = '"'.charCodeAt(0);
-    var openSquareBracket = "[";
+    //var openSquareBracket = "[";
     var openSquareBracketCC = "[".charCodeAt(0);
-    var closeSquareBracket = "]";
+    //var closeSquareBracket = "]";
     var closeSquareBracketCC = "]".charCodeAt(0);
 
     /**
@@ -109,11 +109,6 @@ function tXml(S, options) {
         var c = S[pos];
         while (nameSpacer.indexOf(c) === -1) {
             c = S[++pos];
-            // flacunza: Ignoramos los prefijos
-            if (c === ':') {
-                pos++;
-                start = pos;
-            }
         }
         return S.slice(start, pos);
     }
@@ -170,12 +165,12 @@ function tXml(S, options) {
         // optional parsing of children
         if (S.charCodeAt(pos - 1) !== slashCC) {
             if (node.tagName == "script") {
-                var start = pos + 1;
+                const start = pos + 1;
                 pos = S.indexOf('</script>', pos);
                 node.children = [S.slice(start, pos - 1)];
                 pos += 8;
             } else if (node.tagName == "style") {
-                var start = pos + 1;
+                const start = pos + 1;
                 pos = S.indexOf('</style>', pos);
                 node.children = [S.slice(start, pos - 1)];
                 pos += 7;
@@ -211,10 +206,10 @@ function tXml(S, options) {
         }
     }
 
-    var out = null;
+    let out = null;
     if (options.attrValue !== undefined) {
         options.attrName = options.attrName || 'id';
-        var out = [];
+        out = [];
 
         while ((pos = findElements()) !== -1) {
             pos = S.lastIndexOf('<', pos);
@@ -409,178 +404,401 @@ console.log("MILLISECONDS",end2-start2);
 
 (function () {
 
-    var simplify = function simplify(children, attributes) {
-        var out = {};
-        if ((!children || !children.length) && !attributes) {
-            return '';
-        }
-        children = children || [];
+    const XSD_PREFIXES = ['xsd', 'xs'];
+    const TEXT_NODE = '#text';
+    const ATTRIBUTE_NAME_PREFIX = '@';
+    const removePrefix = (str, prefix) => prefix ? str.substring(prefix.length) : str.substring(str.indexOf(":") + 1);
+    const addPrefix = (str, prefix) => str.indexOf(':') > 0 ? str : prefix + str;
 
-        if (children.length === 1 && typeof children[0] == 'string') {
-            return children[0];
-        }
-        // map each object
-        children.forEach(function (child) {
-            if (typeof child !== 'object') {
-                return;
+    const getPrefixForNamespace = function (schema, namespace) {
+        for (const [attrName, value] of Object.entries(schema.attributes)) {
+            if (attrName.startsWith('xmlns:') && value === namespace) {
+                return attrName.substring(attrName.indexOf(':') + 1) + ':';
             }
-            var prefixIdx = child.tagName.indexOf('ows:');
-            var tagName = prefixIdx < 0 ? child.tagName : child.tagName.substr(prefixIdx + 4);
-            if (!out[tagName])
-                out[tagName] = [];
-            var kids = simplify(child.children, child.attributes);
-            out[tagName].push(kids);
-            if (child.attributes) {
-                for (var key in child.attributes) {
-                    kids[key] = child.attributes[key];
+        }
+        return '';
+    };
+
+    const getTargetNamespacePrefix = function (schema) {
+        const targetNamespace = schema.attributes?.targetNamespace;
+        if (targetNamespace) {
+            return getPrefixForNamespace(schema, targetNamespace);
+        }
+        return '';
+    };
+
+    const removePrefixFromAttribute = function (attributes, attributeName, prefix) {
+        if (attributes?.[attributeName]?.indexOf(prefix) === 0) {
+            attributes[attributeName] = removePrefix(attributes[attributeName], prefix);
+        }
+    };
+
+    const addPrefixToAttribute = function (attributes, attributeName, prefix) {
+        if (attributes?.[attributeName]) {
+            attributes[attributeName] = addPrefix(attributes[attributeName], prefix);
+        }
+    };
+
+    const getPredicateForTagName = (...tagNames) => {
+        const compoundedTagNames = tagNames.slice();
+        for (const tagName of tagNames) {
+            for (const prefix of XSD_PREFIXES) {
+                compoundedTagNames.push(prefix + ':' + tagName);
+            }
+        }
+        return function (node) {
+            for (const tagName of compoundedTagNames) {
+                if (node?.tagName === tagName) {
+                    return true;
                 }
             }
-        });
+            return false;
+        };
+    };
 
-        for (var i in out) {
-            if (out[i].length == 1) {
-                out[i] = out[i][0];
+    const findByTagName = function (node, ...predicateOrTagNames) {
+        let result = [];
+        let predicate;
+        if (typeof predicateOrTagNames[0] === 'function') {
+            predicate = predicateOrTagNames[0];
+        }
+        else {
+            predicate = getPredicateForTagName(...predicateOrTagNames);
+        }
+        if (predicate(node)) {
+            result.push(node);
+        }
+        if (node?.children) {
+            for (const child of node.children) {
+                result = result.concat(findByTagName(child, predicate));
             }
         }
-
-        return out;
+        return result;
     };
-    const removePreffix = function (str) {
-        return str.substring(str.indexOf(":") + 1);
-    }
-    const copySchema = function (schema1, schema2) {
+
+    const schemaElementPredicate = getPredicateForTagName('element', 'attribute', 'attributeGroup', 'complexType', 'simpleType', 'include', 'import');
+
+    const externalPrefixes = new WeakMap();
+
+    const copySchema = function (schema1, schema2, prefix) {
         for (var key in schema2.attributes) {
-            schema1.attributes[key] = schema2.attributes[key];
+            if (key !== 'targetNamespace') {
+                schema1.attributes[key] = schema2.attributes[key];
+            }
         }
-        schema1.children = schema1.children.concat(schema2.children.filter(function (e) { return e.tagName === "element" || e.tagName === "complexType" || e.tagName === "import" }));
-    }
-    const findByTagName = function (node, tagName) {
-        if (node.tagName === tagName)
-            return [node];
-        else if (node.children) {
-            const nodes = node.children.filter(function (node) { return node.tagName === tagName })
-            if (nodes.length > 0) return nodes;
-            else
-                return node.children.reduce(function (vi, va) {
-                    return vi.concat(findByTagName(va, tagName));
-                }, [])
+        const newChildren = schema2
+            .children
+            .filter(schemaElementPredicate);
+
+        const newDescendants = findByTagName(schema2, schemaElementPredicate);
+
+        const targetNamespacePrefix = getTargetNamespacePrefix(schema2);
+        if (targetNamespacePrefix) {
+            newDescendants.forEach((c) => {
+                removePrefixFromAttribute(c.attributes, 'name', targetNamespacePrefix);
+                removePrefixFromAttribute(c.attributes, 'type', targetNamespacePrefix);
+                removePrefixFromAttribute(c.attributes, 'ref', targetNamespacePrefix);
+            });
         }
-        return [];
-    }
-    const proccessIncludes = async function (schema, url) {
-        var include = schema.children.filter(function (node) { return node.tagName === "include" })
-        if (include.length > 0) {
-            for (var i = 0; i < include.length; i++) {
-                var _url = include[i].attributes.schemaLocation;
-                _url = _url.startsWith("http") ? _url : url.substring(0, url.lastIndexOf("/") + 1) + _url;
-                if (IncludesUsed.indexOf(_url) >= 0) continue;
+        if (prefix) {
+            newDescendants.forEach((c) => {
+                addPrefixToAttribute(c.attributes, 'name', prefix);
+                addPrefixToAttribute(c.attributes, 'type', prefix);
+                addPrefixToAttribute(c.attributes, 'ref', prefix);
+            });
+        }
+        newChildren.forEach((child2) => {
+            const tagName = removePrefix(child2.tagName);
+            if (tagName !== 'include' || tagName !== 'import' ||
+                !schema1.children.some((child1) => child1.tagName === child2.tagName &&
+                child1.attributes?.name === child2.attributes?.name)) {
+                if (tagName === 'include' && prefix) {
+                    // Si es un include que estaba en un import hay que meter el prefijo del import
+                    externalPrefixes.set(child2, prefix);
+                }
+                schema1.children.push(child2);
+            }
+        })
+    };
+
+    const externalPredicate = getPredicateForTagName('include', 'import');
+
+    const processExternals = async function (schema, url) {
+        const external = schema.children.find(externalPredicate);
+        if (external) {
+            let _url = new URL(external.attributes.schemaLocation, url || schema._url).href;
+            _url = _url.replaceAll('&amp;', '&');
+            if (!processedExternals.has(_url)) {
                 var schema2;
                 try {
                     schema2 = await proxifyUrl(_url);
+                    schema2._url = _url;
+                    schema2.children
+                        .filter(externalPredicate)
+                        .forEach((ext) => {
+                            ext.attributes.schemaLocation = new URL(ext.attributes.schemaLocation, _url).href;
+                        });
                 } catch (err) {
                     return schema
                 }
-                copySchema(schema, schema2);
-                IncludesUsed.push(_url);
-                proccessIncludes(schema, _url);
-                return schema;
+                let prefix = '';
+                const tagName = removePrefix(external.tagName);
+                if (tagName === 'import') {
+                    // Los imports deben añadir el prefijo de namespace
+                    const ns = external.attributes.namespace;
+                    for (const [key, value] of Object.entries(schema.attributes)) {
+                        if (value === ns) {
+                            prefix = removePrefix(key) + ':';
+                            break;
+                        }
+                    }
+                }
+                else { // include
+                    const externalPrefix = externalPrefixes.get(external);
+                    if (externalPrefix) {
+                        prefix = externalPrefix;
+                    }
+                }
+                copySchema(schema, schema2, prefix);
+                if (tagName === 'include' && schema2.attributes?.targetNamespace) {
+                    schema.attributes.targetNamespace ??= schema2.attributes.targetNamespace;
+                }
+                processedExternals.add(_url);
             }
+            schema.children.splice(schema.children.indexOf(external), 1);
+            await processExternals(schema, _url);
         }
         return schema;
-    }
-    const searchHierarchyTypes = async function (schema, type, urlBegin) {
-        let IncludesUsed = [];
-        const prom = new Promise(async function (resolve) {
-            const getRecursive = async function (schema, type, url) {
-                var temp = schema.children.find(function (node) { return node.tagName === "complexType" && node.attributes.name === removePreffix(type) });
-                if (!temp) {
-                    IncludesUsed.push(url);
-                    var include = schema.children.filter(function (node) { return node.tagName === "include" });
-                    if (include.length > 0) {
-                        for (var i = 0; i < include.length; i++) {
-                            var _url = include[i].attributes.schemaLocation;
-                            _url = _url.startsWith("http") ? _url : url.substring(0, url.lastIndexOf("/") + 1) + _url;
-                            if (IncludesUsed.indexOf(_url) >= 0) continue;
-                            var schema;
-                            try {
-                                schema = await proxifyUrl(_url);
-                            } catch (err) {
-                                console.log(err)
-                                throw err;
-                            }
-                            await getRecursive({ ...schema }, type, _url);
-                        }
-                    }
+    };
+
+    const flattenElements = function (parent) {
+        let result = [];
+        if (parent.children) {
+            for (const child of parent.children.filter(getPredicateForTagName('element', 'complexContent', 'sequence', 'all'))) {
+                if (removePrefix(child.tagName) === 'element') {
+                    result.push(child);
                 }
                 else {
-                    var subType = null;
-                    var extension = findByTagName(temp, "extension")[0];
-                    var subelement = findByTagName(temp, "element")[0]
-                    if (extension && extension.attributes.base)
-                        subType = extension.attributes.base;
-                    if (subelement && subelement.attributes.ref)
-                        subType = subelement.attributes.ref;
-                    if (subType) {
-                        if (subType.indexOf(":") > 0) {
-                            IncludesUsed = [];
-                            temp = await getRecursive({ ...schema }, subType, urlBegin);
-                        }
-                        else
-                            resolve(subType);
+                    result = result.concat(flattenElements(child));
+                }
+            }
+        }
+        return result;
+    };
+
+    const flattenAttributes = function (parent) {
+        let result = [];
+        if (parent.children) {
+            for (const child of parent.children.filter(getPredicateForTagName('attribute', 'attributeGroup', 'complexContent', 'simpleContent'))) {
+                if (removePrefix(child.tagName) === 'attribute') {
+                    result.push(child);
+                }
+                else {
+                    result = result.concat(flattenAttributes(child));
+                }
+            }
+        }
+        return result;
+    };
+
+    const sequencePredicate = getPredicateForTagName('sequence');
+    const contentPredicate = getPredicateForTagName('complexContent', 'simpleContent');
+    const extensionPredicate = getPredicateForTagName('extension');
+
+    const extendedTypeNames = new Map();
+
+    const mergeNodeExtensions = function (schema, parentNode, complexType) {
+        let result;
+        const extensions = parentNode.children.filter(extensionPredicate);
+        for (const extension of extensions) {
+            const baseTypeName = extension.attributes.base;
+            if (complexType.attributes?.name) extendedTypeNames.set(complexType.attributes.name, baseTypeName);
+            let baseType = schema.children
+                .filter(getPredicateForTagName('complexType', 'simpleType'))
+                .find((type) => type.attributes.name === baseTypeName);
+            const extendedSequence = extension.children?.find(sequencePredicate);
+            if (baseType) {
+                result ??= mergeExtensions(schema, baseType);
+                if (!result) {
+                    // 
+                    result = baseTypeName;
+                    while (extendedTypeNames.has(result)) {
+                        result = extendedTypeNames.get(result);
+                    }
+                }
+                const baseSequence = baseType
+                    .children
+                    .find(contentPredicate)
+                    ?.children
+                    .find(sequencePredicate);
+                if (baseSequence) {
+                    if (extendedSequence) {
+                        extendedSequence.children = baseSequence.children.concat(extendedSequence.children);
                     }
                     else {
-                        resolve(temp)
+                        parentNode.children.push({ ...baseSequence });
                     }
-
+                }
+                const baseAttributes = flattenAttributes(baseType);
+                for (const baseAttribute of baseAttributes) {
+                    parentNode.children.push(baseAttribute);
                 }
             }
-            await getRecursive({ ...schema }, type, urlBegin);
-            resolve(null);
-        });
+            else {
+                // No hemos encontrado el tipo base, asumimos que es un tipo básico (integer, etc.).
+                result = baseTypeName;
+                const parentElement = findByTagName(schema, 'element').find((elm) => elm.children?.includes(complexType));
+                if (parentElement) {
+                    parentElement.attributes.type = baseTypeName;
+                    if (!flattenAttributes(extension).length) {
+                        // No hay atributos a añadir, podemos cargarnos el tipo complejo y dejar el tipo básico
+                        parentElement.children.splice(parentElement.children.indexOf(complexType), 1);
+                    }
+                }
+            }
+            parentNode.children.splice(parentNode.children.indexOf(extension), 1);
+            const extendedAttributes = flattenAttributes(extension);
+            extendedAttributes?.forEach((attrElm) => {
+                parentNode.children ??= [];
+                parentNode.children.push(attrElm);
+            });
+            if (extendedSequence) parentNode.children.push(extendedSequence);
+        }
+        return result;
+    };
 
-        return await prom;
-    }
+    const mergeExtensions = function (schema, complexType) {
+        let result = mergeNodeExtensions(schema, complexType, complexType);
+        for (const contentElement of complexType.children.filter(contentPredicate)) {
+            result ??= mergeNodeExtensions(schema, contentElement, complexType);
+        }
+        return result;
+    };
 
-    const getExternalType = async function (schema, type, depth) {
+    const findRefParents = function (node) {
+        let result = [];
+        if (node?.children) {
+            for (const child of node.children) {
+                if (child?.attributes?.ref) {
+                    result.push(node);
+                }
+                result = result.concat(findRefParents(child));
+            }
+        }
+        return result;
+    };
+
+    const processRefAttributes = function (schema, typeElement) {
+        let changed = false;
+        const refParents = findRefParents(typeElement);
+        for (const parent of refParents.reverse()) {
+            parent.children.forEach((child, idx) => {
+                const reference = child?.attributes?.ref;
+                if (reference) {
+                    const childAttributes = { ...child.attributes };
+                    delete childAttributes.ref;
+                    const localTagName = removePrefix(child.tagName);
+                    const referenced = schema
+                        .children
+                        .filter(getPredicateForTagName(localTagName))
+                        .find((elm) => elm.attributes?.name === reference);
+                    if (referenced) {
+                        const toInsert = { ...referenced };
+                        toInsert.attributes = { ...toInsert.attributes, ...childAttributes };
+                        parent.children.splice(idx, 1, toInsert);
+                        changed = true;
+                    }
+                }
+            });
+        }
+        return changed;
+    };
+
+    const findTypedElements = function (node) {
+        let result = [];
+        if (node?.children) {
+            for (const child of node.children) {
+                if (child?.attributes?.type) {
+                    result.push(child);
+                }
+                result = result.concat(findTypedElements(child));
+            }
+        }
+        return result;
+    };
+
+    const processTypeAttributes = function (schema, typeElement) {
+        let changed = false;
+        const typedElements = findTypedElements(typeElement);
+        for (const element of typedElements) {
+            const typeName = element.attributes.type;
+            const referencedType = schema
+                .children
+                .filter(getPredicateForTagName('complexType', 'simpleType'))
+                .find((elm) => elm.attributes?.name === typeName);
+            if (referencedType) {
+                changed = true;
+                element.children ??= [];
+                element.children.push(referencedType);
+                delete element.attributes.type;
+            }
+        }
+        return changed;
+    };
+
+    const getReferencedType = async function (schema, type, depth) {
+        if (type.startsWith("xsd:")) {
+            type = removePrefix(type);
+        }
         //miro si ya está en la colección
-        if (collection[type])
+        if (collection[type]) {
             return collection[type];
-        //miro si está en el schema actual
-        else if (schema.children && schema.children.filter(function (node) { return node.tagName === "element" && node.attributes.name === removePreffix(type) }).length > 0) {
-            if (type.endsWith("Type"))
-                collection[type] = await processType(schema, type, ++depth);
-            else
-                collection[type] = await processElement(schema, type, ++depth);
-            return collection[type];
-        }
-        else {
-            //miro si tiene prefijo y busco un import para ese prefijo
-            if (type.indexOf(":") > 0) {
-                const preffix = type.substring(0, type.indexOf(":"));
-                const schemaLocation = schema.children.find(function (_import) { return _import.tagName === "import" && _import.attributes.namespace === schema.attributes[preffix]; }).attributes.schemaLocation;
-                var schema2 = await proxifyUrl(schemaLocation.startsWith("http") ? schemaLocation : self.location.origin + "/" + schemaLocation);
-                IncludesUsed.push(schemaLocation);
-                copySchema(schema, schema2);
-                if (type.endsWith("Type")) {
-                    let ret = null;
-                    if (findByTagName(type, "element").length === 1 && findByTagName(type, "element")[0].attributes.ref)
-                        ret = await processElement(schema, findByTagName(type, "element")[0].attributes.ref, ++depth);
-                    else
-                        ret = await processType(schema, type, ++depth);
-                    if (!ret || Object.keys(ret).length === 0)
-                        ret = await searchHierarchyTypes(schema2, type, schemaLocation);
-                    collection[type] = ret;
-                    return ret;
-                }
-                else {
-                    collection[type] = await processElement(schema, type, ++depth);
-                    return collection[type];
-                }
-            }
-            return type;
         }
 
-    }
+        collection[type] = await processType(schema, type, ++depth);
+
+        return collection[type];
+    };
+
+    const getReferencedElement = async function (schema, element) {
+        if (element.attributes?.type === 'gml:ReferenceType') {
+            const annotation = element.children?.find(getPredicateForTagName('annotation'));
+            if (annotation) {
+                const appinfo = annotation.children?.find(getPredicateForTagName('appinfo'));
+                if (appinfo?.attributes?.source === 'urn:x-gml:targetElement') {
+                    const path = appinfo.children[0];
+                    if (path) {
+                        let parent = schema;
+                        for (const part of path.split('/')) {
+                            if (part.startsWith('@')) {
+                                const attribute = schema
+                                    .children
+                                    .filter(getPredicateForTagName('attribute'))
+                                    .find((attr) => attr.attributes.name === part.substring(1));
+                                if (attribute) {
+                                    return attribute.attributes?.type ?? null;
+                                }
+                                return null;
+                            }
+                            else {
+                                const element = parent
+                                    .children
+                                    .filter(getPredicateForTagName('element'))
+                                    .find((elm) => elm.attributes.name === part);
+                                if (element) {
+                                    parent = element;
+                                }
+                            }
+                        }
+                        if (parent !== schema) {
+                            return await processElement(schema, parent);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    };
 
     const geometryTypes = [
         "gml:PointPropertyType",
@@ -596,184 +814,215 @@ console.log("MILLISECONDS",end2-start2);
         "gml:GeometryAssociationType",
         "gml:MultiCurvePropertyType",
         "gml:CurvePropertyType",
-        "gml:BoxPropertyType"
-    ]
+        "gml:BoxPropertyType",
+        "gml:AbstractGeometryType"
+    ];
 
-    const requestCache = {};
-    const functionsCallback = {};
+    const requestCache = new Map();
+    const xmlCache = new Map();
+    const promiseCallbacks = new Map();
 
     const proxifyUrl = async function (url) {
-        if (requestCache[url]) {
-            if (!(requestCache[url] instanceof Promise))
-                return requestCache[url];
-            else {
-                return await requestCache[url];
-            }
+        if (xmlCache.has(url)) {
+            return tXml(xmlCache.get(url))[0];
         }
-        requestCache[url] = new Promise(function (resolve) {
-            functionsCallback[url] = resolve;
-        });
-        self.postMessage(url);
-        return await requestCache[url];
-    }
-    const getComplexType = function (schema, element) {
-        var complexType;
-        if (!element.children && element.attributes.type) {
-            var type = element.attributes.type;
-            complexType = schema.children.filter(function (node) { return node.tagName === "complexType" && node.attributes.name === removePreffix(type) });
+        if (!requestCache.has(url)) {
+            requestCache.set(url, new Promise(function (resolve) {
+                promiseCallbacks.set(url, resolve);
+            }));
+            self.postMessage(url);
         }
-        else if (element.children && element.attributes.type) {
-            var type = element.attributes.type;
-            complexType = schema.children.filter(function (node) { return node.tagName === "complexType" && node.attributes.name === removePreffix(type) });
-        }
-        if (complexType.length > 0) {
-            return complexType = complexType[0];
-        }
-        return null;
-    }
-    const processElement = async function (schema, element, depth, preffix) {
+        return await requestCache.get(url);
+    };
+
+    //const getComplexType = function (schema, element) {
+    //    const prefix = getTargetNamespacePrefix(schema);
+    //    let complexType;
+    //    if (element.attributes.type) {
+    //        const type = addPrefix(element.attributes.type, prefix);
+    //        complexType = schema
+    //            .children
+    //            .filter(getPredicateForTagName('complexType'))
+    //            .find((node) => addPrefix(node.attributes.name, prefix) === type);
+    //    }
+    //    if (complexType) {
+    //        return complexType;
+    //    }
+    //    return null;
+    //};
+
+    const processElement = async function (schema, element, depth) {
         if (depth === MAX_DEPTH) return null;
-        //busco los includes
-        schema = await proccessIncludes(schema);
-        //busco los elements con el nombre de la capa en cuestión
-        var currentElement = schema.children.filter(function (node) { return node.tagName === "element" && node.attributes.name === removePreffix(element) });
 
-        if (currentElement.length > 0) {
-            //si tiene un tipo compuesto lo busco				
-            var complexType = getComplexType(schema, currentElement[0])
-            collection[element] = await processType(schema, complexType, depth, preffix);
-            return collection[element];
-        }
-        else {
-            collection[element] = null;
-            return null;
-        }
-    }
-    const processType = async function (schema, complexType, depth, preffix) {
-
-        if (!(complexType instanceof Object))
-            complexType = schema.children.find(function (item) { return item.tagName === "complexType" && item.attributes.name === removePreffix(complexType) })
-        if (!complexType) return null;
-        //Recorro recursivamente buscando nodos element debajo del nodo complexType
-        const elements = findByTagName(complexType, "element");
-        var objFeature = {};
-        //recorro los nodos element que son los atributos de la feature
-        for (var j = 0; j < elements.length; j++) {
-            let element = elements[j];
-            let type = element.attributes.type;
-            if (!element.attributes.name && element.attributes.ref) {
-                let aux = {}, preffix = element.attributes.ref.substring(0, element.attributes.ref.indexOf(":"));
-                aux[removePreffix(element.attributes.ref)] = { "type": await processElement(schema, element.attributes.ref, ++depth, preffix), "name": element.attributes.ref };
-                return aux;
-            }
-            const nodeName = removePreffix(element.attributes.name);
-            //declaro un objeto cuyo key es el nombre de la entidad y sus hijos los atributos
-            let current = objFeature[nodeName] = {};
-
-            //cada atributo será un objeto cuyo key será el nombre del atributo y dentro un objeto infromación de cada atribut como tipo si es nullable etc 
-            for (var i in element.attributes) {
-                switch (i) {
+        if (element) {
+            let elementObject = {};
+            //cada atributo será un objeto cuyo key será el nombre del atributo y dentro un objeto información de cada atribut como tipo si es nullable etc 
+            for (let attributeName in element.attributes) {
+                const markedAttributeName = ATTRIBUTE_NAME_PREFIX + attributeName;
+                switch (attributeName) {
                     case "minOccurs":
                     case "maxOccurs":
-                        current[i] = parseInt(element.attributes[i], 10);
-                        if (Number.isNaN(current[element.attributes[i]]))
-                            current[i] = element.attributes[i];
+                        elementObject[markedAttributeName] = parseInt(element.attributes[attributeName], 10);
+                        if (Number.isNaN(elementObject[markedAttributeName]))
+                            elementObject[markedAttributeName] = element.attributes[attributeName];
                         break;
                     case "nillable":
-                        current[i] = element.attributes[i] === "true" ? true : false;
+                        elementObject[markedAttributeName] = element.attributes[attributeName] === "true" ? true : false;
                         break;
                     default:
-                        current[i] = (preffix ? preffix + ":" : "") + element.attributes[i];
+                        elementObject[markedAttributeName] = element.attributes[attributeName];
                         break;
                 }
             }
-            if (geometryTypes.includes(type)) { continue; }//no procesamos las geometrías
-            if (type) {
-                current.type = type;
-                if (type.startsWith("xsd"))
-                    type = removePreffix(type);
-                if (type === "gml:ReferenceType") {
-                    var targetElement = findByTagName(element, "targetElement");
-                    if (targetElement.length > 0 && targetElement[0].children.length > 0) {
-                        current.type = await getExternalType(schema, targetElement[0].children[0], depth);
-                    }
-                }
-                else if (type.indexOf(":") > 0) {
-                    complexType = schema.children.find(function (node) { return (node.tagName === "complexType" || node.tagName === "element") && node.attributes.name === removePreffix(type) })
-                    if (!complexType) {
-                        current.type = await getExternalType(schema, type, depth);
-                    }
-                    else {
-                        if (complexType.tagName === "complexType") {
-                            current.type = await processType(schema, complexType, depth);
-                        }
-                        else {
-                            current.type = null;//Esto no se había dado hasta ahora;
-                        }
-                    }
 
+            let type = element.attributes.type;
+            if (type) {
+                if (type === "gml:ReferenceType") {
+                    elementObject = await getReferencedElement(schema, element);
+                }
+                else {
+                    elementObject.type = await getReferencedType(schema, type, depth);
                 }
             }
             else {
-                //si el atributo es un dato complejo
-                var attrComplex = element.children.find((a) => a.tagName === "complexType");
-                var extension = findByTagName(attrComplex, "extension")[0];
-                var subelement = findByTagName(attrComplex, "element")[0]
-                if (extension && extension.attributes.base) {
-                    if (extension.attributes.base.indexOf(":") < 0) {
-                        current.type = extension.attributes.base;
-                    }
-                    else {
-                        current.type = await getExternalType(schema, extension.attributes.base);
-                    }
-                }
-                if (subelement && subelement.attributes.ref) {
-                    current.type = await getExternalType(schema, subelement.attributes.ref);
+                //si el tipo del atributo no es un texto sino un elemento complexType o simpleType
+                const elementTypeElement = element.children.find(getPredicateForTagName('complexType', 'simpleType'));
+                elementObject.type = await processType(schema, elementTypeElement, depth);
+            }
+
+            collection[element.attributes.name] = elementObject;
+            const prefix = getPrefixForNamespace(schema, schema.attributes.targetNamespace);
+            if (prefix) {
+                collection[prefix + element.attributes.name] = elementObject;
+            }
+            return elementObject;
+        }
+
+        return null;
+    };
+
+    const processType = async function (schema, type, depth) {
+
+        let typeElement;
+        if (typeof type === 'string') {
+            if (geometryTypes.includes(type)) return type; // no procesamos las geometrías
+
+            const localType = removePrefix(type);
+            const typePredicate = (item) => item.attributes.name === type || item.attributes.name === localType;
+            typeElement = schema
+                .children
+                .filter(getPredicateForTagName('complexType'))
+                .find(typePredicate);
+            if (!typeElement) {
+                typeElement = schema
+                    .children
+                    .filter(getPredicateForTagName('simpleType'))
+                    .find(typePredicate);
+                if (typeElement) {
+                    return typeElement.attributes.name;
                 }
             }
         }
-        return objFeature;
-    }
+        else {
+            typeElement = type;
+        }
+        if (!typeElement) return type;
+        if (geometryTypes.includes(typeElement.attributes?.name)) return typeElement.attributes.name; // no procesamos las geometrías
 
-    const processDFT = async function (json, layerName, preffix) {
+        const objFeature = {};
+
+        // Hago merge de todos los tipos en extension
+        const baseType = mergeExtensions(schema, typeElement);
+        if (baseType && !baseType.includes(':')) {
+            // Resulta que en el fondo este typeElement era la extensión de un tipo básico. 
+            // Devolvemos el tipo base en la propiedad especial #text
+            objFeature[TEXT_NODE] = { type: baseType };
+        }
+
+        let typeChangesMade, refChangesMade;
+        do {
+            // Sustituimos los elementos con atributos type por los elementos referenciados
+            typeChangesMade = processTypeAttributes(schema, typeElement);
+
+            // Sustituimos los elementos con atributos ref por los elementos referenciados
+            refChangesMade = processRefAttributes(schema, typeElement);
+        }
+        while (typeChangesMade || refChangesMade);
+
+        //Recorro los nodos element debajo del nodo typeElement, incluyendo los que estan en complexContent, sequence o all
+        const elements = flattenElements(typeElement);
+        //recorro los nodos element que son los atributos de la feature
+        for (const element of elements) {
+            const elmObj = await processElement(schema, element, depth + 1);
+            if (elmObj) {
+                elmObj.index = Object.keys(objFeature).length;
+                objFeature[element.attributes.name] = elmObj;
+            }
+        }
+        //recorro los nodos attribute que sean atributos de la feature
+        const attributes = flattenAttributes(typeElement);
+        for (const attribute of attributes) {
+            let type = attribute.attributes.type || 'string';
+            const attrObj = {};
+            attrObj.type = await getReferencedType(schema, type, depth);
+            objFeature[ATTRIBUTE_NAME_PREFIX + attribute.attributes.name] = attrObj;
+        }
+        return objFeature;
+    };
+
+    const processDft = async function (json, layerName, _prefix) {
         //coger nodo esquema
-        var schema = json.find(function (node) { return node.tagName === "schema" });
-        return new Promise(async function (resolve) {
-            await processElement(schema, layerName, 0);
-            resolve();
-        });
-    }
+        const schema = json.find(getPredicateForTagName('schema'));
+        //Añado includes e imports
+        await processExternals(schema);
+
+        //busco los elements con el nombre de la capa en cuestión
+        const elementName = removePrefix(layerName);
+        const layerElement = schema
+            .children
+            .filter(getPredicateForTagName('element'))
+            .find((node) => node.attributes.name === elementName);
+
+        await processElement(schema, layerElement, 0);
+    };
+
     var collection = {};
-    var IncludesUsed = [];
-    var MAX_DEPTH = 5;
+    var processedExternals = new Set();
+    const MAX_DEPTH = 10;
 
     onmessage = async function (e) {
-        if (e.data.xml) {
-            var json = tXml(e.data.xml);
+        if (e.data.type === 'describeFeatureType') {
+            const json = tXml(e.data.xml);
 
-            const arrTypes = (e.data.layerName instanceof Array ? e.data.layerName : e.data.layerName.split(","));
+            const layerNames = Array.isArray(e.data.layerName) ? e.data.layerName : e.data.layerName.split(",");
             let result;
             try {
-                for (var i = 0; i < arrTypes.length; i++) {
-                    await processDFT(json, arrTypes[i]);
+                for (var i = 0; i < layerNames.length; i++) {
+                    await processDft(json, layerNames[i]);
                 }
                 result = true;
             }
             catch (error) {
-                result = false;
+                console.error(error);
+                result = error.message;
             }
             postMessage({
-                state: result ? 'success' : 'error',
-                DFTCollection: (e.data.layerName instanceof Array ? e.data.layerName : e.data.layerName.split(",")).reduce(function (vi, va) {
-                    let temp = {};
-                    temp[va] = (collection[va] || collection[va.replace(/^\w{1,}:/, function (a) { return (a.toLowerCase()) })]);
-                    return Object.assign(vi, temp);
+                state: result === true ? 'success' : 'error',
+                message: result === true ? '' : result,
+                dftCollection: layerNames.reduce(function (acc, name) {
+                    const dft = collection[name] ?? collection[name.replace(/^\w{1,}:/, (v) => v.toLowerCase())];
+                    return Object.assign(acc, { [name]: dft });
                 }, {})
             });
+            close();
         }
         else {
-            functionsCallback[e.data.url](tXml(e.data.response)[0]);
-            delete functionsCallback[e.data.url];
+            xmlCache.set(e.data.url, e.data.xml);
+            const callback = promiseCallbacks.get(e.data.url);
+            if (callback) {
+                callback(tXml(e.data.xml)[0]);
+                promiseCallbacks.delete(e.data.url);
+            }
         }
 
     };
