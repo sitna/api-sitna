@@ -466,9 +466,12 @@ class Modify extends WebComponentControl {
     }
 
     setSelectableState(active) {
-        const self = this;
-        self.#selectBtn.disabled = !active;
-        self.#textBtn.disabled = !active;
+        this.#selectBtn.disabled = !active;
+        this.setLabelableState(active);
+    }
+
+    setLabelableState(active) {
+        this.#textBtn.disabled = !active;
     }
 
     getSelectedFeatures() {
@@ -483,11 +486,18 @@ class Modify extends WebComponentControl {
     }
 
     getActiveFeatures() {
-        const self = this;
-        const result = self.getSelectedFeatures();
-        if (!result.length && self.layer.features.length) {
-            result.push(self.layer.features[self.layer.features.length - 1]);
-        }
+        const result = this.getSelectedFeatures();
+        if (!result.length) {
+            if (this.map?.activeControl?.getSketch) {
+                const sketch = this.map.activeControl.getSketch();
+                if (sketch) {
+                    result.push(sketch);
+                }
+            }
+            if (!result.length && this.layer?.features.length) {
+                result.push(this.layer.features[this.layer?.features.length - 1]);
+            }
+        } 
         return result;
     }
 
@@ -640,11 +650,11 @@ class Modify extends WebComponentControl {
 
     displayLabelText() {
         const self = this;
-        const features = self.getSelectedFeatures();
+        const features = self.getActiveFeatures();
         var text;
         var size;
         var color;
-        if (self.isActive && features.length) {
+        if (features.length) {
             const feature = features[features.length - 1];
             const style = feature.getStyle();
             text = style.label;
