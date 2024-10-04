@@ -91,7 +91,7 @@ class Draw extends WebComponentControl {
                 const defaultPrefix = self.getLocaleString('sketch');
                 const usedIds = self.layer.features.map(f => f.getId());
                 const prefix = usedIds
-                    .map(id => id ? id.substring(0, id.indexOf('.')) : '')
+                    .map(id => id ? id.substring(0, id.lastIndexOf('.')) : '')
                     .map(f => f ? f : defaultPrefix)
                     .reduce((acc, cur, idx) => {
                         if (idx === 0) {
@@ -625,6 +625,10 @@ class Draw extends WebComponentControl {
         await self.renderPromise();
         self.#styler = self.querySelector('sitna-feature-styler');
         return self.#styler;
+    }
+
+    getSketch() {
+        return this.wrap.getSketch();
     }
 
     exportState() {
