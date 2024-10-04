@@ -4,7 +4,7 @@
     "tutorials": "./batch/jsdoc/tutorials",
     "destination": "./dist/doc/"
   },
-  "plugins": [ "plugins/markdown" ],
+  "plugins": [ "plugins/markdown"],
   "recurseDepth": 10,
   "source": {
     "include": [
@@ -30,7 +30,7 @@
     "includeDate": true,
     "dateFormat": "DD/MM/YYYY",
     "systemName": "API SITNA",
-    "systemVersion": "v4.3.0",
+    "systemVersion": "v4.4.0",
     "systemSummary": "API JavaScript para la visualización de datos georreferenciados en aplicaciones web",
     "systemLogo": "./css/img/sitna-logo.png",
     "systemColor": "#cc0000",
@@ -65,17 +65,17 @@
         "summary": "All documented interfaces."
       },
       {
-        "kind": "module",
-        "title": "Modules",
-        "summary": "All documented modules."
-      },
-      {
         "kind": "namespace",
         "title": "Espacios de nombres"
       },
       {
         "kind": "tutorial",
         "title": "Documentación"
+      },
+      {
+        "kind": "module",
+        "title": "Modules",
+        "summary": "All documented modules."
       }
     ],
     "outputSourceFiles": false,
@@ -86,7 +86,7 @@
     "showAccessFilter": false,
     "sort": "longname, version, since",
     "search": true,
-    "stylesheets": ["css/sitnaCSS.css"],
-    "scripts": []
+    "stylesheets": [ "css/sitnaCSS.css", "css/sandbox-toolbar.css" ],
+    "scripts": ["js/sandbox-toolbar.js"]
   }
 }
