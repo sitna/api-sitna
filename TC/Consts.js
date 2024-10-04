@@ -180,6 +180,7 @@ Consts.classes = {
     PANEL_CONTENT: 'tc-panel-content',
     PANEL_TAB: 'tc-panel-tab',
     FULL_SCREEN: 'tc-fullscreen',
+    NOT_AVAILABLE: 'tc-legend-not-available'
 };
 Consts.msgType = {
     INFO: 'info',
