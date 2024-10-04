@@ -198,6 +198,10 @@ class DrawMeasureModify extends Measure {
                     }
                     self.resetValues();
                 });
+                self.getModifyControl().then((ctl) => {
+                    ctl.setLabelableState(true);
+                    ctl.displayLabelText();
+                });
                 //self.#beginDraw();
             })
             .on(Consts.event.DRAWUNDO + ' ' + Consts.event.DRAWREDO, function () {
@@ -219,6 +223,9 @@ class DrawMeasureModify extends Measure {
                     if (ctl.resultsPanel) {
                         ctl.resultsPanel.currentFeature = e.feature;
                     }
+                });
+                self.getModifyControl().then((ctl) => {
+                    ctl.displayLabelText();
                 });
             })
             .on(Consts.event.POINT, function (e) {
@@ -245,6 +252,10 @@ class DrawMeasureModify extends Measure {
             .on(Consts.event.STYLECHANGE, function (e) {
                 self.onStyleChange(e);
             }).on(Consts.event.DRAWCANCEL, function () {
+                self.getModifyControl().then((ctl) => {
+                    ctl.setLabelableState(self.layer.features.length > 0);
+                    ctl.displayLabelText();
+                });
                 self.#cancelDraw();
             });
 
@@ -252,6 +263,10 @@ class DrawMeasureModify extends Measure {
         polygonDrawControl
             .on(Consts.event.DRAWSTART, function () {
                 self.resetValues();
+                self.getModifyControl().then((ctl) => {
+                    ctl.setLabelableState(true);
+                    ctl.displayLabelText();
+                });
                 //self.#beginDraw();
             })
             .on(Consts.event.POINT, function (e) {
@@ -259,20 +274,27 @@ class DrawMeasureModify extends Measure {
                     self.#beginDraw();
                 }
             })
-            //.on(Consts.event.DRAWEND, function (e) {
-            //    self.getElevationTool().then(function (tool) {
-            //        if (tool) {
-            //            tool.setGeometry({
-            //                features: [e.feature],
-            //                crs: self.map.crs
-            //            });
-            //        }
-            //    }
-            //})
+            .on(Consts.event.DRAWEND, function (_e) {
+                self.getModifyControl().then((ctl) => {
+                    ctl.displayLabelText();
+                });
+                //self.getElevationTool().then(function (tool) {
+                //    if (tool) {
+                //        tool.setGeometry({
+                //            features: [e.feature],
+                //            crs: self.map.crs
+                //        });
+                //    }
+                //}
+            })
             .on(Consts.event.STYLECHANGE, function (e) {
                 self.onStyleChange(e);
             })
             .on(Consts.event.DRAWCANCEL + ' ' + Consts.event.DRAWUNDO, function () {
+                self.getModifyControl().then((ctl) => {
+                    ctl.setLabelableState(self.layer.features.length > 0);
+                    ctl.displayLabelText();
+                });
                 self.#cancelDraw();
             });
 
