@@ -95,15 +95,15 @@ TC.control = TC.control || {};
  * @constructor
  * @async
  * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
- * @param {object} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global {{#crossLink "TC.Cfg"}}{{/crossLink}}.
+ * @param {object} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben el objeto de configuración global {{#crossLink "SITNA.Cfg"}}{{/crossLink}}.
  * @param {string} [options.crs="EPSG:25830"] Código EPSG del sistema de referencia espacial del mapa.
  * @param {array} [options.initialExtent] Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima. 
- * Esta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver TC.Cfg.{{#crossLink "TC.Cfg/crs:property"}}{{/crossLink}}).
- * Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/initialExtent:property"}}{{/crossLink}}.
- * @param {array} [options.maxExtent] Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar TC.Cfg.{{#crossLink "TC.Cfg/maxExtent:property"}}{{/crossLink}}.
- * @param {string} [options.layout] URL de una carpeta de maquetación. Consultar TC.Cfg.{{#crossLink "TC.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
- * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
- * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "TC.cfg.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
+ * Esta opción es obligatoria si el sistema de referencia espacial del mapa es distinto del sistema por defecto (ver SITNA.Cfg.{{#crossLink "SITNA.Cfg/crs:property"}}{{/crossLink}}).
+ * Para más información consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/initialExtent:property"}}{{/crossLink}}.
+ * @param {array} [options.maxExtent] Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/maxExtent:property"}}{{/crossLink}}.
+ * @param {string} [options.layout] URL de una carpeta de maquetación. Consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
+ * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "SITNA.layer.LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
+ * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "SITNA.layer.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
  * @param {SITNA.control.MapControlOptions} [options.controls] Opciones de controles de mapa.
  * @param {SITNA.layer.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
  * @param {string} [options.locale="es-ES"] Código de idioma de la interfaz de usuario. Este código debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
@@ -403,13 +403,6 @@ const _loadIntoMap = async function (stringOrJson) {
     });
 };
 
-const getAvailableBaseLayer = function (id) {
-    const ablCollection = this instanceof TC.Map ? this.options.availableBaseLayers : TC.Cfg.availableBaseLayers;
-    return ablCollection.filter(function (abl) {
-        return abl.id === id;
-    })[0];
-};
-
 var toasts = {};
 var toastHide = function () {
     const toast = this;
@@ -686,6 +679,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
      */
     baseLayer = null;
 
+    availableBaseLayers = Cfg.availableBaseLayers;
+
     /**
      * Capa donde se dibujan las entidades geográficas si no se especifica la capa explícitamente. Se instancia en el momento de añadir la primera entidad.
      * @property #vectors
@@ -711,7 +706,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
     #layerBuffer;
     #extraStates;
-
+    
     constructor(div, options = {}) {
         super();
         const self = this;
@@ -721,7 +716,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
         let loadingLayerCount = 0;
         this.div = Util.getDiv(div);
-
+        
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
          * @event MAPLOAD
@@ -779,14 +774,9 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
         this.div.classList.add(Consts.classes.LOADING, Consts.classes.MAP);
 
-        if (!TC.ready) {
-            TC.Cfg = Util.extend({}, TC.Defaults, Cfg);
-            TC.ready = true;
-        }
-
         // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
         if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
-            for (var allowed in TC.Cfg.controls.search.allowedSearchTypes) {
+            for (var allowed in Cfg.controls.search.allowedSearchTypes) {
                 if (!Object.prototype.hasOwnProperty.call(options.controls.search.allowedSearchTypes, allowed)) {
                     options.controls.search.allowedSearchTypes[allowed] = false;
                 }
@@ -806,112 +796,87 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
         self.crossOrigin = self.options.crossOrigin;
 
+        if (self.options.availableBaseLayers) {
+            self.availableBaseLayers = self.options.availableBaseLayers;
+        }
+
         const setupStateControl = self.#setupStateControl;
         self.#layerBuffer = {
             layers: [],
-            contains: function (id) {
-                return this.layers.some((l) => l.id === id);
-            },
-            getIndex: function (id) {
-                return this.layers.findLastIndex((l) => l.id === id);
-            },
-            add: function (id, zIndex, isBase) {
-                const obj = {
-                    id: id,
-                    pending: true,
-                    zIndex: zIndex,
-                    isBase: isBase
-                };
-                this.layers.splice(this.getIndexForZIndex(zIndex), 0, obj);
-            },
-            remove: function (id) {
-                this.layers.splice(this.getIndex(id), 1);
-            },
-            getMapLayers: function () {
-                return this.layers
-                    .filter(l => l.pending === false)
-                    .filter(l => !l.rejected)
-                    .map(l => l.mapLayer);
-            },
-            resolve: function (map, layer, isBase) {
-                const layerObj = this.layers[this.getIndex(layer.id)];
+            contains: (id) => self.#layerBuffer.layers.some((l) => l.id === id),
+            getIndex: (id) => self.#layerBuffer.layers.findLastIndex((l) => l.id === id),
+            add: (id, zIndex, isBase) => self.#layerBuffer.layers.splice(self.#layerBuffer.getIndexForZIndex(zIndex), 0, {
+                id,
+                pending: true,
+                zIndex,
+                isBase
+            }),
+            remove: (id) => self.#layerBuffer.layers.splice(self.#layerBuffer.getIndex(id), 1),
+            resolve: (layer, isBase) => {
+                const layerObj = self.#layerBuffer.layers[self.#layerBuffer.getIndex(layer.id)];
                 layerObj.mapLayer = layer;
                 layerObj.pending = false;
-                map.layers = this.getMapLayers();
-                if (isBase) {
-                    if (map.baseLayers.length === 0) {
-                        map.baseLayers = new Array(map.options.baseLayers.length);
-                    }
-
-                    var index = map.options.baseLayers.map(l => l.id).indexOf(layer.id);
-                    if (index < 0) {
-                        index = map.baseLayers.map(l => l.type).indexOf(Consts.layerType.VECTOR);
-                        if (index < 0) {
-                            map.baseLayers.push(layer);
-                        } else {
-                            map.baseLayers.splice(index, 0, layer);
-                        }
-                    } else {
-                        map.baseLayers.splice(index, 1, layer);
-                    }
-                }
-                else {
-                    map.workLayers = map.layers.filter((l) => !l.isBase);
-                }
+                self.#layerBuffer.insertLayerInMapCollection(layer, self.layers);
+                self.#layerBuffer.insertLayerInMapCollection(layer, isBase ? self.baseLayers : self.workLayers);
             },
-            reject: function (map, error) {
-                const layerObj = this.layers[this.getIndex(error.layerId)];
+            reject: (error) => {
+                const layerObj = self.#layerBuffer.layers[self.#layerBuffer.getIndex(error.layerId)];
                 layerObj.mapLayer = null;
                 layerObj.pending = false;
                 layerObj.rejected = true;
-                var index = map.options.baseLayers.map((l) => l.id).indexOf(error.layerId);
+                var index = self.options.baseLayers.map((l) => l.id).indexOf(error.layerId);
                 if (index >= 0) {
-                    map.baseLayers.splice(index, 1);
+                    self.baseLayers.splice(index, 1);
                 }
             },
-            getResolvedWorkLayerIndex: function (_map, id) {
-                return this.layers
-                    .filter((l) => l.id === id || !l.isBase && l.pending === false)
-                    .findLastIndex((l) => l.id === id);
-            },
-            getResolvedVisibleLayerIndex: function (map, id) {
-                let index = this.getResolvedWorkLayerIndex(map, id);
-                if (index >= 0 && map.baseLayer) {
-                    index = index + 1;
+            getIndexForZIndex: (zIndex) => self.#layerBuffer.layers.findLastIndex((l) => l.zIndex <= zIndex) + 1,
+            getMapCollectionIndex: (index, collection) => {
+                let cIndex = -1;
+                for (let i = 0; i < index; i++) {
+                    const provIndex = collection.findIndex((l) => l.id === self.#layerBuffer.layers[i].id);
+                    if (provIndex >= 0) {
+                        cIndex = provIndex;
+                    }
                 }
-                return index;
+                return cIndex + 1;
             },
-            getIndexForZIndex: function (zIndex) {
-                return this.layers.findLastIndex((l) => l.zIndex <= zIndex) + 1;
+            insertLayerInMapCollection: (layer, collection) => {
+                const bufferIndex = self.#layerBuffer.getIndex(layer.id);
+                const mlIndex = self.#layerBuffer.getMapCollectionIndex(bufferIndex, collection);
+                if (mlIndex === collection.length) {
+                    collection.push(layer);
+                }
+                else {
+                    collection.splice(mlIndex, 0, layer);
+                }
             },
-            checkMapLoad: function (map) {
-                const self = this;
-                if (map.options.baseLayers
-                    .concat(map.options.workLayers)
-                    .every(function (l) {
-                        return self.contains(l.id || l);
-                    }) && // Si ya se han empezado a procesar todas las capas de las opciones
-                    !this.layers.some(function (layer) {
-                        return layer.pending === true; // Si ya se han terminado de procesar
-                    })) {
+            checkMapLoad: () => {
+                if (self.options.baseLayers
+                    .concat(self.options.workLayers)
+                    .every((l) => self.#layerBuffer.contains(l.id || l)) && // Si ya se han empezado a procesar todas las capas de las opciones
+                    self.#layerBuffer.layers.every((l) => !l.pending)) { // Si ya se han terminado de procesar
+
                     const throwMapLoad = async function () {
-                        if (!map.isLoaded) {
+                        if (!self.isLoaded) {
                             const setLoaded = function () {
 
                                 // 07/03/2019 GLS: Bug 24832 la gestión del estado comienza después de Consts.event.MAPLOAD, 
                                 // como los callbacks a loaded se lanzan según el orden de suscripción, el de script.js de IDENA se lanza antes 
                                 // que el de la gestión del estado, lo que provoca que las capas añadidas por queryString no se registren.
-                                if (map.options.stateful) {
-                                    setupStateControl.call(map);
+                                if (self.options.stateful) {
+                                    setupStateControl.call(self);
                                 }
 
-                                map.isLoaded = true;
-                                map.trigger(Consts.event.MAPLOAD);
+                                self.isLoaded = true;
+                                // Si hay datos en cache es posible que salte el evento MAPREADY después de MAPLOAD.
+                                // Por eso quitamos la clase LOADING en un callback de ready().
+                                self.ready(() => self.div.classList.remove(Consts.classes.LOADING));
+                                self.trigger(Consts.event.MAPLOAD);
                             };
                             // tenemos estado 3d
-                            if (map.state && map.state.vw3) {
-                                if (!map.div.classList.contains(Consts.classes.THREED)) {
-                                    map.div.classList.add(Consts.classes.THREED);
+                            if (self.state && self.state.vw3) {
+                                if (!self.div.classList.contains(Consts.classes.THREED)) {
+                                    self.div.classList.add(Consts.classes.THREED);
 
                                     if (!TC.view || !TC.view.ThreeD) {
                                         const module = await import('./view/ThreeD');
@@ -919,10 +884,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                                         TC.view.ThreeD = module.default;
                                     }
                                     TC.view.ThreeD.apply({
-                                        map: map, state: map.state.vw3, callback: function () {
+                                        map: self, state: self.state.vw3, callback: function () {
                                             setLoaded();
 
-                                            map.getControlsByClass(ThreeD)[0].button.removeAttribute("disabled");
+                                            self.getControlsByClass(ThreeD)[0].button.removeAttribute("disabled");
                                         }
                                     });
                                 }
@@ -932,33 +897,32 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         }
                     };
                     // Gestionamos el final de la carga del mapa
-                    if (map.baseLayer) {
+                    if (self.baseLayer) {
                         throwMapLoad();
                     }
                     else {
                         //GLS: Si no hay mapa de fondo cargado es posible que se haya añadido desde diálogo modal, lo comprobamos en todos los mapas de fondo disponibles del API
-                        var onAvailables = [];
-                        if (map.state && map.state.base) {
-                            onAvailables = TC.Cfg.availableBaseLayers.filter(l => l.id === map.state.base);
+                        let availableBaseLayer;
+                        if (self.state && self.state.base) {
+                            availableBaseLayer = self.availableBaseLayers.find(l => l.id === self.state.base);
                         }
 
-                        if (onAvailables.length > 0) {
-                            onAvailables[0].isBase = true;
-                            map.addLayer(onAvailables[0]).then(function (_layer) {
+                        if (availableBaseLayer) {
+                            availableBaseLayer.isBase = true;
+                            self.addLayer(availableBaseLayer).then(function (_layer) {
                                 throwMapLoad();
                             });
                         }
                         else {
                             // Si no hay capa base cargada cargamos la primera compatible
-                            const lastResortBaseLayer = map.baseLayers.filter(function (layer) {
-                                return !layer.mustReproject;
-                            }).filter(function (l) {
-                                return l.wrap && l.wrap.layer;
-                            });
+                            const lastResortBaseLayer = self
+                                .baseLayers
+                                .filter((l) => !l.mustReproject)
+                                .filter((l) => l.wrap && l.wrap.layer);
 
                             if (lastResortBaseLayer.length > 0) {
-                                map.wrap.setBaseLayer(lastResortBaseLayer[0].wrap.layer);
-                                map.baseLayer = lastResortBaseLayer[0];
+                                self.wrap.setBaseLayer(lastResortBaseLayer[0].wrap.layer);
+                                self.baseLayer = lastResortBaseLayer[0];
                             }
 
                             throwMapLoad();
@@ -969,8 +933,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         };
 
         var init = async function () {
-            self.div.classList.remove(Consts.classes.LOADING);
-
+            
             self.state = await self.checkLocation();
 
             if (self.options.layout) {
@@ -996,6 +959,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 };
                 self.on(Consts.event.FEATURESADD, handleFeaturesAdd);
             }
+
             var _handleLayerAdd = function _handleLayerAdd(e) {
                 if (e.layer.isBase &&
                     (e.layer === self.baseLayer ||
@@ -1048,125 +1012,122 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
             self.wrap = new TC.wrap.Map(self);
 
-            TC.loadProjDef({
-                crs: self.options.crs,
-                callback: function () {
-                    self.wrap.setMap();
-                    const ctlPromises = [];
+            await TC.loadProjDef({ crs: self.options.crs });
 
-                    for (var name in self.options.controls) {
-                        var ctlOptions = self.options.controls[name];
-                        if (ctlOptions) {
-                            ctlOptions = typeof ctlOptions === 'boolean' ? {} : Util.extend(true, {}, ctlOptions);
-                            if (typeof ctlOptions.div === 'string') {
-                                ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
-                            }
-                            ctlPromises.push(self.addControl(name, ctlOptions));
-                        }
+            self.wrap.setMap();
+            const ctlPromises = [];
+
+            for (var name in self.options.controls) {
+                var ctlOptions = self.options.controls[name];
+                if (ctlOptions) {
+                    ctlOptions = typeof ctlOptions === 'boolean' ? {} : Util.extend(true, {}, ctlOptions);
+                    if (typeof ctlOptions.div === 'string') {
+                        ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
                     }
-
-                    /*
-                     *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
-                     *  Parameters: OpenLayers.Layer, event name ('loadstart', 'loadend')
-                     */
-                    var _triggerLayersBeforeUpdateEvent = function (_e) {
-                        if (loadingLayerCount <= 0) {
-                            loadingLayerCount = 0;
-                            self.trigger(Consts.event.BEFOREUPDATE);
-                        }
-                        loadingLayerCount = loadingLayerCount + 1;
-                    };
-
-                    var _triggerLayersUpdateEvent = function (_e) {
-                        loadingLayerCount = loadingLayerCount - 1;
-                        if (loadingLayerCount <= 0) {
-                            loadingLayerCount = 0;
-                            self.trigger(Consts.event.UPDATE);
-                        }
-                    };
-
-                    self.on(Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
-                    self.on(Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
-                    self.on(Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
-
-                    var i;
-                    var lyrCfg;
-                    for (i = 0; i < self.options.baseLayers.length; i++) {
-                        lyrCfg = self.options.baseLayers[i];
-                        if (typeof lyrCfg === 'string') {
-                            lyrCfg = getAvailableBaseLayer.call(self, lyrCfg);
-                        }
-                        self.addLayer(Util.extend({}, lyrCfg, { isBase: true, map: self }));
-                    }
-
-                    //vamos creando un array de capas a añadir. Primero añadimos las capas de estado
-                    (!self.state || !self.state.layers ? [] : self.state.layers.map(function (stateLayer) {
-                        const lyrCfg = {
-                            id: stateLayer.i || TC.getUID(),
-                            hideTitle: stateLayer.h,
-                            unremovable: stateLayer.ur,
-                            title: stateLayer.t,
-                            filter: stateLayer.f,
-                            hideTree: stateLayer.x !== 0,
-                            renderOptions: {
-                                opacity: stateLayer.o,
-                                hide: !stateLayer.v
-                            }
-                        };
-                        if (stateLayer.u) {
-                            lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
-                            lyrCfg.layerNames = (stateLayer.a || stateLayer.n) ? (stateLayer.a || stateLayer.n).split(',') : undefined;
-                        }
-                        else {
-                            lyrCfg.type = Consts.layerType.VECTOR;
-                            lyrCfg.file = stateLayer.fn;
-                        }
-                        return lyrCfg;
-                    })).concat(
-                        //Despues las capas de configuración que no estén en el estado
-                        self.options.workLayers.filter(function (workLayer) {
-                            return !self.state || !self.state.layers || !self.state.layers.some((stateLayer) => workLayer.url === stateLayer.u && workLayer.id === stateLayer.i);
-                        })
-                            .map(function (workLayer) {
-                                return Util.extend({}, workLayer, { map: self });
-                            }))
-                        //por ultimo recorremos el Array añadiendo las capas al mapa
-                        .forEach((lyrCfg) => {
-                            self.addLayer(lyrCfg).then(function (layer) {
-                                if (layer.wrap.getRootLayerNode) {
-                                    var rootNode = layer.wrap.getRootLayerNode();
-                                }
-                                layer.title = layer.title || lyrCfg.title || rootNode && (rootNode.Title || rootNode.title);
-                                if (lyrCfg.renderOptions && lyrCfg.renderOptions.opacity < 1) {
-                                    layer.setOpacity(lyrCfg.renderOptions.opacity);
-                                }
-                                if (lyrCfg.renderOptions && lyrCfg.renderOptions.hide) {
-                                    layer.setVisibility(!lyrCfg.renderOptions.hide);
-                                }
-                                const stateLayer = ((self.state && self.state.layers) || []).find((stateLayer) => stateLayer.u === lyrCfg.url && stateLayer.i === lyrCfg.id)
-                                if (stateLayer && stateLayer.n && stateLayer.a && stateLayer.n !== stateLayer.a)
-                                    layer.setLayerNames(stateLayer.n);
-                            }.bind())
-                                .catch(function (error) {
-                                    // no hacemos nada porque al llegar a este punto ya hemos gestionado el error en la instrucción crsLayerError(self, lyr); en la línea 4888														
-
-                                    //URI:Si que hacemos ya que si falla el getCapabilities no hay CRS que valga
-                                    self.toast(error.message, { type: Consts.msgType.ERROR });
-                                });
-                        }
-                        );
-                    Promise.all(ctlPromises).finally(function () {
-                        // 13/03/2020 si tenemos estado de controles, pasamos a establecer los estados
-                        if (self.state && self.state.ctl) {
-                            self.importControlStates(self.state.ctl);
-                        }
-
-                        self.isReady = true;
-                        self.trigger(Consts.event.MAPREADY);
-                    });
-                    setHeightFix(self.div);
+                    ctlPromises.push(self.addControl(name, ctlOptions));
                 }
+            }
+
+            /*
+             *  _triggerLayersBeforeUpdateEvent: Triggers map beforeupdate event (jQuery.Event) when any layer starts loading
+             *  Parameters: OpenLayers.Layer, event name ('loadstart', 'loadend')
+             */
+            var _triggerLayersBeforeUpdateEvent = function (_e) {
+                if (loadingLayerCount <= 0) {
+                    loadingLayerCount = 0;
+                    self.trigger(Consts.event.BEFOREUPDATE);
+                }
+                loadingLayerCount = loadingLayerCount + 1;
+            };
+
+            var _triggerLayersUpdateEvent = function (_e) {
+                loadingLayerCount = loadingLayerCount - 1;
+                if (loadingLayerCount <= 0) {
+                    loadingLayerCount = 0;
+                    self.trigger(Consts.event.UPDATE);
+                }
+            };
+
+            self.on(Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
+            self.on(Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
+            self.on(Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
+
+            for (let lyrCfg of self.options.baseLayers) {
+                if (typeof lyrCfg === 'string') {
+                    lyrCfg = self.getAvailableBaseLayer(lyrCfg);
+                }
+                else {
+                    lyrCfg = Util.extend({}, self.getAvailableBaseLayer(lyrCfg.id), lyrCfg);
+                }
+                await self.addLayer(Util.extend(lyrCfg, { isBase: true, map: self }));
+            }
+
+            //vamos creando un array de capas a añadir. Primero añadimos las capas de estado
+            (!self.state || !self.state.layers ? [] : self.state.layers.map(function (stateLayer) {
+                const lyrCfg = {
+                    id: stateLayer.i || TC.getUID(),
+                    hideTitle: stateLayer.h,
+                    unremovable: stateLayer.ur,
+                    title: stateLayer.t,
+                    filter: stateLayer.f,
+                    hideTree: stateLayer.x !== 0,
+                    renderOptions: {
+                        opacity: stateLayer.o,
+                        hide: !stateLayer.v
+                    }
+                };
+                if (stateLayer.u) {
+                    lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
+                    lyrCfg.layerNames = (stateLayer.a || stateLayer.n) ? (stateLayer.a || stateLayer.n).split(',') : undefined;
+                }
+                else {
+                    lyrCfg.type = Consts.layerType.VECTOR;
+                    lyrCfg.file = stateLayer.fn;
+                }
+                return lyrCfg;
+            })).concat(
+                //Despues las capas de configuración que no estén en el estado
+                self.options.workLayers.filter(function (workLayer) {
+                    return !self.state || !self.state.layers || !self.state.layers.some((stateLayer) => workLayer.url === stateLayer.u && workLayer.id === stateLayer.i);
+                })
+                    .map(function (workLayer) {
+                        return Util.extend({}, workLayer, { map: self });
+                    }))
+                //por ultimo recorremos el Array añadiendo las capas al mapa
+                .forEach((lyrCfg) => {
+                    self.addLayer(lyrCfg).then(function (layer) {
+                        if (layer.wrap.getRootLayerNode) {
+                            var rootNode = layer.wrap.getRootLayerNode();
+                        }
+                        layer.title = layer.title || lyrCfg.title || rootNode && (rootNode.Title || rootNode.title);
+                        if (lyrCfg.renderOptions && lyrCfg.renderOptions.opacity < 1) {
+                            layer.setOpacity(lyrCfg.renderOptions.opacity);
+                        }
+                        if (lyrCfg.renderOptions && lyrCfg.renderOptions.hide) {
+                            layer.setVisibility(!lyrCfg.renderOptions.hide);
+                        }
+                        const stateLayer = ((self.state && self.state.layers) || []).find((stateLayer) => stateLayer.u === lyrCfg.url && stateLayer.i === lyrCfg.id)
+                        if (stateLayer && stateLayer.n && stateLayer.a && stateLayer.n !== stateLayer.a)
+                            layer.setLayerNames(stateLayer.n);
+                    }.bind())
+                        .catch(function (error) {
+                            // no hacemos nada porque al llegar a este punto ya hemos gestionado el error en la instrucción crsLayerError(self, lyr); en la línea 4888														
+
+                            //URI:Si que hacemos ya que si falla el getCapabilities no hay CRS que valga
+                            self.toast(error.message, { type: Consts.msgType.ERROR });
+                        });
+                }
+                );
+            Promise.all(ctlPromises).finally(function () {
+                // 13/03/2020 si tenemos estado de controles, pasamos a establecer los estados
+                if (self.state && self.state.ctl) {
+                    self.importControlStates(self.state.ctl);
+                }
+
+                self.isReady = true;
+                self.trigger(Consts.event.MAPREADY);
             });
+            setHeightFix(self.div);
 
             self.on(Consts.event.FEATURECLICK, function (e) {
                 if (!self.activeControl || !self.activeControl.isExclusive()) {
@@ -1415,7 +1376,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         /*var oldError = TC.error;
         TC.error = function (text) {
             oldError(text);
-            self.toast(text, { type: Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+            self.toast(text, { type: Consts.msgType.ERROR, duration: Cfg.toastDuration * 2 });
         };*/
         var oldError = TC.error;
         TC.error = function (err, options, subject) {
@@ -1425,17 +1386,17 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             }
             if (!options) {
                 oldError(text);
-                self.toast(text, { type: Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+                self.toast(text, { type: Consts.msgType.ERROR, duration: Cfg.toastDuration * 2 });
             }
             else {
                 var fnc = function (text, mode, subject) {
                     switch (mode) {
                         case Consts.msgErrorMode.TOAST:
                             if (!self.toast) { console.warn("No existe el objeto Toast"); return; }
-                            self.toast(text, { type: Consts.msgType.ERROR, duration: TC.Cfg.toastDuration * 2 });
+                            self.toast(text, { type: Consts.msgType.ERROR, duration: Cfg.toastDuration * 2 });
                             break;
                         case Consts.msgErrorMode.EMAIL:
-                            if (TC.Cfg.loggingErrorsEnabled) {
+                            if (Cfg.loggingErrorsEnabled) {
                                 JL("onerrorLogger").fatalException(!subject ? text : {
                                     "msg": subject,
                                     "errorMsg": text
@@ -1906,6 +1867,9 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 if (!layer.id)
                     layer.id = TC.getUID();
                 else {
+                    const lyr = self.getAvailableBaseLayer(layer.id);
+                    if (lyr && !(layer instanceof Layer)) layer = { ...lyr, ...layer };
+
                     //URI expresion regular para sacar el prefijo y el número del ID de la capa y setear  lista de prefijos
                     const groups = /(?<ctl>[-_\p{Letter}]+(\u002D\d)?\u002D)?(?<num>[\d]*)?/gu.exec(layer.id).groups;
                     if (groups["num"] && groups["ctl"]) {
@@ -1915,11 +1879,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
             }
 
-            let zIndex = layer.options ? layer.options.zIndex : layer.zIndex;
-            if (typeof zIndex !== 'number') {
-                zIndex = layer.stealth ? 1 : 0;
-            }
-
+            const zIndex = layer.options?.zIndex ?? layer.zIndex ?? (layer.stealth ? 1 : 0);
             self.#layerBuffer.add(layer.id || layer, zIndex, layer.isBase);
 
             if (self.getLayer(layer.id)) {
@@ -1931,7 +1891,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
             let lyr;
             if (typeof layer === 'string') {
-                lyr = new Raster(Util.extend({}, getAvailableBaseLayer.call(self, layer), { map: self }));
+                lyr = new Raster(Util.extend({}, self.getAvailableBaseLayer(layer), { map: self }));
             }
             else {
                 if (layer instanceof Layer) {
@@ -1980,20 +1940,23 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 l = await self.#addWorkLayer(lyr, currentCrs);
             }
 
-            self.#layerBuffer.resolve(self, l, l.isBase);
+            self.#layerBuffer.resolve(l, l.isBase);
             if (!l.isBase) {
-                self.wrap.insertLayer(l.wrap.layer, self.#layerBuffer.getResolvedVisibleLayerIndex(self, l.id));
+                const wrappedLayers = self.#layerBuffer.layers.map((l) => l.mapLayer?.wrap?.layer).filter((l) => !!l);
+                const layerIndex = wrappedLayers.indexOf(l.wrap.layer);
+                const previousLayers = layerIndex < 0 ? wrappedLayers : wrappedLayers.slice(0, layerIndex);
+                self.wrap.insertLayer(l.wrap.layer, { previousLayers });
             }
             self.trigger(Consts.event.LAYERADD, { layer: l });
-            self.#layerBuffer.checkMapLoad(self);
+            self.#layerBuffer.checkMapLoad();
             if (Util.isFunction(callback)) {
                 callback(l);
             }
             return l;
         }
         catch (err) {
-            self.#layerBuffer.reject(self, err);
-            self.#layerBuffer.checkMapLoad(self);
+            self.#layerBuffer.reject(err);
+            self.#layerBuffer.checkMapLoad();
             throw err;
         }
     }
@@ -2046,34 +2009,26 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             throw Error("Unremovable");
         }
 
-        let found = false;
-        for (var i = 0; i < self.layers.length; i++) {
-            if (self.layers[i] === layer) {
-                self.layers.splice(i, 1);
-                found = true;
-                break;
-            }
+        let index = self.layers.indexOf(layer);
+        if (index >= 0) {
+            self.layers.splice(index, 1);
         }
-        if (!found) {
+        else {
             throw Error(`Layer ${layer.id} not found in map`);
         }
         if (layer.isBase) {
-            for (i = 0; i < self.baseLayers.length; i++) {
-                if (self.baseLayers[i] === layer) {
-                    self.baseLayers.splice(i, 1);
-                    if (self.baseLayer === layer) {
-                        self.setBaseLayer(self.baseLayers[0]);
-                    }
-                    break;
+            index = self.baseLayers.indexOf(layer);
+            if (index >= 0) {
+                self.baseLayers.splice(index, 1);
+                if (self.baseLayer === layer) {
+                    self.setBaseLayer(self.baseLayers[0]);
                 }
             }
         }
         else {
-            for (i = 0; i < self.workLayers.length; i++) {
-                if (self.workLayers[i] === layer) {
-                    self.workLayers.splice(i, 1);
-                    break;
-                }
+            index = self.workLayers.indexOf(layer);
+            if (index >= 0) {
+                self.workLayers.splice(index, 1);
             }
             if (layer === self.#vectors) {
                 self.#vectors = null;
@@ -2084,7 +2039,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         self.wrap.removeLayer(olLayer);
         self.#layerBuffer.remove(layer.id);
         self.trigger(Consts.event.LAYERREMOVE, { layer: layer });
-        self.#layerBuffer.checkMapLoad(self);
+        self.#layerBuffer.checkMapLoad();
         layer.map = null;
         return layer;
     }
@@ -2163,7 +2118,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 }
             }
             if (!found) {
-                layer = getAvailableBaseLayer.call(self, layer);
+                layer = self.getAvailableBaseLayer(layer);
                 if (layer) {
                     layer = await self.addLayer(Util.extend(true, {}, layer, { isDefault: true, isBase: true, map: self }));
                     found = true;
@@ -2196,7 +2151,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             if (!layer.isCompatible(self.getCRS())) {
                 let fallbackLayer = layer.fallbackLayer;
                 if (typeof fallbackLayer === 'string') {
-                    fallbackLayer = getAvailableBaseLayer.call(self, fallbackLayer);
+                    fallbackLayer = self.getAvailableBaseLayer(fallbackLayer);
                     if (fallbackLayer) {
                         fallbackLayer = new Raster(fallbackLayer);
                         await fallbackLayer.getCapabilitiesPromise();
@@ -2818,6 +2773,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         return this.#vectors;
     }
 
+    getAvailableBaseLayer(id) {
+        return this.availableBaseLayers.find((abl) => abl.id === id);
+    }
+
     /**
      * Añade un punto al mapa. Si no se especifica una capa en el parámetro de opciones se añadirá a una capa vectorial destinada a añadir entidades geográficas.
      * Esta capa se crea al añadir por primera vez una entidad sin especificar capa.
@@ -3111,7 +3070,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     }
 
     toast(text, options = {}) {
-        var duration = options.duration || TC.Cfg.toastDuration;
+        var duration = options.duration || Cfg.toastDuration;
         var toastInfo = toasts[text];
         if (toastInfo) {
             clearTimeout(toastInfo.timeout);
@@ -3556,38 +3515,14 @@ var deleteTreeCache = function (layer) {
     * Función que mezcla opciones de mapa relativos a capa, teniendo cuidado de que puede haber objetos de opciones de capa o identificadores de capa.
     * En este último caso, si no son la opción prioritaria, hay que sustituirlos por los objetos de definiciones de capa.
     */
-var mergeLayerOptions = function (optionsArray, propertyName) {
-    const self = this;
+const mergeLayerOptions = function (optionsArray, propertyName) {
     // lista de opciones de capa de los argumentos
-    var layerOptions = Array.prototype.slice.call(optionsArray).map(function (elm) {
-        var result = {};
-        if (elm) {
-            result[propertyName] = elm[propertyName];
-        }
-        return result;
-    });
-    if (propertyName === 'availableBaseLayers') console.log("layerOptions", layerOptions);
+    const layerOptions = optionsArray
+        .filter(elm => Object.prototype.hasOwnProperty.call(elm, propertyName))
+        .map((elm) => ({ [propertyName]: elm[propertyName] }));
     // añadimos las opciones de capa de la configuración general
-    var layerOption = {};
-    layerOption[propertyName] = TC.Cfg[propertyName];
-    layerOptions.unshift(layerOption);
-
-    //Si se han definido baseLayers en el visor, hay que hacer un merge con las predefinidas en la API
-    if (propertyName === 'baseLayers' && layerOptions[1]['baseLayers']) {
-        layerOption = layerOptions[1];
-
-        for (var i = 0; i < layerOption.baseLayers.length; i++) {
-            if (typeof layerOption.baseLayers[i] === 'object') {
-                Util.extend(layerOption.baseLayers[i], getAvailableBaseLayer.call(self, layerOption.baseLayers[i].id));
-            }
-        }
-    } else {
-        layerOptions.unshift(true); // Deep merge
-        layerOption = Util.extend.apply(this, layerOptions);
-        if (propertyName === 'availableBaseLayers') console.log("layerOption", layerOption);
-    }
-
-    return layerOption[propertyName];
+    layerOptions.unshift({ [propertyName]: Cfg[propertyName] });
+    return layerOptions.pop()[propertyName];
 };
 
 const mergeControlOptions = function (controlOptions) {
@@ -3628,16 +3563,15 @@ const mergeControlOptions = function (controlOptions) {
 };
 
 const mergeOptions = function () {
-    const argArray = [true, {}, TC.Cfg].concat(Array.prototype.slice.call(arguments));
-    const result = this.options = Util.extend.apply(this, argArray);
-    // Concatenamos las colecciones availableBaseLayers
-    result.availableBaseLayers = TC.Cfg.availableBaseLayers.concat.apply(TC.Cfg.availableBaseLayers, Array.prototype.map.call(arguments, function (arg) {
-        return arg.availableBaseLayers || [];
-    }));
-    result.baseLayers = mergeLayerOptions.call(this, arguments, 'baseLayers');
-    result.workLayers = mergeLayerOptions.call(this, arguments, 'workLayers');
+    const argArray = [...arguments];
+    const extendParams = [true, {}, Cfg].concat(argArray);
+    const result = this.options = Util.extend(...extendParams);
+    // Siguiente línea por compatibilidad hacia atrás (comparamapas)
+    result.availableBaseLayers ??= this.availableBaseLayers;
+    result.baseLayers = mergeLayerOptions(argArray, 'baseLayers');
+    result.workLayers = mergeLayerOptions(argArray, 'workLayers');
 
-    const controls = Array.prototype.slice.call(arguments)
+    const controls = argArray
         .filter(elem => elem.controls)
         .map(elem => elem.controls);
     if (controls.length > 0) {
