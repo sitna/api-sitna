@@ -1558,7 +1558,8 @@ const ThreeD = (function (namespace, signature, factory) {
         var paths = {
             CRS: ["Capability", "Layer", "CRS"],
             TILEMATRIXSET: ["Contents", "TileMatrixSet", "Identifier"],
-            TILEMATRIXSETLABELS: ["Contents", "TileMatrixSet"]
+            TILEMATRIXSETLABELS: ["Contents", "TileMatrixSet"],
+            LAYERS: ["Contents", "Layer"],
         };
         var getOfPath = function (obj, p, i) {
             if (i < p.length - 1) {
@@ -1589,7 +1590,15 @@ const ThreeD = (function (namespace, signature, factory) {
             if ((capsURL = Util.isOnCapabilities(layer.url))) {
                 let caps;
                 if ((caps = TC.capabilities[capsURL])) {
-                    var tileMatrixSet = getOfPath(caps, paths.TILEMATRIXSETLABELS, 0);
+                    let tileMatrixSet = getOfPath(caps, paths.TILEMATRIXSETLABELS, 0);
+                    //obtener la lista de tilematrix usado por las capas de WMTS
+                    let usedTileMatrixSet = getOfPath(caps, ["Contents", "Layer"], 0)
+                        .filter((l) => layer.names.indexOf(l.Identifier) >= 0)
+                        .reduce((vi, va) => {
+                            return vi.concat(va.TileMatrixSetLink.map((tmsl) => tmsl.TileMatrixSet))
+                        }, []);
+                    //filtramos por aquellos que se usan
+                    tileMatrixSet = tileMatrixSet.filter((t) => usedTileMatrixSet.indexOf(t.Identifier) >= 0)
                     for (var a = 0; a < tileMatrixSet.length; a++) {
                         if (Util.CRSCodesEqual(crs, tileMatrixSet[a].SupportedCRS)) {
                             return { id: tileMatrixSet[a].Identifier, labels: getOfPath(tileMatrixSet[a], ["TileMatrix", "Identifier"], 0) };
@@ -1644,7 +1653,8 @@ const ThreeD = (function (namespace, signature, factory) {
                     }
 
                     if (tileMatrixSetLabels && tileMatrixSetLabels.labels) {
-                        options.maximumLevel = parseInt(tileMatrixSetLabels.labels[tileMatrixSetLabels.labels.length - 1]);
+                        const maxTileMatrixSetLabel = tileMatrixSetLabels.labels[tileMatrixSetLabels.labels.length - 1];
+                        options.maximumLevel = parseInt(maxTileMatrixSetLabel.substring(maxTileMatrixSetLabel.indexOf(":")+1));
                     }
 
                     // cuando un WMTS no tenga el matrixset de 0 a 21 requeriremos de la siguiente instrucción
@@ -1656,7 +1666,14 @@ const ThreeD = (function (namespace, signature, factory) {
                     resolve(new cesium.WebMapTileServiceImageryProvider(options));
 
                 } else {
-                    reject('Faltan datos para instanciar la capa');
+                    if (layer.fallbackLayer) {
+                        wmsLayer(layer.getFallbackLayer()).then((layer) => {
+                            resolve(layer);
+                        }, () => {
+                            reject('Faltan datos para instanciar la capa');
+                        })
+                    }
+                    else reject('Faltan datos para instanciar la capa');
                 }
             });
         }
@@ -2789,6 +2806,14 @@ const ThreeD = (function (namespace, signature, factory) {
             self.terrainFallback = (Array.isArray(options.terrainFallback) ? options.terrainFallback : [options.terrainFallback]).map((tfb) => {
                 if (tfb && (!tfb.url || !(tfb.coverageName || tfb.layerName) || tfb.noDataValue === undefined)) {
                     return {
+                        //"url": "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
+                        //"type": "ARCGIS",
+                        //url: "https://image.discomap.eea.europa.eu/arcgis/services/Elevation/EUElev_DEM_V11/MapServer/WCSServer",
+                        //coverageName: "1",
+                        //format: "GeoTIFF",
+                        //url: "https://worldwind26.arc.nasa.gov/wcs?service=wcs",
+                        //coverageName: "NASA_SRTM30_900m_Tiled",
+                        //format: "png",
                         url: "https://image.discomap.eea.europa.eu/arcgis/services/Elevation/EUElev_DEM_V11/MapServer/WCSServer",
                         coverageName: "1",
                         format: "GeoTIFF",
@@ -3056,11 +3081,13 @@ const ThreeD = (function (namespace, signature, factory) {
 
                                 });
                             }.bind(self))
-                                .catch(() => { console.log('3051'); applyEnd(); });
+                                .catch((err) => { console.log('3051'); applyEnd(); });
                         })
-                        .catch(() => { console.log('3053'); applyEnd(); });
+                        .catch((err) => {
+                            console.log('3053'); applyEnd();
+                        });
                 })
-                .catch(() => { console.log('3055'); applyEnd(); });
+                .catch((err) => { console.log('3055'); applyEnd(); });
         } catch (error) {
             applyEnd();
 
@@ -3233,10 +3260,10 @@ const ThreeD = (function (namespace, signature, factory) {
             var self = this;
 
             switch (true) {
-                case e.type == Consts.event.BEFOREBASELAYERCHANGE:
-                    if (!self.waiting)
-                        self.waiting = self.map.getLoadingIndicator().addWait();
-                    break;
+                //case e.type == Consts.event.BEFOREBASELAYERCHANGE:
+                //    if (!self.waiting)
+                //        self.waiting = self.map.getLoadingIndicator().addWait();
+                //    break;
                 case e.type == Consts.event.BASELAYERCHANGE: {
                     self.view3D.setBaseLayer.call(self, e.layer);
                     break;
@@ -3367,7 +3394,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     }
                     self.lastZoom = performance.now();
 
-                    let rectangle = cesium.Rectangle.fromDegrees(...e.extent);
+                    let rectangle = cesium.Rectangle.fromDegrees(...e.extent);                    
                     self.view3D.flyToRectangle.call(self, rectangle);
                     break;
                 }
@@ -4253,7 +4280,6 @@ const ThreeD = (function (namespace, signature, factory) {
                                     self.view3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
                                         if (!self.waiting)
                                             self.waiting = self.map.getLoadingIndicator().addWait();
-
                                         if ((self.viewer.scene.terrainProvider.allReady ||
                                             (!self.viewer.scene.terrainProvider.allReady && self.viewer.scene.terrainProvider.ready))
                                             && data === 0) {
@@ -4328,6 +4354,11 @@ const ThreeD = (function (namespace, signature, factory) {
 
                                     }
                                     return fovCoords;
+                                }
+                                self.view3D.getExtent = function () {                                    
+                                    const fov = this.getFovCoords(this.crs);
+                                    const rectangle = cesium.Rectangle.fromCartographicArray(fov.map((coords) => { return new cesium.Cartographic(coords[0], coords[1]) }))
+                                    return [rectangle.west, rectangle.south, rectangle.east, rectangle.north];
                                 }
                                 self.view3D.getCameraData = function () {
                                     const camera = self.viewer.scene.camera
@@ -4847,7 +4878,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     var marginX = rectangle.width * enlargeFactor / 2;
                     var marginY = rectangle.height * enlargeFactor / 2;
                     rectangle.east -= marginX;
-                    rectangle.west += marginY;
+                    rectangle.west += marginX;
                     rectangle.north += marginY;
                     rectangle.south -= marginY;
 
@@ -4856,29 +4887,46 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     var destinationCartesian = camera.getRectangleCameraCoordinates(rectangle);
                     var destination = cesium.Ellipsoid.WGS84.cartesianToCartographic(destinationCartesian);
-
-                    cesium.when(scene.globe.terrainProvider.sampleTerrainMostDetailed([cesium.Rectangle.center(rectangle)]), function (updatedPositions) {
+                    cesium.sampleTerrainMostDetailed(scene.terrainProvider, [cesium.Rectangle.center(rectangle)]).then(function (updatedPositions) {
+                    //cesium.when(cesium.sampleTerrainMostDetailed(scene.globe.terrainProvider, [cesium.Rectangle.center(rectangle)]), function (updatedPositions) {
 
                         var finalDestinationCartographic = {
                             longitude: destination.longitude,
                             latitude: destination.latitude,
-                            height: destination.height + updatedPositions[0].height || 0
+                            //URI:Partimos de una base de una altura de al menos 200, para evitar quedar muy cerca del suelo si el rectangulo es el extent de un punto
+                            height: Math.max(destination.height,200) + updatedPositions[0].height || 0
                         };
+                        const geodesic = new cesium.EllipsoidGeodesic(destination, new cesium.Cartographic(destination.longitude, 0, destination.height));
+                        const pos = geodesic.interpolateUsingSurfaceDistance(Math.max(destination.height, 200));
+                        pos.height = finalDestinationCartographic.height;
+                        //camera.setView({
+                        //    destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
+                        //    orientation: {
+                        //        heading: 0,
+                        //        pitch: -1 * (Math.PI / 4)
+                        //    }
+                        //});
+                        //resolve();
 
                         camera.flyTo({
                             duration: options.duration || 1,
-                            destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(finalDestinationCartographic),
+                            destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),    
+                            orientation: {
+                                heading: 0,
+                                pitch: -1 * (Math.PI / 4)
+                            },
                             complete: function () {
-                                var angle = cesium.Math.toRadians(50);
-                                var pickBP = pickBottomPoint(this.viewer.scene);
-                                pickBP = cesium.Matrix4.fromTranslation(pickBP);
+                                resolve();
+                                //var angle = cesium.Math.toRadians(50);
+                                //var pickBP = pickBottomPoint(this.viewer.scene);
+                                //pickBP = cesium.Matrix4.fromTranslation(pickBP);
 
-                                this.view3D.rotateAroundAxis(this.viewer.scene.camera, -angle, this.viewer.scene.camera.right, pickBP, {
-                                    duration: 250,
-                                    callback: function () {
-                                        resolve();
-                                    }
-                                });
+                                //this.view3D.rotateAroundAxis(this.viewer.scene.camera, -angle, this.viewer.scene.camera.right, pickBP, {
+                                //    duration: 250,
+                                //    callback: function () {
+                                //        resolve();
+                                //    }
+                                //});
                             }.bind(self)
                         });
                     });

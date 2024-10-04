@@ -259,7 +259,7 @@ export default class ThreeDDraw extends EventTarget {
                 createVirtualSPs = true;
                 break;
             case 'rectangle':
-                positions = [...this.entityForEdit.polygon?.hierarchy?.getValue(this.julianDate).positions];
+                positions = [...(this.entityForEdit.polygon?.hierarchy?.getValue(this.julianDate).positions ?? [])];
                 this.entityForEdit.polygon.hierarchy = new cesium.CallbackProperty(() => new cesium.PolygonHierarchy(this.#activePoints_), false);
                 this.drawingDataSource.entities.add({
                     position: new cesium.CallbackProperty(() => {
