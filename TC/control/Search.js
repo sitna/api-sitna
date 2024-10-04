@@ -1308,7 +1308,7 @@ class SearchType {
             const getValueOrLikePattern = function (propertyName, value) {
                 const featureTypes = self.getFeatureTypes();
                 const description = self.#featureTypeDescriptions.get(featureTypes[0])?.[propertyName];
-                if (description?.type === 'xsd:string' && value.indexOf(self.parent._LIKE_PATTERN) < 0) {
+                if (description?.['@type'] === 'xsd:string' && value.indexOf(self.parent._LIKE_PATTERN) < 0) {
                     return self.parent._LIKE_PATTERN + value + self.parent._LIKE_PATTERN;
                 }
                 return value;
@@ -2387,32 +2387,29 @@ class Search extends Control {
 
     constructor() {
         super(...arguments);
-        const self = this;
 
-        self._dialogDiv = Util.getDiv(self.options.dialogDiv);
-        if (!self.options.dialogDiv) {
-            document.body.appendChild(self._dialogDiv);
+        this._dialogDiv = Util.getDiv(this.options.dialogDiv);
+        if (!this.options.dialogDiv) {
+            document.body.appendChild(this._dialogDiv);
         }
 
-        self.exportsState = true;
+        this.exportsState = true;
 
-        self.url = '//idena.navarra.es/ogc/wfs';
-        self.version = '1.1.0';
-        self.featurePrefix = 'IDENA';
+        this.url = this.options.url || '//idena.navarra.es/ogc/wfs';
+        this.version = this.options.version || '1.1.0';
+        this.featurePrefix = this.options.featurePrefix || 'IDENA';
 
-        if (self.options && self.options.url) {
-            self.url = self.options.url;
-        }
+        this.mimimumPatternLength = this.options.minimumPatternLength ?? 3;
 
-        self.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
+        this.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
 
-        self.queryableFeatures = self.options.queryableFeatures || false;
+        this.queryableFeatures = this.options.queryableFeatures || false;
 
-        self.wrap = new TC.wrap.control.Search(self);
+        this.wrap = new TC.wrap.control.Search(this);
 
-        self.interval = 500;
+        this.interval = 500;
 
-        self.NORMAL_PATTERNS = {
+        this.NORMAL_PATTERNS = {
             ROMAN_NUMBER: /M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}){1,}?\S?\./i,
             ABSOLUTE_NOT_DOT: /[`~!@#$%^&*_|+\=?;:'"\{\}\[\]\\]/gi,
             ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/gi
@@ -3602,7 +3599,7 @@ class Search extends Control {
 
     getSearchTypeByRole(type) {
         const self = this;
-        return self.allowedSearchTypes.find(allowed => allowed.typeName == type);
+        return self.allowedSearchTypes.find(allowed => allowed.typeName.toLowerCase() == type.toLowerCase());
     }
 
     getSearchTypeByFeature(id) {
@@ -3877,19 +3874,14 @@ class Search extends Control {
 
         var result = [];
 
-        const test = function () {
-            var tests = [function (text) {
-                return text.length >= 3;
-            },
-            function (text) {
-                return /^\d+$/.test(text) ?
-                    false :
-                    /^\d+\,\s*\d+$/.test(text) ? false : true;
-            }];
+        const isValid = function () {
+            var tests = [
+                (text) => text.length >= self.mimimumPatternLength,
+                (text) => /^\d+$/.test(text) ? false : !(/^\d+\,\s*\d+$/.test(text))
+            ];
 
-            for (var i = 0; i < tests.length; i++) {
-                if (!tests[i].call(self, text))
-                    return false;
+            for (const test of tests) {
+                if (!test(text)) return false;
             }
 
             return true;
@@ -3903,7 +3895,7 @@ class Search extends Control {
             text = text.substring(0, text.length - 1);
         }
 
-        if (test(text)) {
+        if (isValid(text)) {
             var check = [];
 
             check = allowedRoles.map(function (dataRole) {
@@ -4044,7 +4036,7 @@ class Search extends Control {
         if (pattern.length > 0) {
             pattern = pattern.toLowerCase();
             if (self.searchRequestsAbortController) {
-                self.searchRequestsAbortController.abort('Petición de nuevo patrón: ' + pattern);
+                self.searchRequestsAbortController.abort();
             }
 
             self.searchRequestsAbortController = new AbortController();
@@ -4055,8 +4047,12 @@ class Search extends Control {
             self.searchRequestsResults = [];
 
             let toRender = 0;
-            let renderingEnd = () => {
+            let someSuccess = false;
+            let renderingEnd = (success) => {
                 toRender--;
+                if (success) {
+                    someSuccess = true;
+                }
                 if (toRender === 0) {
                     // si al término de las peticiones ya estamos con otro patrón no hacemos nada
                     if (pattern !== self.textInput.value.trim().toLowerCase()) {
@@ -4066,7 +4062,7 @@ class Search extends Control {
                         if (self.searchRequestsResults.length === 0) {
                             self.cleanMap();
 
-                            if (!self.layer || self.layer.features.length === 0) {
+                            if (someSuccess && (!self.layer || self.layer.features.length === 0)) {
 
                                 self.resultsList.innerHTML = '<li><a title="' + self.EMPTY_RESULTS_TITLE + '" class="tc-ctl-search-li-empty">' + self.EMPTY_RESULTS_LABEL + '</a></li>';
                                 self.textInput.dispatchEvent(new CustomEvent("targetUpdated.autocomplete"));
@@ -4109,58 +4105,69 @@ class Search extends Control {
                 }
             };
 
-            self.allowedSearchTypes.forEach(function (allowed) {
-                if (allowed.searchFunction) {
-                    toRender++;
+            let rootLabelPromise;
+            if (self.rootCfg.active) {
+                rootLabelPromise = self.rootCfg.active.getRootLabel();
+            }
+            else {
+                rootLabelPromise = Promise.resolve();
+            }
 
-                    //console.log('registramos promesa: ' + allowed.typeName);
+            rootLabelPromise.then(() => {
+                for (const allowedSearchType of self.allowedSearchTypes) {
+                    if (allowedSearchType.searchFunction) {
+                        toRender++;
 
-                    allowed.searchFunction.call(self, pattern)
-                        .then(function (dataRole, result) {
+                        //console.log('registramos promesa: ' + allowed.typeName);
 
-                            let manageLoadingByDataRole = () => {
-                                let loadingElemOfDataRole = self.resultsList.querySelector('li[data-role="' + dataRole + '"]');
-                                if (loadingElemOfDataRole) {
-                                    let indexLoadingElemOfDataRole = Array.prototype.indexOf.call(loadingElemOfDataRole.parentElement.childNodes, loadingElemOfDataRole);
-                                    let headerElemOfDataRole = self.resultsList.childNodes[indexLoadingElemOfDataRole - 1];
+                        allowedSearchType.searchFunction.call(self, pattern)
+                            .then(function (dataRole, result) {
 
-                                    self.resultsList.removeChild(headerElemOfDataRole);
-                                    self.resultsList.removeChild(loadingElemOfDataRole);
-                                }
-                            };
+                                let manageLoadingByDataRole = () => {
+                                    let loadingElemOfDataRole = self.resultsList.querySelector('li[data-role="' + dataRole + '"]');
+                                    if (loadingElemOfDataRole) {
+                                        let indexLoadingElemOfDataRole = Array.prototype.indexOf.call(loadingElemOfDataRole.parentElement.childNodes, loadingElemOfDataRole);
+                                        let headerElemOfDataRole = self.resultsList.childNodes[indexLoadingElemOfDataRole - 1];
 
-                            //console.log('resulta promesa: ' + dataRole);
+                                        self.resultsList.removeChild(headerElemOfDataRole);
+                                        self.resultsList.removeChild(loadingElemOfDataRole);
+                                    }
+                                };
 
-                            if (result && result.length > 0) {
+                                //console.log('resulta promesa: ' + dataRole);
 
-                                // caso topónimo con y sin municipio Irisarri Auzoa (Igantzi)
-                                let toConcat = result.filter(elm => self.searchRequestsResults.findIndex((srrElm) => srrElm.id === elm.id) === -1);
-                                if (toConcat.length === result.length) {
-                                    self.searchRequestsResults = self.searchRequestsResults.concat(toConcat);
+                                if (result && result.length > 0) {
 
-                                    renderResultsOnSuggestionList();
-                                } else if (result.length === 1) {
+                                    // caso topónimo con y sin municipio Irisarri Auzoa (Igantzi)
+                                    let toConcat = result.filter(elm => self.searchRequestsResults.findIndex((srrElm) => srrElm.id === elm.id) === -1);
+                                    if (toConcat.length === result.length) {
+                                        self.searchRequestsResults = self.searchRequestsResults.concat(toConcat);
+
+                                        renderResultsOnSuggestionList();
+                                    } else if (result.length === 1) {
+                                        manageLoadingByDataRole();
+                                    }
+                                } else {
                                     manageLoadingByDataRole();
                                 }
-                            } else {
-                                manageLoadingByDataRole();
-                            }
 
-                            renderingEnd();
+                                renderingEnd(true);
 
-                            //resolve(result);
-                        }.bind(self, allowed.typeName)).catch(function (_dataRole) {
-                            //reject();
-                            //console.log('reject promesa: ' + _dataRole);
-                            renderingEnd();
-                            const li = self.resultsList.querySelector("[data-role='" + _dataRole + "']")
-                            if (li) {
-                                li.parentElement.removeChild(li.previousElementSibling);
-                                li.parentElement.removeChild(li);
-                            }
-                        }.bind(self, allowed.typeName));
-                } else {
-                    console.log('Falta implementación del método searchFunction en el tipo ' + allowed.typeName);
+                                //resolve(result);
+                            }.bind(self, allowedSearchType.typeName))
+                            .catch(function (_dataRole) {
+                                //reject();
+                                //console.log('reject promesa: ' + _dataRole);
+                                renderingEnd(false);
+                                const li = self.resultsList.querySelector("[data-role='" + _dataRole + "']")
+                                if (li) {
+                                    li.parentElement.removeChild(li.previousElementSibling);
+                                    li.parentElement.removeChild(li);
+                                }
+                            }.bind(self, allowedSearchType.typeName));
+                    } else {
+                        console.log('Falta implementación del método searchFunction en el tipo ' + allowedSearchType.typeName);
+                    }
                 }
             });
         }
@@ -4216,7 +4223,8 @@ class Search extends Control {
                         
             const dr = dataRole || self.getElementOnSuggestionList.call(self, id).dataRole;
 
-            const allowed = self.allowedSearchTypes.findByProperty("typeName", dr);
+            //const allowed = self.allowedSearchTypes.findByProperty("typeName", dr);
+            const allowed = self.getSearchTypeByRole(dr);
 
             const customSearchType = !Object.prototype.hasOwnProperty.call(self.availableSearchTypes, dr)
 
@@ -4842,9 +4850,9 @@ class Search extends Control {
             while (i--) {
                 if (!addRoot) {
                     if (result[i][0]) {
-                        var indicatedRoot = self.rootCfg.active.rootLabel.filter(function (elem) {
+                        var indicatedRoot = self.rootCfg.active.rootLabel?.filter(function (elem) {
                             return elem.label.indexOf(self.removePunctuation(result[i][0]).toLowerCase()) > -1;
-                        }.bind(self));
+                        }.bind(self)) || [];
 
                         if (indicatedRoot.length === 1) {
                             result[i][0] = indicatedRoot[0].id;
