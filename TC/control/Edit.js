@@ -917,6 +917,7 @@ class Edit extends WebComponentControl {
 
         if (ctl !== self.map.activeControl) {
             self.#previousActiveControl = self.map.activeControl;
+            await ctl.activate();
         }
     }
 
@@ -924,22 +925,22 @@ class Edit extends WebComponentControl {
         const self = this;
         if (self.#previousActiveControl) {
             self.map.previousActiveControl = self.#previousActiveControl;
-            switch (self.map.activeControl) {
-                case self.pointDrawControl:
-                    self.pointDrawControl.deactivate();
-                    break;
-                case self.lineDrawControl:
-                    self.lineDrawControl.deactivate();
-                    break;
-                case self.polygonDrawControl:
-                    self.polygonDrawControl.deactivate();
-                    break;
-                case self.modifyControl:
-                    self.modifyControl.deactivate();
-                    break;
-                default:
-                    break;
-            }
+        }
+        switch (self.map.activeControl) {
+            case self.pointDrawControl:
+                self.pointDrawControl.deactivate();
+                break;
+            case self.lineDrawControl:
+                self.lineDrawControl.deactivate();
+                break;
+            case self.polygonDrawControl:
+                self.polygonDrawControl.deactivate();
+                break;
+            case self.modifyControl:
+                self.modifyControl.deactivate();
+                break;
+            default:
+                break;
         }
         return self;
     }
