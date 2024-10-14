@@ -98,6 +98,7 @@
   "dl.export.vector": "Vector layers",
   "dl.export.map.error": "msg error",
   "dl.export.complexAttr": "Complex attributes will be lost on {0} format export.",
+  "dl.export.timeData": "Due to {0} format limitations, time data will be lost withing date/time attribute values.",
   "download": "Download",
   "downloadData": "Download vector",
   "downloadSketch": "Download sketch",

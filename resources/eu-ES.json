@@ -98,6 +98,7 @@
   "dl.export.vector": "Geruza bektorialak",
   "dl.export.map.error": "msg error",
   "dl.export.complexAttr": "Ezaugarri konplexuak galduko dira {0} formatuan esportatzean.",
+  "dl.export.timeData": "{0} formatuaren mugak direla eta, data-balioak dituzten atributuetan ordu-informazioa galduko da.",
   "download": "Deskargatu",
   "downloadData": "Bektorial deskargak",
   "downloadSketch": "Marrazkia deskargatu",

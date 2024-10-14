@@ -98,6 +98,7 @@
   "dl.export.vector": "Capas vectoriales",
   "dl.export.map.error": "msg error",
   "dl.export.complexAttr": "Se perderán los atributos complejos al exportar a formato {0}.",
+  "dl.export.timeData": "Debido a las limitaciones del formato {0}, se perderá la información de hora en los atributos con valores de fecha.",
   "download": "Descargar",
   "downloadData": "Descargas vectoriales",
   "downloadSketch": "Descargar dibujo",
