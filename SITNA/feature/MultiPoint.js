@@ -40,6 +40,7 @@ import Consts from '../../TC/Consts';
             strokeWidth: 4,
             fillColor: '#ffffff', // blanco
             fillOpacity: 0.7,
+            radius: 10,
             data: {
                 'Denominación': 'Encinas de Corella'
             }
