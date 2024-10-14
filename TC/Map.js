@@ -1385,11 +1385,12 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 console.trace();
             }
             if (!options) {
-                oldError(text);
+                oldError(err);
                 self.toast(text, { type: Consts.msgType.ERROR, duration: Cfg.toastDuration * 2 });
             }
             else {
-                var fnc = function (text, mode, subject) {
+                var fnc = function (err, mode, subject) {
+                    const text = err.message ?? err;
                     switch (mode) {
                         case Consts.msgErrorMode.TOAST:
                             if (!self.toast) { console.warn("No existe el objeto Toast"); return; }
@@ -1405,16 +1406,16 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                             break;
                         case Consts.msgErrorMode.CONSOLE:
                         default:
-                            console.error(text);
+                            console.error(err);
                             break;
                     }
                 };
                 if (!Array.isArray(options)) {
-                    fnc(text, options, subject);
+                    fnc(err, options, subject);
                 }
                 else {
                     for (var i = 0; i < options.length; i++) {
-                        fnc(text, options[i], subject);
+                        fnc(err, options[i], subject);
                     }
                 }
             }
@@ -3264,7 +3265,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 var path = layer.getPath(name);
                 serviceObj.layers.push({
                     name: name,
-                    title: path[path.length - 1],
+                    title: path[0],
                     path: path.slice(1),
                     features: []
                 });
