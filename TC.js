@@ -1793,7 +1793,13 @@ TC.inherit = function (childCtor, parentCtor) {
 };
 
 TC.mix = function (targetCtor, ...mixins) {
-    Object.assign(targetCtor.prototype, ...mixins);
+    for (const mixin of mixins) {
+        for (const [key, value] of Object.entries(mixin)) {
+            if (!Object.prototype.hasOwnProperty.call(targetCtor.prototype, key)) {
+                targetCtor.prototype[key] = value;
+            }
+        }
+    }
 };
 
 const uids = new Map();
