@@ -232,6 +232,26 @@ class FeatureDownloadDialog extends Control {
 
         const endExport = async (features, opts) => {
 
+            // comprobar si hay fecha y hora y el formato de destino es shapefile (que no soporta horas)
+            if (format === Consts.format.SHAPEFILE) {
+                const metadata = await Promise.all(features.map(async (f) => f.layer?.getFeatureTypeMetadata()));
+                if (metadata.some((layerMetadata) => layerMetadata?.attributes.some((attr) => attr.type === Consts.dataType.DATETIME ||
+                    attr.type === Consts.dataType.TIME))) {
+                    if (!options.acceptedTimeLoss) {
+                        await TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.timeData"), format),
+                            () => {
+                                options.acceptedTimeLoss = true;
+                            },
+                            () => {
+                                cancel = true;
+                            });
+                    }
+                }
+                if (cancel) {
+                    return;
+                }
+            }
+
             //checkear si son features con datos complejos
             var cancel = false;
             if (format !== Consts.format.GEOJSON &&
