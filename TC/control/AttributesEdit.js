@@ -19,6 +19,16 @@ const getDataType = (value) => {
     if (type === 'number') {
         type = Consts.dataType.FLOAT;
     }
+    if (type === 'string') {
+        // Revisamos casos especiales
+        if (Date.parse(value)) {
+            if (value.includes('T')) return 'datetime'
+            return 'date';
+        }
+        if (/^[0-2]\d:[0-5]\d$/.test(value)) {
+            return 'time';
+        }
+    }
     return type;
 };
 
@@ -142,6 +152,7 @@ class AttributesEdit extends WebComponentControl {
                 if (Array.isArray(target) && Array.isArray(source)) {
                     for (const targetItem of target) {
                         const sourceItem = source.find(byName(targetItem.name, equalsPredicate));
+                        result ??= [];
                         if (sourceItem) {
                             const newItem = { name: targetItem.name, sealed: !sourceItem.optional };
                             if (sourceItem.multiple || targetItem.multiple) {
@@ -167,8 +178,10 @@ class AttributesEdit extends WebComponentControl {
                                     }
                                 }
                             }
-                            result ??= [];
                             result.push(newItem);
+                        }
+                        else {
+                            result.push(targetItem);
                         }
                     }
                 }
