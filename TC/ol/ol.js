@@ -1763,7 +1763,7 @@ var getFormatFromName = function (name, extractStyles) {
             });
         case Consts.mimeType.GML:
         case Consts.format.GML:
-            return new ol.format.GML({
+            return new ol.format.GML32({
                 featureNS: 'http://www.opengis.net/gml/3.2',
                 featureType: 'feature'
             });
@@ -3492,8 +3492,10 @@ const createNativeStyle = function (options, olFeat) {
                     });
                 }
 
-                if (!Number.isNaN(circleOptions.radius))
+                if (Number.isNaN(circleOptions.radius)) circleOptions.radius = TC.Cfg.styles?.point?.radius;
+                if (!Number.isNaN(circleOptions.radius)) {
                     nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, { "image": new ol.style.Circle(circleOptions) });
+                }
             });
 
         }
@@ -7827,7 +7829,11 @@ TC.wrap.Feature.prototype.createCircle = function (coords, options = {}) {
 };
 
 TC.wrap.Feature.createFeature = function (olFeat, options = {}) {
-    if (!olFeat._sitnaFeature) {
+    if (olFeat._sitnaFeature) {
+        olFeat._sitnaFeature.data = olFeat._sitnaFeature.wrap.getData();
+        olFeat._sitnaFeature.geometry = olFeat._sitnaFeature.wrap.getGeometry();
+    }
+    else {
         var olGeometry = olFeat.getGeometry();
         options.id = olFeat.getId();
         let olStyle = olFeat.getStyle();
