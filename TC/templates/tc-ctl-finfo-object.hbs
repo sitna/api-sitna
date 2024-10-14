@@ -1,13 +1,13 @@
-{{#if (isObject this)}}
+{{#if (isPlainObject this)}}
 <table class="tc-complex-attr">
     <tbody>
     {{#each this}}
-        {{#if (isObject this)}}
+        {{#if (isPlainObject this)}}
         <tr>
             <th style="display:none">{{@key}}</th>
             <td>
                 <div>
-                {{#if (isObject this)}}
+                {{#if (isPlainObject this)}}
                 <!--object-->
                     <input type="checkbox" id="complexAttr_{{getId this}}">
                     <div>
@@ -20,7 +20,7 @@
                     {{/if}}
                 {{/if}}
                     {{> tc-ctl-finfo-object this }}
-                {{#if (isObject this)}}
+                {{#if (isPlainObject this)}}
                     </div>
                 {{/if}}
                 </div>

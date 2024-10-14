@@ -22,7 +22,7 @@ files
                     isEmpty: true,
                     getId: true,
                     isArray: true,
-                    isObject: true,
+                    isPlainObject: true,
                     isNumber: true,
                     isBoolean: true,
                     formatNumber: true,
