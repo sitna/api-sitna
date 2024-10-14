@@ -574,7 +574,11 @@ console.log("MILLISECONDS",end2-start2);
     const flattenElements = function (parent) {
         let result = [];
         if (parent.children) {
-            for (const child of parent.children.filter(getPredicateForTagName('element', 'complexContent', 'sequence', 'all'))) {
+            if (removePrefix(parent.tagName) === 'choice') {
+                return [parent.children.filter(getPredicateForTagName('element'))[0]];
+            }
+
+            for (const child of parent.children.filter(getPredicateForTagName('element', 'complexContent', 'sequence', 'choice', 'all'))) {
                 if (removePrefix(child.tagName) === 'element') {
                     result.push(child);
                 }
