@@ -61,7 +61,7 @@ const dbfDataTypes = new Map([
     [Consts.dataType.DOUBLE, dbfDataType.NUMERIC], // Librería dbf no soporta tipos numéricos distintos de NUMERIC
     [Consts.dataType.STRING, dbfDataType.CHARACTER],
     [Consts.dataType.DATE, dbfDataType.DATE],
-    [Consts.dataType.DATETIME, dbfDataType.TIMESTAMP]
+    [Consts.dataType.DATETIME, dbfDataType.DATE] // Shapefile no soporta timestamp, el formato dBase para fecha y hora
 ]);
 
 const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
@@ -123,9 +123,16 @@ const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
                 originalType: geometryType
             }
         ];
-        // El parser no añade ids, los añadimos nosotros.
         collection.features.forEach((f, i) => {
+            // El parser no añade ids, los añadimos nosotros.
             f.id = `${fileNameWithoutExtension}.${i + 1}`;
+
+            // Eliminamos las fechas no válidas (seguramente vienen de un campo fecha vacío)
+            for (const key in f.properties) {
+                if (f.properties[key] instanceof Date && isNaN(f.properties[key])) {
+                    f.properties[key] = null;
+                }
+            }
         });
         collection.metadata = { ...metadata, ...{ geometries } };
         return collection;
@@ -206,7 +213,7 @@ const exportFeatures = async function (features, options = {}) {
             const dbfMetadata = featureTypeMetadata
                 ?.attributes
                 .filter((attr) => !attr.isId)
-                .filter((attr) => !attr.optional || featureList.some((feat) => Object.prototype.hasOwnProperty.call(feat.data, attr.name)))
+                .filter((attr) => featureList.some((feat) => Object.keys(feat.data).some((key) => featureTypeMetadata.equals(key, attr.name))))
                 .map((attr) => {
                     const name = attr.name;
                     if (featureTypeMetadata.origin === Consts.format.SHAPEFILE && attr.originalType) {
@@ -227,6 +234,7 @@ const exportFeatures = async function (features, options = {}) {
                             size = 1;
                             break;
                         case dbfDataType.DATE:
+                        case dbfDataType.TIMESTAMP:
                             size = 8;
                             break;
                         case dbfDataType.NUMERIC:
@@ -267,6 +275,47 @@ const exportFeatures = async function (features, options = {}) {
                 const fileName = layerId + (groups.size > 1 ? '_' + geometryType : '');
                 //generamos el un shape mas sus allegados por grupo
                 if (dbfMetadata) {
+                    // Convertimos fechas a formato YYYYMMDD
+                    for (const property of dbfMetadata) {
+                        if (property.type === dbfDataType.DATE) {
+                            for (const dataElm of data) {
+                                const val = dataElm[property.name];
+                                if (val) {
+                                    const date = new Date(val);
+                                    dataElm[property.name] = date.getFullYear() +
+                                        (date.getMonth() + 1).toString().padStart(2, '0') +
+                                        date.getDate().toString().padStart(2, '0');
+                                }
+                                else {
+                                    dataElm[property.name] = ''.padEnd(8, '');
+                                }
+                            }
+                        }
+                    }
+
+                    // Cambiamos el nombre de las propiedades al de los metadatos
+                    // Evitamos así los problemas de prefijos de GML
+                    for (const elmData of data) {
+                        for (const prop in elmData) {
+                            const val = elmData[prop];
+                            const metadataProp = dbfMetadata.find((mdProp) => featureTypeMetadata.equals(mdProp.name, prop));
+                            if (metadataProp && metadataProp.name !== prop) {
+                                delete elmData[prop];
+                                elmData[metadataProp.name] = val;
+                            }
+                        }
+                    }
+
+                    // Eliminamos propiedades complejas (p.e. INSPIRE)
+                    for (const elmData of data) {
+                        for (const prop in elmData) {
+                            const val = elmData[prop];
+                            if (val && typeof val === 'object') {
+                                elmData[prop] = '';
+                            }
+                        }
+                    }
+
                     // No pasamos los atributos a shpWrite porque no tiene en cuenta metadatos, usamos dbf para ello
                     shpWrite.write([]
                         , geometryType
