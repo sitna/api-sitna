@@ -465,9 +465,10 @@ function lint() {
     return gulp.
         src([
             'sitna.js',
+            'lib/ol/**/*.js',
+            'SITNA/**/*.js',
             'TC.js',
             'TC/**/*.js',
-            'SITNA/**/*.js',
             'workers/**/*.js'
         ])
         .pipe(eslint())
