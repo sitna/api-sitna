@@ -2,9 +2,16 @@
 import Consts from '../Consts';
 import Util from '../Util';
 import Control from '../Control';
+import Controller from '../Controller';
+import Observer from '../Observer';
+
 
 TC.control = TC.control || {};
-
+class NavBarHomeModel{
+    constructor() {
+        this.zoomToInitialExtent = "";
+    }
+}
 class NavBarHome extends Control {
 
     render() {
@@ -19,7 +26,7 @@ class NavBarHome extends Control {
 
     async register(map) {
         const self = this;
-        await super.register.call(self, map);
+        const superRegisterPromise = super.register.call(self, map);
         self.wrap.register(map);
 
         map.on(Consts.event.PROJECTIONCHANGE, function (e) {
@@ -28,8 +35,18 @@ class NavBarHome extends Control {
             const topRight = Util.reproject([map.options.initialExtent[2], map.options.initialExtent[3]], map.options.crs, crs);
             self.wrap.setInitialExtent([bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]]);
         });
+        await superRegisterPromise;
+
+        self.model = new NavBarHomeModel();
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.model.zoomToInitialExtent = self.getLocaleString('zoomToInitialExtent');
 
         return self;
+    }
+
+    async changeLanguage() {
+        const self = this;
+        self.model.zoomToInitialExtent = self.getLocaleString('zoomToInitialExtent');
     }
 }
 
