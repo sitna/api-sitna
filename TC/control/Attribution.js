@@ -2,9 +2,31 @@
 import Consts from '../Consts';
 import Control from '../Control';
 import Layer from '../../SITNA/layer/Layer';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 TC.Control = Control;
+
+
+class AttributionModel {
+    constructor() {
+        //super();
+        this.data = "";
+        this.others = "";
+        this.attributionGithubTooltip = "";
+    }
+}
+
+class AttributionView extends Observer {
+    constructor(object) {
+        super(object);
+    }
+
+    update(model) {
+        //this.heading.innerText = model.heading;
+    }
+}
 
 class Attribution extends Control {
     constructor() {
@@ -17,6 +39,9 @@ class Attribution extends Control {
         if (self.options.dataAttributions) {
             self.dataAttributions = self.options.dataAttributions instanceof Array ? self.options.dataAttributions : [self.options.dataAttributions];
         }
+
+        self.model = new AttributionModel();
+
     }
 
     register(map) {
@@ -121,10 +146,13 @@ class Attribution extends Control {
         //URI: Si las atribuciones están vacias evito hace una llamada al renderizado del control ya que lo obtendría sin datos.
         //self.render();
 
+        self.updateModel();
+
         map.loaded(function () {
             if (map.baseLayer.wrap.getAttribution) {
                 addData(map.baseLayer.wrap);
                 self.render();
+                self.updateModel();
             }
         });
 
@@ -214,6 +242,9 @@ class Attribution extends Control {
             isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(Consts.classes.COLLAPSED) : true,
             lang: self.map?.options.locale
         }, function () {
+            //if(!self.controller)
+            self.controller = new Controller(self.model, new AttributionView(self.div));
+
             self.addUIEventListeners();
 
             if (typeof callback === 'function') {
@@ -234,6 +265,17 @@ class Attribution extends Control {
         const self = this;
         const other = self.div.querySelector('.' + self.CLASS + '-other');
         other.classList.toggle(Consts.classes.COLLAPSED);
+    }
+
+    updateModel() {
+        const self = this;
+        self.model.data = self.getLocaleString("data");
+        self.model.attributionGithubTooltip = self.getLocaleString("attributionGithubTooltip");
+        self.model.others = self.getLocaleString("others");
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

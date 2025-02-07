@@ -1,9 +1,12 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import MapContents from './MapContents';
-import Raster from '../../SITNA/layer/Raster';
-import Vector from '../../SITNA/layer/Vector';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import MapContents from './MapContents.js';
+import Raster from '../../SITNA/layer/Raster.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import Controller from '../Controller';
+import Observer from '../Observer';
+
 
 TC.control = TC.control || {};
 
@@ -20,6 +23,23 @@ const getTo3DVIew = function (baseLayer) {
         baseLayer.getFallbackLayer() ? baseLayer.getFallbackLayer().getCapabilitiesPromise() : Promise.resolve()
     ]);
 };
+
+class BasemapSelectorModel {
+    constructor() {
+        //super();
+        this.showDetailsView = "";
+        this.backgroundMaps = "";
+        this.moreBackgroundMaps = "";        
+        this.close = "";
+        this.cancel = "";
+        this.baseLayerNotCompatible = "";
+        this.baseLayerNotCompatible_instructions = "";
+        this.metadata = "";
+        this.fileDefault = "";
+    }
+}
+
+const formatDescriptions = [];
 
 class BasemapSelector extends MapContents {
     #currentSelection;
@@ -43,6 +63,9 @@ class BasemapSelector extends MapContents {
         //options = options || {};
 
         self.layerInfos = {};
+
+        self.model = new BasemapSelectorModel();        
+        self.modelDialog = new BasemapSelectorModel();
 
         self._dialogDiv = Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
@@ -143,12 +166,14 @@ class BasemapSelector extends MapContents {
         const self = this;
 
         const ctl = await super.register.call(self, map);
-
+                
         if (self.options.dialogMore) {
             map.on(Consts.event.VIEWCHANGE, function () {
                 self.#getMoreBaseLayers();
             });
         }
+
+        self.updateModel();
 
         map.on(Consts.event.BASELAYERCHANGE + ' ' + Consts.event.PROJECTIONCHANGE + ' ' + Consts.event.VIEWCHANGE, function (e) {
             self.update(self.div, e.layer);
@@ -186,6 +211,7 @@ class BasemapSelector extends MapContents {
         const self = this;
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
         await super.render(callback, Util.extend({}, self.options, { controlId: self.id }));
+        self.controller = new Controller(self.model, new Observer(self.div));        
         return self;
     }
 
@@ -296,10 +322,12 @@ class BasemapSelector extends MapContents {
                 const currentLi = ul.querySelector('li[data-layer-uid="' + uid + '"]');
                 if (currentLi) {
                     currentLi.innerHTML = newLi.innerHTML;
+                    self.#fromFormatToModel(currentLi);
+                    self.controller.add(currentLi);
                 }
                 else {
                     newLi.dataset.layerId = displayLayer.id;
-
+                    self.#fromFormatToModel(newLi);
                     // Insertamos elemento en el lugar correcto, según indica la colección baseLayers
                     const setLayerIds = self.map.baseLayers
                         .map(baseLayer => baseLayer.firstOption || baseLayer)
@@ -312,6 +340,7 @@ class BasemapSelector extends MapContents {
                         const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
                         if (curLi) {
                             curLi.insertAdjacentElement('afterend', newLi);
+                            self.controller.add(curLi);
                             inserted = true;
                             break;
                         }
@@ -321,6 +350,7 @@ class BasemapSelector extends MapContents {
                             const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
                             if (curLi) {
                                 curLi.insertAdjacentElement('beforebegin', newLi);
+                                self.controller.add(curLi);
                                 inserted = true;
                                 break;
                             }
@@ -331,11 +361,13 @@ class BasemapSelector extends MapContents {
                                 moreLabel.parentElement.insertAdjacentElement('beforebegin', newLi);
                             }
                             else {
-                                ul.appendChild(newLi);
+                                ul.appendChild(newLi);                                
                             }
+                            self.controller.add(newLi);
                         }
-                    }
-                    self.update();
+                    }                    
+                    self.update();                    
+                    
                 }
             }).catch(function (err) {
                 TC.error(err);
@@ -530,10 +562,7 @@ class BasemapSelector extends MapContents {
 
         dialog.classList.toggle(Consts.classes.THREED, !!self.map.on3DView);
 
-        const modalBody = dialog.querySelector('.tc-modal-body');
-        modalBody.innerHTML = '';
-        modalBody.classList.add(Consts.classes.LOADING);
-        dialog.classList.remove(Consts.classes.HIDDEN);
+        const modalBody = dialog.querySelector('.tc-modal-body');        
 
         Util.showModal(dialog, {
             closeCallback: function () {
@@ -548,6 +577,20 @@ class BasemapSelector extends MapContents {
         button.classList.toggle(self.#cssClasses.DETAILS, isGrid);
         button.classList.toggle(self.#cssClasses.GRID, !isGrid);
         button.setAttribute('title', self.getLocaleString(isGrid ? 'showDetailsView' : 'showGridView'));
+
+        if (modalBody.childElementCount > 0) {
+            dialog.classList.remove(Consts.classes.HIDDEN);
+            dialog.classList.add(Consts.classes.VISIBLE);
+            const tree = modalBody.querySelector(`.${self.#cssClasses.TREE}`);
+            tree.classList.toggle(self.#cssClasses.DETAILS, !isGrid);
+            tree.classList.toggle(self.#cssClasses.GRID, isGrid);
+            //self.update(tree);            
+            return;
+        }
+
+        modalBody.innerHTML = '';
+        modalBody.classList.add(Consts.classes.LOADING);
+        dialog.classList.remove(Consts.classes.HIDDEN);
 
         const processLayer = bl => {
             if (bl) {
@@ -574,7 +617,9 @@ class BasemapSelector extends MapContents {
                 tree.classList.toggle(self.#cssClasses.GRID, isGrid);
                 modalBody.classList.remove(Consts.classes.LOADING);
 
-                self.update(modalBody);
+                self.update(tree);
+                new Controller(self.modelDialog, new Observer(self._dialogDiv));
+                
             });
         };
         self.#getMoreBaseLayers(function (layerIdx) {
@@ -594,6 +639,7 @@ class BasemapSelector extends MapContents {
             }
         }).then(function () {
             renderBody();
+            self.modelDialog.metadata = self.getLocaleString("metadata");
         });
     }
 
@@ -729,6 +775,39 @@ class BasemapSelector extends MapContents {
         }
 
         return self.#moreBaseLayersPromise;
+    }
+
+    #fromFormatToModel(node) {
+        const links = node.querySelectorAll(".tc-ctl-bms-metadata li a");
+        links.forEach((link) => {
+            const format = link.attributes["type"].value;
+            formatDescriptions[format] =
+                formatDescriptions[format] ||
+                this.getLocaleString(Util.getSimpleMimeType(format)) ||
+            this.getLocaleString('viewMetadata');
+            this.model[format] = this.modelDialog[format] = formatDescriptions[format];
+        });
+    }
+
+    updateModel(){        
+        this.modelDialog.showDetailsView = this.model.showDetailsView = this.getLocaleString("showDetailsView");
+        this.modelDialog.backgroundMaps = this.model.backgroundMaps = this.getLocaleString("backgroundMaps");
+        this.model.moreBackgroundMaps = this.getLocaleString("moreBackgroundMaps");
+        this.modelDialog.close = this.getLocaleString("close");
+        this.modelDialog.cancel = this.getLocaleString("cancel");
+        this.modelDialog.baseLayerNotCompatible = this.getLocaleString("baseLayerNotCompatible");
+        this.modelDialog.baseLayerNotCompatible_instructions = this.getLocaleString("baseLayerNotCompatible.instructions");
+        this.modelDialog.metadata = this.model.metadata = this.getLocaleString("metadata");
+
+        Object.keys(formatDescriptions).forEach((format) => {
+            this.modelDialog[format] = this.model[format] = this.getLocaleString(Util.getSimpleMimeType(format)) ||
+                self.getLocaleString('viewMetadata');
+        });
+        this.model.fileDefault = this.modelDialog.fileDefault = this.getLocaleString('viewMetadata');
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
