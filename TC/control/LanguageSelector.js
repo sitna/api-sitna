@@ -67,7 +67,7 @@ class LanguageOption extends HTMLElement {
     #onShortCodeChange() {
         const shortCode = this.shortCode;
         this.#link.dataset.langCode = shortCode;
-        let parent = self;
+        let parent = this;
         do {
             parent = parent.parentElement;
         }
@@ -95,6 +95,8 @@ class LanguageOption extends HTMLElement {
     set href(value) {
         this.#link.setAttribute('href', value);
     }
+
+
 }
 
 LanguageOption.prototype.CLASS = 'tc-ctl-lang-link';
@@ -115,6 +117,9 @@ class LanguageSelector extends WebComponentControl {
         self.languages = [];
         if (self.options.static) {
             self.static = true;
+        }
+        if (self.options.noReload) {
+            self.noReload = true;
         }
         self.tagAttributeName = self.options.tagAttributeName || 'data-sitna-i18n';
    }
@@ -147,7 +152,7 @@ class LanguageSelector extends WebComponentControl {
         }
         if (!self.static) {
             self.collapsed = self.collapsed || true;
-        }
+        }        
         const languages = Array.from(self.querySelectorAll('sitna-language-option'));
         if (languages.length) {
             self.languages = languages;
@@ -155,7 +160,7 @@ class LanguageSelector extends WebComponentControl {
     }
 
     static get observedAttributes() {
-        return ['static', 'collapsed'];
+        return ['static', 'collapsed','noreload'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -168,6 +173,9 @@ class LanguageSelector extends WebComponentControl {
         }
         if (name === 'collapsed') {
             self.collapsed = self.hasAttribute(name);
+        }
+        if (name === 'noreload') {
+            self.noReload = self.hasAttribute(name);
         }
     }
 
@@ -182,6 +190,20 @@ class LanguageSelector extends WebComponentControl {
         }
         else {
             self.removeAttribute('static');
+        }
+    }
+
+    get noReload() {
+        return this.hasAttribute('noreload');
+    }
+
+    set noReload(value) {
+        const self = this;
+        if (value) {
+            self.setAttribute('noreload', '');
+        }
+        else {
+            self.removeAttribute('noreload');
         }
     }
 
@@ -224,7 +246,7 @@ class LanguageSelector extends WebComponentControl {
                 activeLink = link;
             }
         });
-        activeLink ??= self.languages[0]?.querySelector(`a.${self.languages[0].CLASS}`);
+        activeLink ??= (self.languages.find((lang) => lang.fullCode === LanguageSelector?.currentLocale) || self.languages[0])?.querySelector(`a.${self.languages[0].CLASS}`);
         activeLink?.classList.add(Consts.classes.ACTIVE);
         self.toggle = self.querySelector(`.${self.CLASS}-toggle`);
 
@@ -254,9 +276,21 @@ class LanguageSelector extends WebComponentControl {
     setLanguage(code) {
         const self = this;
         const links = self.languages.map(language => language.querySelector(`a.${language.CLASS}`));
+
         links.forEach(link => link.classList.remove(Consts.classes.ACTIVE));
         links.find(link => link.dataset.langCode === code)?.classList.add(Consts.classes.ACTIVE);
-        window.location.href = self.getUrl(code);
+        if (self.noReload) {
+            const lang = self.languages.find((lang) => lang.shortCode === code).fullCode;
+            LanguageSelector.currentLocale = lang;
+            self.map.setLanguage(lang).then(() => {
+                console.log("language changed");
+            }, (err) => {
+                console.log("language not changed: " + err);
+            });
+        }
+        else
+            window.location.href = self.getUrl(code);            
+        //window.location.href = self.getUrl(code);
     }
 
     static setDocumentTexts() {
@@ -284,6 +318,24 @@ class LanguageSelector extends WebComponentControl {
             });
         }
         return LanguageSelector.#currentLocale;
+    }
+
+    static set currentLocale(lang) {
+        var expirationDate = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000);
+        var hyphenIdx = lang.indexOf('-');
+        if (hyphenIdx >= 0) {
+            lang = lang.substr(0, hyphenIdx);
+        }
+        Util.storage.setCookie(LanguageSelector.COOKIE_NAME, lang, { expires: expirationDate });
+    }
+    static get cookieName() {
+        return LanguageSelector.COOKIE_NAME;
+    }
+
+    static set cookieName(value) {        
+        const refreshValue = LanguageSelector.COOKIE_NAME != value;        
+        LanguageSelector.COOKIE_NAME = value;
+        LanguageSelector.#currentLocale = null;
     }
 }
 
