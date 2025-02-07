@@ -5,6 +5,7 @@ import Cfg from './Cfg';
 import EventTarget from './EventTarget';
 import i18n from './i18n';
 import Handlebars from '../lib/handlebars/helpers';
+
 TC.i18n = TC.i18n || i18n;
 TC._hbs = Handlebars;
 
@@ -41,6 +42,7 @@ TC.Control = function () {
 };
 
 TC.inherit(TC.Control, EventTarget);
+//TC.inherit(TC.Control, Controller);
 
 (function () {
     const ctlProto = TC.Control.prototype;
@@ -335,6 +337,10 @@ TC.inherit(TC.Control, EventTarget);
         return Util.getLocaleString(locale, key, texts);
     };
 
+    ctlProto.getId = function () {
+        return this.id;
+    }
+
     ctlProto.getUID = function () {
         const self = this;
         return TC.getUID({
@@ -404,6 +410,9 @@ TC.inherit(TC.Control, EventTarget);
         }
         return self.elevation;
     };
+    ctlProto.changeLanguage = async function () {
+        return true;
+    }    
 
 })();
 
