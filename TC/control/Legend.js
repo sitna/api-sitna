@@ -2,8 +2,19 @@
 import Consts from '../Consts';
 import MapContents from './MapContents';
 import './LayerLegend';
+import Controller from '../Controller';
+import Observer from '../Observer';
+
+
 TC.control = TC.control || {};
 const layerLoaded = [];
+
+class LegendModel {
+    constructor() {
+        this.legend = "";
+        this.noData = "";
+    }
+}
 
 class Legend extends MapContents {
 
@@ -19,6 +30,13 @@ class Legend extends MapContents {
             } else if (view === Consts.view.DEFAULT) {
                 map.off(Consts.event.LAYERADD, onLayerAdd);
             }
+        });
+
+        self.model = new LegendModel();
+
+        self.renderPromise().then(function () {
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
         });
 
         return super.register.call(self, map);
@@ -141,12 +159,12 @@ class Legend extends MapContents {
         return self;
     }
 
-    async updateLayerTree(layer) {
+    async updateLayerTree(layer,refresh) {
         const self = this;
-
+        
         if (!layer.isBase &&
             !layer.options.stealth &&
-            layer.availableNames?.some((name) => layer.getInfo(name).legend.length)) {
+            (!layer.availableNames || layer.availableNames?.some((name) => layer.getInfo(name).legend.length))) {
 
             //// 09/04/2019 GLS: ignoramos el atributo que venga en la capa porque en la leyenda queremos que el árbol se muestre siempre y 
             //// nos ahorramos el tener que pasarlo en el estado del mapa
@@ -157,9 +175,10 @@ class Legend extends MapContents {
                 /*layer.tree = null;
                 layer.hideTree = layer.options.hideTree = false;*/
             }                  
-            self.div.querySelector('.' + self.CLASS + '-empty').classList.add(Consts.classes.HIDDEN);            
-            //si ya se ha renderiazado en control lagerlegend no es necesario renderiazarlo de nuevo, se depulicaría leyenda
-            if (layerLoaded.includes(layer.id)) return;
+            self.div.querySelector('.' + self.CLASS + '-empty')?.classList.add(Consts.classes.HIDDEN);            
+            //URI:Si la capa se ha añadido pero todavía no se han obtenido las features no se dibuja la leyenda. Esto es por las capas KML que si tienen leyenda 
+            //pero hasta que no se añaden la features no se puede obtener la simbología.
+            if (layer.features && !layer.features.length) return;
             let layerLegend;
             layerLegend = self.div.querySelector('sitna-layer-legend#stl-' + layer.id);
             if (!layerLegend) {
@@ -179,15 +198,16 @@ class Legend extends MapContents {
             try {
                 const html = await self.getRenderedHtml(self.CLASS + '-node', params);
                 layerLegend.innerHTML = html;//parser.parseFromString(out, 'text/html').body.firstChild;
-                const uid = layerLegend.dataset.layerUid;
+                const uid = layerLegend.dataset.layerUid || layerLegend.dataset.layerId;
                 const ul = self.div.querySelector('ul.' + self.CLASS + '-branch');
-                const lis = ul.querySelectorAll('li[data-layer-uid="' + uid + '"]');
-                if (lis.length === 1) {
+                const lis = ul?.querySelectorAll('li[data-layer-uid="' + uid + '"]');
+                if (lis && lis.length === 1) {
                     const li = lis[0];
                     if (li.innerHTML !== layerLegend.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
                         li.innerHTML = layerLegend.innerHTML;
                         li.setAttribute('class', layerLegend.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                     }
+                    self.update();
 
                     }
                     else {
@@ -202,10 +222,13 @@ class Legend extends MapContents {
 
                     };
                     ul.insertBefore(layerLegend, getReferenceElement(loadOrder.indexOf(layer.id)));
-                    layerLegend.addEventListener('update', (e) => {                        
-                        self.map?.magnifier?.addNode(e.srcElement.querySelectorAll(".tc-ctl-legend-watch img"), 4);
+                    if (layer instanceof TC.layer.Raster)
+                        layerLegend.addEventListener('update', (e) => {                        
+                            self.map?.magnifier?.addNode(e.srcElement.querySelectorAll(".tc-ctl-legend-watch img"), 4);
+                            self.update();
+                        });
+                    else
                         self.update();
-                    });
                 }                
             }
             catch (err) {
@@ -241,6 +264,28 @@ class Legend extends MapContents {
     getLayerUIElements() {
         const self = this;
         return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('sitna-layer-legend, li.' + self.CLASS + '-node');
+    }
+
+    updateModel() {
+        this.model.legend = this.getLocaleString("legend");
+        this.model.noData = this.getLocaleString("noData");
+    }
+
+    async changeLanguage() {
+        const self = this;        
+        //////eliminar los cartuchos antes de redibujarlos
+        //this.map.workLayers.forEach((layer) => {
+        //    self.updateLayerTree(layer,true);
+        //});
+        //////if (self.div.querySelector('.' + self.CLASS + '-empty'))
+        //////await self.render();
+        //return self._firstRender;
+        self.updateModel();
+        if (self.map ?.magnifier ?.model){
+            self.map.magnifier.model.textToOpen = self.getLocaleString("clickToEnlarge");
+            self.map.magnifier.model.textToClose = self.getLocaleString("clickToClose");
+        }
+            
     }
 }
 
