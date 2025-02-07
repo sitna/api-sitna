@@ -47,22 +47,23 @@
   */
 
 import localforage from 'localforage';
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import SWCacheClient from './SWCacheClient';
-import Edit from './Edit';
-import Geometry from '../Geometry';
-import Layer from '../../SITNA/layer/Layer';
-import Vector from '../../SITNA/layer/Vector';
-import filter from '../filter';
-import Toggle from '../../SITNA/ui/Toggle';
-import Point from '../../SITNA/feature/Point';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import SWCacheClient from './SWCacheClient.js';
+import Edit from './Edit.js';
+import Geometry from '../Geometry.js';
+import Layer from '../../SITNA/layer/Layer.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import filter from '../filter.js';
+import Toggle from '../../SITNA/ui/Toggle.js';
+import Point from '../../SITNA/feature/Point.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import GMLBase from '../../lib/ol/format/GMLBase.js';
 
 TC.control = TC.control || {};
 TC.Geometry = Geometry;
@@ -248,43 +249,41 @@ class WFSEdit extends SWCacheClient {
                 ctl.addItemTool({
                     renderFn: function (container, layerId) {
                         const className = self.CLASS + '-btn-edit';
-                        let button = container.querySelector('sitna-toggle.' + className);
-                        if (!button) {
+                        let checkbox = container.querySelector('sitna-toggle.' + className);
+                        if (!checkbox) {
                             const text = self.getLocaleString('featureEditing');
-                            button = new Toggle();
-                            button.text = text;
-                            button.classList.add(className);
-                            button.checkedIconText = editIconText;
-                            button.uncheckedIconText = editIconText;
-                            button.dataset.layerId = layerId;
+                            checkbox = new Toggle();
+                            checkbox.text = text;
+                            checkbox.classList.add(className);
+                            checkbox.checkedIconText = editIconText;
+                            checkbox.uncheckedIconText = editIconText;
+                            checkbox.dataset.layerId = layerId;
                             const layer = map.getLayer(layerId);
                             if (layer.type === Consts.layerType.WMS) {
-                                button.classList.add(Consts.classes.LOADING);
+                                checkbox.classList.add(Consts.classes.LOADING);
                                 layer.getWFSCapabilities()
-                                    .catch(() => button.classList.add(Consts.classes.HIDDEN))
-                                    .finally(() => button.classList.remove(Consts.classes.LOADING));
+                                    .catch(() => checkbox.classList.add(Consts.classes.HIDDEN))
+                                    .finally(() => checkbox.classList.remove(Consts.classes.LOADING));
                             }
                         }
-                        return button;
+                        return checkbox;
                     },
                     updateEvents: [Consts.event.BEFORELAYERUPDATE, Consts.event.LAYERUPDATE, Consts.event.LAYERERROR, Consts.event.CONTROLACTIVATE, Consts.event.CONTROLDEACTIVATE],
                     updateFn: function (_e) {
-                        const button = this;
-                        const layer = map.getLayer(button.dataset.layerId);
+                        const checkbox = this;
+                        const layer = map.getLayer(checkbox.dataset.layerId);
                         setTimeout(() => {
-                            button.classList.toggle(Consts.classes.ACTIVE, self.layer === layer);
+                            checkbox.checked = self.layer === layer;
                         }, 500);
-                        button.disabled = !layer || layer.isRaster() && layer.names.length !== 1;
+                        checkbox.disabled = !layer || layer.isRaster() && layer.names.length !== 1;
                     },
                     actionFn: function () {
-                        const button = this;
-                        const layer = map.getLayer(button.dataset.layerId);
+                        const checkbox = this;
+                        const layer = map.getLayer(checkbox.dataset.layerId);
                         const prevLayer = self.layer;
-                        button.classList.remove(Consts.classes.ACTIVE);
                         if (layer.names && layer.names.length === 1 || !layer.isRaster()) {
                             if (layer && prevLayer !== layer) {
                                 self.setLayer(layer).then(() => {
-                                    //button.classList.toggle(Consts.classes.ACTIVE, self.layer === layer);
                                     self.openEditSession();
                                 });
                             }
@@ -472,7 +471,7 @@ class WFSEdit extends SWCacheClient {
 
         self.#saveBtn = self.div.querySelector(`.${self.CLASS}-btn-save`);
         self.#discardBtn = self.div.querySelector(`.${self.CLASS}-btn-discard`);
-        self.#recropBtn = self.div.querySelector(`.${self.CLASS}-view button.${self.CLASS}-btn-crop`);
+        self.#recropBtn = self.div.querySelector(`.${self.CLASS}-view sitna-button.${self.CLASS}-btn-crop`);
 
         self.addUIEventListeners();
         if (Util.isFunction(callback)) {
@@ -484,7 +483,7 @@ class WFSEdit extends SWCacheClient {
         const self = this;
         self.#layerSelect.addEventListener('change', function (_e) {
             self.#setEditState(false);
-            self.getEditableLayer(self.#layerSelect.value)
+            self.getEditableLayer(this.value)
                 .then(function (layer) {
                     self.setLayer(layer.wmsLayer || layer).then(function () {
                         if (self.layer) {
@@ -492,25 +491,26 @@ class WFSEdit extends SWCacheClient {
                         }
                     });
                 })
-                .catch(() => {
+                .catch((e) => {
+                    console.error(e);
                     self.setLayer(null);
                 });
         });
 
         const viewToolsDiv = self.div.querySelector(`.${self.CLASS}-view`);
-        viewToolsDiv.querySelector(`#${self.CLASS}-view-original-cb-${self.id}`).addEventListener('change', function (e) {
+        viewToolsDiv.querySelector(`.${self.CLASS}-view-original-cb`).addEventListener('change', function (e) {
             self.showOriginalFeatures(e.target.checked);
         });
 
-        viewToolsDiv.querySelector(`#${self.CLASS}-view-added-cb-${self.id}`).addEventListener('change', function (e) {
+        viewToolsDiv.querySelector(`.${self.CLASS}-view-added-cb`).addEventListener('change', function (e) {
             self.highlightAdded(e.target.checked);
         });
 
-        viewToolsDiv.querySelector(`#${self.CLASS}-view-modified-cb-${self.id}`).addEventListener('change', function (e) {
+        viewToolsDiv.querySelector(`.${self.CLASS}-view-modified-cb`).addEventListener('change', function (e) {
             self.highlightModified(e.target.checked);
         });
 
-        viewToolsDiv.querySelector(`#${self.CLASS}-view-removed-cb-${self.id}`).addEventListener('change', function (e) {
+        viewToolsDiv.querySelector(`.${self.CLASS}-view-removed-cb`).addEventListener('change', function (e) {
             self.highlightRemoved(e.target.checked);
         });
 
@@ -899,9 +899,9 @@ class WFSEdit extends SWCacheClient {
             let key;
             for (key in attributes) {
                 const attr = attributes[key];
-                const geometryType = Util.getGeometryType(attr.type);
+                const geometryType = GMLBase.getGeometryType(attr.type);
                 if (geometryType) {
-                    layerEditData.geometryName = attr.name;
+                    layerEditData.geometryName = key;
                     layerEditData.geometryType = geometryType === Consts.geom.GEOMETRY ? null : geometryType;
                 }
                 else {
@@ -1325,7 +1325,7 @@ class WFSEdit extends SWCacheClient {
                     };
 
                     if (editableLayer.type === Consts.layerType.WFS) {
-                        if (editableLayer.state === Layer.state.IDLE) {
+                        if (editableLayer.state !== Layer.state.LOADING) {
                             endProcess();
                         }
                         else {
