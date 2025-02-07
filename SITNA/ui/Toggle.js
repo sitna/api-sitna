@@ -29,6 +29,7 @@ class Toggle extends Component {
     }
 
     connectedCallback() {
+        this.#onTitleChange();
         this.#onTextChange();
         this.#onCheckedChange();
         this.#onCheckedIconTextChange();
@@ -37,7 +38,7 @@ class Toggle extends Component {
     }
 
     static get observedAttributes() {
-        return ['text', 'disabled', 'checked', 'checked-icon-text', 'unchecked-icon-text'];
+        return ['text', 'disabled', 'checked', 'checked-icon-text', 'unchecked-icon-text', 'title'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -59,6 +60,9 @@ class Toggle extends Component {
             }
             if (name === 'unchecked-icon-text') {
                 this.#onUncheckedIconTextChange();
+            }
+            if (name === 'title') {
+                this.#onTitleChange();
             }
         }
     }
@@ -136,6 +140,18 @@ class Toggle extends Component {
 
     set uncheckedIconText(value) {
         this.#setOptionalAttribute('unchecked-icon-text', value);
+    }
+
+    get title() {
+        return this.getAttribute('title');
+    }
+
+    set title(value) {
+        this.setAttribute('title', value);
+    }
+
+    #onTitleChange() {
+        this.#checkbox.setAttribute('title', this.title);
     }
 
     #onUncheckedIconTextChange() {
