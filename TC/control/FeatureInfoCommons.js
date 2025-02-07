@@ -93,7 +93,6 @@ class FeatureInfoCommons extends Click {
             if (shareCtl) {
                 self.loadSharedFeature(shareCtl.loadParamFeature());
             }
-            //self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || Consts.infoContainer.POPUP);
         });
 
         map
