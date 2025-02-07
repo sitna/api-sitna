@@ -180,7 +180,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
 
         self.loaded(async function () {
             const search = self.#searchControl = new Search();
-            search.register(self);
+            await search.register(self);
 
             // Si existe el control featureInfo lo activamos.
             if (!self.activeControl) {
