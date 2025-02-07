@@ -12,7 +12,7 @@
   * Función de callback que gestiona los clic del usuario en la ventana de visualización del mapa.
   * @callback SITNA.Map~ClickCallback
   * @param {number[]} coords - Coordenadas del punto donde se ha realizado clic, en las unidades del sistema de referencia de coordenadas del mapa (Ver propiedad `crs`de {@link SITNA.MapOptions}). Array de dos números correspondientes a las coordenadas x e y.
-  * @example <caption>[Ver en vivo](../examples/cfg.ClickOptions.html)</caption> {@lang html} 
+  * @example {@lang html} 
   * <div id="mapa"/>
   * <script>
   *     // Creamos un mapa con el control de gestión de clics, con una función de callback personalizada
