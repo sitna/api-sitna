@@ -3546,7 +3546,7 @@ const ThreeD = (function (namespace, signature, factory) {
                         elm.classList.add(Consts.classes.THREED_HIDDEN);
                     });
                     self.ctrlsToMng.forEach(function (ctl) {
-                        ctl.div.classList.add(Consts.classes.THREED);
+                        ctl.div?.classList.add(Consts.classes.THREED);
                     });
                     break;
             }
@@ -4521,7 +4521,11 @@ const ThreeD = (function (namespace, signature, factory) {
                                             const originalFeat = evt.detail.entity._wrap.parent;
                                             originalFeat.setCoordinates(newFeature.getCoordinates());
                                             //originalFeat.setCoordinates(newFeature.getCoordinates({ geometryCrs: self.map.view3D.view2DCRS, crs: self.map.view3D.crs }));
-                                            self.map.activeControl.trigger(Consts.event.FEATUREMODIFY, { feature: originalFeat, layer: originalFeat.layer });
+                                            self.map.activeControl.trigger(Consts.event.FEATUREMODIFY, {
+                                                feature: originalFeat,
+                                                layer: originalFeat.layer,
+                                                geometryChanged: true
+                                            });
                                         });
 
                                         return self.view3D.threeDDraw;
