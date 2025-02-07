@@ -10,7 +10,7 @@
   * @property {boolean} [persistentHighlights] - Cuando el control `featureInfo` muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si este valor es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. En caso contrario, las geometrías resaltadas se borran en el 
   * momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
-  * @example <caption>[Ver en vivo](../examples/cfg.FeatureInfoOptions.persistentHighlights.html)</caption> {@lang html} 
+  * @example {@lang html} 
   * <div id="mapa"></div>
   * <script>
   *     // Añadimos el control featureInfo.
