@@ -11,10 +11,24 @@ import MultiPolygon from '../feature/MultiPolygon';
 
 let dataTypes;
 let gpDataTypes;
+// BOOLEAN:   0
+// TINYINT:   1
+// SMALLINT:  2
+// MEDIUMINT: 3
+// INT:       4
+// INTEGER:   5
+// FLOAT:     6
+// DOUBLE:    7
+// REAL:      8
+// TEXT:      9
+// BLOB:     10
+// DATE:     11
+// DATETIME: 12
+// GEOMETRY: 13
 
 const sanitizeName = function (name) {
-    let sanitizedName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    if (!/^[a-z]/.test(sanitizedName)) {
+    let sanitizedName = Util.replaceSpecialCharacters(name.toLowerCase()).replace(/[^a-z0-9_]/g, '_');
+    if (!/^[a-z_]/.test(sanitizedName)) {
         sanitizedName = 'gp_' + sanitizedName;
     }
     return sanitizedName;
@@ -70,7 +84,7 @@ const exportFeatures = async function (features, options = {}) {
         if (metadata) {
             const attr = metadata?.attributes?.find(c => c.name === name);
             if (attr) {
-                if (metadata.origin === Consts.format.GEOPACKAGE) {
+                if (metadata.origin === Consts.format.GEOPACKAGE && attr.originalType) {
                     return attr.originalType;
                 }
                 const value = gpDataTypes.get(attr.type);
@@ -157,19 +171,30 @@ const exportFeatures = async function (features, options = {}) {
     }
     //agrupar por capa
     //const timestamp = options.fileName.substring(options.fileName.lastIndexOf("_", options.fileName.lastIndexOf("_") - 1) + 1); 
-    const layers = featuresToExport.reduce(function (rv, feature) {
-        var id = typeof feature.id === "string" ? feature.id.substr(0, feature.id.lastIndexOf(".")) : options.fileName;
-        if (!id) {
-            id = feature.layer?.id || 'layer';
+    const featureCollections = {}
+    for (const feature of featuresToExport) {
+        let tableName;
+        if (feature.layer) {
+            const metadata = await feature.layer.getFeatureTypeMetadata();
+            if (metadata?.origin === Consts.format.GEOPACKAGE) {
+                tableName = metadata.originalMetadata.tableName;
+            }
+            else {
+                tableName = metadata?.name;
+            }
+        }
+        if (!tableName) {
+            tableName = typeof feature.id === "string" ? feature.id.substr(0, feature.id.lastIndexOf(".")) : options.fileName;
+            tableName = tableName || feature.layer?.id || 'layer';
         }
         //var id = feature.layer ? (typeof (feature.layer) === "string" ? feature.layer : feature.layer.id) : feature.id.substr(0, feature.id.lastIndexOf("."));
-        (rv[id] = rv[id] || []).push(getSafeFeature(feature));
-        return rv;
-    }, {});
+        featureCollections[tableName] ??= [];
+        featureCollections[tableName].push(getSafeFeature(feature));
+    }
     let layerId;
-    for (layerId in layers) {
+    for (layerId in featureCollections) {
         //agrupar las features por estructura de atributos
-        const groups = layers[layerId].reduce(fillGroupMap, new Map());
+        const groups = featureCollections[layerId].reduce(fillGroupMap, new Map());
         let groupIndex = 0;
         for (let featureList of groups.values()) {
             //crear columnas
@@ -231,14 +256,22 @@ const exportFeatures = async function (features, options = {}) {
                 }
             }
 
+            const sanitizedColumnNames = new Map();
+
             for (var x in firstFeature.data || firstFeature.attributes || {}) {
-                const attributeName = firstFeature.attributes && firstFeature.attributes[x] ? firstFeature.attributes[x].name : x;
-                if (!/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(attributeName)) {
-                    throw new FieldNameError('Field "' + attributeName + '" is invalid', { cause: attributeName });
-                }
+                let attributeName = firstFeature.attributes && firstFeature.attributes[x] ? firstFeature.attributes[x].name : x;
                 if (attributeName.toLowerCase() === pkColumnName) continue;
                 var fieldValue = firstFeature.data[attributeName];
-                const c = FeatureColumn.createColumn(i++, attributeName, fieldDataType(featureTypeMetadata, attributeName, fieldValue));
+                if (!/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(attributeName)) {
+                    if (!options.adaptNames) {
+                        throw new FieldNameError('Field "' + attributeName + '" is invalid', { cause: attributeName });
+                    }
+                    sanitizedColumnNames.set(attributeName, sanitizeName(attributeName));
+                }
+                else {
+                    sanitizedColumnNames.set(attributeName, attributeName);
+                }
+                const c = FeatureColumn.createColumn(i++, sanitizedColumnNames.get(attributeName), fieldDataType(featureTypeMetadata, attributeName, fieldValue));
                 columns.push(c);
                 //dataColumns.push(c);
             }
@@ -287,9 +320,10 @@ const exportFeatures = async function (features, options = {}) {
                     if (attributeName.toLowerCase() === pkColumnName) {
                         continue;
                     }
-                    const fieldValue = getSerializableValue(feature.data[attributeName], columns.find(c => c.name === attributeName).dataType);
-                    if (typeof fieldValue !== 'object') {
-                        featureRow.setValueWithColumnName(attributeName, fieldValue);
+                    const sanitizedAttributeName = sanitizedColumnNames.get(attributeName);
+                    const fieldValue = getSerializableValue(feature.data[attributeName], columns.find(c => c.name === sanitizedAttributeName).dataType);
+                    if (typeof fieldValue !== 'object' || fieldValue instanceof Date) {
+                        featureRow.setValueWithColumnName(sanitizedAttributeName, fieldValue);
                     }
                 }
                 if (featureDao.columns.indexOf("name") >= 0 && !feature.data.name) {
@@ -355,7 +389,7 @@ const importFile = async function (buffer) {
         if (!arr.length) throw 'empty table';
 
         results.push({
-            metadata: getFeatureTypeMetadata(tableMetadata),
+            metadata: getFeatureTypeMetadata.call(this, tableMetadata),
             type: "FeatureCollection",
             features: arr
         });
@@ -384,7 +418,7 @@ const getFeatureTypeMetadata = function (tableMetadata) {
         geometries: [
             {
                 name: tableMetadata.geometryColumns.geometryColumn,
-                type: Util.getGeometryType(tableMetadata.geometryColumns.geometryTypeName),
+                type: this.getGeometryType(tableMetadata.geometryColumns.geometryTypeName),
                 originalType: tableMetadata.geometryColumns.geometryTypeName
             }
         ],
@@ -395,7 +429,8 @@ const getFeatureTypeMetadata = function (tableMetadata) {
                 name: c.name,
                 type: getType(c.dataType),
                 originalType: c.dataType,
-                isId: c.primaryKey
+                isId: c.primaryKey,
+                optional: !c.primaryKey,
             }))
     };
 };
@@ -403,7 +438,7 @@ const getFeatureTypeMetadata = function (tableMetadata) {
 class GeoPackage extends BinaryFormat {
 
     async readFeatures(source, options) {
-        const jsonCollection = await importFile(new Uint8Array(source));
+        const jsonCollection = await importFile.call(this, new Uint8Array(source));
         return jsonCollection
             .map((jsonObj) => {
                 const features = this.readGeoJsonFeatures(jsonObj, options);
@@ -414,7 +449,10 @@ class GeoPackage extends BinaryFormat {
     }
 
     async writeFeatures(features, options = {}) {
-        return await exportFeatures(features.map((f) => f._wrap.parent), { crs: options.featureProjection });
+        return await exportFeatures(features.map((f) => f._wrap.parent), {
+            crs: options.featureProjection,
+            adaptNames: options.adaptNames
+        });
     }
 
     groupFeatures(features) {
@@ -430,6 +468,26 @@ class GeoPackage extends BinaryFormat {
         });
         return result;
     }
+
+    getGeometryType(typeName) {
+        switch (typeName) {
+            case 'POLYGON':
+                return Consts.geom.POLYGON;
+            case 'MULTIPOLYGON':
+                return Consts.geom.MULTIPOLYGON;
+            case 'LINESTRING':
+                return Consts.geom.POLYLINE;
+            case 'MULTILINESTRING':
+                return Consts.geom.MULTIPOLYLINE;
+            case 'POINT':
+                return Consts.geom.POINT;
+            case 'MULTIPOINT':
+                return Consts.geom.MULTIPOINT;
+            default:
+                return false;
+        }
+    }
+
 }
 
 export default GeoPackage;
