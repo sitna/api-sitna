@@ -4,7 +4,7 @@
   * @memberof SITNA.control
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [showGeo] - Determina si se muestran coordenadas geográficas (en EPSG:4326) además de las del mapa, que por defecto son UTM (EPSG:25830).
-  * @example <caption>[Ver en vivo](../examples/cfg.CoordinatesOptions.html)</caption> {@lang html} 
+  * @example {@lang html} 
   * <div id="mapa"/>
   * <script>
   *     // Hacemos que el control que muestra las coordenadas en pantalla
@@ -22,8 +22,36 @@ import Cfg from '../Cfg';
 import Util from '../Util';
 import ProjectionSelector from './ProjectionSelector';
 import Popup from './Popup';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
+
+
+class CoordinatesModel {
+    constructor() {
+        //super();        
+        this.crs="";
+        this.changeCRS = "";
+        this.lat = "";
+        this.lon = "";
+        this.ele = "";
+        this.currentCRS = "";
+    }
+}
+class CoordinatesDialogModel {
+    constructor() {
+        //super();
+        this.changeCRS = "";
+        this.coordsCurrentProjection = "";
+        this.currentCRSName = "";
+        this.currentCRSCode = "";
+        this.coordsNoCrsWarning = "";
+        this.coordsInstructions = "";
+        this.coordsInstructionsWarning = "";
+        this.cancel = "";
+    }
+}
 
 class Coordinates extends ProjectionSelector {
     #cssClasses;
@@ -61,6 +89,10 @@ class Coordinates extends ProjectionSelector {
 
         self.geoCrs = self.options.geoCrs || Cfg.geoCrs;
         self.wrap = new TC.wrap.control.Coordinates(self);
+
+        self.model = new CoordinatesModel();
+        self.modelDialog = new CoordinatesDialogModel();
+
     }
 
     async register(map) {
@@ -70,6 +102,9 @@ class Coordinates extends ProjectionSelector {
         self.crs = self.map.crs;
 
         self.clear();
+
+        self.updateModel();
+        self.model.currentCRS = map.crs;
 
         const _3dContainerListener = function (e) {
             if (!self.isPointerOver(e)) {
@@ -134,6 +169,7 @@ class Coordinates extends ProjectionSelector {
                 self.render(function () {
                     //self.update();
                     self.clear();
+                    self.controller = new Controller(self.model, new Observer(self.div));
                 });
             });
 
@@ -147,8 +183,8 @@ class Coordinates extends ProjectionSelector {
             map.on(Consts.event.PROJECTIONCHANGE, function (e) {
                 if (!map.on3DView) {
                     self.isGeo = map.wrap.isGeo();
-                    self.crs = e.newCrs;
-                    self.render();
+                    self.model.currentCRS = self.crs = e.newCrs;
+                    //self.render();
                 }
             });
 
@@ -187,6 +223,9 @@ class Coordinates extends ProjectionSelector {
 
         const html = await self.getRenderedHtml(self.CLASS + '-dialog', null);
         self._dialogDiv.innerHTML = html;
+
+        self.controllerModal = new Controller(self.modelDialog, new Observer(self._dialogDiv));
+
         await super.renderData.call(self, {
             x: self.x,
             y: self.y,
@@ -478,6 +517,23 @@ class Coordinates extends ProjectionSelector {
             self.layer.map.putLayerOnTop(self.layer);
         }
         return self.layer;
+    }
+    updateModel(){
+        this.model.crs=this.getLocaleString("crs");;
+        this.model.changeCRS = this.getLocaleString("changeCRS");
+        this.model.lat = this.getLocaleString("lat");
+        this.model.lon = this.getLocaleString("lon");
+        this.model.ele = this.getLocaleString("ele");
+        this.modelDialog.changeCRS = this.getLocaleString("changeCRS");
+        this.modelDialog.coordsCurrentProjection =this.getLocaleString("coords.currentProjection");
+        this.modelDialog.coordsNoCrsWarning = this.getLocaleString("coords.noCrs.warning");
+        this.modelDialog.coordsInstructions = this.getLocaleString("coords.instructions");
+        this.modelDialog.coordsInstructionsWarning = this.getLocaleString("coords.instructions.warning");
+        this.modelDialog.cancel = this.getLocaleString("changeCRS");
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
