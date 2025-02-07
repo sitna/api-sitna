@@ -19,6 +19,7 @@
   * En estos objetos, si se asigna un valor a la propiedad `layerNames`, solo las capas especificadas y sus hijas estarán disponibles para ser añadidas al mapa. 
   * Sin embargo, si esta propiedad se deja sin asignar, todas las capas publicadas en el servicio WMS estarán disponibles para ser añadidas.
   * @example <caption>[Ver en vivo](../examples/cfg.MapControlOptions.layerCatalog_workLayerManager.html)</caption> {@lang html}
+   * [//]@example {@lang html}
   * <div id="mapa"></div>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -56,14 +57,16 @@
   * </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import ProjectionSelector from './ProjectionSelector';
-import WorkLayerManager from './WorkLayerManager';
-import Layer from '../../SITNA/layer/Layer';
-import Raster from '../../SITNA/layer/Raster';
-import autocomplete from '../ui/autocomplete';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import ProjectionSelector from './ProjectionSelector.js';
+import WorkLayerManager from './WorkLayerManager.js';
+import Layer from '../../SITNA/layer/Layer.js';
+import Raster from '../../SITNA/layer/Raster.js';
+import autocomplete from '../ui/autocomplete.js';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 TC.UI = TC.UI || {};
@@ -71,6 +74,8 @@ TC.UI.autocomplete = autocomplete;
 
 const SEARCH_MIN_LENGTH = 3;
 const ctlCssClass = 'tc-ctl-lcat';
+
+var clickToAddText;
 
 if (!Consts.classes.SELECTABLE) {
     Consts.classes.SELECTABLE = 'tc-selectable';
@@ -120,6 +125,42 @@ const getLayerTree = function (layer) {
     return result;
 };
 
+class LayerCatalogModel {
+    constructor() {
+        //super();        
+        this.searchLayersByText = "";
+        this.textToSearchInLayers = "";
+        this.loadingLayers = "";
+        this.loadingLayerTree = "";
+        this.availableLayers = "";
+        this.clickToAddToMap = "";
+        this.infoFromThisLayer = "";
+        this.close = "";
+        this.layerInfo = "";
+        this.abstract = "";
+        this.metadata = "";
+    }
+}
+class LayerCatalogResultModel {
+    constructor() {
+        //super();        
+        this.layerAlreadyAdded = "";
+        this.clickToAddToMap = "";
+        this.noMatches = "";
+        this.infoFromThisLayer = "";
+    }
+}
+
+class LayerCatalogInfoModel {
+    constructor() {
+        //super();        
+        this.close = "";
+        this.layerInfo = "";
+        this.abstract = "";
+        this.metadata = "";
+    }
+}
+
 class LayerCatalog extends ProjectionSelector {
     layers = [];
     searchInit = false;
@@ -151,32 +192,35 @@ class LayerCatalog extends ProjectionSelector {
         self.template = template;
     }
 
-    render(callback) {
+    async render(callback) {
         const self = this;
 
         self.sourceLayers = [];
 
-        return new Promise(function (resolve, _reject) {
-            if (self.layers.length === 0) {
-                self.renderData({ layerTrees: [], enableSearch: false }, function () {
+        if (self.layers.length === 0) {
+            await self.renderData({ layerTrees: [], enableSearch: false }, callback);
+            self._roots = [];
+        } else {
+            await self.renderData({ layers: self.layers, enableSearch: true });
 
-                    if (Util.isFunction(callback)) {
-                        callback();
-                    }
+            self._roots = self.div.querySelectorAll(self.#selectors.LAYER_ROOT);
+            self.#createSearchAutocomplete();
 
-                    resolve();
-                });
-            } else {
-                self.renderData({ layers: self.layers, enableSearch: true }, function () {
-
-                    self.#createSearchAutocomplete();
-
-                    self.layers.forEach(function (layer) {
-                        self.renderBranch(layer, callback, resolve);
-                    });
-                });
+            for (const layer of self.layers) {
+                await self.renderBranch(layer);
             }
-        });
+            if (Util.isFunction(callback)) {
+                callback();
+            }
+        }
+        self.model = new LayerCatalogModel();
+        self.infoModel = new LayerCatalogInfoModel();
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.updateModel();
+        
+
+        self.searchInit = false;
+        
     }
 
     async register(map) {
@@ -184,6 +228,7 @@ class LayerCatalog extends ProjectionSelector {
 
         await super.register.call(self, map);
 
+        
         const load = function (resolve, _reject) {
             if (Array.isArray(self.options.layers)) {
                 for (var i = 0; i < self.options.layers.length; i++) {
@@ -267,7 +312,7 @@ class LayerCatalog extends ProjectionSelector {
             }
         };
 
-        var clickToAddText = self.getLocaleString('clickToAddToMap');
+        clickToAddText = self.getLocaleString('clickToAddToMap');
 
         map
             .on(Consts.event.BEFORELAYERADD + ' ' + Consts.event.BEFOREUPDATEPARAMS, function (e) {
@@ -355,13 +400,15 @@ class LayerCatalog extends ProjectionSelector {
             })
             .on(Consts.event.PROJECTIONCHANGE, function (_e) {
                 self.update();
-            });
+            });            
 
         // Control de que las capas no tengan mismo id
         const nonRepeatedIds = new Set(self.layers.map(l => l.id));
         if (self.layers.length > nonRepeatedIds.size) {
             console.warn(`LayerCatalog [${self.id}]: There are duplicate layer ids`);
         }
+
+        self.resultController = [];
 
         return self;
     }
@@ -536,7 +583,7 @@ class LayerCatalog extends ProjectionSelector {
                     if (visibleInfoPane) {
                         const serviceId = visibleInfoPane.dataset.serviceId;
                         const layerName = visibleInfoPane.dataset.layerName;
-                        let selector = `li[data-layer-name="${layerName}"] input[type="checkbox"].${self.CLASS}-search-btn-info`;
+                        let selector = `li[data-layer-name="${layerName}"] .${self.CLASS}-search-btn-info`;
                         if (self.sourceLayers.length > 1) {
                             selector = `li[data-service-id="${serviceId}"] ${selector}`;
                         }
@@ -545,6 +592,15 @@ class LayerCatalog extends ProjectionSelector {
                             infoCheckbox.checked = true;
                         }
                     }
+                    self.resultController = [];
+                    const model = new LayerCatalogResultModel();
+                    const controller=new Controller(model, new Observer(container));
+                    model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
+                    model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
+                    model.noMatches = self.getLocaleString("noMatches");
+                    model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+                    self.resultController.push(controller);
+                    
                 });
                 return ret;
             }
@@ -573,7 +629,7 @@ class LayerCatalog extends ProjectionSelector {
                     e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
 
                     //Si hay resaltados en el árbol, mostramos el panel de info
-                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li input[type=checkbox]:checked').length;
+                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li  input[type=checkbox]:checked').length;
                     if (selectedCount > 0) {
                         infoPane.classList.remove(Consts.classes.HIDDEN);
                     }
@@ -583,7 +639,7 @@ class LayerCatalog extends ProjectionSelector {
 
             //evento de expandir nodo de info
             //self._$div.off("click", ".tc-ctl-lcat-search button");                        
-            self.div.addEventListener("change", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search input[type=checkbox]." + self.CLASS + "-search-btn-info", function (evt) {
+            self.div.addEventListener("change", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search ." + self.CLASS + "-search-btn-info", function (evt) {
                 evt.stopPropagation();
                 const target = evt.target;
                 if (target.checked) {
@@ -600,7 +656,7 @@ class LayerCatalog extends ProjectionSelector {
                 }
             }));
 
-            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search input[type=checkbox]." + self.CLASS + "-search-btn-info", function (evt) {
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search ." + self.CLASS + "-search-btn-info", function (evt) {
                 evt.stopPropagation();
             }));
 
@@ -661,6 +717,7 @@ class LayerCatalog extends ProjectionSelector {
             node.classList.add(Consts.classes.CHECKED);
             node.querySelector('span').dataset.tooltip = self.getLocaleString('layerAlreadyAdded');
         });
+        self.controller.add(self.getLayerRootNode(layer));
         self.getLayerRootNode(layer).querySelectorAll("li.tc-ctl-lcat-node.tc-ctl-lcat-leaf.tc-checked").forEach(function (node) {
             if (!lisToCheck.find(n => n === node)) {
                 node.classList.remove(Consts.classes.CHECKED);
@@ -796,7 +853,7 @@ class LayerCatalog extends ProjectionSelector {
 
             self.#addLogicToNode(newChild, layer);
 
-            if (branch.childElementCount === 1) {
+            if (branch.childElementCount === 1 && Util.isFunction(promiseRenderResolve)) {
                 promiseRenderResolve();
             }
 
@@ -875,6 +932,7 @@ class LayerCatalog extends ProjectionSelector {
                 self.getRenderedHtml(self.CLASS + '-info', infoObj)
                     .then(function (out) {
                         info.innerHTML = out;
+                        self.layerInfoController = new Controller(self.infoModel, new Observer(info));
                         info.querySelector('.' + self.CLASS + '-info-close').addEventListener(Consts.event.CLICK, function () {
                             self.hideLayerInfo();
                         }, { passive: true });
@@ -927,9 +985,9 @@ class LayerCatalog extends ProjectionSelector {
                     var n = infoToggle.parentElement.dataset.layerName;
                     if (name && n === name) {
                         const info = layer.getInfo(name);
-                        const infoBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > input[type="checkbox"].' + self.CLASS + '-btn-info');
+                        const infoBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > .' + self.CLASS + '-btn-info');
                         infoBtn.checked = toggleInfo(n, info);
-                        const infoSearchBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > input[type="checkbox"].' + self.CLASS + '-search-btn-info');
+                        const infoSearchBtn = self.div.querySelector('li[data-layer-name="' + n + '"] > .' + self.CLASS + '-search-btn-info');
                         if (infoSearchBtn) {
                             infoSearchBtn.checked = infoBtn.checked;
                         }
@@ -1086,6 +1144,35 @@ class LayerCatalog extends ProjectionSelector {
         self.#layerToAdd = options.layer;
         super.showProjectionChangeDialog.call(self, options);
     }
+
+    updateModel() {
+        const self = this;
+        clickToAddText = self.getLocaleString('clickToAddToMap');
+
+        this.model.searchLayersByText = self.getLocaleString("searchLayersByText");
+        this.model.textToSearchInLayers = self.getLocaleString("textToSearchInLayers");
+        this.model.loadingLayers = self.getLocaleString("loadingLayers");
+        this.model.loadingLayerTree = self.getLocaleString("loadingLayerTree");
+        this.model.availableLayers = self.getLocaleString("availableLayers");
+        this.model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
+        this.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+        self.resultController ?.forEach((controller) => {
+            controller.model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
+            controller.model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
+            controller.model.noMatches = self.getLocaleString("noMatches");
+            controller.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+        });
+        this.infoModel.close = self.getLocaleString("close");
+        this.infoModel.layerInfo = self.getLocaleString("layerInfo");
+        this.infoModel.abstract = self.getLocaleString("abstract");
+        this.infoModel.metadata = self.getLocaleString("metadata");
+        
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
+    }
+    
 }
 
 LayerCatalog.prototype.CLASS = 'tc-ctl-lcat';

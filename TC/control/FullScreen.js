@@ -2,10 +2,17 @@
 import Consts from '../Consts';
 import Control from '../Control';
 import Util from '../Util';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
 const document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
+class FullScreenModel {
+    constructor() {
+        this["fscreen.tip"] = "";
+    }
+}
 
 class FullScreen extends Control {
     #byBtn = false;
@@ -13,6 +20,8 @@ class FullScreen extends Control {
     async register(map) {
         const self = this;
         await super.register.call(self, map);
+
+        self.model = new FullScreenModel();
 
         const btn = self.div.querySelector('.' + self.CLASS + '-btn');
 
@@ -83,6 +92,11 @@ class FullScreen extends Control {
             // GLS: 19/02/2019 en lugar de ocultar el botón, deshabilitamos el control para que no quede espacio de más entre los botones
             self.disable();
         }
+    
+        self.renderPromise().then(function () {
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
+        });
 
         return self;
     }
@@ -103,6 +117,14 @@ class FullScreen extends Control {
     async loadTemplates() {
         const module = await import('../templates/tc-ctl-fscreen.mjs');
         this.template = module.default;
+    }
+
+    updateModel(){
+        this.model["fscreen.tip"] = this.getLocaleString("fscreen.tip");
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
