@@ -3,8 +3,19 @@ import Consts from '../Consts';
 import Util from '../Util';
 import Control from '../Control';
 import './Draw';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
+
+class MeasureModel {
+    constructor() {
+        //super();        
+        this.measure = "";
+        this.length = "";
+        this.areaAndPerimeter = "";
+    }
+}
 
 class Measure extends Control {
     constructor() {
@@ -28,6 +39,7 @@ class Measure extends Control {
 
             self.wrap = new TC.wrap.control.Measure(self);
         });
+        self.model = new MeasureModel();
     }
 
     async loadTemplates() {
@@ -38,6 +50,10 @@ class Measure extends Control {
 
     async render(callback) {
         const self = this;
+
+        //const drawControls = self.div.querySelectorAll("sitna-draw");
+        //const selectedIndex = Array.from(self.div.querySelectorAll("sitna-tab")).findIndex((tab) => tab.selected);
+
         await super.renderData.call(self, {
             controlId: self.id,
             displayElevation: self.options.displayElevation,
@@ -62,56 +78,12 @@ class Measure extends Control {
                     self.setMode(target.id.substr(target.id.indexOf('-mode-') + 6), true);
                 }
             };
-        });
-
-        if (Util.isFunction(callback)) {
-            callback();
-        }
-    }
-
-    async register(map) {
-        const self = this;
-        await super.register.call(self, map);
-        self.map.on(Consts.event.VIEWCHANGE, function () {
-            if (self.map.view === Consts.view.PRINTING) {
-                self.trigger(Consts.event.DRAWEND);
-            }
-        });
-
-        const layerId = self.getUID();
-        const drawLinesId = self.getUID();
-        const drawPolygonsId = self.getUID();
-
-        self.units = self.options.units ? self.options.units : ["m", "km"];
-
-        if (self.options.layerLess) {
-            self.layerPromise = Promise.resolve(null);
-        }
-        else {
-            self.layerPromise = map.addLayer({
-                id: layerId,
-                title: self.getLocaleString('measure'),
-                owner: self,
-                stealth: true,
-                type: Consts.layerType.VECTOR,
-                styles: {
-                    point: map.options.styles.point,
-                    line: map.options.styles.line,
-                    polygon: map.options.styles.polygon
-                }
-            });
-        }
-        self.layer = await self.layerPromise;
-        await self.renderPromise();
-        if (self.layer) {
-            map.putLayerOnTop(self.layer);
-        }
-
+        });        
         const controls = await Promise.all([self.getLineDrawControl(), self.getPolygonDrawControl()]);
         self.lineDrawControl = controls[0];
         self.polygonDrawControl = controls[1];
-        self.lineDrawControl.id = drawLinesId;
-        self.polygonDrawControl.id = drawPolygonsId;
+        self.lineDrawControl.id = self.drawLinesId;
+        self.polygonDrawControl.id = self.drawPolygonsId;
         self.lineDrawControl.setLayer(self.layer);
         self.polygonDrawControl.setLayer(self.layer);
         self.lineDrawControl.snapping = self.snapping;
@@ -143,7 +115,64 @@ class Measure extends Control {
             ctl.exportsState = false;
         });
 
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+
+        self.controller = new Controller(self.model, new Observer(self.div));
+
+        //if (selectedIndex >= 0) {
+        //    self.div.querySelector("sitna-tab:nth-child(" + (selectedIndex + 1) + ")").toggleAttribute('selected', true);
+        //    self.div.querySelectorAll("sitna-draw")[selectedIndex].renderPromise().then((drawCtl) => {
+        //        self.div.querySelectorAll("sitna-draw")[selectedIndex].activate();
+        //    });
+        //}
+    }
+
+    async register(map) {
+        const self = this;
+        
+
+        const layerId = self.getUID();
+        self.drawLinesId = self.getUID();
+        self.drawPolygonsId = self.getUID();
+
+        self.units = self.options.units ? self.options.units : ["m", "km"];
+
+        if (self.options.layerLess) {
+            self.layerPromise = Promise.resolve(null);
+        }
+        else {
+            self.layerPromise = map.addLayer({
+                id: layerId,
+                title: self.getLocaleString('measure'),
+                owner: self,
+                stealth: true,
+                type: Consts.layerType.VECTOR,
+                styles: {
+                    point: map.options.styles.point,
+                    line: map.options.styles.line,
+                    polygon: map.options.styles.polygon
+                }
+            });
+        }
+        self.layer = await self.layerPromise;
+
+        await super.register.call(self, map);
+        self.map.on(Consts.event.VIEWCHANGE, function () {
+            if (self.map.view === Consts.view.PRINTING) {
+                self.trigger(Consts.event.DRAWEND);
+            }
+        });
+
+        await self.renderPromise();
+        if (self.layer) {
+            map.putLayerOnTop(self.layer);
+        }
+
         self.setMode(self.options.mode);
+        self.updateModel();
+
         return self;
     }
 
@@ -316,6 +345,15 @@ class Measure extends Control {
         self.layerPromise.then(function (layer) {
             layer.importState(state.layer);
         });
+    }
+    updateModel() {
+        this.model.length = this.getLocaleString("length");
+        this.model.areaAndPerimeter = this.getLocaleString("areaAndPerimeter");
+        this.model.measure = this.getLocaleString("measure");
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
