@@ -101,13 +101,13 @@ class ProjectionSelector extends Control {
                 orderBy: 'name'
             }).then(function (projList) {
                 var hasFallbackCRS = false;
-                var currentCRSName = dialog.querySelector('.' + self.#cssClasses.CURRENT_CRS_NAME);
-                var currentCRSCode = dialog.querySelector('.' + self.#cssClasses.CURRENT_CRS_CODE);
+                //var currentCRSName = dialog.querySelector('.' + self.#cssClasses.CURRENT_CRS_NAME);
+                //var currentCRSCode = dialog.querySelector('.' + self.#cssClasses.CURRENT_CRS_CODE);
                 projList
                     .forEach(function (projObj) {
-                        if (currentCRSName && currentCRSCode && Util.CRSCodesEqual(self.map.crs, projObj.code)) {
-                            currentCRSName.textContent = projObj.name;
-                            currentCRSCode.textContent = projObj.code;
+                        if (self.modelDialog && Util.CRSCodesEqual(self.map.crs, projObj.code)) {
+                            self.modelDialog.currentCRSName = projObj.name;
+                            self.modelDialog.currentCRSCode = projObj.code;
                         }
                         else {
                             const button = document.createElement('button');
