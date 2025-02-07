@@ -18,7 +18,7 @@ const layerOwner = {
         self.map.on(Consts.event.LAYERADD, function (e) {
             const match = self.getIdCount(e.layer.id);
             if (match) {
-                TC.setUIDStart(match + 1, { prefix: self.id + '-' });
+                TC.setUIDStart(match + 1, { prefix: self.getId() + '-' });
                 e.layer.owner = self;
             }
         });
@@ -26,10 +26,10 @@ const layerOwner = {
 
     getIdCount: function (id) {
         const self = this;
-        const regEx = new RegExp(`^${self.id}(-(\\d+))*$`);
+        const regEx = new RegExp(`^${self.getId()}(-(\\d+))*$`);
         const match = id.match(regEx);
         if (match) {
-            return parseInt(match[1]);
+            return parseInt(match[2]);
         }
         return 0;
     }
