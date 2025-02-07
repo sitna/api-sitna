@@ -13,6 +13,7 @@
   * @property {boolean} [enableDragAndDrop] - Propiedad que establece si está permitido arrastrar y soltar archivos al área del mapa, además de abrirlos de la manera convencional abriendo el cuadro de diálogo de búsqueda de archivos.
   * @property {SITNA.layer.WmsGroupOptions[]} [wmsSuggestions] - Lista de grupos de sugerencias de servicios WMS ofrecidos por el control. Por ejemplo se puede establecer un grupo de servicios WMS estatales y otro de servicios WMS mundiales.
   * @example <caption>[Ver en vivo](../examples/cfg.DataLoaderOptions.html)</caption> {@lang html} 
+  * [//]@example {@lang html} 
   * <div id="mapa"></div>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -115,10 +116,15 @@ class DataLoader extends TabContainer {
     async register(map) {
         const self = this;
         self.map = map;
-        self.title = self.getLocaleString('addMaps');
         const ctl = await super.register.call(self, map);
         ctl.div.classList.add(TabContainer.prototype.CLASS + '-datldr');
         return ctl;
+    }
+    render(callback) {
+        const self = this;
+        self.title = self.getLocaleString('addMaps');
+        super.render(callback)
+
     }
 }
 
