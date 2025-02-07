@@ -15,6 +15,16 @@ TC.control = TC.control || {};
 const elementName = 'sitna-track-edit';
 
 class TrackEdit extends FileEdit {
+    formats = [
+        {
+            type: Consts.format.KMZ,
+            description: 'KML',
+        },
+        {
+            type: Consts.format.GPX,
+            description: 'GPX',
+        },
+    ];
     #geolocationControl;
 
     async register(map) {
@@ -70,7 +80,8 @@ class TrackEdit extends FileEdit {
 
                 editCtlPromise.then(function (editCtl) {
                     editCtl.on(Consts.event.DRAWEND + ' ' + Consts.event.FEATUREMODIFY, function (e) {
-                        if (e.feature.layer === ctl.trackLayer) {
+                        if (e.feature.layer === ctl.trackLayer &&
+                            (e.type === Consts.event.DRAWEND || e.geometryChanged)) {
                             if (e.feature instanceof Polyline || e.feature instanceof MultiPolyline) {
                                 ctl.updateEndMarkers();
                                 const selectedTrackItem = ctl.getSelectedTrackItem();
@@ -83,7 +94,7 @@ class TrackEdit extends FileEdit {
                     editCtl.on(Consts.event.DRAWEND, async function (e) {
                         if (e.feature.layer === ctl.trackLayer) {
                             if (e.feature instanceof Point) {
-                                e.feature.setData({ name: '' }); // Atributo necesario en un waypoint
+                                e.feature.setData({ name: '' }); // Hemos decidido meter este atributo siempre en un waypoint
                                 const elevationTool = await self.map.getElevationTool();
                                 await elevationTool.setGeometry({
                                     features: [e.feature],
@@ -112,30 +123,43 @@ class TrackEdit extends FileEdit {
                                 }
                             });
 
+                        const addElevations = async function (feature) {
+                            let changed = false;
+                            const elevationTool = await self.map.getElevationTool();
+                            for (const point of Geometry.iterateCoordinates(feature.geometry)) {
+                                const z = point[2];
+                                if (z === null || z === undefined) {
+                                    const newCoords = await elevationTool.getElevation({
+                                        coordinates: [point]
+                                    });
+                                    if (newCoords?.length) {
+                                        changed = true;
+                                        point[2] = newCoords[0][2];
+                                    }
+                                }
+                            }
+                            if (changed) {
+                                feature.setCoordinates(feature.geometry);
+                            }
+                            return feature;
+                        };
+
                         const onDraw = async function (_e) {
                             if (lineCtl.layer === ctl.trackLayer) {
                                 // Añadimos al dibujo las Z que faltan
-                                const sketch = lineCtl.getSketch().clone();
-                                let changed = false;
-                                const elevationTool = await self.map.getElevationTool();
-                                for (const point of Geometry.iterateCoordinates(sketch.geometry)) {
-                                    const z = point[2];
-                                    if (z === null || z === undefined) {
-                                        const newCoords = await elevationTool.getElevation({
-                                            coordinates: [point]
-                                        });
-                                        if (newCoords?.length) {
-                                            changed = true;
-                                            point[2] = newCoords[0][2];
-                                        }
-                                    }
-                                }
-                                if (changed) {
-                                    sketch.setCoordinates(sketch.geometry);
-                                }
+                                let sketch = await addElevations(lineCtl.getSketch().clone());
                                 if (isSeparateLine(lineCtl)) {
                                     // No es un dibujo válido porque no continua línea, luego no dibujamos perfil
                                     return
+                                }
+                                const extendedFeature = lineCtl.getExtendedFeature();
+                                if (extendedFeature) {
+                                    if (extendedFeature instanceof MultiPolyline) {
+                                        sketch = new MultiPolyline(extendedFeature.getCoordinates().concat([sketch.getCoordinates()]));
+                                    }
+                                    else {
+                                        sketch = extendedFeature.getCoordsArray().concat(sketch.getCoordsArray());
+                                    }
                                 }
                                 ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
                                     forceRefresh: true,
@@ -151,6 +175,11 @@ class TrackEdit extends FileEdit {
                                 ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
                                     forceRefresh: true
                                 });
+                            }
+                        });
+                        lineCtl.addEventListener(Consts.event.DRAWEND, function (e) {
+                            if (lineCtl.layer === ctl.trackLayer) {
+                                addElevations(e.detail.feature);
                             }
                         });
                     });
