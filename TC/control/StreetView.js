@@ -12,7 +12,7 @@
   * 
   * Puede obtener más información en el [sitio para desarrolladores de Google](https://developers.google.com/maps/documentation/javascript/get-api-key).
   * @property {HTMLElement|string} [viewDiv] - Elemento del DOM en el que mostrar la vista de StreetView o valor de atributo id de dicho elemento.
-  * @example <caption>[Ver en vivo](../examples/cfg.StreetViewOptions.html)</caption> {@lang html}
+  * @example {@lang html}
   * <div id="mapa"/>
   * <div id="sv"/>
   * <script>
@@ -21,6 +21,7 @@
   *     // Se utilizará la clave de Google Maps para el SITNA.
   *     // (Solamente es válida en el sitio web del SITNA, está aquí a título de ejemplo).
   *     var map = new SITNA.Map("mapa", {
+  *         layout: '../layout/minimal', // Usamos una maquetación sin controles por defecto
   *         controls: {
   *             streetView: {
   *                 viewDiv: "sv",
@@ -36,6 +37,8 @@ import Consts from '../Consts';
 import Cfg from '../Cfg';
 import Util from '../Util';
 import Control from '../Control';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
@@ -45,6 +48,12 @@ Cfg.proxyExceptions = Cfg.proxyExceptions || [];
 Cfg.proxyExceptions.push(Consts.url.GOOGLEMAPS);
 
 var waitId = 0;
+class StreetViewModel {
+    constructor() {
+        this["sv.tip"] = "";
+        this["closeStreetView"] = "";
+    }
+}
 
 class StreetView extends Control {
     viewDiv = null;
@@ -65,6 +74,8 @@ class StreetView extends Control {
         }
 
         const result = super.register.call(self, map);
+
+        self.model = new StreetViewModel();
 
         self.mapDiv = self.map.div;
 
@@ -104,36 +115,13 @@ class StreetView extends Control {
         }
 
         self.renderPromise().then(function () {
-            import("draggabilly").then(function (module) {
-                const Draggabilly = module.default;
-                const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
-                    containment: (self.getMapDiv && self.mapDiv) || self.map.div
-                });
-                drag.on('dragStart', function (_e) {
-                    self.#preset();
-                });
-                drag.on('dragEnd', function (_e) {
-                    self.#resolve();
-                    drag.setPosition(0, 0);
-                });
-                // Añadimos aviso de que este botón no se pulsa, se arrastra
-                self.div.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
-                    const btnRect = e.target.getBoundingClientRect();
-                    console.log(btnRect);
-                    if (e.clientX >= btnRect.left &&
-                        e.clientX <= btnRect.right &&
-                        e.clientY >= btnRect.top &&
-                        e.clientY <= btnRect.bottom) {
-                        self.map.toast(self.getLocaleString('sv.instructions'), { type: TC.Consts.msgType.INFO });
-                    }
-                });
-            });
+            
 
             const view = self.viewDiv;
             view.querySelector('.' + self.CLASS + '-btn-close').addEventListener(Consts.event.CLICK, function (e) {
                 e.stopPropagation();
                 self.closeView();
-            }, { passive: true });
+            }, { passive: true });            
         }
             , function () {
                 TC.error("Error de renderizado StreetView");
@@ -260,6 +248,35 @@ class StreetView extends Control {
         const self = this;
         self.viewDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-view', null);
         await self.renderData(null);
+
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.updateModel();
+
+        import("draggabilly").then(function (module) {
+            const Draggabilly = module.default;
+            const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
+                containment: (self.getMapDiv && self.mapDiv) || self.map.div
+            });
+            drag.on('dragStart', function (_e) {
+                self.#preset();
+            });
+            drag.on('dragEnd', function (_e) {
+                self.#resolve();
+                drag.setPosition(0, 0);
+            });
+            // Añadimos aviso de que este botón no se pulsa, se arrastra
+            self.div.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
+                const btnRect = e.target.getBoundingClientRect();
+                console.log(btnRect);
+                if (e.clientX >= btnRect.left &&
+                    e.clientX <= btnRect.right &&
+                    e.clientY >= btnRect.top &&
+                    e.clientY <= btnRect.bottom) {
+                    self.map.toast(self.getLocaleString('sv.instructions'), { type: TC.Consts.msgType.INFO });
+                }
+            });
+        });
+        
     }
 
     callback(coords) {
@@ -563,6 +580,14 @@ class StreetView extends Control {
         if (self.#previousActiveControl) {
             self.#previousActiveControl.activate();
         }
+    }
+    updateModel(){
+        this.model["sv.tip"] = this.getLocaleString("sv.tip");
+        this.model["closeStreetView"] = this.getLocaleString("closeStreetView");
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
