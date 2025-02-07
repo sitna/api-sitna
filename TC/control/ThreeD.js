@@ -17,7 +17,7 @@
   *     {  
   *         div: "IDElementoDOM"
   *     }
-  * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
+  * @example {@lang html}
   * <div id="mapa"/>
   * <div id="vista3d"/>
   * <script>
