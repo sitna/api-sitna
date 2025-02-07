@@ -10,19 +10,36 @@ import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 import Cfg from '../Cfg';
 import Consts from '../Consts';
 import Util from '../Util';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
 const elementName = 'sitna-measurement';
+class MeasurementModel {
+    constructor() {
+        this["2dLength"]= "";
+        this.area = "";
+        this["2dPerimeter"] = "";
+        this.deactivateElevationProfile = "";
+        this.activateElevationProfile = "";
+        this.ele = "";
+        this.latitude = "";
+        this.latitude = "";
+        this.perimeterValue = "";
+        this.areaValue = "";
+        this.lengthValue = "";
+    }
+}
 
 class Measurement extends WebComponentControl {
 
     static units = {
-        m: { weight: 0, abbr: "m&sup2;" },
-        dam: { weight: 1, abbr: "dam&sup2;", precision: 2 },
-        hm: { weight: 2, abbr: "hm&sup2;", precision: 2 },
+        m: { weight: 0, abbr: "m²" },
+        dam: { weight: 1, abbr: "dam²;", precision: 2 },
+        hm: { weight: 2, abbr: "hm²", precision: 2 },
         ha: { weight: 2, abbr: "ha", precision: 3 },
-        km: { weight: 3, abbr: "km&sup2;", precision: 3 }
+        km: { weight: 3, abbr: "km²", precision: 3 }
     };
 
     NOMEASURE = '-';
@@ -47,6 +64,8 @@ class Measurement extends WebComponentControl {
             .initProperty('enabledProfile')
             .initProperty('mode')
             .initProperty('units');
+
+        self.model = new MeasurementModel();
     }
 
     static get observedAttributes() {
@@ -159,15 +178,20 @@ class Measurement extends WebComponentControl {
         self.#crsValue = self.querySelector(`.${self.CLASS}-val-crs`);
         self.#elevationText = self.querySelector(`.${self.CLASS}-val-coord-ele-t`);
         self.#elevationValue = self.querySelector(`.${self.CLASS}-val-coord-ele-v`);
-        self.#lengthValue = self.querySelector(`.${self.CLASS}-val-len`);
-        self.#areaValue = self.querySelector(`.${self.CLASS}-val-area`);
-        self.#perimeterValue = self.querySelector(`.${self.CLASS}-val-peri`);
+
+        //self.#lengthValue = self.querySelector(`.${self.CLASS}-val-len`);
+        //self.#areaValue = self.querySelector(`.${self.CLASS}-val-area`);
+        //self.#perimeterValue = self.querySelector(`.${self.CLASS}-val-peri`);
+
         self.#profileButton = self.querySelector('sitna-toggle.tc-ctl-msmt-prof-btn');
         self.addUIEventListeners();
         self.clearMeasurement();
         if (Util.isFunction(callback)) {
             callback();
         }
+        self.controller = new Controller(self.model, new Observer(self));
+        self.updateModel();
+
     }
 
     addUIEventListeners() {
@@ -322,7 +346,7 @@ class Measurement extends WebComponentControl {
                     let precision = Measurement.units[key].precision ? Measurement.units[key].precision : 0;
                     if (array.length === 1 ||
                         area >= Math.pow(100, weightDiff) / Math.pow(10, precision ? precision - 1 : precision)) {
-                        self.#areaValue.innerHTML = Util.formatNumber((area / Math.pow(100, weightDiff)).toFixed(precision), locale) +
+                        self.model.areaValue = Util.formatNumber((area / Math.pow(100, weightDiff)).toFixed(precision), locale) +
                             ' ' + Measurement.units[unit].abbr;
                     }
                 });
@@ -332,7 +356,7 @@ class Measurement extends WebComponentControl {
                     units = 'km';
                 }
                 precision = units === 'm' ? 0 : 3;
-                self.#perimeterValue.innerHTML = Util.formatNumber(perimeter.toFixed(precision), locale) + ' ' + units;
+                self.model.perimeterValue = Util.formatNumber(perimeter.toFixed(precision), locale) + ' ' + units;
             }
             else if (mode === Consts.geom.POLYLINE) {
                 let length = self.#measurementData.length;
@@ -341,7 +365,7 @@ class Measurement extends WebComponentControl {
                     units = 'km';
                 }
                 precision = units === 'm' ? 0 : 3;
-                self.#lengthValue.innerHTML = Util.formatNumber(length.toFixed(precision), locale) + ' ' + units;
+                self.model.lengthValue = Util.formatNumber(length.toFixed(precision), locale) + ' ' + units;
             }
             else if (mode === Consts.geom.POINT) {
                 const setTooltip = (elm, tooltip) => {
@@ -413,6 +437,39 @@ class Measurement extends WebComponentControl {
 
     clear() {
         this.mode = null;
+    }
+
+    updateModel() {
+        this.model["2dLength"] = this.getLocaleString('2dLength');
+        this.model.area = this.getLocaleString('area');
+        this.model["2dPerimeter"] = this.getLocaleString('2dPerimeter');
+        this.model.deactivateElevationProfile = this.getLocaleString('deactivateElevationProfile');
+        this.model.activateElevationProfile = this.getLocaleString('activateElevationProfile');
+        this.model.ele = this.getLocaleString('ele') +  ': ';
+        this.model.latitude = this.getLocaleString('latitude');
+        this.model.latitude = this.getLocaleString('longitude');
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();        
+        var drawControl;
+        if (self.containerControl?.pointDrawControl?.mode == self.mode) {
+            drawControl = self.containerControl.pointDrawControl;
+        }
+        else if (self.containerControl?.lineDrawControl?.mode == self.mode) {
+            drawControl = self.containerControl.lineDrawControl;
+        }
+        else if (self.containerControl?.polygonDrawControl?.mode == self.mode) {
+            drawControl = self.containerControl.polygonDrawControl;
+        }
+        if (!drawControl) return;
+        const layer = await drawControl.getLayer();
+        if (layer ?.features.length){
+            const features = layer.features.filter((f) => { return f.STYLETYPE === self.mode })
+            if (features && features.length)
+                self.displayMeasurement(features[0]);
+        }
+            
     }
 }
 
