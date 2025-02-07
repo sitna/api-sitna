@@ -39,7 +39,7 @@
   * @property {boolean|SITNA.control.TownSearchOptions} [town=true] - Esta propiedad activa/desactiva de cascos urbanos en el buscador del mapa.
   *
   * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.TownSearchOptions}.
-  * @example <caption>[Ver en vivo](../examples/cfg.SearchOptions.html)</caption> {@lang html}
+  * @example {@lang html}
   * <div id="mapa"></div>    
   * <script>
   *     // Creamos un mapa con el control de búsquedas. 
@@ -92,7 +92,7 @@
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de varios colores, uno para cada tipo de parcela (urbana, rústica, mixta). 
   * El literal indica el tipo de búsqueda y los colores se obtendrán de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchCadastralSource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -374,7 +374,7 @@
   * resultado con valor del campo **NombreMunicipio** a `"Pamplona"` mostrará en la lista de sugerencias el texto
   * *Pamplona*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchMunicipalitySource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -458,7 +458,7 @@
   * **Via** a `"Calle Estafeta"` y valor del campo **Numero** a `13` mostrará en la lista de sugerencias el texto
   * *Calle Estafeta 13, Pamplona*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPostalAddressSource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -546,7 +546,7 @@
   * para un resultado con valor del campo **MUNICIPIO** a `"Aranguren"` y valor del campo **TOPONIMO** a
   * `"Camino de Pamplona"` mostrará en la lista de sugerencias el texto *Camino de Pamplona (Aranguren)*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameSource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -635,7 +635,7 @@
   * y valor del campo **TOPONIMO** a `"Camino de Pamplona"` mostrará en la lista de sugerencias el texto
   * *Camino de Pamplona (Aranguren)*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameMunicipalitySource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -722,7 +722,7 @@
   * Por ejemplo: `outputProperties` como `["Carretera"]` y `suggestionTemplate` como `"{0}"` para un resultado
   * con valor del campo **Carretera** a `"N-121"` mostrará en la lista de sugerencias el texto *N-121*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadSource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -808,7 +808,7 @@
   * para un resultado con valor del campo **Carretera** a `"AP-15"` y valor del campo **PK** a `10` mostrará en
   * la lista de sugerencias el texto *AP-15: PK 10*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadMilestoneSource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -895,7 +895,7 @@
   * para un resultado con valor del campo **EntidadPoblacion** a `"Pamplona"` y valor del campo **Via** a
   * `"Calle Estafeta"` mostrará en la lista de sugerencias el texto *Calle Estafeta, Pamplona*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchStreetSource.html)</caption> {@lang html}
+  * @example {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -987,7 +987,7 @@
   * **NombreCascoUrbano** a `"Salinas de Pamplona"` mostrará en la lista de sugerencias el texto
   * *Salinas de Pamplona (Galar)*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example <caption>[Ver en vivo](../examples/Cfg.SearchTownSource.html)</caption> {@lang html}
+  * @example {@lang html}
   <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -1066,7 +1066,7 @@
  * *Salinas de Pamplona (Galar)*.
  * @property {string} url - Dirección del servicio WFS que aporta los datos para las búsquedas.
  * @property {string} [version="1.1.0"] - Versión del servicio WFS que aporta los datos para las búsquedas.
- * @example <caption>[Ver en vivo](../examples/cfg.SearchTypeOptions.html)</caption> {@lang html}
+ * @example {@lang html}
     <div id="mapa"></div>    
     <script>
         // Creamos un mapa con el control de búsquedas. 
@@ -1165,6 +1165,8 @@ import Vector from '../../SITNA/layer/Vector';
 import infoShare from './infoShare';
 import filter from '../filter';
 import autocomplete from '../ui/autocomplete';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 TC.filter = filter;
@@ -1201,7 +1203,7 @@ class SearchType {
         Util.extend(self, options);
 
         self.version = self.version || '1.1.0';
-
+        
         if (!self.searchFunction && self.parser) {
             // Creamos searchFunction por defecto.
             // En esta función this es el control Search.
@@ -2025,6 +2027,18 @@ class SearchType {
     }
 }
 
+class SearchModel {
+    constructor() {
+        //super();        
+        this.search1 = "";
+        this.searchPlaceholder = "";
+        this.searchInstructions = "";
+        this.share = "";
+        this.search2 = "";
+        this.dialogHeader = "";
+    }
+}
+
 Consts.event.TOOLSCLOSE = Consts.event.TOOLSCLOSE || 'toolsclose.tc';
 Consts.event.SEARCHQUERYEMPTY = Consts.event.SEARCHQUERYEMPTY || 'searchqueryempty.tc';
 
@@ -2415,18 +2429,44 @@ class Search extends Control {
             ABSOLUTE: /[`~!@#$%^&*_|+\=?;:'.\{\}\[\]\\]/gi
         };
 
+        this.model = new SearchModel();
+
     }
+    async reloadLocaleString() {
+        const self = this;
+        self.EMPTY_RESULTS_LABEL = self.getLocaleString('noResults');
+        self.EMPTY_RESULTS_TITLE = self.getLocaleString('checkCriterion');
+        self.OUTBBX_LABEL = self.getLocaleString('outsideOfLimits');
+    }
+    updateModel() {
+        this.model.search1 = this.getLocaleString("search.1");
+        this.model.searchPlaceholder = this.getLocaleString("search.placeholder");
+        this.model.searchInstructions = this.getLocaleString("search.instructions");
+        this.model.share = this.getLocaleString("share");
+        this.model.search2 = this.getLocaleString("search.2");
+        this.model.dialogHeader = this.getLocaleString("search.1") + " - " + this.getLocaleString("share"); 
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
+    }
+    //changeLanguage() {
+    //    this.controller.abort();
+    //    this.controller = null;
+    //    this.render();
+    //    this.reloadLocaleString();        
+    //    return this._firstRender;
+    //}
 
     async register(map) {
         const self = this;
+        
         await super.register.call(self, map);
         if (self.options && self.options.share) {
             await self.getShareDialog();
         }
 
-        self.EMPTY_RESULTS_LABEL = self.getLocaleString('noResults');
-        self.EMPTY_RESULTS_TITLE = self.getLocaleString('checkCriterion');
-        self.OUTBBX_LABEL = self.getLocaleString('outsideOfLimits');
+        self.reloadLocaleString();
 
         self.#loadAvailableSearchTypes();
 
@@ -2566,6 +2606,8 @@ class Search extends Control {
         }
 
         self.#loadAllowedSearchTypes();
+        
+        self.updateModel();
 
         return self;
     }
@@ -2583,9 +2625,11 @@ class Search extends Control {
 
     async render() {
         const self = this;
-
+        self.controller = new AbortController();
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', {});
         await self.renderData();
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.dialogController = new Controller(self.model, new Observer(self._dialogDiv));
     }
 
     async renderData(data, callback) {
@@ -2691,51 +2735,51 @@ class Search extends Control {
         if (!self.map) {
             throw new Error('Control not registered to map');
         }
-
-        self.layerPromise = self.map.addLayer({
-            id: self.getUID(),
-            title: 'Búsquedas',
-            owner: self,
-            stealth: true,
-            declutter: true,
-            type: Consts.layerType.VECTOR,
-            styles: {
-                polygon: {
-                    fillColor: self.layerStyleFN.bind(self, 'polygon', 'fillColor', false),
-                    fillOpacity: self.layerStyleFN.bind(self, 'polygon', 'fillOpacity', false),
-                    strokeColor: self.layerStyleFN.bind(self, 'polygon', 'strokeColor', false),
-                    strokeOpacity: self.layerStyleFN.bind(self, 'polygon', 'strokeOpacity', false),
-                    strokeWidth: self.layerStyleFN.bind(self, 'polygon', 'strokeWidth', false)
-                },
-                line: {
-                    strokeColor: self.layerStyleFN.bind(self, 'line', 'strokeColor', false),
-                    strokeOpacity: self.layerStyleFN.bind(self, 'line', 'strokeOpacity', false),
-                    strokeWidth: self.layerStyleFN.bind(self, 'line', 'strokeWidth', false)
-                },
-                marker: {
-                    anchor: TC.Defaults.styles.marker.anchor,
-                    height: TC.Defaults.styles.marker.height,
-                    width: TC.Defaults.styles.marker.width
-                },
-                point: {
-                    radius: self.layerStyleFN.bind(self, 'point', 'radius', false),
-                    height: self.layerStyleFN.bind(self, 'point', 'height', false),
-                    width: self.layerStyleFN.bind(self, 'point', 'width', false),
-                    fillColor: self.layerStyleFN.bind(self, 'point', 'fillColor', false),
-                    fillOpacity: self.layerStyleFN.bind(self, 'point', 'fillOpacity', false),
-                    strokeColor: self.layerStyleFN.bind(self, 'point', 'strokeColor', false),
-                    strokeWidth: self.layerStyleFN.bind(self, 'point', 'strokeWidth', false),
-                    fontSize: self.layerStyleFN.bind(self, 'point', 'fontSize', false),
-                    fontColor: self.layerStyleFN.bind(self, 'point', 'fontColor', false),
-                    labelOutlineColor: self.layerStyleFN.bind(self, 'point', 'labelOutlineColor', false),
-                    labelOutlineWidth: self.layerStyleFN.bind(self, 'point', 'labelOutlineWidth', false),
-                    labelKey: self.layerStyleFN.bind(self, 'point', 'labelKey', true),
-                    labelRotationKey: self.layerStyleFN.bind(self, 'point', 'labelRotationKey', true)
+        if (!self.layerPromise) {
+            self.layerPromise = self.map.addLayer({
+                id: self.getUID(),
+                title: 'Búsquedas',
+                owner: self,
+                stealth: true,
+                declutter: true,
+                type: Consts.layerType.VECTOR,
+                styles: {
+                    polygon: {
+                        fillColor: self.layerStyleFN.bind(self, 'polygon', 'fillColor', false),
+                        fillOpacity: self.layerStyleFN.bind(self, 'polygon', 'fillOpacity', false),
+                        strokeColor: self.layerStyleFN.bind(self, 'polygon', 'strokeColor', false),
+                        strokeOpacity: self.layerStyleFN.bind(self, 'polygon', 'strokeOpacity', false),
+                        strokeWidth: self.layerStyleFN.bind(self, 'polygon', 'strokeWidth', false)
+                    },
+                    line: {
+                        strokeColor: self.layerStyleFN.bind(self, 'line', 'strokeColor', false),
+                        strokeOpacity: self.layerStyleFN.bind(self, 'line', 'strokeOpacity', false),
+                        strokeWidth: self.layerStyleFN.bind(self, 'line', 'strokeWidth', false)
+                    },
+                    marker: {
+                        anchor: TC.Defaults.styles.marker.anchor,
+                        height: TC.Defaults.styles.marker.height,
+                        width: TC.Defaults.styles.marker.width
+                    },
+                    point: {
+                        radius: self.layerStyleFN.bind(self, 'point', 'radius', false),
+                        height: self.layerStyleFN.bind(self, 'point', 'height', false),
+                        width: self.layerStyleFN.bind(self, 'point', 'width', false),
+                        fillColor: self.layerStyleFN.bind(self, 'point', 'fillColor', false),
+                        fillOpacity: self.layerStyleFN.bind(self, 'point', 'fillOpacity', false),
+                        strokeColor: self.layerStyleFN.bind(self, 'point', 'strokeColor', false),
+                        strokeWidth: self.layerStyleFN.bind(self, 'point', 'strokeWidth', false),
+                        fontSize: self.layerStyleFN.bind(self, 'point', 'fontSize', false),
+                        fontColor: self.layerStyleFN.bind(self, 'point', 'fontColor', false),
+                        labelOutlineColor: self.layerStyleFN.bind(self, 'point', 'labelOutlineColor', false),
+                        labelOutlineWidth: self.layerStyleFN.bind(self, 'point', 'labelOutlineWidth', false),
+                        labelKey: self.layerStyleFN.bind(self, 'point', 'labelKey', true),
+                        labelRotationKey: self.layerStyleFN.bind(self, 'point', 'labelRotationKey', true)
+                    }
                 }
-            }
-        });
-        self.layer = await self.layerPromise;
-
+            });
+            self.layer = await self.layerPromise;
+        }
         self.addUIEventListeners();
 
         if (Util.isFunction(callback)) {
@@ -2779,14 +2823,14 @@ class Search extends Control {
                     self.textInput.dispatchEvent(new Event("keyup"));
                 }
             });
-        }, { passive: true });
+        }, { passive: true, signal: self.controller.signal });
 
 
         // GLS: añadimos la funcionalidad al mensaje de "No hay resultados", al hacer click repliega el mensaje.
         self.resultsList.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('a.' + self.CLASS + '-li-empty', function () {
             self.resultsList.classList.add(Consts.classes.HIDDEN);
             self.textInput.focus();
-        }), { passive: true });
+        }), { passive: true, signal: self.controller.signal });
 
         self.textInput.addEventListener('keypress', function (e) {
             if (e.which == 13) {
@@ -2802,7 +2846,7 @@ class Search extends Control {
                 }
                 return false;
             }
-        });
+        }, { signal: self.controller.signal });
         self.textInput.addEventListener("search", function () {
             if (self.textInput.value.length === 0) {
                 delete self.toShare;
@@ -2810,14 +2854,14 @@ class Search extends Control {
                 self.resultsList.classList.add(Consts.classes.HIDDEN);
                 search();
             }
-        });
+        }, { signal: self.controller.signal });
         self.textInput.addEventListener("input", function () {
             if (self.textInput.value.length === 0) {
                 self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
                 self.resultsList.classList.add(Consts.classes.HIDDEN);
                 search();
             }
-        });
+        }, { signal: self.controller.signal });
         self.textInput.addEventListener("targetCleared.autocomplete", function () {
             self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
             self.resultsList.classList.add(Consts.classes.HIDDEN);
@@ -2826,7 +2870,7 @@ class Search extends Control {
             if (self.resultsList.querySelectorAll('li').length > 0) {
                 self.resultsList.classList.remove(Consts.classes.HIDDEN);
             }
-        });
+        }, { signal: self.controller.signal });
 
         const getNextSibling = function (elem, selector) {
             // Get the next sibling element
@@ -2889,8 +2933,8 @@ class Search extends Control {
             e.stopPropagation();
         };
 
-        self.textInput.addEventListener('keydown', onKeydown);
-        self.resultsList.addEventListener('keydown', onKeydown);
+        self.textInput.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
+        self.resultsList.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
     }
 
     #loadAvailableSearchTypes() {
