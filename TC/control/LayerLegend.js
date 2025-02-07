@@ -4,6 +4,10 @@ import Consts from '../Consts';
 import Util from '../Util';
 import WebComponentControl from './WebComponentControl';
 import ImageMagnifier from './ImageMagnifier';
+import { fivePointStarPoints, crossPoints } from '../tool/WellKnowNameFactory';
+import Factory from '../tool/WellKnowNameFactory';
+import { line as lineTemplate, polygon as polygonTemplate } from '../tool/WellKnowNameTemplates';
+
 
 TC.control = TC.control || {};
 
@@ -21,6 +25,11 @@ const _defaultCircleValues = {
     stroke: "transparent",
     "stroke-width": 1
 }
+const _pathDefaultStyle = {
+    "fill": "transparent",
+    "stroke-opacity": "1",
+    "stroke-width": 1
+};
 const _symbolDefaultWidth = 20;
 const _symbolDefaultHeight = 20;
 const svgTemplate = '<svg xmlns="http://www.w3.org/2000/svg" height="{height}" width="{width}" {viewBox}>{inner}</svg>';
@@ -28,6 +37,7 @@ const circlePattern = '<circle cx="{x}" cy="{y}" r="{r}" {style} />';
 
 const createStyles = function (symbolizer) {
     const _styles = [];
+    delete symbolizer["mark"];
     for (var i in symbolizer) {
         if (!(symbolizer[i] instanceof Object)) {
             if (i === "stroke-width" && Number(symbolizer[i]) < 1)
@@ -67,7 +77,7 @@ const wktToPath = (wkt, size, origin) => {
     const coordinates = wktFormat.readGeometry(wkt.substring(wkt.lastIndexOf("/") + 1)).getCoordinates();
     const geometryType = wkt.substring(wkt.lastIndexOf("/") + 1, wkt.indexOf("("));    
     const pathCoordinates = (coords) => {
-        return coords.reduce((vi, va, i) => { va = va.map((i) => { return (i * size) + origin }); return vi + (i ? " L" : "") + va }, "M");
+        return coords.reduce((vi, va, i) => { va = va.map((i, index) => { return (i * size) + (index ? origin : 0) }); return vi + (i ? " L" : "") + va }, "M")
     };
     switch (geometryType.toUpperCase()) {
         case "LINESTRING":
@@ -190,16 +200,33 @@ const getGraphicStroke = async function (line, size) {
                 return TC.Util.formatTemplate('<path d="M0 {W} L{W} {W} L{w2} 0 Z" {style} {transform} />', { w2: size / 2, W: size, style: createStyles(graphic), transform: transform(transformParams) });
             }
             case graphic.mark?.startsWith("wkt"):
-                return TC.Util.formatTemplate('<path d="{path}" {style} />', { path: wktToPath(graphic.mark, line["graphic-stroke"].size, _symbolDefaultWidth /2), style: createStyles(graphic) });
+                return TC.Util.formatTemplate('<path d="{path}" {style} />', { path: wktToPath(graphic.mark, line["graphic-stroke"].size, _symbolDefaultHeight / 2), style: createStyles(Object.assign({}, _pathDefaultStyle, graphic)) });
+            case graphic.mark === "circle":
+                return TC.Util.formatTemplate(circlePattern, { r: size / 2, x: size / 2 + (Number(graphic["stroke-width"] || 0) / 2), y: _symbolDefaultHeight/2 , style: createStyles(Object.assign({}, _pathDefaultStyle, graphic)) });
+            default:
+                return "";
         }
     });
+    const defaultGraphicStroke = async (graphicStroke) => {
+        if (graphicStroke.url) {
+
+            return (await getImageSymbolizer(graphicStroke, 20)).data;
+        }
+        else return "";
+    };
     const aux = await Promise.all(arrPromises);
 
-    returned.push(TC.Util.formatTemplate('<defs><pattern id="{patternId}" x = "0" y = "{y}" width = "{w}" height = "{h}" patternUnits = "userSpaceOnUse">{innerPath}</pattern></defs>', {
-        w: Math.min(_symbolDefaultWidth,size), h: _symbolDefaultHeight, y: 0 , patternId: patternId,
-        innerPath: aux.join(' ')
+    returned.push(TC.Util.formatTemplate('<defs><pattern id="{patternId}" x = "{x}" y = "{y}" width = "{w}" height = "{h}" patternUnits = "userSpaceOnUse">{innerPath}</pattern></defs>', {
+        //w: Math.min(_symbolDefaultWidth, size),
+        w: line["stroke-dasharray"]?.[1] || _symbolDefaultWidth,
+        h: Math.max(size, _symbolDefaultHeight),
+        y: 0,//_symbolDefaultHeight,
+        x: line["stroke-dasharray"]?.[0] || 0,
+        patternId: patternId,
+        innerPath: aux.join(' ') || (await defaultGraphicStroke(line["graphic-stroke"]))
     }));
-    returned.push(TC.Util.formatTemplate(baseLineTemplate, { y: _symbolDefaultHeight / 2, w: _symbolDefaultWidth, h: _symbolDefaultHeight, patternId: patternId, style:"" }));
+    
+    returned.push(TC.Util.formatTemplate(baseLineTemplate, { y: Math.max(size, _symbolDefaultHeight) / 2, w: _symbolDefaultWidth, h: Math.max(size, _symbolDefaultHeight), patternId: patternId, style:"" }));
     return returned;
 }
 
@@ -222,11 +249,6 @@ const getDefaultLegend =async function (i, url,fecthFnc) {
 }
 
 const internalCreateSymbolizer = async function (rule, text,layer,index) {
-
-    const lineTemplate = '<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" {style} shape-rendering="crispEdges" >Sorry, your browser does not support inline SVG.</line>';
-    const polygonTemplate = '<polygon points="0,0 {width},0 {width},{height} 0,{height} 0,0" {style} >Sorry, your browser does not support inline SVG.</polygon>';
-    const circleTemplate = '<circle cx="{x}" cy="{y}" r="{radius}" {style} >Sorry, your browser does not support inline SVG.</circle>';
-    const squareTemplate = '<rect  x="{x}" y="{y}" width="{width}" height="{height}" {style} {transform}>Sorry, your browser does not support inline SVG.</rect >';
 
     const retorno = [];
     let exceptionalWidth = _symbolDefaultWidth;
@@ -283,23 +305,34 @@ const internalCreateSymbolizer = async function (rule, text,layer,index) {
                         }
                     }
                     else
-                        innerText.push(TC.Util.formatTemplate(lineTemplate, { x1: 0, y1: _symbolDefaultHeight / 2, x2: _symbolDefaultWidth, y2: _symbolDefaultHeight / 2, style: createStyles(symbol.Line) }));
+                        innerText.push(TC.Util.formatTemplate(lineTemplate, { x1: 0, y1: Math.max(exceptionalHeight, _symbolDefaultHeight) / 2, x2: Math.max(exceptionalWidth, _symbolDefaultWidth), y2: Math.max(exceptionalHeight, _symbolDefaultHeight) / 2, style: createStyles(symbol.Line) }));
                 }
                 if (symbol.Point) {
+                    const factory = new Factory(_symbolDefaultHeight, _symbolDefaultWidth);
                     for (var i = 0; i < symbol.Point?.graphics.length; i++) {
                         if (symbol.Point?.graphics[i].mark) {
                             const graphic = symbol.Point.graphics[i];
                             const margin = graphic["stroke-width"] ? Math.max(Number(graphic["stroke-width"]), 1) : 0;
+                            if (size > _symbolDefaultWidth) {
+                                exceptionalHeight = exceptionalWidth = size + (margin * 2);                                
+                            }
+                                
                             switch (graphic.mark) {
-                                case "square":                                    
-                                    if (size > _symbolDefaultWidth)
-                                        exceptionalHeight = exceptionalWidth = size + (margin * 2);
-                                    innerText.push(TC.Util.formatTemplate(squareTemplate, { x: (Math.max(_symbolDefaultWidth, size) - symbol.Point.size) / 2, y: (Math.max(_symbolDefaultHeight, size) - symbol.Point.size) / 2, width: symbol.Point.size, height: symbol.Point.size, style: createStyles(Object.assign({}, _defaultCircleValues, graphic)), transform: createTransform(symbol.Point) }))
+                                case "square":
+                                    innerText.push(factory.square(size, exceptionalWidth, createStyles(Object.assign({}, _defaultCircleValues, graphic)), createTransform(symbol.Point)));
+                                    //innerText.push(TC.Util.formatTemplate(squareTemplate, { x: (Math.max(_symbolDefaultWidth, size) - symbol.Point.size) / 2, y: (Math.max(_symbolDefaultHeight, size) - symbol.Point.size) / 2, width: symbol.Point.size, height: symbol.Point.size, style: createStyles(Object.assign({}, _defaultCircleValues, graphic)), transform: createTransform(symbol.Point) }))
                                     break;
-                                case "circle":                                    
-                                    if (size > _symbolDefaultWidth)
-                                        exceptionalHeight = exceptionalWidth = size + (margin * 2);
-                                    innerText.push(TC.Util.formatTemplate(circleTemplate, { x: (Math.max(_symbolDefaultWidth, size)) / 2, y: (Math.max(_symbolDefaultHeight, size)) / 2, radius: symbol.Point.size / 2, style: createStyles(Object.assign({}, _defaultCircleValues, graphic)) }))
+                                case "triangle":
+                                    innerText.push(factory.triangle(size, exceptionalWidth,createStyles(Object.assign({}, _defaultCircleValues, graphic)), createTransform(symbol.Point)));
+                                    break;
+                                case "star":
+                                    innerText.push(factory.star(size, exceptionalWidth, createStyles(Object.assign({}, _defaultCircleValues, graphic)), createTransform(symbol.Point)));
+                                    break;
+                                case "cross":
+                                    innerText.push(factory.cross(size, exceptionalWidth, createStyles(Object.assign({}, _defaultCircleValues, graphic)), createTransform(symbol.Point)))
+                                    break;
+                                case "circle":                                                                    
+                                    innerText.push(factory.circle(size, exceptionalWidth, createStyles(Object.assign({}, _defaultCircleValues, graphic)), createTransform(symbol.Point)))
                                     break;
                                 default:
                                     if (graphic.mark.startsWith("ttf://") && Util.fontSupported(graphic.mark.slice("ttf://".length, graphic.mark.lastIndexOf("#")))) {
@@ -341,9 +374,11 @@ const internalCreateSymbolizer = async function (rule, text,layer,index) {
                             //delete symbol.Polygon["graphic-fill"];
                             symbol.Polygon["fill"] = "url(#" + patternId + ")";
                         }
-                        innerText.push(patternsDef + TC.Util.formatTemplate(polygonTemplate, {
-                            width: _symbolDefaultWidth, height: _symbolDefaultHeight, style: createStyles(Object.assign({}, _defaultPolygonValues, symbol.Polygon))
-                        }));
+                        const factory = new Factory(_symbolDefaultHeight, _symbolDefaultWidth);
+                        innerText.push(patternsDef + factory.square(_symbolDefaultWidth, _symbolDefaultWidth, createStyles(Object.assign({}, _defaultPolygonValues, symbol.Polygon)),""));
+                        //innerText.push(patternsDef + TC.Util.formatTemplate(polygonTemplate, {
+                        //    width: _symbolDefaultWidth, height: _symbolDefaultHeight, style: createStyles(Object.assign({}, _defaultPolygonValues, symbol.Polygon))
+                        //}));
                     }
                 }
                 //if (symbol.Text && !symbols.filter((s) => s !== symbol).find((s) => s["external-graphic-url"])) {
@@ -419,7 +454,7 @@ const createSymbolizer = async function (rules,layer) {
     await Promise.all(promArray);
     return retorno;
 };
-const getImageSymbolizer = async function (graphic, sizeH) {
+const getImageSymbolizer = async function (graphic, sizeH,centered) {
     //return decodeURIComponent(graphic["external-graphic-url"]);
     const imgTemplate = '<image x="{x}" y="{y}" width="{width}" height="{height}" href="{url}" style="transform-origin:50% 50%" />';
 
@@ -450,6 +485,9 @@ const getImageSymbolizer = async function (graphic, sizeH) {
             y = (_symbolDefaultHeight - sizeH) / 2;
         }
         if (sizeW < _symbolDefaultWidth) {
+            x = (_symbolDefaultWidth - sizeW) / 2;
+        }
+        if (centered) {
             x = (_symbolDefaultWidth - sizeW) / 2;
         }
         if (graphic.geometry)
@@ -542,6 +580,7 @@ class LayerLegend extends WebComponentControl {
     constructor() {
         super(...arguments);
         const self = this;
+
         self.initProperty('layerId');
         self.initProperty('static');
 
@@ -632,6 +671,9 @@ class LayerLegend extends WebComponentControl {
 
     async register(map) {
         const self = this;
+
+        self.controller = new AbortController();
+
         const layer = map.layers.findByProperty("id", this.dataset.layerId);
         if (!(layer instanceof SITNA.layer.Raster)) return;
 
@@ -671,17 +713,19 @@ class LayerLegend extends WebComponentControl {
                 self.parentNode?.removeChild(self)
                 self.remove();
             }
-        });
+        }, { signal: self.controller.signal });
 
-        map.on(Consts.event.LAYERVISIBILITY, _onHideEvent);
+        map.on(Consts.event.LAYERVISIBILITY, _onHideEvent, { signal: self.controller.signal });
 
         if (!map.magnifier) {
             map.magnifier = new ImageMagnifier(3, {
                 textToOpen: Util.getLocaleString(map.options.locale, "clickToEnlarge"),
                 textToClose: Util.getLocaleString(map.options.locale, "clickToClose")
             });
-            document.body.appendChild(map.magnifier);
+            //map.magnifier.register(map);
+            document.body.appendChild(map.magnifier);            
         }
+
         map.on(TC.Consts.event.VIEWCHANGE, function (_e) {
             if (_e.currentTarget.on3DView) {
                 self.#on3DMode = true;
@@ -699,9 +743,14 @@ class LayerLegend extends WebComponentControl {
                 self.getLegend();
             }
             
-        })
+        }, { signal: self.controller.signal })
 
         self.getLegend();
+    }
+    async unregister(map) {
+        this.controller.abort();
+        this.controller = null;
+        if (this?.#map?.magnifier && this?.#map.controls.filter((c) => c.tagName === this.tagName).length===1) this.#map.magnifier = null; 
     }
 
     async loadTemplates() {
@@ -709,6 +758,7 @@ class LayerLegend extends WebComponentControl {
         const module = await import('../templates/tc-ctl-legend-node.mjs');
         self.template = module.default;
     }
+    
 }
 
 customElements.get(elementName) || customElements.define(elementName, LayerLegend);
