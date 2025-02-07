@@ -14,6 +14,7 @@ const elementName = 'sitna-control';
 class WebComponentControl extends HTMLElement {
     template;
     control;
+    #id;
     #onBySelectorMap = new WeakMap();
     #downloadDialog;
     #listeners = {};
@@ -29,6 +30,9 @@ class WebComponentControl extends HTMLElement {
         var len = arguments.length;
 
         self.options = self.mergeOptions(len > 1 ? arguments[1] : arguments[0]);
+        self.#id = self.options.id || TC.getUID({
+            prefix: self.CLASS.substr(WebComponentControl.prototype.CLASS.length + 1) + '-'
+        });
 
         const divOption = self.options.div || arguments[0];
         if (divOption) {
@@ -45,6 +49,9 @@ class WebComponentControl extends HTMLElement {
 
     connectedCallback() {
         const self = this;
+        if (!self.id) {
+            self.id = self.#id;
+        }
         self.classList.add(WebComponentControl.prototype.CLASS, self.CLASS);
         if (self.map instanceof BasicMap) {
             return;
@@ -97,6 +104,10 @@ class WebComponentControl extends HTMLElement {
         this.unregister();
     }
 
+    getId() {
+        return this.#id;
+    }
+
     mergeOptions(...options) {
         return Util.extend({}, ...options);
     }
@@ -123,6 +134,9 @@ class WebComponentControl extends HTMLElement {
 
     render(callback) {
         const self = this;
+        if (!self.id) {
+            self.id = self.#id;
+        }
         return self.renderData(null, function () {
             self.addUIEventListeners();
             if (typeof callback === 'function') {
@@ -241,11 +255,6 @@ class WebComponentControl extends HTMLElement {
 
     async register(map) {
         const self = this;
-        if (!self.id) {
-            self.id = self.options.id || TC.getUID({
-                prefix: self.CLASS.substr('tc-ctl'.length + 1) + '-'
-            });
-        }
         self.map = map;
         await self.render();
         if (!self.parentElement) {
@@ -405,15 +414,13 @@ class WebComponentControl extends HTMLElement {
     }
 
     getUID() {
-        const self = this;
         return TC.getUID({
-            prefix: self.id + '-'
+            prefix: this.#id + '-'
         });
     }
 
     exportState() {
-        const self = this;
-        if (self.exportsState) {
+        if (this.exportsState) {
             return {};
         }
         return null;
