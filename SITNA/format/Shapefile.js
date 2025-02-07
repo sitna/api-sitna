@@ -1,11 +1,11 @@
-﻿import BinaryFormat, { FieldNameError } from './BinaryFormat';
-import Consts from '../../TC/Consts';
-import Util from '../../TC/Util';
-import Point from '../feature/Point';
-import Polygon from '../feature/Polygon';
-import MultiPolygon from '../feature/MultiPolygon';
-import Polyline from '../feature/Polyline';
-import MultiPolyline from '../feature/MultiPolyline';
+﻿import BinaryFormat, { FieldNameError } from './BinaryFormat.js';
+import Consts from '../../TC/Consts.js';
+import Geometry from '../../TC/Geometry.js';
+import Point from '../feature/Point.js';
+import Polygon from '../feature/Polygon.js';
+import MultiPolygon from '../feature/MultiPolygon.js';
+import Polyline from '../feature/Polyline.js';
+import MultiPolyline from '../feature/MultiPolyline.js';
 
 const defaultEncoding = 'ISO-8859-1';
 
@@ -64,6 +64,8 @@ const dbfDataTypes = new Map([
     [Consts.dataType.DATETIME, dbfDataType.DATE] // Shapefile no soporta timestamp, el formato dBase para fecha y hora
 ]);
 
+const genericEquals = (n1, n2) => n1 === n2;
+
 const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
     if (!shp || !prj || !dbf) {
         throw 'fileImport.shapeImcomplete';
@@ -110,16 +112,18 @@ const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
                     length: rh.length,
                     decimalCount: rh.decimalCount,
                 },
-                isId: rh.dataType === '+'
-            }))
+                isId: rh.dataType === '+',
+                optional: rh.dataType !== '+',
+            })),
+        equals: genericEquals,
     };
 
-    return (shapes instanceof Array ? shapes : [shapes]).map(function (collection) {
+    return (shapes instanceof Array ? shapes : [shapes]).map((collection) => {
         const geometryType = collection?.features[0]?.geometry.type;
         const geometries = [
             {
                 name: 'geometry',
-                type: Util.getGeometryType(geometryType),
+                type: this.getGeometryType(geometryType),
                 originalType: geometryType
             }
         ];
@@ -187,7 +191,7 @@ const exportFeatures = async function (features, options = {}) {
 
     const arrPromises = [];
     const [{ default: shpWrite }, { default: dbf }] = await Promise.all([
-        import('@aleffabricio/shp-write/index'),
+        import('@mapbox/shp-write'),
         import('dbf')
     ]);
 
@@ -209,11 +213,12 @@ const exportFeatures = async function (features, options = {}) {
 
             const firstFeature = featureList[0] ?? {};
             const featureTypeMetadata = await firstFeature.layer?.getFeatureTypeMetadata();
+            const equalsPredicate = featureTypeMetadata?.equals ?? genericEquals;
 
             const dbfMetadata = featureTypeMetadata
                 ?.attributes
                 .filter((attr) => !attr.isId)
-                .filter((attr) => featureList.some((feat) => Object.keys(feat.data).some((key) => featureTypeMetadata.equals(key, attr.name))))
+                .filter((attr) => featureList.some((feat) => Object.keys(feat.data).some((key) => equalsPredicate(key, attr.name))))
                 .map((attr) => {
                     const name = attr.name;
                     if (featureTypeMetadata.origin === Consts.format.SHAPEFILE && attr.originalType) {
@@ -250,27 +255,49 @@ const exportFeatures = async function (features, options = {}) {
                 });
 
             arrPromises.push(new Promise(function (resolve) {
-                const data = featureList.reduce(function (prev, curr) {
+                const data = featureList.map(function (feat) {
                     const data = {};
-                    for (var key in curr.data) {
-                        const val = curr.data[key];
+                    for (var key in feat.data) {
+                        const val = feat.data[key];
                         data[key] = typeof val === 'string' ?
                             val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
                             val;
                     }
-                    if (curr.getStyle().label && !curr.data.name) {
-                        data.name = curr.getStyle().label;
+                    if (feat.getStyle().label && !feat.data.name) {
+                        data.name = feat.getStyle().label;
                     }
-                    return prev.concat([data]);
-                }, []);
-                const geometries = featureList.reduce(function (prev, curr) {
-                    //No se porque no le gusta las geometrias polyline de la herramienta draw por tanto las convierto a multipolyline
-                    if (curr instanceof Polyline) {
-                        curr = new MultiPolyline(curr.getCoords(), curr.options);
+                    return data;
+                });
+                const geometries = featureList.map(function (feat) {
+                    let geometry = feat.geometry;
+                    // Para que guarde bien los agujeros, hay que guardar los anillos en sentido antihorario
+                    const reverseRings = (polygon) => {
+                        const result = [];
+                        result.push(polygon[0]);
+                        for (var i = 1; i < polygon.length; i++) {
+                            let reversedRing;
+                            if (Geometry.getArea(polygon[i]) > 0) reversedRing = polygon[i].reverse();
+                            else reversedRing = polygon[i];
+                            result.push(reversedRing);
+                        }
+                        return result;
                     }
-                    //si el sistema de referencia es distinto a EPSG:4326 reproyecto las geometrias							
-                    return prev.concat([curr.geometry]);
-                }, []);
+                    //Al formato shapefile hay que pasarle una colección de anillos/líneas, por tanto hay que 
+                    // meter la geometría de Polyline en un array
+                    if (feat instanceof Polyline) {
+                        return [geometry];
+                    }
+                    if (feat instanceof Polygon) {
+                        return reverseRings(geometry);
+                    }
+                    if (feat instanceof MultiPolygon) {
+                        geometry = [];
+                        for (const pol of feat.geometry) {
+                            geometry.push(reverseRings(pol));
+                        }
+                    }
+                    return geometry;
+                });
 
                 const fileName = layerId + (groups.size > 1 ? '_' + geometryType : '');
                 //generamos el un shape mas sus allegados por grupo
@@ -420,7 +447,7 @@ class Shapefile extends BinaryFormat {
             if (/\.(shp)$/ig.test(fileName)) {
                 shpParams.fileName = fileName;
                 await Promise.all(shpParams.deferreds);
-                const collections = await importFile(shpParams);
+                const collections = await importFile.call(this, shpParams);
                 delete this.#shapeParts[fileNameWithoutExtension];
                 return collections.map((collection) => {
                     const features = this.readGeoJsonFeatures(collection, options);
@@ -437,6 +464,25 @@ class Shapefile extends BinaryFormat {
             crs: options.featureProjection,
             adaptNames: options.adaptNames
         });
+    }
+
+    getGeometryType(typeName) {
+        switch (typeName) {
+            case 'Polygon':
+                return Consts.geom.POLYGON;
+            case 'MultiPolygon':
+                return Consts.geom.MULTIPOLYGON;
+            case 'LineString':
+                return Consts.geom.POLYLINE;
+            case 'MultiLineString':
+                return Consts.geom.MULTIPOLYLINE;
+            case 'Point':
+                return Consts.geom.POINT;
+            case 'MultiPoint':
+                return Consts.geom.MULTIPOINT;
+            default:
+                return false;
+        }
     }
 }
 
