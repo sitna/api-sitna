@@ -18,6 +18,8 @@ import tableTemplate from '../templates/tc-ctl-rpanel-table.mjs';
 import chartTemplate from '../templates/tc-ctl-rpanel-chart.mjs';*/
 import itemToolContainer from './itemToolContainer';
 import Button from '../../SITNA/ui/Button';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
@@ -85,6 +87,18 @@ const getTime = function (timeFrom, timeTo) {
 
     return Util.extend({}, d, { toString: ("00000" + d.h).slice(-2) + ':' + ("00000" + d.m).slice(-2) + ':' + ("00000" + d.s).slice(-2) });
 };
+
+class ResultsPanelModel {
+    constructor() {
+        //super();        
+        this.title = "";
+        this.close = "";
+        this.hide = "";
+        this.expand = "";
+        this.download = "";
+        this.shareQuery = "";
+    }
+}
 
 class ResultsPanel extends InfoDisplay {
     COLLIDING_PRIORITY = {
@@ -154,6 +168,7 @@ class ResultsPanel extends InfoDisplay {
                 self.share = self.options.share;
 
         }
+        self.model = new ResultsPanelModel();
     }
 
     isVisible() {
@@ -228,6 +243,11 @@ class ResultsPanel extends InfoDisplay {
                 button.variant = Button.variant.MINIMAL;
                 button.text = text;
                 button.classList.add(className);
+                if (self.model) {                    
+                    button.text = "[[" + localeKey + "]]";
+                    self.controller.add(button);
+                    self.model[localeKey] = self.getLocaleString(localeKey);
+                }
                 return button;
             },
             actionFn: actionFn
@@ -240,11 +260,7 @@ class ResultsPanel extends InfoDisplay {
         self.div.classList.add(Consts.classes.HIDDEN);
 
         await super.render.call(self);
-
-        /* --- LEGACY --- */
-        self.mainTitleElm = self.div.querySelector('.tc-ctl-rpanel-title-text') ||
-            self.div.querySelector('.prpanel-title-text');
-
+        
         /* --- LEGACY --- */
         self.minimizeButton = self.div.querySelector('.tc-ctl-rpanel-btn-min') ||
             self.div.querySelector('.prcollapsed-slide-submenu-min');
@@ -276,7 +292,7 @@ class ResultsPanel extends InfoDisplay {
             self.maximize();
         });
         //<sitna-button variant="minimal" class="tc-ctl-rpanel-btn-csv" hidden text="{{i18n "export.excel"}}"></sitna-button>
-        if (self.save) {
+        if (self.save) {            
             self.#addItemTool('-btn-csv', 'export.excel', function () {
                 self.exportToExcel();
             });
@@ -302,8 +318,7 @@ class ResultsPanel extends InfoDisplay {
             if (self.#titles) {
                 self.setTitles(self.#titles);
             } else {
-                self.mainTitleElm.setAttribute('title', self.getLocaleString("rsp.title"));
-                self.mainTitleElm.innerHTML = self.getLocaleString("rsp.title");
+                self.model.title = self.getLocaleString("rsp.title");
             }
         }
 
@@ -346,13 +361,16 @@ class ResultsPanel extends InfoDisplay {
         if (callback && typeof callback === "function") {
             callback();
         }
+
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.updateModel()
+
         return self;
     }
 
     setTitles(titles = {}) {
         if (titles.main) {
-            this.mainTitleElm.setAttribute('title', titles.main);
-            this.mainTitleElm.innerHTML = titles.main;
+            this.model.title = titles.main;
             this.#titles.main = titles.main;
         }
 
@@ -1529,6 +1547,23 @@ class ResultsPanel extends InfoDisplay {
             var title = self.#titles && self.#titles.main ? self.#titles.main : null;
             exporter.Save(fileName, rows, title);
         });
+    }
+
+    updateModel() {
+        this.model.title = this.getLocaleString("rsp.title");
+        this.model.close = this.getLocaleString("close");
+        this.model.hide = this.getLocaleString("hide");
+        this.model.expand = this.getLocaleString("expand");
+        if(this.options.save)
+            this.model['export.excel'] = this.getLocaleString("export.excel");
+        this.model.download = this.getLocaleString("download");
+        if (this.options.share)
+            this.model.shareQuery = this.getLocaleString("shareQuery");
+        
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();        
     }
 }
 
