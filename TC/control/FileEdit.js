@@ -36,6 +36,41 @@ const elementName = 'sitna-file-edit';
 class FileEdit extends WebComponentControl {
 
     TITLE_SEPARATOR = ' › ';
+    formats = [
+        {
+            type: Consts.format.KMZ,
+            description: 'KML',
+        },
+        {
+            type: Consts.format.GML,
+            description: 'GML',
+        },
+        {
+            type: Consts.format.GEOJSON,
+            description: 'GeoJSON',
+        },
+        {
+            type: Consts.format.WKT,
+            description: 'WKT',
+        },
+        {
+            type: Consts.format.WKB,
+            description: 'WKB',
+        },
+        {
+            type: Consts.format.GPX,
+            description: 'GPX',
+        },
+        {
+            type: Consts.format.SHAPEFILE,
+            description: 'Shapefile',
+            extension: '.zip',
+        },
+        {
+            type: Consts.format.GEOPACKAGE,
+            description: 'GeoPackage',
+        },
+    ];
     #userPreferences = new WeakMap();
 
     constructor() {
@@ -410,6 +445,7 @@ class FileEdit extends WebComponentControl {
         let filterFn;
         let fileName;
         let fileSystemFileName;
+        let availableFormats = self.formats;
         let format;
         let features;
         let permission;
@@ -419,16 +455,8 @@ class FileEdit extends WebComponentControl {
             const filteredLayers = await filterFn(self.map.workLayers);
             filteredLayers.forEach(l => editedLayers.delete(l));
         };
-        if (layer._fileHandle) {
+        if (DataTransferItem.prototype.getAsFileSystemHandle) {
             // Con File System Access API: guardamos archivo
-            oldFileHandle = layer._fileHandle;
-            fileHandle = oldFileHandle;
-            fileName = layer.file;
-            fileSystemFileName = layer.fileSystemFile;
-            filterFn = async function (layers) {
-                const results = await Promise.all(layers.map(l => l._fileHandle?.isSameEntry(oldFileHandle)));
-                return layers.filter((_l, idx) => results[idx]);
-            };
             const getPermission = async function (handle) {
                 const permissionDescriptor = { mode: 'readwrite' };
                 let result = await handle.queryPermission(permissionDescriptor);
@@ -437,42 +465,75 @@ class FileEdit extends WebComponentControl {
                 }
                 return result;
             };
-            const getLayerPermission = async function (layer) {
-                let permission = await getPermission(layer._fileHandle);
-                if (layer._additionalFileHandles?.length) {
-                    for await (let p of layer._additionalFileHandles.map(h => getPermission(h))) {
-                        if (p !== 'granted') {
-                            permission = p;
+
+            if (layer._fileHandle) {
+                const getLayerPermission = async function (layer) {
+                    let permission = await getPermission(layer._fileHandle);
+                    if (layer._additionalFileHandles?.length) {
+                        for await (let p of layer._additionalFileHandles.map(h => getPermission(h))) {
+                            if (p !== 'granted') {
+                                permission = p;
+                            }
                         }
                     }
+                    return permission;
+                };
+                oldFileHandle = layer._fileHandle;
+                fileHandle = oldFileHandle;
+                fileName = layer.file;
+                fileSystemFileName = layer.fileSystemFile;
+                filterFn = async function (layers) {
+                    const results = await Promise.all(layers.map(l => l._fileHandle?.isSameEntry(oldFileHandle)));
+                    return layers.filter((_l, idx) => results[idx]);
+                };
+                if (!options.showDialog) {
+                    // El fileHandle no ha cambiado. 
+                    // Pedimos ahora permiso porque estamos en una ruta
+                    // directa desde la intervención del usuario.
+                    permission = await getLayerPermission(layer);
                 }
-                return permission;
             }
-            if (!options.showDialog) {
-                // El fileHandle no ha cambiado. 
-                // Pedimos ahora permiso porque estamos en una ruta
-                // directa desde la intervención del usuario.
-                permission = await getLayerPermission(layer);
+            else {
+                fileName = layer.title;
+                if (!/\.[a-zA-Z]+$/.test(fileName)) fileName += '.' + Consts.format.GEOJSON;
+                filterFn = async function (_layers) {
+                    return [layer];
+                }
             }
             endFn = async function () {
                 if (options.showDialog) {
                     if (window.showSaveFilePicker) {
-                        const mimeType = Util.getMimeTypeFromUrl(fileHandle.name);
-                        const extension = fileHandle.name.substr(fileHandle.name.lastIndexOf('.'));
+                        const types = availableFormats.map((format) => ({
+                            accept: {
+                                [Util.getMimeTypeFromUrl(format.type)]: [format.extension ?? '.' + format.type.toLowerCase()]
+                            },
+                            description: format.description
+                        }));
+                        const showSaveFilePickerOptions = { types };
+                        if (fileHandle) {
+                            showSaveFilePickerOptions.suggestedName = fileHandle.name;
+                        }
+                        else if (fileName) {
+                            showSaveFilePickerOptions.suggestedName = fileName;
+                        }
                         try {
-                            fileHandle = await window.showSaveFilePicker({
-                                suggestedName: fileHandle.name,
-                                types: [{
-                                    accept: {
-                                        [mimeType]: [extension]
-                                    }
-                                }]
-                            });
+                            fileHandle = await window.showSaveFilePicker(showSaveFilePickerOptions);
                             permission = await getPermission(fileHandle);
                         }
                         catch (e) {
-                            console.log(e.message);
+                            console.error(e);
                             return;
+                        }
+                        fileSystemFileName = fileHandle.name;
+                        fileName = fileSystemFileName;
+                        oldFileHandle ??= fileHandle;
+                        const extension = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+                        format = Util.getFormatFromFileExtension(extension);
+                        if (!format) {
+                            format = availableFormats.find((f) => f.extension === extension)?.type;
+                            if (format === Consts.format.SHAPEFILE) {
+                                layer.file = fileName.substring(0, fileName.lastIndexOf('.')) + '.shp';
+                            }
                         }
                     }
                 }
@@ -548,19 +609,18 @@ class FileEdit extends WebComponentControl {
                         }
                         await cleanEditedLayerList();
                         const filteredLayers = await filterFn(self.map.workLayers);
-                        filteredLayers.forEach(async l => {
+                        for (const l of filteredLayers) {
                             // Si hemos "guardado como", asignamos el nuevo fileHandle
                             if (options.showDialog) {
                                 l._fileHandle = fileHandle;
                                 l.file = fileHandle.name;
                                 l.title = fileHandle.name;
-                                self.map.refreshMapState().then(() => {
-                                    self.map.trigger(Consts.event.VECTORUPDATE, {
-                                        layer: l
-                                    });
-                                })
+                                await self.map.refreshMapState();
+                                self.map.trigger(Consts.event.VECTORUPDATE, {
+                                    layer: l
+                                });
                             }
-                        });
+                        }
                         self.map.trigger(Consts.event.FILESAVE, fileSaveEventData);
                         // Si hemos "guardado como", metemos el nuevo archivo en la lista de archivos recientes
                         if (options.showDialog) {
@@ -603,7 +663,7 @@ class FileEdit extends WebComponentControl {
         }
         if (fileName) {
             format = Util.getFormatFromFileExtension(fileName.substr(fileName.lastIndexOf('.')));
-            if (!format) {
+            if (!format && layer.file) {
                 format = Util.getFormatFromFileExtension(layer.file.substr(layer.file.lastIndexOf('.')));
             }
             if (!format) {
@@ -617,6 +677,11 @@ class FileEdit extends WebComponentControl {
                 .map(l => l.features)
                 .flat();
 
+            if (features.some((f) => f instanceof Polygon || f instanceof MultiPolygon)) {
+                // Hay polígonos, no permitimos guardar en GPX
+                availableFormats = availableFormats.filter((f) => f.type !== Consts.format.GPX);
+            }
+
             const siblings = filteredLayers.filter(l => l !== layer);
             if (!siblings.length || TC.confirm(self.getLocaleString('fileSave.otherLayers.confirm', {
                 layerList: siblings.map(l => {
@@ -626,7 +691,8 @@ class FileEdit extends WebComponentControl {
                     return l.title;
                 }).join(', ')
             }))) {
-                endFn();
+                await endFn();
+                self.#setSaveButtonState();
             }
         }
     }
@@ -649,7 +715,7 @@ class FileEdit extends WebComponentControl {
         const self = this;
         const layer = await self.getLayer();
         const isDisabled = !layer || !((layer._fileHandle && !layer._additionalFileHandles?.length) || layer.fileSystemFile || layer.file);
-        const isSaveAsDisabled = isDisabled || layer._additionalFileHandles?.length;
+        const isSaveAsDisabled = !layer || layer._additionalFileHandles?.length;
         self.saveButton.disabled = isDisabled;
         if (self.saveAsButton) {
             self.saveAsButton.disabled = isSaveAsDisabled;
