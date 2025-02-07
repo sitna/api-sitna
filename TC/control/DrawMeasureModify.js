@@ -759,6 +759,9 @@ class DrawMeasureModify extends Measure {
             });
         }
     }
+    async changeLanguage() {
+        const self = this;
+    }
 }
 
 DrawMeasureModify.prototype.CLASS = 'tc-ctl-dmm';
