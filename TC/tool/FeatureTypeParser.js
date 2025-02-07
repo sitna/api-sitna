@@ -21,7 +21,7 @@ class FeatureTypeParser {
                 this.#featureTypeDescriptions = Object.assign(this.#featureTypeDescriptions, this.#getDftCollection(e.data.dftCollection));
             }
             else {
-                throw "Ha habido problemas procesando el Describe feature type";
+                throw new Error(e.data.message); //"Ha habido problemas procesando el Describe feature type";
                 //reject("loquesea");
             }
         });
@@ -68,7 +68,7 @@ class FeatureTypeParser {
     #getDftCollection(dftCollection) {
         const result = {};
         for (const key in dftCollection) {
-            result[key] = dftCollection[key].type;
+            result[key] = dftCollection[key]?.type;
         }
         return result;
     }
@@ -130,6 +130,17 @@ class FeatureTypeParser {
                 return await this.parseFeatureTypeDescription(schemaDoc, [featureType]);
             }
         }
+    }
+
+    static getSchemaEntries(obj) {
+        return Object.entries(obj).sort(function (e1, e2) {
+            const i1 = e1[1].index;
+            const i2 = e2[1].index;
+            if (i1 === undefined || i2 === undefined) {
+                return 0;
+            }
+            return i1 - i2;
+        });
     }
 }
 
