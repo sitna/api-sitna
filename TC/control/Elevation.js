@@ -60,7 +60,10 @@ class Elevation extends Control {
         await super.register.call(self, map);
 
         map
-            .on(Consts.event.FEATUREMODIFY + ' ' + Consts.event.FEATUREREMOVE, function (e) {
+            .on(Consts.event.FEATUREMODIFY, function (e) {
+                if (e.geometryChanged) removeElevationProfileFromCache(e.feature);
+            })
+            .on(Consts.event.FEATUREREMOVE, function (e) {
                 removeElevationProfileFromCache(e.feature);
             })
             .on(Consts.event.FEATUREREMOVE, function (e) {
