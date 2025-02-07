@@ -1,4 +1,5 @@
-﻿const getNativeListener = function (evt, callback) {
+﻿const signalEvents = new WeakMap();
+const getNativeListener = function (evt, callback) {
     const result = function (evt) {
         const cbParameter = {
             type: evt.type,
@@ -54,8 +55,25 @@ const EventTarget = function () {
 
 const etProto = EventTarget.prototype;
 
-etProto.on = function (events, callback) {
-    return onInternal.call(this, events, callback);
+etProto.on = function (events, callback, options) {
+    const et = this;
+    var arrEvents = null;
+    if (options?.signal) {
+        arrEvents = signalEvents.has(options.signal) ? signalEvents.get(options.signal) : [];
+    }
+    const map = onInternal.call(this, events, callback, options);
+    if (options?.signal) {
+        arrEvents.push({ "evt": events, "callback": callback });
+    }
+    if (options?.signal) {
+        signalEvents.set(options.signal, arrEvents);
+        options.signal.onabort = function () {
+            signalEvents.get(options.signal).forEach(function (i) {
+                et.off(i.evt, i.callback);                
+            });
+        }
+    }
+    return map
 };
 
 etProto.one = function (events, callback) {
