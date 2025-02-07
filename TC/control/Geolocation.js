@@ -7,7 +7,7 @@
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [displayElevation=true] - Si se establece a `true`, se completará el gráfico del perfil de elevación de la ruta (si esta cuenta con datos de elevación) añadiendo el perfil de elevación resultante del MDT (Modelo Digital de Terreno)
   
-  * @example <caption>[Ver en vivo](../examples/cfg.GeolocationOptions.html)</caption> {@lang html}
+  * @example {@lang html}
   * <div id="mapa"/>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -861,6 +861,7 @@ class Geolocation extends Control {
                     for (var i = 0, len = options.features.length; i < len; i++) {
                         addPromises.push(self.trackLayer.addFeature(options.features[i]));
                     }
+                    self.trackLayer.setFeatureTypeMetadata(options.metadata);
                     await Promise.all(addPromises);
                     await self.wrap.processImportedFeatures({
                         notReproject: options.notReproject,
@@ -2985,6 +2986,15 @@ class Geolocation extends Control {
                         const tracks = await self.getAvailableTracks();
                         const track = tracks.find((t) => t.name === sharedTrackResult.trackName);
                         if (track) {
+                            if (track.fileHandle) {
+                                let permission = await track.fileHandle.queryPermission();
+                                if (permission === 'prompt') {
+                                    if (navigator.userActivation?.isActive || TC.confirm(self.getLocaleString('fileAccessPrompt'))) {
+                                        permission = await track.fileHandle.requestPermission();
+                                    }
+                                }
+                                if (permission === 'granted') self.map.loadFiles([track.fileHandle], { control: self });
+                            }
                             await self.#bindTracks();
                             await self.drawTrack(getTrackElement(track));
                         }
