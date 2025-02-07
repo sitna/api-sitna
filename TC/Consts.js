@@ -265,7 +265,9 @@ Consts.event = {
     OVERVIEWBASELAYERCHANGE: 'overviewbaselayerchange.tc',
     POPUP: 'popup.tc',
     BEFOREAPPLYQUERY: 'beforeapplyquery.tc',
-    RECENTFILEADD: 'recentfileadd.tc'
+    RECENTFILEADD: 'recentfileadd.tc',
+    CHANGELANGUAGE: 'changelanguage.tc',
+    BEFORECHANGELANGUAGE: 'beforechangelanguage.tc'
 };
 
 Consts.layer = {
@@ -476,7 +478,8 @@ Consts.WFSErrors = {
     MAX_NUM_FEATURES: "NumMaxFeatures",
     GETCAPABILITIES: "GetCapabilities",
     INDETERMINATE: "Indeterminate",
-    NO_FEATURES: "NoFeatures"
+    NO_FEATURES: "NoFeatures",
+    NO_VALID_FORMAT:"NoValidFormat"
 };
 
 Consts.visibility = {
