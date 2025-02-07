@@ -18,10 +18,10 @@ class Container extends Control {
     async register(map) {
         const ctlRegister = super.register.call(this, map);
 
-        this.uids = new Array(self.ctlCount);
-        this.uids.forEach((_elm, idx, arr) => {
-            arr[idx] = this.getUID();
-        });
+        this.uids = new Array(this.ctlCount);
+        for (let i = 0; i < this.uids.length; i++) {
+            this.uids[i] = this.getUID();
+        }
 
         await Promise.all([ctlRegister, this.renderPromise()]);
         const ctl = await this.onRender();
