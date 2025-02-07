@@ -3,6 +3,8 @@ import Consts from '../Consts';
 //import { Defaults } from '../Cfg';
 //import Util from '../Util';
 import WebComponentControl from './WebComponentControl';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
@@ -16,7 +18,12 @@ const noAnchorClassName = 'tc-ctl-img-magnifier-no-anchor';
 const bgClassName = 'tc-ctl-img-magnifier-bg';
 const elementName = 'sitna-image-magnifier';
 
-
+class ImageMagnifierMode {
+    constructor() {
+        this.textToClose = "";
+        this.textToOpen = "";
+    }
+}
 
 class ImageMagnifier extends WebComponentControl {
     CLASS = className;
@@ -35,7 +42,7 @@ class ImageMagnifier extends WebComponentControl {
             self.hideMagnifier();
         });
         self.#texts = texts;
-        self.title = texts.textToClose;
+        self.title = "[[textToClose]]";//texts.textToClose;
         self.#bgContent =  document.createElement("div");
         self.#bgContent.classList.add(bgClassName)
         self.appendChild(self.#bgContent);
@@ -46,6 +53,8 @@ class ImageMagnifier extends WebComponentControl {
         self.#bgContent.addEventListener("mouseleave", function (_event) {
             self.hideMagnifier();
         });
+        self.model = new ImageMagnifierMode();
+        
     }
 
     #mouseEnterEvent(event,img, zoom) {
@@ -131,7 +140,8 @@ class ImageMagnifier extends WebComponentControl {
         _nodes.forEach((node) => {
             node.classList.add(classNameAvailable)
             node.oncontextmenu = (e) => e.preventDefault();
-            node.title = self.#texts.textToOpen;
+            //node.title = self.#texts.textToOpen;
+            node.title = "[[textToOpen]]";
             node.addEventListener("pointerdown", function (event) {
                 event.preventDefault();
                 if (!this.classList.contains(Consts.classes.NOT_AVAILABLE))
@@ -146,20 +156,30 @@ class ImageMagnifier extends WebComponentControl {
                 if (event.relatedTarget !== self.#bgContent)
                     self.hideMagnifier();
             });
-            if (TC.browserFeatures.touch())
-                node.addEventListener("touchmove", function (_event) {
-                    self.hideMagnifier();
-                })
+        if (TC.browserFeatures.touch())
+            node.addEventListener("touchmove", function (_event) {
+                self.hideMagnifier();
+            });
+            
             
         });
         self.#bgContent.addEventListener("pointerup", function (event) {
             event.preventDefault();
             self.hideMagnifier();
-        });   
-
+        });
+        if(!self.controller) {
+            if (_nodes.length)
+                self.controller = new Controller(self.model, new Observer(_nodes));
+        }
+        else{
+            self.controller.view.add(_nodes)
+        }
+        self.model.textToOpen = self.#texts.textToOpen;
+        self.model.textToClose = self.#texts.textToClose;
     }
 }
 
+ImageMagnifier.prototype.CLASS = 'tc-ctl-img-magnifier';
 customElements.get(elementName) || customElements.define(elementName, ImageMagnifier);
 TC.control.ImageMagnifier = ImageMagnifier;
 export default ImageMagnifier;
