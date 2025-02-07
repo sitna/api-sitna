@@ -9,6 +9,8 @@ import Vector from '../../SITNA/layer/Vector';
 import itemToolContainer from './itemToolContainer';
 import { CreateSymbolizer } from './LayerLegend';
 import ImageMagnifier from './ImageMagnifier';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
@@ -27,6 +29,36 @@ Consts.event.TOOLSOPEN = Consts.event.TOOLSOPEN || 'toolsopen.tc';
 //        return l1._timeStamp === l2._timeStamp
 //};
 
+class WorkLayerManagerModel {
+    constructor() {
+        //super();        
+        this.loadedLayers = "";
+        this.removeAllLayersFromMap = "";
+        this.noData = "";
+    }
+}
+class WorkLayerManagerNodeModel {
+    constructor() {
+        //super();        
+        this.infoFromThisLayer = "";
+        this.visibilityOfThisLayer = "";
+        this.zoomToLayerExtent = "";
+        this.removeLayerFromMap = "";
+        this.otherTools = "";
+        this.transparencyOfThisLayer = "";
+        this.abstract = "";
+        this.content = "";
+        this.metadata = "";
+        this.dragToReorder = "";        
+    }
+}
+class WorkLayerManagerGroupModel {
+    constructor() {
+        //super();
+        this.singleLayer = "";
+        this.groupLayerThatContains = "";
+    }
+}
 
 class WorkLayerManager extends TOC {
     CLICKEVENT = 'click';
@@ -42,6 +74,8 @@ class WorkLayerManager extends TOC {
 
         self._uiElementSelector = `ul > li.${self.CLASS}-elm`;
         self._toolContainerSelector = `.${self.CLASS}-tools`;
+
+        self.model = new WorkLayerManagerModel();
 
         self.addItemTool({
             renderFn: function (container, layerId) {
@@ -81,6 +115,9 @@ class WorkLayerManager extends TOC {
                 });
             }
         });
+
+        self.groupModel = new WorkLayerManagerGroupModel();
+        self.nodeModel = new WorkLayerManagerNodeModel();
     }
 
     async loadTemplates() {
@@ -113,7 +150,17 @@ class WorkLayerManager extends TOC {
                 return !layer.stealth;
             })
             .forEach(function (layer) {
-                self.updateLayerTree(layer);
+                if (options?.refresh) {
+                    if (layer.renderOptions) {
+                        layer.renderOptions.hide = !layer.getVisibility();
+                        layer.renderOptions.opacity = layer.getOpacity();
+                    }
+                    else {
+                        layer.renderOptions = { hide: !layer.getVisibility(), opacity : layer.getOpacity() };
+                    }
+                }
+                    
+                self.updateLayerTree(layer, options?.refresh || false);
             });
 
 
@@ -169,6 +216,8 @@ class WorkLayerManager extends TOC {
             }
         }));
 
+        self.controller = new Controller(self.model, new Observer(self.div));
+
         if (Util.isFunction(callback)) {
             callback();
         }
@@ -179,8 +228,10 @@ class WorkLayerManager extends TOC {
         await super.register(map);
 
         if (self.options.fileEditing) {
-            await map.addControl('fileEdit', { caller: self, snapping: true });
+            self.fileEdit = await map.addControl('fileEdit', { caller: self, snapping: true });
         }
+
+        self.updateModel();
 
         map.loaded(function () {
             self.updateScale();
@@ -217,7 +268,7 @@ class WorkLayerManager extends TOC {
             map.magnifier = new ImageMagnifier(3, {
                 textToOpen: Util.getLocaleString(map.options.locale, "clickToEnlarge"),
                 textToClose: Util.getLocaleString(map.options.locale, "clickToClose")
-            });
+            });            
             document.body.appendChild(map.magnifier);
         }
             
@@ -318,7 +369,7 @@ class WorkLayerManager extends TOC {
         }
     }
     
-    updateLayerTree(layer) {
+    updateLayerTree(layer, refreshing) {
         const self = this;
 
         var getLegendImgByPost = async function (layer) {
@@ -344,8 +395,9 @@ class WorkLayerManager extends TOC {
                 }
             }
 
-            if (!alreadyExists) {
-                self.layers.push(layer);
+            if (!alreadyExists || refreshing) {
+                if (!refreshing)
+                    self.layers.push(layer);
 
                 var domReadyPromise;
                 const layerTitle = layer.title || layer.wrap.getServiceTitle && layer.wrap.getServiceTitle();
@@ -458,20 +510,28 @@ class WorkLayerManager extends TOC {
 
                             self.getRenderedHtml(className, layerNode).then(function (out) {
                                 var tip;
+                                tip = document.createElement('div');
+                                tip.classList.add(self.CLASS + '-tip');
+                                tip.innerHTML = out;
+                                self.map.div.appendChild(tip);
+
+                                if (!self.groupController)
+                                    self.groupController = new Controller(self.groupModel, new Observer(tip));
+                                else
+                                    self.groupController.add(tip);
 
                                 typeElm.addEventListener('mouseover', function (_e) {
                                     const mapDiv = self.map.div;
-                                    const typeElmRect = typeElm.getBoundingClientRect();
-                                    tip = document.createElement('div');
-                                    tip.classList.add(self.CLASS + '-tip');
-                                    tip.innerHTML = out;
+                                    const typeElmRect = typeElm.getBoundingClientRect();                                    
+                                    tip.classList.remove(Consts.classes.HIDDEN)
                                     tip.style.top = typeElmRect.top - mapDiv.offsetTop + 'px';
                                     tip.style.right = mapDiv.offsetWidth - (typeElmRect.left - mapDiv.offsetLeft) + 'px';
-                                    mapDiv.appendChild(tip);
+                                    
                                 });
                                 typeElm.addEventListener('mouseout', function (_e) {
-                                    tip.parentElement.removeChild(tip);
+                                    tip.classList.add(Consts.classes.HIDDEN)
                                 });
+
                             });
                         }
                         const ul = self.div.querySelector('ul');
@@ -502,7 +562,28 @@ class WorkLayerManager extends TOC {
 
                         if (domReadyPromise) domReadyPromise(li);
                         self.updateScale();
-                        self.map.magnifier?.addNode(".tc-ctl-wlm-legend img",4);
+                        self.map.magnifier ?.addNode(".tc-ctl-wlm-legend img", 4);
+
+
+                        if (!self.nodeController) {
+                            self.nodeController = new Controller(self.nodeModel, new Observer(li));
+                        }
+                        else
+                            self.nodeController.add(li);
+
+                        self.nodeModel.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");                            
+                        self.nodeModel.visibilityOfThisLayer = self.getLocaleString("visibilityOfThisLayer");
+                        self.nodeModel.zoomToLayerExtent = self.getLocaleString("zoomToLayerExtent");
+                        self.nodeModel.removeLayerFromMap = self.getLocaleString("removeLayerFromMap");
+                        self.nodeModel.otherTools = self.getLocaleString("otherTools");
+                        self.nodeModel.transparencyOfThisLayer = self.getLocaleString("transparencyOfThisLayer");
+                        self.nodeModel.abstract = self.getLocaleString("abstract");
+                        self.nodeModel.content = self.getLocaleString("content");
+                        self.nodeModel.metadata = self.getLocaleString("metadata");
+                        self.nodeModel.dragToReorder = self.getLocaleString("dragToReorder");
+                        
+                        self.groupModel.singleLayer = self.getLocaleString("singleLayer");
+                        self.groupModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
 
                     });
                 });
@@ -681,6 +762,36 @@ class WorkLayerManager extends TOC {
         const newIdx = self.map.layers.indexOf(targetLayer);
         if (newIdx >= 1 && newIdx < self.map.layers.length) {
             self.map.insertLayer(sourceLayer, newIdx, callback);
+        }
+    }
+    updateModel() {
+        const self= this;
+        self.model.loadedLayers = self.getLocaleString("loadedLayers");
+        self.model.removeAllLayersFromMap = self.getLocaleString("removeAllLayersFromMap");
+        self.model.noData = self.getLocaleString("noData");
+
+        self.nodeModel.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+        self.nodeModel.visibilityOfThisLayer = self.getLocaleString("visibilityOfThisLayer");
+        self.nodeModel.zoomToLayerExtent = self.getLocaleString("zoomToLayerExtent");
+        self.nodeModel.removeLayerFromMap = self.getLocaleString("removeLayerFromMap");
+        self.nodeModel.otherTools = self.getLocaleString("otherTools");
+        self.nodeModel.transparencyOfThisLayer = self.getLocaleString("transparencyOfThisLayer");
+        self.nodeModel.abstract = self.getLocaleString("abstract");
+        self.nodeModel.content = self.getLocaleString("content");
+        self.nodeModel.metadata = self.getLocaleString("metadata");
+        self.nodeModel.dragToReorder = self.getLocaleString("dragToReorder");
+        //currentModel.singleLayer = self.getLocaleString("singleLayer");
+        //currentModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
+
+        self.groupModel.singleLayer = self.getLocaleString("singleLayer");
+        self.groupModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
+        if (self.map ?.magnifier ?.model){
+            self.map.magnifier.model.textToOpen = self.getLocaleString("clickToEnlarge");
+            self.map.magnifier.model.textToClose = self.getLocaleString("clickToClose");
         }
     }
 }
