@@ -1,19 +1,20 @@
-import TC from '../../TC';
-import Cfg from '../../TC/Cfg';
-import Util from '../../TC/Util';
-import Consts from '../../TC/Consts';
-import Layer from './Layer';
-import Feature from '../feature/Feature';
-import Point from '../feature/Point';
-import Marker from '../feature/Marker';
-import Polyline from '../feature/Polyline';
-import Polygon from '../feature/Polygon';
-import MultiPoint from '../feature/MultiPoint';
-import MultiMarker from '../feature/MultiMarker';
-import MultiPolyline from '../feature/MultiPolyline';
-import MultiPolygon from '../feature/MultiPolygon';
-import Circle from '../feature/Circle';
-import FeatureTypeParser from '../../TC/tool/FeatureTypeParser';
+import TC from '../../TC.js';
+import Cfg from '../../TC/Cfg.js';
+import Util from '../../TC/Util.js';
+import Consts from '../../TC/Consts.js';
+import Layer from './Layer.js';
+import Feature from '../feature/Feature.js';
+import Point from '../feature/Point.js';
+import Marker from '../feature/Marker.js';
+import Polyline from '../feature/Polyline.js';
+import Polygon from '../feature/Polygon.js';
+import MultiPoint from '../feature/MultiPoint.js';
+import MultiMarker from '../feature/MultiMarker.js';
+import MultiPolyline from '../feature/MultiPolyline.js';
+import MultiPolygon from '../feature/MultiPolygon.js';
+import Circle from '../feature/Circle.js';
+import FeatureTypeParser from '../../TC/tool/FeatureTypeParser.js';
+import GMLBase from '../../lib/ol/format/GMLBase.js';
 
 TC.Layer = Layer;
 TC.layer = TC.layer || {};
@@ -30,6 +31,7 @@ featureNamespace.Circle = Circle;
 
 const capabilitiesPromises = {};
 const visibilityCache = new Map();
+const FEATURE_PROPERTY_NAME = '__f';
 
 
 const getMergedLegendImage = function (images) {
@@ -103,6 +105,7 @@ class Vector extends Layer {
     features = [];
 
     selectedFeatures = [];
+    #usedIds = new Set();
 
     //esta promise se resolverá cuando el capabilities esté descargado y parseado
     //se utiliza para saber cuándo está listo el capabilities en los casos en los que se instancia el layer pero no se añade al mapa
@@ -1092,7 +1095,7 @@ class Vector extends Layer {
                 }
                 for (let name in featureTypeDescription) {
                     const attribute = featureTypeDescription[name];
-                    const geometryType = Util.getGeometryType(attribute.type);
+                    const geometryType = GMLBase.getGeometryType(attribute.type);
                     if (geometryType) {
                         const geometryMetadata = {
                             name,
@@ -1133,6 +1136,47 @@ class Vector extends Layer {
         self.wrap.setStyles(options);
     }
 
+    getNextFeatureId(options = {}) {
+        for (const featureId of this.features.map((f) => f.getId())) {
+            this.#usedIds.add(featureId);
+        }
+        const ids = Array.from(this.#usedIds);
+
+        if (ids.length === 0) return (options.prefix ?? (this.id + '.')) + 1;
+
+        if (ids.every((id) => typeof id === 'number')) {
+            return Math.max(...ids) + 1;
+        }
+
+        let prefix = '';
+        if (options.prefix) {
+            prefix = options.prefix;
+        }
+        else {
+            if (ids.length > 1) {
+                prefix = ids[0];
+                for (let i = 1; i < ids.length; i++) {
+                    while (ids[i].indexOf(prefix) !== 0) {
+                        prefix = prefix.substring(0, prefix.length - 1);
+                        if (prefix === '') break;
+                    }
+                    if (prefix === '') break;
+                }
+            }
+            else if (ids.length === 1) {
+                const firstId = ids[0];
+                if (/\.\d+$/.test(firstId)) {
+                    prefix = firstId.substring(0, firstId.lastIndexOf('.') + 1);
+                }
+            }
+        }
+
+        const prefixLength = prefix.length;
+        let nextNumber = Math.max(...ids.map((id) => parseInt(id.substring(prefixLength)))) + 1;
+        if (Number.isNaN(nextNumber)) nextNumber = 1;
+        return prefix + nextNumber;
+    }
+
     exportState(options = {}) {
         const self = this;
         const lObj = {
@@ -1143,10 +1187,26 @@ class Vector extends Layer {
         }
 
         // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
-        var precision = Math.pow(10, (self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION) + 1);
+        const precision = Math.pow(10, (self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION) + 1);
         let commonStyles = null;
         const features = options.features || self.features;
+
+        const exportFeature = (feature) => ({
+            id: feature.id,
+            type: feature.getGeometryType(),
+            geom: Util.compactGeometry(feature.geometry, precision),
+            data: sanitizeData(feature.getData()),
+            autoPopup: feature.autoPopup,
+            showsPopup: feature.showsPopup
+        });
+
         const sanitizeData = (data) => {
+            if (data instanceof Feature) {
+                return { [FEATURE_PROPERTY_NAME]: exportFeature(data) };
+            }
+            if (Array.isArray(data)) {
+                return data.map((elm) => sanitizeData(elm));
+            }
             if (data && typeof data === 'object') {
                 const result = {};
                 for (const key in data) {
@@ -1159,16 +1219,10 @@ class Vector extends Layer {
             }
             return data;
         };
+
         lObj.features = features
             .map(function (f) {
-                const fObj = {
-                    id: f.id,
-                    type: f.getGeometryType(),
-                    geom: Util.compactGeometry(f.geometry, precision),
-                    data: sanitizeData(f.getData()),
-                    autoPopup: f.autoPopup,
-                    showsPopup: f.showsPopup
-                };
+                const fObj = exportFeature(f);
                 let layerStyle = self.styles?.[f.STYLETYPE] ||
                     self.map?.options?.styles?.[f.STYLETYPE] || TC.Cfg.styles?.[f.STYLETYPE];
                 if (options.exportStyles === undefined || options.exportStyles) {
@@ -1181,8 +1235,7 @@ class Vector extends Layer {
                     }
                     fObj.style = Util.extend(layerStyle, f.getStyle());
                     if (!commonStyles) commonStyles = Object.assign({}, fObj.style);
-                    else
-                        commonStyles = compareStyles(commonStyles, fObj.style);
+                    else commonStyles = compareStyles(commonStyles, fObj.style);
                 }
                 return fObj;
             });
@@ -1193,78 +1246,102 @@ class Vector extends Layer {
             });
             lObj.style = commonStyles;
         }
+        if (this.#featureTypeMetadata) {
+            lObj.metadata = {
+                origin: this.#featureTypeMetadata.origin,
+                attributes: this.#featureTypeMetadata.attributes,
+                geometries: this.#featureTypeMetadata.geometries,
+                originalMetadata: this.#featureTypeMetadata.originalMetadata,
+            }
+        }
         return lObj;
     }
 
     async importState(obj) {
         const self = this;
-        const promises = new Array(obj.features.length);
-        obj.features.forEach(function (f, idx) {
-            let style = Util.extend({}, obj.style || {}, f.style);
-            const featureOptions = Util.extend({}, style, {
-                data: f.data,
-                id: f.id,
-                showsPopup: f.showsPopup,
-                showPopup: f.autoPopup
+
+        const extractFeatureValues = function (data) {
+            if (Array.isArray(data)) {
+                return data.map((elm) => extractFeatureValues(elm));
+            }
+            if (!data || typeof data !== 'object') {
+                return data;
+            }
+            const result = { ...data };
+            for (const key in data) {
+                const value = data[key];
+                if (value && typeof value === 'object') {
+                    const keys = Object.keys(value);
+                    if (keys.length === 1 && keys[0] === FEATURE_PROPERTY_NAME) {
+                        result[key] = getFeature(value[FEATURE_PROPERTY_NAME]);
+                    }
+                }
+            }
+            return result;
+        };
+
+        if (obj.crs && self.map.crs !== obj.crs) {
+            await new Promise(function (resolve, _reject) {
+                self.map.one(Consts.event.PROJECTIONCHANGE, resolve);
             });
-            var addFn;
+        }
+
+        if (obj.metadata) {
+            self.setFeatureTypeMetadata(obj.metadata);
+        }
+
+        const getFeature = function (f) {
+            let style = Util.extend({}, obj.style || {}, f.style);
+            let Ctor;
             switch (f.type) {
                 case Consts.geom.POLYGON:
-                    addFn = self.addPolygon;
+                    Ctor = Polygon;
                     break;
                 case Consts.geom.MULTIPOLYGON:
-                    addFn = self.addMultiPolygon;
+                    Ctor = MultiPolygon;
                     break;
                 case Consts.geom.POLYLINE:
-                    addFn = self.addPolyline;
+                    Ctor = Polyline;
                     break;
                 case Consts.geom.MULTIPOLYLINE:
-                    addFn = self.addMultiPolyline;
+                    Ctor = MultiPolyline;
                     break;
                 case Consts.geom.CIRCLE:
-                    addFn = self.addCircle;
+                    Ctor = Circle;
                     break;
                 case Consts.geom.MULTIPOINT:
                     if (f.style && (f.style.url || f.style.className)) {
-                        addFn = self.addMultiMarker;
+                        Ctor = MultiMarker;
                     }
                     else {
-                        addFn = self.addMultiPoint;
+                        Ctor = MultiPoint;
                     }
                     break;
                 case Consts.geom.POINT:
                     if (style && (style.url || style.className)) {
-                        addFn = self.addMarker;
+                        Ctor = Marker;
                     }
                     else {
-                        addFn = self.addPoint;
+                        Ctor = Point;
                     }
                     break;
                 default:
                     break;
             }
-            if (addFn) {
-                var geom = Util.explodeGeometry(f.geom);
-                if (obj.crs && self.map.crs !== obj.crs) {
-                    promises[idx] = new Promise(function (res, rej) {
-                        self.map.one(Consts.event.PROJECTIONCHANGE, function (_e) {
-                            addFn.call(self, geom, featureOptions).then(
-                                function () {
-                                    res();
-                                },
-                                function () {
-                                    rej(Error('addFn failed'));
-                                }
-                            );
-                        });
-                    });
-                }
-                else {
-                    promises[idx] = addFn.call(self, geom, featureOptions);
-                }
+            if (Ctor) {
+                const featureOptions = Util.extend({}, style, {
+                    data: extractFeatureValues(f.data),
+                    id: f.id,
+                    showsPopup: f.showsPopup,
+                    showPopup: f.autoPopup
+                });
+                const geom = Util.explodeGeometry(f.geom);
+                return new Ctor(geom, featureOptions);
             }
-        });
-        await Promise.all(promises);
+        };
+
+        const features = obj.features.map(getFeature);
+        await Promise.all(features.map((f) => self.addFeature(f)));
     }
 
     clone() {
