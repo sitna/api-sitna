@@ -4,6 +4,8 @@ import { Defaults } from '../Cfg';
 import Util from '../Util';
 import WebComponentControl from './WebComponentControl';
 import './FeatureStyler';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
@@ -20,6 +22,17 @@ Consts.event.CHANGE = 'change';
 
 const className = 'tc-ctl-draw';
 const elementName = 'sitna-draw';
+
+class DrawModel {
+    constructor() {
+        this.new = "";
+        this.undo = "";
+        this.redo = "";
+        this.cancel = "";
+        this.end = "";
+        this.tooltip = "";
+    }
+}
 
 class Draw extends WebComponentControl {
     #classSelector = '.' + className;
@@ -65,7 +78,7 @@ class Draw extends WebComponentControl {
         self.exportsState = true;
 
         self.#layerPromise = null;
-
+        
         self
             .on(Consts.event.DRAWSTART, function (e) {
                 self.resetValues();
@@ -87,29 +100,13 @@ class Draw extends WebComponentControl {
             .on(Consts.event.DRAWEND, function (e) {
                 self.#setFeatureAddReadyState();
 
-                // Sacamos prefijo de las entidades que tienen id con formato prefijo.nnn
-                const defaultPrefix = self.getLocaleString('sketch');
-                const usedIds = self.layer.features.map(f => f.getId());
-                const prefix = usedIds
-                    .map(id => id ? id.substring(0, id.lastIndexOf('.')) : '')
-                    .map(f => f ? f : defaultPrefix)
-                    .reduce((acc, cur, idx) => {
-                        if (idx === 0) {
-                            return cur;
-                        }
-                        return cur === acc ? cur : defaultPrefix
-                    }, defaultPrefix);
-
-                const featureId = TC.getUID({
-                    prefix: prefix + '.',
-                    banlist: usedIds
-                });
-                e.feature.setId(featureId);
+                e.feature.setId(self.layer.getNextFeatureId());
 
                 if (self.callback) {
                     self.callback(e.feature);
                 }
             });
+        self.model = new DrawModel();
     }
 
     connectedCallback() {
@@ -130,7 +127,7 @@ class Draw extends WebComponentControl {
         if (name === 'stylable') {
             self.#onStylableChange();
         }
-        if (name === 'mode') {
+        if (name === 'mode') {            
             self.#onModeChange();
         }
     }
@@ -218,33 +215,31 @@ class Draw extends WebComponentControl {
 
     render(callback) {
         const self = this;
-        let strToolTip;
         switch (self.mode) {
             case Consts.geom.POLYLINE:
             case Consts.geom.MULTIPOLYLINE:
-                strToolTip = self.getLocaleString('drawLine');
+                self.model.tooltip = self.getLocaleString('drawLine');
                 self.classList.add(self.#lineClass);
                 break;
             case Consts.geom.POLYGON:
             case Consts.geom.MULTIPOLYGON:
-                strToolTip = self.getLocaleString('drawPolygon');
+                self.model.tooltip = self.getLocaleString('drawPolygon');
                 self.classList.add(self.#polygonClass);
                 break;
             case Consts.geom.POINT:
             case Consts.geom.MULTIPOINT:
-                strToolTip = self.getLocaleString('drawPoint');
+                self.model.tooltip = self.getLocaleString('drawPoint');
                 self.classList.add(self.#pointClass);
                 break;
             case Consts.geom.RECTANGLE:
-                strToolTip = self.getLocaleString('drawRectangle');
+                self.model.tooltip = self.getLocaleString('drawRectangle');
                 self.classList.add(self.#rectangleClass);
                 break;
             default:
-                strToolTip = self.getLocaleString('draw');
+                self.model.tooltip = self.getLocaleString('draw');
                 break;
         }
-        const renderObject = {
-            tooltip: strToolTip,
+        const renderObject = {            
             stylable: self.stylable
         };
         return self.renderData(renderObject, function () {
@@ -272,6 +267,8 @@ class Draw extends WebComponentControl {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self));
+            self.updateModel();
         });
     }
 
@@ -359,6 +356,10 @@ class Draw extends WebComponentControl {
         });
 
         return self;
+    }
+
+    unregister() {        
+        this.map.controls.splice(this.map.controls.findIndex((c) => c == this), 1);
     }
 
     new() {
@@ -631,11 +632,15 @@ class Draw extends WebComponentControl {
         return this.wrap.getSketch();
     }
 
+    getExtendedFeature() {
+        return this.wrap.getExtendedFeature();
+    }
+
     exportState() {
         const self = this;
         if (self.exportsState && self.layer) {
             return {
-                id: self.id,
+                id: self.getId(),
                 layer: self.layer.exportState()
             };
         }
@@ -670,6 +675,37 @@ class Draw extends WebComponentControl {
         self.resetValues();
         self.#endBtn.disabled = true;
         self.#cancelBtn.disabled = false;
+    }
+    updateModel() {
+        this.model.new = this.getLocaleString('new');
+        this.model.undo = this.getLocaleString('undo');
+        this.model.redo = this.getLocaleString('redo');
+        this.model.end = this.getLocaleString('end');
+        this.model.cancel = this.getLocaleString('cancel');
+        switch (this.mode) {
+            case Consts.geom.POLYLINE:
+            case Consts.geom.MULTIPOLYLINE:
+                this.model.tooltip = this.getLocaleString('drawLine');
+                break;
+            case Consts.geom.POLYGON:
+            case Consts.geom.MULTIPOLYGON:
+                this.model.tooltip = this.getLocaleString('drawPolygon');
+                break;
+            case Consts.geom.POINT:
+            case Consts.geom.MULTIPOINT:
+                this.model.tooltip = this.getLocaleString('drawPoint');
+                break;
+            case Consts.geom.RECTANGLE:
+                this.model.tooltip = this.getLocaleString('drawRectangle');
+                break;
+            default:
+                this.model.tooltip = this.getLocaleString('draw');
+                break;
+        }
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
