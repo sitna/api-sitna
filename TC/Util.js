@@ -949,6 +949,9 @@ var Util = {
             case 'cst':
             case 'cpg':
                 return Consts.mimeType.SHAPEFILE;
+            case 'wkt':
+            case 'wkb':
+                return 'text/plain';
             case 'zip':
                 return Consts.mimeType.ZIP;
             default:
@@ -1857,11 +1860,11 @@ var Util = {
         var translate = new Map([
             ["ä", "a"], ["ö", "o"], ["ü", "u"],
             ["Ä", "A"], ["Ö", "O"], ["Ü", "U"],
-            ["á", "a"], ["é", "e"], ["i", "i"], ["ó", "o"], ["ú", "u"],
+            ["á", "a"], ["é", "e"], ["í", "i"], ["ó", "o"], ["ú", "u"],
             ["Á", "A"], ["É", "E"], ["Í", "I"], ["Ó", "O"], ["Ú", "U"],
-            ["ñ", "n"], ["Ñ", "N"]
+            ["ñ", "n"], ["Ñ", "N"], ["ç", "c"], ["Ç", "C"]
         ]);
-        return t.replace(/[öäüÖÄÜáéíóúÁÉÍÓÚñÑ]/g, function (match) {
+        return t.replace(/[öäüÖÄÜáéíóúÁÉÍÓÚñÑçÇ]/g, function (match) {
             return translate.get(match);
         });
     },
@@ -2300,68 +2303,6 @@ var Util = {
             origin: origin,
             geom: newGeom
         };
-    },
-
-    getGeometryType: function (value) {
-        switch (value) {
-            case 'gml:LinearRingPropertyType':
-            case 'gml:PolygonPropertyType':
-            case 'LinearRingPropertyType':
-            case 'PolygonPropertyType':
-            case 'gml:Polygon':
-            case 'Polygon':
-            case 'POLYGON':
-                return Consts.geom.POLYGON;
-            case 'gml:MultiPolygonPropertyType':
-            case 'gml:MultiSurfacePropertyType':
-            case 'MultiPolygonPropertyType':
-            case 'MultiSurfacePropertyType':
-            case 'gml:MultiPolygon':
-            case 'MultiPolygon':
-            case 'MULTIPOLYGON':
-                return Consts.geom.MULTIPOLYGON;
-            case 'gml:LineStringPropertyType':
-            case 'gml:CurvePropertyType':
-            case 'LineStringPropertyType':
-            case 'CurvePropertyType':
-            case 'gml:LineString':
-            case 'LineString':
-            case 'LINESTRING':
-                return Consts.geom.POLYLINE;
-            case 'gml:MultiLineStringPropertyType':
-            case 'gml:MultiCurvePropertyType':
-            case 'MultiLineStringPropertyType':
-            case 'MultiCurvePropertyType':
-            case 'gml:MultiLineString':
-            case 'MultiLineString':
-            case 'MULTILINESTRING':
-                return Consts.geom.MULTIPOLYLINE;
-            case 'gml:PointPropertyType':
-            case 'PointPropertyType':
-            case 'gml:Point':
-            case 'Point':
-            case 'POINT':
-                return Consts.geom.POINT;
-            case 'gml:MultiPointPropertyType':
-            case 'MultiPointPropertyType':
-            case 'gml:MultiPoint':
-            case 'MultiPoint':
-            case 'MULTIPOINT':
-                return Consts.geom.MULTIPOINT;
-            case 'gml:BoxPropertyType':
-            case 'BoxPropertyType':
-                return Consts.geom.RECTANGLE;
-            case 'gml:GeometryCollectionPropertyType':
-            case 'gml:GeometryAssociationType':
-            case 'gml:GeometryPropertyType':
-            case 'gml:AbstractGeometryType':
-            case 'GeometryCollectionPropertyType':
-            case 'GeometryAssociationType':
-            case 'GeometryPropertyType':
-                return Consts.geom.GEOMETRY;
-            default:
-                return false;
-        }
     },
 
     isStyleOption: function (name) {
