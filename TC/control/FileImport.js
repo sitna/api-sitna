@@ -216,7 +216,7 @@ class FileImport extends WebComponentControl {
                     // Guarda metadatos de la capa extraídos de archivo (por ejemplo, info de tabla de GeoPackage)
                     mapLayer.setFeatureTypeMetadata(e.metadata);
                     const fileMetadata = await self.loadLayerMetadata(mapLayer);
-                    if (!fileMetadata || fileMetadata.groupIndex === groupIndex) {
+                    if (!fileMetadata || fileMetadata.groupIndex === groupIndex || (!groupIndex && !fileMetadata.groupIndex)) {
                         targetLayers[i] = mapLayer;
                     }
                     else {
@@ -406,7 +406,7 @@ class FileImport extends WebComponentControl {
         if (ownLayers.length) {
             const fileHandles = [];
             const idCount = Math.max(...ownLayers.map(l => self.getIdCount(l.id)));
-            TC.setUIDStart(idCount + 1, { prefix: self.id + '-' });
+            TC.setUIDStart(idCount + 1, { prefix: self.getId() + '-' });
             const layersMetadata = await Promise.all(ownLayers.map(l => self.loadLayerMetadata(l)));
             ownLayers.forEach((l, idx) => {
                 l.options.groupIndex = layersMetadata[idx]?.groupIndex;
@@ -482,9 +482,9 @@ class FileImport extends WebComponentControl {
                         }
                     }
                 }
-                const isPermissionGranted = p => p === 'granted';
+                const isPermissionGranted = (p) => p === 'granted';
                 if (promptRequired) {
-                    const onCloseClick = async function (_e) {
+                    const requestPermissions = async function () {
                         for (var k = 0; k < permissions.length; k++) {
                             permissions[k] = await fileHandles[k].requestPermission();
                         }
@@ -496,13 +496,22 @@ class FileImport extends WebComponentControl {
                             const layersToRemove = layerGroups.get(fileHandle);
                             layersToRemove.forEach(l => self.map.removeLayer(l));
                         }
+                    }
+                    const onCloseClick = async function (_e) {
+                        await requestPermissions();
                         title.innerHTML = '';
+                        button.removeEventListener('click', onCloseClick);
                         Util.closeModal();
                     };
-                    Util.showModal(dialog, {
-                        closeCallback: onCloseClick
-                    });
-                    button.addEventListener('click', onCloseClick);
+                    if (navigator.userActivation?.isActive) {
+                        requestPermissions();
+                    }
+                    else {
+                        Util.showModal(dialog, {
+                            closeCallback: onCloseClick
+                        });
+                        button.addEventListener('click', onCloseClick);
+                    }
                 }
                 else if (permissions.every(isPermissionGranted)) {
                     endFn(fileHandles);
@@ -515,7 +524,7 @@ class FileImport extends WebComponentControl {
         const self = this;
         if (self.exportsState && self.getLayers().length) {
             return {
-                id: self.id,
+                id: self.getId(),
                 layers: self.getLayers().map(function (layer) {
                     const layerState = {
                         title: layer.title,
@@ -682,11 +691,11 @@ class FileImport extends WebComponentControl {
                     vi.some(l => /^[\w]*-\d-\d/gi.exec(va.id)[0] === /^[\w]*-\d-\d/gi.exec(l.id)[0]) ? vi : vi.concat(va);
             }, []);
             return TC.getUID({
-                prefix: `${self.id}-${grouped.filter(l => l[propertyname] != fileHandleOrTimestamp).length + 1}-`
+                prefix: `${self.getId()}-${grouped.filter(l => l[propertyname] != fileHandleOrTimestamp).length + 1}-`
             });
         }
         return TC.getUID({
-            prefix: self.id + '-'
+            prefix: self.getId() + '-'
         });
     }
 }
