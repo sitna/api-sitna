@@ -51,7 +51,7 @@ class TabContainer extends Container {
     render(callback) {
         const self = this;
         return self.renderData({
-            controlId: self.id,
+            controlId: self.getId(),
             title: self.title,
             deselectableTabs: self.options.deselectableTabs,
             controls: self.controlOptions
@@ -131,7 +131,7 @@ class TabContainer extends Container {
                 parent = parent.parentElement;
             }
             while (parent && !parent.matches(classSelector));
-            parent.querySelector(`sitna-tab[for="${self.id}-sel-${idx}"]`).text = title;
+            parent.querySelector(`sitna-tab[for="${self.getId()}-sel-${idx}"]`).text = title;
         };
 
         const controls = await Promise.all(self._ctlPromises);
