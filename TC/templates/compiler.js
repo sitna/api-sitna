@@ -40,7 +40,8 @@ files
                     formatDateNumberOrBoolean: true,
                     inputDate: true,
                     inputTime: true,
-                    inputDatetime: true
+                    inputDatetime: true,
+                    isPlainObject: true,
                 },
                 knownHelpersOnly: true
             });
