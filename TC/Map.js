@@ -80,6 +80,8 @@ import '../SITNA/feature/Polygon';
 import '../SITNA/feature/MultiPolygon';
 import filterNs from './filter';
 import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
+import Controller from './Controller';
+import Observer from './Observer';
 
 TC.EventTarget = EventTarget;
 TC.i18n = TC.i18n || i18n;
@@ -934,7 +936,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
         var init = async function () {
             
-            self.state = await self.checkLocation();
+            self.state = self.options.stateful ? await self.checkLocation() : undefined;
 
             if (self.options.layout) {
                 self.trigger(Consts.event.LAYOUTLOAD, { map: self });
@@ -1304,8 +1306,16 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                                             //data = data.replace(/\{\{([^\}\{]+)\}\}/g, replacerFn); // Estilo {{key}}
                                             //data = data.replace(/\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFn); // Estilo {@i18n $key="key"/}
                                             //data = data.replace(/\{\{i18n "([^\}\{]+)"\}\}/g, replacerFn); // Estilo {{i18n "key"}}
-                                            data = data.replace(/\{\{i18n "([^\}\{]+)"\}\}|\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFn); // Los tres estilos anteriores
+                                            data = data.replace(/\{\{i18n "([^\}\{]+)"\}\}|\{\{([^\}\{]+)\}\}|\{@i18n \$key="([^\}\{]+)"\/\}/g, replacerFn); // Los tres estilos anteriores                                            
+
                                             self.div.insertAdjacentHTML('beforeend', data);
+                                            //new Observer(self.div);
+                                            const titles = self.div.querySelectorAll("[data-i18n-title]");
+                                            if (titles.length)
+                                                titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
+                                            const content = self.div.querySelectorAll("[data-i18n-content]");
+                                            if (content.length)
+                                                content.forEach((node) => node.innerHTML= Util.getLocaleString(locale, node.dataset.i18nContent));
                                             resolve();
                                         });
                                     }
@@ -3316,6 +3326,11 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         resolve({ "errors": errors });
                         return;
                     }
+                    if (!(capabilities.Operations.GetFeature.outputFormat.includes(outputFormat.toLowerCase()) || capabilities.Operations.GetFeature.outputFormat.includes(outputFormat.toUpperCase()))) {
+                        errors.push({ key: Consts.WFSErrors.NO_VALID_FORMAT, params: { serviceTitle: _getServiceTitle(service), format: outputFormat } });
+                        resolve({ "errors": errors });
+                        return;
+                    }
                     if (capabilities.Operations.GetFeature.CountDefault)
                         _numMaxFeatures = capabilities.Operations.GetFeature.CountDefault.DefaultValue;
                     //comprobamos si soporta querys    
@@ -3503,6 +3518,47 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             }
         }
         return null;
+    }
+    setLanguage(locale) {
+        const self = this;
+        const activeControl = self.activeControl; 
+        if (i18n.currentLocaleKey != locale) {
+            self.trigger(Consts.event.BEFORECHANGELANGUAGE, { lang: locale });    
+            //self.wait(new Promise((resolve) => { setTimeout(resolve, 1) }));
+            const endPromise = new Promise(async (resolve, reject) => {
+                try {                    
+                    if (!i18n[locale]) {
+                        //cargar los recursos del nuevo idioma
+                        await TC.i18n.loadResources(true, TC.apiLocation + 'resources/', locale);
+                        await TC.i18n.loadResources(true, self.layout.i18n, locale);
+                    }
+                    else {
+                        await TC.i18n.loadResources(false, null, locale);                        
+                    }
+                    await (() => { return new Promise((resolve) => { setTimeout(resolve, 100) }) })();
+                    self.options.locale = i18n.currentLocaleKey = locale;
+                    await Promise.all(self.controls.filter((c) => c.changeLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
+                        return control.changeLanguage?.apply(control);
+                    }));
+                    
+                    const titles = self.div.querySelectorAll("[data-i18n-title]");
+                    if (titles.length)
+                        titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
+                    const content = self.div.querySelectorAll("[data-i18n-content]");
+                    if (content.length)
+                        content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
+                    self.trigger(Consts.event.CHANGELANGUAGE, { lang: locale });                    
+                    resolve();
+                }
+                catch (err) {
+                    reject(err);
+                }                
+                
+            });             
+            self.wait(endPromise);
+            return endPromise
+        }
+        return Promise.reject("Same language");
     }
 }
 
