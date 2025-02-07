@@ -5,7 +5,10 @@ import Util from './Util';
 let availableBaseLayers;
 // Carga síncrona de las capas de fondo predefinidas
 let apiLocation = TC.apiLocation;
-if (!/^https?:/.test(apiLocation)) apiLocation = (globalThis.location?.protocol ?? '') + TC.apiLocation;
+//chequear si es relativa
+if (!/^http?:/.test(apiLocation)) apiLocation = new URL(TC.apiLocation, globalThis.location?.href ?? '').href
+else
+    if (!/^https?:/.test(apiLocation)) apiLocation = (globalThis.location?.protocol ?? '') + TC.apiLocation;
 const req = new XMLHttpRequest();
 req.open("GET", TC.apiLocation + 'config/predefined-layers.json', false); // 'false': synchronous.
 let result = '[]';
@@ -155,7 +158,7 @@ const Defaults = (function () {
         *     { 
         *         threeD: { }
         *     }            
-        * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
+        * @example {@lang html}
         * <div id="mapa"/>
         * <div id="vista3d"/>
         * <script>
@@ -253,7 +256,7 @@ const Defaults = (function () {
         *    - Si está también el control `WFSQuery`, ejecutar consultas alfanuméricas sobre las capas cargadas en el mapa, si cuentan con un servicio WFS pareado al WMS.
         * 
         * Los controles `workLayerManager` y `TOC` realizan varias funciones comunes, así rara vez será necesario tener los dos a la vez en un visor.
-        * @example <caption>Ejemplo de uso de propiedad `featureInfo` - [Ver en vivo](../examples/cfg.MapControlOptions.featureInfo.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `featureInfo`</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Añadimos el control featureInfo.
@@ -270,14 +273,14 @@ const Defaults = (function () {
         *     ];
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `fullScreen` - [Ver en vivo](../examples/cfg.MapControlOptions.fullScreen.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `fullScreen`</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Añadimos el control fullScreen.
         *     SITNA.Cfg.controls.fullScreen = true;
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `printMap` - [Ver en vivo](../examples/cfg.MapControlOptions.printMap.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `printMap`</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -288,7 +291,7 @@ const Defaults = (function () {
         *     };
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `share` - [Ver en vivo](../examples/cfg.MapControlOptions.share.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `share`</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -305,7 +308,7 @@ const Defaults = (function () {
         *     };
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `workLayerManager` - [Ver en vivo](../examples/cfg.MapControlOptions.workLayerManager.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `workLayerManager`</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -560,7 +563,7 @@ const Defaults = (function () {
  * @member Cfg
  * @type SITNA.MapOptions
  * @memberof SITNA
- * @example <caption>Configuración de capas base - [Ver en vivo](../examples/Cfg.baseLayers.html)</caption> {@lang html}
+ * @example <caption>Configuración de capas base</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // Establecer un proxy porque se hacen peticiones a otro dominio.
@@ -577,7 +580,7 @@ const Defaults = (function () {
  * 
  *     var map = new SITNA.Map("mapa");
  * </script>
- * @example <caption>Configuración de CRS - [Ver en vivo](../examples/Cfg.crs.html)</caption> {@lang html}
+ * @example <caption>Configuración de CRS</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.
@@ -599,7 +602,7 @@ const Defaults = (function () {
  *         }
  *     });
  * </script>
- * @example <caption>Configuración de capas de trabajo - [Ver en vivo](../examples/Cfg.workLayers.html)</caption> {@lang html}
+ * @example <caption>Configuración de capas de trabajo</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // Establecer un proxy porque se hacen peticiones a otro dominio.
