@@ -1882,8 +1882,15 @@ class WFSQuery extends Control {
         const self = this;
         try {
             const data = await layer.describeFeatureType(layerName);
-            const form = await self.#manageDescribeFeature(data, true);
-            return ({ attributes: data, form: form });
+            // Quitamos los atributos que vienen de gml:AbstractFeatureType
+            const attributes = {};
+            for (const key in data) {
+                if (!key.startsWith('gml:') && !key.startsWith('@gml:')) {
+                    attributes[key] = data[key];
+                }
+            }
+            const form = await self.#manageDescribeFeature(attributes, true);
+            return ({ attributes, form });
         }
         catch (err) {
             var tbody = dialog.getElementsByClassName("tc-modal-body")[0];
@@ -2091,6 +2098,7 @@ class WFSQuery extends Control {
             case type.indexOf("double") >= 0:
             case type.indexOf("long") >= 0:
             case type.indexOf("decimal") >= 0:
+            case type.indexOf("short") >= 0:
                 valueField.type = "number";
                 if (type.indexOf("int") >= 0 || type.indexOf("long") >= 0) {
                     valueField.step = 1;
