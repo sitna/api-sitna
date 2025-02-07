@@ -1,10 +1,47 @@
-﻿import TC from '../../TC';
-import Util, { MapImage } from '../Util';
-import Consts from '../Consts';
-import MapInfo from './MapInfo';
-
+﻿import TC from '../../TC.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
+import MapInfo from './MapInfo.js';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
+
+class ShareModel {
+    constructor() {
+        this.share = "";
+        this.shareLink = "";
+        this.embedMap = "";
+        this.image = "";
+        this.shareMapAsImage = "";        
+        this["shareLink.tip.1"] = "";
+        this["shareLink.tip.2"] = "";
+        this["shareLink.tip.3"] = "";
+        this.shareURL = "";
+        this.sendMapByEmail = "";
+        this.createQrCode = "";
+        this.shareMapToWhatsapp = "";
+        this.shareMapToTwitter = "";
+        this.shareMapToFacebook = "";
+        this.addToBookmarks = "";
+        this["embedMap.tip.1"] = "";
+        this["embedMap.tip.2"] = "";
+        this.createQrCodeToImage = "";
+        this.appendQRCode = "";
+        this.sharePNG = "";
+        this.shareJPG = "";
+        this.tooManyLayersLoaded = "";
+        this.shorten = "";
+    }
+}
+
+class ShareDialogModel {
+    constructor() {
+        this.qrCode = "";
+        this.qrAdvice = "";
+        this.close = "";
+    }
+}
 
 class Share extends MapInfo {
     MAILTO_MAX_LENGTH = 256;
@@ -24,16 +61,19 @@ class Share extends MapInfo {
         if (!self.options.dialogDiv) {
             document.body.appendChild(self.#dialogDiv);
         }
+        self.model = new ShareModel();
+        self.dialogModel = new ShareDialogModel();
     }
 
     async register(map) {
         const self = this;
 
         await super.register.call(self, map);
-        self.exportsState = true;
 
-        self.MOBILEFAV = self.getLocaleString('mobileBookmarks.instructions');
-        self.NAVALERT = self.getLocaleString('bookmarks.instructions');
+        // URI: Añado el flag al mapa, de la misma manera que se hace con el control de download, para tenerlo en cuenta cuando se establece la función de carga de imágenes
+        self.map.crossOrigin = 'anonymous';
+
+        self.exportsState = true;        
 
         self.map.on(Consts.event.MAPCHANGE, function (_e) {
             const self = this;
@@ -94,7 +134,9 @@ class Share extends MapInfo {
             if (Util.isFunction(callback)) {
                 callback();
             }
-
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.dialogController = new Controller(self.dialogModel, new Observer(self.#dialogDiv));
+            self.updateModel();
         });
     }
 
@@ -105,7 +147,7 @@ class Share extends MapInfo {
             self.update();
         });
                 
-        self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`).addEventListener('click', function (e) {
+        self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`).addEventListener('change', function (e) {
             const btn = e.target;
             btn.disabled = true;
             if (!btn.checked)
@@ -220,9 +262,8 @@ class Share extends MapInfo {
         
         self.div.querySelector(`sitna-button.${self.CLASS}-btn-whatsapp`).addEventListener("click", function (_e) {
             self.shortenedLink().then(async function (url) {
-                var waText = Util.detectMobile() ? 'whatsapp://send?text=' : 'https://wa.me/?text=';                
                 if (Util.detectMobile()) {
-                    var waText = 'whatsapp://send?text=';
+                    const waText = 'whatsapp://send?text=';
                     if (url !== undefined) {
                         location.href = waText + encodeURIComponent(url);
                     } else {
@@ -230,7 +271,7 @@ class Share extends MapInfo {
                     }                    
                 }
                 else {
-                    var waText = 'https://wa.me/?text=';
+                    const waText = 'https://wa.me/?text=';
                     if (url !== undefined) {
                         window.open(waText + encodeURIComponent(url),"_blank");
                     } else {
@@ -338,9 +379,10 @@ class Share extends MapInfo {
                 const value = await self.shortenedLink();
                 if (value && value.trim().length > 0) {
 
-                    elm.textContent = self.getLocaleString('shortened');
+                    const previousTitle = elm.title;
+                    elm.title = self.getLocaleString('shortened');
                     setTimeout(function () {
-                        elm.textContent = self.getLocaleString('shorten');
+                        elm.title = previousTitle;
                         self.#unselectInputField();
                     }, 1000);
 
@@ -373,10 +415,8 @@ class Share extends MapInfo {
 
     async #shareImage(format) {
         const self = this;
-        var canvases = self.map.wrap.getCanvas();
-        var newCanvas = canvases.length > 1 ? Util.mergeCanvases(canvases) : canvases[0];
         const includeQR = self.div.querySelector(`.${self.CLASS}-chk-qr`).checked;
-        const blob = await self.generateImage(format,true, includeQR);
+        const blob = await self.generateImage(format, true, includeQR);
         const fileName = document.title + "." + format.substr(format.indexOf("/") + 1);
         const file = new File([blob], fileName, { type: format })
         const sharedData = {
@@ -515,15 +555,15 @@ class Share extends MapInfo {
 
     async confirmDialog(message) {
         const self = this;
-        return new Promise(async (resolve,reject) => {
-            if (!self.#dialogConfirmDiv) {
-                self.#dialogConfirmDiv = Util.getDiv();
-                document.body.appendChild(self.#dialogConfirmDiv);
-                self.#dialogConfirmDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-confirm-dialog', {message:message});                
-            }
-            else{
-                self.#dialogConfirmDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-confirm-dialog', {message:message});
-            }
+        if (!self.#dialogConfirmDiv) {
+            self.#dialogConfirmDiv = Util.getDiv();
+            document.body.appendChild(self.#dialogConfirmDiv);
+            self.#dialogConfirmDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-confirm-dialog', { message: message });
+        }
+        else {
+            self.#dialogConfirmDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-confirm-dialog', { message: message });
+        }
+        return new Promise((resolve, reject) => {
             const manageYesFnc=()=>{
                 Util.closeModal();
                 resolve();
@@ -539,7 +579,42 @@ class Share extends MapInfo {
             });
         });
     }
+    updateModel() {
+        this.model.share = this.getLocaleString("share");
+        this.model.shareLink = this.getLocaleString("shareLink");
+        this.model.embedMap = this.getLocaleString("embedMap");
+        this.model.image = this.getLocaleString("image");
+        this.model.shareMapAsImage = this.getLocaleString("shareMapAsImage");
+        this.model["shareLink.tip.1"] = this.getLocaleString("shareLink.tip.1");
+        this.model["shareLink.tip.2"] = this.getLocaleString("shareLink.tip.2");
+        this.model["shareLink.tip.3"] = this.getLocaleString("shareLink.tip.3");
+        this.model.shareURL = this.getLocaleString("shareURL");
+        this.model.sendMapByEmail = this.getLocaleString("sendMapByEmail");
+        this.model.createQrCode = this.getLocaleString("createQrCode");
+        this.model.shareMapToWhatsapp = this.getLocaleString("shareMapToWhatsapp");
+        this.model.shareMapToTwitter = this.getLocaleString("shareMapToTwitter");
+        this.model.shareMapToFacebook = this.getLocaleString("shareMapToFacebook");
+        this.model.addToBookmarks = this.getLocaleString("addToBookmarks");
+        this.model["embedMap.tip.1"] = this.getLocaleString("embedMap.tip.1");
+        this.model["embedMap.tip.2"] = this.getLocaleString("embedMap.tip.2");
+        this.model.createQrCodeToImage = this.getLocaleString("createQrCodeToImage");
+        this.model.appendQRCode = this.getLocaleString("appendQRCode");
+        this.model.sharePNG = this.getLocaleString("sharePNG");
+        this.model.shareJPG = this.getLocaleString("shareJPG");
+        this.model.tooManyLayersLoaded = this.getLocaleString("tooManyLayersLoaded");
+        this.model.shorten = this.getLocaleString("shorten");
 
+        this.dialogModel.qrCode = this.getLocaleString("qrCode");
+        this.dialogModel.qrAdvice = this.getLocaleString("qrAdvice");
+        this.dialogModel.close = this.getLocaleString("close");
+
+        this.MOBILEFAV = this.getLocaleString('mobileBookmarks.instructions');
+        this.NAVALERT = this.getLocaleString('bookmarks.instructions');
+    }
+    async changeLanguage() {
+        const self = this;
+        self.updateModel();
+    }
 }
 
 Share.prototype.CLASS = 'tc-ctl-share';
