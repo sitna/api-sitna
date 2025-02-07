@@ -1,19 +1,20 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import wrap from '../ol/ol';
-import './Draw';
-import './Modify';
-import './Measurement';
-import './AttributesEdit';
-import Geometry from '../Geometry';
-import Point from '../../SITNA/feature/Point';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-import WebComponentControl from './WebComponentControl';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import wrap from '../ol/ol.js';
+import './Draw.js';
+import './Modify.js';
+import './Measurement.js';
+import './AttributesEdit.js';
+import Geometry from '../Geometry.js';
+import Point from '../../SITNA/feature/Point.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import WebComponentControl from './WebComponentControl.js';
+import GMLBase from '../../lib/ol/format/GMLBase.js';
 
 TC.wrap = wrap;
 
@@ -197,7 +198,7 @@ class Edit extends WebComponentControl {
             }
 
             if (mode) {
-                const tab = self.querySelector(`${self.#selectors.MODE_TAB}[for="${self.id}-mode-${mode}"]`);
+                const tab = self.querySelector(`${self.#selectors.MODE_TAB}[for="${self.getId()}-mode-${mode}"]`);
                 tab.selected = true;
             }
             else {
@@ -354,25 +355,23 @@ class Edit extends WebComponentControl {
                 attributeEditorControlPromise?.then(ctl => ctl.feature = null);
             });
         return self;
-    }
+    }    
 
     getModeTab(mode) {
         const self = this;
-        return self.querySelector(`sitna-tab[for="${self.id}-mode-${mode}"]`);
+        return self.querySelector(`sitna-tab[for="${self.getId()}-mode-${mode}"]`);
     }
 
     async loadTemplates() {
         const self = this;
 
         const mainTemplatePromise = import('../templates/tc-ctl-edit.mjs');
-        const attributesTemplatePromise = import('../templates/tc-ctl-edit-attr.mjs');
         const importTemplatePromise = import('../templates/tc-ctl-edit-import.mjs');
         const importLayerTemplatePromise = import('../templates/tc-ctl-edit-import-layer.mjs');
         const importFeatureTemplatePromise = import('../templates/tc-ctl-edit-import-feature.mjs');
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
         template[self.CLASS + '-import'] = (await importTemplatePromise).default;
         template[self.CLASS + '-import-layer'] = (await importLayerTemplatePromise).default;
         template[self.CLASS + '-import-feature'] = (await importFeatureTemplatePromise).default;
@@ -382,7 +381,7 @@ class Edit extends WebComponentControl {
     async render(callback) {
         const self = this;
         await super.renderData.call(self, {
-            controlId: self.id,
+            controlId: self.getId(),
             stylable: self.stylable,
             snapping: self.snapping,
             otherToolsIncluded: self.otherToolsIncluded
@@ -504,7 +503,7 @@ class Edit extends WebComponentControl {
                     self.#measurementControl.displayMeasurement(e.feature);
                 }
                 await addElevation(e.feature);
-                self.trigger(Consts.event.FEATUREMODIFY, { feature: e.feature, layer: e.layer });
+                self.trigger(Consts.event.FEATUREMODIFY, { feature: e.feature, layer: e.layer, geometryChanged: true });
             })
             .on(Consts.event.FEATUREADD, function (e) {
                 self.trigger(Consts.event.FEATUREADD, { feature: e.feature, layer: e.layer });
@@ -521,189 +520,6 @@ class Edit extends WebComponentControl {
                     self.#measurementControl.clearMeasurement();
                 }
             });
-
-        self.modifyControl.displayAttributes = function () {
-            const selectedFeatures = self.getSelectedFeatures();
-            const feature = selectedFeatures[selectedFeatures.length - 1];
-            if (feature) {
-                const data = feature.getData() || {};
-                self
-                    .modifyControl
-                    .querySelector('.' + self.modifyControl.CLASS + '-btn-attr')
-                    .classList.add(Consts.classes.ACTIVE);
-                let attributes = self.getLayerEditData(feature.layer).attributes;
-                if (!Object.keys(attributes).length) {
-                    // No hay información de capa concerniente a atributos. 
-                    // Tomamos los de la entidad seleccionada
-                    const feature = self.getSelectedFeatures()[0];
-                    if (feature && Object.keys(data).length) {
-                        attributes = {};
-                        for (var key in data) {
-                            attributes[key] = { name: key, value: data[key] };
-                        }
-                    }
-                }
-                const attrArray = Object.keys(attributes).map(k => attributes[k]);
-                const jfa = self._joinedFeatureAttributes || [];
-
-                attrArray.forEach(function (attributeObj) {
-                    attributeObj.value = data[attributeObj.name];
-                    if (attributeObj.name === 'id') {
-                        attributeObj.readOnly = true;
-                    }
-                    attributeObj.availableValues = [];
-                    jfa.forEach(function (jfaObj) {
-                        const val = jfaObj[attributeObj.name];
-                        if (val !== undefined && val !== '') {
-                            attributeObj.availableValues.push(val);
-                        }
-                    });
-                });
-
-                attrArray.forEach(function (attributeObj) {
-                    if (attributeObj.type === 'date') {
-                        if (attributeObj.value) {
-                            attributeObj.value = new Date(attributeObj.value).toISOString().substr(0, 10);
-                        }
-                    }
-                    else if (attributeObj.type === 'dateTime') {
-                        if (attributeObj.value) {
-                            attributeObj.value = new Date(attributeObj.value).toISOString().substr(0, 19);
-                        }
-                    }
-                });
-
-                attrArray.sort(function (a, b) {
-                    if (a.readOnly ? !b.readOnly : b.readOnly) { //XOR
-                        return !a.readOnly - !b.readOnly; // Primero readOnly
-                    }
-                    if (a.name > b.name) {
-                        return 1;
-                    }
-                    if (a.name < b.name) {
-                        return -1;
-                    }
-                    return 0;
-                });
-                self.getRenderedHtml(self.CLASS + '-attr', { data: attrArray }, function (html) {
-                    const contentDiv = self.getAttributeDisplayTarget();
-                    contentDiv.classList.remove(Consts.classes.HIDDEN);
-                    contentDiv.innerHTML = html;
-                    const inputs = contentDiv.querySelectorAll('input');
-                    const selects = contentDiv.querySelectorAll('select');
-                    inputs.forEach(function (elm) {
-                        elm.addEventListener('input', function (e) {
-                            const input = e.target;
-                            for (var i = 0, len = selects.length; i < len; i++) {
-                                const select = selects[i];
-                                if (select.matches(`[name=${e.target.getAttribute('name')}]`) && select.value !== input.value) {
-                                    select.value = '';
-                                    break;
-                                }
-                            }
-                        });
-                    });
-                    selects.forEach(function (elm) {
-                        elm.addEventListener('change', function (e) {
-                            const select = e.target;
-                            for (var i = 0, len = inputs.length; i < len; i++) {
-                                const input = inputs[i];
-                                if (input.matches(`[name=${e.target.getAttribute('name')}]`)) {
-                                    input.value = select.value;
-                                    break;
-                                }
-                            }
-                        });
-                    });
-
-                    contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-ok`).addEventListener(Consts.event.CLICK, function (_e) {
-                        self.modifyControl._onAttrOK();
-                    }, { passive: true });
-
-                    contentDiv.querySelector(`.${self.modifyControl.CLASS}-btn-attr-cancel`).addEventListener(Consts.event.CLICK, function (_e) {
-                        self.modifyControl.closeAttributes();
-                    }, { passive: true });
-                });
-            }
-        };
-
-        self.modifyControl._onAttrOK = function () {
-            const that = this;
-            const feature = that.getSelectedFeatures()[0];
-            if (feature) {
-                const data = {};
-                const attributes = self.getLayerEditData(feature.layer).attributes;
-                const layerHasInfo = Object.keys(attributes).length > 0;
-                const inputs = that.getAttributeDisplayTarget().querySelectorAll('input');
-                inputs.forEach(function (input) {
-                    var name = input.getAttribute('name');
-                    var value = input.value;
-                    if (layerHasInfo) {
-                        switch (attributes[name].type) {
-                            case 'int':
-                            case 'integer':
-                            case 'byte':
-                            case 'long':
-                            case 'negativeInteger':
-                            case 'nonNegativeInteger':
-                            case 'nonPositiveInteger':
-                            case 'positiveInteger':
-                            case 'short':
-                            case 'unsignedLong':
-                            case 'unsignedInt':
-                            case 'unsignedShort':
-                            case 'unsignedByte':
-                                value = parseInt(value);
-                                if (!Number.isNaN(value)) {
-                                    data[name] = value;
-                                }
-                                break;
-                            case 'double':
-                            case 'float':
-                            case 'decimal':
-                                value = parseFloat(value);
-                                if (!Number.isNaN(value)) {
-                                    data[name] = value;
-                                }
-                                break;
-                            case 'date':
-                                // Obtiene el valor yyyy-mm-dd
-                                if (value) {
-                                    data[name] = new Date(value).toISOString().substr(0, 10);
-                                }
-                                else {
-                                    data[name] = value;
-                                }
-                                break;
-                            case 'dateTime':
-                                // Obtiene el valor yyyy-mm-ddThh:mm:ss
-                                if (value) {
-                                    data[name] = new Date(value).toISOString().substr(0, 19);
-                                }
-                                else {
-                                    data[name] = value;
-                                }
-                                break;
-                            case 'boolean':
-                                data[name] = !!value;
-                                break;
-                            case undefined:
-                                break;
-                            default:
-                                data[name] = value;
-                                break;
-                        }
-                    }
-                    else {
-                        data[name] = value;
-                    }
-                });
-                feature.setData(data);
-                that.trigger(Consts.event.FEATUREMODIFY, { feature: feature, layer: that.layer });
-                that.closeAttributes();
-            }
-        };
-
 
         //control de renderizado enfunción del modo de edicion
         if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
@@ -767,7 +583,7 @@ class Edit extends WebComponentControl {
                     let key;
                     for (key in attributes) {
                         const attr = attributes[key];
-                        const geometryType = Util.getGeometryType(attr.type);
+                        const geometryType = GMLBase.getGeometryType(attr.type);
                         if (geometryType) {
                             layerEditData.geometryName = attr.name;
                             layerEditData.geometryType = geometryType === Consts.geom.GEOMETRY ? null : geometryType;
@@ -840,7 +656,7 @@ class Edit extends WebComponentControl {
         if (!self.#modes.has(self.mode)) {
             self.mode = null;
         }
-        const selector = self.getModes().map(m => `[for="${self.id}-mode-${m}"]`).join() || '[for]';
+        const selector = self.getModes().map(m => `[for="${self.getId()}-mode-${m}"]`).join() || '[for]';
         self.querySelectorAll(self.#selectors.MODE_TAB).forEach(function (tab) {
             tab.disabled = !tab.matches(selector);
         });
@@ -1231,7 +1047,7 @@ class Edit extends WebComponentControl {
 
     #getFeatureFromImportList(elm) {
         const self = this;
-        const cb = elm.querySelector('input');
+        const cb = elm.querySelector('sitna-toggle');
         const layer = self.map.getLayer(elm.parentElement.parentElement.dataset.layerId);
         if (layer) {
             return layer.getFeatureById(cb.value);
@@ -1261,9 +1077,9 @@ class Edit extends WebComponentControl {
     #addImportLayerEvents(li) {
         const self = this;
 
-        li.querySelector('input').addEventListener('change', function (_e) {
+        li.querySelector('sitna-toggle').addEventListener('change', function (_e) {
             const cb = this;
-            cb.parentElement.querySelectorAll('li.tc-feature input').forEach(function (ccb) {
+            cb.parentElement.querySelectorAll('li.tc-feature sitna-toggle').forEach(function (ccb) {
                 if (ccb.checked !== cb.checked) {
                     ccb.checked = cb.checked;
                     self.#handleCheck(ccb);
@@ -1287,7 +1103,7 @@ class Edit extends WebComponentControl {
         };
         li.addEventListener(Consts.event.CLICK, highlightListener, { passive: true });
         li.addEventListener('mouseover', highlightListener);
-        li.querySelector('input').addEventListener('change', function (_e) {
+        li.querySelector('sitna-toggle').addEventListener('change', function (_e) {
             self.#handleCheck(this);
         });
     }
