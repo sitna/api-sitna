@@ -34,6 +34,7 @@ import { inflateCoordinates } from 'ol/geom/flat/inflate';
 import { linearRingLength } from 'ol/geom/flat/length';
 import { xhr } from 'ol/featureloader';
 import GMLBase from '../../lib/ol/format/GMLBase';
+import XMLFeature from 'ol/format/XMLFeature';
 import GML from 'ol/format/GML';
 import { WFS, WKT, WKB, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
 import GeoJSON from '../../lib/ol/format/GeoJSON';
@@ -136,6 +137,7 @@ import Circle from '../../SITNA/feature/Circle';
 import Layer_s from '../../SITNA/layer/Layer';
 import Raster from '../../SITNA/layer/Raster';
 import Geometry from '../Geometry';
+import FeatureTypeParser from '../tool/FeatureTypeParser.js';
 
 TC.wrap = wrap;
 const featureNamespace = {};
@@ -425,6 +427,9 @@ const olGeometryType = {
 const hitTolerance = Util.detectMouse() ? 3 : 10;
 
 const DATA_IMAGE_SVG_PREFIX = "data:image/svg+xml;base64,";
+const ATTRIBUTE_NAME_MARK = '@';
+const TEXT_NODE_NAME = '#text';
+
 
 /////////////////////////// ol patches
 
@@ -697,6 +702,182 @@ ol.interaction.Snap.prototype.snapTo = function (pixel, pixelCoordinate, map) {
 };
 
 FeatureFormat.prototype.featureMetadata = new WeakMap();
+
+XMLFeature.prototype.getType = function (wfsType) {
+    if (wfsType === undefined) {
+        return Consts.dataType.STRING;
+    }
+    switch (wfsType.substring(wfsType.indexOf(':') + 1)) {
+        case 'ID':
+            return 'ID';
+        case 'string':
+        case 'anyURI':
+            return Consts.dataType.STRING;
+        case 'number':
+        case 'double':
+        case 'float':
+        case 'decimal':
+            return Consts.dataType.FLOAT;
+        case 'int':
+        case 'integer':
+        case 'byte':
+        case 'long':
+        case 'negativeInteger':
+        case 'nonNegativeInteger':
+        case 'nonPositiveInteger':
+        case 'positiveInteger':
+        case 'short':
+        case 'unsignedLong':
+        case 'unsignedInt':
+        case 'unsignedShort':
+        case 'unsignedByte':
+            return Consts.dataType.INTEGER;
+        case 'boolean':
+            return Consts.dataType.BOOLEAN;
+        case 'date':
+            return Consts.dataType.DATE;
+        case 'time':
+            return Consts.dataType.TIME;
+        case 'dateTime':
+            return Consts.dataType.DATETIME;
+        default:
+            return 'object';
+    }
+};
+const getNameComponents = function (name) {
+    let [prefix, localName] = name.split(':');
+    if (!localName) {
+        [prefix, localName] = [localName, prefix]
+    }
+    return [prefix, localName];
+};
+
+XMLFeature.prototype.getFeatureTypeMetadata = function (metadata, features) {
+    const newMetadata = { ...metadata };
+    const firstFeature = features[0];
+    const geometryName = firstFeature?.getGeometryName();
+    newMetadata.attributes = [];
+
+    const getAttributeType = (metadata, attributeTypeObject, ...names) => {
+        const name = names[names.length - 1];
+        const result = {
+            name
+        };
+        if (attributeTypeObject['@minOccurs'] === 0 || names[names.length - 1].startsWith(ATTRIBUTE_NAME_MARK)) {
+            result.optional = true;
+        }
+        if (attributeTypeObject['@maxOccurs'] > 1 || attributeTypeObject['@maxOccurs'] === 'unbounded') {
+            result.multiple = true;
+        }
+        if (!attributeTypeObject['@nillable']) {
+            result.nonNullable = true;
+        }
+        if (typeof attributeTypeObject.type === 'object') {
+            const typeObj = attributeTypeObject.type;
+            result.value = [];
+            result.type = 'object';
+            const typeObjEntries = FeatureTypeParser.getSchemaEntries(typeObj);
+            for (const [n, v] of typeObjEntries) {
+                const t = getAttributeType(metadata, v, ...names, n);
+                if (t) {
+                    result.value.push(t);
+                }
+            }
+            return result;
+        }
+        result.type = this.getType(attributeTypeObject.type);
+        if (result.type === 'ID') {
+            result.isId = true;
+            result.type = Consts.dataType.STRING;
+        }
+        else if (result.type === 'object') {
+            const geometryType = this.getGeometryType(attributeTypeObject.type);
+            if (geometryType) {
+                metadata.geometries ??= [];
+                metadata.geometries.push({
+                    name: names,
+                    type: geometryType,
+                    originalType: attributeTypeObject.type
+                });
+                return null;
+            }
+        }
+        return result;
+    };
+    const featureTypeName = Object.keys(metadata.originalMetadata.featureTypes)[0];
+    if (featureTypeName) {
+        if (!featureTypeName.endsWith(':feature')) { // No es feature genérica sin esquema
+            const schema = metadata.originalMetadata.featureTypes[featureTypeName];
+            const schemaEntries = FeatureTypeParser.getSchemaEntries(schema);
+            for (const [name, attribute] of schemaEntries) {
+                const newAttr = getAttributeType(newMetadata, attribute, name);
+                if (name === geometryName || typeof newAttr === 'string' || newAttr === null) {
+                    // El tipo de atributo es una geometría
+                    newMetadata.geometries ??= [];
+                    newMetadata.geometries.push({
+                        name,
+                        type: this.constructor.getGeometryType(attribute.type),
+                        originalType: attribute.type
+                    });
+                }
+                else {
+                    newMetadata.attributes.push(newAttr);
+                }
+            }
+        }
+    }
+
+    // Transformamos los metadatos:
+    // Una propiedad @attr del elemento con nombre elm pasa a ser un elemento con nombre elm@attr
+    const addAttributeProperties = (propertyList) => {
+        for (let i = propertyList.length - 1; i >= 0; i--) {
+            const prop = propertyList[i];
+            if (Array.isArray(prop.value)) {
+                const xmlAttributes = prop.value.filter((val) => val.name.startsWith(ATTRIBUTE_NAME_MARK));
+                const xmlElements = prop.value.filter((val) => !val.name.startsWith(ATTRIBUTE_NAME_MARK) && val.name !== TEXT_NODE_NAME);
+                if (xmlAttributes.length && !xmlElements.length && !prop.multiple) {
+                    propertyList.splice(i + 1, 0, ...xmlAttributes.map((attr) => ({
+                        name: prop.name + attr.name,
+                        type: attr.type,
+                        optional: attr.optional,
+                    })));
+                    const textNode = prop.value.find((val) => val.name === TEXT_NODE_NAME);
+                    if (textNode) {
+                        // Si el elemento tiene un nodo de texto asignamos su tipo al elemento
+                        prop.type = textNode.type;
+                        delete prop.value;
+                    }
+                    else {
+                        // Si el elemento no tiene un nodo de texto lo eliminamos y dejamos solamente los 
+                        // nodos de sus atributos
+                        propertyList.splice(i, 1);
+                    }
+                }
+                else {
+                    addAttributeProperties(prop.value);
+                }
+            }
+        }
+    }
+    addAttributeProperties(newMetadata.attributes);
+
+    newMetadata.equals = (n1, n2) => {
+        const splitPrefix = (name) => {
+            let [prefix, localName] = getNameComponents(name);
+            return [prefix ?? 'gml', localName];
+        };
+        const getParts = (n) => n.split(ATTRIBUTE_NAME_MARK).map((part) => splitPrefix(part)).flat();
+        const arr1 = getParts(n1);
+        const arr2 = getParts(n2);
+        return arr1.every((elm, idx) => elm === arr2[idx]) && arr2.every((elm, idx) => elm === arr1[idx]);
+    };
+
+    return newMetadata;
+};
+
+XMLFeature.prototype.getGeometryType = function (_typeName) {
+    return false;
+};
 
 //////////////////////// end ol patches
 
@@ -1241,7 +1422,7 @@ TC.wrap.Map.prototype.insertLayer = function (olLayer, indexOrObject) {
         layers.push(olLayer);
     }
     else {
-        layers.insertAt(idx, olLayer);
+        layers.insertAt(layers.getLength() < idx ? layers.getLength() : idx, olLayer);
     }
     if (!alreadyExists) {
         // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
@@ -1981,12 +2162,15 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
                         !featuresImportEventData.fileSystemFile ||
                         l._fileHandle.name === featuresImportEventData.fileSystemFile.name
                     ) &&
-                    l.options.groupIndex === e._groupIndex);
+                    (
+                        l.options.groupIndex === e._groupIndex ||
+                        e._groupIndex === 0 && !l.options.groupIndex
+                    ));
                 if (fileLayers.length) {
                     featuresImportEventData.targetLayers = fileLayers;
                 }
                 else {
-                    return;
+                    self.parent.getLoadingIndicator()?.removeWait(self.parent._featureImportWaitId);
                 }
             }
 
@@ -2031,15 +2215,18 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
                     eventFile = new File([], zipFiles.zipName);
                 }
             }
+            self.parent.getLoadingIndicator()?.removeWait(self.parent._featureImportWaitId);
             self.parent.trigger(Consts.event.FEATURESIMPORTERROR, {
                 file: eventFile
             });
-            self.parent.getLoadingIndicator()?.removeWait(self.parent._featureImportWaitId);
         }
     });
 
     ddInteraction.on('error', function (e) {
-        TC.error(Util.getLocaleString(self.parent.options.locale, 'fileImport.error.reasonUnknown', { fileName: e.file.name }));
+        self.parent.getLoadingIndicator()?.removeWait(self.parent._featureImportWaitId);
+        self.parent.trigger(Consts.event.FEATURESIMPORTERROR, {
+            file: e.file
+        });
     });
     if (options.once) {
         ddInteraction.map_ = self.map;
@@ -3822,7 +4009,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
             self.parent.proxificationTool.fetch(url, { method: "GET", nomanage: true }).then(async function (response) {
                 if (response.ok) {
                     const text = await response.text()
-                    var features = format.readFeatures(text, { featureProjection: projection });
+                    var features = await format.readFeatures(text, { featureProjection: projection });
                     const xDocFilename = new DOMParser().parseFromString(text, "text/xml").querySelector("Document > name");
 
                     self.addFeatures(features);
@@ -4011,7 +4198,9 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                                 outputFormat: options.outputFormat,
                                 srsname: crs
                             };
-                            ajaxOptions.data["typename" + (version === "2.0.0" ? "s" : "")] = (options.featurePrefix ? options.featurePrefix + ":" : "") + options.featureType;
+                            let prefix = options.featurePrefix ?? options.featureNS ?? "";
+                            if (prefix.length) prefix = prefix + ":";
+                            ajaxOptions.data["typename" + (version === "2.0.0" ? "s" : "")] = prefix + options.featureType;
                             if (onlyHits)
                                 ajaxOptions.data = Object.assign(ajaxOptions.data, {
                                     resultType: "hits"
@@ -4902,11 +5091,13 @@ TC.wrap.control.NavBar.prototype.register = function (map) {
             button.innerHTML = '';
             if (button.matches('.ol-zoom-in')) {
                 button.classList.add(self.parent.CLASS + '-btn-zoomin');
-                button.setAttribute('title', self.parent.getLocaleString('zoomIn'));
+                //button.setAttribute('title', self.parent.getLocaleString('zoomIn'));
+                button.setAttribute('title', "[[zoomIn]]");                
             }
             if (button.matches('.ol-zoom-out')) {
                 button.classList.add(self.parent.CLASS + '-btn-zoomout');
-                button.setAttribute('title', self.parent.getLocaleString('zoomOut'));
+                //button.setAttribute('title', self.parent.getLocaleString('zoomOut'));
+                button.setAttribute('title', "[[zoomOut]]");
             }
         });
 
@@ -4970,7 +5161,8 @@ TC.wrap.control.NavBarHome.prototype.register = function (map) {
         });
         const homeBtn = div.querySelector('.ol-zoom-extent button');
         homeBtn.classList.add('tc-ctl-btn', 'tc-float-btn', self.parent.CLASS + '-btn');
-        homeBtn.setAttribute('title', self.parent.getLocaleString('zoomToInitialExtent'));
+        homeBtn.setAttribute('title', "[[zoomToInitialExtent]]");
+        //homeBtn.setAttribute('title', self.parent.getLocaleString('zoomToInitialExtent'));        
     });
 };
 
@@ -5524,8 +5716,7 @@ TC.wrap.control.Geolocation.prototype.initSnap = function (coordinate, eventPixe
 
                 if (data) {
                     // Z del MDT si hay datos del MDT
-                    if (self.parent.elevationChartData && self.parent.elevationChartData.secondaryElevationProfileChartData[0] &&
-                        self.parent.elevationChartData.secondaryElevationProfileChartData[0].coords) {
+                    if (self.parent.elevationChartData?.secondaryElevationProfileChartData?.[0]?.coords) {
                         let mdtClosestPoint = TC.wrap.Geometry.getNearest(coordinate, self.parent.elevationChartData.secondaryElevationProfileChartData[0].coords);
                         const mdtZ = mdtClosestPoint[2]
                         data.mdtz = (Math.round(mdtZ * 100) / 100).toLocaleString(locale);
@@ -6347,6 +6538,10 @@ TC.wrap.control.OverviewMap.prototype.register = async function (map) {
 
     await map.loaded(); // Para dar tiempo a que se instancie la capa de fondo
     const olLayer = await self.parent.layer.wrap.getLayer();
+    const olMap = await map.wrap.getMap();
+    if (self.ovMap) {
+        olMap.removeControl(self.ovMap);
+    }
     self.ovMap = new ol.control.OverviewMap({
         target: self.parent.div,
         collapsed: false,
@@ -6463,8 +6658,7 @@ TC.wrap.control.OverviewMap.prototype.register = async function (map) {
         delete drag._delta;
         map.setCenter(newCenter, { animate: true });
     });
-
-    const olMap = await map.wrap.getMap();
+       
 
     // Modificamos mapa para que tenga la proyección correcta
     self.reset();
@@ -7449,6 +7643,8 @@ TC.wrap.control.GeometryFeatureInfo.prototype.getFeaturesByGeometry = function (
                 for (var i = 0; i < responses.length; i++) {
                     const responseObj = responses[i];
                     if (!responseObj) continue;
+                    if (responseObj.service)
+                        responseObj.service.title = responseObj.service.mapLayers[0].title;
                     arrPromises.push(new Promise(function (res, _rej) {
                         if (responseObj.errors && responseObj.errors.length) {
                             for (var j = 0; j < responseObj.errors.length; j++) {
@@ -8654,9 +8850,18 @@ TC.wrap.control.Draw.prototype.mouseOverHandler = function (_evt) {
     }
 };
 
+const removeZeros = function (geometry) {
+    const layoutLength = geometry.getLayout().length;
+    for (let i = 0; i < geometry.flatCoordinates.length; i++) {
+        // OpenLayers añade valores 0 en todas las coordenadas de los puntos que no son X ni Y.
+        // Esto introduce datos falsos en el perfil de elevación, así que los quitamos.
+        if (i % layoutLength > 1) geometry.flatCoordinates[i] = null;
+    }
+};
+
 TC.wrap.control.Draw.prototype.clickHandler = function (evt) {
     const self = this;
-    if (self.parent.map.view === Consts.view.PRINTING) {
+    if (self.parent?.map?.view === Consts.view.PRINTING) {
         return;
     }
     if (self._mdPx) { // No operamos si el clic es consecuencia es en realidad un drag
@@ -8667,6 +8872,7 @@ TC.wrap.control.Draw.prototype.clickHandler = function (evt) {
         }
     }
     if (self.sketch) {
+        removeZeros(self.sketch.getGeometry());
         var coords = self.sketch.getGeometry().getCoordinates();
         self.parent.trigger(Consts.event.POINT, {
             point: coords[coords.length - 1]
@@ -8746,6 +8952,14 @@ TC.wrap.control.Draw.prototype.getSketch = function () {
     const self = this;
     if (self.sketch) {
         return TC.wrap.Feature.createFeature(self.sketch);
+    }
+    return null;
+}
+
+TC.wrap.control.Draw.prototype.getExtendedFeature = function () {
+    const self = this;
+    if (self._extendedFeature) {
+        return TC.wrap.Feature.createFeature(self._extendedFeature);
     }
     return null;
 }
@@ -8882,7 +9096,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                                         });
                                 }
 
-                                if (self.parent.map.view === Consts.view.PRINTING) {
+                                if (self.parent?.map?.view === Consts.view.PRINTING) {
                                     return null;
                                 }
 
@@ -8926,7 +9140,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                                 const lastSketchCoord = self.interaction.sketchCoords_[self.interaction.sketchCoords_.length - 1];
                                 lastSketchCoord.forEach((_val, idx, coord) => {
                                     if (idx > 1) {
-                                        coord[idx] = 0;
+                                        coord[idx] = null;
                                     }
                                 });
                             }
@@ -8976,10 +9190,14 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                                 let lineToAdd = self.sketch.getGeometry();
                                 const extendedFeatureGeometry = self._extendedFeature.getGeometry();
                                 lineToAdd = new lineToAdd.constructor(lineToAdd.getCoordinates(), extendedFeatureGeometry.getLayout());
+                                if (lineToAdd instanceof ol.geom.MultiLineString) {
+                                    lineToAdd = new ol.geom.LineString(lineToAdd.getLineString(0).getCoordinates());
+                                }
+                                removeZeros(lineToAdd);
                                 extendedFeatureGeometry.appendLineString(lineToAdd);
                                 const feat = self._extendedFeature._wrap.parent;
                                 feat.setStyle(self.parent.getStyle());
-                                feat.geometry = extendedFeatureGeometry;
+                                feat.geometry = extendedFeatureGeometry.getCoordinates();
                                 if (olLayer) {
                                     // Necesario timeout porque el evento drawend 
                                     // se lanza antes de añadir la entidad a la capa
@@ -9522,7 +9740,7 @@ const addHaloToStyle = function (style) {
         const image = mainStyle.getImage();
         var strokeWidth;
         if (image instanceof ol.style.RegularShape) {
-            strokeWidth = image.getStroke().getWidth();
+            strokeWidth = image.getStroke()?.getWidth() || 0;
             const radius = image.getRadius();
             const haloPart1 = mainStyle.clone();
             haloPart1.setImage(new ol.style.Circle({
@@ -9686,7 +9904,11 @@ TC.wrap.control.Modify.prototype.activate = function () {
                         }
                     }
                     feature._wrap.parent.geometry = feature._wrap.getGeometry();
-                    self.parent.trigger(Consts.event.FEATUREMODIFY, { feature: feature._wrap.parent, layer: self.parent.layer });
+                    self.parent.trigger(Consts.event.FEATUREMODIFY, {
+                        feature: feature._wrap.parent,
+                        layer: self.parent.layer,
+                        geometryChanged: true
+                    });
                 });
             });
             self.modifyInteraction = modify;
