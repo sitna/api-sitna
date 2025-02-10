@@ -1406,12 +1406,17 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-ctl-fscreen button:after {
+    font-size: 1em;
+    width: 2em;
+    height: 2em;
+    line-height: 2em;
     font-family: FontAwesome;
     content: '\f0b2';
 }
 
 .tc-ctl-fscreen button.tc-active:after {
     content: '\f066';
+    scale: none;
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode label span {
