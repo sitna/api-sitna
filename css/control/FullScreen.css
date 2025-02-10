@@ -1,18 +1,31 @@
 ﻿
 .tc-ctl.tc-ctl-fscreen {
-    top: calc(1.5em + 2em + 10em + 2em + 0.5em + 2em + 0.5em + 2em + 0.5em); /* margen antes del +, el +, el alto de la barra, el - y el margen inferior, la casita, el margen inferior, btn streetView, el margen inferior */
-    position: absolute;
+    top: calc(1.5em - 100%);
+    position: relative;
     left: 0.7em;
     padding: 0;
+    margin-bottom: 0.5em;
 }
 
 .tc-ctl-fscreen {
     width: 2em;
     height: 2em;
 }
-        .tc-ctl-fscreen button:after {
-            content: 'Pantalla completa';
-        }        
+    .tc-ctl-fscreen button:after {
+        content: '\26f6';
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 2em;
+        width: 1em;
+        height: 1em;
+        line-height: 1em;
+    }
+
+    .tc-ctl-fscreen button.tc-active:after {
+        content: '\21b8';
+        scale: 1 -1;
+    }        
 
 /* GLS: en Safari IOS no pasa a ocupar toda la pantalla, así que aplicamos por CSS */
 html:fullscreen .tc-map {
