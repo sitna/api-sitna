@@ -10,6 +10,7 @@
     <div class="instructions">
         <p>Ejemplo de uso de <a href="../doc/SITNA.control.html#.StreetViewOptions">StreetViewOptions</a>.</p>
         <p>Visor con el control de Google StreetView añadido.</p>
+        <p>Para activarlo, arrastrar la figura hacia el punto del mapa deseado.</p>
     </div>
     <script src="../"></script>
     <script type="text/javascript" src="examples.js"></script>
@@ -22,6 +23,7 @@
         // Se utilizará la clave de Google Maps para el SITNA.
         // (Solamente es válida en el sitio web del SITNA, está aquí a título de ejemplo).
         var map = new SITNA.Map("mapa", {
+            layout: '../layout/minimal', // Usamos una maquetación sin controles por defecto
             controls: {
                 streetView: {
                     viewDiv: "sv",
