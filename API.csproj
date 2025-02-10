@@ -150,6 +150,7 @@
     <Content Include="SITNA\ui\Toggle.js" />
     <Content Include="SITNA\ui\Button.js" />
     <Content Include="SITNA\ui\Component.js" />
+    <Content Include="TC\Controller.js" />
     <Content Include="TC\control\FeatureStyler.js" />
     <Content Include="TC\control\FileEdit.js" />
     <Content Include="TC\control\InfoDisplay.js" />
@@ -180,10 +181,13 @@
     <Content Include="TC\control\WebComponentControl.js" />
     <Content Include="SITNA\layer\Raster.js" />
     <Content Include="SITNA\layer\Vector.js" />
+    <Content Include="TC\Observer.js" />
     <Content Include="TC\templates\compiler.js" />
     <Content Include="TC\tool\FeatureTypeParser.js" />
     <Content Include="batch\xsd-prefetch-module-creator.js" />
     <Content Include="TC\tool\OgcApiProcessesElevationService.js" />
+    <Content Include="TC\tool\WellKnowNameFactory.js" />
+    <Content Include="TC\tool\WellKnowNameTemplates.js" />
     <Content Include="TC\view\ThreeDDraw.js" />
     <Content Include="test\unit\browser\control\FileEdit.js" />
     <Content Include="test\unit\browser\control\LanguageSelector.js" />
@@ -483,7 +487,6 @@
     <Content Include="css\fonts\mapskin.svg" />
     <Content Include="css\fonts\OFL.txt" />
     <Content Include="css\img\area.png" />
-    <Content Include="css\img\geo-track.png" />
     <Content Include="css\img\lastleaf.png" />
     <Content Include="css\img\lastnode-collapsed.png" />
     <Content Include="css\img\lastnode.png" />
@@ -756,7 +759,6 @@
     <Content Include="TC\templates\tc-ctl-load.hbs" />
     <Content Include="TC\templates\tc-ctl-meas.hbs" />
     <Content Include="TC\templates\tc-ctl-mod.hbs" />
-    <Content Include="TC\templates\tc-ctl-mod-attr.hbs" />
     <Content Include="TC\templates\tc-ctl-m-finfo.hbs" />
     <Content Include="TC\templates\tc-ctl-ovmap.hbs" />
     <Content Include="TC\templates\tc-ctl-print.hbs" />
@@ -818,7 +820,7 @@
     <Content Include="TC\templates\tc-ctl-attr-edit-row.hbs" />
     <Content Include="TC\templates\tc-ctl-attr-edit-new.hbs" />
     <Content Include="TC\templates\tc-ctl-attr-edit-table.hbs" />
-    <Content Include="TC\templates\tc-ctl-share-confirm-dialog.hbs" />
+    <Content Include="TC\templates\tc-ctl-share-confirm-dialog.hbs" />    
     <None Include="test\endToEnd\config\env\pro.json" />
     <None Include="test\endToEnd\config\env\vinet18.json" />
     <None Include="test\endToEnd\config\env\local.json" />
@@ -924,7 +926,7 @@
           </CustomServerUrl>
           <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
           <servers defaultServer="SelfHostServer">
-            <server name="SelfHostServer" exePath="" cmdArgs="" url="http://localhost:56187/" workingDir="" />
+          <server name="SelfHostServer" exePath="" cmdArgs="" url="http://localhost:56187/" workingDir="" />
           </servers>
         </WebProjectProperties>
       </FlavorProperties>
