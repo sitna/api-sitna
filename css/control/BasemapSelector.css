@@ -165,13 +165,14 @@
 .tc-ctl-bms .tc-ctl-bms-metadata ul,
 .tc-ctl-bms-more-dialog .tc-ctl-bms-metadata ul {
     list-style-type: none;
-    display: inline-block;
+    display: flex;
+    gap: 1em;
     padding: 0;
     margin: 0;
 }
 
-.tc-ctl-bms .tc-ctl-bms-metadata li,
-.tc-ctl-bms-more-dialog .tc-ctl-bms-metadata li {
+.tc-ctl-bms .tc-ctl-bms-metadata li:first-of-type,
+.tc-ctl-bms-more-dialog .tc-ctl-bms-metadata li:first-of-type {
     display: inline-block;
     margin-left: 0.5em;
 }
