@@ -8,10 +8,10 @@
         <p>{{info.abstract}}</p>
         {{#if info.metadata}}
         <div class="tc-ctl-bms-metadata">
-            <h4>{{i18n "metadata"}}</h4>
+            <h4>[[metadata]]</h4>
             <ul>
             {{#each info.metadata}}
-                <li><a href="{{{url}}}" class="tc-file-link" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+                <li><a href="{{{url}}}" class="tc-file-link" type="{{format}}" title="[[{{#if format}}{{format}}{{else}}fileDefault{{/if}}]]" target="_blank">[[{{#if format}}{{format}}{{else}}fileDefault{{/if}}]]</a></li>
             {{/each}}
         </ul>
         </div>
