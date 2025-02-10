@@ -1,11 +1,11 @@
 <h2>
-    {{i18n "availableLayers"}}
+    [[availableLayers]]
     {{#if enableSearch}}
         {{#if layerTrees}}
-    <button type="button" class="tc-icon-btn tc-ctl-lcat-btn-search" title="{{i18n "searchLayersByText"}}"></button>
+    <button type="button" class="tc-icon-btn tc-ctl-lcat-btn-search" title="[[searchLayersByText]]"></button>
         {{/if}}
         {{#if layers}}
-    <button type="button" class="tc-icon-btn tc-ctl-lcat-btn-search" title="{{i18n "searchLayersByText"}}"></button>
+    <button type="button" class="tc-icon-btn tc-ctl-lcat-btn-search" title="[[searchLayersByText]]"></button>
         {{/if}}
     {{/if}}
 </h2>
@@ -13,7 +13,7 @@
 
 <div class="tc-ctl-lcat-search tc-hidden tc-collapsed">
     <div class="tc-group">
-        <input type="search" class="tc-ctl-lcat-input tc-textbox" placeholder="{{i18n "textToSearchInLayers"}}">
+        <input type="search" class="tc-ctl-lcat-input tc-textbox" placeholder="[[textToSearchInLayers]]">
     </div>
     <ul></ul>
 
@@ -30,12 +30,12 @@
         {{#if layers}}
             <ul class="tc-ctl-lcat-branch">
                 {{#each layers}}
-                    <li data-layer-id="{{id}}" title="{{i18n "loadingLayers"}}" class="tc-ctl-lcat-loading-node"> {{title}}</li>
+                    <li data-layer-id="{{id}}" title="[[loadingLayers]]" class="tc-ctl-lcat-loading-node"> {{title}}</li>
                 {{/each}}
             </ul>
         {{else}}
             <div class="tc-ctl tc-ctl-lcat-loading">
-                <span>{{i18n "loadingLayerTree"}}...</span>
+                <span>[[loadingLayerTree]]...</span>
             </div>
         {{/if}}
     {{/if}}

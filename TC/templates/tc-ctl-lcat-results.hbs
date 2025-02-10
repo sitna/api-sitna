@@ -5,18 +5,18 @@
     {{/if}}
         {{#each founds}}
         <li data-layer-name="{{Name}}" {{#if alreadyAdded}} class="tc-checked"{{/if}}>
-            <h5 class="tc-selectable" {{#if alreadyAdded}} data-tooltip="{{i18n "layerAlreadyAdded"}}" {{else}} data-tooltip="{{i18n "clickToAddToMap"}}" {{/if}}>
+            <h5 class="tc-selectable" {{#if alreadyAdded}} data-tooltip="[[layerAlreadyAdded]]" {{else}} data-tooltip="[[clickToAddToMap]]" {{/if}}>
                 {{#if parent.parent}}
                     {{> tc-ctl-lcat-results-path layer=./parent}}
                 {{/if}}
                 {{Title}}
             </h5>
-        <input type="checkbox" class="tc-toggle tc-ctl-lcat-search-btn-info" title="{{i18n "infoFromThisLayer"}}"></input>
+        <input type="checkbox" class="tc-toggle tc-ctl-lcat-search-btn-info" title="[[infoFromThisLayer]]"></input>
         </li>
 	    {{/each}}
     {{#if (gt ../servicesLooked 1)}}
 </ul></li>
     {{/if}}
 {{else}}
-<li class="tc-ctl-lcat-no-results"><h5>{{i18n "noMatches"}}</h5></li>
+<li class="tc-ctl-lcat-no-results"><h5>[[noMatches]]</h5></li>
 {{/each}}

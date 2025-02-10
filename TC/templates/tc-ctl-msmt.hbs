@@ -17,15 +17,15 @@
 {{else}}
     {{#if polyline}}
     <div class="tc-ctl-msmt-txt">
-        <span class="tc-ctl-msmt-txt-elm">{{i18n "2dLength"}}: <span class="tc-ctl-msmt-val-len"></span></span>
+        <span class="tc-ctl-msmt-txt-elm">[[2dLength]]: <span class="tc-ctl-msmt-val-len">[[lengthValue]]</span></span>
     </div>
         {{#if enabledProfile}}
-    <sitna-toggle checked class="tc-ctl-msmt-prof-btn" text="{{i18n "deactivateElevationProfile"}}" checked-icon-text="&#xe920;" unchecked-icon-text="&#xe920;"></sitna-toggle>
+    <sitna-toggle checked class="tc-ctl-msmt-prof-btn" title="[[deactivateElevationProfile]]" checked-icon-text="&#xe920;" unchecked-icon-text="&#xe920;"></sitna-toggle>
         {{/if}}
     {{else}}
         {{#if polygon}}
     <div class="tc-ctl-msmt-txt">
-        <span class="tc-ctl-msmt-txt-elm">{{i18n "area"}}: <span class="tc-ctl-msmt-val-area"></span>,</span> <span class="tc-ctl-msmt-txt-elm">{{i18n "2dPerimeter"}}: <span class="tc-ctl-msmt-val-peri"></span></span>
+        <span class="tc-ctl-msmt-txt-elm">[[area]]: <span class="tc-ctl-msmt-val-area">[[areaValue]]</span>,</span> <span class="tc-ctl-msmt-txt-elm">[[2dPerimeter]]: <span class="tc-ctl-msmt-val-peri">[[perimeterValue]]</span></span>
     </div>
         {{/if}}
     {{/if}}

@@ -1,15 +1,15 @@
-<sitna-button variant="minimal" icon="close" text="{{i18n "close"}}" class="tc-ctl-lcat-info-close"></sitna-button>
-<h2>{{i18n "layerInfo"}}</h2>
+<sitna-button variant="minimal" icon="close" text="[[close]]" class="tc-ctl-lcat-info-close"></sitna-button>
+<h2>[[layerInfo]]</h2>
 <h3 class="tc-ctl-lcat-title">{{title}}</h3>
 {{#if abstract}}
 <div class="tc-ctl-lcat-abstract">
-    <h4>{{i18n "abstract"}}</h4>
+    <h4>[[abstract]]</h4>
     <div><pre>{{{abstract}}}</pre></div>
 </div>
 {{/if}}
 {{#if metadata}}
 <div class="tc-ctl-lcat-metadata">
-    <h4>{{i18n "metadata"}}</h4>
+    <h4>[[metadata]]</h4>
     <ul>
         {{#each metadata}}
         <li><a href="{{{url}}}" class="tc-file-link" type="{{format}}" title="{{formatDescription}}" target="_blank">{{{formatDescription}}}</a></li>
