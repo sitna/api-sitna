@@ -1,9 +1,10 @@
 ﻿
 .tc-ctl.tc-ctl-nav {
-    top: 1.5em;
-    position: absolute;
+    top: calc(1.5em - 100%);
+    position: relative;
     left: 0.7em;
     padding: 0;
+    margin-bottom: 0.5em;
 }
 
 .tc-ctl-nav .tc-ctl-nav-bar {
