@@ -524,7 +524,7 @@ console.log("MILLISECONDS",end2-start2);
     const externalPredicate = getPredicateForTagName('include', 'import');
 
     const processExternals = async function (schema, url) {
-        const external = schema.children.find(externalPredicate);
+        const external = schema.children?.find(externalPredicate);
         if (external) {
             let _url = new URL(external.attributes.schemaLocation, url || schema._url).href;
             _url = _url.replaceAll('&amp;', '&');
@@ -984,8 +984,8 @@ console.log("MILLISECONDS",end2-start2);
         const elementName = removePrefix(layerName);
         const layerElement = schema
             .children
-            .filter(getPredicateForTagName('element'))
-            .find((node) => node.attributes.name === elementName);
+            ?.filter(getPredicateForTagName('element'))
+            ?.find((node) => node.attributes.name === elementName);
 
         await processElement(schema, layerElement, 0);
     };
