@@ -147,7 +147,7 @@ class Share extends MapInfo {
             self.update();
         });
                 
-        self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`).addEventListener('change', function (e) {
+        self.div.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`).addEventListener('change', function (e) {
             const btn = e.target;
             btn.disabled = true;
             if (!btn.checked)
@@ -161,7 +161,7 @@ class Share extends MapInfo {
             elm.addEventListener('click', async function (_e) {
                 const btn = _e.target;
                 const input = btn.closest(".tc-ctl-share-url-box").querySelector("input.tc-textbox");
-                const chkShorten = self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`);
+                const chkShorten = self.div.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`);
                 if (chkShorten) chkShorten.checked = !!input.dataset.shortened;
                 if (navigator.clipboard?.writeText) {
                     _e.target.classList.add(Consts.classes.LOADING);
@@ -195,7 +195,7 @@ class Share extends MapInfo {
         });
 
         self.div.querySelector('input[type=text]').addEventListener('click', function (e) {
-            const chk = self.div.querySelector(`.${self.CLASS}-url-box input.${self.CLASS}-btn-shorten`);
+            const chk = self.div.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`);
             if (chk.checked && e.target.dataset.update) chk.checked = false;
             self.#selectInputField(e.target);
         });
@@ -611,7 +611,7 @@ class Share extends MapInfo {
         this.MOBILEFAV = this.getLocaleString('mobileBookmarks.instructions');
         this.NAVALERT = this.getLocaleString('bookmarks.instructions');
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }
