@@ -371,9 +371,6 @@ tXml.getElementsByClassName = function (S, classname, simplified) {
     });
 };
 
-if ('object' === typeof module) {
-    module.exports = tXml;
-}
 
 //console.clear();
 //console.log('here:',tXml.getElementById('<some><xml id="test">dada</xml><that id="test">value</that></some>','test'));
