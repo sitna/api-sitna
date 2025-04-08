@@ -79,29 +79,27 @@ const walk = function (dir, done) {
     });
 };
 
+const copyDirSyncRecursive = function (src, dest, callback) {
+    try {
+        fse.copySync(src, dest);
+        walk(src, function (err, list) {
+            if (err) {
+                console.error(err);
+            }
+            else {
+                sitnaBuild.projectFiles = sitnaBuild.projectFiles
+                    .concat(list.map(r => '.' + r.replace(path.resolve('.'), '').replace(/\\/g, '/')));
+                if (callback) {
+                    callback();
+                }
+            }
+        });
+    } catch (err) {
+        console.error(err);
+    }
+};
+
 function copyOnlineLibraries(cb) {
-    const currentDir = path.resolve('.');
-
-    const copyDirSyncRecursive = function (src, dest, callback) {
-        try {
-            fse.copySync(src, dest);
-            walk(src, function (err, list) {
-                if (err) {
-                    console.error(err);
-                }
-                else {
-                    sitnaBuild.projectFiles = sitnaBuild.projectFiles
-                        .concat(list.map(r => '.' + r.replace(currentDir, '').replace(/\\/g, '/')));
-                    if (callback) {
-                        callback();
-                    }
-                }
-            });
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
     copyDirSyncRecursive('node_modules/cesium/Build/Cesium/Workers', sitnaBuild.targetPath + 'lib/cesium/build/Workers', () => {
         copyDirSyncRecursive('node_modules/cesium/Build/Cesium/ThirdParty', sitnaBuild.targetPath + 'lib/cesium/build/ThirdParty', () => {
             copyDirSyncRecursive('node_modules/cesium/Build/Cesium/Assets', sitnaBuild.targetPath + 'lib/cesium/build/Assets', () => {
@@ -109,6 +107,11 @@ function copyOnlineLibraries(cb) {
             });
         });
     });
+}
+function copyCrs(cb) {
+    fse.cpSync('node_modules/epsg-index/s', 'resources/data/crs', { recursive: true, force: false });
+    fse.cpSync('resources/data/crs', sitnaBuild.targetPath + 'resources/data/crs', { recursive: true });
+    cb();
 }
 
 //function copyOfflineLibraries(cb) {
@@ -423,7 +426,7 @@ function layoutCss(cb) {
 }
 
 function jsonValidate() {
-    return gulp.src(['TC/**/*.json', 'layout/**/*.json', 'resources/**/*.json', 'config/**/*.json'])
+    return gulp.src(['TC/**/*.json', 'layout/**/*.json', 'resources/**/*.json', '!resources/data/crs/*.json', 'config/**/*.json'])
         .pipe(filter(sitnaBuild.projectFiles))
         .pipe(jsonlint())
         .pipe(jsonlint.reporter())
@@ -460,6 +463,48 @@ function textsValidate(cb) {
     }
     cb();
 }
+
+function findOrphanTexts(cb) {
+    const glob = require('glob');
+
+    // Read JSON file
+    const jsonFilePath = path.join(__dirname, 'resources/en-US.json');
+    const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+
+    // Get all keys from JSON
+    const keys = Object.keys(jsonData);
+
+    function getCommonElements(arrays) {
+        if (arrays.length === 0) return [];
+
+        // Start with the first array as the base for comparison
+        let commonElements = arrays[0];
+
+        // Iterate through each array and filter common elements
+        for (let i = 1; i < arrays.length; i++) {
+            commonElements = commonElements.filter(element => arrays[i].includes(element));
+        }
+
+        return commonElements;
+    }
+
+    glob("**/*.{js,hbs}", { ignore: ['node_modules/**', 'resources/en-US.json', 'gulpfile.js'] }, (err, files) => {
+        if (err) throw err;
+
+        const unusedKeyCollection = [];
+        files.forEach(file => {
+            const content = fs.readFileSync(file, 'utf8');
+            unusedKeyCollection.push(keys.filter(key => !content.includes(key)));
+        });
+
+        const orphanKeys = getCommonElements(unusedKeyCollection);
+        for (const key of orphanKeys) {
+            console.log(`Orphan key: ${key}`);
+        }
+        cb();
+    });
+}
+
 
 function lint() {
     return gulp.
@@ -657,6 +702,7 @@ const noTests = gulp.series(
     printCss,
     componentCss,
     layoutCss,
+    copyCrs,
     resources,
     //copyOfflineLibraries,
     offlineScripts,
@@ -687,6 +733,7 @@ exports.copyResources = gulp.series(
 exports.encapsulateWebWorkers = encapsulateWebWorkers;
 exports.prefetchXsd = prefetchXsd;
 exports.updateDependencies = npmUpdate;
+exports.findOrphanTexts = findOrphanTexts;
 exports.noTests = noTests;
 exports.default = gulp.series(
     noTests,
