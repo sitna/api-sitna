@@ -7,7 +7,7 @@
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [displayElevation=true] - Si se establece a `true`, se completará el gráfico del perfil de elevación de la ruta (si esta cuenta con datos de elevación) añadiendo el perfil de elevación resultante del MDT (Modelo Digital de Terreno)
   
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/cfg.GeolocationOptions.html)</caption> {@lang html}
   * <div id="mapa"/>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -22,19 +22,21 @@
   */
 
 import localforage from 'localforage';
-import TC from '../../TC';
-import Consts from '../Consts';
-import Control from '../Control';
-import LoadingIndicator from './LoadingIndicator';
-import Util from '../Util';
-import infoShare from './infoShare';
-import itemToolContainer from './itemToolContainer';
-import SWCacheClient from './SWCacheClient';
-import Feature from '../../SITNA/feature/Feature';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Point from '../../SITNA/feature/Point';
-import Marker from '../../SITNA/feature/Marker';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Control from '../Control.js';
+import LoadingIndicator from './LoadingIndicator.js';
+import Util from '../Util.js';
+import infoShare from './infoShare.js';
+import itemToolContainer from './itemToolContainer.js';
+import SWCacheClient from './SWCacheClient.js';
+import Feature from '../../SITNA/feature/Feature.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Point from '../../SITNA/feature/Point.js';
+import Marker from '../../SITNA/feature/Marker.js';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
@@ -98,11 +100,89 @@ const orderTracks = function (tracks) {
 
     return tracksArray;
 };
+class GeolocationTrackModel {
+    constructor() {
+        this.save = "";
+        this["tr.lst.cancel"] = "";
+        this["tr.lst.edit"] = "";
+        this["tr.lst.share"] = "";
+        this["tr.lst.download"] = "";
+        this["tr.lst.delete"] = "";
+        this["tr.lst.stop"] = "";
+        this["tr.lst.start"] = "";
+        this["tr.lst.backward"] = "";
+        this["tr.lst.velocity"] = "";
+        this["tr.lst.forward"] = "";
+        this["tr.lst.view"] = "";
+    }
+}
+class GeolocationModel {
+    constructor() {
+        this.geo = "";
+        this["geo.trk.panel.help.1"] = "";
+        this["geo.trk.panel.help.2"] = "";
+        this["geo.trk.panel.help.3"] = "";
+        this["geo.gps"] = "";
+        this["geo.track.title"] = "";
+        this["geo.tracks"] = "";
+        this["geo.tracks.title"] = "";
+        this["geo.noTracks"] = "";
+        this["noMatches"] = "";
+        this["geo.trk.delete.all.tooltip"] = "";
+        this["geo.trk.delete.all"] = "";
+        this["geo.trk.import.upload"] = "";
+        this["geo.trk.import.lbl"] = "";
+        this["geo.trk.panel.1"] = "";
+        this["geo.trk.panel.2"] = "";
+        this["geo.trk.panel.3"] = "";
+        this["geo.trk.panel.4"] = "";
+        this["geo.trk.panel.5"] = "";
+        this["geo.trk.render"] = "";
+        this["geo.track.activate.title"] = "";
+        this["geo.track.activate"] = "";
+        this["geo.track.deactivate.title"] = "";
+        this["geo.track.deactivate"] = "";
+        this["geo.trk.name.plhr"] = "";
+        this["geo.filter.plhr"] = "";
+        this["geo.trk.name.save"] = "";
+        this["geo.trk.wyp.plhr"] = "";
+        this["geo.trk.wyp.save"] = "";
+        this["geo.trk.center"] = "";
+
+        this["geo.gps"] = "";
+        this.close = "";
+        this["geo.trk.dialog.cnt"] = "";
+        this["geo.trk.dialog.new"] = "";
+        this["geo.trk.dialog.cancel"] = "";
+        this["geo.track.activate.title"] = "";
+        this["geo.trk.page.blur"] = "";
+        this["geo.trk.dialog.doNotShow"] = "";
+        this.ok = "";
+
+        this["geo.profile.fromTrack"] = "";
+        this["mdt.title"] = "";
+        this.mdt = "";
+        this.getFromDtm = "";
+
+        this["geo.track"] = "";
+        this.share = "";
+    }
+}
+class GeolocationToastModel {
+    constructor() {
+        this.lon = "";
+        this["geo.trk.accuracy"] = "";
+        this.lat = "";
+        this["geo.trk.speed"] = "";
+        this.ele = "";
+        this["mdt.title"] = "";
+        this.mdt = "";
+    }
+}
 
 class Geolocation extends Control {
     const = {
         className: {
-            ACTIVE: 'tc-ctl-geolocation-active',
             DRAWACTIVATED: 'draw-activated',
             SIMULATIONACTIVATED: 'simulation-activated',
             PLAY: 'tc-play',
@@ -128,8 +208,8 @@ class Geolocation extends Control {
         localStorageKey: {
             GEOTRACKING: 'trk',
             GEOTRACKINGTEMP: 'trktemp',
-            GEOTRACKINGSHOWADVERTISEMENT: 'trkAdvertisement',
-            GPSSHOWADVERTISEMENT: 'gpsAdvertisement',
+            GEOTRACKING_SHOW_WARNING: 'trkWarning',
+            GPS_SHOW_WARNING: 'gpsWarning',
             TEST: 'test'
         },
         event: {
@@ -169,6 +249,7 @@ class Geolocation extends Control {
     notificationConfig = {};
     storageCrs = 'EPSG:4326';
     snappingTolerance;
+    currentTrackUid;
     #dialogDiv;
     #shareDialogDiv;
     #interpolationPanel;
@@ -206,6 +287,9 @@ class Geolocation extends Control {
         self._toolContainerSelector = `.${self.CLASS}-tools-active`;
 
         self.wrap = new TC.wrap.control.Geolocation(self);
+        self.model = new GeolocationModel();
+        self.trackModel = new GeolocationTrackModel();
+        self.infoPanelModel = new GeolocationToastModel();
     }
 
     async register(map) {
@@ -308,7 +392,7 @@ class Geolocation extends Control {
         map.on(Consts.event.FEATURESIMPORT, function (e) {
             const self = this;
 
-            const featuresImport = function (e) {
+            const featuresImport = async function (e) {
                 const fileName = e.fileName;
                 const target = e.dropTarget;
                 var kmlPattern = '.' + Consts.format.KML.toLowerCase();
@@ -326,7 +410,7 @@ class Geolocation extends Control {
                             self.map._bufferFeatures = self.map._bufferFeatures.concat(e.features);
                             self.map.dropFilesCounter--;
                             if (self.map.dropFilesCounter === 0) {
-                                self.map.zoomToFeatures(self.map._bufferFeatures);
+                                //self.map.zoomToFeatures(self.map._bufferFeatures);
                                 self.map._bufferFeatures = [];
                                 delete self.map.dropFilesCounter;
                                 var li = self.map.getLoadingIndicator();
@@ -338,7 +422,16 @@ class Geolocation extends Control {
                         }, 0);
                     };
                     self.on(self.const.event.IMPORTEDTRACK, importedGPX);
-                    self.importTrack(e);
+                    for (let i = 0; i < e.features.length; i++) {
+                        const feature = e.features[i];
+                        await self.importTrack({
+                            ...e, ...{
+                                features: [feature],
+                                trackIndex: e.features.length > 1 ? i : undefined,
+                                trackCount: e.features.length,
+                            }
+                        });
+                    }
 
                     if (/.kml$/g.test(fileName.toLowerCase()) && self.trackLayer) {
                         if (self.trackLayer.styles) {
@@ -489,6 +582,12 @@ class Geolocation extends Control {
         if (Util.isFunction(callback)) {
             callback();
         }
+        this.controller = new Controller(this.model, new Observer(this.div));
+        this.controller.add(this.#dialogDiv);
+        this.controller.add(this._downloadDialogExtNode);
+        this.controller.add(this.#shareDialogDiv);
+
+        this.updateModel();
     }
 
     addUIEventListeners() {
@@ -678,7 +777,7 @@ class Geolocation extends Control {
             self.wrap.simulateTrackEnd();
             const btnPause = e.target.parentElement.querySelector(sel.PAUSE);
             btnPause.classList.add(self.const.className.PLAY);
-            btnPause.setAttribute('title', self.getLocaleString('tr.lst.start'));
+            btnPause.textContent = self.getLocaleString('tr.lst.start');
             if (!self.simulationStopped)
                 e.target.parentElement.querySelector(sel.SPEED).textContent = 'x 1';
             self.simulationSpeed = 1;
@@ -701,7 +800,7 @@ class Geolocation extends Control {
 
             }
 
-            e.target.setAttribute('title', self.getLocaleString(self.simulate_paused ? 'tr.lst.play' : 'tr.lst.pause'));
+            e.target.textContent = self.getLocaleString(self.simulate_paused ? 'tr.lst.play' : 'tr.lst.pause');
             e.target.classList.toggle(self.const.className.PLAY, !!self.simulate_paused);
         }));
 
@@ -762,9 +861,9 @@ class Geolocation extends Control {
         //});
 
         // popup advertencia
-        self.track.trackAdvertisementOK.addEventListener('click', function () {
+        self.track.trackWarningOk.addEventListener('click', function () {
 
-            const checkboxes = document.body.querySelectorAll('input[name*="Advertisement"]:checked');
+            const checkboxes = document.body.querySelectorAll('sitna-toggle[name*="Warning"][checked]');
 
             if (checkboxes.length > 0) {
                 localforage
@@ -775,7 +874,7 @@ class Geolocation extends Control {
             Util.closeModal();
         });
 
-        self.track.renderTrack = self.div.querySelector('#tc-ctl-geolocation-track-render-' + self.id);
+        self.track.renderTrack = self.div.querySelector('.tc-ctl-geolocation-track-render');
         self.track.renderTrack.addEventListener('change', function () {
             if (self.track.activateButton.classList.contains(Consts.classes.HIDDEN)) {
                 self.geotrackingLayer.setVisibility(this.checked);
@@ -851,22 +950,84 @@ class Geolocation extends Control {
         return self.elevationControl;
     }
 
-    importTrack(options) {
+    async importTrack(options) {
         const self = this;
         if (!self.isDisabled) {
             if (options.fileName && options.features && options.features.length > 0) {
-                self.map?.wait(async () => {
-                    self.importedFileName = options.fileName;
+                await self.map?.wait(async () => {
+                    const selectedTrackUid = options.uid || self.currentTrackUid;
+                    let fileName = options.fileName;
                     const addPromises = [];
+                    self.clear(this.const.layer.TRACK);
                     for (var i = 0, len = options.features.length; i < len; i++) {
                         addPromises.push(self.trackLayer.addFeature(options.features[i]));
                     }
                     self.trackLayer.setFeatureTypeMetadata(options.metadata);
                     await Promise.all(addPromises);
-                    await self.wrap.processImportedFeatures({
+                    const trackNames = await self.wrap.processImportedFeatures({
+                        fileName: options.fileName,
+                        features: options.features,
                         notReproject: options.notReproject,
                         fileHandle: options.fileHandle
                     });
+                    if (trackNames.length) {
+                        var sameName = function (names, name) {
+                            var indices = [];
+                            var idx = names.indexOf(name);
+                            while (idx !== -1) {
+                                indices.push(idx);
+                                idx = names.indexOf(name, idx + 1);
+
+                                if (indices.length > 1) return true;
+                            }
+
+                            return indices.length > 1 ? true : false;
+                        };
+
+                        let uid;
+                        const addIndex = (name, idx) => '[' + (parseInt(idx) + 1) + ']' + ' ' + name;
+                        for (let i = 0; i < trackNames.length; i++) {
+                            let name = trackNames[i];
+                            if (sameName(trackNames, name)) {
+                                name = addIndex(name, i);
+                                fileName = name;
+                            }
+                            else if (options.trackIndex !== undefined) {
+                                name = addIndex(name, options.trackIndex);
+                                fileName = name;
+                            }
+
+                            const importedTrackUid = await self.saveTrack({
+                                message: self.getLocaleString('geo.trk.upload.ok', { trackName: name ? name : fileName }),
+                                importedFileName: fileName,
+                                notReproject: options.notReproject,
+                                fileHandle: options.fileHandle,
+                                trackIndex: options.trackIndex,
+                                trackCount: options.trackCount,
+                            });
+                            if (i === 0) {
+                                uid = importedTrackUid;
+                            }
+                        }
+                        self.trackLayer.setVisibility(false);
+                        // la siguiente instrucción hace que se elimine del array de ids la línea y después no funciona la descarga de la feature.
+                        // 13/11/2020 recupero la instrucción: sin el borrado de features al compartir un track se queda la importada en 4326 y 
+                        // la nueva ya gestionada, con lo que el zoom a la feature no funciona como debe. Después de todos los cambios en la gestión de 
+                        // IDs de las features de los track no he conseguido reproducir el problema del anterior comentario.
+                        self.trackLayer.clearFeatures();
+
+                        const throwEvent = options.trackCount === undefined || options.trackIndex === options.trackCount - 1;
+                        if (throwEvent) self.trigger(self.const.event.IMPORTEDTRACK, { selectedTrackUid, uid });
+                    }
+                    else {
+                        if (self.trackLayer) {
+                            self.map.removeLayer(self.trackLayer);
+                            self.trackLayer = undefined;
+                        }
+
+                        TC.alert(self.getLocaleString("geo.trk.upload.error4"));
+                    }
+
                     if (self.trackLayer) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
                         // Desplegamos el control "ubicar" al importar mediante drag&drop
                         self.highlight();
@@ -970,18 +1131,14 @@ class Geolocation extends Control {
         }
     }
 
-    async #onShowDownloadDialog(caller, allFeatures) {
-        const self = this;
-        const RADIO_TRACK = "track";
-        const RADIO_MDT = "mdt";
-
-        const downloadDialog = await self.getDownloadDialog();
+    async #onShowDownloadDialog(caller) {
+        const downloadDialog = await this.getDownloadDialog();
         const originalDialogFeatures = downloadDialog.getFeatures();
 
         // llega desde el panel del perfil del track: hacemos que el diálogo sea igual que cuando llega desde la lista aunque lo invoque featureTools
-        if (caller !== self && originalDialogFeatures.every(f => f && f.layer === self.trackLayer)) {
+        if (caller !== this && originalDialogFeatures.every((f) => f && f.layer === this.trackLayer)) {
             let currentOptions = downloadDialog.getOptions();
-            let controlOptions = self.getDownloadDialogOptions();
+            let controlOptions = this.getDownloadDialogOptions();
             currentOptions.elevation = controlOptions.elevation;
             delete currentOptions.openCallback;
 
@@ -989,168 +1146,13 @@ class Geolocation extends Control {
         }
 
         // normalizamos el nombre del archivo de la descarga
-        if (originalDialogFeatures.length === 1 && originalDialogFeatures.every((f) => f && f.fileName)) {
+        if (originalDialogFeatures.length > 0 && originalDialogFeatures.every((f) => f && f.layer === this.trackLayer && f.fileName)) {
             downloadDialog.setOptions({ fileName: originalDialogFeatures[0].fileName });
         }
 
         // si no tenemos configurada la opción del perfil desde MDT retornamos sin gestionar nada más
-        if (!self.options.displayElevation) {
+        if (!this.options.displayElevation) {
             return;
-        }
-
-        // llega desde la lista de tracks || llega desde el panel del perfil de un track 
-        if (caller === self || originalDialogFeatures.every(f => f && f.layer === self.trackLayer)) {
-            if (!downloadDialog.modalBody.querySelector('.' + self.CLASS + "-ext-dldlog")) {
-                let divToExtensions = downloadDialog.modalBody.querySelector('.' + downloadDialog.CLASS + "-ext");
-                if (divToExtensions) {
-                    divToExtensions.appendChild(self._downloadDialogExtNode);
-
-                    self.#elevationsCheckbox = downloadDialog.modalBody.querySelector('.' + downloadDialog.CLASS + "-elev input[type='checkbox']");
-                    self.#interpolationPanel = downloadDialog.modalBody.querySelector('.' + downloadDialog.CLASS + "-ip");
-                    const radioDlSource = downloadDialog.modalBody.querySelectorAll(`input[type=radio][name="${self.id}-dldlog-source"]`);
-
-                    // si el track no tiene elevaciones y solo contamos con las del MDT ocultamos el botón de descargar originales                    
-                    const disableOriginalsRadio = function (condition) {
-                        const originalsRadio = radioDlSource[0];
-                        if (condition) {
-                            if (!originalsRadio.classList.contains(Consts.classes.DISABLED)) {
-                                originalsRadio.classList.add(Consts.classes.DISABLED);
-                            }
-                        } else {
-                            originalsRadio.classList.remove(Consts.classes.DISABLED);
-                        }
-                    };
-                    let feature = originalDialogFeatures.filter(isAnyLine)[0];
-                    const firstPoint = getFirstPoint(feature);
-                    let noZ = firstPoint.length === 2;
-                    if (noZ) {
-                        disableOriginalsRadio(noZ);
-                    } else if (firstPoint.length > 2) {
-                        const coordinates = isMultiPolyline(feature) ? feature.geometry.flat() : feature.geometry;
-                        disableOriginalsRadio(coordinates.map(c => c[2]).every(val => val === 0));
-                    }
-
-
-                    const interpolationPanelIsHidden = function () {
-                        return self.#interpolationPanel && self.#interpolationPanel.classList.contains(Consts.classes.HIDDEN);
-                    };
-                    const setInterpolationPanelVisibility = function () {
-                        if (radioDlSource[0].checked && !interpolationPanelIsHidden()) {
-                            self.#interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                        } else if (radioDlSource[0].checked) {
-                            let observer = new MutationObserver(function (mutations) {
-                                mutations.filter(m => m.attributeName === "class").forEach(function (mutation) {
-                                    if (mutation.oldValue.indexOf(Consts.classes.HIDDEN) > -1) {
-                                        if (radioDlSource[0].checked) {
-                                            self.#interpolationPanel.classList.add(Consts.classes.HIDDEN);
-                                            observer.disconnect();
-                                        } else {
-                                            observer.disconnect();
-                                        }
-                                    }
-                                });
-                            });
-
-                            let config = { attributes: true, attributeOldValue: true };
-                            observer.observe(self.#interpolationPanel, config);
-                        } else {
-                            if (interpolationPanelIsHidden() && self.#elevationsCheckbox.checked) {
-                                self.#interpolationPanel.classList.remove(Consts.classes.HIDDEN);
-                            }
-                        }
-                    };
-
-                    if (self.#elevationsCheckbox) {
-                        if (self.#elevationsCheckbox.checked) {
-                            setInterpolationPanelVisibility();
-                            self._downloadDialogExtNode.classList.remove(Consts.classes.HIDDEN);
-                        } else {
-                            self._downloadDialogExtNode.classList.add(Consts.classes.HIDDEN);
-                        }
-                        self.#elevationsCheckbox.addEventListener("change", function () {
-                            setInterpolationPanelVisibility();
-                            self._downloadDialogExtNode.classList.toggle(Consts.classes.HIDDEN, !this.checked);
-                        });
-                    }
-
-                    if (radioDlSource) {
-                        setInterpolationPanelVisibility();
-                        radioDlSource.forEach(item => {
-                            if (item.dataset.hasChangeEvent) {
-                                return;
-                            }
-                            item.dataset.hasChangeEvent = true;
-                            item.addEventListener("change", async function (e) {
-                                if (e.target.checked) {
-                                    setInterpolationPanelVisibility();
-                                    let featuresToDownload;
-                                    if (e.target.value === RADIO_TRACK) {
-                                        featuresToDownload = originalDialogFeatures;
-                                    } else {
-                                        let featuresFromDialog = originalDialogFeatures;
-                                        let feature = featuresFromDialog.filter(isAnyLine)[0];
-
-                                        if (allFeatures) {
-                                            featuresToDownload = featuresFromDialog.filter((feat) => {
-                                                return feat instanceof Point;
-                                            });
-                                        }
-
-                                        let uid = feature.uid;
-                                        let cachedProfile = self.#getElevationProfileFromCache(uid);
-                                        if (cachedProfile) {
-                                            // Clonamos la feature para presevar la geometría original por si el usuario cambia de nuevo a track
-                                            let toDownload = feature.clone();
-                                            toDownload.setCoords(cachedProfile.secondaryElevationProfileChartData[0].coords);
-                                            if (allFeatures) {
-                                                if (!featuresToDownload) {
-                                                    featuresToDownload = self.#getCurrentPoints() || [];
-                                                }
-                                                featuresToDownload.push(toDownload);
-                                            } else {
-                                                featuresToDownload = toDownload;
-                                            }
-                                        } else {
-                                            downloadDialog.modalBody.classList.add(Consts.classes.LOADING);
-
-                                            let toDownload = await self.#getElevationFromService(feature);
-                                            if (toDownload) {
-                                                if (allFeatures) {
-                                                    featuresToDownload.push(toDownload);
-                                                } else {
-                                                    featuresToDownload = toDownload;
-                                                }
-                                            } else {
-                                                self.map.toast(self.getLocaleString("elevation.error"), { type: Consts.msgType.ERROR, duration: 5000 });
-                                                radioDlSource[0].checked = true;
-                                            }
-
-                                            downloadDialog.modalBody.classList.remove(Consts.classes.LOADING);
-                                        }
-                                    }
-
-                                    downloadDialog.setFeatures(featuresToDownload);
-                                }
-                            });
-                        });
-
-                        const ownCheckedRadio = document.querySelector('.' + self.CLASS + '-ext-dldlog input[type=radio]:checked');
-                        // Condición necesaria, porque el cuadro de diálogo puede no ser el propio (p. e. descarga desde el perfil de elevación)
-                        if (ownCheckedRadio) {
-                            if (radioDlSource[0].classList.contains(Consts.classes.DISABLED) ||
-                                ownCheckedRadio.value === RADIO_MDT) {
-                                const mdtRadio = radioDlSource[1];
-                                mdtRadio.checked = true;
-                                mdtRadio.dispatchEvent(new Event('change'));
-                            }
-                        }
-                    }
-
-                    if (originalDialogFeatures.length === 1 && originalDialogFeatures[0].fileName) {
-                        downloadDialog.setOptions({ fileName: originalDialogFeatures[0].fileName });
-                    }
-                }
-            }
         }
     }
 
@@ -1161,7 +1163,7 @@ class Geolocation extends Control {
             title: self.getLocaleString('download'),
             fileName: fileName,
             openCallback: function () {
-                self.#onShowDownloadDialog(self, true);
+                self.#onShowDownloadDialog(self);
             }
         };
         if (self.options.displayElevation) {
@@ -1214,14 +1216,14 @@ class Geolocation extends Control {
             trackAdd: self.div.querySelector(`.${self.CLASS}-track-add-wpt`),
             trackContinue: self.#dialogDiv.querySelector(`.${self.CLASS}-track-continue`),
             trackRenew: self.#dialogDiv.querySelector(`.${self.CLASS}-track-new`),
-            trackClose: self.#dialogDiv.querySelector(`.${self.CLASS}-continue-track-dialog button.tc-modal-close`),
+            trackClose: self.#dialogDiv.querySelector(`.${self.CLASS}-continue-track-dialog sitna-button.tc-modal-close`),
             //trackAddSegment: self.div.querySelector('#tc-ctl-geolocation-track-segment'),
-            trackAdvertisementOK: self.#dialogDiv.querySelector(`.${self.CLASS}-track-advert-ok`)
+            trackWarningOk: self.#dialogDiv.querySelector(`.${self.CLASS}-track-warning-ok`)
         };
 
         self.track.trackList = self.div.querySelector(`.${self.CLASS}-track-available-lst`);
 
-        self.track.trackToolPanelOpened = self.div.querySelector(`.${self.CLASS}-track-panel-block input[type="checkbox"]`);
+        self.track.trackToolPanelOpened = self.div.querySelector(`.${self.CLASS}-track-panel-block sitna-toggle`);
 
         self.track.trackName = self.div.querySelector(`.${self.CLASS}-track-title`);
 
@@ -1250,9 +1252,16 @@ class Geolocation extends Control {
             }
         };
 
-        self.on(self.const.event.IMPORTEDTRACK, function (e) {
+        self.on(self.const.event.IMPORTEDTRACK, async function (e) {
             if (!self.isDisabled) {
-                const listElement = self.track.trackList.querySelector('li[data-id="' + e.index + '"]');
+                let uidToDraw = e.uid;
+                if (self.currentTrackUid) {
+                    const availableTracks = await self.getAvailableTracks()
+                    const selectedTrack = availableTracks.find((track) => track.uid == self.currentTrackUid);
+                    const importedTrack = availableTracks.find((track) => track.uid == e.uid);
+                    if (await selectedTrack?.fileHandle?.isSameEntry(importedTrack?.fileHandle)) uidToDraw = self.currentTrackUid;
+                }
+                const listElement = self.track.trackList.querySelector('li[data-uid="' + uidToDraw + '"]');
                 self.#drawTrack(listElement.querySelector(self.const.selector.ACTIVATOR)).then(function () {
                     if (self.loadingState) {
                         delete self.loadingState;
@@ -1505,6 +1514,7 @@ class Geolocation extends Control {
                     infoPanel.renderPromise().then(function () {
                         infoPanel.options.collidingPriority = infoPanel.COLLIDING_PRIORITY.IGNORE;
                         infoPanel.open(html);
+                        self.infoPanelController = new Controller(self.infoPanelModel, new Observer(infoPanel.getTableContainer()))
                     });
                 }
             });
@@ -1583,7 +1593,7 @@ class Geolocation extends Control {
 
         self.clear(self.const.layer.GEOTRACKING);
 
-        self.#advertisement(self.const.localStorageKey.GEOTRACKINGSHOWADVERTISEMENT);
+        self.#warn(self.const.localStorageKey.GEOTRACKING_SHOW_WARNING);
 
         self.wrap.setGeotracking(true);
     }
@@ -1766,23 +1776,23 @@ class Geolocation extends Control {
 
     /* final gestión suspensión de la pantalla en móviles */
 
-    #advertisement(showAdvertisement) {
+    #warn(showWarning) {
         const self = this;
 
-        localforage.getItem(showAdvertisement).then(function (registeredShowAdvertisement) {
-            if (registeredShowAdvertisement == null) {
-                const dialog = self.#dialogDiv.querySelector('.tc-ctl-geolocation-track-advert-dialog');
-                const checkbox = dialog.querySelector('input[type="checkbox"]');
-                checkbox.setAttribute('name', showAdvertisement);
+        localforage.getItem(showWarning).then(function (showWarningRegistered) {
+            if (showWarningRegistered == null) {
+                const dialog = self.#dialogDiv.querySelector('.tc-ctl-geolocation-track-warning-dialog');
+                const checkbox = dialog.querySelector('sitna-toggle');
+                checkbox.setAttribute('name', showWarning);
                 checkbox.checked = false;
 
                 document.querySelector('#pageBlurMsg').textContent = Util.detectMobile() ? self.getLocaleString('geo.trk.page.blur') : self.getLocaleString('geo.trk.page.blur.desktop');
 
-                dialog.querySelector('h3').textContent = showAdvertisement === self.const.localStorageKey.GPSSHOWADVERTISEMENT ?
+                dialog.querySelector('h3').textContent = showWarning === self.const.localStorageKey.GPS_SHOW_WARNING ?
                     self.getLocaleString("geo.track.activate") + " " + self.getLocaleString("geo.gps") :
                     self.getLocaleString('geo.track.activate.title');
 
-                Util.showModal(self.#dialogDiv.querySelector('.tc-ctl-geolocation-track-advert-dialog'));
+                Util.showModal(self.#dialogDiv.querySelector('.tc-ctl-geolocation-track-warning-dialog'));
             }
         }, err => console.warn(err));
 
@@ -1873,7 +1883,7 @@ class Geolocation extends Control {
             delete self.geotrackingPosition;
 
             if (!self.#trackVisibility) {
-                self.div.querySelector(`.${self.CLASS}-track-render`).querySelector('label').click();
+                self.div.querySelector(`.${self.CLASS}-track-render`).querySelector('sitna-toggle').click();
             }
 
             self.#releaseLock();
@@ -2039,6 +2049,11 @@ class Geolocation extends Control {
                     const newLi = parser.parseFromString(html, 'text/html').body.firstChild;
                     self.getItemTools().forEach(tool => self.addItemToolUI(newLi, tool));
                     self.track.trackList.appendChild(newLi);
+                    if (!self.trackController)
+                        self.trackController = new Controller(self.trackModel, new Observer(newLi));
+                    else {
+                        self.trackController.add(newLi)
+                    }
                     newLi.querySelector(self.const.selector.VISIBILITY).addEventListener('change', function (e) {
                         self.trackLayer.setVisibility(e.target.checked);
                         self.endPointLayer.setVisibility(e.target.checked);
@@ -2452,16 +2467,13 @@ class Geolocation extends Control {
                 newTrack = tracks.find(t => t.uid == options.uid);
             }
             else if (options.fileHandle) {
-                for (var i = 0, ii = tracks.length; i < ii; i++) {
-                    let sameEntry = false;
-                    const trackFileHandle = tracks[i].fileHandle;
-                    if (trackFileHandle) {
-                        sameEntry = await options.fileHandle.isSameEntry(trackFileHandle);
-                    }
-                    if (sameEntry) {
-                        newTrack = tracks[i];
-                        break;
-                    }
+                const areSameEntries = await Promise.all(tracks.map((t) => t.fileHandle.isSameEntry(options.fileHandle)));
+                const fileHandleTracks = tracks.filter((_t, i) => areSameEntries[i]);
+                if (options.trackIndex !== undefined) {
+                    newTrack = fileHandleTracks[options.trackIndex];
+                }
+                else if (fileHandleTracks.length === 1) {
+                    newTrack = fileHandleTracks[0];
                 }
             }
             if (!newTrack) {
@@ -2483,21 +2495,6 @@ class Geolocation extends Control {
                 sameTrack = await self.#getMatchingTrack(newTrack);
             }
 
-            const getTrackIndex = async function (uid) {
-                await self.getStoredTracks();
-                await self.#bindTracks();
-
-                let index;
-                for (var i = 0; i < self.availableTracks.length; i++) {
-                    if (self.availableTracks[i].uid === uid) {
-                        index = i;
-                        break;
-                    }
-                }
-
-                return index;
-            };
-
             if (!sameTrack) {
                 if (mustAdd) {
                     newTrack.uid = options.uid || self.createTrackUID();
@@ -2511,8 +2508,7 @@ class Geolocation extends Control {
 
                     clean();
 
-                    const index = await getTrackIndex(newTrack.uid);
-                    return index;
+                    return newTrack.uid;
                 }
                 catch (error) {
                     TC.alert(self.getLocaleString("geo.error.savelocalstorage") + ': ' + error.message);
@@ -2524,12 +2520,11 @@ class Geolocation extends Control {
 
                 clean();
 
-                const index = await getTrackIndex(sameTrack.uid);
-                return index;
+                return sameTrack.uid;
             }
         };
 
-        if (self.importedFileName || options.uid) {
+        if (options.importedFileName || options.uid) {
             return await self.map.wait(save(self.trackLayer));
         }
         if (self.track.trackName.value.trim().length === 0) {
@@ -2650,6 +2645,7 @@ class Geolocation extends Control {
 
     setSelectedTrack(li) {
         const self = this;
+        self.currentTrackUid = li.dataset.uid;
 
         if (!self.isActive) {
             self.activate();
@@ -2672,8 +2668,7 @@ class Geolocation extends Control {
         };
         li.addEventListener("transitionend", transitionEvent, false);
 
-        li.setAttribute('title', self.getLocaleString("tr.lst.clear") + " " + btn.text);
-        btn.setAttribute('title', li.getAttribute('title'));
+        btn.setAttribute('title', self.getLocaleString("tr.lst.clear") + ": " + btn.text);
 
         if (!self.loadingState) {
             self.toShare = null;
@@ -2695,7 +2690,6 @@ class Geolocation extends Control {
             }
 
             selected.classList.remove(Consts.classes.CHECKED);
-            selected.setAttribute('title', selected.textContent);
             selected.querySelector(this.const.selector.ACTIVATOR).removeAttribute('title');
 
             this.toShare = null;
@@ -2766,39 +2760,23 @@ class Geolocation extends Control {
             showFeatures.forEach(f => {
                 f.showsPopup = (f instanceof Point);
             });
-            const lineFeature = showFeatures.find(function (feature) {
-                if (isAnyLine(feature)) {
-                    return true;
-                }
-                return false;
-            });
-            if (lineFeature) {
+            const firstLineFeature = showFeatures.find(isAnyLine);
+            const lastLineFeature = showFeatures.reverse().find(isAnyLine);
+            let first, last;
+
+            const getFlatCoordinates = function (feature) {
                 let coordinates;
-                if (isMultiPolyline(lineFeature)) {
-                    coordinates = lineFeature.geometry.flat();
+                if (isMultiPolyline(feature)) {
+                    coordinates = feature.geometry.flat();
                 } else {
-                    coordinates = lineFeature.geometry;
+                    coordinates = feature.geometry;
                 }
+                return coordinates;
+            };
 
-                const first = coordinates[0];
-                const last = coordinates[coordinates.length - 1];
-
-                if (first && first !== last) {
-                    const markerCoords = first.slice().splice(0, 2);
-                    if (self.#startMarker) {
-                        self.#startMarker.setCoordinates(markerCoords);
-                    }
-                    else {
-                        self.#startMarker = await self.endPointLayer.addMarker(markerCoords, {
-                            showsPopup: false,
-                            width: 32,
-                            height: 32,
-                            cssClass: self.CLASS + '-track-marker-icon-end',
-                            anchor: [0.5, 1],
-                            noExport: true
-                        });
-                    }
-                }
+            if (lastLineFeature) {
+                const coordinates = getFlatCoordinates(lastLineFeature);
+                last = coordinates[coordinates.length - 1];
 
                 if (last) {
                     const markerCoords = last.slice().splice(0, 2);
@@ -2818,13 +2796,37 @@ class Geolocation extends Control {
                 }
             }
             else {
-                if (self.#startMarker) {
-                    self.endPointLayer.removeFeature(self.#startMarker);
-                    self.#startMarker = null;
-                }
                 if (self.#finishMarker) {
                     self.endPointLayer.removeFeature(self.#finishMarker);
                     self.#finishMarker = null;
+                }
+            }
+
+            if (firstLineFeature) {
+                const coordinates = getFlatCoordinates(firstLineFeature);
+                first = coordinates[0];
+
+                if (first && first !== last) {
+                    const markerCoords = first.slice().splice(0, 2);
+                    if (self.#startMarker) {
+                        self.#startMarker.setCoordinates(markerCoords);
+                    }
+                    else {
+                        self.#startMarker = await self.endPointLayer.addMarker(markerCoords, {
+                            showsPopup: false,
+                            width: 32,
+                            height: 32,
+                            cssClass: self.CLASS + '-track-marker-icon-end',
+                            anchor: [0.5, 1],
+                            noExport: true
+                        });
+                    }
+                }
+            }
+            else {
+                if (self.#startMarker) {
+                    self.endPointLayer.removeFeature(self.#startMarker);
+                    self.#startMarker = null;
                 }
             }
         }
@@ -2920,7 +2922,10 @@ class Geolocation extends Control {
             } else { // caso compartir general
                 const selectedTrackItem = self.getSelectedTrackItem();
                 if (selectedTrackItem) {
-                    state.trackResult = JSON.stringify({ trackName: selectedTrackItem.querySelector(self.const.selector.ACTIVATOR).text });
+                    state.trackResult = JSON.stringify({
+                        trackName: selectedTrackItem.querySelector(self.const.selector.ACTIVATOR).text,
+                        trackId: selectedTrackItem.dataset.uid,
+                    });
                 }
             }
 
@@ -2970,14 +2975,21 @@ class Geolocation extends Control {
                         const jsonFormat = new ol.format.GeoJSON();
                         const importedTrack = {
                             data: jsonFormat.writeFeatures(tcFeatures.map((f) => f.wrap.feature)),
-                            name: sharedTrackResult.trackName
+                            name: sharedTrackResult.trackName,
+                            uid: sharedTrackResult.trackId,
                         };
                         const existingTrack = await self.#getMatchingTrack(importedTrack);
                         if (existingTrack) {
                             await self.drawTrack(getTrackElement(existingTrack));
                         }
                         else {
-                            var options = { features: tcFeatures, fileName: sharedTrackResult.trackName, notReproject: true, isShared: true };
+                            var options = {
+                                features: tcFeatures,
+                                fileName: sharedTrackResult.trackName,
+                                uid: sharedTrackResult.trackId,
+                                notReproject: true,
+                                isShared: true
+                            };
                             await self.getAvailableTracks();
                             self.importTrack(options);
                         }
@@ -2986,6 +2998,8 @@ class Geolocation extends Control {
                         const tracks = await self.getAvailableTracks();
                         const track = tracks.find((t) => t.name === sharedTrackResult.trackName);
                         if (track) {
+                            await self.#bindTracks();
+                            await self.drawTrack(getTrackElement(track));
                             if (track.fileHandle) {
                                 let permission = await track.fileHandle.queryPermission();
                                 if (permission === 'prompt') {
@@ -2993,15 +3007,97 @@ class Geolocation extends Control {
                                         permission = await track.fileHandle.requestPermission();
                                     }
                                 }
-                                if (permission === 'granted') self.map.loadFiles([track.fileHandle], { control: self });
+                                if (permission === 'granted') {
+                                    self.map.loadFiles([track.fileHandle], { control: self });
+                                }
                             }
-                            await self.#bindTracks();
-                            await self.drawTrack(getTrackElement(track));
                         }
                     }
                 });
             }
         }
+    }
+    updateModel() {
+        const self = this;
+        self.model.geo = self.getLocaleString("geo");
+
+        self.model["geo.trk.panel.help.1"] = self.getLocaleString("geo.trk.panel.help.1");
+        self.model["geo.trk.panel.help.2"] = self.getLocaleString("geo.trk.panel.help.2");
+        self.model["geo.trk.panel.help.3"] = self.getLocaleString("geo.trk.panel.help.3");
+        self.model["geo.gps"] = self.getLocaleString("geo.gps");
+        self.model["geo.track.title"] = self.getLocaleString("geo.track.title");
+        self.model["geo.tracks"] = self.getLocaleString("geo.tracks");
+        self.model["geo.tracks.title"] = self.getLocaleString("geo.tracks.title");
+        self.model["geo.noTracks"] = self.getLocaleString("geo.noTracks");
+        self.model.noMatches = self.getLocaleString("noMatches"); this["noMatches"] = "";
+        self.model["geo.trk.delete.all.tooltip"] = self.getLocaleString("geo.trk.delete.all.tooltip");
+        self.model["geo.trk.delete.all"] = self.getLocaleString("geo.trk.delete.all");
+        self.model["geo.trk.import.upload"] = self.getLocaleString("geo.trk.import.upload");
+        self.model["geo.trk.import.lbl"] = self.getLocaleString("geo.trk.import.lbl");
+        self.model["geo.trk.panel.1"] = self.getLocaleString("geo.trk.panel.1");
+        self.model["geo.trk.panel.2"] = self.getLocaleString("geo.trk.panel.2");
+        self.model["geo.trk.panel.3"] = self.getLocaleString("geo.trk.panel.3");
+        self.model["geo.trk.panel.4"] = self.getLocaleString("geo.trk.panel.4");
+        self.model["geo.trk.panel.5"] = self.getLocaleString("geo.trk.panel.5");
+        self.model["geo.trk.render"] = self.getLocaleString("geo.trk.render");
+        self.model["geo.track.activate.title"] = self.getLocaleString("geo.track.activate.title");
+        self.model["geo.track.activate"] = self.getLocaleString("geo.track.activate");
+        self.model["geo.track.deactivate.title"] = self.getLocaleString("geo.track.deactivate.title");
+        self.model["geo.track.deactivate"] = self.getLocaleString("geo.track.deactivate");
+        self.model["geo.trk.name.plhr"] = self.getLocaleString("geo.trk.name.plhr");
+        self.model["geo.trk.name.save"] = self.getLocaleString("geo.trk.name.save");
+        self.model["geo.trk.wyp.plhr"] = self.getLocaleString("geo.trk.wyp.plhr");
+        self.model["geo.trk.wyp.save"] = self.getLocaleString("geo.trk.wyp.save");
+        self.model["geo.filter.plhr"] = self.getLocaleString("geo.filter.plhr");
+        self.model["geo.trk.center"] = self.getLocaleString("geo.trk.center");
+
+        self.model["geo.gps"] = self.getLocaleString("geo.gps");
+        self.model.close = self.getLocaleString("close");
+        self.model["geo.trk.dialog.cnt"] = self.getLocaleString("geo.trk.dialog.cnt");
+        self.model["geo.trk.dialog.new"] = self.getLocaleString("geo.trk.dialog.new");
+        self.model["geo.trk.dialog.cancel"] = self.getLocaleString("geo.trk.dialog.cancel");
+        self.model["geo.track.activate.title"] = self.getLocaleString("geo.track.activate.title");
+        self.model["geo.trk.page.blur"] = self.getLocaleString("geo.trk.page.blur");
+        self.model["geo.trk.dialog.doNotShow"] = self.getLocaleString("geo.trk.dialog.doNotShow");
+        self.model.ok = self.getLocaleString("ok");
+
+        self.model.keepFromGeometry = self.getLocaleString("keepFromGeometry");
+        self.model["mdt.title"] = self.getLocaleString("mdt.title");
+        self.model.getFromDtm = self.getLocaleString("getFromDtm");
+
+        self.model["geo.track"] = self.getLocaleString("geo.track");
+        self.model.share = self.getLocaleString("share");
+
+        self.trackModel.save = self.getLocaleString("save");
+        self.trackModel["tr.lst.cancel"] = self.getLocaleString("tr.lst.cancel");
+        self.trackModel["tr.lst.edit"] = self.getLocaleString("tr.lst.edit");
+        self.trackModel["tr.lst.share"] = self.getLocaleString("tr.lst.share");
+        self.trackModel["tr.lst.download"] = self.getLocaleString("tr.lst.download");
+        self.trackModel["tr.lst.delete"] = self.getLocaleString("tr.lst.delete");
+        self.trackModel["tr.lst.stop"] = self.getLocaleString("tr.lst.stop");
+        self.trackModel["tr.lst.start"] = self.getLocaleString("tr.lst.start");
+        self.trackModel["tr.lst.backward"] = self.getLocaleString("tr.lst.backward");
+        self.trackModel["tr.lst.velocity"] = self.getLocaleString("tr.lst.velocity");
+        self.trackModel["tr.lst.forward"] = self.getLocaleString("tr.lst.forward");
+        self.trackModel["tr.lst.view"] = self.getLocaleString("tr.lst.view");
+
+        self.infoPanelModel.lon = self.getLocaleString("lon");
+        self.infoPanelModel["geo.trk.accuracy"] = self.getLocaleString("geo.trk.accuracy");
+        self.infoPanelModel.lat = self.getLocaleString("lat");
+        self.infoPanelModel["geo.trk.speed"] = self.getLocaleString("geo.trk.speed");
+        self.infoPanelModel.ele = self.getLocaleString("ele");
+        self.infoPanelModel["mdt.title"] = self.getLocaleString("mdt.title");
+        self.infoPanelModel.mdt = self.getLocaleString("mdt");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
+
+        if (self?.track?.infoPanel)
+            self.track.infoPanel.setTitles({
+                main: self.getLocaleString("geo.mylocation"),
+                max: self.getLocaleString("geo.mylocation.show")
+            })
     }
 }
 
