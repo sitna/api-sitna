@@ -74,54 +74,15 @@
 .tc-ctl-dmm-cmd {
     display: flex;
     gap: 0.2em;
-    flex-grow: 3;
 }
 
-.tc-ctl-dmm .tc-ctl-dmm-cmd button {
-    flex-grow:1;   
-    text-indent: -1000vw;
-    position: relative;
-    color: var(--btn-color);
-    background-color: var(--btn-bg-color);
-    border-color: var(--btn-border-color);
+.tc-ctl-dmm-cmd sitna-button {
+    flex-grow: 1;
 }
 
-    .tc-ctl-dmm .tc-ctl-dmm-cmd button:after {
-        position: absolute;
-        height: 100%;
-        width: 100%;
-        text-align: center;
-        text-indent: 0;
-        line-height: 2em;
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) / 2);
-        left: 0;
-        top: 0;
+    .tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-hide {
+        --icon-text: '\e911';
     }
-
-    .tc-ctl-dmm .tc-ctl-dmm-cmd button:disabled {
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
-    }
-
-    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr:after {
-        content: var(--icon-delete);
-    }
-    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide.tc-active:after {
-        content: var(--icon-visible);
-    }
-    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide:after {
-        content: var(--icon-invisible);
-    }
-    .tc-ctl-dmm .tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide.tc-active:not(:disabled) {
-        background-color: var(--btn-hl-bg-color);
-        border-color: var(--btn-hl-border-color);
-    }
-
-.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl:after {
-    content: var(--icon-download-all);
-}
 
 .tc-ctl-dmm .tc-ctl-mod-style {
     text-align: center;
