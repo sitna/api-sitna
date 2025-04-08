@@ -15,7 +15,7 @@ using System.Xml.Serialization;
 using System.Web.Caching;
 
 /// <summary>
-/// Forwards requests to an ArcGIS Server REST resource. Uses information in
+/// Forwards requests to a service. Uses information in
 /// the proxy.config file to determine properties of the server.
 /// </summary>
 public class proxy : IHttpHandler {
