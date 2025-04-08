@@ -110,6 +110,9 @@ class Feature {
             coords._wrap = this.wrap;
             olFeatureId = this.wrap.getId();
             this.geometry = this.wrap.getGeometry();
+            if (coords._group) {
+                this.group = coords._group;
+            }
             if (coords._folders) {
                 this.folders = coords._folders;
             }
@@ -145,8 +148,8 @@ class Feature {
         if (this.folders) {
             result = this.folders;
         }
-        else if (this.options.group) {
-            result = [this.options.group];
+        else if (this.group ?? this.options.group) {
+            result = [this.group ?? this.options.group];
         }
         return result;
     }
@@ -251,7 +254,7 @@ class Feature {
         const sourceCrs = options?.geometryCrs || self.layer?.map?.crs;
         const destCrs = options?.crs || self.layer?.map?.options.utmCrs || Cfg.utmCrs;
         self.geometry = self.wrap.getGeometry();
-        if (sourceCrs && destCrs) {
+        if (sourceCrs && destCrs && sourceCrs !== destCrs) {
             return Util.reproject(this.geometry, sourceCrs, destCrs);
         }
         return this.geometry;
