@@ -351,7 +351,7 @@ class Measure extends Control {
         this.model.areaAndPerimeter = this.getLocaleString("areaAndPerimeter");
         this.model.measure = this.getLocaleString("measure");
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }

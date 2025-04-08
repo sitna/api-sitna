@@ -271,7 +271,7 @@ class Legend extends MapContents {
         this.model.noData = this.getLocaleString("noData");
     }
 
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;        
         //////eliminar los cartuchos antes de redibujarlos
         //this.map.workLayers.forEach((layer) => {
