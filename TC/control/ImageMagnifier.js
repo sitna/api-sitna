@@ -43,7 +43,7 @@ class ImageMagnifier extends WebComponentControl {
         });
         self.#texts = texts;
         self.title = "[[textToClose]]";//texts.textToClose;
-        self.#bgContent =  document.createElement("div");
+        self.#bgContent = document.createElementNS("http://www.w3.org/1999/xhtml","div");
         self.#bgContent.classList.add(bgClassName)
         self.appendChild(self.#bgContent);
         self.#bgContent.addEventListener("pointerup", function (event) {
