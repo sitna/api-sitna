@@ -790,16 +790,8 @@ var Util = {
         let result;
         const R = 6370997; // m
         if (Array.isArray(extent) && extent.length >= 4) {
-            if (extent[3] === extent[1]) {
-                result = Math.PI * R * Math.cos(this.degToRad(extent[1])) / 180;
-            }
-            else {
-                const dLat = this.degToRad(extent[3] - extent[1]);
-                const sindlat2 = Math.sin(dLat / 2);
-                const a = sindlat2 * sindlat2;
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                result = R * c / (extent[3] - extent[1]);
-            }
+            const lat = (extent[1] + extent[3]) / 2;
+            result = Math.PI * R * Math.cos(this.degToRad(lat)) / 180;
         }
         return result;
     },
@@ -2478,7 +2470,7 @@ var Util = {
     },
 
     patternFn: function (t) {
-        t = t.replace(/[^a-z\dáéíóúüñ]/gi, '\\' + '$&');
+        t = t.replace(/[^a-z\dáéíóúüñ]/gi, (match) => '\\' + match)
         t = t.replace(/(a|á)/gi, "(a|á)");
         t = t.replace(/(e|é)/gi, "(e|é)");
         t = t.replace(/(i|í)/gi, "(i|í)");
@@ -2521,6 +2513,11 @@ var Util = {
             sansWidth !== getWidth(font + ',sans-serif') ||
             serifWidth !== getWidth(font + ',serif');
     },
+    htmlToText: function (html) {
+        var node = document.createElement("div");
+        node.innerHTML = html
+        return node.textContent;
+    },    
 };
 
 const _queryHeaderConstructor = function (capabilities) {
