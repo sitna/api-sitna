@@ -15,6 +15,15 @@
   * [SITNA.Consts.geom.POLYLINE]{@link SITNA.Consts} y [SITNA.Consts.geom.POLYGON]{@link SITNA.Consts}.
   * 
   * Si esta opción no se especifica, se mostrarán los tres modos en tres pestañas de la interfaz de usuario del control.
+  * @property {boolean|SITNA.layer.Vector|Array<SITNA.feature.Feature>} [snapping] - Especifica si el dibujo de 
+  * geometrías tiene ajuste, y en caso afirmativo, qué capa o entidades se usan para el ajuste. 
+  * 
+  * - Si se establece a verdadero, los vértices de las geometrías dibujadas se ajustarán a los vértices de las geometrías de las 
+  * entidades dibujadas previamente.
+  * - Si el valor es una instancia de [SITNA.layer.Vector]{@link SITNA.layer.Vector}, los vértices de las geometrías dibujadas 
+  * se ajustarán a los vértices de las geometrías de las entidades de la capa correspondiente. 
+  * - Si el valor es un array de [SITNA.feature.Feature]{@link SITNA.feature.Feature}, 
+  * los vértices de las geometrías dibujadas se ajustarán a los vértices de las geometrías de las entidades del array.
   * @example <caption>[Ver en vivo](../examples/cfg.DrawMeasureModifyOptions.html)</caption> {@lang html}
   * <div id="mapa"/>
   * <script>
@@ -29,27 +38,184 @@
   *     };
   *     var map = new SITNA.Map("mapa");
   * </script>
+  * @example <caption>[Ver en vivo](../examples/cfg.DrawMeasureModifyOptions.snapping.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        // Definimos una capa de referencia para los ajustes de vértices.
+        const referenceLayer = new SITNA.layer.Vector({
+            id: "reference",
+            type: SITNA.Consts.layerType.VECTOR
+        });
+        // Creamos dos estilos para diferenciar las entidades de la capa de referencia.
+        const depotStyle = {
+            fillColor: "rgba(255, 128, 0, 0.2)",
+            strokeColor: "rgba(255, 128, 0, 1)",
+            strokeWidth: 2
+        };
+        const homeStyle = {
+            fillColor: "rgba(0, 128, 255, 0.2)",
+            strokeColor: "rgba(0, 128, 255, 1)",
+            strokeWidth: 2
+        };
+        // Creamos dos colecciones de entidades para la capa de referencia.
+        const depots = [
+            new SITNA.feature.Polygon([
+                [
+                    [610490.206, 4733953.307],
+                    [610498.028, 4734002.693],
+                    [610517.778, 4733999.564],
+                    [610509.956, 4733950.177],
+                    [610490.206, 4733953.307]
+                ]
+            ], depotStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610456.033, 4733945.572],
+                    [610466.99, 4733938.033],
+                    [610458.01, 4733924.984],
+                    [610447.054, 4733932.523],
+                    [610456.033, 4733945.572]
+                ]
+            ], depotStyle)
+        ];
+        const homes = [
+            new SITNA.feature.Polygon([
+                [
+                    [610460.061, 4734008.732],
+                    [610446.861, 4734010.438],
+                    [610450.08, 4734035.297],
+                    [610463.276, 4734033.591],
+                    [610460.061, 4734008.732]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610426.048, 4733952.592],
+                    [610429.269, 4733977.499],
+                    [610442.44, 4733975.795],
+                    [610439.219, 4733950.888],
+                    [610426.048, 4733952.592]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610460.061, 4734008.732],
+                    [610456.847, 4733983.879],
+                    [610443.648, 4733985.585],
+                    [610446.861, 4734010.438],
+                    [610460.061, 4734008.732]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610463.276, 4734033.591],
+                    [610476.472, 4734031.884],
+                    [610473.257, 4734007.025],
+                    [610460.061, 4734008.732],
+                    [610463.276, 4734033.591]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610439.219, 4733950.888],
+                    [610442.44, 4733975.795],
+                    [610455.61, 4733974.092],
+                    [610452.389, 4733949.185],
+                    [610439.219, 4733950.888]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610446.861, 4734010.438],
+                    [610433.67, 4734012.144],
+                    [610436.885, 4734037.003],
+                    [610450.08, 4734035.297],
+                    [610446.861, 4734010.438]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610452.389, 4733949.185],
+                    [610455.61, 4733974.092],
+                    [610468.777, 4733972.389],
+                    [610465.557, 4733947.482],
+                    [610452.389, 4733949.185]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610473.257, 4734007.025],
+                    [610470.043, 4733982.172],
+                    [610456.847, 4733983.879],
+                    [610460.061, 4734008.732],
+                    [610473.257, 4734007.025]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610446.861, 4734010.438],
+                    [610443.648, 4733985.585],
+                    [610430.456, 4733987.292],
+                    [610433.67, 4734012.144],
+                    [610446.861, 4734010.438]
+                ]
+            ], homeStyle)
+        ];
+        const allLandLots = depots.concat(homes);
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Instanciamos el mapa con el control de dibujo, medida y modificación de geometrías en el primer contenedor.
+        // Añadimos una capa de referencia para los ajustes de vértices.
+        const map = new SITNA.Map("mapa", {
+            initialExtent: [610231, 4733866, 610711, 4734095],
+            controls: {
+                drawMeasureModify: {
+                    div: "slot1",
+                    // Se muestran las tres opciones de ajuste de vértices, dos de ellas dentro de un comentario:
+                    //snapping: true, // Activamos el ajuste de vértices solamente entre las geometrías dibujadas.
+                    //snapping: referenceLayer, // Activamos el ajuste de vértices con todas las entidades de la capa de referencia.
+                    snapping: depots, // Activamos el ajuste de vértices solamente con las entidades de un grupo.
+                }
+            }
+        });
+        map.loaded(() => {
+            map.addLayer(referenceLayer);
+            referenceLayer.addFeatures(allLandLots);
+        });
+    </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Measure from './Measure';
-import './Modify';
-import './Measurement';
-import Point from '../../SITNA/feature/Point';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-import Popup from './Popup';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Measure from './Measure.js';
+import './Modify.js';
+import './Measurement.js';
+import Point from '../../SITNA/feature/Point.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import Popup from './Popup.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
 Consts.event.RESULTSPANELCLOSE = Consts.event.RESULTSPANELCLOSE || 'resultspanelclose.tc';
 Consts.event.FEATURESSELECT = Consts.event.FEATURESSELECT || "featuresselect.tc";
-
+class DrawMeasureModifyModel {
+    constructor() {
+        this.drawAndMeasure = "";
+        this.points = "";
+        this.lines = "";
+        this.polygons = "";
+        this.hideSketch = "";
+        this.download = "";
+        this.deleteAll = "";
+    }
+}
 class DrawMeasureModify extends Measure {
     #selectors = {};
     #clearBtn;
@@ -81,6 +247,10 @@ class DrawMeasureModify extends Measure {
         self.elevationProfileActive = !!objects[2];
         if (layer) {
             layer.title = self.getLocaleString('sketch');
+            layer.getNextFeatureId = function (options = {}) {
+                options.prefix = layer.title + '.';
+                return Object.getPrototypeOf(layer).getNextFeatureId.call(layer, options);
+            };
         }
 
         const modify = await self.getModifyControl();
@@ -88,7 +258,6 @@ class DrawMeasureModify extends Measure {
         modify.containerControl = self;
         modify.id = modifyId;
         modify.snapping = self.snapping;
-        modify.setLayer(layer);
         modify
             .on(Consts.event.FEATURESSELECT, function (e) {
                 const feature = e.features[e.features.length - 1];
@@ -303,7 +472,6 @@ class DrawMeasureModify extends Measure {
         pointDrawControl.containerControl = self;
         pointDrawControl.id = pointDrawControlId;
         pointDrawControl.snapping = self.snapping;
-        pointDrawControl.setLayer(self.layer);
         self.drawControls.push(pointDrawControl);
         self.pointDrawControl = pointDrawControl;
 
@@ -352,6 +520,7 @@ class DrawMeasureModify extends Measure {
 
         self.#elevationControlPromise = map.addControl('elevation', self.options.displayElevation);
 
+        await self.setLayer(self.layer);
         self.setMode(self.options.mode);
 
         map
@@ -401,33 +570,36 @@ class DrawMeasureModify extends Measure {
         await super.render.call(self);
         self.pointMeasurementControl = self.div.querySelector('sitna-measurement[mode="point"]');
         self.pointMeasurementControl.containerControl = self;
-        self.#clearBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-clr');
+        self.#clearBtn = self.div.querySelector('.tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-clr');
         self.#clearBtn.addEventListener(Consts.event.CLICK, function (_e) {
             TC.confirm(self.getLocaleString('deleteAll.confirm'), function () {
                 self.clear();
                 self.#cancelDraw();
             });
         }, { passive: true });
-        self.#downloadBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-dl');
+        self.#downloadBtn = self.div.querySelector('.tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-dl');
         self.#downloadBtn.addEventListener(Consts.event.CLICK, function (_e) {
             self.showSketchDownloadDialog();
         }, { passive: true });
 
-        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-hide');
         showHideBtn.addEventListener(Consts.event.CLICK, function (e) {
-            const visibility = !e.target.classList.contains(Consts.classes.ACTIVE);
+            const visibility = e.target.active;
             self.drawControls.forEach(function (dv) {
                 dv.layer.setVisibility(visibility);
                 if (dv.isActive)
                     dv.wrap.setVisibility(visibility);
             });
             e.target.title = self.getLocaleString(visibility ? "hideSketch" : "showSketch");
-            e.target.classList.toggle(Consts.classes.ACTIVE);
+            e.target.active = !e.target.active;
         }, { passive: true });
 
         if (Util.isFunction(callback)) {
             callback();
         }
+        self.model = new DrawMeasureModifyModel();
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.updateModel();
     }
 
     displayMode(mode) {
@@ -503,6 +675,10 @@ class DrawMeasureModify extends Measure {
         await super.setLayer.call(self, layer);
         for await (const control of [self.getPointDrawControl(), self.getModifyControl()]) {
             control.setLayer(self.layer);
+        }
+        if (!await layer.getFeatureTypeMetadata()) {
+            const measurementCtl = await self.getLineMeasurementControl();
+            layer.setFeatureTypeMetadata(measurementCtl.getFeatureMeasurementMetadata());
         }
         if (self.layer?.features.length) {
             self.displayFeatureMode(self.layer.features[0]);
@@ -608,7 +784,8 @@ class DrawMeasureModify extends Measure {
         self.getDownloadDialog().then(function (control) {
             var options = {
                 title: self.getLocaleString("downloadSketch"),
-                fileName: self.getLocaleString('sketch').toLowerCase().replace(' ', '_') + '_' + Util.getFormattedDate(new Date().toString(), true)
+                fileName: self.getLocaleString('sketch').toLowerCase().replace(' ', '_') + '_' + Util.getFormattedDate(new Date().toString(), true),
+                hiddenElevationSourceSelection: true,
             };
             //si el control tiene su propia configuración de elevacion la pasamos para que sobrescriba a la del mapa
             if (self.map.elevation || self.options.displayElevation) {
@@ -741,7 +918,7 @@ class DrawMeasureModify extends Measure {
 
     #beginDraw() {
         const self = this;
-        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-hide');
         if (showHideBtn) {
             showHideBtn.disabled = false;
         }
@@ -749,19 +926,32 @@ class DrawMeasureModify extends Measure {
 
     #cancelDraw() {
         const self = this;
-        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd button.tc-ctl-dmm-btn-hide');
+        const showHideBtn = self.div.querySelector('.tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-hide');
         if (showHideBtn) {
             const layerPromises = this.drawControls.reduce(function (i, a) { return i.concat([a.getLayer()]) }, []);
             Promise.all(layerPromises).then(function () {
                 showHideBtn.disabled = !self.drawControls.some(dc => dc.layer.features.length || (dc.isActive && dc.historyIndex > 0));
-                showHideBtn.classList.add(Consts.classes.ACTIVE);
+                showHideBtn.active = false;
                 showHideBtn.title = self.getLocaleString("hideSketch");
             });
         }
     }
-    async changeLanguage() {
+
+    updateModel() {
         const self = this;
+        self.model.drawAndMeasure = self.getLocaleString("drawAndMeasure");
+        self.model.points = self.getLocaleString("points");
+        self.model.lines = self.getLocaleString("lines");
+        self.model.polygons = self.getLocaleString("polygons");
+        self.model.hideSketch = self.getLocaleString("hideSketch");
+        self.model.download = self.getLocaleString("download");
+        self.model.deleteAll = self.getLocaleString("deleteAll");
     }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
+    }
+    
 }
 
 DrawMeasureModify.prototype.CLASS = 'tc-ctl-dmm';
