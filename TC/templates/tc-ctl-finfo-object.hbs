@@ -45,7 +45,7 @@
     <input type="checkbox" id="complexAttr_{{getId this}}">
     <div>
         <label for="complexAttr_{{getId this}}" class="tc-plus" title=""></label>
-        <label for="complexAttr_{{getId this}}" class="tc-title" title="">{{length}} {{i18n "featureInfo.complexData.array"}}</label><br />
+        <label for="complexAttr_{{getId this}}" class="tc-title" title="">{{length}} [[featureInfo.complexData.array]]</label><br />
         <table class="tc-complex-attr">
             <tbody>
                 {{#each this}}
@@ -59,7 +59,7 @@
 </div>
     {{else}}
         {{#if (isUrl this)}}
-<a href="{{this}}" target="_blank" title="{{i18n "linkInNewWindow"}}">{{i18n "open"}}</a>
+<a href="{{this}}" target="_blank" title="[[linkInNewWindow]]">[[open]]</a>
         {{else}}
 {{{formatDateNumberOrBoolean this}}}
         {{/if}}

@@ -1,15 +1,17 @@
 ﻿
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Click from './Click';
-import Print from './Print';
-import Popup from './Popup';
-import ResultsPanel from './ResultsPanel';
-import ControlContainer from './ControlContainer';
-import infoShare from './infoShare';
-import Feature from '../../SITNA/feature/Feature';
-import Point from '../../SITNA/feature/Point';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Click from './Click.js';
+import Print from './Print.js';
+import Popup from './Popup.js';
+import ResultsPanel from './ResultsPanel.js';
+import ControlContainer from './ControlContainer.js';
+import infoShare from './infoShare.js';
+import Feature from '../../SITNA/feature/Feature.js';
+import Point from '../../SITNA/feature/Point.js';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
@@ -35,6 +37,57 @@ const getParentElement = function (elm, tagName) {
     while (result && result.tagName !== tagName);
     return result;
 };
+class FeatureInfoModel {
+    constructor() {
+        this.crs = "";
+        this.lat = "";
+        this.lon = "";
+        this.feature = "";
+        this.heightOverTerrain = "";
+        this.height = "";
+        this["elevation.explained"] = "";
+        this.ele = "";
+        this.expand = "";
+        this["fi.error"] = "";
+        this.noDataInThisLayer = "";
+        this.noDataAtThisService = "";
+        this.noData = "";
+        this.previous = "";
+        this.next = "";
+        this.showOnMapAllResults = "";
+        this.zoomToAllResults = "";
+        this.removeAllResults = "";
+        this.downloadAllResults = "";
+        this.clickToShowOnMap = "";        
+    }
+}
+class FeatureInfoDataModel {
+    constructor() {
+        this.linkInNewWindow = "";
+        this.open = "";
+        this["featureInfo.complexData.array"] = "";
+        this.viewEnlargedImage = "";
+        this.audioFormatNotCompatible = "";
+        this.videoFormatNotCompatible = "";
+        this.openInNewTab = "";
+    }
+}
+
+class FeatureInfoMenuModel {
+    constructor() {
+        this.showOnMapAllResults = "";
+        this.zoomToAllResults = "";
+        this.removeAllResults = "";
+        this.downloadAllResults = "";
+    }
+}
+
+class FeatureInfoDialogModel {
+    constructor() {
+        this.shareQuery = "";
+        this.close = "";
+    }
+}
 
 class FeatureInfoCommons extends Click {
     CURRENT_CLASS = 'tc-current';
@@ -57,9 +110,9 @@ class FeatureInfoCommons extends Click {
 
     #selectors = {
         LIST_ITEM: `ul.${cssClassName}-features li`,
-        SHOW_ALL_CHECKBOX: `.${cssClassName}-btn input[type="checkbox"].${cssClassName}-btn-show-all`,
-        ZOOM_ALL_BUTTON: `.${cssClassName}-btn .${cssClassName}-btn-zoom-all`,
-        DEL_ALL_BUTTON: `.${cssClassName}-btn .${cssClassName}-btn-del-all`
+        SHOW_ALL_CHECKBOX: `.${cssClassName}-btn sitna-toggle.${cssClassName}-btn-show-all`,
+        ZOOM_ALL_BUTTON: `.${cssClassName}-btn sitna-button.${cssClassName}-btn-zoom-all`,
+        DEL_ALL_BUTTON: `.${cssClassName}-btn sitna-button.${cssClassName}-btn-del-all`
     };
     #layersPromise = null;
     #infoHistory = {};
@@ -78,6 +131,10 @@ class FeatureInfoCommons extends Click {
         if (!self.options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
+        self.model = new FeatureInfoModel();
+        self.menuModel = new FeatureInfoMenuModel();
+        self.dataModel = new FeatureInfoDataModel();
+        self.dialogModel = new FeatureInfoDialogModel();
     }
 
     async register(map) {
@@ -241,6 +298,9 @@ class FeatureInfoCommons extends Click {
         });
         self._firstRender ??= renderPromise;
         self._dialogDiv.innerHTML = await renderPromise;
+        new Controller(self.dialogModel, new Observer(self._dialogDiv));
+        self.dialogModel.shareQuery = self.getLocaleString("shareQuery");
+        self.dialogModel.close = self.getLocaleString("close");
     }
 
     get layerCount() {
@@ -259,9 +319,7 @@ class FeatureInfoCommons extends Click {
         const showAllCb = menu.querySelector(self.#selectors.SHOW_ALL_CHECKBOX);
         if (showAllCb) {
             showAllCb.checked = true;
-            const text = self.getLocaleString('doNotShowOnMapAllResults');
-            showAllCb.innerHTML = text;
-            showAllCb.setAttribute('title', text);
+            showAllCb.setAttribute('title', self.getLocaleString('doNotShowOnMapAllResults'));
         }
         menu.querySelector(self.#selectors.ZOOM_ALL_BUTTON).classList.remove(Consts.classes.HIDDEN);
         menu.querySelector(self.#selectors.DEL_ALL_BUTTON).classList.remove(Consts.classes.HIDDEN);
@@ -273,9 +331,7 @@ class FeatureInfoCommons extends Click {
         const showAllCb = menu.querySelector(self.#selectors.SHOW_ALL_CHECKBOX);
         if (showAllCb) {
             showAllCb.checked = false;
-            const text = self.getLocaleString('showOnMapAllResults');
-            showAllCb.innerHTML = text;
-            showAllCb.setAttribute('title', text);
+            showAllCb.setAttribute('title', self.getLocaleString('showOnMapAllResults'));
             menu.querySelector(self.#selectors.ZOOM_ALL_BUTTON).classList.add(Consts.classes.HIDDEN);
             menu.querySelector(self.#selectors.DEL_ALL_BUTTON).classList.add(Consts.classes.HIDDEN);
         }
@@ -459,11 +515,35 @@ class FeatureInfoCommons extends Click {
                     self.getMenuTarget().innerHTML = "";
                     self.displayResultsCallback();
 
+                    self.getResultsPanel().then(table => {
+                        self.dataController = new Controller(self.dataModel, new Observer(table.getInfoContainer()));
+                        self.dataModel.open = self.getLocaleString("open");
+                        self.dataModel.linkInNewWindow = self.getLocaleString("linkInNewWindow");
+                        self.dataModel["featureInfo.complexData.array"] = self.getLocaleString("featureInfo.complexData.array");
+                        self.dataModel.viewEnlargedImage = self.getLocaleString("viewEnlargedImage");
+                        self.dataModel.audioFormatNotCompatible = self.getLocaleString("audioFormatNotCompatible");
+                        self.dataModel.videoFormatNotCompatible = self.getLocaleString("videoFormatNotCompatible");
+                        self.dataModel.openInNewTab = self.getLocaleString("openInNewTab");
+                    });
+
                 }
 
                 break;
             default:
-                self.getPopup().then(popup => self.filterFeature.showPopup(popup));
+                self.getPopup().then(async popup => {
+                    const instance = await self.filterFeature.showPopup(popup);
+                    if (self?.resultsLayer?.features) {
+                        self.dataController = new Controller(self.dataModel, new Observer(instance.popupDiv));
+                        self.dataModel.open = self.getLocaleString("open");
+                        self.dataModel.linkInNewWindow = self.getLocaleString("linkInNewWindow");
+                        self.dataModel["featureInfo.complexData.array"] = self.getLocaleString("featureInfo.complexData.array");
+                        self.dataModel.viewEnlargedImage = self.getLocaleString("viewEnlargedImage");
+                        self.dataModel.audioFormatNotCompatible = self.getLocaleString("audioFormatNotCompatible");
+                        self.dataModel.videoFormatNotCompatible = self.getLocaleString("videoFormatNotCompatible");
+                        self.dataModel.openInNewTab = self.getLocaleString("openInNewTab");
+                    }
+                    
+                });
                 break;
         }
     }
@@ -667,7 +747,9 @@ class FeatureInfoCommons extends Click {
 
         content.querySelectorAll('table:not(.tc-complex-attr)').forEach(function (table) {
             if (!table.parentElement.classList.contains(Consts.classes.CHECKED)) {
-                table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
+                self.controller.setAttribute('clickToShowOnMap', 'title', table);
+                self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+                //table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
             }
             // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
             table.addEventListener('click', function (e) {
@@ -723,6 +805,18 @@ class FeatureInfoCommons extends Click {
                 }
             }
         }
+        if (self.displayMode !== Consts.infoContainer.RESULTS_PANEL)
+            self.getPopup().then(popup => {
+                self.controller = new Controller(self.model, new Observer(popup.contentDiv));
+                self.menuController = new Controller(self.menuModel, new Observer(popup.menuDiv));
+                self.updateModel();
+            });
+        else
+            self.getResultsPanel().then(table => {
+                self.controller = new Controller(self.model, new Observer(table.getInfoContainer()));
+                self.menuController = new Controller(self.menuModel, new Observer(table.getMenuElement()));
+                self.updateModel();
+            });
     }
 
     onShowPopup(e) {
@@ -917,7 +1011,9 @@ class FeatureInfoCommons extends Click {
                     Consts.classes.FROMRIGHT);
             });
         target.querySelectorAll('.' + self.CLASS + '-features table:not(.tc-complex-attr)').forEach(function (table) {
-            table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
+            self.controller.setAttribute('clickToShowOnMap', 'title', table);
+            self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+            //table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
         });
 
         self.#setNotShowAllUI();
@@ -1155,7 +1251,27 @@ class FeatureInfoCommons extends Click {
 
         return self.#layersPromise;
     }
-
+    _generateTitle(displayControl) {
+        const self = this;
+        var printTitle = self.getLocaleString("feature");
+        if (displayControl === self.getDisplayControl()) {
+            if (self.filterFeature instanceof Point) {
+                const geom = self.filterFeature.geometry;
+                printTitle = self.getLocaleString('featuresAt', {
+                    crs: self.map.crs,
+                    x: Util.formatCoord(geom[0], self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION),
+                    y: Util.formatCoord(geom[1], self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION)
+                });
+            }
+            else {
+                printTitle = self.getLocaleString('spatialQueryResults');
+            }
+        }
+        else if (displayControl.currentFeature) {
+            printTitle = displayControl.currentFeature.id;
+        }
+        return printTitle;
+    }
     _decorateDisplay(displayControl) {
         const self = this;
 
@@ -1170,31 +1286,18 @@ class FeatureInfoCommons extends Click {
             }
         }
         else {
-            var printTitle = self.getLocaleString("feature");
-            if (displayControl === self.getDisplayControl()) {
-                if (self.filterFeature instanceof Point) {
-                    const geom = self.filterFeature.geometry;
-                    printTitle = self.getLocaleString('featuresAt', {
-                        crs: self.map.crs,
-                        x: Util.formatCoord(geom[0], self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION),
-                        y: Util.formatCoord(geom[1], self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION)
-                    });
-                }
-                else {
-                    printTitle = self.getLocaleString('spatialQueryResults');
-                }
-            }
-            else if (displayControl.currentFeature) {
-                printTitle = displayControl.currentFeature.id;
-            }
+            var printTitle = self._generateTitle(displayControl);
 
             // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
             if (self.lastFeatureCount || displayControl.currentFeature && displayControl.currentFeature.showsPopup === true) {
-                new Print({
+                self.printCtl = new Print({
                     target: resultsContainer,
                     printableElement: self.getDisplayTarget({ control: displayControl }),
                     title: printTitle
                 });
+                self.printToolModel = self.printCtl.model;
+                self.printToolModel.printThisContent = self.getLocaleString("printThisContent");
+                self.printToolModel.print = self.getLocaleString("print");
             }
         }
 
@@ -1326,8 +1429,8 @@ class FeatureInfoCommons extends Click {
             src: img.getAttribute('src')
         });
         const container = document.createElement('div');
+        container.insertAdjacentHTML('beforeend', html);
         document.body.appendChild(container);
-        container.innerHTML = html;
         Util.showModal(container.querySelector(`.${cssClassName}-img-dialog`), {
             closeCallback: () => container.remove()
         });
@@ -1345,6 +1448,53 @@ class FeatureInfoCommons extends Click {
                 e.stopPropagation(); // No queremos zoom si pulsamos en una imagen
             }, { passive: true });
         });
+    }
+    async updateModel() {
+        const self = this;
+        self.model.crs = self.getLocaleString("crs");
+        self.model.lat = self.getLocaleString("lat");;
+        self.model.lon = self.getLocaleString("lon");
+        self.model.feature = self.getLocaleString("feature");
+        self.model.heightOverTerrain = self.getLocaleString("heightOverTerrain");
+        self.model.height = self.getLocaleString("height");
+        self.model["elevation.explained"] = self.getLocaleString("elevation.explained");
+        self.model.ele = self.getLocaleString("ele");
+        self.model.expand = self.getLocaleString("expand");
+        self.model["fi.error"] = self.getLocaleString("fi.error");
+        self.model.noDataInThisLayer = self.getLocaleString("noDataInThisLayer");
+        self.model.noDataAtThisService = self.getLocaleString("noDataAtThisService");
+        self.model.noData = self.getLocaleString("noData");
+        self.model.previous = self.getLocaleString("previous");
+        self.model.next = self.getLocaleString("next");
+
+        self.dialogModel.shareQuery = self.getLocaleString("shareQuery");
+        self.dialogModel.close = self.getLocaleString("close");
+
+        self.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+
+        (await self.getResultsPanel())?.setTitles({
+            main: self.getLocaleString("threed.rs.panel.gfi"),
+            max: self.getLocaleString("threed.rs.panel.gfi")
+        });
+
+        self.menuModel.showOnMapAllResults = self.getLocaleString("showOnMapAllResults");
+        self.menuModel.zoomToAllResults = self.getLocaleString("zoomToAllResults");
+        self.menuModel.removeAllResults = self.getLocaleString("removeAllResults");
+        self.menuModel.downloadAllResults = self.getLocaleString("downloadAllResults");
+
+        self.dataModel.open = self.getLocaleString("open");
+        self.dataModel.linkInNewWindow = self.getLocaleString("linkInNewWindow");
+        self.dataModel["featureInfo.complexData.array"] = self.getLocaleString("featureInfo.complexData.array");
+        self.dataModel.viewEnlargedImage = self.getLocaleString("viewEnlargedImage");
+        self.dataModel.audioFormatNotCompatible = self.getLocaleString("audioFormatNotCompatible");
+        self.dataModel.videoFormatNotCompatible = self.getLocaleString("videoFormatNotCompatible");
+        self.dataModel.openInNewTab = self.getLocaleString("openInNewTab");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
+        if (self.printCtl)
+            self.printCtl.title = self._generateTitle(self.getDisplayControl());
     }
 }
 
