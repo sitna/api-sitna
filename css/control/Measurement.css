@@ -5,7 +5,7 @@
 sitna-measurement .tc-ctl-msmt-box {
     position: relative;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     width: 100%;
     min-height: 2em;
     margin: 0.5em 0 0.5em 0;
@@ -20,6 +20,9 @@ sitna-measurement .tc-ctl-msmt-box {
 sitna-measurement .tc-ctl-msmt-txt {
     flex-grow: 1;
     line-height: 1.5em;
+    /* Esto para que quepa en una línea, que está justo */
+    white-space: nowrap;
+    letter-spacing: -0.01em;
 }
 
 sitna-measurement .tc-ctl-msmt-txt-elm {

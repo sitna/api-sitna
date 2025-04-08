@@ -33,6 +33,7 @@ sitna-file-import ul.tc-ctl-file-recent {
         flex-wrap: nowrap;
         justify-content: space-between;
         align-items: baseline;
+        margin: 0 0.2em;
     }
 
         sitna-file-import ul.tc-ctl-file-recent > li h3 {
