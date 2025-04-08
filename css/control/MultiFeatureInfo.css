@@ -3,10 +3,15 @@
     padding-right: 0;
 }
 
+.tc-ctl-m-finfo-btn-zoom {
+    --icon-text: '\e917';
+}
+
 .tc-ctl-m-finfo-select {
     font-size: 0.9em;
     line-height: 1.8em;
     display: flex;
+    align-items: center;
     margin: 0.2em;
 }
 
@@ -77,38 +82,21 @@
         cursor: default;
     }
     
-    .tc-map .tc-ctl-m-finfo-select .tc-icon-btn {
+    .tc-map .tc-ctl-m-finfo-select sitna-button {
         font-size: 1.5em;
-        padding: 1px 0px 1px 10px;
+        margin-left: 0.2em;
+        margin-right: 0;
     }
 
-        .tc-map .tc-ctl-m-finfo-select .tc-icon-btn:first-of-type {
+        .tc-map .tc-ctl-m-finfo-select sitna-button:first-of-type {
             margin-left: 0.5em;
         }
 
-        .tc-map .tc-ctl-m-finfo-select .tc-icon-btn.tc-hidden {
+        .tc-map .tc-ctl-m-finfo-select sitna-button.tc-hidden {
             display: none;
         }
 
-.tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-dl:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
-    content: var(--icon-download-all);
-}
-
-.tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-remove:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
-    content: var(--icon-delete);
-}
-
-.tc-ctl-m-finfo-select .tc-ctl-m-finfo-btn-zoom:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
-    content: '\e917';
-}
-
-@media screen and (min-height: 40em) and (pointer: fine),screen and (min-height: 40em) and (-ms-high-contrast: none), screen and (max-resolution: 1dppx) and (min-height: 40em) {
+@media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height: 40em) {
     .tc-map .tc-ctl-m-finfo-select .tc-icon-btn {
         padding: 1px 0px 1px 3px;
     }
