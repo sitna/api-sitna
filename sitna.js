@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.4.1
+ * @version 4.5.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -34,6 +34,7 @@ import { JL } from 'jsnlog';
 import Button from './SITNA/ui/Button';
 import './SITNA/ui/Toggle';
 import './SITNA/ui/Tab';
+import filter from './SITNA/filter';
 
 TC.isDebug = true;
 
@@ -74,24 +75,9 @@ TC.wrap = wrap;
 globalThis.TC = globalThis.TC || TC;
 //window.JL = JL;
 
-TC.version = '4.4.1';
+TC.version = '4.5.0';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
-
-// Precargamos el CRS por defecto
-TC.loadProjDef({ crs: 'EPSG:25830', name: 'ETRS89 / UTM zone 30N', def: '+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs' });
-// Precargamos los CRS de IDENA que tienen orden de ejes neu
-TC.loadProjDef({ crs: 'EPSG:4258', name: 'ETRS89', def: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs +axis=neu' });
-TC.loadProjDef({ crs: 'EPSG:3040', name: 'ETRS89 / UTM zone 28N (N-E)', def: '+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
-TC.loadProjDef({ crs: 'EPSG:3041', name: 'ETRS89 / UTM zone 29N (N-E)', def: '+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
-TC.loadProjDef({ crs: 'EPSG:3042', name: 'ETRS89 / UTM zone 30N (N-E)', def: '+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
-TC.loadProjDef({ crs: 'EPSG:3043', name: 'ETRS89 / UTM zone 31N (N-E)', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +axis=neu' });
-TC.loadProjDef({ crs: 'EPSG:4230', name: 'ED50', def: '+proj=longlat +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +no_defs +axis=neu' });
-//resto de CRS nacionales
-TC.loadProjDef({ crs: 'EPSG:25828', name: 'ETRS89 / UTM zone 28N', def: '+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
-TC.loadProjDef({ crs: 'EPSG:25829', name: 'ETRS89 / UTM zone 29N', def: '+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
-TC.loadProjDef({ crs: 'EPSG:25831', name: 'ETRS89 / UTM zone 31N', def: '+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' });
-
 
 // Método que se usa en varios proyectos
 // TODO: eliminar de todos los sitios
@@ -269,5 +255,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 Cfg.layout = TC.apiLocation + 'layout/responsive';
 
-export { Cfg, SitnaMap as Map, Consts, feature, layer, tool, ui };
+export { Cfg, SitnaMap as Map, Consts, feature, layer, tool, filter, ui };
 
