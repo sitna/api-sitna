@@ -9,9 +9,10 @@ class Tab extends Component {
 
     constructor() {
         super();
-        const template = document.createElement('template');
-        template.innerHTML = '<slot></slot>'
+        this.createTemplate();
+        const template = this.getTemplate();
         this.shadowRoot.appendChild(template.content.cloneNode(true));
+        this.shadowRoot.querySelector('slot').addEventListener('slotchange', () => this.#onTextChange());
         this.addEventListener(Consts.event.CLICK, (_e) => this.onClick(), { passive: true });
     }
 
@@ -55,7 +56,8 @@ class Tab extends Component {
     }
 
     #onTextChange() {
-        this.shadowRoot.querySelector('slot').textContent = this.text;
+        const text = this.text || this.textContent;
+        if (this.textContent !== text) this.textContent = text;
     }
 
     get group() {
