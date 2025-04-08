@@ -981,9 +981,18 @@ class Vector extends Layer {
         const result = [];
         if (this.file) {
             if (this.fileSystemFile && this.fileSystemFile !== this.file) {
-                result.push(this.fileSystemFile);
+                const getNameWithoutExtension = (name) => name.substring(0, name.lastIndexOf('.')) || name;
+                if (getNameWithoutExtension(this.fileSystemFile) !== getNameWithoutExtension(this.file)) {
+                    result.push(this.file);
+                }
             }
-            result.push(this.file);
+            const groupIndex = this.groupIndex ?? this.options?.groupIndex;
+            const groupCount = this.groupCount ?? this.options?.groupCount;
+            const groupName = this.groupName ?? this.options?.groupName;
+            if (result.length === 0 || groupCount > 1) {
+                if (groupName) result.push(groupName);
+                else result.push((groupIndex ?? 0) + 1);
+            }
         }
         return result;
     }
@@ -1224,7 +1233,7 @@ class Vector extends Layer {
             .map(function (f) {
                 const fObj = exportFeature(f);
                 let layerStyle = self.styles?.[f.STYLETYPE] ||
-                    self.map?.options?.styles?.[f.STYLETYPE] || TC.Cfg.styles?.[f.STYLETYPE];
+                    self.map?.options?.styles?.[f.STYLETYPE] || Cfg.styles?.[f.STYLETYPE];
                 if (options.exportStyles === undefined || options.exportStyles) {
                     layerStyle = Util.extend({}, layerStyle);
                     for (var key in layerStyle) {
@@ -1456,9 +1465,10 @@ export default Vector;
  * @property {SITNA.layer.ClusterOptions} [cluster] - La capa agrupa sus entidades puntuales cercanas entre sí en grupos (clusters).
  * @property {string} [featureType] - Nombre de la capa del servicio WFS que queremos representar. Propiedad obligatoria
  * solamente en capas de tipo `WFS`.
+ * @property {string|SITNA.filter.Filter} [filter] - Filtro en formato [SITNA.filter]{@linkplain SITNA.filter}, GML o <a href="https://docs.geoserver.org/latest/en/user/tutorials/cql/cql_tutorial.html" target="_blank">CQL</a>. En el caso de tratarse de capas `WFS` se añade a las peticione GetFeature el parámetro <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#filter" target="_blank">filter</a> o <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#cql-filter" target="_blank">cql_filter</a> correspondiente.
  * @property {string} [format] - Tipo MIME del formato de archivo de datos geográficos que queremos cargar (GeoJSON, KML, etc.).
 
-  * Para asignar valor a esta propiedad se pueden usar las constantes definidas en [SITNA.Consts.mimeType]{@link SITNA.Consts}.
+ * Para asignar valor a esta propiedad se pueden usar las constantes definidas en [SITNA.Consts.mimeType]{@link SITNA.Consts}.
  * @property {boolean} [hideTree] - Aplicable a capas de tipo [KML]{@link SITNA.Consts}.
  * Si se establece a `true`, la capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.
  * @property {boolean} [isBase] - Si se establece a `true`, la capa es un mapa de fondo.
@@ -1469,6 +1479,10 @@ export default Vector;
  * Si el valor es de tipo `string`, tiene que ser un identificador de capas de la API SITNA (un miembro de [SITNA.Consts.layer]{@link SITNA.Consts}).
  *
  * La capa del mapa de situación debe ser compatible con el sistema de referencia de coordenadas del mapa principal (ver propiedad `crs` de {@link SITNA.MapOptions}).
+ * @property {string} [outputFormat] - Tipo MIME del formato en el cual se desea la respuesta del servicio `WFS`.
+ * Para asignar valor a esta propiedad se pueden usar las constantes definidas en [SITNA.Consts.format]{@link SITNA.Consts}.
+ * El valor por defecto es GML2, aunque se aconseja usar [JSON]{@link SITNA.Consts} si el servicio lo soporta; para saberlo, consultar previamente las capacidades del servicio. 
+ * @property {string|string[]} [properties] - Lista de propiedades soliciadas (PropertyName) en la peticion GetFeature. Puede ser un array de cadenas o bien una cadena de textos separados por comas.
  * @property {boolean} [stealth] - Si se establece a `true`, la capa no aparece en la tabla de contenidos ni en la leyenda.
  * De este modo se puede añadir una superposición de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
  * @property {SITNA.layer.StyleOptions} [styles] - Descripción de los estilos que tendrán las entidades geográficas de la capa.
@@ -1483,7 +1497,58 @@ export default Vector;
  * El formato se deduce de la extensión del nombre de archivo, pero también se puede especificar utilizando la propiedad `format`.
  *
  * En el caso de que un fichero KML tenga definido el <a target="_blank" href="https://developers.google.com/kml/documentation/kmlreference#balloonstyle">estilo del bocadillo</a>, este formato será usado al renderizar el bocadillo en visores basados en la API SITNA.
+ * @example <caption>Ejemplo de uso de la capa vectorial de tipo `WFS` [Ver en vivo](../examples/cfg.VectorOptions.wfs.html)</caption> {@lang html}
+ * <div id="mapa"></div>
+ * <script>
+ *    // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+ *       SITNA.Cfg.layout = "layout/ctl-container";
+ *       // Añadimos el control de tabla de contenidos en la primera posición.
+ *       SITNA.Cfg.controls.TOC = {
+ *           div: "slot1"
+ *       };
+ *       var map = new SITNA.Map("mapa", {
+ *           // Mapa centrado de Pamplona
+ *           initialExtent: [606239, 4738249, 614387, 4744409],
+ *           // Añadimos la capa de GeoPamplona del catálogo de edificios filtrada para mostrar solamente los de uso cultural.
+ *           // Añadimos también la capa de IDENA de museos filtrada para mostrar solamente los que están en Pamplona.
+ *           // Añadimos también la capa de IDENA de edificios religiosos filtrando por los contenidos en un polígono dado.
+ *           workLayers: [
+ *               {
+ *                   id: "layer1",
+ *                   title: "Catálogo de edificios de Pamplona de uso cultural",
+ *                   type: SITNA.Consts.layerType.WFS,
+ *                   url: "//sig.pamplona.es/ogc/wfs",
+ *                   featureType: "PROY_Pol_Edificios",
+ *                   filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>GRUPOEDIF</ogc:PropertyName><ogc:Literal><![CDATA[CULTURAL]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
+ *               },
+ *               {
+ *                   id: "layer2",
+ *                   title: "Museos localizados en Pamplona",
+ *                   type: SITNA.Consts.layerType.WFS,
+ *                   url: "//idena.navarra.es/ogc/wfs",
+ *                   featureType: "IDENA:DOTACI_Sym_Museos",
+ *                   filter: "POBLACION='Pamplona / Iruña'",
+ *                   outputFormat: SITNA.Consts.format.JSON
+ *               },
+ *               {
+ *                   id: "layer3",
+ *                   title: "Edificios religiosos",
+ *                   type: SITNA.Consts.layerType.WFS,
+ *                   url: "//idena.navarra.es/ogc/wfs",
+ *                   featureType: "DOTACI_Sym_EdifReligi",
+ *                   filter: SITNA.filter.Within("the_geom",new SITNA.feature.Polygon([
+ *                         [602979, 4743332],
+ *                         [602979, 4737828,
+ *                         [614563, 4737828],
+ *                         [614563, 4743332],
+ *                         [602979, 4743332]
+ *                   ]))
+ *             }
+ *           ]
+ *       });
+ * </script>
  */
+
 
 /**
  * Opciones de clustering de puntos de una capa, define si los puntos se tienen que agrupar cuando están más cerca entre sí que un valor umbral.
