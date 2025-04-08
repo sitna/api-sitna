@@ -121,7 +121,8 @@ const exportFeatures = async function (features, options = {}) {
         switch (type) {
             case DataTypes.DATE:
             case DataTypes.DATETIME:
-                return new Date(value);
+                if (value) return new Date(value);
+                return value;
             default:
                 return value;
         }
@@ -162,10 +163,9 @@ const exportFeatures = async function (features, options = {}) {
         var projData = await TC.getProjectionData({ crs: currentCrs });
         newSRS.srs_name = currentCrs;
         newSRS.srs_id = projData.code;
-        newSRS.organization = currentCrs.substr(0, currentCrs.indexOf(":"));
+        newSRS.organization = projData.authority ?? 'EPSG';
         newSRS.organization_coordsys_id = projData.code;
-        newSRS.definition = projData.proj4.trim();
-        newSRS.definition_12_063 = projData.wkt.trim();
+        newSRS.definition = projData.wkt.trim();
         newSRS.description = projData.name;
         myPackage.spatialReferenceSystemDao.create(newSRS);
     }
@@ -175,17 +175,18 @@ const exportFeatures = async function (features, options = {}) {
     for (const feature of featuresToExport) {
         let tableName;
         if (feature.layer) {
-            const metadata = await feature.layer.getFeatureTypeMetadata();
+            let metadata = await feature.layer.getFeatureTypeMetadata();
+            if (Util.isFunction(metadata)) metadata = metadata(feature);
             if (metadata?.origin === Consts.format.GEOPACKAGE) {
                 tableName = metadata.originalMetadata.tableName;
             }
             else {
-                tableName = metadata?.name;
+                tableName = metadata?.name || (feature.layer?.title ?? feature.layer?.id);
             }
         }
         if (!tableName) {
             tableName = typeof feature.id === "string" ? feature.id.substr(0, feature.id.lastIndexOf(".")) : options.fileName;
-            tableName = tableName || feature.layer?.id || 'layer';
+            tableName = tableName || 'layer';
         }
         //var id = feature.layer ? (typeof (feature.layer) === "string" ? feature.layer : feature.layer.id) : feature.id.substr(0, feature.id.lastIndexOf("."));
         featureCollections[tableName] ??= [];
@@ -233,7 +234,10 @@ const exportFeatures = async function (features, options = {}) {
                 return newType;
             }, 'Geometry');
 
-            const tableName = sanitizeName(layerId + (groups.size > 1 ? "_" + groupIndex++ : ""));// + (timestamp ? "_" + timestamp : "");
+            let tableName = sanitizeName(layerId + (groups.size > 1 ? "_" + geometryType : ""));// + (timestamp ? "_" + timestamp : "");
+            if (myPackage.getFeatureTables().includes(tableName)) {
+                tableName += "_" + groupIndex++;
+            }
             var columns = [];
             //var dataColumns = [];
             const pkColumn = featureTypeMetadata?.attributes?.find(c => c.isId);
@@ -338,6 +342,8 @@ const exportFeatures = async function (features, options = {}) {
     return await myPackage.export();
 };
 
+const getColumnName = (c) => c.dataColumn ? c.dataColumn.name : c.name;
+
 const importFile = async function (buffer) {
     const {
         GeoPackageAPI,
@@ -374,13 +380,15 @@ const importFile = async function (buffer) {
                 row.type = "Feature";
                 for (let key in row.properties) {
                     const prop = row.properties[key];
-                    const dataColumn = tableMetadata.columns.find(c => c.name === key);
-                    if (dataColumn.primaryKey) {
-                        row.id = vectorLayers[i] + "." + prop;
-                        delete row.properties[key];
-                    }
-                    if (dataColumn?.dataType === DataTypes.BOOLEAN) {
-                        row.properties[key] = !!prop;
+                    const dataColumn = tableMetadata.columns.find((c) => getColumnName(c) === key);
+                    if (dataColumn) {
+                        if (dataColumn.primaryKey) {
+                            row.id = vectorLayers[i] + "." + prop;
+                            delete row.properties[key];
+                        }
+                        if (dataColumn.dataType === DataTypes.BOOLEAN) {
+                            row.properties[key] = !!prop;
+                        }
                     }
                 }
                 arr[arr.length] = row;
@@ -426,7 +434,7 @@ const getFeatureTypeMetadata = function (tableMetadata) {
             .columns
             .filter(c => typeof c.dataType === 'number')
             .map(c => ({
-                name: c.name,
+                name: getColumnName(c),
                 type: getType(c.dataType),
                 originalType: c.dataType,
                 isId: c.primaryKey,
@@ -457,7 +465,7 @@ class GeoPackage extends BinaryFormat {
 
     groupFeatures(features) {
         const result = {};
-        features.forEach((feat) => {
+        for (const feat of features) {
             const featureMetadata = this.featureMetadata.get(feat);
             if (featureMetadata) {
                 if (!Object.prototype.hasOwnProperty.call(result, featureMetadata.name)) {
@@ -465,7 +473,7 @@ class GeoPackage extends BinaryFormat {
                 }
                 result[featureMetadata.name].push(feat);
             }
-        });
+        }
         return result;
     }
 
