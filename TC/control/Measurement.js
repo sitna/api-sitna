@@ -55,7 +55,8 @@ class Measurement extends WebComponentControl {
     #perimeterValue;
     #areaValue;
     #profileButton;
-    #measurementData;
+    #measurementData = {}
+;
 
     constructor() {
         super(...arguments);
@@ -243,43 +244,108 @@ class Measurement extends WebComponentControl {
     }
 
     setFeatureMeasurementData(feature) {
-        const self = this;
         const data = {};
         switch (true) {
             case feature instanceof Point: {
-                const firstCoordText = self.#measurementData.coord1Text;
-                const secondCoordText = self.#measurementData.coord2Text;
-                //const elevationText = self.#measurementData.elevationText;
-                if (Object.prototype.hasOwnProperty.call(self.#measurementData, "coord1") &&
-                    Object.prototype.hasOwnProperty.call(self.#measurementData, "coord2")) {
-                    data.CRS = self.map.getCRS();
-                    data[firstCoordText.substr(0, firstCoordText.indexOf(':'))] = self.#measurementData.coord1;
-                    data[secondCoordText.substr(0, secondCoordText.indexOf(':'))] = self.#measurementData.coord2;
+                //const elevationText = this.#measurementData.elevationText;
+                if (Object.prototype.hasOwnProperty.call(this.#measurementData, "coord1") &&
+                    Object.prototype.hasOwnProperty.call(this.#measurementData, "coord2")) {
+                    data.CRS = this.map.getCRS();
+                    data[this.#getFirstCoordinatePropertyName()] = this.#measurementData.coord1;
+                    data[this.#getSecondCoordinatePropertyName()] = this.#measurementData.coord2;
                     //if (elevationText) {
-                    //    data[self.getLocaleString('ele')] = self.#measurementData.elevation;
+                    //    data[this.getLocaleString('ele')] = this.#measurementData.elevation;
                     //}
                     feature.setData(data);
                 }
                 break;
             }
             case feature instanceof Polyline:
-                if (Object.prototype.hasOwnProperty.call(self.#measurementData, "length")) {                    
-                    data[self.getLocaleString('2dLength')] = self.#measurementData.length;
+                if (Object.prototype.hasOwnProperty.call(this.#measurementData, "length")) {                    
+                    data[this.#getLengthPropertyName()] = this.#measurementData.length;
                     feature.setData(data);
                 }
                 break;
             case feature instanceof Polygon:
-                if (Object.prototype.hasOwnProperty.call(self.#measurementData, "area") &&
-                    Object.prototype.hasOwnProperty.call(self.#measurementData, "perimeter")) {
-                    data[self.getLocaleString('area')] = self.#measurementData.area;
-                    data[self.getLocaleString('2dPerimeter')] = self.#measurementData.perimeter;                    
+                if (Object.prototype.hasOwnProperty.call(this.#measurementData, "area") &&
+                    Object.prototype.hasOwnProperty.call(this.#measurementData, "perimeter")) {
+                    data[this.#getAreaPropertyName()] = this.#measurementData.area;
+                    data[this.#getPerimeterPropertyName()] = this.#measurementData.perimeter;                    
                     feature.setData(data);
                 }
                 break;
             default:
                 break;
         }
-        return self;
+        return this;
+    }
+
+    #getFirstCoordinatePropertyName() {
+        const coord1Text = this.#getPointMeasurementDataObject().coord1Text;
+        return coord1Text.substring(0, coord1Text.indexOf(':'));
+    }
+
+    #getSecondCoordinatePropertyName() {
+        const coord2Text = this.#getPointMeasurementDataObject().coord2Text;
+        return coord2Text.substring(0, coord2Text.indexOf(':'));
+    }
+
+    #getLengthPropertyName() {
+        return this.getLocaleString('2dLength');
+    }
+
+    #getPerimeterPropertyName() {
+        return this.getLocaleString('2dPerimeter');
+    }
+
+    #getAreaPropertyName() {
+        return this.getLocaleString('area');
+    }
+
+    getFeatureMeasurementMetadata() {
+        const getFloatProperty = (name) => ({ name, type: Consts.dataType.FLOAT });
+        return (feature) => {
+            const attributes = [];
+            const geometryType = feature.getGeometryType();
+            let groupName = 'Measurement';
+            switch (geometryType) {
+                case Consts.geom.POINT:
+                    groupName = this.getLocaleString('point');
+                    attributes.push({
+                        name: 'CRS',
+                        type: Consts.dataType.STRING
+                    });
+                    attributes.push(getFloatProperty(this.#getFirstCoordinatePropertyName()));
+                    attributes.push(getFloatProperty(this.#getSecondCoordinatePropertyName()));
+                    break;
+                case Consts.geom.POLYLINE:
+                    groupName = this.getLocaleString('line');
+                    attributes.push(getFloatProperty(this.#getLengthPropertyName()));
+                    break;
+                case Consts.geom.POLYGON:
+                    groupName = this.getLocaleString('polygon');
+                    attributes.push(getFloatProperty(this.#getAreaPropertyName()));
+                    attributes.push(getFloatProperty(this.#getPerimeterPropertyName()));
+                    break;
+            }
+            return {
+                origin: 'Measurement',
+                name: groupName,
+                geometries: [{
+                    name: 'geometry',
+                    type: geometryType,
+                }],
+                attributes,
+            };
+        }
+    }
+
+    #getPointMeasurementDataObject(options = {}) {
+        const units = options.units ?? 'm';
+        const data = {};
+        data.coord1Text = units === 'm' ? 'x: ' : 'lat: ';
+        data.coord2Text = units === 'm' ? 'y: ' : 'lon: ';
+        return data;
     }
 
     displayMeasurement(featureOrOptions) {
@@ -296,6 +362,7 @@ class Measurement extends WebComponentControl {
         self.#measurementData = {};
         let units = options.units;
         if (options.coordinates) {
+            self.#measurementData = self.#getPointMeasurementDataObject(options);
             mode = Consts.geom.POINT;
             const round = function (val, precision) {
                 const factor = Math.pow(10, precision);
@@ -305,16 +372,12 @@ class Measurement extends WebComponentControl {
                 precision = Consts.METER_PRECISION;
                 self.#measurementData.coord1 = options.coordinates[0];
                 self.#measurementData.coord2 = options.coordinates[1];
-                self.#measurementData.coord1Text = 'x: ';
-                self.#measurementData.coord2Text = 'y: ';
             }
             else {
                 precision = Consts.DEGREE_PRECISION;
                 self.#measurementData.coord1 = options.coordinates[1];
                 self.#measurementData.coord2 = options.coordinates[0];
-                self.#measurementData.coord1Text = 'lat: ';
                 self.#measurementData.coord1Tooltip = self.getLocaleString('latitude');
-                self.#measurementData.coord2Text = 'lon: ';
                 self.#measurementData.coord2Tooltip = self.getLocaleString('longitude');
             }
             self.#measurementData.coord1 = round(self.#measurementData.coord1, precision);
@@ -449,7 +512,7 @@ class Measurement extends WebComponentControl {
         this.model.latitude = this.getLocaleString('latitude');
         this.model.latitude = this.getLocaleString('longitude');
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();        
         var drawControl;
