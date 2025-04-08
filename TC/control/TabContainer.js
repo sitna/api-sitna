@@ -42,6 +42,11 @@ TC.control = TC.control || {};
 
 class TabContainer extends Container {
 
+    constructor() {
+        super(...arguments);
+        const self = this;
+    }
+
     async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-tctr.mjs');
@@ -50,14 +55,15 @@ class TabContainer extends Container {
 
     render(callback) {
         const self = this;
+                
         return self.renderData({
             controlId: self.getId(),
             title: self.title,
             deselectableTabs: self.options.deselectableTabs,
             controls: self.controlOptions
         }, function () {
-
-            self.div.querySelectorAll('sitna-tab').forEach(tab => {
+            
+            self.div.querySelectorAll('sitna-tab').forEach((tab,index) => {
                 const target = tab.target;
 
                 // GLS 24/01/2020 necesitamos un mutation observer para poder quitar el tc.collapsed cuando volvamos de  
@@ -92,6 +98,7 @@ class TabContainer extends Container {
             if (typeof callback === 'function') {
                 callback();
             }
+            
         });
     }
 
@@ -99,7 +106,7 @@ class TabContainer extends Container {
         const self = this;
 
         self.title = self.title || self.getLocaleString(self.options.title || 'moreControls');
-        self.div.querySelector('h2').innerHTML = self.title;
+        //self.div.querySelector('h2').innerHTML = self.title;
 
         self.controlOptions.forEach((ctl, i) => {
             let ctlName = "";
@@ -125,19 +132,20 @@ class TabContainer extends Container {
         const classSelector = `.${self.CLASS}`;
         const writeTitle = async function (ctl, idx) {
             await ctl.renderPromise();
-            const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
+
+            //const title = self.getLocaleString(self.controlOptions[idx].title) || ctl.div.querySelector('h2').innerHTML;
             var parent = ctl.div;
             do {
                 parent = parent.parentElement;
             }
             while (parent && !parent.matches(classSelector));
-            parent.querySelector(`sitna-tab[for="${self.getId()}-sel-${idx}"]`).text = title;
+            ctl.controller.setAttribute(self.controlOptions[idx].title, "text", parent.querySelector(`sitna-tab[for="${self.getId()}-sel-${idx}"]`))
         };
 
         const controls = await Promise.all(self._ctlPromises);
         for (var i = 0, len = controls.length; i < len; i++) {
             const ctl = controls[i];
-            ctl.containerControl = self;
+            ctl.containerControl = self;            
             await writeTitle(ctl, i);
         }
         return self;
@@ -168,6 +176,19 @@ class TabContainer extends Container {
                 }
             }
         });
+    }
+    async updateModel() {
+        const self = this;
+        const controls = await Promise.all(self._ctlPromises);
+        for (var i = 0, len = controls.length; i < len; i++) {
+            const ctl = controls[i];
+            const key = self.controlOptions[i].title
+            ctl.model[key] = self.getLocaleString(key);
+        }
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

@@ -12,8 +12,7 @@
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [enableDragAndDrop] - Propiedad que establece si está permitido arrastrar y soltar archivos al área del mapa, además de abrirlos de la manera convencional abriendo el cuadro de diálogo de búsqueda de archivos.
   * @property {SITNA.layer.WmsGroupOptions[]} [wmsSuggestions] - Lista de grupos de sugerencias de servicios WMS ofrecidos por el control. Por ejemplo se puede establecer un grupo de servicios WMS estatales y otro de servicios WMS mundiales.
-  * @example <caption>[Ver en vivo](../examples/cfg.DataLoaderOptions.html)</caption> {@lang html} 
-  * [//]@example {@lang html} 
+  * @example <caption>[Ver en vivo](../examples/cfg.DataLoaderOptions.html)</caption> {@lang html}   
   * <div id="mapa"></div>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -93,9 +92,15 @@
 
 import TC from '../../TC';
 import TabContainer from './TabContainer';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
-
+class DataloaderModel{
+    constructor() {
+        this.title = "";
+    }
+}
 class DataLoader extends TabContainer {
     constructor() {
         super(...arguments);
@@ -107,10 +112,12 @@ class DataLoader extends TabContainer {
                 externalWMS: { suggestions: self.options.wmsSuggestions }
             },
             {
+                title: 'openFile',
                 fileImport: { enableDragAndDrop: self.options.enableDragAndDrop }
             }
         ];
         self.defaultSelection = 0;
+        self.model = new DataloaderModel();
     }
 
     async register(map) {
@@ -120,11 +127,21 @@ class DataLoader extends TabContainer {
         ctl.div.classList.add(TabContainer.prototype.CLASS + '-datldr');
         return ctl;
     }
-    render(callback) {
+    async render(callback) {
         const self = this;
         self.title = self.getLocaleString('addMaps');
-        super.render(callback)
-
+        await super.render(callback)
+        new Controller(self.model, new Observer(self.div));
+        self.updateModel();
+    }
+    updateModel() {
+        const self = this;
+        self.model.title = self.getLocaleString("addMaps");
+        super.updateModel();
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();        
     }
 }
 
