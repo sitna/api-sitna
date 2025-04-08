@@ -10,8 +10,7 @@
     </div>
     <div id="{{controlId}}-format-url" class="tc-ctl-share-url-box tc-group tc-url">
         <input type="text" class="tc-textbox tc-url" readonly data-toggle="tooltip" data-placement="top" title="[[shareLink.tip.1]]" />
-        <input class="tc-toggle tc-ctl-share-btn-shorten" type="checkbox" id="{{controlId}}-format-url-shorten" title="[[shareLink.tip.3]]">
-        <label for="{{controlId}}-format-url-shorten">{{i18n "shorten"}}</label>        
+        <sitna-toggle class="tc-ctl-share-btn-shorten" title="[[shareLink.tip.3]]">[[shorten]]</sitna-toggle>
         <div class="tc-ctl-share-icons">
             <sitna-button variant="minimal" class="tc-ctl-share-btn-copy" text="[[shareLink.tip.2]]"></sitna-button>
             {{#if native}}
@@ -36,8 +35,7 @@
         <div id="{{controlId}}-format-image" class="tc-ctl-share-url-box tc-group tc-image tc-hidden">
             <div class="tc-ctl-share-icons">
                 <div>
-                    <input class="tc-toggle tc-ctl-share-chk-qr" type="checkbox" id="{{controlId}}-qr" title="[[createQrCodeToImage]]">
-                    <label for="{{controlId}}-qr" class="tc-ctl-share-label-qr">[[appendQRCode]]</label>
+                    <sitna-toggle class="tc-ctl-share-chk-qr" title="[[createQrCodeToImage]]">[[appendQRCode]]</sitna-toggle>
                 </div>
                 <button class="tc-ctl-share-btn-png-native" data-format="PNG" title="[[sharePNG]]"></button>
                 <button class="tc-ctl-share-btn-jpg-native" data-format="JPG" title="[[shareJPG]]"></button>
