@@ -4,11 +4,13 @@ import Consts from '../../TC/Consts';
 import Cfg from '../../TC/Cfg';
 import Layer from '../../SITNA/layer/Layer';
 import Vector from './Vector';
+import { GMLFilter } from '../filter.js';
+import ol_filter from 'ol/format/filter/Filter.js';
 TC.layer = TC.layer || {};
 
 Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
 
-const wfsUrlPromises = {};
+const wfsUrls = {};
 const describeLayerPromises = {};
 const capabilitiesPromises = new Map();
 const formatDescriptions = {};
@@ -328,6 +330,10 @@ class Raster extends Layer {
             //primero miramos si es un objeto TC.filter
             if (options.filter instanceof TC.filter.Filter) {
                 params.filter = options.filter.getText();
+            }
+            //luego miramos si en un objeto filtro de los nuevos
+            if (options.filter instanceof GMLFilter) {
+                params.filter = options.filter.getFilterText(self);
             }
             //se puede parsear a XML, asumimos que es GML
             else if (!new DOMParser().parseFromString(options.filter, 'text/xml').querySelector("parsererror")) {
@@ -817,16 +823,14 @@ class Raster extends Layer {
         }
     }
 
+    getOgcScale() {
+        return this.map.wrap.getResolution() * this.map.getMetersPerUnit() / 0.00028; // OGC assumes 0.28 mm / pixel
+    }
+
     /*
      *  isVisibleByScale: return wether the WMS layer is visible at current scale
      *  Parameter: WMS layer name or UID
      */
-
-    getOgcScale = function () {
-        const self = this;
-        return self.map.wrap.getResolution() * self.map.getMetersPerUnit() / 0.00028; // OGC assumes 0.28 mm / pixel
-    };
-
 
     isVisibleByScale(nameOrUid, looseComparison) {
         const self = this;
@@ -1538,7 +1542,7 @@ class Raster extends Layer {
                 self.wrap.normalizeLayerNode(ly);
 
                 var title = ly.Title.trim();
-                var res = re.exec(title);
+                var res = re.exec(TC.Util.htmlToText(title));
                 var titleIx = res ? res.index : -1;
                 var abstractIx = -1;
                 if (ly.Abstract) {
@@ -1977,33 +1981,32 @@ class Raster extends Layer {
 
     async getWFSURL() {
         const self = this;
-        if (wfsUrlPromises[self.options.url]) return wfsUrlPromises[self.options.url];
-        else
-            wfsUrlPromises[self.options.url] = new Promise(async (resolve) => {
-                let layerDescription;
-                try {
-                    layerDescription = await self.describeLayer();
-                }
-                catch (_e) {
-                    resolve(self.options.url.replace(/wms/gi, "wfs"));
-                    return;
-                }
-                if (layerDescription.owsType !== "WFS") {
-                    resolve(self.options.url.replace(/wms/gi, "wfs"));
-                }
+        if (!wfsUrls[self.options.url]) {
+            let layerDescription;
+            try {
+                layerDescription = await self.describeLayer();
+            }
+            catch (_e) {
+                wfsUrls[self.options.url] = self.options.url.replace(/wms/gi, "wfs");
+                return wfsUrls[self.options.url];
+            }
+            if (layerDescription.owsType !== "WFS") {
+                wfsUrls[self.options.url] = self.options.url.replace(/wms/gi, "wfs");
+            }
+            else {
                 const url = layerDescription.owsURL.substr(0, layerDescription.owsURL.length + (layerDescription.owsURL.endsWith('?') ? -1 : 0));
                 try {
                     const urlObj = new URL(url);
                     urlObj.searchParams.append('request', 'GetCapabilities');
                     await self.proxificationTool.fetch(urlObj.toString(), { method: "HEAD" });
-                    resolve(url);
+                    wfsUrls[self.options.url] = url;
                 }
                 catch (_e) {
-                    resolve(self.options.url.replace(/wms/gi, "wfs"));
-                }                
-            })        
-        return wfsUrlPromises[self.options.url];
-
+                    wfsUrls[self.options.url] = self.options.url.replace(/wms/gi, "wfs");
+                }
+            }
+        }
+        return wfsUrls[self.options.url];
     }
 
     async getWFSFeatureType() {
@@ -2040,7 +2043,7 @@ class Raster extends Layer {
             return null;
         //URI:Comprobamos que el servicio tiene cacheado la cmprobación si soporta leyenda JSON
         const urlForGetMap = self.getGetMapUrl();
-        var legendJSONSupported = Object.prototype.hasOwnProperty.call(TC.legendFormat, urlForGetMap) ? TC.legendFormat[self.getGetMapUrl()] : new Promise(async (resolve, reject) => {
+        var legendJSONSupported = Object.prototype.hasOwnProperty.call(TC.legendFormat, urlForGetMap) ? TC.legendFormat[urlForGetMap] : new Promise(async (resolve, reject) => {
             const url = self.getLegendFormatUrl();
             if (url) {
                 try {
@@ -2074,7 +2077,7 @@ class Raster extends Layer {
                 }
                 catch (err) {
                     if (err?.status >= 400) {                        
-                        if (err.status === 405) {
+                        if (err.status === 405 || err.status === 501) {
                             resolve(LegendStatusEnum.NOT_ALLOWED);
                         }
                         else {
@@ -2256,9 +2259,9 @@ export { LegendStatusEnum };
  * @property {string} id - Identificador único de capa. No puede haber en un mapa dos capas con el mismo valor de `id`.
  * @property {string} layerNames - Lista separada por comas de los nombres de capa del servicio OGC.
  * @property {string} url - URL del servicio OGC que define la capa.
- * @property {string} [filter] - Filtro en formato GML o <a href="https://docs.geoserver.org/latest/en/user/tutorials/cql/cql_tutorial.html" target="_blank">CQL</a>. En función del formato especificado, se añade a las peticiones GetMap posteriores el parámetro <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#filter" target="_blank">filter</a> o <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#cql-filter" target="_blank">cql_filter</a> correspondiente.
+ * @property {string|SITNA.filter.Filter} [filter] - Filtro en formato [SITNA.filter]{@linkplain SITNA.filter}, GML o <a href="https://docs.geoserver.org/latest/en/user/tutorials/cql/cql_tutorial.html" target="_blank">CQL</a>. En función del formato especificado, se añade a las peticiones GetMap posteriores el parámetro <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#filter" target="_blank">filter</a> o <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#cql-filter" target="_blank">cql_filter</a> correspondiente.
  *
- * No se pueden añadir al mapa 2 o más capas del mismo servicio (misma URL), en las cuales se establezcan filtros de tipo distinto. Es decir, no se pueden mezclar filtros CQL y GML en capas del mismo servicio.
+ * No se pueden añadir al mapa 2 o más capas del mismo servicio (misma URL), en las cuales se establezcan filtros de tipo distinto. Es decir, no se pueden mezclar filtros CQL y GML o CQL y [SITNA.filter]{@linkplain SITNA.filter} en capas del mismo servicio.
  * @property {string} [format] - Tipo MIME del formato de archivo de imagen a obtener del servicio.
  *
  * Si esta propiedad no está definida, entonces si la capa es un mapa de fondo (consultar propiedad `isBase`), se asume que el formato es `image/jpeg`, en caso contrario se asume que el formato es `image/png`.
@@ -2277,7 +2280,7 @@ export { LegendStatusEnum };
  * @property {string} [title] - Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.
  * @property {boolean} [transparent=true] - Indica si la capa tiene transparencia.
  * @property {string} [type] - Tipo de capa. Si no se especifica se considera que la capa es WMS. La lista de valores posibles está definida en [SITNA.Consts.layerType]{@link SITNA.Consts}.
- * @example <caption>Ejemplo de uso de la propiedad `filter` - [Ver en vivo](../examples/cfg.RasterOptions.filter.html)</caption> {@lang html}
+   * @example <caption>Ejemplo de uso de la propiedad `filter` [Ver en vivo](../examples/cfg.RasterOptions.filter.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *    // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -2291,6 +2294,7 @@ export { LegendStatusEnum };
  *        initialExtent: [606239, 4738249, 614387, 4744409],
  *        // Añadimos la capa de GeoPamplona del catálogo de edificios filtrada para mostrar solamente los de uso cultural.
  *        // Añadimos también la capa de IDENA de museos filtrada para mostrar solamente los que están en Pamplona.
+ *        // Añadimos también la capa de IDENA de edificios religiosos filtrando por los contenidos en un polígono dado.
  *        workLayers: [
  *            {
  *                id: "layer1",
@@ -2306,8 +2310,22 @@ export { LegendStatusEnum };
  *                type: SITNA.Consts.layerType.WMS,
  *                url: "//idena.navarra.es/ogc/ows",
  *                layerNames: "DOTACI_Sym_Museos",
- *                filter: "POBLACION='Pamplona'"
- *            }
+ *                filter: "POBLACION='Pamplona / Iruña'"
+ *            },
+ *            {
+ *                id: "layer3",
+ *                title: "Edificios religiosos",
+ *                type: SITNA.Consts.layerType.WMS,
+ *                url: "//idena.navarra.es/ogc/ows",
+ *                layerNames: "DOTACI_Sym_EdifReligi",
+ *                filter: SITNA.filter.within("the_geom",new SITNA.feature.Polygon([
+ *                      [602979, 4743332],
+ *                      [602979, 4737828,
+ *                      [614563, 4737828],
+ *                      [614563, 4743332],
+ *                      [602979, 4743332]
+ *                ]))
+ *             }
  *        ]
  *    });
  * </script>
