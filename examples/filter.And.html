@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.filter.and</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de la uníón logíca de filtros <a href="../doc//SITNA.filter.html#.and">And</a></p>
+        <p>Tuberías de abastecimiento con un diámetro entre 150 y 200 y con un fabricante con la palabra "tubo" en su denominación</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        var map = new SITNA.Map("mapa", {
+            // Mapa centrado de Pamplona
+            initialExtent: [606239, 4738249, 614387, 4744409],
+            workLayers: [
+                {
+                    id: "layer",
+                    title: "Tuberias de abastecimento",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/wms",
+                    layerNames: "REDABA_Lin_Tuberia",
+                    filter: SITNA.filter.and(SITNA.filter.between("DIAMETRO", 150, 200), SITNA.filter.like("FABRICANTE", "*tubo*"))
+                }
+            ]
+        });
+    </script>
+
+</body>
+</html>

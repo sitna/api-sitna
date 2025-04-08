@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de MapControlOptions.drawMeasureModify</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de la propiedad snapping de <a href="..//doc/SITNA.control.html#.DrawMeasureModifyOptions">DrawMeasureModifyOptions</a>.</p>
+        <p>Control de dibujo y medición con tres diferentes opciones de ajuste.</p>
+        <p>Editar el código quitando el comentario correspondiente para observar los distintos efectos.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Definimos una capa de referencia para los ajustes de vértices.
+        const referenceLayer = new SITNA.layer.Vector({
+            id: "reference",
+            type: SITNA.Consts.layerType.VECTOR
+        });
+        // Creamos dos estilos para diferenciar las entidades de la capa de referencia.
+        const depotStyle = {
+            fillColor: "rgba(255, 128, 0, 0.2)",
+            strokeColor: "rgba(255, 128, 0, 1)",
+            strokeWidth: 2
+        };
+        const homeStyle = {
+            fillColor: "rgba(0, 128, 255, 0.2)",
+            strokeColor: "rgba(0, 128, 255, 1)",
+            strokeWidth: 2
+        };
+        // Creamos dos colecciones de entidades para la capa de referencia.
+        const depots = [
+            new SITNA.feature.Polygon([
+                [
+                    [610490.206, 4733953.307],
+                    [610498.028, 4734002.693],
+                    [610517.778, 4733999.564],
+                    [610509.956, 4733950.177],
+                    [610490.206, 4733953.307]
+                ]
+            ], depotStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610456.033, 4733945.572],
+                    [610466.99, 4733938.033],
+                    [610458.01, 4733924.984],
+                    [610447.054, 4733932.523],
+                    [610456.033, 4733945.572]
+                ]
+            ], depotStyle)
+        ];
+        const homes = [
+            new SITNA.feature.Polygon([
+                [
+                    [610460.061, 4734008.732],
+                    [610446.861, 4734010.438],
+                    [610450.08, 4734035.297],
+                    [610463.276, 4734033.591],
+                    [610460.061, 4734008.732]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610426.048, 4733952.592],
+                    [610429.269, 4733977.499],
+                    [610442.44, 4733975.795],
+                    [610439.219, 4733950.888],
+                    [610426.048, 4733952.592]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610460.061, 4734008.732],
+                    [610456.847, 4733983.879],
+                    [610443.648, 4733985.585],
+                    [610446.861, 4734010.438],
+                    [610460.061, 4734008.732]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610463.276, 4734033.591],
+                    [610476.472, 4734031.884],
+                    [610473.257, 4734007.025],
+                    [610460.061, 4734008.732],
+                    [610463.276, 4734033.591]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610439.219, 4733950.888],
+                    [610442.44, 4733975.795],
+                    [610455.61, 4733974.092],
+                    [610452.389, 4733949.185],
+                    [610439.219, 4733950.888]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610446.861, 4734010.438],
+                    [610433.67, 4734012.144],
+                    [610436.885, 4734037.003],
+                    [610450.08, 4734035.297],
+                    [610446.861, 4734010.438]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610452.389, 4733949.185],
+                    [610455.61, 4733974.092],
+                    [610468.777, 4733972.389],
+                    [610465.557, 4733947.482],
+                    [610452.389, 4733949.185]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610473.257, 4734007.025],
+                    [610470.043, 4733982.172],
+                    [610456.847, 4733983.879],
+                    [610460.061, 4734008.732],
+                    [610473.257, 4734007.025]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610446.861, 4734010.438],
+                    [610443.648, 4733985.585],
+                    [610430.456, 4733987.292],
+                    [610433.67, 4734012.144],
+                    [610446.861, 4734010.438]
+                ]
+            ], homeStyle)
+        ];
+        const allLandLots = depots.concat(homes);
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Instanciamos el mapa con el control de dibujo, medida y modificación de geometrías en el primer contenedor.
+        // Añadimos una capa de referencia para los ajustes de vértices.
+        const map = new SITNA.Map("mapa", {
+            initialExtent: [610231, 4733866, 610711, 4734095],
+            controls: {
+                drawMeasureModify: {
+                    div: "slot1",
+                    // Se muestran las tres opciones de ajuste de vértices, dos de ellas dentro de un comentario:
+                    //snapping: true, // Activamos el ajuste de vértices solamente entre las geometrías dibujadas.
+                    //snapping: referenceLayer, // Activamos el ajuste de vértices con todas las entidades de la capa de referencia.
+                    snapping: depots, // Activamos el ajuste de vértices solamente con las entidades de un grupo.
+                }
+            }
+        });
+        map.loaded(() => {
+            map.addLayer(referenceLayer);
+            referenceLayer.addFeatures(allLandLots);
+        });
+    </script>
+	
+</body>
+</html>

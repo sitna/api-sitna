@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.filter.or</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de la unión logíca de filtros <a href="../doc//SITNA.filter.html#.or">Or</a> </p>
+        <p>Edificios religiosos dentro de un extent dado o cuyo municipio sea "Barañáin / Barañain" </p>
+</div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        var map = new SITNA.Map("mapa", {
+            // Mapa centrado de Pamplona
+            initialExtent: [606239, 4738249, 614387, 4744409],
+            workLayers: [
+                {
+                    id: "layer1",
+                    title: "Edificios religiosos",
+                    type: SITNA.Consts.layerType.WFS,
+                    url: "//idena.navarra.es/ogc/wfs",
+                    featureType: "DOTACI_Sym_EdifReligi",
+                    outputFormat: SITNA.Consts.format.JSON,
+                    filter: SITNA.filter.or(
+                        SITNA.filter.bbox("the_geom", [610327, 4741864, 611287, 4741088]),
+                        SITNA.filter.equalTo("MUNICIPIO", "Barañáin / Barañain")
+                    )
+                }
+            ]
+        });
+    </script>
+
+</body>
+</html>

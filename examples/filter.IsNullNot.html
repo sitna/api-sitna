@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.filter.isNull y SITNA.filter.not</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de los filtros <a href="../doc//SITNA.filter.html#.isNull">IsNull</a> y <a href="../doc//SITNA.filter.html#.not">Not</a></p>
+        <p>Entidades de voluntariado cuyo atributo URLPDF no es nulo.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        var map = new SITNA.Map("mapa", {
+            // Mapa centrado de Pamplona
+            initialExtent: [606239, 4738249, 614387, 4744409],
+            workLayers: [
+                {
+                    id: "layer1",
+                    title: "Entidades de voluntariado",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/wms",
+                    layerNames: "SOCIAL_Sym_EntVoluntariado",
+                    filter: SITNA.filter.not(SITNA.filter.isNull("URLPDF"))
+                }
+            ]
+        });
+    </script>
+
+</body>
+</html>

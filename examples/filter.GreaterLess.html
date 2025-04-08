@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.filter.greaterThan, SITNA.filter.lessThan</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de la uníón logíca de filtros <a href="../doc/SITNA.filter.html#.greaterThan">GreaterThan</a> y <a href="../doc/SITNA.filter.html#.lessThan">LessThan</a></p>
+        
+    </div>
+    <script src="../sitna.debug.js"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        var map = new SITNA.Map("mapa", {
+            workLayers: [
+                {
+                    //Estaciones meteorológicas automáticas cuya altitud sea mayor de 1000 metros
+                    id: "layer1",
+                    title: "Estaciones Meteorológicas Automáticas",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/wms",
+                    layerNames: "METEOR_Sym_EstMetAuto",
+                    filter: SITNA.filter.greaterThan("ALTITUD", 1000)
+                },
+                {
+                    //Estaciones meteorológicas manuales cuya altitud sea sea menor de 700 metros
+                    id: "layer2",
+                    title: "Estaciones Meteorológicas Manuales",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/wms",
+                    layerNames: "METEOR_Sym_EstMetManu",
+                    filter: SITNA.filter.lessThan("ALTITUD", 700)
+                }
+            ]
+        });
+    </script>
+
+</body>
+</html>

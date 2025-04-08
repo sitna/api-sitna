@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de filtros espaciales: SITNA.filter.contains, SITNA.filter.disjoint, SITNA.filter.dwithin, SITNA.filter.intersects</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de filtros espaciales: <a href="../doc/SITNA.filter.html#.contains">Contains</a>, <a href="../doc/SITNA.filter.html#.disjoint">Disjoint</a>, <a href="../doc/SITNA.filter.html#.dwithin">Dwithin</a>, <a href="../doc/SITNA.filter.html#.intersects">Intersects</a></p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
+        SITNA.Cfg.layout = "layout/ctl-container";
+        // Añadimos el control de tabla de contenidos en la primera posición.
+        SITNA.Cfg.controls.TOC = {
+            div: "slot1"
+        };
+        var map = new SITNA.Map("mapa", {
+            // Mapa centrado de Pamplona
+            initialExtent: [606239, 4738249, 614387, 4744409],
+            workLayers: [
+                {
+                    //Capa vectorial con los códigos postales que no contengan una coordenada en particular
+                    id: "layer1",
+                    title: "Códigos postales",
+                    type: SITNA.Consts.layerType.WFS,
+                    url: "//idena.navarra.es/ogc/wfs",
+                    featureType: "DIRECC_Pol_CodPostal",
+                    filter: SITNA.filter.disjoint("the_geom", new SITNA.feature.Point([609934, 4740855]))
+                },
+                {
+                    //Capa raster con los códigos postales que contengan una coordenada en particular
+                    id: "layer2",
+                    title: "Códigos postales2",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/wms",
+                    layerNames: "DIRECC_Pol_CodPostal",
+                    filter: SITNA.filter.contains("the_geom", new SITNA.feature.Point([609934, 4740855]))
+                },
+                {
+                    //Capa vectorial con los edificios religiosos dentro de un polígono dado y incluyendo un buffer de 100 metros
+                    id: "layer3",
+                    title: "Edificios religiosos",
+                    type: SITNA.Consts.layerType.WFS,
+                    url: "//idena.navarra.es/ogc/wfs",
+                    featureType: "DOTACI_Sym_EdifReligi",
+                    filter: SITNA.filter.dwithin("the_geom", new SITNA.feature.Polygon([
+                        [610290, 4741582],
+                        [611092, 4741841],
+                        [611359, 4741451],
+                        [610623, 4741152],
+                        [610290, 4741582]
+                    ]), 100)
+                },
+                {
+                    //Capa raster con los tramos de carril bici que intersecan una línea dada.
+                    id: "layer4",
+                    title: "Red movilidad ciclista",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/wms",
+                    layerNames: "INFRAE_Lin_TrazadoSIGMC",
+                    filter: SITNA.filter.intersects("the_geom", new SITNA.feature.Polyline([[608947, 4740938], [610807, 4740202]]))
+                }
+            ]
+        });
+    </script>
+
+</body>
+</html>
