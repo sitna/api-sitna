@@ -95,9 +95,9 @@
     width: calc(25% - 0.2em);
 }
 
-.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-text,
-.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-join,
-.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-split {
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > sitna-button.tc-ctl-mod-btn-text,
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > sitna-button.tc-ctl-mod-btn-join,
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > sitna-button.tc-ctl-mod-btn-split {
     display: none;
 }
 
@@ -105,7 +105,7 @@
     display: none;
 }
 
-.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > button.tc-ctl-mod-btn-del-vertex {
+.tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > sitna-button.tc-ctl-mod-btn-del-vertex {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
 }
@@ -127,42 +127,23 @@
 
 .tc-ctl-edit-other {
     padding-top: 0.5em;
+    display: flex;
+    justify-content: center;
+    gap: 0.2em;
 }
 
-.tc-ctl-edit .tc-ctl-edit-other .tc-button {
-    height: 2em;
-    padding-top: 0;
-    padding-bottom: 0;
-}
-
-    .tc-ctl-edit .tc-ctl-edit-other .tc-button:before {
+    .tc-ctl-edit-other sitna-button {
         height: 2em;
-        margin-right: 0.5em;
+        font-size: calc(var(--icon-font-grid-size) / 2);
     }
 
 .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-import {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-right: 0.1em;
+    --icon-text: '\e901';
 }
-
-    .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-import:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) / 2);
-        content: '\e901';
-    }
 
 .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-dl {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    margin-left: 0.1em;
+    --icon-text: var(--icon-download);
 }
-
-    .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-dl:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) / 2);
-        content: var(--icon-download);
-    }
 
 .tc-ctl-edit-import {
     padding: 0.5em;

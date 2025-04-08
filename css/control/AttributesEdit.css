@@ -6,6 +6,10 @@
     overflow-y: auto;
 }
 
+.tc-ctl-edit .tc-ctl-attr-edit-body > table {
+    width: 100%;
+}
+
 .tc-ctl-rpanel .tc-ctl-edit .tc-ctl-attr-edit-body {
     max-height: 20em;
     overflow-y: auto;
@@ -22,6 +26,14 @@
 
 .tc-ctl-edit .tc-ctl-attr-edit-body table sitna-toggle {
     font-size: 0.9em;
+}
+
+.tc-ctl-attr-edit-add {
+    --icon-text: '\e904';
+}
+
+.tc-ctl-attr-edit-remove {
+    --icon-text: var(--icon-delete);
 }
 
 .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex {

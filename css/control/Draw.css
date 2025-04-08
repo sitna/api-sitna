@@ -36,7 +36,34 @@
 
 .tc-ctl-draw-tools {
     display: flex;
+    gap: 0.2em;
 }
+
+    .tc-ctl-draw-tools > sitna-button {
+        --icon-font-family: 'sitna';
+        flex-grow: 1;
+    }
+
+        .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-new {
+            --icon-text: '\f040';
+        }
+
+        .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-undo {
+            --icon-text: '\2b8c';
+        }
+
+        .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-redo {
+            --icon-text: '\2b8c';
+            scale: -1 1;
+        }
+
+        .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-end {
+            --icon-text: '\2714';
+        }
+
+        .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-cancel {
+            --icon-text: '\e908';
+        }
 
 .tc-ctl-draw .tc-ctl-draw-tools > button {
     position: relative;

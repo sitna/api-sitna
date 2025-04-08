@@ -36,13 +36,15 @@
     z-index: 10008;
     bottom: 1em;
     right: 1em;
-    background-color: #ccc;
-    opacity: 0.5;
+    color: var(--map-btn-color);
+    background-color: var(--map-btn-bg-color);
     border-radius: var(--border-radius);
     padding: 0.3em;
     font-size: 0.8em;
-    font-weight: bold;
     max-width: 6em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
     .tc-ctl-omm-off-panel span, .tc-ctl-omm-off-panel a {
@@ -145,23 +147,12 @@
     border-color: var(--main-inactive-color);
 }
 
-    .tc-ctl-omm .tc-ctl-omm-btn-new:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl:before {
-        font-family: mapskin;
-        height: 2em;
-        margin-right: 0.5em;
+    .tc-ctl-omm .tc-ctl-omm-btn-new {
+        --icon-text: '\e904';
     }
 
-.tc-ctl-omm .tc-ctl-omm-btn-new:before {
-    content: "\e001";
-}
-
-.tc-ctl-omm .tc-ctl-omm-btn-cancel-draw:before, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl:before {
-    display: inline-block;
-    font-family: var(--icon-font-family);
-    content: var(--icon-close);
-    height: 1em;
-    width: 1em;
-    line-height: 1em;
+.tc-ctl-omm .tc-ctl-omm-btn-cancel-draw, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl {
+    --icon-text: var(--icon-close);
 }
 
 .tc-ctl-omm .tc-alert {
@@ -173,18 +164,13 @@
     box-sizing: border-box;
     height: 2em;
     padding: 0 0 0 0.2em;
-    border: 1px solid #ccc;
+    border: 1px solid var(--input-border-color);
     border-radius: var(--border-radius);
     margin: 0 0 0.6em 0;
 }
 
 .tc-ctl-omm .tc-ctl-omm-tile-cmd {
     float: right;
-}
-
-.tc-ctl-omm-dialog .tc-ctl-omm-btn-cancel {
-    display: inline-block;
-    margin-left: 0.5em;
 }
 
 .tc-ctl-omm-dialog .tc-ctl-omm-tile-count {
@@ -204,7 +190,7 @@
 .tc-ctl-omm .tc-ctl-omm-progress-bar {
     width: 100%;
     height: 0.8em;
-    border: 0.1em solid #999;
+    border: 0.1em solid var(--tab-border-color);
     padding: 0.1em;
     margin-bottom: 0.5em;
     border-radius: var(--border-radius);
@@ -256,7 +242,7 @@
     max-height: 8em;
     height: auto;
     border-radius: var(--border-radius);
-    border: 1px solid #CCC;
+    border: 1px solid var(--sec-divider-color);
     padding: 0;
     list-style: none;
     margin-top: 0.5em;
@@ -286,9 +272,9 @@
 .tc-ctl-omm-map-search-icon {
     position: relative;
     margin-top: 4px;
-    right: 1em;
+    right: 0.7em;
     line-height: 1em;
-    color: #ccc;
+    color: var(--glyph-color);
     font-style: normal;
     width: 1em;
     float: right;
@@ -320,4 +306,8 @@
     margin-right: 0.5em;
     width: calc(100% - 1.2em - 1.2em - 1.5em);
     float: left;
+}
+
+.tc-ctl-omm .tc-btn-save {
+    --icon-text: '\2714';
 }

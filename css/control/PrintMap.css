@@ -22,10 +22,6 @@ div.tc-ctl-prnmap-txt label {
     line-height: 2em;
 }
 
-div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
-    /*float: right;*/
-}
-
 .tc-ctl-prnmap-view {
     top: 0;
     left: 0;
@@ -58,13 +54,10 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     z-index: 100000;
     cursor: pointer;
     padding-top: 0.15em;
-    background-color: #fff;
+    background-color: var(--main-bg-color);
     border-bottom-left-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
-}
-
-.tc-ctl-prnmap-btn-close {
 }
 
 .tc-ctl-prnmap-printing .tc-ctl-prnmap-btn-close:after {
@@ -151,12 +144,8 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
     font-size: 0.9em
 }
 
-.tc-ctl-prnmap-btn:before {
-    color: #fff;
-    font-size: 1em;
-    font-family: var(--icon-font-family);
-    content: var(--icon-print);
-    margin-right: 0.5em;
+.tc-ctl-prnmap-btn {
+    --text-icon: var(--icon-print);
 }
 
 .tc-ctl-prnmap-btn-share.tc-loading,
@@ -166,23 +155,8 @@ div.tc-ctl-prnmap .tc-ctl-prnmap-btn {
 
 
 .tc-ctl-prnmap-cnt-btn {
-    text-align: right;
-}
-
-.tc-ctl-prnmap-cnt > label.tc-ctl-prnmap-image-qr-label {
-    line-height: 2em;
-    font-weight: normal;
-    text-align: left;
-    width: 50%;
-    float: left;
-}
-
-.tc-ctl-prnmap-cnt label.tc-loading:after {
-    font-family: var(--icon-font-family);
-    content: var(--icon-spinner);
-    display: inline-block;
-    margin-left: 0.5em;
-    animation: spin 2s infinite linear;
+    display: flex;
+    justify-content: space-between;
 }
 
 .tc-map.tc-collapsed .tc-ctl-prnmap-tools {

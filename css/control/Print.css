@@ -1,27 +1,4 @@
 ﻿.tc-ctl-print-btn {
-    display: inline-block;
-    font-size: 1.2em;
-    width: 1em;
-    height: 1em;
-    line-height: 1em;
-    padding: 0;
-    text-align: right;
-    cursor: pointer;
-    overflow: hidden;
-    color: transparent;
-    background-color: var(--win-btn-bg-color);
+    --icon-text: var(--icon-print);
     order: 1;
-}
-
-a.tc-icon-btn.tc-ctl-print-btn:hover, a.tc-icon-btn.tc-ctl-print-btn:active {
-    color: transparent;
-}
-
-.tc-ctl-print-btn:before {
-    position: absolute;
-    width: 1.2em;
-    height: 1.2em;
-    font-family: var(--icon-font-family);
-    content: var(--icon-print);
-    margin-right: 0.2em;
 }
