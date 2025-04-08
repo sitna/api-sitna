@@ -3,23 +3,38 @@ const liExamples = document.querySelector("#topNavigation > ul > li:nth-child(3)
 liExamples.parentElement.removeChild(liExamples);
 document.querySelector("#topNavigation > ul > li:last-of-type").insertAdjacentElement('beforebegin', liExamples);
 
-Prism.plugins.toolbar.registerButton('Sandbox', {
-	text: 'Editar', // required
-	onClick: function (e) { // optional		
-		//crear div modal
-		var shadow = document.createElement("div");
-		shadow.classList.add("example-sandbox")
-		shadow.classList.add("example-sandbox-modalbg")
-		var modal = document.createElement("div");
-		modal.classList.add("example-sandbox-modal");
-		var iframe = document.createElement("iframe");
-		shadow.appendChild(modal);
-		modal.appendChild(iframe);
-		iframe.src = "../examples/sandbox.html";
-		document.body.appendChild(shadow);
-		var code = e.code;
-		iframe.onload = function () {
-			this.contentWindow.postMessage(code);
+document.querySelectorAll(".example-caption a").forEach(link => link.style.display = 'none');
+
+Prism.plugins.toolbar.registerButton('Sandbox', function (env) {
+	const regexp1 = /new\s+SITNA\.Map\(["|'](\w+)["|']/gm;
+
+	const matches = env.code.match(regexp1);
+	if (!matches) {
+		return;
+	} else {
+
+		if (!matches.some(match => {
+			const mapName = match.replace(/new\s+SITNA\.Map\(["|'](\w+)["|']/, '$1');
+			const regexp2 = new RegExp('<([a-zA-Z]+)([^>]*?)id\\s*=\\s*["\']' + mapName + '["\']([^>]*?)>', 'g');
+			return !!regexp2.exec(env.code);
+		})) {
+			return;
 		}
 	}
+
+	var button = document.createElement('button');
+	button.innerHTML = 'Ver en vivo';
+
+	button.addEventListener('click', function () {
+		let link = this.closest(".example-code").previousElementSibling?.querySelector(".example-caption a");
+		if (link)
+			document.location.href = link.href
+		else {
+			sessionStorage.setItem('sandboxCode', env.code);
+			document.location.href = "../examples/sandbox.html";
+        }
+		
+	});
+
+	return button;
 });
