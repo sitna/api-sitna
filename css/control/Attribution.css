@@ -21,8 +21,7 @@
     position: relative;
     left: -50%;
     width: 100%;
-    bottom: 0;
-    color: #999;
+    bottom: 0;    
     text-align: center;
     background-color: #fff;
     border: 1px solid #ccc;
@@ -30,10 +29,12 @@
     border-top-left-radius: var(--border-radius);
     border-top-right-radius: var(--border-radius);
     padding: 0.1em;
+    font-style: italic;
 }
 
 .tc-ctl-attrib div span, .tc-ctl-attrib div span a:link, .tc-ctl-attrib div span a:visited {
     color: #000;
+    font-style: normal;
 }
 
     .tc-ctl-attrib div span.tc-ctl-attrib-cmd {
