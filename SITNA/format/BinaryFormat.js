@@ -21,5 +21,12 @@ class BinaryFormat extends FeatureFormat {
 class FieldNameError extends TypeError {
 }
 
+class TimeNotSupportedError extends TypeError {
+    constructor() {
+        super(...arguments);
+        this.message = 'Time not supported in this format';
+    }
+}
+
 export default BinaryFormat;
-export { FieldNameError };
+export { FieldNameError, TimeNotSupportedError };
