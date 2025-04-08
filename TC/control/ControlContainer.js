@@ -124,7 +124,7 @@ class ControlContainer extends Container {
         addedElement.setAttribute('class', addedElement.getAttribute('class') + ' tc-ctl');
         return addedElement;
     }
-    changeLanguage = async function () {
+    updateLanguage = async function () {
         
     }
 }
