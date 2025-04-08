@@ -1,4 +1,4 @@
-﻿import Component from './Component';
+﻿import Component from './Component.js';
 
 const elementName = "sitna-button";
 
@@ -9,7 +9,7 @@ class Button extends Component {
     static variant = {
         DEFAULT: 'default',
         ICON: 'icon',
-        ICONLEFT: 'iconleft',
+        ICONLEFT: 'icon-left',
         LINK: 'link',
         MINIMAL: 'minimal'
     }
@@ -18,7 +18,7 @@ class Button extends Component {
         CLOSE: 'close',
         DELETE: 'delete',
         DOWNLOAD: 'download',
-        DOWNLOAD_ALL: 'download_all',
+        DOWNLOAD_ALL: 'download-all',
         EDIT: 'edit',
         SHARE: 'share'
     }
@@ -27,6 +27,10 @@ class Button extends Component {
         super();
         this.#button = document.createElement('button');
         this.#button.setAttribute('type', 'button');
+        this.createTemplate();
+        const template = this.getTemplate();
+        this.#button.appendChild(template.content.cloneNode(true));
+        this.#button.querySelector('slot').addEventListener('slotchange', () => this.#onTextChange());
         this.shadowRoot.appendChild(this.#button);
     }
 
@@ -78,6 +82,7 @@ class Button extends Component {
                             this.#onTextChange();
                         }
                     }
+                    this.#button.ariaLabel = newValue;
                     break;
                 default:
                     break;
@@ -98,10 +103,11 @@ class Button extends Component {
     }
 
     #onTextChange() {
-        const text = this.text;
-        this.#button.innerHTML = text ?? '';
+        const text = this.text || this.textContent;
+        if (this.textContent !== text) this.textContent = text ?? '';
         const variant = this.variant;
-        if (variant === Button.variant.ICON || variant === Button.variant.MINIMAL || variant === Button.variant.LINK) {
+        if (variant === Button.variant.ICON || variant === Button.variant.MINIMAL ||
+            (variant === Button.variant.LINK && !this.hasAttribute('title'))) {
             if (text) {
                 this.#button.setAttribute('title', text);
             }
@@ -138,7 +144,8 @@ class Button extends Component {
             this.#button.classList.add(newValue);
         }
         const text = this.text;
-        if (text && (newValue === Button.variant.ICON || newValue === Button.variant.MINIMAL || newValue === Button.variant.LINK)) {
+        if (text && (newValue === Button.variant.ICON || newValue === Button.variant.MINIMAL ||
+            (newValue === Button.variant.LINK && !this.hasAttribute('title')))) {
             this.#button.setAttribute('title', text);
         }
         else {
@@ -152,6 +159,14 @@ class Button extends Component {
 
     set disabled(value) {
         this.toggleAttribute('disabled', !!value);
+    }
+
+    get value() {
+        return this.getAttribute('value');
+    }
+
+    set value(val) {
+        this.setAttribute('value', val);
     }
 
     #onDisabledChange() {

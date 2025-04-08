@@ -1,6 +1,7 @@
 ﻿:host {
     display: inline-block;
     height: 2em;
+    transition: all 0.2s ease;
 }
 
 :host([variant="link"]) {
@@ -40,7 +41,10 @@ button {
     background-color: var(--btn-bg-color);
     color: var(--btn-color);
     border: 1px solid var(--btn-border-color);
-    border-radius: 0;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -50,12 +54,12 @@ button {
         cursor: help;
     }
 
-:host(:first-of-type) button {
+:host(:first-of-type) {
     border-top-left-radius: var(--border-radius);
     border-bottom-left-radius: var(--border-radius);
 }
 
-:host(:last-of-type) button {
+:host(:last-of-type) {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
 }
@@ -64,7 +68,7 @@ button:focus {
     outline: none;
 }
 
-button:disabled {
+button:disabled, button.active:disabled {
     color: var(--btn-disabled-color);
     background-color: var(--btn-disabled-bg-color);
     border-color: var(--btn-disabled-border-color);
@@ -77,19 +81,16 @@ button.active {
     border-color: var(--btn-hl-border-color);
 }
 
-button[data-icon]::before,
-button[data-icon-text]::before {
-    margin-right: 0.5em;
-}
-
-button.minimal[data-icon]::before,
-button.minimal[data-icon-text]::before {
-    margin-right: 0;
-}
-
 button::before {
+    padding-right: 0.5em;
     font-family: var(--icon-font-family);
+    font-weight: var(--icon-font-weight);
     content: var(--icon-text);
+}
+
+button.minimal::before,
+button.icon::before {
+    padding-right: 0;
 }
 
 button[data-icon-text]::before {
@@ -104,7 +105,11 @@ button[data-icon="delete"]::before {
     content: var(--icon-delete);
 }
 
-button[data-icon="download_all"]::before {
+button[data-icon="download"]::before {
+    content: var(--icon-download);
+}
+
+button[data-icon="download-all"]::before {
     content: var(--icon-download-all);
 }
 
@@ -157,7 +162,7 @@ button.icon {
         width: 100%;
         text-align: center;
         text-indent: 0;
-        line-height: 1.5em;
+        line-height: var(--icon-font-line-height);
         left: 0;
         top: 0;
     }
