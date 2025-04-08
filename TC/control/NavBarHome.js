@@ -44,7 +44,7 @@ class NavBarHome extends Control {
         return self;
     }
 
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.model.zoomToInitialExtent = self.getLocaleString('zoomToInitialExtent');
     }
