@@ -12,7 +12,7 @@
   * 
   * Puede obtener más información en el [sitio para desarrolladores de Google](https://developers.google.com/maps/documentation/javascript/get-api-key).
   * @property {HTMLElement|string} [viewDiv] - Elemento del DOM en el que mostrar la vista de StreetView o valor de atributo id de dicho elemento.
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/cfg.StreetViewOptions.html)</caption> {@lang html}
   * <div id="mapa"/>
   * <div id="sv"/>
   * <script>
@@ -250,6 +250,7 @@ class StreetView extends Control {
         await self.renderData(null);
 
         self.controller = new Controller(self.model, new Observer(self.div));
+        self.controller.add(self.viewDiv);
         self.updateModel();
 
         import("draggabilly").then(function (module) {
@@ -375,9 +376,8 @@ class StreetView extends Control {
 
         TC.loadJS(
             !window.google || !google.maps,
-            gMapsUrl,
-            function () {
-
+            gMapsUrl + "&language=" + self.map.options.locale.substr(0, 2),
+            function () {                
                 if (window.google) {
                     setMarker();
                     const view = self.viewDiv;
@@ -585,9 +585,9 @@ class StreetView extends Control {
         this.model["sv.tip"] = this.getLocaleString("sv.tip");
         this.model["closeStreetView"] = this.getLocaleString("closeStreetView");
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
-        self.updateModel();
+        self.updateModel();        
     }
 }
 
