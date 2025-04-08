@@ -410,7 +410,7 @@ TC.inherit(TC.Control, EventTarget);
         }
         return self.elevation;
     };
-    ctlProto.changeLanguage = async function () {
+    ctlProto.updateLanguage = async function () {
         return true;
     }    
 
