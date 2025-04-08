@@ -1,58 +1,52 @@
-<h2>{{i18n "download"}} </h2>
+<h2>[[download]] </h2>
 <div class="tc-ctl-tctr tc-ctl-tctr-select">
-    <sitna-tab text="{{i18n "dl.export.map"}}" group="{{controlId}}-type" {{#if deselectableTabs}} deselectable{{/if}}for="{{controlId}}-type-image"></sitna-tab>
-    <sitna-tab text="{{i18n "dl.export.vector"}}" group="{{controlId}}-type" {{#if deselectableTabs}} deselectable{{/if}}for="{{controlId}}-type-vector"></sitna-tab>
+    <sitna-tab text="[[dl.export.map]]" group="{{controlId}}-type" {{#if deselectableTabs}} deselectable{{/if}}for="{{controlId}}-type-image"></sitna-tab>
+    <sitna-tab text="[[dl.export.vector]]" group="{{controlId}}-type" {{#if deselectableTabs}} deselectable{{/if}}for="{{controlId}}-type-vector"></sitna-tab>
 </div>
 <div id="{{controlId}}-type-image" class="tc-ctl-tctr-elm tc-ctl-tctr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image">
     <div>
-        <label>{{i18n "format"}}:</label><select class="tc-combo">
+        <label>[[format]]:</label><select class="tc-combo"  title="[[formatImageTitle]]">
             <option value="image/png">PNG</option>
             <option value="image/jpeg">JPEG</option>
         </select>
         <div class="tc-ctl-download-div">
-            <label class="tc-ctl-download-image-qr-label" title="{{i18n "createQrCodeToImage"}}">
-                <input class="tc-toggle tc-ctl-download-image-qr" type="checkbox" checked />
-                {{i18n "appendQRCode"}}
-            </label>
-            <label class="tc-ctl-download-image-wld-label" title="{{i18n "appendWorldFile.explanation"}}">
-                <input class="tc-toggle tc-ctl-download-image-wld" type="checkbox" />
-                {{i18n "appendWorldFile"}}
-            </label>
+            <sitna-toggle class="tc-ctl-download-image-qr" title="[[createQrCodeToImage]]" checked>[[appendQRCode]]</sitna-toggle>
+            <sitna-toggle class="tc-ctl-download-image-wld" title="[[appendWorldFile.explanation]]">[[appendWorldFile]]</sitna-toggle>
         </div>
 
-        <div class="tc-group tc-group tc-ctl-download-cnt" style="text-align:right;">
+        <div class="tc-group tc-group tc-ctl-download-cnt tc-ctl-download-btn-row">
             {{#if clipboard}}
-            <button type="button" class="tc-ctl-clipboard-btn tc-button tc-icon-button" title="{{i18n "copyImageFromCurrentMap"}}" name="descargar">{{i18n "copyClipboard"}}</button>
+            <sitna-button class="tc-ctl-clipboard-btn" title="[[copyImageFromCurrentMap]]" name="descargar">[[copyClipboard]]</sitna-button>
             {{/if}}
-            <button type="button" class="tc-ctl-download-btn tc-button tc-icon-button" title="{{i18n "downloadImageFromCurrentMap"}}" name="descargar">{{i18n "download"}}</button>
+            <sitna-button class="tc-ctl-download-btn" icon="download" title="[[downloadImageFromCurrentMap]]" name="descargar">[[download]]</sitna-button>
         </div>
         <div class="tc-ctl-download-alert tc-alert tc-alert-warning tc-hidden">
-            <p>{{i18n "qrAdvice" true}}</p>
+            <p>[[qrAdvice]]</p>
         </div>
     </div>
 </div>
 <div id="{{controlId}}-type-vector" class="tc-ctl-tctr-elm tc-ctl-tctr-elm-data tc-group tc-ctl-download-cnt">
     <div>
-        <label>{{i18n "format"}}:</label><select class="tc-combo">
+        <label>[[format]]:</label><select class="tc-combo" title="[[formatVectorTitle]]">
             <option value="GML32">GML</option>
             <option value="application/json">GeoJSON</option>
             <option value="application/vnd.google-earth.kml+xml">KML (Google Earth)</option>
             <option value="shape-zip">Shapefile (ESRI)</option>
-            <option value="geopkg">Geopackage</option>
-            <option value="dxf"> Drawing Exchange Format</option>
+            <option value="geopkg">GeoPackage</option>
+            <option value="dxf">DXF</option>
         </select>
 
-        <div class="tc-group tc-group tc-ctl-download-cnt" style="text-align:right;">
-            <sitna-button variant="minimal" icon="help" class="tc-ctl-download-help" text="{{i18n "showDownloadHelp"}}"></sitna-button>
-            <button type="button" class="tc-ctl-download-btn tc-button tc-icon-button" title="{{i18n "downloadLayersFromCurrentExtent"}}" name="descargar">{{i18n "download"}}</button>
+        <div class="tc-group tc-group tc-ctl-download-cnt tc-ctl-download-btn-row">
+            <sitna-button variant="minimal" icon="help" class="tc-ctl-download-help" text="[[showDownloadHelp]]"></sitna-button>
+            <sitna-button class="tc-ctl-download-btn" icon="download" title="[[downloadLayersFromCurrentExtent]]" name="descargar">[[download]]</sitna-button>
         </div>
 
         <div class="tc-alert tc-alert-warning tc-hidden">
-            <p id="zoom-msg-{{controlId}}"><strong>{{i18n "tooManyFeatures"}}: </strong>{{i18n "tooManyFeatures.instructions"}}</p>
-            <p id="layers-msg-{{controlId}}"><strong>{{i18n "noLayersLoaded"}}: </strong>{{i18n "noLayersLoaded.instructions"}}</p>
-            <p id="url-msg-{{controlId}}"><strong>{{i18n "tooManySelectedLayers"}}: </strong>{{i18n "tooManySelectedLayers.instructions"}}</p>
-            <p id="noFeatures-msg-{{controlId}}"><strong>{{i18n "noData"}}: </strong>{{i18n "noData.instructions"}}</p>
-            <p id="novalid-msg-{{controlId}}"><strong>{{i18n "noValidService"}}: </strong>{{i18n "noValidService.instructions"}}</p>
+            <p id="zoom-msg-{{controlId}}"><strong>[[tooManyFeatures]]: </strong>[[tooManyFeatures.instructions]]</p>
+            <p id="layers-msg-{{controlId}}"><strong>[[noLayersLoaded]]: </strong>[[noLayersLoaded.instructions]]</p>
+            <p id="url-msg-{{controlId}}"><strong>[[tooManySelectedLayers]]: </strong>[[tooManySelectedLayers.instructions]]</p>
+            <p id="noFeatures-msg-{{controlId}}"><strong>[[noData]]: </strong>[[noData.instructions]]</p>
+            <p id="novalid-msg-{{controlId}}"><strong>[[noValidService]]: </strong>[[noValidService.instructions]]</p>
         </div>
     </div>
 </div>

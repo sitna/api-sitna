@@ -1,11 +1,12 @@
 ﻿
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import MapInfo from './MapInfo';
-import filter from '../filter';
-import Polygon from '../../SITNA/feature/Polygon';
-import ScaleBar from './ScaleBar';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import MapInfo from './MapInfo.js';
+import filter from '../filter.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 TC.filter = filter;
@@ -17,6 +18,48 @@ const toFixed = function (number) {
     }
     return result;
 };
+class DownloadModel {
+    constructor() {
+        this.download = "";
+        this["dl.export.map"] = "";
+        this["dl.export.vector"] = "";
+        this.format = "";
+        this.createQrCodeToImage = "";
+        this.appendQRCode = "";
+        this["appendWorldFile.explanation"] = "";
+        this.appendWorldFile = "";
+        this.copyImageFromCurrentMap = "";
+        this.copyClipboard = "";
+        this.downloadImageFromCurrentMap = "";
+        this.qrAdvice = "";
+        this.showDownloadHelp = "";
+        this.downloadLayersFromCurrentExtent = "";
+        this.tooManyFeatures = "";
+        this["tooManyFeatures.instructions"] = "";
+        this.noLayersLoaded = "";
+        this["noLayersLoaded.instructions"] = "";
+        this.tooManySelectedLayers = "";
+        this["tooManySelectedLayers.instructions"] = "";
+        this.noData = "";
+        this["noData.instructions"] = "";
+        this.noValidService = "";
+        this["noValidService.instructions"] = "";
+        this.formatImageTitle = "";
+        this.formatVectorTitle = "";
+    }
+}
+class DownloadDialogModel {
+    constructor() {
+        this.downloadData = "";
+        this["dl.instructions.1"] = "";
+        this["dl.instructions.2"] = "";
+        this["dl.instructions.3"] = "";
+        this["dl.instructions.4"] = "";
+        this["dl.instructions.5"] = "";
+        this["dl.instructions.6"] = "";
+        this.close = "";
+    }
+}
 
 class Download extends MapInfo {
     #activeElement;
@@ -29,6 +72,8 @@ class Download extends MapInfo {
         if (!options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
+        self.model = new DownloadModel();
+        self.dialogModel = new DownloadDialogModel();
     }
 
     async loadTemplates() {
@@ -59,8 +104,12 @@ class Download extends MapInfo {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
         });
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog');
+        self.dialogController = new Controller(self.dialogModel, new Observer(self._dialogDiv));
+
     }
 
     addUIEventListeners() {
@@ -112,11 +161,11 @@ class Download extends MapInfo {
         const li = self.map.getLoadingIndicator();
         const wait = li && li.addWait();
 
-        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr:disabled`) &&
-            self.#activeElement.querySelector(`.${self.CLASS}-image-qr:checked`);
+        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr[disabled]`) &&
+            self.#activeElement.querySelector(`.${self.CLASS}-image-qr[checked]`);
         const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + Util.getFormattedDate(new Date().toString(), true);
         const fileExtension = '.' + format.split('/')[1];
-        if (self.#activeElement.querySelector(`.${self.CLASS}-image-wld:checked`) && !self.map.on3DView) {            
+        if (self.#activeElement.querySelector(`.${self.CLASS}-image-wld[checked]`) && !self.map.on3DView) {            
             const worldFileExtension = format === Consts.mimeType.JPEG ? '.jgw' : '.pgw';
             const blob = await self.generateImage(format, true, includeQR);
             const extent = self.map.getExtent();
@@ -228,8 +277,8 @@ ${toFixed(yOrigin)}`);
         const li = self.map.getLoadingIndicator();
         const wait = li && li.addWait();
         const format=this.#activeElement.querySelector('select').value;
-        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr:disabled`) &&
-            self.#activeElement.querySelector(`.${self.CLASS}-image-qr:checked`);
+        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr[disabled]`) &&
+            self.#activeElement.querySelector(`.${self.CLASS}-image-qr[checked]`);
         const blob = await self.generateImage(format, true, includeQR);
         const clipboardItemData = {
             [blob.type]: blob
@@ -281,6 +330,9 @@ ${toFixed(yOrigin)}`);
                 self.map.toast(errorMsg, { type: Consts.msgType.ERROR });
                 TC.error(Util.formatTemplate("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}", { error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), Consts.msgErrorMode.CONSOLE);
                 return;
+            case Consts.WFSErrors.NO_VALID_FORMAT:
+                errorMsg = self.getLocaleString("wfs.NoValidFormat", { serviceTitle: error.params.serviceTitle, format: error.params.format.toUpperCase() });
+                break;
             default:
                 errorMsg = self.getLocaleString("wfs." + error.key, error.params);
                 break;
@@ -310,13 +362,54 @@ ${toFixed(yOrigin)}`);
 
     async generateLink() {
         const self = this;
-        const checkbox = self.div.querySelector(`.${self.CLASS}-div input.${self.CLASS}-image-qr`);
-        const label = self.div.querySelector(`label.${self.CLASS}-image-qr-label`);
+        const checkbox = self.div.querySelector(`.${self.CLASS}-div .${self.CLASS}-image-qr`);
         checkbox.disabled = true;
-        label.classList.add(Consts.classes.LOADING);
+        checkbox.classList.add(Consts.classes.LOADING);
         const result = await super.generateLink.call(self);
-        label.classList.remove(Consts.classes.LOADING);
+        checkbox.classList.remove(Consts.classes.LOADING);
         return result;
+    }
+    updateModel() {
+        const self = this;
+        self.model.download = self.getLocaleString("download");
+        self.model["dl.export.map"] = self.getLocaleString("dl.export.map");
+        self.model["dl.export.vector"] = self.getLocaleString("dl.export.vector");
+        self.model.format = self.getLocaleString("format");
+        self.model.createQrCodeToImage = self.getLocaleString("createQrCodeToImage");
+        self.model.appendQRCode = self.getLocaleString("appendQRCode");
+        self.model["appendWorldFile.explanation"] = self.getLocaleString("appendWorldFile.explanation");
+        self.model.appendWorldFile = self.getLocaleString("appendWorldFile");
+        self.model.copyImageFromCurrentMap = self.getLocaleString("copyImageFromCurrentMap");
+        self.model.copyClipboard = self.getLocaleString("copyClipboard");
+        self.model.downloadImageFromCurrentMap = self.getLocaleString("downloadImageFromCurrentMap");
+        self.model.qrAdvice = self.getLocaleString("qrAdvice");
+        self.model.showDownloadHelp = self.getLocaleString("showDownloadHelp");
+        self.model.downloadLayersFromCurrentExtent = self.getLocaleString("downloadLayersFromCurrentExtent");
+        self.model.tooManyFeatures = self.getLocaleString("tooManyFeatures");
+        self.model["tooManyFeatures.instructions"] = self.getLocaleString("tooManyFeatures.instructions");
+        self.model.noLayersLoaded = self.getLocaleString("noLayersLoaded");
+        self.model["noLayersLoaded.instructions"] = self.getLocaleString("noLayersLoaded.instructions");
+        self.model.tooManySelectedLayers = self.getLocaleString("tooManySelectedLayers");
+        self.model["tooManySelectedLayers.instructions"] = self.getLocaleString("tooManySelectedLayers.instructions");
+        self.model.noData = self.getLocaleString("noData");
+        self.model["noData.instructions"] = self.getLocaleString("noData.instructions");
+        self.model.noValidService = self.getLocaleString("noValidService");
+        self.model["noValidService.instructions"] = self.getLocaleString("noValidService.instructions");
+        self.model.formatImageTitle = self.getLocaleString("format");
+        self.model.formatVectorTitle = self.getLocaleString("format");
+
+        self.dialogModel.downloadData = self.getLocaleString("downloadData");
+        self.dialogModel["dl.instructions.1"] = self.getLocaleString("dl.instructions.1");
+        self.dialogModel["dl.instructions.2"] = self.getLocaleString("dl.instructions.2");
+        self.dialogModel["dl.instructions.3"] = self.getLocaleString("dl.instructions.3");
+        self.dialogModel["dl.instructions.4"] = self.getLocaleString("dl.instructions.4");
+        self.dialogModel["dl.instructions.5"] = self.getLocaleString("dl.instructions.5");
+        self.dialogModel["dl.instructions.6"] = self.getLocaleString("dl.instructions.6");
+        self.dialogModel.close = self.getLocaleString("close");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

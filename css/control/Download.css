@@ -4,11 +4,9 @@
     margin-top: 0;
 }
 
-.tc-ctl-download-cnt span {
-    width: 100%;
-    display: block;
+.tc-ctl-download-cnt span {    
     line-height: 2em;
-    color: #333;
+    color: var(--text-main-color);
     font-weight: bold;
     font-size: 104.5%;
 }
@@ -24,14 +22,13 @@ div.tc-ctl-download-cnt label {
     box-sizing: border-box;
 }
 
-.tc-ctl-download-div label.tc-ctl-download-image-qr-label,
-.tc-ctl-download-div label.tc-ctl-download-image-wld-label {
-    display: inline-block;
-    line-height: 3em;
-    width: calc(50% - 2px);
-    font-weight: normal;
+.tc-ctl-download-div {
+    display: flex;
+    margin: 1em 0;
+    justify-content: space-between;
 }
-.tc-3d .tc-ctl-download-div label.tc-ctl-download-image-wld-label {
+
+.tc-3d .tc-ctl-download-div sitna-toggle.tc-ctl-download-image-wld {
     display: none;
 }
 
@@ -43,27 +40,26 @@ div.tc-ctl-download-cnt label {
     animation: spin 2s infinite linear;
 }
 
+.tc-ctl-download-btn {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.tc-ctl-download-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5em;
+}
+
+sitna-button.tc-ctl-clipboard-btn {
+    --icon-text: '\29c9';
+}
+
+
 sitna-button.tc-ctl-download-help {
     line-height: 1.55em;
-    opacity: 0.5;
     display: inline-block;
-}
-
-.tc-ctl-download .tc-ctl-download-btn, .tc-ctl-download .tc-ctl-clipboard-btn {
-    height: 2em;
-}
-
-div.tc-ctl-download .tc-ctl-download-btn:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) / 2);
-    content: var(--icon-download);
-    margin-right: 0.5em;
-}
-
-div.tc-ctl-download .tc-ctl-clipboard-btn:before {
-    font-family: var(--icon-font-family);
-    content: var(--icon-download);
-    margin-right: 0.5em;
 }
 
 /*div.tc-ctl-download .tc-alert {
@@ -94,8 +90,10 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
     margin-bottom: 3px;
 }
 
-.tc-ctl-download-cnt.tc-group {
-    display: block;
+.tc-ctl-download-image .tc-ctl-download-cnt.tc-group {
+    display: flex;
+    gap: 0.2em;
+    justify-content: right;
 }
 
     .tc-ctl-download-cnt.tc-group.tc-hidden {
@@ -118,9 +116,6 @@ div.tc-ctl-download .tc-ctl-download-help-dialog li li {
         align-self: start;
     }
 
-/*div.tc-ctl-download-div i {
-    color: #666;
-}*/
 @media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height:40em) {
     .tc-ctl-share-qr-dialog .tc-modal-body {
         max-width: 256px; /* tamaño del QR */
