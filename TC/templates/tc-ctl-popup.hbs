@@ -1,11 +1,11 @@
-﻿<<div class="tc-ctl-popup">
+<<div class="tc-ctl-popup">
     <div class="tc-ctl-popup-content{{#if closeButton}} tc-ctl-popup-has-btn{{/if}}"></div>
     <div class="tc-ctl-popup-menu">
         {{#if closeButton}}
-        <button type="button" class="tc-ctl-popup-close tc-icon-btn" title="{{i18n "close"}}"></button>
+        <sitna-button variant="minimal" class="tc-ctl-popup-close">[[close]]</sitna-button>
         {{/if}}
         {{#if shareButton}}
-        <button type="button" class="tc-ctl-popup-share tc-icon-btn" title="{{i18n "shareQuery"}}"></button>
+        <sitna-button variant="minimal" class="tc-ctl-popup-share">[[shareQuery]]</sitna-button>
         {{/if}}
     </div>
 </div>

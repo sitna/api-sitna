@@ -2,26 +2,26 @@
     <div class="tc-modal-background tc-modal-close"></div>
     <div class="tc-modal-window">
         <div class="tc-modal-header">
-            <h3>{{i18n "newOfflineMap"}}</h3>
-            <div class="tc-modal-close"></div>
+            <h3>[[newOfflineMap]]</h3>
+            <div class="tc-modal-close" title="[[close]]"></div>
         </div>
         <div class="tc-modal-body">
-            <input type="text" class="tc-ctl-omm-txt-name" placeholder="{{i18n "nameRequired"}}" required />
+            <input type="text" class="tc-ctl-omm-txt-name" placeholder="[[nameRequired]]" required />
             <div class="tc-ctl-omm-bl-panel">
-                <h4>{{i18n "availableOfflineMaps"}}</h4>
-                <p class="tc-ctl-omm-bl-panel-txt">{{i18n "selectAtLeastOne"}}</p>
+                <h4>[[availableOfflineMaps]]</h4>
+                <p class="tc-ctl-omm-bl-panel-txt">[[selectAtLeastOne]]</p>
                 <ul class="tc-ctl-omm-bl-list"></ul>
             </div>
             <div class="tc-ctl-omm-res-panel tc-hidden">
-                <h4>{{i18n "maxRes"}}</h4>
+                <h4>[[maxRes]]</h4>
                 <div class="tc-ctl-omm-res"></div>
-                <input type="range" class="tc-ctl-omm-rng-maxres" disabled value="0" title="{{i18n "maxRes"}}">
+                <input type="range" class="tc-ctl-omm-rng-maxres" disabled value="0" title="[[maxRes]]">
             </div>
             <div class="tc-ctl-omm-tile-count tc-hidden"></div>
         </div>
         <div class="tc-modal-footer">
-            <button type="button" class="tc-button tc-modal-close tc-ctl-omm-btn-ok" disabled>{{i18n "ok"}}</button>
-            <button type="button" class="tc-button tc-modal-close tc-ctl-omm-btn-cancel">{{i18n "cancel"}}</button>
+            <sitna-button class="tc-modal-close tc-ctl-omm-btn-ok" aria-label="[[ok]]" disabled>[[ok]]</sitna-button>
+            <sitna-button class="tc-modal-close tc-ctl-omm-btn-cancel" aria-label="[[cancel]]">[[cancel]]</sitna-button>
         </div>
     </div>
 </div>

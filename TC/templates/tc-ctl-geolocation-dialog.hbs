@@ -2,31 +2,31 @@
     <div class="tc-modal-background tc-modal-close"></div>
     <div class="tc-modal-window">
         <div class="tc-modal-header">
-            <h3>{{i18n "geo.gps"}}</h3>
-            <div class="tc-modal-close"></div>
+            <h3>[[geo.gps]]</h3>
+            <div class="tc-modal-close" title="[[close]]"></div>
         </div>
         <div class="tc-modal-body">
-            <button type="button" class="tc-button tc-ctl-geolocation-track-continue"> {{i18n "geo.trk.dialog.cnt"}} </button>
-            <button type="button" class="tc-button tc-ctl-geolocation-track-new"> {{i18n "geo.trk.dialog.new"}} </button>            
-            <button type="button" class="tc-button tc-modal-close"> {{i18n "geo.trk.dialog.cancel"}} </button>
+            <sitna-button class="tc-ctl-geolocation-track-continue">[[geo.trk.dialog.cnt]]</sitna-button>
+            <sitna-button class="tc-ctl-geolocation-track-new">[[geo.trk.dialog.new]]</sitna-button>
+            <sitna-button class="tc-modal-close">[[geo.trk.dialog.cancel]]</sitna-button>
         </div>
     </div>
 </div>
-<div class="tc-ctl-geolocation-track-advert-dialog tc-modal" >
+<div class="tc-ctl-geolocation-track-warning-dialog tc-modal" >
     <div class="tc-modal-background tc-modal-close"></div>
     <div class="tc-modal-window">
         <div class="tc-modal-header">
-            <h3>{{i18n "geo.track.activate.title"}}</h3>
-            <div class="tc-modal-close"></div>
+            <h3>[[geo.track.activate.title]]</h3>
+            <div class="tc-modal-close" title="[[close]]"></div>
         </div>
         <div class="tc-modal-body">
-            <p id="pageBlurMsg">{{i18n "geo.trk.page.blur"}}</p>
-            <p class="tc-ctl-geolocation-track-advertisement">                
-                <label> <input type="checkbox" name="checkbox" id="advertisement"> {{i18n "geo.trk.dialog.advertisement"}} </label>        
+            <p id="pageBlurMsg">[[geo.trk.page.blur]]</p>
+            <p class="tc-ctl-geolocation-track-warning">
+                <sitna-toggle name="checkbox">[[geo.trk.dialog.doNotShow]]</sitna-toggle>
             </p>
         </div>
         <div class="tc-modal-footer">
-            <button type="button" class="tc-button tc-ctl-geolocation-track-advert-ok"> {{i18n "ok"}} </button>
+            <sitna-button class="tc-ctl-geolocation-track-warning-ok">[[ok]]</sitna-button>
         </div>
     </div>
 </div>
