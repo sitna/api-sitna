@@ -90,105 +90,125 @@
 
 :root {
     /* custom variables */
-    --color-1: #ffffff;
-    --color-2: #000000;
-    --color-3: #cc0000;
-    --color-4: #cccccc;
-    --color-5: #666666;
-    --color-6: #333333;
-    --color-7: #999999;
-    --color-8: #eeeeee;
-    --color-9: #660000;
-    --color-10: rgba(255, 255, 255, 0);
-    --color-11: rgba(255, 255, 255, 0.7);
-    --color-12: rgba(0, 0, 0, 0.66);
-    --color-13: rgba(102, 0, 0, 0.1);
-    --color-14: #c52737; /*rojo*/
-    --color-15: #3b3bc6; /*azul*/
-    --color-16: #eaeaea;
-    --color-17: #f3f3f3;
-    --color-18: #dddddd;
-    --text-main-color: var(--color-2);
-    --text-sec-color: var(--color-6);
+    --sitna-color-01: #ffffff;
+    --sitna-color-02: #000000;
+    --sitna-color-03: #555555;
+    --sitna-color-04: #cc0000;
+    --sitna-color-05: #333333;
+    --sitna-color-06: #c52737; /*rojo*/
+    --sitna-color-07: #3b3bc6; /*azul*/
+    --sitna-background-color: var(--sitna-color-01);
+    --sitna-text-color: var(--sitna-color-03);
+    --sitna-main-accent-color: var(--sitna-color-04);
+    --sitna-main-accent-contrast-color: var(--sitna-color-01);
+    --sitna-secondary-accent-color: var(--sitna-color-03);
+    --sitna-secondary-accent-contrast-color: var(--sitna-color-01);
+    --sitna-highlighted-text-color: var(--sitna-color-02);
+    --sitna-bg1-txt3-color: color-mix(in srgb, var(--sitna-background-color) 25%, var(--sitna-text-color)); /* #666666 */
+    --sitna-bg1-txt1-color: color-mix(in srgb, var(--sitna-background-color) 50%, var(--sitna-text-color)); /* #999999 */
+    --sitna-bg3-txt1-color: color-mix(in srgb, var(--sitna-background-color) 75%, var(--sitna-text-color)); /* #cccccc */
+    --sitna-bg8-txt1-color: color-mix(in srgb, var(--sitna-background-color) 88.89%, var(--sitna-text-color)); /* #e8e8e8 */
+    --sitna-bg5-txt1-color: color-mix(in srgb, var(--sitna-background-color) 83.33%, var(--sitna-text-color)); /* #dddddd */
+    --sitna-bg11-txt1-color: color-mix(in srgb, var(--sitna-background-color) 91.67%, var(--sitna-text-color)); /* #eeeeee */
+    --sitna-bg-a0-color: rgb(from var(--sitna-background-color) r g b / 0);
+    --sitna-bg-a7-color: rgb(from var(--sitna-background-color) r g b / 0.7);
+    --text-main-color: var(--sitna-text-color);
+    --text-sec-color: var(--sitna-bg1-txt3-color);
     --text-font: sans-serif;
-    --disabled-text-color: var(--color-4);
-    --main-bg-color: var(--color-1);
-    --main-hl-color: var(--color-3);
-    --main-inactive-color: var(--color-9);
-    --link-color: var(--color-3); /* ¿#557FC3? */
+    --disabled-text-color: var(--sitna-bg3-txt1-color);
+    --main-bg-color: var(--sitna-background-color);
+    --main-hl-color: var(--sitna-main-accent-color);
+    --main-inactive-color: hsl(from var(--main-hl-color) h s calc(l / 2)); /* #660000 */
+    --link-color: var(--main-hl-color); /* ¿#557FC3? */
     --link-decoration: underline;
-    --title-color: var(--color-5);
-    --main-divider-color: var(--color-7);
-    --main-divider-width: 1px;
-    --sec-divider-color: var(--color-4);
+    --title-color: var(--sitna-bg1-txt3-color);
+    --main-divider-color: var(--sitna-bg8-txt1-color);
+    --main-divider-width: 2px;
+    --sec-divider-color: var(--sitna-bg3-txt1-color);
+    --panel-bg-color: var(--sitna-bg-a7-color);
+    --panel-hl-bg-color: var(--sitna-background-color);
     --border-radius: 0.3rem;
-    --glyph-color: var(--color-6);
-    --glyph-sec-color: var(--color-7);
-    --glyph-hl-color: var(--color-3);
-    --glyph-disabled-color: var(--color-4);
-    --win-btn-color: var(--color-2);
-    --win-btn-bg-color: var(--color-10);
-    --ph-color: var(--color-7);
-    --btn-color: var(--color-1);
-    --btn-bg-color: var(--color-5);
-    --btn-border-color: var(--color-5);
-    --btn-disabled-color: var(--color-1);
-    --btn-disabled-bg-color: var(--color-4);
-    --btn-disabled-border-color: var(--color-4);
-    --btn-hl-color: var(--color-1);
-    --btn-hl-bg-color: var(--color-3);
-    --btn-hl-border-color: var(--color-3);
-    --sec-btn-color: var(--color-2);
-    --sec-btn-bg-color: var(--color-1);
-    --sec-btn-border-color: var(--color-1);
-    --sec-btn-disabled-color: var(--color-4);
-    --sec-btn-disabled-bg-color: var(--color-1);
-    --sec-btn-disabled-border-color: var(--color-1);
-    --sec-btn-hl-color: var(--color-3);
-    --sec-btn-hl-bg-color: var(--color-1);
-    --sec-btn-hl-border-color: var(--color-1);
-    --input-color: var(--color-2);
-    --input-bg-color: var(--color-1);
-    --input-border-color: var(--color-4);
-    --input-disabled-bg-color: var(--color-8);
-    --input-select-color: var(--color-5);
-    --cb-color: var(--color-2);
-    --cb-bg-color: var(--color-4);
-    --cb-checked-color: var(--color-1);
-    --cb-checked-bg-color: var(--color-6);
-    --tab-color: var(--color-5);
-    --tab-hl-color: var(--color-3);
-    --tab-border-color: var(--color-5);
-    --tab-hl-border-color: var(--color-3);
-    --tab-disabled-color: var(--color-4);
-    --tab-disabled-border-color: var(--color-4);
-    --tab-bg-color: transparent;
+    --glyph-color: var(--sitna-highlighted-text-color);
+    --glyph-sec-color: var(--sitna-bg1-txt1-color);
+    --glyph-hl-color: var(--main-hl-color);
+    --glyph-bg-color: var(--sitna-bg5-txt1-color);
+    --glyph-disabled-color: var(--sitna-bg3-txt1-color);
+    --win-btn-color: var(--sitna-highlighted-text-color);
+    --win-btn-bg-color: var(--sitna-bg-a0-color);
+    --ph-color: var(--sitna-bg1-txt1-color);
+    --btn-color: var(--sitna-secondary-accent-contrast-color);
+    --btn-bg-color: var(--sitna-secondary-accent-color);
+    --btn-border-color: var(--sitna-secondary-accent-color);
+    --btn-disabled-color: var(--sitna-secondary-accent-contrast-color);
+    --btn-disabled-bg-color: var(--sitna-bg3-txt1-color);
+    --btn-disabled-border-color: var(--sitna-bg3-txt1-color);
+    --btn-hl-color: var(--sitna-main-accent-contrast-color);
+    --btn-hl-bg-color: var(--main-hl-color);
+    --btn-hl-border-color: var(--main-hl-color);
+    --sec-btn-color: var(--sitna-highlighted-text-color);
+    --sec-btn-bg-color: var(--sitna-background-color);
+    --sec-btn-border-color: var(--sitna-background-color);
+    --sec-btn-disabled-color: var(--sitna-bg3-txt1-color);
+    --sec-btn-disabled-bg-color: var(--sitna-background-color);
+    --sec-btn-disabled-border-color: var(--sitna-background-color);
+    --sec-btn-hl-color: var(--main-hl-color);
+    --sec-btn-hl-bg-color: var(--sitna-background-color);
+    --sec-btn-hl-border-color: var(--sitna-background-color);
+    --input-color: var(--sitna-highlighted-text-color);
+    --input-bg-color: var(--sitna-background-color);
+    --input-border-color: var(--sitna-bg3-txt1-color);
+    --input-disabled-bg-color: var(--sitna-bg11-txt1-color);
+    --input-select-color: var(--sitna-bg1-txt3-color);
+    --cb-color: var(--sitna-highlighted-text-color);
+    --cb-bg-color: var(--main-bg-color);
+    --cb-border-color: var(--sitna-bg1-txt1-color);
+    --cb-checked-color: var(--main-bg-color);
+    --cb-checked-bg-color: var(--main-hl-color);
+    --cb-checked-border-color: var(--main-hl-color);
+    --cb-indeterminate-color: var(--sitna-highlighted-text-color);
+    --cb-indeterminate-bg-color: var(--sitna-bg3-txt1-color);
+    --cb-indeterminate-border-color: var(--sitna-bg1-txt1-color);
+    --tab-color: var(--sitna-bg1-txt3-color);
+    --tab-hl-color: var(--sitna-bg1-txt3-color);
+    --tab-border-color: var(--sitna-bg1-txt1-color);
+    --tab-hl-border-color: var(--sitna-bg1-txt3-color);
+    --tab-disabled-color: var(--sitna-bg3-txt1-color);
+    --tab-disabled-border-color: var(--sitna-bg8-txt1-color);
+    --tab-bg-color: var(--sitna-bg8-txt1-color);
     --tab-bg-hl-color: var(--main-bg-color);
     --tab-disabled-bg-color: transparent;
     --tab-inner-border-radius: var(--border-radius);
-    --tab-selected-font-weight: normal;
-    --map-btn-color: var(--color-1);
-    --map-btn-bg-color: var(--color-12);
-    --map-slider-thumb-bg-color: var(--color-2);
-    --map-slider-bg-color: var(--color-4);
-    --thumb-border-width: 0.3em;
-    --thumb-border-color: var(--color-4);
-    --thumb-text-color: var(--color-2);
-    --thumb-text-shadow-color: var(--color-1);
-    --overlay-color: var(--color-2);
-    --overlay-bg-color: var(--color-11);
-    --overlay-border-color: var(--color-4);
-    --cell-odd-bg-color: var(--color-8);
-    --cell-even-bg-color: var(--color-1);
-    --list-color: var(--color-2);
-    --list-bg-color: var(--color-1);
-    --list-hl-color: var(--color-2);
-    --list-hl-bg-color: var(--color-13);
-    --active-zone-bg-color: var(--color-8);
-    --track-profile-original-color: var(--color-14);
-    --track-profile-mdt-color: var(--color-15);
+    --tab-selected-font-weight: bold;
+    --map-btn-color: var(--sitna-secondary-accent-contrast-color);
+    --map-btn-bg-color: rgb(from var(--sitna-color-02) r g b / 0.66);
+    --map-slider-thumb-bg-color: var(--sitna-color-02);
+    --map-slider-bg-color: var(--sitna-bg3-txt1-color);
+    --thumb-border-width: 2px;
+    --thumb-border-color: var(--sitna-bg5-txt1-color);
+    --thumb-text-color: var(--sitna-highlighted-text-color);
+    --thumb-text-shadow-color: var(--sitna-background-color);
+    --overlay-color: var(--sitna-highlighted-text-color);
+    --overlay-bg-color: var(--sitna-bg-a7-color);
+    --overlay-border-color: var(--sitna-bg3-txt1-color);
+    --cell-odd-bg-color: var(--sitna-bg11-txt1-color);
+    --cell-even-bg-color: var(--sitna-background-color);
+    --list-color: var(--sitna-highlighted-text-color);
+    --list-bg-color: var(--sitna-background-color);
+    --list-hl-color: var(--sitna-highlighted-text-color);
+    --list-hl-bg-color: color-mix(in hsl, var(--main-bg-color) 80%, var(--main-hl-color));
+    --active-zone-bg-color: var(--sitna-bg11-txt1-color);
+    --track-profile-original-color: var(--sitna-color-06);
+    --track-profile-mdt-color: var(--sitna-color-07);
+    --table-even-row-bg-color: var(--sitna-background-color);
+    --table-odd-row-bg-color: var(--sitna-bg11-txt1-color);
+    --sitna-toast-duration: 5s;
+    --sitna-info-color: var(--sitna-color-07);
+    --sitna-warning-color: goldenrod;
+    --sitna-error-color: var(--sitna-color-04);
     --icon-font-family: 'sitna';
     --icon-font-grid-size: 24px;
+    --icon-font-weight: normal;
+    --icon-font-line-height: 1.5em;
     --icon-close: '\e908';
     --icon-clipboard: '\e902';
     --icon-delete: '\e90d';
@@ -212,6 +232,9 @@
     --icon-filter: '\e931';
     --icon-print: '\e91b';
     --icon-placemark: '\e932';
+    --icon-indeterminate: '?';
+    --checked-icon-text: '\2714';
+    --unchecked-icon-text: '';
 }
 
 .tc-map :-ms-input-placeholder, .tc-ctl :-ms-input-placeholder, .tc-modal :-ms-input-placeholder { /* Edge */
@@ -255,7 +278,6 @@ a.tc-file-link {
     display: inline-block;
     position: relative;
     text-indent: -1000vw;
-    margin-right: 1.4em;
     height: 2em;
 }
 
@@ -274,7 +296,7 @@ a.tc-file-link {
         content: '\1f5ce';
     }
 
-    a.tc-file-link:after {
+    a.tc-file-link:not([type=""]):after {
         content: attr(title);
         position: absolute;
         text-indent: 0;
@@ -473,12 +495,8 @@ sitna-button {
 
     sitna-button[variant="minimal"] {
         height: 1.5em;
+        width: 1.5em;
     }
-
-sitna-toggle {
-    width: 1.5em;
-    height: 1.5em;
-}
 
 sitna-tab {
     text-align: center;
@@ -570,6 +588,20 @@ sitna-tab {
 
     50% {
         opacity: 0.1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes soft-pulsation {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
     }
 
     100% {
@@ -678,10 +710,10 @@ sitna-tab {
     }
 }
 
-@keyframes fadegrow {
+@keyframes fade-grow {
     0% {
         opacity: 0;
-        transform: scale(.95);
+        transform: scale(0.95);
     }
 
     99% {
@@ -1051,13 +1083,13 @@ ol.tc-list, ul.tc-list {
 .tc-ctl .tc-button,
 .tc-modal .tc-button {
     border: 1px solid;
-    border-color: var(--btn-hl-border-color);
+    border-color: var(--btn-border-color);
     border-radius: var(--border-radius);
-    background-color: var(--btn-hl-bg-color);
-    color: var(--btn-hl-color);
+    background-color: var(--btn-bg-color);
+    color: var(--btn-color);
     padding: 6px 10px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12.8px;
     outline: none;
 }
 
@@ -1127,6 +1159,7 @@ ol.tc-list, ul.tc-list {
     -webkit-appearance: none;
     border: 0;
     border-radius: calc(var(--border-radius) / 2);
+    border: solid 2px var(--cb-border-color);
     outline: none;
     background-color: var(--cb-bg-color);
     box-sizing: border-box;
@@ -1147,7 +1180,7 @@ ol.tc-list, ul.tc-list {
         font-size: 0.8em;
         width: 100%;
         height: 100%;
-        line-height: 1.5em;
+        line-height: 1.2em;
         text-indent: 0;
         text-align: center;
         color: var(--cb-color);
@@ -1164,6 +1197,7 @@ ol.tc-list, ul.tc-list {
     .tc-ctl .tc-toggle:checked,
     .tc-modal .tc-toggle:checked {
         background-color: var(--cb-checked-bg-color);
+        border-color: var(--cb-checked-border-color);
     }
 
         .tc-map .tc-toggle.tc-checked:before,
@@ -1256,26 +1290,31 @@ div.tc-alert.tc-hidden {
     display: block;
     position: relative;
     width: 1em;
-    height: 1em;
+    height: 1.3em;
     float: right;
 }
 
 .tc-modal {
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.6);
     width: 100%;
     height: 100%;
     position: fixed;
     top: 0;
     left: 0;
-    display: none;
     z-index: 100010;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s linear 0.15s, opacity 0.15s linear;
+    display: grid;
+    grid-template-areas: "topleft top topright" "left center right" "bottomleft bottom bottomright";
+    backdrop-filter: grayscale(0.5);
 }
 
     .tc-modal.tc-visible {
         animation: fadein 0.25s;
         visibility: visible;
-        display: grid;
-        grid-template-areas: "topleft top topright" "left center right" "bottomleft bottom bottomright";
+        opacity: 1;
+        transition: none;
     }
 
     .tc-modal .tc-modal-background {
@@ -1308,7 +1347,7 @@ body .tc-modal .tc-modal-background {
 }
 
 .tc-modal.tc-visible .tc-modal-window {
-    animation: fadegrow 0.25s;
+    animation: fade-grow 0.25s;
 }
 
 .tc-modal .tc-modal-header {
@@ -1371,6 +1410,10 @@ body .tc-modal .tc-modal-background {
     text-align: right;
     position: relative;
 }
+
+    .tc-modal .tc-modal-footer sitna-button {
+        font-size: 13px;
+    }
 
 .tc-modal h4 {
     color: var(--title-color);
