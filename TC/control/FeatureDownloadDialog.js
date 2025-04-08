@@ -1,39 +1,62 @@
-﻿import TC from '../../TC';
-import Util from '../Util';
-import Consts from '../Consts';
-import Control from '../Control';
-import Point from '../../SITNA/feature/Point';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-import { FieldNameError } from '../../SITNA/format/BinaryFormat';
+﻿import TC from '../../TC.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
+import WebComponentControl from './WebComponentControl.js';
+import Point from '../../SITNA/feature/Point.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import { FieldNameError, TimeNotSupportedError } from '../../SITNA/format/BinaryFormat.js';
+import Elevation from '../tool/Elevation.js'
 
 TC.control = TC.control || {};
 
-class FeatureDownloadDialog extends Control {
-    #displayElevation;
+const elementName = 'sitna-download-file';
+
+class FeatureDownloadDialog extends WebComponentControl {
+    displaysElevation;
     #interpolation = false;
     #interpolationDistance = null;
-    #formats = ["KMZ",/*"KML",*/ "GML", "GeoJSON", "WKT", "WKB", "GPX", "SHP", "GPKG"];
     #interpolationPanel;
+    #elevationSourcePanel;
     #selectors;
+    usesDtm = false;
+    static persistenceMode = {
+        SAVE: 'save',
+        DOWNLOAD: 'download',
+    };
+    formats = [
+        Consts.format.KMZ,
+        Consts.format.GML,
+        Consts.format.GEOJSON,
+        Consts.format.WKT,
+        Consts.format.WKB,
+        Consts.format.GPX,
+        Consts.format.SHAPEFILE,
+        Consts.format.GEOPACKAGE,
+    ];
+
+    persistenceMode = FeatureDownloadDialog.persistenceMode.DOWNLOAD;
 
     constructor() {
         super(...arguments);
-        const self = this;
-        self.title = self.options.title;
-        self.cssClass = self.options.cssClass || "";
+        if (this.options.title) this.title = this.options.title;
+        this.cssClass = this.options.cssClass || "";
 
-        self.#selectors = {
-            ELEVATION_CHECKBOX: "." + self.CLASS + '-elev input[type=checkbox]',
-            INTERPOLATION_PANEL: "." + self.CLASS + '-ip',
-            INTERPOLATION_RADIO: `input[type=radio][name=${self.id}-finfo-ip-coords]`,
-            INTERPOLATION_DISTANCE: "." + self.CLASS + '-ip-m'
+        const className = this.constructor.prototype.CLASS;
+        this.#selectors = {
+            ELEVATION_CHECKBOX: `.${className}-elev sitna-toggle`,
+            ELEVATION_PANEL: `.${className}-elev-ipt`,
+            ELEVATION_SOURCE_PANEL: `.${className}-elev-src`,
+            SOURCE_RADIO: `.${className}-elev-src input[type=radio]`,
+            INTERPOLATION_PANEL: `.${className}-elev-ip`,
+            INTERPOLATION_RADIO: `.${className}-elev-ip input[type=radio]`,
+            INTERPOLATION_DISTANCE: `.${className}-elev-ip-m`,
         };
-        self.features = [];
-        self.options = {};
+        this.features = [];
+        this.options = {};
     }
 
     async loadTemplates() {
@@ -44,7 +67,7 @@ class FeatureDownloadDialog extends Control {
 
     render(callback) {
         const self = this;
-        return super.renderData.call(self, { controlId: self.id }, callback);
+        return super.renderData.call(self, { uid: TC.getUID(), controlId: this.getId() }, callback);
     }
 
     addUIEventListeners() {
@@ -52,8 +75,8 @@ class FeatureDownloadDialog extends Control {
         if (self.modalBody) {
             const modalBody = self.modalBody;
 
-            modalBody.querySelectorAll('button[data-format]').forEach((btn) => btn.addEventListener(Consts.event.CLICK, function (e) {
-                self.download({ format: e.target.dataset.format });
+            modalBody.querySelectorAll('sitna-button[data-format]').forEach((btn) => btn.addEventListener(Consts.event.CLICK, function (e) {
+                self.persist({ format: e.target.dataset.format });
             }, { passive: true }));
 
             if (self.options?.elevation) {
@@ -61,9 +84,9 @@ class FeatureDownloadDialog extends Control {
                 modalBody.querySelector(self.#selectors.ELEVATION_CHECKBOX).addEventListener('change', function (_e) {
                     //self.showDownloadDialog(); // Recalculamos todo el aspecto del diálogo de descarga
 
-                    self.#displayElevation = !self.#displayElevation;
+                    self.displaysElevation = !self.displaysElevation;
 
-                    self.#interpolationPanel?.classList.toggle(Consts.classes.HIDDEN, !self.#displayElevation || !self.#hasLines() && !self.#hasPolygons());
+                    self.#setElevationUIState();
 
                 });
 
@@ -79,7 +102,12 @@ class FeatureDownloadDialog extends Control {
                         self.#interpolationDistance = e.target.value;
                     });
                 }
-            }            
+
+                modalBody.querySelectorAll(self.#selectors.SOURCE_RADIO).forEach((radio, idx) => radio.addEventListener('change', function (_e) {
+                    self.usesDtm = idx === 1;
+                    self.#setElevationUIState();
+                }));
+            }
         }
     }
 
@@ -100,32 +128,28 @@ class FeatureDownloadDialog extends Control {
 
     async #addElevationAndInterpolation(features, options = {}) {
         const self = this;
-        const cloneWithId = function (feat) {
-            const result = feat.clone();
-            result.id = feat.id;
-            return result;
-        };
         //si no se incluyen las elevaciones quito las Z de las geometrias que las tuvieran
         if (!options.displayElevation) {
-            return features.map(function (feat) {
+            for (const feat of features) {
                 if (feat.getGeometryStride() > 2) {
-                    const f = cloneWithId(feat);
-                    f.id = feat.id;
-                    f.layer = feat.layer;
-                    f.removeZ();
-                    return f;
+                    feat.removeZ();
                 }
-                return feat;
-            });
+            }
+            return features;
         }
 
         let mustInterpolate = options.elevation && options.elevation.resolution;
         // Array con features sin altura y nulo donde habia feature con alturas
-        let featuresToAddElevation = mustInterpolate ? features.map(f => cloneWithId(f)) : features.map(f => {
-            return f.getCoordsArray().every(p => !p[2]) ? cloneWithId(f) : null;
-        });
+        let featuresToAddElevation;
+        if (self.usesDtm) {
+            featuresToAddElevation = features;
+        }
+        else {
+            featuresToAddElevation = mustInterpolate ?
+                features : features.map((f) => f.getCoordsArray().every(p => !p[2]) ? f : null);
+        }
 
-        if (mustInterpolate || featuresToAddElevation.some(f => f !== null)) {
+        if (mustInterpolate || featuresToAddElevation.some((f) => f !== null)) {
             const elevOptions = {
                 crs: self.map.getCRS(),
                 features: featuresToAddElevation,
@@ -133,7 +157,7 @@ class FeatureDownloadDialog extends Control {
                 resolution: options.elevation.resolution,
                 sampleNumber: options.elevation.sampleNumber || 0
             };
-            const processedFeatures = await (self.map.elevation || new TC.tool.Elevation(typeof options.elevation === 'boolean' ? {} : options.elevation)).setGeometry(elevOptions);
+            const processedFeatures = await (self.map.elevation || new Elevation(typeof options.elevation === 'boolean' ? {} : options.elevation)).setGeometry(elevOptions);
             // Recombinamos features procesadas y sin procesar
             processedFeatures.forEach((f, index) => {
                 if (!f) {
@@ -147,17 +171,17 @@ class FeatureDownloadDialog extends Control {
         }
     }
 
-    async open(featureOrFeatures, options) {
+    async open(featureOrFeatures, options = {}) {
         const self = this;
 
         self.close();
 
+        self.hiddenElevationSourceSelection = options.hiddenElevationSourceSelection ?? false;
+
         self.setFeatures(featureOrFeatures);
-        options = options || {};
         options = Object.assign({}, {
-            controlId: self.id,
+            controlId: self.getId(),
             cssClass: self.cssClass,
-            checkboxId: self.getUID(),
             elevation: options.elevation//options.elevation ? (options.elevation instanceof Object ? options.elevation : self.map.elevation.options) : options.elevation,
         }, options);
         //si solo hay poligonos ocultamos el botón de formato GPX
@@ -165,35 +189,24 @@ class FeatureDownloadDialog extends Control {
         if (!self.#hasPoints(self) && !self.#hasLines(self) && self.#hasPolygons(self)) {
             excludedFormats.push(Consts.format.GPX);
         }
-        options.formats = self.#formats.filter(item => excludedFormats.indexOf(item) < 0);
+        options.formats ??= self.formats.filter((format) => excludedFormats.indexOf(format) < 0);
+        self.persistenceMode = options.persistenceMode ?? FeatureDownloadDialog.persistenceMode.DOWNLOAD;
         self.setOptions(options);
 
         const html = await self.getRenderedHtml(self.CLASS, options);
         const template = document.createElement('template');
         template.innerHTML = html;
         self.modal = template.content ? template.content.firstChild : template.firstChild;
-        document.body.appendChild(self.modal);
+        self.appendChild(self.modal);
 
         const modalBody = self.modalBody = self.modal.getElementsByClassName("tc-modal-body")[0];
 
+        self.#elevationSourcePanel = modalBody.querySelector(self.#selectors.ELEVATION_SOURCE_PANEL);
         self.#interpolationPanel = modalBody.querySelector(self.#selectors.INTERPOLATION_PANEL);
-        const elevationCheckbox = modalBody.querySelector(self.#selectors.ELEVATION_CHECKBOX);
 
         if (options.elevation) {
-            self.#displayElevation = options.elevation.checked ? options.elevation.checked : self.#displayElevation;
-
-            elevationCheckbox.checked = self.#displayElevation;
-
-            if (self.#interpolationPanel) {
-                self.#interpolationPanel.classList.toggle(Consts.classes.HIDDEN, !self.#displayElevation || !self.#hasLines() && !self.#hasPolygons() || !options.elevation.resolution);
-
-                modalBody.querySelectorAll(self.#selectors.INTERPOLATION_RADIO)[self.#interpolation ? 1 : 0].checked = true;
-                if (self.#interpolation) {
-                    modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE).classList.remove(Consts.classes.HIDDEN);
-                    const input = modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE + " input");
-                    input.value = self.#interpolationDistance || input.value;
-                }
-            }
+            self.displaysElevation = options.elevation.checked ? options.elevation.checked : self.displaysElevation;
+            self.#setElevationUIState();
         }
 
         self.addUIEventListeners();
@@ -220,145 +233,262 @@ class FeatureDownloadDialog extends Control {
         }
     }
 
-    download(options = {}) {
+    #setElevationUIState() {
+        const featuresHaveZ = this.getFeatures().some((f) => f.getGeometryStride() > 2);
+        if (!featuresHaveZ) this.usesDtm = true;
+        const modalBody = this.modalBody = this.modal.getElementsByClassName("tc-modal-body")[0];
+        modalBody.querySelector(this.#selectors.ELEVATION_CHECKBOX).checked = this.displaysElevation;
+        const interpolationRadio = modalBody.querySelectorAll(this.#selectors.INTERPOLATION_RADIO)[this.#interpolation ? 1 : 0];
+        if (interpolationRadio) interpolationRadio.checked = true;
+        modalBody.querySelector(this.#selectors.INTERPOLATION_DISTANCE)?.classList.toggle(Consts.classes.HIDDEN, !this.#interpolation);
+        const sourceRadio = modalBody.querySelectorAll(this.#selectors.SOURCE_RADIO)[this.usesDtm ? 1 : 0];
+        if (sourceRadio) sourceRadio.checked = true;
+        this.#elevationSourcePanel?.classList.toggle(Consts.classes.HIDDEN, this.hiddenElevationSourceSelection || !(this.displaysElevation && featuresHaveZ));
+        this.#interpolationPanel?.classList.toggle(Consts.classes.HIDDEN, !this.usesDtm || !this.displaysElevation || !this.#hasLines() && !this.#hasPolygons());
+        const input = modalBody.querySelector(this.#selectors.INTERPOLATION_DISTANCE + " input");
+        input.value = this.#interpolationDistance || input.value;
+    }
+
+    async persist(options = {}) {
         const self = this;
         if (!options.format) {
             return;
         }
 
-        var resolution = self.#displayElevation && self.#interpolation ?
+        var resolution = self.displaysElevation && self.#interpolation ?
             parseFloat(self.modalBody.querySelector(self.#selectors.INTERPOLATION_DISTANCE + ' input[type=number]').value) || (self.options.elevation || self.map.elevation?.options)?.resolution : 0;
         const format = options.format;
 
-        const endExport = async (features, opts) => {
-
-            // comprobar si hay fecha y hora y el formato de destino es shapefile (que no soporta horas)
-            if (format === Consts.format.SHAPEFILE) {
-                const metadata = await Promise.all(features.map(async (f) => f.layer?.getFeatureTypeMetadata()));
-                if (metadata.some((layerMetadata) => layerMetadata?.attributes.some((attr) => attr.type === Consts.dataType.DATETIME ||
-                    attr.type === Consts.dataType.TIME))) {
-                    if (!options.acceptedTimeLoss) {
-                        await TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.timeData"), format),
-                            () => {
-                                options.acceptedTimeLoss = true;
-                            },
-                            () => {
-                                cancel = true;
-                            });
-                    }
+        let features = self.getFeatures();
+        if (format === Consts.format.GPX) {
+            if (self.#hasPolygons()) {
+                if (TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'))) {
+                    features = features.filter((f) => !(f instanceof Polygon) && !(f instanceof MultiPolygon));
                 }
-                if (cancel) {
+                else {
                     return;
                 }
             }
+        }
 
-            //checkear si son features con datos complejos
-            var cancel = false;
-            if (format !== Consts.format.GEOJSON &&
-                opts.format !== Consts.format.WKT &&
-                format !== Consts.format.GML &&
-                features.some(function (feat) {
-                    for (var attr in feat.getData()) {
-                        if (feat.data[attr] instanceof Object)
-                            return true;
-                    }
-                    return false;
-                })) {
-                if (!options.acceptedDataDestruction) {
-                    await TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.complexAttr"), format),
-                        () => {
-                            options.acceptedDataDestruction = true;
-                        },
-                        () => {
-                            cancel = true;
-                        });
+        const controlOptions = self.getOptions();
+
+        //comprobar si son features con datos complejos
+        if (format !== Consts.format.GEOJSON &&
+            controlOptions.format !== Consts.format.WKT &&
+            format !== Consts.format.GML &&
+            features.some(function (feat) {
+                for (var attr in feat.getData()) {
+                    if (feat.data[attr] instanceof Object)
+                        return true;
+                }
+                return false;
+            })) {
+            if (!options.acceptedDataDestruction) {
+                if (TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.complexAttr"), format))) {
+                    options.acceptedDataDestruction = true;
+                }
+                else {
+                    return;
                 }
             }
-            if (cancel) {
+        }
+
+        return await self.map.wait(async () => {
+            let result = null;
+            Util.closeModal();
+            const persistBySaving = this.persistenceMode === FeatureDownloadDialog.persistenceMode.SAVE && 
+                !!window.showSaveFilePicker;
+            // Si descargamos, clonamos las features para no modificar las originales
+            // Si guardamos, modificamos las features originales
+            let proccessedFeatures = persistBySaving ? features : features.map((feat) => {
+                const result = feat.clone();
+                result.setId(feat.id);
+                result.layer = feat.layer;
+                return result;
+            });
+            try {
+                await self.#addElevationAndInterpolation(proccessedFeatures, {
+                    displayElevation: self.displaysElevation,
+                    elevation: self.displaysElevation ? Object.assign({}, controlOptions.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
+                });
+            }
+            catch (error) {
+                self.open(features, controlOptions);
+                if (error.message === Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
+                    TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
+                    return;
+                }
+                TC.error(self.getLocaleString('elevation.error'));
                 return;
             }
 
-            await self.map.wait(async () => {
-                Util.closeModal();
-                try {
-                    const proccessedFeatures = await self.#addElevationAndInterpolation(features, {
-                        displayElevation: self.#displayElevation,
-                        elevation: self.#displayElevation ? Object.assign({}, opts.elevation || self.map.elevation && self.map.elevation.options, { resolution: resolution }) : null
-                    });
-                    const innerFileName = opts.fileName ||
-                        (opts.title ? opts.title.toLowerCase().replace(/ /g, '_') : 'download');
-                    let fileName = opts.fileName || innerFileName + ' ' + Util.getFormattedDate(new Date().toString(), true);
-                    try {
-                        const data = await self.map.exportFeatures(proccessedFeatures, {
-                            fileName: innerFileName,
-                            format,
-                            adaptNames: options.adaptNames
-                        })
-                        fileName = fileName || TC.getUID();
-                        switch (format) {
-                            case Consts.format.SHAPEFILE:
-                                Util.downloadBlob(fileName + ".zip", data);
-                                break;
-                            case Consts.format.GEOPACKAGE:
-                                Util.downloadFile(fileName + ".gpkg", "application/geopackage+sqlite3", data);
-                                break;
-                            case Consts.format.KMZ:
-                                Util.downloadBlob(fileName + ".kmz", data);
-                                break;
-                            default: {
-                                const mimeType = Consts.mimeType[format];
-                                Util.downloadFile(fileName + '.' + format.toLowerCase(), mimeType, data);
-                                break;
-                            }
-                        }
-                    }
-                    catch (e) {
-                        if (e instanceof FieldNameError) {
-                            const message = self.getLocaleString('fileWrite.fieldNameError', { name: e.cause });
-                            if (options.adaptNames) {
-                                TC.error(message, [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
-                            }
-                            else {
-                                TC.confirm(self.getLocaleString('fileWrite.fieldNameWarning'), () => {
-                                    const newOpts = { ...options };
-                                    newOpts.adaptNames = true;
-                                    self.download(newOpts);
-                                }, () => {
-                                    self.map.toast(message, { type: Consts.msgType.INFO });
-                                });
-                            }
-                        }
-                        else {
-                            TC.error(e);
-                        }
-                    }
+            let exportedFileName = controlOptions.fileName ||
+                (controlOptions.title ? controlOptions.title.toLowerCase().replace(/ /g, '_') : 'download');
+            let fileName = controlOptions.fileName || exportedFileName + ' ' + Util.getFormattedDate(new Date().toString(), true);
+            switch (format) {
+                case Consts.format.SHAPEFILE:
+                    exportedFileName = exportedFileName + '.zip';
+                    break;
+                case Consts.format.KMZ:
+                    exportedFileName = exportedFileName + '.kmz';
+                    break;
+                default: {
+                    exportedFileName = null; // no se usa más que en los casos anteriores
+                    break;
                 }
-                catch (error) {
-                    self.open(features, opts);
-                    if (TC.tool.Elevation && error.message === TC.tool.Elevation.errors.MAX_COORD_QUANTITY_EXCEEDED) {
-                        TC.alert(self.getLocaleString('tooManyCoordinatesForElevation.warning'));
-                        return;
-                    }
-                    TC.error(self.getLocaleString('elevation.error'));
+            }
+            fileName = fileName || TC.getUID();
+            let extension;
+            switch (format) {
+                case Consts.format.SHAPEFILE:
+                    extension = ".zip";
+                    break;
+                case Consts.format.GEOPACKAGE:
+                    extension = ".gpkg";
+                    break;
+                case Consts.format.KMZ:
+                    extension = ".kmz";
+                    break;
+                default: {
+                    extension = '.' + format.toLowerCase();
+                    break;
                 }
-            });
-        };
+            }
+            fileName = fileName + extension;
 
-        if (format === Consts.format.GPX) {
-            if (self.#hasPolygons()) {
-                TC.confirm(self.getLocaleString('gpxNotCompatible.confirm'), function () {
-                    endExport(self.getFeatures().filter(function (feature) {
-                        return !(feature instanceof Polygon) && !(feature instanceof MultiPolygon);
-                    }), self.getOptions());
+            let data;
+            try {
+                data = await self.map.exportFeatures(proccessedFeatures, {
+                    fileName: exportedFileName,
+                    format,
+                    adaptNames: options.adaptNames,
+                    acceptTimeLoss: options.acceptTimeLoss,
                 });
             }
-            else {
-                endExport(self.getFeatures(), self.getOptions());
+            catch (e) {
+                if (e instanceof FieldNameError) {
+                    const message = self.getLocaleString('fileWrite.fieldNameError', { name: e.cause });
+                    if (options.adaptNames) {
+                        TC.error(message, [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
+                    }
+                    else {
+                        if (TC.confirm(self.getLocaleString('fileWrite.fieldNameWarning'))) {
+                            const newOpts = { ...options };
+                            newOpts.adaptNames = true;
+                            self.persist(newOpts);
+                        }
+                        else {
+                            self.map.toast(message, { type: Consts.msgType.INFO });
+                        }
+                    }
+                }
+                else if (e instanceof TimeNotSupportedError) {
+                    if (!options.acceptTimeLoss) {
+                        if (TC.confirm(self.getLocaleString('dl.export.timeData', format))) {
+                            const newOpts = { ...options };
+                            newOpts.acceptTimeLoss = true;
+                            self.persist(newOpts);
+                        }
+                    }
+                }
+                return;
             }
-        }
-        else {
-            endExport(self.getFeatures(), self.getOptions());
-        }
+
+            if (persistBySaving) {
+                // Save as file
+                const getPermission = async function (handle) {
+                    const permissionDescriptor = { mode: 'readwrite' };
+                    let result = await handle.queryPermission(permissionDescriptor);
+                    if (result !== 'granted') {
+                        result = await handle.requestPermission(permissionDescriptor);
+                    }
+                    return result;
+                };
+                const types = [{
+                    accept: {
+                        [Util.getMimeTypeFromUrl(format)]: [extension]
+                    },
+                    description: this.querySelector(`[data-format="${format}"]`).textContent,
+                }];
+                const fileHandle = await window.showSaveFilePicker({ types, suggestedName: fileName });
+                const permission = await getPermission(fileHandle);
+                const fileSystemFileName = fileHandle.name;
+                result = fileHandle;
+                fileName = fileSystemFileName;
+
+                if (permission === 'granted') {
+                    const writeData = async function (handle, data) {
+                        try {
+                            const writable = await handle.createWritable();
+                            await writable.write(data);
+                            await writable.close();
+                            return true;
+                        }
+                        catch (e) {
+                            TC.error(self.getLocaleString('fileWrite.error'), [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
+                            return false;
+                        }
+                    };
+                    const writeOk = await writeData(fileHandle, data);
+                    if (writeOk) {
+                        const sorter = (a, b) => {
+                            let result = 0;
+                            if (a.layer && b.layer) {
+                                result = a.layer.id.localeCompare(b.layer.id);
+                            }
+                            if (result === 0) result = a.id.localeCompare(b.id);
+                            return result;
+                        };
+                        const layers = new Set();
+                        const oldFileHandles = new Set();
+                        features.forEach((f) => f.layer && layers.add(f.layer));
+                        const sortedFeatures = features.sort(sorter);
+                        const sortedLayerFeatures = Array.from(layers).map((l) => l.features).flat().sort(sorter);
+                        let updateLayers = true;
+                        for (let i = 0; i < sortedFeatures.length; i++) {
+                            if (sortedFeatures[i] !== sortedLayerFeatures[i]) {
+                                updateLayers = false;
+                                break;
+                            }
+                        }
+                        if (updateLayers) {
+                            layers.forEach((layer) => {
+                                oldFileHandles.add(layer._fileHandle);
+                                layer._fileHandle = fileHandle;
+                                self.map.trigger(Consts.event.VECTORUPDATE, { layer });
+                            });
+                        }
+
+                        oldFileHandles.forEach((oldFileHandle) => {
+                            self.map.trigger(Consts.event.FILESAVE, { fileHandle, oldFileHandle });
+                        });
+                        await self.map.addRecentFileEntry({ mainHandle: fileHandle });
+                        await self.map.refreshMapState();
+                        self.map.toast(self.getLocaleString('fileSaved'), { type: Consts.msgType.INFO });
+                    }
+                }
+            }
+            else {
+                // Download
+                switch (format) {
+                    case Consts.format.SHAPEFILE:
+                    case Consts.format.KMZ:
+                        Util.downloadBlob(fileName, data);
+                        break;
+                    case Consts.format.GEOPACKAGE:
+                        Util.downloadFile(fileName, "application/geopackage+sqlite3", data);
+                        break;
+                    default: {
+                        const mimeType = Consts.mimeType[format];
+                        Util.downloadFile(fileName, mimeType, data);
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        });
     }
 
     setFeatures(features) {
@@ -376,8 +506,13 @@ class FeatureDownloadDialog extends Control {
     getOptions() {
         return this.options;
     }
+
+    setPersistenceMode(mode) {
+        this.persistenceMode = mode;
+    }
 }
 
 FeatureDownloadDialog.prototype.CLASS = 'tc-ctl-dldlog';
+customElements.get(elementName) || customElements.define(elementName, FeatureDownloadDialog);
 TC.control.FeatureDownloadDialog = FeatureDownloadDialog;
 export default FeatureDownloadDialog;
