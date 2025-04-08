@@ -39,7 +39,7 @@
   * @property {boolean|SITNA.control.TownSearchOptions} [town=true] - Esta propiedad activa/desactiva de cascos urbanos en el buscador del mapa.
   *
   * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.TownSearchOptions}.
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/cfg.SearchOptions.html)</caption> {@lang html}
   * <div id="mapa"></div>    
   * <script>
   *     // Creamos un mapa con el control de búsquedas. 
@@ -92,7 +92,7 @@
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de varios colores, uno para cada tipo de parcela (urbana, rústica, mixta). 
   * El literal indica el tipo de búsqueda y los colores se obtendrán de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchCadastralSource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -374,7 +374,7 @@
   * resultado con valor del campo **NombreMunicipio** a `"Pamplona"` mostrará en la lista de sugerencias el texto
   * *Pamplona*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchMunicipalitySource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -458,7 +458,7 @@
   * **Via** a `"Calle Estafeta"` y valor del campo **Numero** a `13` mostrará en la lista de sugerencias el texto
   * *Calle Estafeta 13, Pamplona*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPostalAddressSource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -546,7 +546,7 @@
   * para un resultado con valor del campo **MUNICIPIO** a `"Aranguren"` y valor del campo **TOPONIMO** a
   * `"Camino de Pamplona"` mostrará en la lista de sugerencias el texto *Camino de Pamplona (Aranguren)*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameSource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -635,7 +635,7 @@
   * y valor del campo **TOPONIMO** a `"Camino de Pamplona"` mostrará en la lista de sugerencias el texto
   * *Camino de Pamplona (Aranguren)*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchPlacenameMunicipalitySource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -722,7 +722,7 @@
   * Por ejemplo: `outputProperties` como `["Carretera"]` y `suggestionTemplate` como `"{0}"` para un resultado
   * con valor del campo **Carretera** a `"N-121"` mostrará en la lista de sugerencias el texto *N-121*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadSource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -808,7 +808,7 @@
   * para un resultado con valor del campo **Carretera** a `"AP-15"` y valor del campo **PK** a `10` mostrará en
   * la lista de sugerencias el texto *AP-15: PK 10*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchRoadMilestoneSource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -895,7 +895,7 @@
   * para un resultado con valor del campo **EntidadPoblacion** a `"Pamplona"` y valor del campo **Via** a
   * `"Calle Estafeta"` mostrará en la lista de sugerencias el texto *Calle Estafeta, Pamplona*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchStreetSource.html)</caption> {@lang html}
     <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -987,7 +987,7 @@
   * **NombreCascoUrbano** a `"Salinas de Pamplona"` mostrará en la lista de sugerencias el texto
   * *Salinas de Pamplona (Galar)*.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/Cfg.SearchTownSource.html)</caption> {@lang html}
   <div id="mapa"></div>
     <script>
         var map = new SITNA.Map("mapa", {
@@ -1066,7 +1066,7 @@
  * *Salinas de Pamplona (Galar)*.
  * @property {string} url - Dirección del servicio WFS que aporta los datos para las búsquedas.
  * @property {string} [version="1.1.0"] - Versión del servicio WFS que aporta los datos para las búsquedas.
- * @example {@lang html}
+ * @example <caption>[Ver en vivo](../examples/cfg.SearchTypeOptions.html)</caption> {@lang html}
     <div id="mapa"></div>    
     <script>
         // Creamos un mapa con el control de búsquedas. 
@@ -2446,11 +2446,11 @@ class Search extends Control {
         this.model.search2 = this.getLocaleString("search.2");
         this.model.dialogHeader = this.getLocaleString("search.1") + " - " + this.getLocaleString("share"); 
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }
-    //changeLanguage() {
+    //updateLanguage() {
     //    this.controller.abort();
     //    this.controller = null;
     //    this.render();
