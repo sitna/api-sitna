@@ -77,6 +77,8 @@ import Consts from '../Consts';
 import Util from '../Util';
 import Control from '../Control';
 import FeatureInfoCommons from './FeatureInfoCommons';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
@@ -89,6 +91,21 @@ const mergeOptions = function (opt1, opt2) {
     }
     return opt1;
 };
+
+class MultiFeatureInfoModel {
+    constructor() {
+        this.selectionBy = "";
+        this.selectionByPoint = "";
+        this.selectionByLine = "";
+        this.selectionByPrecinct = "";
+        this.zoomFeatures = "";
+        this.downloadFeatures = "";
+        this.deleteFeatures = "";
+        this.byPoint = "";
+        this.byLine = "";
+        this.byPrecinct = "";
+    }
+}
 
 class MultiFeatureInfo extends FeatureInfoCommons {
     constructor() {
@@ -117,6 +134,8 @@ class MultiFeatureInfo extends FeatureInfoCommons {
         self.div.querySelectorAll('input[type=radio]').forEach(function (input) {
             input.checked = false;
         });
+
+        self.model = new MultiFeatureInfoModel();
 
         const ctlPromises = [Control.prototype.register.call(self, map)];
         const styles = self.options.styles || {};
@@ -228,6 +247,8 @@ class MultiFeatureInfo extends FeatureInfoCommons {
                 if (Util.isFunction(callback)) {
                     callback();
                 }
+                new Controller(self.model, new Observer(self.div));
+                self.updateModel();
             });
     }
 
@@ -356,6 +377,21 @@ class MultiFeatureInfo extends FeatureInfoCommons {
                 self.div.style.removeProperty('display');
             }
         });
+    }
+    updateModel() {
+        this.model.selectionBy = this.getLocaleString("selectionBy");
+        this.model.selectionByPoint = this.getLocaleString("selectionByPoint");
+        this.model.selectionByLine = this.getLocaleString("selectionByLine");
+        this.model.selectionByPrecinct = this.getLocaleString("selectionByPrecinct");
+        this.model.zoomFeatures = this.getLocaleString("zoomFeatures");
+        this.model.downloadFeatures = this.getLocaleString("downloadFeatures");
+        this.model.deleteFeatures = this.getLocaleString("deleteFeatures");
+        this.model.byPoint = this.getLocaleString("byPoint");
+        this.model.byLine = this.getLocaleString("byLine");
+        this.model.byPrecinct = this.getLocaleString("byPrecinct");
+    }
+    updateLanguage() {
+        this.updateModel();
     }
 }
 
