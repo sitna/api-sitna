@@ -15,7 +15,7 @@ import ZoomSlider from 'ol/control/ZoomSlider';
 import { listen, unlistenByKey } from 'ol/events';
 import { shiftKeyOnly, click, never } from 'ol/events/condition';
 import e_EventType from 'ol/events/EventType';
-import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, boundingExtent } from 'ol/extent';
+import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, extend as extend_e } from 'ol/extent';
 import Feature from 'ol/Feature';
 import { createStyleFunction } from 'ol/Feature';
 import {
@@ -138,6 +138,8 @@ import Layer_s from '../../SITNA/layer/Layer';
 import Raster from '../../SITNA/layer/Raster';
 import Geometry from '../Geometry';
 import FeatureTypeParser from '../tool/FeatureTypeParser.js';
+import filter from '../../SITNA/filter.js';
+import { GMLFilter } from '../../SITNA/filter.js';
 
 TC.wrap = wrap;
 const featureNamespace = {};
@@ -209,7 +211,7 @@ ol.extent = {
     containsCoordinate,
     containsExtent,
     buffer,
-    boundingExtent
+    extend: extend_e,
 };
 
 ol.geom = {
@@ -1726,7 +1728,7 @@ TC.wrap.Map.prototype.getCanvas = function () {
     const self = this;
     if (self.parent.on3DView) {
         const scene = self.parent.view3D.getScene();
-        const newCanvas = document.createElement("canvas");
+        const newCanvas = document.createElementNS("http://www.w3.org/2000/svg", "canvas");
         newCanvas.width = scene.canvas.width;
         newCanvas.height = scene.canvas.height;
         const ctxt = newCanvas.getContext("2d");
@@ -1796,7 +1798,7 @@ TC.wrap.Map.prototype.addPopup = async function (popupCtl) {
             const Draggabilly = module.default;
             // Tuneamos Draggabilly para que acepte excepciones a los asideros del elemento.
             const drag = new Draggabilly(container, {
-                not: 'th,td, td *,input,select,.tc-ctl-finfo-coords,sitna-measurement, h3, h4'
+                not: 'th,td, td *,input,sitna-button,select,.tc-ctl-finfo-coords,sitna-measurement, h3, h4'
             });
             drag.handleEvent = function (event) {
                 const notSelector = this.options.not;
@@ -1965,40 +1967,22 @@ var getFormatFromName = function (name, extractStyles) {
 
 TC.wrap.Map.prototype.exportFeatures = async function (features, options = {}) {
     const self = this;
-    var nativeStyle = createNativeStyle({
+    const nativeStyle = createNativeStyle({
         styles: self.parent.options.styles
     });
-    var olFeatures = features.map(function (feature) {
-        var result = feature.wrap.cloneFeature();
-        // Copiamos propiedad _wrap para poder acceder a las propiedades en la función de estilo
-        result._wrap = feature.wrap;
-        const path = feature.getPath();
-        if (path) {
-            result._folders = path;
-        }
-        //URI:replicamos el id a la feature OL
-        result.id_ = feature.id;
-        // Quitamos el estilo de selección
-        if (result._originalStyle) {
-            result.setStyle(result._originalStyle);
+    const featureStyles = new WeakMap();
+    const olFeatures = features.map((f) => f.wrap.feature);
+    for (const olFeature of olFeatures) {
+        const initialStyle = olFeature.getStyle();
+        featureStyles.set(olFeature, initialStyle);
+        if (olFeature._originalStyle) {
+            olFeature.setStyle(olFeature._originalStyle);
         }
         // Si la feature no tiene estilo propio le ponemos el definido por la API
-        if (!result.getStyle()) {
-            result.setStyle(nativeStyle);
+        if (!initialStyle) {
+            olFeature.setStyle(nativeStyle);
         }
-        // Miramos si tiene texto, en cuyo caso la features se clona para no contaminar la feature original
-        // y al clon se le añade el texto como atributo (necesario para exportar etiquetas en KML y GPX)
-        const text = getNativeFeatureStyle(result).getText();
-        if (text) {
-            const name = text.getText();
-            if (name) {
-                result.setProperties({
-                    name: text.getText()
-                });
-            }
-        }
-        return result;
-    });
+    }
 
     let featureTypeMetadata;
     const firstFeature = features[0];
@@ -2009,11 +1993,18 @@ TC.wrap.Map.prototype.exportFeatures = async function (features, options = {}) {
     const format = getFormatFromName(options.format);
     format.featureTypeMetadata = featureTypeMetadata;
     format.srsName = Util.toURNCRS(self.parent.getCRS());
-    return format.writeFeatures(olFeatures, {
+    const result = await format.writeFeatures(olFeatures, {
         featureProjection: self.parent.getCRS(),
         featureTypeMetadata,
-        adaptNames: options.adaptNames
+        adaptNames: options.adaptNames,
+        acceptTimeLoss: options.acceptTimeLoss,
     });
+
+    for (const olFeature of olFeatures) {
+        const initialStyle = featureStyles.get(olFeature);
+        olFeature.setStyle(initialStyle);
+    }
+    return result;
 };
 
 var isFileDrag = function (e) {
@@ -2081,47 +2072,6 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
     var zipFiles = null;
     var ddInteraction = new ol.interaction.DragAndDrop(ddOptions);
     ddInteraction.on('addfeatures', function (e) {
-
-        // Proceso de puntos de KML: al exportarlos traducimos radius, strokeColor, strokeWidth, etc.
-        // a un SVG con elemento circle. Aquí hacemos el proceso inverso.
-        if (e.features?.length) {
-            const circleRegExp = /<circle cx="(?:\d+(?:\.\d+)?)" cy="(?:\d+(?:\.\d+)?)" r="(\d+(?:\.\d+)?)" stroke="([\w\d#(),]+)" fill="([\w\d#(),]+)" stroke-width="(\d+(?:\.\d+)?)" fill-opacity="(\d+(?:\.\d+)?)" \/>/;
-            e.features.forEach(f => {
-                let style = f.getStyle();
-                if (style) {
-                    if (Util.isFunction(style)) {
-                        style = style(f);
-                    }
-                    if (Array.isArray(style)) {
-                        style = style[0];
-                    }
-                    const image = style.getImage();
-                    if (image) {
-                        const url = image.getSrc();
-                        if (url.startsWith(DATA_IMAGE_SVG_PREFIX)) {
-                            const svg = window.atob(url.substr(DATA_IMAGE_SVG_PREFIX.length));
-                            const match = svg.match(circleRegExp);
-                            if (match) {
-                                const olCircle = new ol.style.Circle({
-                                    radius: parseFloat(match[1]),
-                                    stroke: new ol.style.Stroke({
-                                        color: match[2],
-                                        width: parseFloat(match[4])
-                                    }),
-                                    fill: new ol.style.Fill({
-                                        color: match[3],
-                                        opacity: parseFloat(match[5])
-                                    })
-                                });
-                                style.setImage(olCircle);
-                                f.setStyle(style);
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
         const features = e.features ? e.features.map(function (elm) {
             if (!elm.getId()) {
                 elm.setId(TC.getUID());
@@ -2141,6 +2091,7 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
                 timeStamp: e.file.lastModified,
                 groupIndex: e._groupIndex,
                 groupCount: e._groupCount,
+                groupName: e._groupName,
                 metadata: e._metadata
             };
             if (e.file.name.substring(e.file.name.lastIndexOf(".") + 1).toLowerCase() === 'shp') {
@@ -2156,16 +2107,15 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
                 delete e.file._fileSystemFile;
             }
             if (ddInteraction._fileLayers?.length) {
-                const fileLayers = ddInteraction._fileLayers.filter(l =>
-                    l.file === e.file.name &&
-                    (
-                        !featuresImportEventData.fileSystemFile ||
-                        l._fileHandle.name === featuresImportEventData.fileSystemFile.name
-                    ) &&
-                    (
-                        l.options.groupIndex === e._groupIndex ||
-                        e._groupIndex === 0 && !l.options.groupIndex
-                    ));
+                const fileLayers = ddInteraction._fileLayers.filter((l) => {
+                    const result =
+                        ((!featuresImportEventData.fileSystemFile && l.file === e.file.name)
+                            || l._fileHandle.name === featuresImportEventData.fileSystemFile.name)
+                        &&
+                        (l.options.groupIndex === e._groupIndex || e._groupIndex === 0 && !l.options.groupIndex);
+                    if (result) l.file = e.file.name;
+                    return result;
+                });
                 if (fileLayers.length) {
                     featuresImportEventData.targetLayers = fileLayers;
                 }
@@ -3280,9 +3230,15 @@ var createWmtsSource = function (options) {
         format: options.format
     });
 
+    // Ponemos wrapX = true porque OL 10.1 recorta el extent del mapa base de IDENA. Con esto no recorta nada.
+    sourceOptions.wrapX = true;
+
+
     // Parche: OL calcula fullTileRanges_ en base a la extensión cubierta por los límites del último nivel de zoom. 
     // Esto es un problema porque mapabase tiene límites más extensos en los primeros niveles de zoom que en los últimos.
     // Reasignamos los límites en base a los que salen en el capabilities.
+    //
+    // A partir de OL 10.1 es necesario también rehacer extent_, si no se queda con el extent de la capa más profunda
     let matrixSetLinkNode;
     const layerNode = self
         .parent
@@ -3297,12 +3253,22 @@ var createWmtsSource = function (options) {
         if (matrixSetLinkNode) {
             const tmsLimits = matrixSetLinkNode.TileMatrixSetLimits;
             if (tmsLimits) {
+                const resolutions = sourceOptions.tileGrid.getResolutions();
+                const origins = sourceOptions.tileGrid.origins_;
+                const tileSizes = sourceOptions.tileGrid.tileSizes_;
                 sourceOptions.tileGrid.fullTileRanges_.forEach(function (range, idx) {
                     const tmsl = tmsLimits[idx];
                     range.minX = tmsl.MinTileCol;
                     range.minY = tmsl.MinTileRow;
                     range.maxX = tmsl.MaxTileCol;
                     range.maxY = tmsl.MaxTileRow;
+                    const delta = resolutions[idx] + tileSizes[idx];
+                    const origin = origins[idx];
+                    const minX = origin[0] + delta * range.minX;
+                    const minY = origin[1] + delta * range.minY;
+                    const maxX = origin[0] + delta * (range.maxX + 1)
+                    const maxY = origin[1] + delta * (range.maxY + 1)
+                    ol.extent.extend(sourceOptions.tileGrid.extent_, [minX, minY, maxX, maxY]);
                 });
             }
         }
@@ -3624,7 +3590,13 @@ const createNativeStyle = function (options, olFeat) {
                 };
             }
         }
-        const styles = options.styles || {};
+
+        let styles = options.styles || {};
+        let isCluster = feature && Array.isArray(feature.features) && feature.features.length > 1;
+        const externalStyles = mergeMapAndGeneralStyles(options.layer);
+        if (isCluster) {
+            styles = TC.Util.extend(true, {}, externalStyles.cluster, options && options.styles && options.styles.cluster ? options.styles.cluster : {});
+        }
         let styleOptions = {};
         if (styles.line && (isLine || !olFeat)) {
             styleOptions = styles.line;
@@ -4103,6 +4075,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
             default:
                 outputFormat = new ol.format.WFS({ gmlFormat: new ol.format.GML2() });
                 mimeType = Consts.mimeType.GML;
+                options.outputFormat = Consts.format.GML2;
                 break;
         }
         vectorOptions = {
@@ -4156,14 +4129,44 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                             self.parent.map.trigger(Consts.event.LAYERERROR, { layer: self.parent, reason: error });
                         }
                     };
+                    const getRequestLength = (options) => {
+                        let data;
+                        if (options.data) {
+                            if (typeof options.data === 'string') {
+                                data = options.data;
+                            }
+                            else if (typeof options.data === 'object') {
+                                if (options.contentType || typeof options.contentType === 'boolean') {
+                                    data = TC.Util.getParamString(options.data);
+                                } else {
+                                    const paramArray = [];
+                                    for (var key in options.data) {
+                                        paramArray.push(key + '=' + options.data[key].toString());
+                                    }
+                                    data = paramArray.join('&');
+                                }
+                            }
+                        }
+                        var url = options.url;
+                        if (data) {
+                            url = url + '?' + data;
+                        }
+                        if (options.cache === false) {
+                            url += (url.indexOf('?') < 0 ? '?' : '&') + 'ts=' + Date.now();
+                        }
+                        return url.length;
+
+                    }
+
+
 
                     const makeAjaxCall = (onlyHits, capabilities) => {
-                        var ajaxOptions = {};
-                        var crs = projection.getCode();
-                        var version = options.version || capabilities.version || '1.1.0';
+                        let ajaxOptions = {};
+                        let crs = projection.getCode();
+                        let version = options.version || capabilities.version || '1.1.0';
                         capabilities.version = version;
-                        var url = serviceUrl;
-                        var featureType = Array.isArray(options.featureType) ? options.featureType : [options.featureType];
+                        let url = serviceUrl;
+                        let featureType = Array.isArray(options.featureType) ? options.featureType : [options.featureType];
                         //const isSpatial = function (filter) {
                         //    switch (true) {
                         //        case filter instanceof TC.filter.LogicalNary:
@@ -4176,55 +4179,103 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                         //            return false;
                         //    }
                         //};
-                        const filterText = isFilterText();
-                        // flacunza: quitamos temporalmente la condicion isSpatial para no romper WFSEdit.
-                        //if (options.properties && (isSpatial(options.properties) || (filterText ? options.properties.length > Consts.URL_MAX_LENGTH : options.properties.getText(capabilities.version).length > Consts.URL_MAX_LENGTH))) {
-                        if (options.properties && (filterText ? options.properties.length > Consts.URL_MAX_LENGTH : options.properties.getText(capabilities.version).length > Consts.URL_MAX_LENGTH)) {
-                            ajaxOptions.method = 'POST';
-                            ajaxOptions.url = url;
-                            ajaxOptions.data = filterText ? options.properties : Util.WFSQueryBuilder(featureType, options.properties, capabilities, onlyHits ? null : options.outputFormat, onlyHits, crs, options.maxFeatures);
-
-                            if (!filterText) {
-                                self.parent.map.trigger(Consts.event.BEFOREAPPLYQUERY, { layer: self.parent, query: ajaxOptions.data });
-                            }
-                        }
-                        else {
-                            ajaxOptions.method = 'GET';
-                            ajaxOptions.url = url;
-                            ajaxOptions.data = {
+                        const GETRequestBuider = (options) => {
+                            const _ajaxOptions = {};
+                            _ajaxOptions.method = 'GET';
+                            _ajaxOptions.url = url;
+                            _ajaxOptions.data = {
                                 service: "WFS",
                                 request: "GetFeature",
-                                version: version,
                                 outputFormat: options.outputFormat,
+                                version: version,
                                 srsname: crs
                             };
-                            let prefix = options.featurePrefix ?? options.featureNS ?? "";
-                            if (prefix.length) prefix = prefix + ":";
-                            ajaxOptions.data["typename" + (version === "2.0.0" ? "s" : "")] = prefix + options.featureType;
-                            if (onlyHits)
-                                ajaxOptions.data = Object.assign(ajaxOptions.data, {
-                                    resultType: "hits"
-                                });
                             if (options.properties) {
-                                if (options.properties instanceof TC.filter.Bbox)
-                                    ajaxOptions.data = Object.assign(ajaxOptions.data, {
-                                        BBOX: Util.formatTemplate('{0},{1},{2},{3},{4}', options.properties.extent.concat([crs]))
+                                _ajaxOptions.data.propertyName = options.properties
+                            }
+                            if (options.filter) {
+                                //primero miramos si es un objeto TC.filter
+                                if (options.filter instanceof TC.filter.Filter) {
+                                    if (options.filter instanceof TC.filter.Bbox) {
+                                        _ajaxOptions.data = Object.assign(_ajaxOptions.data, {
+                                            BBOX: Util.formatTemplate('{0},{1},{2},{3},{4}', options.filter.extent.concat([crs]))
+                                        });
+                                    }
+                                    else
+                                        //URI en IOS peta Lookbehind in JS regular expressions https://caniuse.com/js-regexp-lookbehind
+                                        _ajaxOptions.data = Object.assign(_ajaxOptions.data, {
+                                            // quita los prefijos ogc: y fes: del filtro esto afecta a las etiquetas de apertura de cierre
+                                            filter: options.filter.getText(version).replace(/\<(fes\:|ogc\:)/g, "<").replace(/\<\/(fes\:|ogc\:)/g, "</")
+                                        });
+                                }
+                                //luego miramos si en un objeto filtro de los nuevos
+                                else if (options.filter instanceof GMLFilter) {
+                                    _ajaxOptions.data.filter = options.filter.getFilterText({
+                                        outputFormat: options.outputFormat,
+                                        srsName: crs,
+                                        version: version,
+                                        propertyNames: options.properties ? [...options.properties] : null,
+                                        featureNS: options.featureNS,
+                                        featurePrefix: options.featurePrefix,
+                                        featureTypes: featureType,
+                                        resultType: onlyHits ? "hits" : ""
                                     });
-                                else
-                                    //URI en IOS peta Lookbehind in JS regular expressions https://caniuse.com/js-regexp-lookbehind
-                                    ajaxOptions.data = Object.assign(ajaxOptions.data, {
-                                        // quita los prefijos ogc: y fes: del filtro esto afecta a las etiquetas de apertura de cierre
-                                        filter: filterText ? options.properties : options.properties.getText(version).replace(/\<(fes\:|ogc\:)/g, "<").replace(/\<\/(fes\:|ogc\:)/g, "</")
-                                    });
-
-                                if (!filterText && !onlyHits) {
-                                    self.parent.map.trigger(Consts.event.BEFOREAPPLYQUERY, { layer: self.parent, query: options.properties.getText() });
+                                }
+                                //se puede parsear a XML, asumimos que es GML
+                                else if (!new DOMParser().parseFromString(options.filter, 'text/xml').querySelector("parsererror")) {
+                                    _ajaxOptions.data.filter = options.filter;
+                                }
+                                //Si no, asumimos que es CQL
+                                else {
+                                    _ajaxOptions.data.cql_filter = options.filter;
                                 }
                             }
+
+                            let prefix = options.featurePrefix ?? options.featureNS ?? "";
+                            if (prefix.length) prefix = prefix + ":";
+                            _ajaxOptions.data["typename" + (version === "2.0.0" ? "s" : "")] = prefix + options.featureType;
+                            if (onlyHits)
+                                _ajaxOptions.data = Object.assign(_ajaxOptions.data, {
+                                    resultType: "hits"
+                                });
+                            if (!onlyHits && options.filter) {
+                                self.parent.map.trigger(Consts.event.BEFOREAPPLYQUERY, { layer: self.parent, query: _ajaxOptions.data });
+                            }
                             if (options.maxFeatures)
-                                ajaxOptions.data = Object.assign(ajaxOptions.data, {
+                                _ajaxOptions.data = Object.assign(_ajaxOptions.data, {
                                     maxFeatures: options.maxFeatures
                                 });
+                            return _ajaxOptions;
+                        }
+                        const POSTRequestBuider = (options) => {
+                            const _ajaxOptions = {};
+                            _ajaxOptions.method = 'POST';
+                            _ajaxOptions.url = url;
+                            if (options.filter instanceof TC.filter.Filter)
+                                _ajaxOptions.data = Util.WFSQueryBuilder(featureType, options.filter, capabilities, onlyHits ? null : options.outputFormat, onlyHits, crs, options.maxFeatures);
+                            else if (options.filter instanceof GMLFilter) {
+                                ajaxOptions.data = options.filter.getGeatureText({
+                                    outputFormat: options.outputFormat,
+                                    srsName: crs,
+                                    version: version,
+                                    propertyNames: options.properties ? [...options.properties] : null,
+                                    featureNS: options.featureNS,
+                                    featurePrefix: options.featurePrefix,
+                                    featureTypes: featureType,
+                                    resultType: onlyHits ? "hits" : ""
+                                });
+                            }
+                            return _ajaxOptions;
+                        };
+
+                        const verbs = Object.keys(capabilities.Operations.GetFeature.DCP.HTTP).map((a) => a.toUpperCase());
+                        if (verbs.includes("GET") || !verbs.length) {
+                            ajaxOptions = GETRequestBuider(options);
+                            if (verbs.includes("POST") && getRequestLength(ajaxOptions) > Consts.URL_MAX_LENGTH)
+                                ajaxOptions = POSTRequestBuider(options);
+                        }
+                        else {
+                            ajaxOptions = POSTRequestBuider(options);
                         }
                         switch (onlyHits ? "" : mimeType) {
                             case 'json':
@@ -4235,7 +4286,6 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                                 break;
                         }
                         ajaxOptions.contentType = Consts.mimeType.XML;
-
                         return TC.ajax(ajaxOptions);
                     };
 
@@ -4625,9 +4675,6 @@ TC.wrap.layer.Vector.prototype.createStyles = function (options) {
             }
             return nativeStyle;
         };
-        if (opts.styles && Object.keys(opts.styles).length > 1) {
-            dynamicStyle = true;
-        }
     }
 
     var nativeStyle = dynamicStyle ? self.styleFunction : self.styleFunction();
@@ -5061,22 +5108,24 @@ TC.wrap.control.NavBar.prototype.register = function (map) {
             render: function (e) {
                 if (!e.frameState || !e.frameState.viewState || olMap.getView().getMinResolution() <= e.frameState.viewState.resolution) {
                     // GLS: para evitar que el slider se configure en horizontal
-                    var render = function () {
-                        if (this.element.offsetWidth > this.element.offsetHeight) {
-                            if (!self.requestSliderSize) {
-                                self.requestSliderSize = window.requestAnimationFrame(render.bind(this));
-                            }
+                    //var render = function () {
+                    //    if (this.element.offsetWidth > this.element.offsetHeight) {
+                    //        if (!self.requestSliderSize) {
+                    //            self.requestSliderSize = window.requestAnimationFrame(render.bind(this));
+                    //        }
 
-                            window.requestAnimationFrame(render.bind(this));
-                        } else if (this.element.offsetWidth < this.element.offsetHeight) {
-                            if (self.requestSliderSize) {
-                                window.cancelAnimationFrame(self.requestSliderSize);
-                                delete self.requestSliderSize;
-                            }
-                            ol.control.ZoomSlider.prototype.render.call(this, e);
-                        }
-                    };
-                    render.call(this);
+                    //        window.requestAnimationFrame(render.bind(this));
+                    //    } else if (this.element.offsetWidth < this.element.offsetHeight) {
+                    //        if (self.requestSliderSize) {
+                    //            window.cancelAnimationFrame(self.requestSliderSize);
+                    //            delete self.requestSliderSize;
+                    //        }
+                    //        ol.control.ZoomSlider.prototype.render.call(this, e);
+                    //    }
+                    //};
+                    //render.call(this);
+
+                    ol.control.ZoomSlider.prototype.render.call(this, e);
                 }
             }
         });
@@ -5089,10 +5138,13 @@ TC.wrap.control.NavBar.prototype.register = function (map) {
             button.classList.add('tc-ctl-btn', 'tc-float-btn', self.parent.CLASS + '-btn');
             button.style.display = 'block';
             button.innerHTML = '';
+            if (button.matches('.ol-zoomslider-thumb')) {
+                button.setAttribute('title', "[[zoomBar]]");
+            }
             if (button.matches('.ol-zoom-in')) {
                 button.classList.add(self.parent.CLASS + '-btn-zoomin');
                 //button.setAttribute('title', self.parent.getLocaleString('zoomIn'));
-                button.setAttribute('title', "[[zoomIn]]");                
+                button.setAttribute('title', "[[zoomIn]]");
             }
             if (button.matches('.ol-zoom-out')) {
                 button.classList.add(self.parent.CLASS + '-btn-zoomout');
@@ -5900,21 +5952,21 @@ var segmentsUnion = function (lineStrings) {
     return lineStrings[0].getCoordinates();
 };
 
-TC.wrap.control.Geolocation.prototype.processImportedFeatures = async function (options) {
+TC.wrap.control.Geolocation.prototype.processImportedFeatures = async function (options = {}) {
     const self = this;
 
-    var source = self.parent.trackLayer.wrap.layer.getSource();
-    var fileName = self.parent.importedFileName;
-    var names = [];
-    var toAdd = [];
-    var toRemove = [];
-    var maybeRemove = [];
-    var features = source.getFeatures();
+    const source = self.parent.trackLayer.wrap.layer.getSource();
+    const fileName = options.fileName;
+    const names = [];
+    const toAdd = [];
+    const toRemove = [];
+    const maybeRemove = [];
+    const features = options.features?.map((f) => f.wrap.feature) ?? source.getFeatures();
 
-    var segments = [];
-    var coord = [];
+    const segments = [];
+    const coord = [];
 
-    var getName = function (feature) {
+    const getName = function (feature) {
         const properties = feature.getProperties();
         if (Object.prototype.hasOwnProperty.call(properties, "name")) {
             if (properties.name.trim().length > 0) {
@@ -5929,11 +5981,10 @@ TC.wrap.control.Geolocation.prototype.processImportedFeatures = async function (
         }
     };
 
-    for (var f = 0; f < features.length; f++) {
-        var feature = features[f];
+    for (let feature of features) {
 
         if (feature instanceof Feature_s) {
-            feature = features[f].wrap.feature;
+            feature = feature.wrap.feature;
         }
 
         const geometry = feature.getGeometry();
@@ -5988,86 +6039,14 @@ TC.wrap.control.Geolocation.prototype.processImportedFeatures = async function (
         }));
     }
 
-    if (toRemove.length > 0) {
-        for (var i = 0; i < toRemove.length; i++) {
-            source.removeFeature(toRemove[i]);
-        }
+    for (var i = 0; i < toRemove.length; i++) {
+        source.removeFeature(toRemove[i]);
     }
 
-    if (toAdd.length > 0) {
-        var sameName = function (array, element) {
-            var indices = [];
-            var idx = array.indexOf(element);
-            while (idx !== -1) {
-                indices.push(idx);
-                idx = array.indexOf(element, idx + 1);
-
-                if (indices.length > 1)
-                    return true;
-            }
-
-            return indices.length > 1 ? true : false;
-        };
-
-        var featureToAdd;
-        var index = 0;
-        var processAdd = function () {
-            const promises = toAdd.map(function (_ta, idx) {
-                return new Promise(function (resolve, _reject) {
-                    if (featureToAdd) {
-                        source.removeFeature(featureToAdd);
-                    }
-
-                    var name;
-                    if (names.length > idx) {
-                        name = names[idx];
-                        if (sameName(names, name)) {
-                            name = '[' + (idx + 1) + ']' + ' ' + name;
-                        }
-                    }
-
-                    self.parent.importedFileName = name ? name : fileName;
-
-                    featureToAdd = toAdd[idx];
-                    source.addFeature(featureToAdd);
-
-                    self.parent.saveTrack({
-                        message: self.parent.getLocaleString('geo.trk.upload.ok', { trackName: name ? name : fileName }),
-                        importedFileName: name ? name : fileName,
-                        notReproject: options.notReproject,
-                        fileHandle: options.fileHandle
-                    }).then(function (importedIndex) {
-                        if (idx === 0) {
-                            index = importedIndex;
-                        }
-                        resolve();
-                    });
-                });
-            });
-            return Promise.all(promises);
-        };
-        await processAdd();
-
-        self.parent.trackLayer.setVisibility(false);
-        // la siguiente instrucción hace que se elimine del array de ids la línea y después no funciona la descarga de la feature.
-        // 13/11/2020 recupero la instrucción: sin el borrado de features al compartir un track se queda la importada en 4326 y 
-        // la nueva ya gestionada, con lo que el zoom a la feature no funciona como debe. Después de todos los cambios en la gestión de 
-        // IDs de las features de los track no he conseguido reproducir el problema del anterior comentario.
-        self.parent.trackLayer.clearFeatures();
-
-        self.parent.trigger(self.parent.const.event.IMPORTEDTRACK, { index: index });
-
-        delete self.parent.importedFileName;
-    } else {
-
-        if (self.parent.trackLayer) {
-            self.parent.map.removeLayer(self.parent.trackLayer);
-            self.parent.trackLayer = undefined;
-        }
-
-        delete self.parent.importedFileName;
-        TC.alert(self.parent.getLocaleString("geo.trk.upload.error4"));
+    for (let i = 0; i < toAdd.length; i++) {
+        source.addFeature(toAdd[i]);
     }
+    return names;
 };
 
 //TC.wrap.control.Geolocation.prototype.import = function (wait, data, type) {
@@ -6658,7 +6637,7 @@ TC.wrap.control.OverviewMap.prototype.register = async function (map) {
         delete drag._delta;
         map.setCenter(newCenter, { animate: true });
     });
-       
+
 
     // Modificamos mapa para que tenga la proyección correcta
     self.reset();
@@ -6883,7 +6862,7 @@ TC.wrap.control.FeatureInfo.prototype.register = function (map) {
 var bufferElm;
 var getElementText = function (elm) {
     var text = elm.innerHTML || elm.textContent;
-    bufferElm = bufferElm || document.createElement("textarea");
+    bufferElm = bufferElm || document.createElementNS("http://www.w3.org/1999/xhtml", "textarea");
     bufferElm.innerHTML = text;
     return bufferElm.value;
 };
@@ -7016,7 +6995,15 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
                 }
             }
             const _isGMLFilter = function (filter) {
-                return filter && (/<ogc:Filter.*<\/ogc:Filter>/.test(filter) || filter instanceof TC.filter.Filter);
+                return filter && (/<(Filter|fes:Filter|ogc:Filter).*<\/(Filter|fes:Filter|ogc:Filter)>/.test(filter) || filter instanceof TC.filter.Filter || filter instanceof GMLFilter);
+            };
+            const getGMLFilter = function (filter, params) {
+                if (filter instanceof TC.filter.Filter)
+                    return filter.getText();
+                else if (filter instanceof GMLFilter)
+                    return params.filter;
+                else
+                    return filter;
             };
             for (var serviceUrl in targetServices) {
                 services.push(targetServices[serviceUrl]);
@@ -7030,7 +7017,11 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
                 }
 
                 var params = source.getParams();
-                if (params.filter) params.filter = targetService.layers.map(function (i) { return "(" + (!_isGMLFilter(i.filter) ? "" : i.filter instanceof TC.filter.Filter ? i.filter.getText() : i.filter) + ")"; }).join("");
+                if (params.filter) {
+                    params.filter = targetService.layers.map(function (i) {
+                        return "(" + (!_isGMLFilter(i.filter) ? "" : getGMLFilter(i.filter, params)) + ")";
+                    }).join("");
+                }
                 if (params.cql_filter) params.cql_filter = targetService.layers.map(function (i) { return !i.filter || _isGMLFilter(i.filter) ? "INCLUDE" : i.filter; }).join(";");
                 params.LAYERS = serviceLayers.join(',');
                 var gfiURL = source.getFeatureInfoUrl(coords, resolution, map.crs, {
@@ -9281,7 +9272,7 @@ TC.wrap.control.Draw.prototype.setSnapping = function (snapping) {
     }
     if (snapping) {
         const snapOptions = {};
-        if (snapping instanceof Layer) {
+        if (snapping instanceof Layer_s) {
             snapOptions.source = snapping.wrap.layer.getSource();
         }
         else if (Array.isArray(snapping)) {
