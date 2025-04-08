@@ -1,20 +1,33 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import WebComponentControl from './WebComponentControl';
-import Button from '../../SITNA/ui/Button';
-import layerOwner from './layerOwner';
-import Util from '../Util';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import WebComponentControl from './WebComponentControl.js';
+import Button from '../../SITNA/ui/Button.js';
+import layerOwner from './layerOwner.js';
+import Util from '../Util.js';
 import localforage from 'localforage';
-import Point from '../../SITNA/feature/Point';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import Point from '../../SITNA/feature/Point.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
 const elementName = 'sitna-file-import';
+
+class FileImportModel {
+    constructor() {
+        this.openFile = "";
+        this["fileImport.instructions"] = "";
+        this.fileAccessPrompt = "";
+        this.close = "";
+        this.ok = "";
+    }
+}
 
 class FileImport extends WebComponentControl {
 
@@ -24,6 +37,7 @@ class FileImport extends WebComponentControl {
         super(...arguments);
 
         const self = this;
+        self.model = new FileImportModel();
         self.LAYER_METADATA_STORE_KEY_PREFIX = 'TC.fileLayerMetadata.';
 
         self._dialogDiv = Util.getDiv(self.options.dialogDiv);
@@ -108,7 +122,7 @@ class FileImport extends WebComponentControl {
     }
 
     register(map) {
-        const self = this;
+        const self = this;        
         const result = super.register.call(self, map);
         self.registerLayerAdd();
 
@@ -146,7 +160,9 @@ class FileImport extends WebComponentControl {
                 const features = e.features;
                 const timeStamp = e.timeStamp;
                 const groupIndex = e.groupIndex;
-                const fileSystemFile = e.fileSystemFile && e.fileSystemFile.name;
+                const groupCount = e.groupCount;
+                const groupName = e.groupName;
+                const fileSystemFile = e.fileSystemFile?.name;
 
                 const projectGeom = function (feature) {
                     const geogCrs = 'EPSG:4326';
@@ -188,36 +204,41 @@ class FileImport extends WebComponentControl {
                     return;
                 }
 
-                const addLayer = id => {
+                const newLayer = id => {
                     if (!id) {
                         do {
                             id = self.getUID(fileHandle || timeStamp);
                         }
                         while (self.map.getLayer(id));
                     }
-                    return map.addLayer({
-                        id: id,
-                        title: fileName || fileSystemFile,
+                    return new Vector({
+                        id,
+                        title: fileSystemFile ?? fileName,
                         owner: self,
-                        type: Consts.layerType.VECTOR,
                         file: fileName,
-                        groupIndex: groupIndex,
-                        fileSystemFile: fileSystemFile
+                        groupIndex,
+                        groupCount,
+                        groupName,
+                        fileSystemFile,
                     });
                 };
 
                 let targetLayers = e.targetLayers || [];
                 if (!targetLayers.length) {
-                    targetLayers.push(await addLayer());
+                    targetLayers.push(await newLayer());
                 }
                 for (var i = 0; i < targetLayers.length; i++) {
                     const targetLayer = targetLayers[i];
-                    const mapLayer = self.map.getLayer(targetLayer) || await addLayer(targetLayer.id);
+                    const mapLayer = self.map.getLayer(targetLayer) || newLayer(targetLayer.id);
                     // Guarda metadatos de la capa extraídos de archivo (por ejemplo, info de tabla de GeoPackage)
                     mapLayer.setFeatureTypeMetadata(e.metadata);
                     const fileMetadata = await self.loadLayerMetadata(mapLayer);
                     if (!fileMetadata || fileMetadata.groupIndex === groupIndex || (!groupIndex && !fileMetadata.groupIndex)) {
+                        mapLayer.groupIndex = groupIndex;
+                        mapLayer.groupCount = groupCount;
+                        mapLayer.groupName = groupName;
                         targetLayers[i] = mapLayer;
+
                     }
                     else {
                         // Este grupo de entidades no es para esta capa
@@ -226,53 +247,63 @@ class FileImport extends WebComponentControl {
                 }
                 targetLayers = targetLayers.filter(tl => tl);
 
-                map._fileDropLoadingIndicator = map.getLoadingIndicator().addWait(map._fileDropLoadingIndicator);
-
-                targetLayers.forEach(async function (layer) {
-                    if (fileHandle) {
-                        layer._fileHandle = fileHandle;
-                        //layer.file = fileHandle.name;
-                        layer.fileSystemFile = fileHandle.name;
-                        if (e.additionalFileHandles) {
-                            layer._additionalFileHandles = e.additionalFileHandles;
-                        }
-                        else {
-                            delete layer._additionalFileHandles;
-                        }
-                        await self.saveLayerMetadata(layer);
+                for (const layer of targetLayers) {
+                    if (!self.map.getLayer(layer)) {
+                        await self.map.addLayer(layer);
                     }
-                    layer._timeStamp = timeStamp;
-                    layer.owner = self;
-                    self.getLayers().push(layer);
+                }
 
-                    const uidPrefix = layer.id + '.';
-                    const ids = features.map(f => f.getId());
-                    const fixId = function (feature, idx) {
-                        const id = feature.getId();
-                        // Si está el id en el array de ids sin contar el índice del elemento actual
-                        if (ids.filter((_v, i) => i !== idx).includes(id)) {
-                            const newId = TC.getUID({
-                                prefix: uidPrefix,
-                                banlist: ids
-                            });
-                            ids[idx] = newId;
-                            feature.setId(newId);
+                if (targetLayers.length) {
+
+                    map._fileDropLoadingIndicator = map.getLoadingIndicator().addWait(map._fileDropLoadingIndicator);
+
+                    for (const layer of targetLayers) {
+                        if (fileHandle) {
+                            layer._fileHandle = fileHandle;
+                            //layer.file = fileHandle.name;
+                            layer.fileSystemFile = fileHandle.name;
+                            if (e.additionalFileHandles) {
+                                layer._additionalFileHandles = e.additionalFileHandles;
+                            }
+                            else {
+                                delete layer._additionalFileHandles;
+                            }
+                            await self.saveLayerMetadata(layer);
                         }
-                        return feature;
-                    };
-                    layer.addFeatures(
-                        features
-                            .map(projectGeom)
-                            .map(fixId)
-                    )
-                        .then(() => self.subtrackPendingFile());
+                        layer._timeStamp = timeStamp;
+                        layer.owner = self;
+                        self.getLayers().push(layer);
 
-                    if (!e.targetLayer) {
-                        map._bufferFeatures = map._bufferFeatures.concat(layer.features);
+                        const uidPrefix = layer.id + '.';
+                        const ids = features.map(f => f.getId());
+                        const fixId = function (feature, idx) {
+                            const id = feature.getId();
+                            // Si está el id en el array de ids sin contar el índice del elemento actual
+                            if (ids.filter((_v, i) => i !== idx).includes(id)) {
+                                const newId = TC.getUID({
+                                    prefix: uidPrefix,
+                                    banlist: ids
+                                });
+                                ids[idx] = newId;
+                                feature.setId(newId);
+                            }
+                            return feature;
+                        };
+                        layer.clearFeatures();
+                        layer.addFeatures(
+                            features
+                                .map(projectGeom)
+                                .map(fixId)
+                        )
+                            .then(() => self.subtrackPendingFile());
+
+                        if (!e.targetLayer) {
+                            map._bufferFeatures = map._bufferFeatures.concat(layer.features);
+                        }
                     }
-                });
 
-                self.renderRecentFileList();
+                    self.renderRecentFileList();
+                }
             })
             .on(Consts.event.FEATURESIMPORTERROR, function (e) {
                 var dictKey;
@@ -309,8 +340,12 @@ class FileImport extends WebComponentControl {
             })
             .on(Consts.event.FILESAVE, function (e) {
                 self.map.workLayers.forEach(l => {
-                    l._fileHandle?.isSameEntry(e.fileHandle).then(_isSameEntry => {
-                        self.saveLayerMetadata(l);
+                    l._fileHandle?.isSameEntry(e.fileHandle).then((isSameEntry) => {
+                        isSameEntry && self.saveLayerMetadata(l);
+                        if (l.owner === self) {
+                            l._title = l.title = e.fileHandle.name;
+                            self.map.trigger(Consts.event.VECTORUPDATE, { layer: l });
+                        }
                     });
                 });
             });
@@ -339,6 +374,9 @@ class FileImport extends WebComponentControl {
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
 
         await self.renderData({ formats: self.formats });
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.controller.add(self._dialogDiv);
+        self.updateModel();
 
         self.addUIEventListeners();
         self.renderRecentFileList();
@@ -697,6 +735,19 @@ class FileImport extends WebComponentControl {
         return TC.getUID({
             prefix: self.getId() + '-'
         });
+    }
+    updateModel() {
+        const self = this;
+        self.model.openFile = self.getLocaleString("openFile");
+        self.model["fileImport.instructions"] = self.getLocaleString("fileImport.instructions");
+        self.model.addWMS = self.getLocaleString("addWMS");
+        self.model.fileAccessPrompt = self.getLocaleString("fileAccessPrompt");
+        self.model.close = self.getLocaleString("close");
+        self.model.ok = self.getLocaleString("ok");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
