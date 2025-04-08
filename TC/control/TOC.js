@@ -1,16 +1,30 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import MapContents from './MapContents';
-import Raster from '../../SITNA/layer/Raster';
-import Vector from '../../SITNA/layer/Vector';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import MapContents from './MapContents.js';
+import Raster from '../../SITNA/layer/Raster.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import Controller from '../Controller';
+import Observer from '../Observer';
 
 TC.control = TC.control || {};
 
-var CLICKEVENT = 'click';
+class TOCModel {
+    constructor() {
+        //super();
+        this.worklayers = "";
+        this.noData = "";
+    }
+}
 
 class TOC extends MapContents {
+
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.model = new TOCModel();
+    }
 
     register(map) {
         const self = this;
@@ -18,7 +32,7 @@ class TOC extends MapContents {
         map.on(Consts.event.EXTERNALSERVICEADDED, function (e) {
             self.onExternalServiceAdded(e);
         });
-
+        
         return super.register.call(self, map);
     }
 
@@ -44,7 +58,7 @@ class TOC extends MapContents {
 
             if (controlOptions.length > 0) {
                 var ctl = controlOptions[0];
-                var newDiv = document.createElement("div");
+                var newDiv = document.createElementNS("http://www.w3.org/1999/xhtml","div");
                 self.div.appendChild(newDiv);
                 self.map.addControl(ctl.name, Util.extend({ 'div': newDiv }, ctl.options));
             }
@@ -52,6 +66,8 @@ class TOC extends MapContents {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div))
+            self.updateModel();
         });
     }
 
@@ -67,7 +83,7 @@ class TOC extends MapContents {
 
     addUIEventListeners() {
         const self = this;
-        self.div.addEventListener(CLICKEVENT, TC.EventTarget.listenerBySelector('input[type=checkbox]', function (e) { // No usamos Consts.event.CLICK porque en iPad los eventos touchstart no van bien en los checkbox
+        self.div.addEventListener('change', TC.EventTarget.listenerBySelector('sitna-toggle', function (e) { // No usamos Consts.event.CLICK porque en iPad los eventos touchstart no van bien en los checkbox
             const checkbox = e.target;
             var ul = checkbox;
 
@@ -75,9 +91,9 @@ class TOC extends MapContents {
             if (checkbox.parentElement.dataset.layerId) {
                 const layer = self.map.getLayer(checkbox.parentElement.dataset.layerId);
                 //y está chequeado y tiene algún nodo desmarcado
-                if (checkbox.checked && checkbox.parentElement.querySelectorAll("ul input:not(:checked").length > 0) {
+                if (checkbox.checked && checkbox.parentElement.querySelectorAll("ul sitna-toggle:not([checked]").length > 0) {
                     //marcamos todos los checkbox que estén desmarcados
-                    const selectorCSS = "ul " + (layer instanceof Raster ? ("li." + self.CLASS + "-leaf ") : "") + "input:not(:checked)";
+                    const selectorCSS = "ul " + (layer instanceof Raster ? ("li." + self.CLASS + "-leaf ") : "") + "sitna-toggle:not([checked])";
                     const uids = Array.from(e.target.parentElement.querySelectorAll(selectorCSS)).map((cb) => {
                         return cb.parentElement.dataset.layerUid;
                     });
@@ -134,7 +150,7 @@ class TOC extends MapContents {
         var _getCheckbox = function (li) {
             for (var i = 0, len = li.children.length; i < len; i++) {
                 const child = li.children[i];
-                if (child.matches('input[type=checkbox]')) {
+                if (child.matches('sitna-toggle')) {
                     return child;
                 }
             }
@@ -146,15 +162,15 @@ class TOC extends MapContents {
 
         layer.tree = null;
         const tree = layer.getTree(false);
-        const rootCheck = _getCheckbox(li);
-        rootCheck.checked = layer.getVisibility();
+        const rootCheckbox = _getCheckbox(li);
+        rootCheckbox.checked = layer.getVisibility();
         //si la capa está visible pero alguno de los hijos está oculto le ponemos como indeterminado
-        if (rootCheck.checked && layer.getNodeVisibility(tree.uid, tree) === Consts.visibility.HAS_VISIBLE) {
-            rootCheck.checked = false;
-            rootCheck.indeterminate = true;
+        if (rootCheckbox.checked && layer.getNodeVisibility(tree.uid, tree) === Consts.visibility.HAS_VISIBLE) {
+            rootCheckbox.checked = false;
+            rootCheckbox.indeterminate = true;
         }
-        if (rootCheck.checked && layer.getNodeVisibility(tree.uid, tree) === Consts.visibility.NOT_VISIBLE) {
-            rootCheck.checked = rootCheck.indeterminate = false;
+        if (rootCheckbox.checked && layer.getNodeVisibility(tree.uid, tree) === Consts.visibility.NOT_VISIBLE) {
+            rootCheckbox.checked = rootCheckbox.indeterminate = false;
         }
         li.querySelectorAll('li').forEach(function (l) {
             const checkbox = _getCheckbox(l);
@@ -200,11 +216,12 @@ class TOC extends MapContents {
             }
         });
         Array.from(li.parentElement.querySelectorAll('li:not(.' + self.CLASS + '-leaf)')).reverse().forEach((l) => {
-            const someChecked = !!li.parentElement.querySelector("li[data-layer-uid='" + l.dataset.layerUid + "'] > ul > li > input:checked");
-            const someNotChecked = !!li.parentElement.querySelector("li[data-layer-uid='" + l.dataset.layerUid + "'] > ul > li > input:not(:checked)");
-            const someIndeterminated = !!li.parentElement.querySelector("li[data-layer-uid='" + l.dataset.layerUid + "'] > ul > li > input:indeterminate");
-            l.querySelector("input").indeterminate = (someChecked && someNotChecked) || someIndeterminated;
-            l.querySelector("input").checked = someChecked && !someNotChecked && !someIndeterminated;
+            const someChecked = !!li.parentElement.querySelector("li[data-layer-uid='" + l.dataset.layerUid + "'] > ul > li > sitna-toggle[checked]");
+            const someNotChecked = !!li.parentElement.querySelector("li[data-layer-uid='" + l.dataset.layerUid + "'] > ul > li > sitna-toggle:not([checked])");
+            const someIndeterminate = Array.from(li.parentElement.querySelectorAll("li[data-layer-uid='" + l.dataset.layerUid + "'] > ul > li > sitna-toggle"))
+                .some((elm) => elm.indeterminate);
+            l.querySelector("sitna-toggle").indeterminate = (someChecked && someNotChecked) || someIndeterminate;
+            l.querySelector("sitna-toggle").checked = someChecked && !someNotChecked && !someIndeterminate;
         });
         return self;
     }
@@ -267,7 +284,7 @@ class TOC extends MapContents {
                             }
                         });
                         if (layer instanceof Raster) {
-                            newLi.querySelector("input[type='checkbox']").classList.add(Consts.classes.HIDDEN);
+                            newLi.querySelector("sitna-toggle").classList.add(Consts.classes.HIDDEN);
                         }
                     } else if (layer instanceof Vector) {
                         const wl = 'ul.' + self.CLASS + '-wl';
@@ -319,7 +336,7 @@ class TOC extends MapContents {
             if (li.dataset.layerId === layer.id) {
                 var isHidden = !layer.getVisibility();
                 if (isHidden) {
-                    li.querySelectorAll('input[type=checkbox]').forEach(function (checkbox) {
+                    li.querySelectorAll('sitna-toggle').forEach(function (checkbox) {
                         checkbox.checked = !isHidden;
                         if (layer instanceof Vector) {
                             layer.setNodeVisibility(checkbox.parentElement.dataset.layerUid, false);
@@ -330,7 +347,7 @@ class TOC extends MapContents {
                     }
                 }
                 else {
-                    if (layer instanceof Raster && li.querySelector("input.tc-ctl-toc-branch-cb:checked")) {
+                    if (layer instanceof Raster && li.querySelector("sitna-toggle.tc-ctl-toc-branch-cb[checked]")) {
                         layer.setLayerNames(Array.from(li.querySelectorAll('li.' + self.CLASS + '-leaf'))
                             .reduce((vi, va) => { return vi.concat(va.dataset.layerName) }, []));
                     }
@@ -362,6 +379,14 @@ class TOC extends MapContents {
     }
 
     importState(_state) {
+    }
+    updateModel() {
+        this.model.worklayers = this.getLocaleString("worklayers");
+        this.model.noData = this.getLocaleString("noData");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

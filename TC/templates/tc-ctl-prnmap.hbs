@@ -1,31 +1,28 @@
-<h2>{{i18n "print"}}</h2>
+<h2>[[print]]</h2>
 <div>
     <div class="tc-ctl-prnmap-div">
         <div class="tc-group tc-ctl-prnmap-cnt">
-            <label>{{i18n "title"}}:</label><input type="text" class="tc-ctl-prnmap-title tc-textbox" maxlength="30" placeholder="{{i18n "mapTitle"}}" />
+            <label>[[title]]:</label><input type="text" class="tc-ctl-prnmap-title tc-textbox" maxlength="30" placeholder="[[mapTitle]]" />
         </div>
         <div class="tc-group tc-ctl-prnmap-cnt">
-            <label>{{i18n "layout"}}:</label><select id="print-design" class="tc-combo">
-                <option value="landscape">{{i18n "landscape"}}</option>
-                <option value="portrait">{{i18n "portrait"}}</option>
+            <label>[[layout]]:</label><select id="print-design" class="tc-combo" title="[[layoutTitle]]">
+                <option value="landscape">[[landscape]]</option>
+                <option value="portrait">[[portrait]]</option>
             </select>
         </div>
         <div class="tc-group tc-ctl-prnmap-cnt">
-            <label>{{i18n "size"}}:</label><select id="print-size" class="tc-combo">
+            <label>[[size]]:</label><select id="print-size" class="tc-combo"  title="[[sizeTitle]]">
                 <option value="a4">A4</option>
                 <option value="a3">A3</option>
             </select>
         </div>
         <div class="tc-group tc-ctl-prnmap-cnt tc-ctl-prnmap-cnt-btn">
-            <label class="tc-ctl-prnmap-image-qr-label" title="{{i18n "createQrCodeToImage"}}">
-                <input class="tc-toggle tc-ctl-prnmap-image-qr" type="checkbox" checked />
-                {{i18n "appendQRCode"}}
-            </label>
-            <button type="button" class="tc-ctl-prnmap-btn tc-button tc-icon-button" title="{{i18n "printMap"}}">{{i18n "print"}}</button>
+            <sitna-toggle class="tc-ctl-prnmap-image-qr" title="[[createQrCodeToImage]]" checked>[[appendQRCode]]</sitna-toggle>
+            <sitna-button class="tc-ctl-prnmap-btn" title="[[printMap]]">[[print]]</sitna-button>
         </div>
         <div class="tc-group tc-ctl-prnmap-cnt">
             <div class="tc-ctl-prnmap-alert tc-alert tc-alert-warning tc-hidden">
-                <p>{{i18n "qrAdvice" true}}</p>
+                <p>[[qrAdvice]]</p>
             </div>
         </div>
     </div>

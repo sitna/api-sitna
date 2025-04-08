@@ -19,13 +19,15 @@
   * @property {string} [orientation="portrait"] - Determina la orientación de la página de impresión que contiene la leyenda. Puede tomar el valor `portrait` (vertical) o `landscape` (horizontal).
   */
 
-import TC from '../../TC';
-import Util from '../Util';
-import Consts from '../Consts';
-import MapInfo from './MapInfo';
-import ScaleBar from './ScaleBar';
-import '../tool/Proxification';
-import { CreateSymbolizer } from './LayerLegend';
+import TC from '../../TC.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
+import MapInfo from './MapInfo.js';
+import ScaleBar from './ScaleBar.js';
+import '../tool/Proxification.js';
+import { CreateSymbolizer } from './LayerLegend.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -477,7 +479,38 @@ const options = {
     }
 };
 
+class PrintMapModel {
+    constructor() {
+        this.print = "";
+        this.title = "";
+        this.mapTitle = "";
+        this.layout = "";
+        this.landscape = "";
+        this.portrait = "";
+        this.size = "";
+        this.createQrCodeToImage = "";
+        this.appendQRCode = "";
+        this.printMap = "";
+        this.qrAdvice = "";
+        this.layoutTitle = "";
+        this.sizeTitle = "";
+    }
+}
+class PrintMapToolsModel {
+    constructor() {
+        this.printpdf = "";
+        this.sharePDF = "";
+        this.close = "";
+    }
+}
+
 class PrintMap extends MapInfo {
+    constructor() {
+        super(...arguments);
+        const self = this;
+        self.model = new PrintMapModel();
+        self.toolModel = new PrintMapToolsModel();
+    }
 
     async loadTemplates() {
         const self = this;
@@ -494,7 +527,12 @@ class PrintMap extends MapInfo {
 
     render(callback) {
         const self = this;
+        self.renderPromise().then(() => {
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
+        });
         return super.renderData.call(self, { controlId: self.id }, callback);
+        
     }
 
     register(map) {
@@ -660,6 +698,7 @@ class PrintMap extends MapInfo {
                     div.querySelector('.' + self.CLASS + '-btn-pdf').addEventListener('click', self.downloadPdf.bind(self));
 
                     div.querySelector('.' + self.CLASS + '-btn-share')?.addEventListener('click', self.sharePdf.bind(self));
+                    self.toolsController = new Controller(self.toolModel, new Observer(self.getToolsElement()));
                 });
             }
 
@@ -719,10 +758,12 @@ class PrintMap extends MapInfo {
     getContainer() {
         return this.map.on3DView ? this.map.view3D.container : this.map.div
     }
-    static imageErrorHandling (imageUrl) {
+
+    static imageErrorHandling(imageUrl) {
         TC.error(self.getLocaleString('print.error'));
         TC.error('No se ha podido generar el base64 correspondiente a la imagen: ' + imageUrl, Consts.msgErrorMode.EMAIL, 'Error en la impresión'); //Correo de error
-    };
+    }
+
     getLogo() {
 
         const self = this;
@@ -749,14 +790,15 @@ class PrintMap extends MapInfo {
                 return logoColumn;
 
             }, function () {
-                imageErrorHandling(self.options.logo);
+                PrintMap.imageErrorHandling(self.options.logo);
 
                 return onLogoError();
             });
         } else {
             return onLogoError();
         }
-    };
+    }
+
     getScaleBar() {
         const self = this;
         var scaleBarColumn = getScaleBarColumn(getLayout(self.orientation || ORIENTATION.PORTRAIT, self.format.toString().toUpperCase() || "A4"));
@@ -809,9 +851,7 @@ class PrintMap extends MapInfo {
             }
         }
         return scaleBarColumn;
-
-
-    };
+    }
 
     getLegend() {
         const self = this;
@@ -1088,7 +1128,8 @@ class PrintMap extends MapInfo {
                 reject([]);
             });
         });
-    };
+    }
+
     drawQR() {
         const self = this;
         // GLS: añadimos el QR
@@ -1109,7 +1150,7 @@ class PrintMap extends MapInfo {
         } else {
             return self.canvas;
         }
-    };
+    }
 
     generateFileName() {
         const self = this;
@@ -1124,7 +1165,7 @@ class PrintMap extends MapInfo {
         }
 
         return filename.replace(/[\\\/:*?"<>\|]/g, "") + '.pdf';
-    };
+    }
 
     async sharePdf(e) {
         const self = this;
@@ -1152,6 +1193,7 @@ class PrintMap extends MapInfo {
             btn.classList.remove(Consts.classes.LOADING);
         });
     }
+
     async downloadPdf(e) {
         const self = this;
 
@@ -1162,6 +1204,7 @@ class PrintMap extends MapInfo {
         await pdfDocGenerator.download(self.generateFileName());
         btn.classList.remove(Consts.classes.LOADING);
     }
+
     async createPdf() {
         const self = this;
 
@@ -1264,18 +1307,40 @@ class PrintMap extends MapInfo {
 
     async generateLink() {
         const self = this;
-        const checkbox = self.div.querySelector(`.${self.CLASS}-div input.${self.CLASS}-image-qr`);
-        const label = self.div.querySelector(`label.${self.CLASS}-image-qr-label`);
+        const checkbox = self.div.querySelector(`.${self.CLASS}-div sitna-toggle.${self.CLASS}-image-qr`);
         checkbox.disabled = true;
-        label.classList.add(Consts.classes.LOADING);
+        checkbox.classList.add(Consts.classes.LOADING);
         const result = await MapInfo.prototype.generateLink.call(self);
-        label.classList.remove(Consts.classes.LOADING);
+        checkbox.classList.remove(Consts.classes.LOADING);
         return result;
     }
 
     getToolsElement() {
         const self = this;
         return self.getContainer().querySelector(`.${self.CLASS}-tools`);
+    }
+
+    updateModel() {
+        this.model.print = this.getLocaleString("print");
+        this.model.title = this.getLocaleString("title");
+        this.model.mapTitle = this.getLocaleString("mapTitle");
+        this.model.layout = this.getLocaleString("layout");
+        this.model.landscape = this.getLocaleString("landscape");
+        this.model.portrait = this.getLocaleString("portrait");
+        this.model.size = this.getLocaleString("size");
+        this.model.createQrCodeToImage = this.getLocaleString("createQrCodeToImage");
+        this.model.appendQRCode = this.getLocaleString("appendQRCode");
+        this.model.printMap = this.getLocaleString("printMap");
+        this.model.qrAdvice = this.getLocaleString("qrAdvice");
+        this.model.layoutTitle = this.getLocaleString("layout");
+        this.model.sizeTitle = this.getLocaleString("size");
+
+        this.toolModel.printpdf = this.getLocaleString("printpdf");
+        this.toolModel.sharePDF = this.getLocaleString("sharePDF");
+        this.toolModel.close = this.getLocaleString("close");
+    }
+    async updateLanguage() {
+        this.updateModel();
     }
 }
 

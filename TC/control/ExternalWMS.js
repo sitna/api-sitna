@@ -1,10 +1,22 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import Raster from '../../SITNA/layer/Raster';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Raster from '../../SITNA/layer/Raster.js';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
+
+class ExternalWMSModel {
+    constructor() {
+        this.addMaps = "";
+        this.writeAddressOrSelect = "";
+        this["addService.title"] = "";
+        this.addService = "";
+        this.addWMS = "";
+    }
+};
 
 class ExternalWMS extends Control {
     #addedUrls = [];
@@ -16,12 +28,13 @@ class ExternalWMS extends Control {
         self.count = 0;
 
         self.allowReprojection = Object.prototype.hasOwnProperty.call(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
+
+        self.model = new ExternalWMSModel();
     }
 
     async register(map) {
-        const self = this;
+        const self = this;        
         await super.register.call(self, map);
-
         map.on(Consts.event.LAYERADD, function (e) {
             const layer = e.layer;
             if (layer && !layer.isBase) {
@@ -43,7 +56,7 @@ class ExternalWMS extends Control {
                     self.#addedUrls.push(url);
                 }
             }
-        });
+        });        
 
         return self;
     }
@@ -78,6 +91,8 @@ class ExternalWMS extends Control {
             if (typeof callback === 'function') {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
         });
     }
 
@@ -93,7 +108,7 @@ class ExternalWMS extends Control {
                 evt.target.value = '';
             }
         });
-        self.div.querySelector('button[name="agregar"]').addEventListener('click', function (_e) {
+        self.div.querySelector('sitna-button[name="agregar"]').addEventListener('click', function (_e) {
             self.addWMS();
         });
         self.div.querySelector('input').addEventListener('keyup', (e) => {
@@ -150,8 +165,7 @@ class ExternalWMS extends Control {
                         }
                     }
 
-                    const addButton = self.div.querySelector('button');
-                    addButton.setAttribute('type', 'button');
+                    const addButton = self.div.querySelector('sitna-button');
                     addButton.disabled = true;
 
                     var obj = {
@@ -220,6 +234,18 @@ class ExternalWMS extends Control {
             selectedOption.disabled = true;
             selectedOption.classList.add('tc-ctl-xwms-option-selected');
         }
+    }
+    updateModel() {
+        const self = this;
+        self.model.addMaps = self.getLocaleString("addMaps");
+        self.model.writeAddressOrSelect = self.getLocaleString("writeAddressOrSelect");
+        self.model["addService.title"] = self.getLocaleString("addService.title");
+        self.model.addService = self.getLocaleString("addService");
+        self.model.addWMS = self.getLocaleString("addWMS");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

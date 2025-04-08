@@ -4,7 +4,7 @@
   * @memberof SITNA.control
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [showGeo] - Determina si se muestran coordenadas geográficas (en EPSG:4326) además de las del mapa, que por defecto son UTM (EPSG:25830).
-  * @example {@lang html} 
+  * @example <caption>[Ver en vivo](../examples/cfg.CoordinatesOptions.html)</caption> {@lang html} 
   * <div id="mapa"/>
   * <script>
   *     // Hacemos que el control que muestra las coordenadas en pantalla
@@ -12,7 +12,7 @@
   *     SITNA.Cfg.controls.coordinates = {
   *         showGeo: true
   *     };
-  *     var map = new SITNA.Map('map');
+  *     var map = new SITNA.Map('mapa');
   * </script>
   */
 
@@ -37,6 +37,7 @@ class CoordinatesModel {
         this.lon = "";
         this.ele = "";
         this.currentCRS = "";
+        this.close = "";
     }
 }
 class CoordinatesDialogModel {
@@ -50,6 +51,7 @@ class CoordinatesDialogModel {
         this.coordsInstructions = "";
         this.coordsInstructionsWarning = "";
         this.cancel = "";
+        this.close = "";
     }
 }
 
@@ -103,8 +105,9 @@ class Coordinates extends ProjectionSelector {
 
         self.clear();
 
-        self.updateModel();
+        
         self.model.currentCRS = map.crs;
+        self.modelDialog.currentCRSCode = map.crs
 
         const _3dContainerListener = function (e) {
             if (!self.isPointerOver(e)) {
@@ -122,7 +125,6 @@ class Coordinates extends ProjectionSelector {
                 self.isGeo = true;
                 self.units = Consts.units.DEGREES;
                 self.crs = self.map.view3D.crs;
-
                 self.map.view3D.container.addEventListener('mouseout', _3dContainerListener);
 
                 /* provisional: faltaría el off cuando pasemos a default*/
@@ -150,15 +152,14 @@ class Coordinates extends ProjectionSelector {
             } else if (view === Consts.view.DEFAULT) {
                 self.isGeo = self.map.wrap.isGeo();
                 self.units = Consts.units.METERS;
-                self.crs = self.map.crs;
-
+                self.crs = self.map.crs;                
                 if (self.map.view3D) {
                     self.map.view3D.container.removeEventListener('mouseout', _3dContainerListener);
                 }
             }
-
+            self.model.currentCRS = self.crs;
             if (self.map.view3D) {
-                self.geoCrs = self.map.view3D.crs;
+                self.geoCrs = self.map.view3D.crs;                
                 self.render();
             }
         });
@@ -168,8 +169,7 @@ class Coordinates extends ProjectionSelector {
             self.wrap.register(map).then(function () {
                 self.render(function () {
                     //self.update();
-                    self.clear();
-                    self.controller = new Controller(self.model, new Observer(self.div));
+                    self.clear();                    
                 });
             });
 
@@ -184,7 +184,7 @@ class Coordinates extends ProjectionSelector {
                 if (!map.on3DView) {
                     self.isGeo = map.wrap.isGeo();
                     self.model.currentCRS = self.crs = e.newCrs;
-                    //self.render();
+                    Util.closeModal();
                 }
             });
 
@@ -223,9 +223,7 @@ class Coordinates extends ProjectionSelector {
 
         const html = await self.getRenderedHtml(self.CLASS + '-dialog', null);
         self._dialogDiv.innerHTML = html;
-
-        self.controllerModal = new Controller(self.modelDialog, new Observer(self._dialogDiv));
-
+        
         await super.renderData.call(self, {
             x: self.x,
             y: self.y,
@@ -253,6 +251,9 @@ class Coordinates extends ProjectionSelector {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controllerModal = new Controller(self.modelDialog, new Observer(self._dialogDiv));
+            self.updateModel();
         });
     }
 
@@ -519,19 +520,21 @@ class Coordinates extends ProjectionSelector {
         return self.layer;
     }
     updateModel(){
-        this.model.crs=this.getLocaleString("crs");;
+        this.model.crs=this.getLocaleString("crs");
         this.model.changeCRS = this.getLocaleString("changeCRS");
         this.model.lat = this.getLocaleString("lat");
         this.model.lon = this.getLocaleString("lon");
         this.model.ele = this.getLocaleString("ele");
+        this.model.close = this.getLocaleString("close");
         this.modelDialog.changeCRS = this.getLocaleString("changeCRS");
         this.modelDialog.coordsCurrentProjection =this.getLocaleString("coords.currentProjection");
         this.modelDialog.coordsNoCrsWarning = this.getLocaleString("coords.noCrs.warning");
         this.modelDialog.coordsInstructions = this.getLocaleString("coords.instructions");
         this.modelDialog.coordsInstructionsWarning = this.getLocaleString("coords.instructions.warning");
-        this.modelDialog.cancel = this.getLocaleString("changeCRS");
+        this.modelDialog.cancel = this.getLocaleString("cancel");
+        this.modelDialog.close = this.getLocaleString("close");
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }
