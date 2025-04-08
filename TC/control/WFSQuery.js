@@ -106,6 +106,9 @@ import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 import Button from '../../SITNA/ui/Button';
 
+import Observer from '../Observer';
+import Controller from '../Controller';
+
 
 TC.control = TC.control || {};
 TC.UI = TC.UI || {};
@@ -193,7 +196,7 @@ const filterByOperation = {
 };
 
 const checkInputType = function (type) {
-    var input = document.createElement("input");
+    var input = document.createElementNS("http://www.w3.org/1999/xhtml", "input");
     input.setAttribute("type", type);
     return input.type == type;
 };
@@ -489,6 +492,84 @@ const _showMessage = function (message, type) {
     }
 };
 
+class WFSQueryModel {
+    constructor() {
+        this["query.tooltipMagnifBtn"] = "";
+        this["query.tooltipCloseDialogBtn"] = "";
+        this["query.chooseALayerCombo"] = "";
+        this["query.tooltipSendQueryBtn"] = "";
+        this["query.sendQueryBtnText"] = "";
+        this["query.cancelQueryTooltip"] = "";
+        this["query.cancelQueryButton"] = "";
+        this["query.zoomToExtent"] = "";
+        this["wfs.changeCriteria"] = "";
+        this["headerTitle"] = "";
+
+        this["query.chooseAttrCombo"] = "";
+        this.geometry = "";
+        this["query.noAttributes"] = "";
+        this["operators.eq.key"] = "";
+        this["operators.neq.key"] = "";
+        this["operators.gt.key"] = "";
+        this["operators.lt.key"] = "";
+        this["operators.gte.key"] = "";
+        this["operators.lte.key"] = "";
+        this["operators.contains.key"] = "";
+        this["operators.starts.key"] = "";
+        this["operators.ends.key"] = "";
+        this["operators.empty.key"] = "";
+
+        this["query.searchFieldPhd"] = "";
+        this["query.tooltipAddCondBtn"] = "";
+        this["query.textAddCondBtn"] = "";
+
+        this["operators.btw.key"] = "";
+        this["operators.nbtw.key"] = "";
+
+        this["operators.intersects.key"] = "";
+        this["operators.within.key"] = "";
+
+        this["query.textAddCondBtn"] = "";
+        this["box"] = "";
+        this["line"] = "";
+        this["polygon"] = "";
+
+        this["query.logicalOpLbl"] = "";
+        this["query.logicalOpAndLbl"] = "";
+        this["query.logicalOpOrLbl"] = "";
+
+        this["query.returnToQueryBuilder"];
+
+
+    }
+}
+
+class WFSQueryFilterModel {
+    constructor() {
+        this.view = "";
+        this["query.tooltipRemoveCond"] = "";
+    };
+}
+
+class WFSQueryShareModel {
+    constructor() {
+        this["query.tooltipMagnifBtn"] = "";
+        this.share = "";
+        this.close = "";
+    }
+}
+
+class WFSQueryResultModel {
+    constructor() {
+        this["wfs.QuerySortTitle"] = "";
+        this.zoomToFeature = "";
+        this.linkInNewWindow = "";
+        this.open = "";
+        this["featureInfo.complexData.array"] = "";
+    }
+}
+
+
 class WFSQuery extends Control {
     DEFAULT_STROKE_COLOR = '#0000ff';
     #cache = {
@@ -510,6 +591,9 @@ class WFSQuery extends Control {
         if (!this.options.dialogDiv) {
             document.body.appendChild(this._dialogDiv);
         }
+
+        this.model = new WFSQueryModel();
+        this.filterModel = new WFSQueryFilterModel();
 
         this.exportsState = true;
 
@@ -585,6 +669,9 @@ class WFSQuery extends Control {
             self.map.off(Consts.event.LAYERUPDATE, _onFeaturesUpdate);
             self.map.off(Consts.event.BEFOREAPPLYQUERY, _onBeforeApplyQuery);
             delete self.toShare;
+            self.resultsController.model = null;
+            self.resultsController.view = null;
+            self.resultsController = null;
         });
 
         await Control.prototype.register.call(self, map);
@@ -646,7 +733,7 @@ class WFSQuery extends Control {
             } : _default;
         };
 
-        
+
 
         getLocaleString = function (key, texts) {
             return Util.getLocaleString(locale, key, texts);
@@ -663,7 +750,7 @@ class WFSQuery extends Control {
                             button.remove();
                             button = null;
                         }
-                        const layer = map.getLayer(layerId); 
+                        const layer = map.getLayer(layerId);
                         if (layer?.type === Consts.layerType.WMS || layer?.type === Consts.layerType.WFS) {
                             const text = self.getLocaleString('query.tooltipMagnifBtn');
                             button = new Button();
@@ -691,6 +778,14 @@ class WFSQuery extends Control {
                                     }
                                 }).catch(() => button.classList.add(hiddenCssClass))
                                     .finally(() => button.classList.remove(loadingCssClass));
+                            }
+                            if (self.model) {
+                                button.text = "[[query.tooltipMagnifBtn]]";
+                                if (!self.controller)
+                                    self.controller = new Controller(self.model, new Observer(button));
+                                else
+                                    self.controller.add(button);
+                                self.model['query.tooltipMagnifBtn'] = self.getLocaleString('query.tooltipMagnifBtn');
                             }
                         }
                         return button;
@@ -724,6 +819,8 @@ class WFSQuery extends Control {
         });
 
         await self.getShareDialog();
+        self.shareDialogController = new Controller(new WFSQueryShareModel(), new Observer(self._dialogDiv));
+
         return self;
     }
 
@@ -752,8 +849,8 @@ class WFSQuery extends Control {
 
     async render(callback) {
         this._dialogDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-share-dialog', {});
-
-        locale = this.map.options.locale;
+        if (this.map)
+            locale = this.map.options.locale;
 
         await super.render.call(this, callback);
     }
@@ -766,7 +863,7 @@ class WFSQuery extends Control {
         const isSpatial = ftr instanceof filter.Spatial;
         return {
             field: isSpatial ? this.getLocaleString('geometry') : ftr.propertyName,
-            opText: this.getLocaleString(filterByOperation[ftr._abbr].key),
+            opText: "[[" + filterByOperation[ftr._abbr].key + "]]", //this.getLocaleString(filterByOperation[ftr._abbr].key),
             valueToShow: ftr._valueToShow,
             isSpatial: isSpatial
         };
@@ -778,6 +875,11 @@ class WFSQuery extends Control {
         const form = self.getForm();
         const whereDiv = form.querySelector(`.${self.CLASS}-where-list`);
         whereDiv.replaceChildren(); // Vaciar nodo
+
+        self.getCurrentQuery().filter.forEach((f) => {
+            self.filterModel[filterByOperation[f._abbr].key] = self.getLocaleString(filterByOperation[f._abbr].key)
+        })
+
         self.getRenderedHtml(self.CLASS + "-filter", {
             conditions: self.getCurrentQuery().filter.map(f => self.#getTemplateObjFromFilter(f)),
             locale: self.map.options.locale
@@ -794,6 +896,9 @@ class WFSQuery extends Control {
                     self.removeFilter(idx);
                 }, { passive: true });
             });
+            self.filterController = new Controller(self.filterModel, new Observer(whereDiv));
+            self.filterModel.view = self.getLocaleString("view");
+            self.filterModel["query.tooltipRemoveCond"] = self.getLocaleString("query.tooltipRemoveCond");
         });
     }
 
@@ -884,12 +989,13 @@ class WFSQuery extends Control {
                         button.remove();
                         button = null;
                     }
-                    const text = self.getLocaleString('query.zoomToExtent');
+                    const text = "[[query.zoomToExtent]]";//self.getLocaleString('query.zoomToExtent');
                     button = new Button();
                     button.variant = Button.variant.MINIMAL;
                     button.text = text;
                     button.iconText = extentIconText;
                     button.classList.add(className);
+                    self.controller.add(button)
                     return button;
                 },
                 updateEvents: [],
@@ -907,12 +1013,13 @@ class WFSQuery extends Control {
                         button.remove();
                         button = null;
                     }
-                    const text = self.getLocaleString("wfs.changeCriteria");
+                    const text = "[[wfs.changeCriteria]]";//self.getLocaleString("wfs.changeCriteria");
                     button = new Button();
                     button.variant = Button.variant.MINIMAL;
                     button.text = text;
                     button.iconText = filterIconText; //'\uf0b0';
                     button.classList.add(className);
+                    self.controller.add(button);
                     return button;
                 },
                 updateEvents: [],
@@ -1009,7 +1116,7 @@ class WFSQuery extends Control {
                             geometryName: "the_geom",
                             featurePrefix: currentQuery.name.substring(0, currentQuery.name.indexOf(":")),
                             featureType: currentQuery.name.substring(currentQuery.name.indexOf(":") + 1),
-                            properties: queryFilter,
+                            filter: queryFilter,
                             outputFormat: Consts.format.JSON,
                             styles: _getStyles()
                         })
@@ -1029,7 +1136,7 @@ class WFSQuery extends Control {
                     self.resultsLayer.url = url;
                     self.resultsLayer.featurePrefix = currentQuery.name.substring(0, currentQuery.name.indexOf(":"));
                     self.resultsLayer.featureType = currentQuery.name.substring(currentQuery.name.indexOf(":") + 1);
-                    self.resultsLayer.properties = queryFilter;
+                    self.resultsLayer.filter = queryFilter;
                     self.resultsLayer.setVisibility(true);
                     self.resultsLayer.refresh();
                 }
@@ -1040,7 +1147,7 @@ class WFSQuery extends Control {
     async sendQuery() {
         const self = this;
         if (!self.validateQuery()) {
-            self.showMessage(getLocaleString("query.msgNoQueryFilter"));
+            self.showMessage(self.getLocaleString("query.msgNoQueryFilter"));
             return;
         }
         self.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.add(loadingCssClass);
@@ -1062,7 +1169,7 @@ class WFSQuery extends Control {
         const self = this;
         if (Object.keys(options).length === 1 && Object.prototype.hasOwnProperty.call(options, "doZoom")) {
             self.toShare = Util.extend(self.toShare, { doZoom: options.doZoom });
-        } else if (options.filter || self.resultsLayer && self.resultsLayer.properties instanceof filter.Filter) {
+        } else if (options.filter || self.resultsLayer && self.resultsLayer.filter instanceof filter.Filter) {
             const currentQuery = self.getCurrentQuery();
             self.toShare = Util.extend(self.toShare, {
                 wms: {
@@ -1070,7 +1177,7 @@ class WFSQuery extends Control {
                 },
                 title: currentQuery.title,
                 name: currentQuery.name,
-                filter: options.filter ? options.filter : self.resultsLayer.properties.getText(),
+                filter: options.filter ? options.filter : self.resultsLayer.filter.getText(),
                 doZoom: Object.prototype.hasOwnProperty.call(options, 'doZoom') ? options.doZoom : true
             });
         }
@@ -1146,7 +1253,7 @@ class WFSQuery extends Control {
         self.deletedFeatures = [];
         //en funcion del número de elementos cargo un título en singular o plural
 
-        self.resultsPanel.div.querySelector(`.${self.resultsPanel.CLASS}-title-text`).textContent = self.resultsPanel.getLocaleString(data.length > 1 ? 'query.titleResultPaneMany' : 'query.titleResultPanelOne', { "numero": data.length, "layerName": layername });
+        self.resultsPanel.model.title = self.resultsPanel.getLocaleString(data.length > 1 ? 'query.titleResultPaneMany' : 'query.titleResultPanelOne', { "numero": data.length, "layerName": layername });
 
         self.resultsPanel.div.classList.add("tc-ctl-wfsquery-results");
 
@@ -1166,14 +1273,13 @@ class WFSQuery extends Control {
             },
             sort: true,
             callback: function (tabla) {
-
                 self.resultsPanel.maximize();
                 console.log("render del panel de resultados");
                 var col = tabla.querySelectorAll(".tc-table > tbody > tr");
                 var j = 1;
                 for (var key in data[0]) {
                     if (Object.prototype.hasOwnProperty.call(dataTypes, key)) {
-                        const dataType = dataTypes[key].type;
+                        const dataType = dataTypes[key].type["#text"]?.type || dataTypes[key].type;
                         if (dataType && !(dataType instanceof Object)) {
                             if (dataType.indexOf("int") >= 0 ||
                                 dataType.indexOf("float") >= 0 ||
@@ -1185,8 +1291,11 @@ class WFSQuery extends Control {
                                     tdNumeric[k].classList.add("tc-numeric");
                                 }
                             }
+                            if (dataType.indexOf("date")>=0) {
+                                tabla.querySelectorAll(".tc-table > tbody > tr > td:nth-child(" + j + ")").forEach((td) => td.classList.add("tc-date"))
+                            }
                         }
-                        j++;                                         
+                        j++;
                     }
                 }
 
@@ -1275,6 +1384,12 @@ class WFSQuery extends Control {
                 if (TC.browserFeatures.touch()) {
                     Util.swipe(self.resultsPanel.div, 'disable');
                 }
+                self.resultsController = new Controller(new WFSQueryResultModel(), new Observer(tabla));
+                self.resultsController.model["wfs.QuerySortTitle"] = self.getLocaleString('wfs.QuerySortTitle');
+                self.resultsController.model["zoomToFeature"] = self.getLocaleString('zoomToFeature');
+                self.resultsController.model["linkInNewWindow"] = self.getLocaleString('linkInNewWindow');
+                self.resultsController.model["open"] = self.getLocaleString('open');
+                self.resultsController.model["featureInfo.complexData.array"] = self.getLocaleString('featureInfo.complexData.array');
             }
         });
 
@@ -1349,7 +1464,7 @@ class WFSQuery extends Control {
             html += '<option value="' + (prop.name || key) + '"' + (Util.isGeometry(prop.type) ? ` class="tc-ctl-wfsquery-opt-geom"` : '') + '>' +
                 (key === CONTENT ? '[' + getLocaleString('content') + ']' : key) + '</option>';
         }
-        var container = document.createElement("div");
+        var container = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
         container.insertAdjacentHTML('beforeend', '<select class="' + combo.className + '" name="' + combo.name + '">' + html + '</select>');
         combo.parentNode.parentNode.insertBefore(container, combo.parentNode.nextSibling).firstElementChild.addEventListener("change", function () {
             self.#changeAttributeEvent(this, form, type);
@@ -1417,6 +1532,7 @@ class WFSQuery extends Control {
             case type.indexOf("double") >= 0:
             case type.indexOf("long") >= 0:
             case type.indexOf("decimal") >= 0:
+            case type.indexOf("short") >= 0:
                 numericSection.classList.remove(hiddenCssClass);
                 whereSection.classList.remove(hiddenCssClass, spatialCssClass);
 
@@ -1582,7 +1698,7 @@ class WFSQuery extends Control {
         if (!self.geometryPanel) {
             const ctlOptions = {
                 titles: {
-                    main: self.getLocaleString('query.spatialFilter')
+                    main: self.getLocaleString("query.spatialFilter")
                 }
             };
             const ctlContainer = self.map.getControlsByClass(ControlContainer)[0];
@@ -1604,6 +1720,8 @@ class WFSQuery extends Control {
                 });
             const html = await self.getRenderedHtml(self.CLASS + '-geom');
             self.geometryPanel.open(html);
+            self.controller.add(self.geometryPanel.div);
+
             self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn-ok`).addEventListener(Consts.event.CLICK, function () {
                 self.geometryPanel.close();
             }, { passive: true });
@@ -1611,7 +1729,7 @@ class WFSQuery extends Control {
                 self.drawControl = await self.map.addControl('draw', {
                     div: self.geometryPanel.getTableContainer().querySelector(`.${self.CLASS}-geom-draw`),
                     styles: self.styles
-                });                
+                });
                 result = await self.drawControl.getLayer();
                 self.drawControl.on(Consts.event.DRAWEND, function (e) {
                     e.feature.showsPopup = false;
@@ -1619,7 +1737,7 @@ class WFSQuery extends Control {
 
                     const op = self.modalDialog.querySelector(`input[name="${self.id}-condition"]:checked`).value;
                     const field = self.#getFieldPath();
-                    let spatialFilter;                    
+                    let spatialFilter;
                     switch (op) {
                         case 'intersects':
                             spatialFilter = new filter.Intersects(field, e.feature, self.map.crs);
@@ -1754,11 +1872,13 @@ class WFSQuery extends Control {
                         form.replaceChildren(); // Vaciar nodo
                         form.insertAdjacentHTML('beforeend', html);
                         modalBody.classList.remove(loadingCssClass);
-                        var combo = form.getElementsByClassName("tc-combo");
-                        if (combo.length === 0)
-                            dialog.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].setAttribute("disabled", "");
+                        const combo = form.getElementsByClassName("tc-combo");
+                        const launchBtn = dialog.querySelector('.tc-ctl-wfsquery-btn-launch');
+                        if (combo.length === 0) {
+                            launchBtn.disabled = true;
+                        }
                         else {
-                            dialog.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].removeAttribute("disabled");
+                            launchBtn.disabled = false;
                             combo[0].addEventListener("change", function () {
                                 self.#changeAttributeEvent(this, form, data);
                             })
@@ -1787,11 +1907,10 @@ class WFSQuery extends Control {
                                 });
                             });
 
-                            form.querySelector(".tc-button").addEventListener(Consts.event.CLICK, function () {
+                            form.querySelector(`.${self.CLASS}-value sitna-button`).addEventListener(Consts.event.CLICK, function () {
                                 var valueField = form.querySelector('input.tc-textbox');
                                 TC.UI.autocomplete.call(valueField, "clear");
-                                if (inputMaskNumber)
-                                    inputMaskNumber.masked.remove();
+                                inputMaskNumber?.masked.remove();
                                 if (!self.#validate(form)) {
                                     return;
                                 }
@@ -1810,7 +1929,8 @@ class WFSQuery extends Control {
                             const onGeomClick = function (e) {
                                 self.showGeometryPanel(e.target.value);
                             };
-                            form.querySelectorAll("button[name='geometry']").forEach(btn => btn.addEventListener(Consts.event.CLICK, onGeomClick, { passive: true }));
+                            form.querySelectorAll("sitna-button[name='geometry']").forEach(btn => btn.addEventListener(Consts.event.CLICK, onGeomClick, { passive: true }));
+                            self.controller.add(form);
                             resolve(form);
                         }
                     });
@@ -1989,13 +2109,13 @@ class WFSQuery extends Control {
         }
 
         const html = await self.getRenderedHtml(self.CLASS + "-dialog", {
-            layerName: getLocaleString("query.titleDialog", { "layerName": title }),
+            //layerName: getLocaleString("query.titleDialog", { "layerName": title }),
             layers: layers
         });
         // Borramos diálogos previos
         document.body.querySelectorAll(`.${self.CLASS}-dialog`).forEach(elm => elm.remove());
 
-        var d = document.createElement("div");
+        var d = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
         d.insertAdjacentHTML('beforeEnd', html);
         var modal = null;
         if (d.childNodes.length > 0) {
@@ -2006,7 +2126,7 @@ class WFSQuery extends Control {
         modalBody.classList.add(loadingCssClass);
         //Util.showModal(modal);
         Util.showModal(modal, {
-            closeCallback: () => {                
+            closeCallback: () => {
                 self.clearFilters();
                 if (self.#cache.queried?.layer.id === self.#cache.current?.layer.id)
                     self.#cache.queried?.filter?.filter((f) => f instanceof filter.Spatial).forEach((f) => self.drawControl.layer.addFeature(f.geometry));
@@ -2025,11 +2145,14 @@ class WFSQuery extends Control {
             modalBody.style.maxHeight = document.body.clientHeight * coef - modalBody.nextElementSibling.clientHeight - modalBody.previousElementSibling.clientHeight;
         }
         self.modalDialog = modal;
-        modal.getElementsByClassName("tc-button tc-ctl-wlm-btn-launch")[0].addEventListener("click", function () {
+        modal.querySelector('.tc-ctl-wfsquery-btn-launch').addEventListener("click", function () {
             self.sendQuery();
         });
         if (layerName && layers.length > 1)
             Array.from(modal.querySelector(".tc-combo[name='availableLayers']")).find((opt) => opt.value === layerName).selected = true;
+        self.controller.add(modal);
+        self.updateModel();
+        self.model["headerTitle"] = self.getLocaleString("query.titleDialog", { "layerName": title });
         return modal;
     }
 
@@ -2066,7 +2189,7 @@ class WFSQuery extends Control {
 
     async #makeInputField(f, operation, data, geomName) {
         const self = this;
-        const valueField = document.createElement("input");
+        const valueField = document.createElementNS("http://www.w3.org/1999/xhtml", "input");
         valueField.value = /<!\[CDATA\[(?<content>.*?)\]\]>/gm.exec(f.expression)?.groups?.content || f.expression;
         const type = data.attributes[f.propertyName || geomName].type
 
@@ -2098,7 +2221,6 @@ class WFSQuery extends Control {
             case type.indexOf("double") >= 0:
             case type.indexOf("long") >= 0:
             case type.indexOf("decimal") >= 0:
-            case type.indexOf("short") >= 0:
                 valueField.type = "number";
                 if (type.indexOf("int") >= 0 || type.indexOf("long") >= 0) {
                     valueField.step = 1;
@@ -2117,6 +2239,83 @@ class WFSQuery extends Control {
         }
         return valueField;
     }
+    updateModel() {
+        const self = this;
+        self.model['query.tooltipMagnifBtn'] = self.getLocaleString('query.tooltipMagnifBtn');
+        self.model["query.tooltipCloseDialogBtn"] = self.getLocaleString('query.tooltipCloseDialogBtn');
+        self.model["query.chooseALayerCombo"] = self.getLocaleString('query.chooseALayerCombo');
+        self.model["query.tooltipSendQueryBtn"] = self.getLocaleString('query.tooltipSendQueryBtn');
+        self.model["query.sendQueryBtnText"] = self.getLocaleString('query.sendQueryBtnText');
+        self.model["query.cancelQueryTooltip"] = self.getLocaleString('query.cancelQueryTooltip');
+        self.model["query.cancelQueryButton"] = self.getLocaleString('query.cancelQueryButton');
+        self.model["query.zoomToExtent"] = self.getLocaleString('query.zoomToExtent');
+        self.model["wfs.changeCriteria"] = self.getLocaleString('wfs.changeCriteria');
+
+        self.model["headerTitle"] = self.getLocaleString("query.titleDialog", { "layerName": self.getCurrentQuery().title });
+
+
+        self.model["query.chooseAttrCombo"] = self.getLocaleString('query.chooseAttrCombo');
+        self.model.geometry = self.getLocaleString('geometry');
+        self.model["query.noAttributes"] = self.getLocaleString('query.noAttributes');
+        self.model["operators.eq.key"] = self.getLocaleString(filterByOperation.eq.key);
+        self.model["operators.neq.key"] = self.getLocaleString(filterByOperation.neq.key);
+        self.model["operators.gt.key"] = self.getLocaleString(filterByOperation.gt.key);
+        self.model["operators.lt.key"] = self.getLocaleString(filterByOperation.lt.key);
+        self.model["operators.gte.key"] = self.getLocaleString(filterByOperation.gte.key);
+        self.model["operators.lte.key"] = self.getLocaleString(filterByOperation.lte.key);
+        self.model["operators.contains.key"] = self.getLocaleString(filterByOperation.contains.key);
+        self.model["operators.starts.key"] = self.getLocaleString(filterByOperation.starts.key);
+        self.model["operators.ends.key"] = self.getLocaleString(filterByOperation.ends.key);
+        self.model["operators.empty.key"] = self.getLocaleString(filterByOperation.empty.key);
+
+        self.model["operators.btw.key"] = self.getLocaleString(filterByOperation.btw.key);
+        self.model["operators.nbtw.key"] = self.getLocaleString(filterByOperation.nbtw.key);
+
+        self.model["operators.intersects.key"] = self.getLocaleString(filterByOperation.intersects.key);
+        self.model["operators.within.key"] = self.getLocaleString(filterByOperation.within.key);
+
+        self.model["query.textAddCondBtn"] = self.getLocaleString('query.textAddCondBtn');
+        self.model["box"] = self.getLocaleString('box');
+        self.model["line"] = self.getLocaleString('line');
+        self.model["polygon"] = self.getLocaleString('polygon');
+
+        self.model["query.logicalOpLbl"] = self.getLocaleString('query.logicalOpLbl');
+        self.model["query.logicalOpAndLbl"] = self.getLocaleString('query.logicalOpAndLbl');
+        self.model["query.logicalOpOrLbl"] = self.getLocaleString('query.logicalOpOrLbl');
+
+        self.model["query.searchFieldPhd"] = self.getLocaleString('query.searchFieldPhd');
+        self.model["query.tooltipAddCondBtn"] = self.getLocaleString('query.tooltipAddCondBtn');
+        self.model["query.textAddCondBtn"] = self.getLocaleString('query.textAddCondBtn');
+
+        self.model["query.returnToQueryBuilder"] = self.getLocaleString('query.returnToQueryBuilder');
+        if (self.geometryPanel) self.geometryPanel.setTitles({ main: self.getLocaleString("query.spatialFilter") });
+        if (self?.resultsLayer?.features)
+            self.resultsPanel.setTitles({
+                main: self.resultsPanel.getLocaleString(self.resultsLayer.features.length > 1 ? 'query.titleResultPaneMany' : 'query.titleResultPanelOne', { "numero": self.resultsLayer.features.length, "layerName": self.getCurrentQuery().title })
+            });
+
+        Object.keys(self.filterModel).forEach((f) => {
+            self.filterModel[f] = self.getLocaleString(f);
+        });
+        self.shareDialogController.model.share = self.getLocaleString("share");
+        self.shareDialogController.model['query.tooltipMagnifBtn'] = self.getLocaleString('query.tooltipMagnifBtn');
+        self.shareDialogController.model.close = self.getLocaleString('close');
+
+        if (self.resultsController) {
+            self.resultsController.model["wfs.QuerySortTitle"] = self.getLocaleString('wfs.QuerySortTitle');
+            self.resultsController.model["zoomToFeature"] = self.getLocaleString('zoomToFeature');
+            self.resultsController.model["linkInNewWindow"] = self.getLocaleString('linkInNewWindow');
+            self.resultsController.model["open"] = self.getLocaleString('open');
+            self.resultsController.model["featureInfo.complexData.array"] = self.getLocaleString('featureInfo.complexData.array');
+        }
+
+    }
+    async updateLanguage() {
+        const self = this;
+        locale = self.map.options.locale;
+        self.updateModel();
+    }
+
 }
 
 TC.mix(WFSQuery, infoShare);

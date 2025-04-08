@@ -64,6 +64,8 @@ import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
 import Polygon from '../../SITNA/feature/Polygon.js';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 TC.Geometry = Geometry;
@@ -151,6 +153,22 @@ const getLegendImage = function (layer, geometryType) {
     }
 };
 
+class WFSEditModel {
+    constructor() {
+        this.featureEditing = "";
+        this.selectLayerToEdit = "";
+        this.featuresInEditedLayer = "";
+        this.featuresAsBeforeEditing = "";
+        this.unsyncedAdded = "";
+        this.unsyncedModified = "";
+        this.unsyncedRemoved = "";
+        this.refreshLayerToCurrentExtent = "";
+        this.syncChanges = "";
+        this.discardChanges = "";
+        this.clickToChangeColor = "";
+    }
+}
+
 class WFSEdit extends SWCacheClient {
     LOCAL_STORAGE_KEY_PREFIX = "SITNA.offline.edit.";
     LOCAL_STORAGE_ADDED_KEY_PREFIX = ".added.";
@@ -207,6 +225,8 @@ class WFSEdit extends SWCacheClient {
                 strokeOpacity: 1
             }
         };
+
+        self.model = new WFSEditModel();
     }
 
     async register(map) {
@@ -262,6 +282,9 @@ class WFSEdit extends SWCacheClient {
                             if (layer.type === Consts.layerType.WMS) {
                                 checkbox.classList.add(Consts.classes.LOADING);
                                 layer.getWFSCapabilities()
+                                    .then((capabilities) => {
+                                        if (!capabilities.Operations.Transaction) throw 'Transaction no disponible';
+                                    })
                                     .catch(() => checkbox.classList.add(Consts.classes.HIDDEN))
                                     .finally(() => checkbox.classList.remove(Consts.classes.LOADING));
                             }
@@ -477,6 +500,8 @@ class WFSEdit extends SWCacheClient {
         if (Util.isFunction(callback)) {
             callback();
         }
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.updateModel();
     }
 
     addUIEventListeners() {
@@ -584,12 +609,12 @@ class WFSEdit extends SWCacheClient {
         self.#recropBtn.addEventListener(Consts.event.CLICK, function () {
             if (self.layer) {
                 const reload = () => {
-                    if (self.layer && self.layer.wfsLayer && TC.filter && TC.filter.Bbox && self.layer.wfsLayer.properties instanceof TC.filter.Bbox) {
+                    if (self.layer && self.layer.wfsLayer && TC.filter && TC.filter.Bbox && self.layer.wfsLayer.filter instanceof TC.filter.Bbox) {
                         const layerEditData = self.getLayerEditData();
-                        self.layer.wfsLayer.properties = new TC.filter.Bbox(null, self.map.getExtent(), self.map.getCRS());
+                        self.layer.wfsLayer.filter = new TC.filter.Bbox(null, self.map.getExtent(), self.map.getCRS());
                         self.layer.wfsLayer.refresh();
                         if (layerEditData.beforeEditLayer) {
-                            layerEditData.beforeEditLayer.properties = self.layer.wfsLayer.properties;
+                            layerEditData.beforeEditLayer.filter = self.layer.wfsLayer.filter;
                             layerEditData.beforeEditLayer.refresh();
                         }
                     }
@@ -633,7 +658,7 @@ class WFSEdit extends SWCacheClient {
         const self = this;
         self.div.querySelector(`.${self.CLASS}-view`).classList.toggle(Consts.classes.HIDDEN, !enabled || !self.layer || !(self.layer.type === Consts.layerType.WFS || self.layer.type === Consts.layerType.WMS));
         if (self.layer && self.layer.wfsLayer) {
-            const isLayerCropped = TC.filter && TC.filter.Bbox && self.layer.wfsLayer.properties instanceof TC.filter.Bbox;
+            const isLayerCropped = TC.filter && TC.filter.Bbox && self.layer.wfsLayer.filter instanceof TC.filter.Bbox;
             self.#recropBtn.classList.toggle(Consts.classes.HIDDEN, !isLayerCropped);
         }
         self.div.querySelector(`.${self.CLASS}-edit`).classList.toggle(Consts.classes.HIDDEN, !enabled);
@@ -1094,7 +1119,7 @@ class WFSEdit extends SWCacheClient {
                             id: self.getUID(),
                             type: Consts.layerType.WFS,
                             url: await layer.getWFSURL(),
-                            properties: map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
+                            filter: map ? new TC.filter.Bbox(null, map.getExtent(), map.getCRS()) : null,
                             outputFormat: Consts.format.JSON,
                             title: `${layer.getPath().join(' • ')} - ${self.getLocaleString('featureEditing')}`,
                             geometryName: 'geom',
@@ -1562,6 +1587,25 @@ class WFSEdit extends SWCacheClient {
         const self = this;
         const layerEditData = self.getLayerEditData(layer.wmsLayer || layer);
         return self.#colorizeLayer(layer, layerEditData.removedCustomColor || '#ff0000');
+    }
+
+    updateModel() {
+        const self = this;
+        self.model.featureEditing = self.getLocaleString("featureEditing");
+        self.model.selectLayerToEdit = self.getLocaleString("selectLayerToEdit");
+        self.model.featuresInEditedLayer = self.getLocaleString("featuresInEditedLayer");
+        self.model.featuresAsBeforeEditing = self.getLocaleString("featuresAsBeforeEditing");
+        self.model.unsyncedAdded = self.getLocaleString("unsyncedAdded");
+        self.model.unsyncedModified = self.getLocaleString("unsyncedModified");
+        self.model.unsyncedRemoved = self.getLocaleString("unsyncedRemoved");
+        self.model.refreshLayerToCurrentExtent = self.getLocaleString("refreshLayerToCurrentExtent");
+        self.model.syncChanges = self.getLocaleString("syncChanges");
+        self.model.discardChanges = self.getLocaleString("discardChanges");
+        self.model.clickToChangeColor = self.getLocaleString("clickToChangeColor");
+    }
+    updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
