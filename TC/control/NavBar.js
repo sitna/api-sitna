@@ -8,6 +8,7 @@ class NavBarModel {
     constructor() {
         this.zoomIn = "";
         this.zoomOut = "";
+        this.zoomBar = "";
     }
 }
 class NavBar extends Control {
@@ -45,12 +46,14 @@ class NavBar extends Control {
         self.controller = new Controller(self.model, new Observer(self.div));
         self.model.zoomIn = self.getLocaleString('zoomIn');
         self.model.zoomOut = self.getLocaleString('zoomOut');
+        self.model.zoomBar = self.getLocaleString('zoomBar');
         return self;
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.model.zoomIn = self.getLocaleString('zoomIn');
         self.model.zoomOut = self.getLocaleString('zoomOut');
+        self.model.zoomBar = self.getLocaleString('zoomBar');
     }
 
 }
