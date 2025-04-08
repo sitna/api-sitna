@@ -19,7 +19,6 @@
   * En estos objetos, si se asigna un valor a la propiedad `layerNames`, solo las capas especificadas y sus hijas estarán disponibles para ser añadidas al mapa. 
   * Sin embargo, si esta propiedad se deja sin asignar, todas las capas publicadas en el servicio WMS estarán disponibles para ser añadidas.
   * @example <caption>[Ver en vivo](../examples/cfg.MapControlOptions.layerCatalog_workLayerManager.html)</caption> {@lang html}
-   * [//]@example {@lang html}
   * <div id="mapa"></div>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -75,7 +74,7 @@ TC.UI.autocomplete = autocomplete;
 const SEARCH_MIN_LENGTH = 3;
 const ctlCssClass = 'tc-ctl-lcat';
 
-var clickToAddText;
+var clickToAddText,expandText,collapseText;
 
 if (!Consts.classes.SELECTABLE) {
     Consts.classes.SELECTABLE = 'tc-selectable';
@@ -95,6 +94,7 @@ const onCollapseButtonClick = function (e) {
         li.classList.toggle(Consts.classes.COLLAPSED);
         const ul = li.querySelector('ul');
         ul.classList.toggle(Consts.classes.COLLAPSED);
+        e.target.title = li.classList.contains(TC.Consts.classes.COLLAPSED) ? expandText : collapseText
     }
 };
 
@@ -139,6 +139,9 @@ class LayerCatalogModel {
         this.layerInfo = "";
         this.abstract = "";
         this.metadata = "";
+        this.changeCRS = "";
+        this.cancel = "";
+        this["wmsLayerNotCompatible.instructions"] = "";
     }
 }
 class LayerCatalogResultModel {
@@ -196,28 +199,35 @@ class LayerCatalog extends ProjectionSelector {
         const self = this;
 
         self.sourceLayers = [];
+        self.model = new LayerCatalogModel();
+        self.infoModel = new LayerCatalogInfoModel(); 
 
         if (self.layers.length === 0) {
             await self.renderData({ layerTrees: [], enableSearch: false }, callback);
             self._roots = [];
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
         } else {
             await self.renderData({ layers: self.layers, enableSearch: true });
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
 
             self._roots = self.div.querySelectorAll(self.#selectors.LAYER_ROOT);
             self.#createSearchAutocomplete();
 
             for (const layer of self.layers) {
                 await self.renderBranch(layer);
+                //title en los botones del arbol expandir contraer
+                self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button").forEach((button) => button.title = expandText);
+                self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button").forEach((button) => button.title = collapseText);
+                self.controller.add(self.getLayerRootNode(layer));
             }
             if (Util.isFunction(callback)) {
                 callback();
             }
         }
-        self.model = new LayerCatalogModel();
-        self.infoModel = new LayerCatalogInfoModel();
-        self.controller = new Controller(self.model, new Observer(self.div));
-        self.updateModel();
-        
+               
+        self.updateModel();        
 
         self.searchInit = false;
         
@@ -313,6 +323,8 @@ class LayerCatalog extends ProjectionSelector {
         };
 
         clickToAddText = self.getLocaleString('clickToAddToMap');
+        expandText = self.getLocaleString('expand');
+        collapseText = self.getLocaleString('collapse');
 
         map
             .on(Consts.event.BEFORELAYERADD + ' ' + Consts.event.BEFOREUPDATEPARAMS, function (e) {
@@ -576,7 +588,7 @@ class LayerCatalog extends ProjectionSelector {
                 self.getRenderedHtml(self.CLASS + '-results', data.results).then(function (out) {
                     //URI: Expresión regular que busca la cadena de filtrado pero distinguiend si se trata de un titulo de capa es decier está entre
                     //caracteres > y < y no se trada de un atributo data
-                    const cojoExpRegular = new RegExp('(?<pre>[\\;|\\>][\\w\\s\\\\r\\\\n\\t\\(\\)\\.\\:\\\\(À-ÿ]*)(?<match>' + Util.patternFn(self.textInput.value) + ')(?<post>[\\w\\s\\\\r\\n\\t\\(\\)\\.\\:\\\\À-ÿ)]*[\\<|\\&])', 'gi');
+                    const cojoExpRegular = new RegExp('(?<pre>[\\;|\\>][\\w\\s\\\\r\\\\n\\t\\(\\)\\.\\:\\\\(À-ÿ]*)(?<match>' + TC.Util.patternFn(self.textInput.value) + ')(?<post>[\\w\\s\\\\r\\n\\t\\(\\)\\.\\:\\\\À-ÿ)]*[\\<|\\&])', 'gi');
                     container.innerHTML = ret = out.replace(cojoExpRegular, "$<pre><strong>$<match></strong>$<post>");
                     // Marcamos el botón "i" correspondiente si el panel de info está abierto
                     const visibleInfoPane = self.div.querySelector(`.${self.CLASS}-info`);
@@ -609,8 +621,7 @@ class LayerCatalog extends ProjectionSelector {
 
         if (!self.searchInit) {
             //botón de la lupa para alternar entre búsqueda y árbol
-            self.div.querySelector('h2 button').addEventListener(Consts.event.CLICK, function (e) {
-                e.target.blur();
+            self.div.querySelector('h2 sitna-toggle').addEventListener('change', function (e) {
 
                 const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
                 const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
@@ -619,8 +630,6 @@ class LayerCatalog extends ProjectionSelector {
                 const searchPaneMustShow = searchPane.classList.contains(Consts.classes.HIDDEN);
                 searchPane.classList.toggle(Consts.classes.HIDDEN, !searchPaneMustShow);
                 treePane.classList.toggle(Consts.classes.HIDDEN, searchPaneMustShow);
-                e.target.classList.toggle(self.CLASS + '-btn-tree', searchPaneMustShow);
-                e.target.classList.toggle(self.CLASS + '-btn-search', !searchPaneMustShow);
                 if (searchPaneMustShow) {
                     self.textInput.focus();
                     e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
@@ -629,7 +638,7 @@ class LayerCatalog extends ProjectionSelector {
                     e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
 
                     //Si hay resaltados en el árbol, mostramos el panel de info
-                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li  input[type=checkbox]:checked').length;
+                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li [checked]').length;
                     if (selectedCount > 0) {
                         infoPane.classList.remove(Consts.classes.HIDDEN);
                     }
@@ -827,6 +836,7 @@ class LayerCatalog extends ProjectionSelector {
 
         self.getRenderedHtml(self.CLASS + '-dialog', null, function (html) {
             self._dialogDiv.innerHTML = html;
+            self.controller.add(self._dialogDiv);
         });
     }
 
@@ -932,7 +942,13 @@ class LayerCatalog extends ProjectionSelector {
                 self.getRenderedHtml(self.CLASS + '-info', infoObj)
                     .then(function (out) {
                         info.innerHTML = out;
+                        self.infoModel = new LayerCatalogInfoModel();
                         self.layerInfoController = new Controller(self.infoModel, new Observer(info));
+                        info.querySelectorAll("." + self.CLASS + '-metadata ul li a').forEach((metadataLink) => {
+                            self.infoModel[metadataLink.type] = self.getLocaleString(metadataLink.type);
+                            self.layerInfoController.setAttribute(metadataLink.type, "title", metadataLink);
+                        });
+                        Object.keys(self.infoModel).filter(key => !key.startsWith("#")).forEach(key => self.infoModel[key] = self.getLocaleString(key));
                         info.querySelector('.' + self.CLASS + '-info-close').addEventListener(Consts.event.CLICK, function () {
                             self.hideLayerInfo();
                         }, { passive: true });
@@ -1072,6 +1088,7 @@ class LayerCatalog extends ProjectionSelector {
                     layer.compatibleLayers = layer.wrap.getCompatibleLayers(self.map.crs);
                     layer.title = layer.title || layer.wrap.getServiceTitle();
                     self.renderBranch(layer, function () {
+                        self.controller.add(self.getLayerRootNode(layer));
                         resolve(); //ver linea 55 y por ahí
                     });
                 });
@@ -1156,20 +1173,29 @@ class LayerCatalog extends ProjectionSelector {
         this.model.availableLayers = self.getLocaleString("availableLayers");
         this.model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
         this.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+
+        this.model.changeCRS = self.getLocaleString("changeCRS");
+        this.model.cancel = self.getLocaleString("cancel");
+        this.model.close = self.getLocaleString("close");
+        this.model["wmsLayerNotCompatible.instructions"] = self.getLocaleString("wmsLayerNotCompatible.instructions");
+
         self.resultController ?.forEach((controller) => {
             controller.model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
             controller.model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
             controller.model.noMatches = self.getLocaleString("noMatches");
             controller.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
         });
-        this.infoModel.close = self.getLocaleString("close");
-        this.infoModel.layerInfo = self.getLocaleString("layerInfo");
-        this.infoModel.abstract = self.getLocaleString("abstract");
-        this.infoModel.metadata = self.getLocaleString("metadata");
+        Object.keys(self.infoModel).filter(key => !key.startsWith("#")).forEach(key => this.infoModel[key] = self.getLocaleString(key));
         
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
+        expandText = self.getLocaleString('expand');
+        collapseText = self.getLocaleString('collapse');
+        self.layers.forEach((layer) => {
+            self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button").forEach((button) => button.title = expandText);
+            self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button").forEach((button) => button.title = collapseText);
+        });
         self.updateModel();
     }
     

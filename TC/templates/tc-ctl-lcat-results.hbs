@@ -9,9 +9,9 @@
                 {{#if parent.parent}}
                     {{> tc-ctl-lcat-results-path layer=./parent}}
                 {{/if}}
-                {{Title}}
+                {{{Title}}}
             </h5>
-        <input type="checkbox" class="tc-toggle tc-ctl-lcat-search-btn-info" title="[[infoFromThisLayer]]"></input>
+        <sitna-toggle class="tc-ctl-lcat-search-btn-info" title="[[infoFromThisLayer]]" checked-icon-text="&#xe923;" unchecked-icon-text="&#xe923;"></sitna-toggle>
         </li>
 	    {{/each}}
     {{#if (gt ../servicesLooked 1)}}
