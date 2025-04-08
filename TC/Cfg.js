@@ -153,12 +153,12 @@ const Defaults = (function () {
         * @typedef MapViewOptions
         * @memberof SITNA
         * @see SITNA.MapOptions
-        * @property {SITNA.ThreeDViewOptions} [threeD] - Se establece un valor *truthy* con las opciones de la vista del mapa.
-        * @example <caption>Definición objeto SITNA.MapViewOptions</caption> {@lang javascript}
+        * @property {SITNA.ThreeDViewOptions} [threeD] - Se establece un valor *truthy* con las opciones de la vista del mapa.        
+        * @example <caption>Definición objeto SITNA.MapViewOptions[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang javascript}
         *     { 
         *         threeD: { }
         *     }            
-        * @example {@lang html}
+        * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
         * <div id="mapa"/>
         * <div id="vista3d"/>
         * <script>
@@ -256,7 +256,7 @@ const Defaults = (function () {
         *    - Si está también el control `WFSQuery`, ejecutar consultas alfanuméricas sobre las capas cargadas en el mapa, si cuentan con un servicio WFS pareado al WMS.
         * 
         * Los controles `workLayerManager` y `TOC` realizan varias funciones comunes, así rara vez será necesario tener los dos a la vez en un visor.
-        * @example <caption>Ejemplo de uso de propiedad `featureInfo`</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `featureInfo` - [Ver en vivo](../examples/cfg.MapControlOptions.featureInfo.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Añadimos el control featureInfo.
@@ -273,14 +273,14 @@ const Defaults = (function () {
         *     ];
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `fullScreen`</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `fullScreen`[Ver en vivo](../examples/cfg.MapControlOptions.fullScreen.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Añadimos el control fullScreen.
         *     SITNA.Cfg.controls.fullScreen = true;
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `printMap`</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `printMap`[Ver en vivo](../examples/cfg.MapControlOptions.printMap.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -291,7 +291,7 @@ const Defaults = (function () {
         *     };
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `share`</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `share`[Ver en vivo](../examples/cfg.MapControlOptions.share.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -308,7 +308,7 @@ const Defaults = (function () {
         *     };
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `workLayerManager`</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `workLayerManager`[Ver en vivo](../examples/cfg.MapControlOptions.workLayerManager.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -563,7 +563,7 @@ const Defaults = (function () {
  * @member Cfg
  * @type SITNA.MapOptions
  * @memberof SITNA
- * @example <caption>Configuración de capas base</caption> {@lang html}
+ @example <caption>Configuración de capas base[Ver en vivo](../examples/Cfg.baseLayers.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // Establecer un proxy porque se hacen peticiones a otro dominio.
@@ -580,7 +580,7 @@ const Defaults = (function () {
  * 
  *     var map = new SITNA.Map("mapa");
  * </script>
- * @example <caption>Configuración de CRS</caption> {@lang html}
+ * @example <caption>Configuración de CRS[Ver en vivo](../examples/Cfg.crs.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // SITNA.Cfg.baseLayers[0] (capa por defecto) no es compatible con WGS 84, lo cambiamos por SITNA.Consts.layer.IDENA_DYNBASEMAP.
@@ -602,7 +602,7 @@ const Defaults = (function () {
  *         }
  *     });
  * </script>
- * @example <caption>Configuración de capas de trabajo</caption> {@lang html}
+ * @example <caption>Configuración de capas de trabajo[Ver en vivo](../examples/Cfg.workLayers.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // Establecer un proxy porque se hacen peticiones a otro dominio.
