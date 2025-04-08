@@ -1,4 +1,4 @@
-﻿import Component from './Component';
+﻿import Component from './Component.js';
 
 const elementName = "sitna-toggle";
 
@@ -23,22 +23,21 @@ class Toggle extends Component {
         this.#label.setAttribute('for', 'cb');
         this.shadowRoot.appendChild(this.#label);
 
-        const template = document.createElement('template');
-        template.innerHTML = '<slot></slot>'
+        this.createTemplate();
+        const template = this.getTemplate();
         this.#label.appendChild(template.content.cloneNode(true));
     }
 
-    connectedCallback() {
-        this.#onTitleChange();
-        this.#onTextChange();
+    connectedCallback() {        
         this.#onCheckedChange();
         this.#onCheckedIconTextChange();
         this.#onUncheckedIconTextChange();
         this.#onDisabledChange();
+        this.#onValueChange();
     }
 
     static get observedAttributes() {
-        return ['text', 'disabled', 'checked', 'checked-icon-text', 'unchecked-icon-text', 'title'];
+        return ['disabled', 'checked', 'checked-icon-text', 'unchecked-icon-text', 'value'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -52,35 +51,20 @@ class Toggle extends Component {
             this.#onCheckedChange();
         }
         if (oldValue !== newValue) {
-            if (name === 'text') {
-                this.#onTextChange();
-            }
             if (name === 'checked-icon-text') {
                 this.#onCheckedIconTextChange();
             }
             if (name === 'unchecked-icon-text') {
                 this.#onUncheckedIconTextChange();
             }
-            if (name === 'title') {
-                this.#onTitleChange();
-            }
+            if (name === 'value') {
+                this.#onValueChange();
+            }            
         }
     }
 
     get elementName() {
         return elementName;
-    }
-
-    get text() {
-        return this.getAttribute('text');
-    }
-
-    set text(value) {
-        this.setAttribute('text', value);
-    }
-
-    #onTextChange() {
-        this.#checkbox.setAttribute('title', this.text);
     }
 
     get disabled() {
@@ -140,7 +124,7 @@ class Toggle extends Component {
 
     set uncheckedIconText(value) {
         this.#setOptionalAttribute('unchecked-icon-text', value);
-    }
+    }    
 
     get title() {
         return this.getAttribute('title');
@@ -156,6 +140,18 @@ class Toggle extends Component {
 
     #onUncheckedIconTextChange() {
         this.#setDataValue('unchecked-icon-text', this.uncheckedIconText);
+    }
+
+    get value() {
+        return this.#checkbox.value;
+    }
+
+    set value(value) {
+        this.setAttribute('value', value);
+    }
+
+    #onValueChange() {
+        this.#checkbox.value = this.getAttribute('value');
     }
 
     #setOptionalAttribute(name, value) {
