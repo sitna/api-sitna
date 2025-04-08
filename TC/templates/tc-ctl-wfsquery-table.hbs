@@ -3,7 +3,7 @@
         {{#each columns}}
         {{#unless (startsWith this "h3_")}}
         {{#unless (startsWith this "h4_")}}
-        <th{{#if ../sort}} title="{{i18n "wfs.QuerySortTitle"}}" class="tc-ctl-wfsquery-results-sortable{{#if (eq this ../sort.field)}} {{#if ../sort.order}}tc-ctl-wfsquery-results-sorting-asc{{else}}tc-ctl-wfsquery-results-sorting-desc{{/if}}{{/if}}" {{/if}}>
+        <th{{#if ../sort}} title="[[wfs.QuerySortTitle]]" class="tc-ctl-wfsquery-results-sortable{{#if (eq this ../sort.field)}} {{#if ../sort.order}}tc-ctl-wfsquery-results-sorting-asc{{else}}tc-ctl-wfsquery-results-sorting-desc{{/if}}{{/if}}" {{/if}}>
             {{this}}</th>
         {{/unless}}
         {{/unless}}
@@ -12,7 +12,7 @@
 </thead>
     <tbody>
         {{#each results}}
-        <tr title="{{i18n "zoomToFeature" }}" data-id="{{Id}}" data-index="{{#if (gt index -1)}}{{index}}{{else}}{{@index}}{{/if}}" class="tc-selectable">
+        <tr title="[[zoomToFeature]]" data-id="{{Id}}" data-index="{{#if (gt index -1)}}{{index}}{{else}}{{@index}}{{/if}}" class="tc-selectable">
             {{#each this}}
             {{#unless (eq @key 'index')}}
             {{#unless (startsWith @key "h3_")}}

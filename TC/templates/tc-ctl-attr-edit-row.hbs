@@ -5,18 +5,18 @@
 <input type="number" class="tc-textbox" name="{{name}}" value="{{value}}" inputmode="numeric" />
 {{/inline}}
 {{#*inline "checkbox"}}
-<sitna-toggle name="{{name}}" text="{{name}}" {{#if value}} checked{{/if}}></sitna-toggle>
+<sitna-toggle name="{{name}}" title="{{name}}" {{#if value}} checked{{/if}}></sitna-toggle>
 {{/inline}}
 {{#if (eq type "object")}}
 <tr data-attribute-name="{{name}}">
     <th colspan="2">{{name}}</th>
     <td>
     {{#if multiple}}
-        <sitna-button variant="minimal" icon-text="&#xe904;" text="{{i18n "addItem"}}" class="tc-ctl-attr-edit-add" data-key="{{name}}"></sitna-button>
+        <sitna-button variant="minimal" class="tc-ctl-attr-edit-add" data-key="{{name}}">[[addItem]]</sitna-button>
     {{/if}}
-    {{#unless sealed}}
-        <sitna-button variant="minimal" icon="delete" text="{{i18n "removeAttribute"}}" class="tc-ctl-attr-edit-remove" data-key="{{name}}"></sitna-button>
-    {{/unless}}
+    {{#if optional}}
+    <sitna-button variant="minimal" class="tc-ctl-attr-edit-remove" data-key="{{name}}">[[removeAttribute]]</sitna-button>
+    {{/if}}
     </td>
 </tr>
     {{#if value}}
@@ -34,56 +34,47 @@
         {{#if readOnly}}
         {{value}}
         {{else}}
-        {{#if availableValues}}
-        <select class="tc-combo" name="{{name}}">
-            <option value=""></option>
-            {{#each availableValues}}
-            <option value="{{.}}">{{.}}</option>
-            {{/each}}
-        </select>
-        {{else}}
-        {{#if (eq type "integer")}}{{> inputInteger}}
-        {{else if (eq type "float")}}{{> inputNumber}}
-        {{else if (eq type "number")}}{{> inputNumber}}
-        {{else if (eq type "tinyint")}}{{> inputInteger}}
-        {{else if (eq type "smallint")}}{{> inputInteger}}
-        {{else if (eq type "mediumint")}}{{> inputInteger}}
-        {{else if (eq type "bigint")}}{{> inputInteger}}
-        {{else if (eq type "double")}}{{> inputNumber}}
-        {{else if (eq type "decimal")}}{{> inputNumber}}
-        {{else if (eq type "boolean")}} {{> checkbox}}
-        {{else if (eq type "date")}}
+            {{#if (eq type "integer")}}{{> inputInteger}}
+            {{else if (eq type "float")}}{{> inputNumber}}
+            {{else if (eq type "number")}}{{> inputNumber}}
+            {{else if (eq type "tinyint")}}{{> inputInteger}}
+            {{else if (eq type "smallint")}}{{> inputInteger}}
+            {{else if (eq type "mediumint")}}{{> inputInteger}}
+            {{else if (eq type "bigint")}}{{> inputInteger}}
+            {{else if (eq type "double")}}{{> inputNumber}}
+            {{else if (eq type "decimal")}}{{> inputNumber}}
+            {{else if (eq type "boolean")}} {{> checkbox}}
+            {{else if (eq type "date")}}
         <input type="date" class="tc-textbox" name="{{name}}" value="{{inputDate value}}" />
-        {{else if (eq type "time")}}
+            {{else if (eq type "time")}}
         <input type="time" class="tc-textbox" name="{{name}}" value="{{inputTime value}}" />
-        {{else if (eq type "datetime")}}
+            {{else if (eq type "datetime")}}
         <input type="datetime-local" class="tc-textbox" name="{{name}}" value="{{inputDatetime value}}" />
-        {{else if (eq type "proposal")}}
-        <select class="tc-combo tc-ctl-attr-edit-type tc-active" data-attribute-name="{{name}}">
-            <option value="">{{i18n "selectDataType"}}</option>
-            <option value="string">{{i18n "text"}}</option>
-            <option value="float">{{i18n "number"}}</option>
-            <option value="integer">{{i18n "integer"}}</option>
-            <option value="boolean">{{i18n "boolean"}}</option>
-            <option value="date">{{i18n "date"}}</option>
-            <option value="time">{{i18n "time"}}</option>
-            <option value="datetime">{{i18n "datetime"}}</option>
+            {{else if (eq type "proposal")}}
+        <select class="tc-combo tc-ctl-attr-edit-type tc-active" title="{{name}}"  data-attribute-name="{{name}}">
+            <option value="">[[selectDataType]]</option>
+            <option value="string">[[text]]</option>
+            <option value="float">[[number]]</option>
+            <option value="integer">[[integer]]</option>
+            <option value="boolean">[[boolean]]</option>
+            <option value="date">[[date]]</option>
+            <option value="time">[[time]]</option>
+            <option value="datetime">[[datetime]]</option>
         </select>
-        {{else if (isNumber value)}} {{> inputNumber}}
-        {{else if (isBoolean value)}} {{> checkbox}}
-        {{else}}
+            {{else if (isNumber value)}} {{> inputNumber}}
+            {{else if (isBoolean value)}} {{> checkbox}}
+            {{else}}
         <input type="text" class="tc-textbox" name="{{name}}" value="{{value}}" />
-        {{/if}}
-        {{/if}}
+            {{/if}}
         {{/if}}
     </td>
     <td>
         {{#if multiple}}
-        <sitna-button variant="minimal" icon-text="&#xe904;" text="{{i18n "addItem"}}" class="tc-ctl-attr-edit-add" data-key="{{name}}"></sitna-button>
+        <sitna-button variant="minimal" class="tc-ctl-attr-edit-add" data-key="{{name}}">[[addItem]]</sitna-button>
         {{/if}}
-        {{#unless sealed}}
-        <sitna-button variant="minimal" icon="delete" text="{{i18n "removeAttribute"}}" class="tc-ctl-attr-edit-remove" data-key="{{name}}"></sitna-button>
-        {{/unless}}
+        {{#if optional}}
+        <sitna-button variant="minimal" class="tc-ctl-attr-edit-remove" data-key="{{name}}">[[removeAttribute]]</sitna-button>
+        {{/if}}
     </td>
 </tr>
     {{/unless}}
