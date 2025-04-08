@@ -1,31 +1,22 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Geometry from '../Geometry';
-import FileEdit from './FileEdit';
-import Edit from './Edit';
-import Geolocation from './Geolocation';
-import Toggle from '../../SITNA/ui/Toggle';
-import Point from '../../SITNA/feature/Point';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Geometry from '../Geometry.js';
+import FileEdit from './FileEdit.js';
+import Edit from './Edit.js';
+import Geolocation from './Geolocation.js';
+import Toggle from '../../SITNA/ui/Toggle.js';
+import Point from '../../SITNA/feature/Point.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
 
 TC.control = TC.control || {};
 
 const elementName = 'sitna-track-edit';
 
 class TrackEdit extends FileEdit {
-    formats = [
-        {
-            type: Consts.format.KMZ,
-            description: 'KML',
-        },
-        {
-            type: Consts.format.GPX,
-            description: 'GPX',
-        },
-    ];
     #geolocationControl;
+    formats = [Consts.format.GPX, Consts.format.KMZ];
 
     async register(map) {
         await super.register.call(this, map);
@@ -192,7 +183,7 @@ class TrackEdit extends FileEdit {
                         if (!checkbox) {
                             const text = self.getLocaleString('editTrack');
                             checkbox = new Toggle();
-                            checkbox.text = text;
+                            checkbox.setAttribute('title', text);
                             checkbox.checkedIconText = editIconText;
                             checkbox.uncheckedIconText = editIconText;
                             self.getLayer().then(function (ownLayer) {
@@ -262,9 +253,10 @@ class TrackEdit extends FileEdit {
     async save(options = {}) {
         const layer = await this.getLayer();
         if (layer.file) {
+            options.formats ??= this.formats;
             return super.save.call(this, options);
         }
-
+        
         let uid;
         if (this.#geolocationControl) {
             uid = this.#geolocationControl.getSelectedTrackItem()?.dataset.uid;
