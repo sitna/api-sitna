@@ -9,17 +9,6 @@
     box-sizing: border-box;
 }
 
-.tc-ctl.tc-ctl-xwms-cnt > button {
-    height: 2em;
-}
-
-.tc-ctl-xwms-cnt > button:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) / 2);
-    content: '\e904';
-    margin-right: 0.5em;
-}
-
 .tc-ctl.tc-ctl-xwms select {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -36,11 +25,15 @@
     padding-left: 15px;
 }
 
+.tc-ctl.tc-ctl-xwms sitna-button {
+    --icon-text: '\e904';
+}
+
 .tc-ctl.tc-collapsed.tc-ctl-xwms .input-group {
     margin: 0;
 }
 
 .tc-ctl-xwms-option-selected {
     font-style: italic;
-    color: #600;
+    color: var(--main-inactive-color);
 }
