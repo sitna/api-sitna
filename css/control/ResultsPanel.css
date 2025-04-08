@@ -448,7 +448,6 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
 }
 
     .tc-ctl-rpanel-resize-handler:before {
-        content: "=";
         height: var(--resize-handler-size);
         width: var(--resize-handler-size);
         text-align: center;
@@ -465,9 +464,10 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
 }
 
     .tc-resizable-grid-handlerRight:before {
+        content: '\2503'; /* ┃ */
         display: block;
-        transform: rotate( 90deg ) translateY(calc(-0.7 * var(--resize-handler-size)));
         position: absolute;
+        transform: translateX(-2px);
         top: 50%;
     }
 
@@ -480,8 +480,9 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
 }
 
     .tc-resizable-grid-handlerBottom::before {
+        content: '\2501'; /* ━ */
         display: block;
-        transform: translateY(-4px);
+        transform: translateY(-6px);
         position: absolute;
         left: 50%;
     }
@@ -495,9 +496,10 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
 }
 
     .tc-resizable-grid-handlerDiagonal:before {
+        content: '\251b'; /* ┛ */
         bottom: calc(-1 * var(--resize-handler-size));
         right: calc(-1 * var(--resize-handler-size));
-        transform: rotate( -45deg ) translate(0px, -6px);
+        transform: translate(-2px, -6px);
         display: block;
     }
 
@@ -742,11 +744,11 @@ div.tc-ctl-rpanel-heading-samehw {
 
 .tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
     font-size: 12px;
-    background-color: var(--color-11);
+    background-color: var(--panel-bg-color);
 }
 
     .tc-ctl-rpanel .tc-ctl-rpanel-collapsible:hover {
-        background-color: var(--color-1);
+        background-color: var(--panel-hl-bg-color);
     }
 
 .tc-ctl-rpanel-grp .panel {
@@ -760,6 +762,10 @@ div.tc-ctl-rpanel-heading-samehw {
 .tc-ctl-rpanel .tc-ctl-rpanel-tools {
     direction: rtl;
     display: flex;
+}
+
+.tc-ctl-rpanel .tc-ctl-rpanel-tools {
+    --glyph-bg-color: transparent;
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
@@ -913,11 +919,11 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
 }
 
 .tc-ctl-rpanel-info table tr:nth-child(odd) {
-    background: #eee;
+    background: var(--table-odd-row-bg-color);
 }
 
 .tc-ctl-rpanel-info table tr:nth-child(even) {
-    background: #fff;
+    background: var(--table-even-row-bg-color);
 }
 
 .tc-ctl-rpanel-table th, .tc-ctl-rpanel-table td, .tc-ctl-rpanel-info table th, .tc-ctl-rpanel-info table td {
@@ -998,7 +1004,7 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table table.tc-attr th {
     cursor: zoom-in;
 }
 
-.tc-ctl-rpanel-table tbody td.tc-numeric {
+.tc-ctl-rpanel-table tbody td.tc-numeric, .tc-ctl-rpanel-table tbody td.tc-date {
     text-align: right;
 }
 
