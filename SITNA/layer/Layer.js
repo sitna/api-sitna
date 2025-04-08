@@ -627,7 +627,7 @@ export default Layer;
  * El formato se deduce de la extensión del nombre de archivo, pero también se puede especificar utilizando la propiedad `format`.
  *
  * En el caso de que un fichero KML tenga definido el <a target="_blank" href="https://developers.google.com/kml/documentation/kmlreference#balloonstyle">estilo del bocadillo</a>, este formato será usado al renderizar el bocadillo en visores basados en la API SITNA.
- * @example <caption>Ejemplo de uso de la propiedad `url` - [Ver en vivo](../examples/cfg.LayerOptions.url.html)</caption> {@lang html}
+ * @example <caption>Ejemplo de uso de la propiedad `url`[Ver en vivo](../examples/cfg.LayerOptions.url.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -671,7 +671,7 @@ export default Layer;
  *     ];
  *     var map = new SITNA.Map("mapa");
  * </script>
- * @example <caption>Ejemplo de uso de la propiedad `overviewMapLayer` - [Ver en vivo](../examples/cfg.LayerOptions.overviewMapLayer.html)</caption> {@lang html}
+ * @example <caption>Ejemplo de uso de la propiedad `overviewMapLayer`[Ver en vivo](../examples/cfg.LayerOptions.overviewMapLayer.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *     // Añadimos una capas de fondo con capas asociadas para el mapa de situación
