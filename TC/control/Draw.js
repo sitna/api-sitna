@@ -1,11 +1,11 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import { Defaults } from '../Cfg';
-import Util from '../Util';
-import WebComponentControl from './WebComponentControl';
-import './FeatureStyler';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import { Defaults } from '../Cfg.js';
+import Util from '../Util.js';
+import WebComponentControl from './WebComponentControl.js';
+import './FeatureStyler.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -20,7 +20,6 @@ Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
 Consts.event.STYLECHANGE = 'stylechange.tc';
 Consts.event.CHANGE = 'change';
 
-const className = 'tc-ctl-draw';
 const elementName = 'sitna-draw';
 
 class DrawModel {
@@ -35,14 +34,14 @@ class DrawModel {
 }
 
 class Draw extends WebComponentControl {
-    #classSelector = '.' + className;
+    #classSelector = '.' + Draw.prototype.CLASS;
     #style;
     #styler;
     #snapping;
-    #pointClass = className + '-point';
-    #lineClass = className + '-line';
-    #polygonClass = className + '-polygon';
-    #rectangleClass = className + '-rectangle';
+    #pointClass = Draw.prototype.CLASS + '-point';
+    #lineClass = Draw.prototype.CLASS + '-line';
+    #polygonClass = Draw.prototype.CLASS + '-polygon';
+    #rectangleClass = Draw.prototype.CLASS + '-rectangle';
     #hasOwnLayer;
     #layerPromise;
     #newBtn;
@@ -78,7 +77,7 @@ class Draw extends WebComponentControl {
         self.exportsState = true;
 
         self.#layerPromise = null;
-        
+
         self
             .on(Consts.event.DRAWSTART, function (e) {
                 self.resetValues();
@@ -127,7 +126,7 @@ class Draw extends WebComponentControl {
         if (name === 'stylable') {
             self.#onStylableChange();
         }
-        if (name === 'mode') {            
+        if (name === 'mode') {
             self.#onModeChange();
         }
     }
@@ -239,7 +238,7 @@ class Draw extends WebComponentControl {
                 self.model.tooltip = self.getLocaleString('draw');
                 break;
         }
-        const renderObject = {            
+        const renderObject = {
             stylable: self.stylable
         };
         return self.renderData(renderObject, function () {
@@ -358,7 +357,7 @@ class Draw extends WebComponentControl {
         return self;
     }
 
-    unregister() {        
+    unregister() {
         this.map.controls.splice(this.map.controls.findIndex((c) => c == this), 1);
     }
 
@@ -410,7 +409,7 @@ class Draw extends WebComponentControl {
 
     activate() {
         const self = this;
-        self.#newBtn.classList.add(Consts.classes.ACTIVE);
+        self.#newBtn.active = true;
         self.#cancelBtn.disabled = false;
         super.activate.call(self);
         self.wrap.activate(self.mode);
@@ -438,7 +437,7 @@ class Draw extends WebComponentControl {
     deactivate() {
         const self = this;
         if (self.#newBtn) {
-            self.#newBtn.classList.remove(Consts.classes.ACTIVE);
+            self.#newBtn.active = false;
         }
         if (self.#cancelBtn) {
             self.#cancelBtn.disabled = true;
@@ -662,7 +661,7 @@ class Draw extends WebComponentControl {
         self.#endBtn.disabled =
             self.historyIndex === 0 ||
             mode === Consts.geom.POLYGON && self.historyIndex < 3 ||
-            mode === Consts.geom.POLYLINE && self.historyIndex < 2 || 
+            mode === Consts.geom.POLYLINE && self.historyIndex < 2 ||
             mode === Consts.geom.RECTANGLE;
         self.#redoBtn.disabled = self.history.length === self.historyIndex;
         self.#undoBtn.disabled = self.historyIndex === 0 || self.mode === Consts.geom.RECTANGLE;
@@ -703,7 +702,7 @@ class Draw extends WebComponentControl {
                 break;
         }
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }
