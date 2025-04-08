@@ -9,6 +9,8 @@ import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 Consts.event.STYLECHANGE = 'stylechange.tc';
 
@@ -24,7 +26,16 @@ const formatColor = function (color) {
     }
     return color;
 };
-
+class FeatureStylerModel {
+    constructor() {
+        this.strokeColor = "";
+        this.selectColor = "";
+        this.width = "";
+        this.fillColor = "";
+        this.opacity = "";
+        this.symbolRadius = "";
+    }
+}
 class FeatureStyler extends WebComponentControl {
     #classSelector = '.' + className;
     #style;
@@ -45,6 +56,7 @@ class FeatureStyler extends WebComponentControl {
         self.styles = self.#initialStyles;
         self.initProperty('mode');
         self.setStyle(self.getModeStyle());
+        self.model = new FeatureStylerModel();
     }
 
     static get observedAttributes() {
@@ -176,6 +188,8 @@ class FeatureStyler extends WebComponentControl {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self));
+            self.updateModel();
         });
     }
 
@@ -589,6 +603,18 @@ class FeatureStyler extends WebComponentControl {
         const self = this;
         const event = new CustomEvent(Consts.event.STYLECHANGE, { detail: data });
         self.dispatchEvent(event);
+    }
+    updateModel() {
+        this.model.strokeColor = this.getLocaleString('strokeColor');
+        this.model.selectColor = this.getLocaleString('selectColor');
+        this.model.width = this.getLocaleString('width');
+        this.model.fillColor = this.getLocaleString('fillColor');
+        this.model.opacity = this.getLocaleString('opacity');
+        this.model.symbolRadius = this.getLocaleString('symbolRadius');
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

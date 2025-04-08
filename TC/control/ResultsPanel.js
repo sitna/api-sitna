@@ -96,7 +96,12 @@ class ResultsPanelModel {
         this.hide = "";
         this.expand = "";
         this.download = "";
-        this.shareQuery = "";
+        this.shareQuery = "";        
+    }
+}
+class ChartModel {
+    constructor() {
+        this["geo.trk.chart.elevationGain"] = "";
     }
 }
 
@@ -672,18 +677,21 @@ class ResultsPanel extends InfoDisplay {
         div.innerHTML = out;
         div.style.display = '';
 
-        if (self.#titles) {
+        self.chartController = new Controller(new ChartModel(), new Observer(div));
+        self.chartController.model["geo.trk.chart.elevationGain"] = self.getLocaleString("geo.trk.chart.elevationGain");
 
-            if (self.#titles.main) {
-                const titleElm = self.div.querySelector('.tc-ctl-rpanel-title-text');
-                titleElm.setAttribute('title', self.#titles.main);
-                titleElm.innerHTML = self.#titles.main;
-            }
+        //if (self.#titles) {
 
-            if (self.#titles.max) {
-                self.div.querySelector('.tc-ctl-rpanel-minimized-max').setAttribute('title', self.#titles.max);
-            }
-        }
+        //    if (self.#titles.main) {
+        //        const titleElm = self.div.querySelector('.tc-ctl-rpanel-title-text');
+        //        titleElm.setAttribute('title', self.#titles.main);
+        //        titleElm.innerHTML = self.#titles.main;
+        //    }
+
+        //    if (self.#titles.max) {
+        //        self.div.querySelector('.tc-ctl-rpanel-minimized-max').setAttribute('title', self.#titles.max);
+        //    }
+        //}
 
         var legendOptions = { show: false };
         if (hasSecondaryElevationProfileChartData) {
@@ -1550,7 +1558,7 @@ class ResultsPanel extends InfoDisplay {
     }
 
     updateModel() {
-        this.model.title = this.getLocaleString("rsp.title");
+        this.model.title = this?.#titles?.main || this.getLocaleString("rsp.title");
         this.model.close = this.getLocaleString("close");
         this.model.hide = this.getLocaleString("hide");
         this.model.expand = this.getLocaleString("expand");
@@ -1559,9 +1567,13 @@ class ResultsPanel extends InfoDisplay {
         this.model.download = this.getLocaleString("download");
         if (this.options.share)
             this.model.shareQuery = this.getLocaleString("shareQuery");
+
+        if (this.chartController) {
+            this.chartController.model["geo.trk.chart.elevationGain"] = this.getLocaleString("geo.trk.chart.elevationGain");
+        }
         
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();        
     }

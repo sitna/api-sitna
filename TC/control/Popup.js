@@ -2,6 +2,8 @@
 import Consts from '../Consts';
 import Util from '../Util';
 import InfoDisplay from './InfoDisplay';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
@@ -10,6 +12,12 @@ Consts.event.POPUPHIDE = Consts.event.POPUPHIDE || 'popuphide.tc';
 Consts.classes.DRAG = Consts.classes.DRAG || 'tc-drag';
 Consts.classes.DRAGGED = Consts.classes.DRAGGED || 'tc-dragged';
 Consts.classes.DRAGGABLE = Consts.classes.DRAGGABLE || 'tc-draggable';
+class PopupModel {
+    constructor() {
+        this.close = "";
+        this.shareQuery = "";
+    }
+}
 
 class Popup extends InfoDisplay {
     currentFeature = null;
@@ -19,6 +27,7 @@ class Popup extends InfoDisplay {
         const self = this;
 
         self.wrap = new TC.wrap.control.Popup(self);
+        self.model = new PopupModel();
     }
 
     async register(map) {
@@ -123,6 +132,8 @@ class Popup extends InfoDisplay {
         if (Util.isFunction(callback)) {
             callback();
         }
+        self.controller = new Controller(self.model, new Observer(self.menuDiv));
+        self.updateModel();
     }
 
     addUIEventListeners() {
@@ -212,6 +223,19 @@ class Popup extends InfoDisplay {
         const self = this;
 
         return self.popupDiv && self.popupDiv.classList.contains(Consts.classes.VISIBLE);
+    }
+    updateModel() {
+        const self = this;
+        self.model.close = self.getLocaleString("close");
+        self.model.shareQuery = self.getLocaleString("shareQuery");
+        if (self?.caller?.printToolModel) {
+            self.caller.printToolModel.print = self.getLocaleString("print");
+            self.caller.printToolModel.printThisContent = self.getLocaleString("printThisContent");
+        }
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

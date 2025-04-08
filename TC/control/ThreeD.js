@@ -17,7 +17,7 @@
   *     {  
   *         div: "IDElementoDOM"
   *     }
-  * @example {@lang html}
+  * @example <caption>[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang html}
   * <div id="mapa"/>
   * <div id="vista3d"/>
   * <script>
@@ -65,10 +65,18 @@ import Consts from '../Consts';
 import Util from '../Util';
 import Control from '../Control';
 import ThreeDView from '../view/ThreeD';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 TC.view = TC.view || {};
 TC.view.ThreeD = ThreeDView;
+
+class ThreeDModel {
+    constructor() {
+        this["threed.tip"] = "";
+    }
+}
 
 class ThreeD extends Control {
 
@@ -80,7 +88,7 @@ class ThreeD extends Control {
                 self.set3D();
             }
         });
-
+        
         return super.register.call(self, map);
     }
 
@@ -92,7 +100,7 @@ class ThreeD extends Control {
 
     renderData(data, callback) {
         const self = this;
-
+        self.model = new ThreeDModel();
         return super.renderData.call(self, data, function () {
             self.button = self.div.querySelector('.' + self.CLASS + '-btn');
 
@@ -101,6 +109,8 @@ class ThreeD extends Control {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.updateModel();
         });
     }
 
@@ -219,6 +229,13 @@ class ThreeD extends Control {
 
             return result;
         }
+    }
+    updateModel() {
+        this.model["threed.tip"] = this.getLocaleString("threed.tip");
+    }
+    updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

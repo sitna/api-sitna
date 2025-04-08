@@ -4,7 +4,7 @@
   * 
   * Para que ese control funcione correctamente, es necesario cumplir estos dos requisitos:
   *    1. Debe instalarse en el ámbito de la aplicación que contiene el visor el _[Service Worker](https://developer.mozilla.org/es/docs/Web/API/Service_Worker_API)_ creado para el funcionamiento de este control.
-  *    Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
+  *    Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/TC/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
   *    2. Debe incluirse en la carpeta de la aplicación un archivo de texto con el nombre `manifest.appcache`. 
   *    Este archivo es un documento de manifiesto de [caché de aplicaciones](https://developer.mozilla.org/es/docs/Web/HTML/Using_the_application_cache#habilitando_cach%C3%A9_de_aplicaciones)[*] 
   *    que contiene una lista de las URL de todos los recursos que tienen que almacenarse en la cache del navegador y así asegurar la carga de la aplicación
@@ -69,6 +69,8 @@ import Util from '../Util';
 import Cfg from '../Cfg';
 import SWCacheClient from './SWCacheClient';
 import md5 from 'md5';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
@@ -137,6 +139,36 @@ const findTileMatrixLimits = function (schema, resolution) {
         }
     }
     return result;
+};
+
+class OfflineMapModel {
+    constructor() {
+        this.offlineMaps = "";
+        this["cb.filter.plhr"] = "";
+        this["cb.noMaps"] = "";
+        this.noMatches = "";
+        this.newOfflineMap = "";
+        this.cancel = "";
+        this["cb.DownloadingMap"] = "";
+        this.save = "";
+        this.editMapName = "";
+        this.viewMapExtent = "";
+        this.deleteMap = "";
+        this.nameRequired = "";
+        this.close = "";
+        this.availableOfflineMaps = "";
+        this.selectAtLeastOne = "";
+        this.maxRes = "";
+        this.ok = "";
+        this.cancel = "";        
+    }
+};
+
+class OfflineMapOffLineModel {
+    constructor() {
+        this.offlineMap = "";
+        this.returnToOnlineMaps = "";
+    }
 };
 
 class OfflineMapMaker extends SWCacheClient {
@@ -222,6 +254,9 @@ class OfflineMapMaker extends SWCacheClient {
 
         self.storedMaps = [];
 
+        self.model = new OfflineMapModel();
+        self.offlineModel = new OfflineMapOffLineModel();
+
         const mapDefString = Util.getParameterByName(self.MAP_DEFINITION_PARAM_NAME);
         const extentString = Util.getParameterByName(self.MAP_EXTENT_PARAM_NAME);
         self.mapIsOffline = !!mapDefString;
@@ -248,9 +283,9 @@ class OfflineMapMaker extends SWCacheClient {
         if (self.localStorage) {
             for (var i = 0, len = self.localStorage.length; i < len; i++) {
                 var key = self.localStorage.key(i);
+                // Tenemos en cuenta los mapas antiguos (TC.offline.map.)
                 if ((key.indexOf(self.LOCAL_STORAGE_KEY_PREFIX) === 0 || key.indexOf('TC.offline.map.') === 0) &&
-                    key !== self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash' && 
-                    key !== 'TC.offline.map.' + self.ROOT_CACHE_NAME + '.hash') {
+                    key !== self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash') {
                     // Es un nombre de mapa y no es el hash de integridad de la cache root
                     var values = self.localStorage.getItem(key).split(" ");
                     var extent = getExtentFromString(values.shift());
@@ -463,6 +498,7 @@ class OfflineMapMaker extends SWCacheClient {
                             e.preventDefault();
                         });
                 });
+                self.offlineController = new Controller(self.offlineModel, new Observer(self.#offlineMapHintDiv))
             });
         }
 
@@ -655,6 +691,7 @@ class OfflineMapMaker extends SWCacheClient {
             self.renderPromise().then(function () {
                 self.div.querySelector(self.#selectors.NEWBTN).disabled = false;
                 map.baseLayers.forEach(addRenderedListNode);
+
             });
 
             if (self.mapIsOffline) {
@@ -829,6 +866,9 @@ class OfflineMapMaker extends SWCacheClient {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controller.add(self._dialogDiv);
+            self.updateModel();
         });
 
         // Control para evitar que se cancele una descarga de cache al salir de la página
@@ -1242,6 +1282,7 @@ class OfflineMapMaker extends SWCacheClient {
             self.getRenderedHtml(self.CLASS + '-map-node', { name: map.name, url: map.url }, function (html) {
                 const parser = new DOMParser();
                 self.div.querySelector(self.#selectors.LIST).appendChild(parser.parseFromString(html, 'text/html').body.firstChild);
+                self.controller.add(self.div.querySelector(self.#selectors.LIST).lastChild);
                 self.div.querySelector(self.#selectors.EMPTYLIST).setAttribute('hidden', 'hidden');
                 self.div.querySelector(self.#selectors.SEARCH).disabled = false;
             });
@@ -1631,6 +1672,37 @@ class OfflineMapMaker extends SWCacheClient {
             newParams = '?' + newParams;
         }
         return location.pathname + newParams + location.hash;
+    }
+    updateModel() {
+        const self = this;
+        self.model.offlineMaps = self.getLocaleString("offlineMaps");
+        self.model["cb.filter.plhr"] = self.getLocaleString("cb.filter.plhr");
+        self.model["cb.noMaps"] = self.getLocaleString("cb.noMaps");
+        self.model.noMatches = self.getLocaleString("noMatches");
+        self.model.newOfflineMap = self.getLocaleString("newOfflineMap");
+        self.model.cancel = self.getLocaleString("cancel");
+        self.model["cb.DownloadingMap"] = self.getLocaleString("cb.DownloadingMap");
+        self.model.save = self.getLocaleString("save");
+        self.model.editMapName = self.getLocaleString("editMapName");
+        self.model.viewMapExtent = self.getLocaleString("viewMapExtent");
+        self.model.deleteMap = self.getLocaleString("deleteMap");
+
+        self.model.nameRequired = self.getLocaleString("nameRequired");
+        self.model.close = self.getLocaleString("close");
+        self.model.availableOfflineMaps = self.getLocaleString("availableOfflineMaps");
+        self.model.selectAtLeastOne = self.getLocaleString("selectAtLeastOne");
+        self.model.maxRes = self.getLocaleString("maxRes");
+        self.model.ok = self.getLocaleString("ok");
+        self.model.cancel = self.getLocaleString("cancel");
+
+        if (self.offlineController) {
+            self.offlineModel.offlineMap = self.getLocaleString("offlineMap");
+            self.offlineModel.returnToOnlineMaps = self.getLocaleString("returnToOnlineMaps");
+        }
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

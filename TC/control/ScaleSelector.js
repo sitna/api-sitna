@@ -3,6 +3,8 @@ import Consts from '../Consts';
 import Cfg from '../Cfg';
 import Util from '../Util';
 import Scale from './Scale';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
@@ -38,6 +40,8 @@ class ScaleSelector extends Scale {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div))
+            self.updateModel();
         });
     }
 
@@ -69,6 +73,14 @@ class ScaleSelector extends Scale {
         }
         self.map.wrap.setResolution(result);
         return result;
+    }
+    
+    updateModel() {
+        this.model.estimatedMapSize = this.getLocaleString("estimatedMapSize");
+    }
+    updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 
 }

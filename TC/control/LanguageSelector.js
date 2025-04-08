@@ -2,9 +2,15 @@
 import Consts from '../Consts';
 import Util from '../Util';
 import TC from '../../TC';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 const optionElementName = 'sitna-language-option';
-
+class LanguageSelectorModel {
+    constructor() {
+        this.selectLanguage = "";
+    }
+}
 class LanguageOption extends HTMLElement {
     #link;
 
@@ -122,6 +128,7 @@ class LanguageSelector extends WebComponentControl {
             self.noReload = true;
         }
         self.tagAttributeName = self.options.tagAttributeName || 'data-sitna-i18n';
+        self.model = new LanguageSelectorModel();
    }
 
     connectedCallback() {
@@ -251,6 +258,8 @@ class LanguageSelector extends WebComponentControl {
         self.toggle = self.querySelector(`.${self.CLASS}-toggle`);
 
         self.addUIEventListeners();
+        self.controller=new Controller(self.model, new Observer(self));
+        self.model.selectLanguage = self.getLocaleString("selectLanguage"); 
     }
 
     addUIEventListeners() {

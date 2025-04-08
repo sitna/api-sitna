@@ -9,7 +9,8 @@ import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Geometry from '../Geometry';
 import InfoDisplay from './InfoDisplay';
-
+import Observer from '../Observer';
+import Controller from '../Controller';
 TC.control = TC.control || {};
 
 const pointElevationCache = new WeakMap();
@@ -42,6 +43,16 @@ const removeElevationProfileFromCache = function (feature) {
         }
     }
 };
+
+class ElevationModel {
+    constructor() {
+        this.originalValue = "";
+        this.ele = "";
+        this.mdt = "";
+        this["elevation.explained"] = "";
+        this["heightOverTerrain"] = "";
+    }
+}
 
 class Elevation extends Control {
     #depTimestamp;
@@ -77,7 +88,7 @@ class Elevation extends Control {
                 if (pointElevationCache.has(e.control.currentFeature)) {
                     self.displayElevationValue(e.control.currentFeature);
                 }
-            });
+            });        
 
         return self;
     }
@@ -179,6 +190,7 @@ class Elevation extends Control {
                     self.getRenderedHtml(self.CLASS + '-val', renderOptions, function (html) {
                         target.querySelectorAll(`tr[class|=${self.CLASS}-pair]`).forEach(elm => elm.remove());
                         target.insertAdjacentHTML('beforeend', html);
+                        self.elevationDataController = new Controller(self.elevationDataModel, new Observer(target));
                     });
                 });
             }
@@ -292,7 +304,7 @@ class Elevation extends Control {
             if (featureOrCoords instanceof Feature && !options.ignoreCaching) {
                 cacheElevationProfile(featureOrCoords, elevationData);
             }
-
+            self.elevationDataModel = new ElevationModel();
             renderProfile(elevationData);
         };
 
@@ -506,6 +518,26 @@ class Elevation extends Control {
             }
             self.resultsPanel.wrap.hideElevationMarker();
         }
+    }
+    async updateModel() {
+        const self = this;
+        const profilePanel = await self.getProfilePanel();
+        profilePanel.setTitles({
+            main: self.getLocaleString("geo.trk.chart.chpe"),
+            max: self.getLocaleString("geo.trk.chart.chpe")
+        });
+        if (self.elevationDataModel) {
+            self.elevationDataModel.originalValue = self.getLocaleString("originalValue");
+            self.elevationDataModel.ele = self.getLocaleString("originalValue");
+            self.elevationDataModel.mdt = self.getLocaleString("originalValue");
+            self.elevationDataModel["elevation.explained"] = self.getLocaleString("elevation.explained");
+            self.elevationDataModel["heightOverTerrain"] = self.getLocaleString("heightOverTerrain");
+        }
+
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

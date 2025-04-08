@@ -3,10 +3,18 @@ import Consts from '../Consts';
 import Cfg from '../Cfg';
 import Util from '../Util';
 import Control from '../Control';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
 Consts.classes.PRINTABLE = 'tc-printable';
+class PrintModel {
+    constructor() {
+        this.printThisContent = "";
+        this.print = "";
+    }
+}
 
 class Print extends Control {
     #mustAddListeners;
@@ -25,6 +33,7 @@ class Print extends Control {
             (self.options.printableElement || self.options.target).classList.add(Consts.classes.PRINTABLE);
             self.render();
         }
+        self.model = new PrintModel();
     }
 
     async loadTemplates() {
@@ -55,6 +64,9 @@ class Print extends Control {
                         callback();
                     }
                     resolve();
+                    self.controller = new Controller(self.model, new Observer(target));
+                    self.model.print = self.getLocaleString("print");
+                    self.model.printThisContent = self.getLocaleString("printThisContent");
                 });
             }
             else {
@@ -103,6 +115,15 @@ class Print extends Control {
             }
         }
         return self;
+    }
+    updateModel() {
+        const self = this;
+        self.model.printThisContent = self.getLocaleString("printThisContent");
+        self.model.print = self.getLocaleString("print");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

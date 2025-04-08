@@ -3,10 +3,18 @@ import Consts from '../Consts';
 import Cfg from '../Cfg';
 import Util from '../Util';
 import Control from '../Control';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
 Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
+
+class ScaleModel {
+    constructor() {
+        this.estimatedMapSize = "";
+    }
+}
 
 class Scale extends Control {
 
@@ -18,6 +26,7 @@ class Scale extends Control {
 
     render(callback) {
         const self = this;
+        self.model = new ScaleModel();
         return self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize }, function () {
 
             const span = self.div.querySelector('span');
@@ -28,6 +37,8 @@ class Scale extends Control {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self.div))
+            self.updateModel();
         });
     }
 
@@ -45,11 +56,13 @@ class Scale extends Control {
         if (screenSize) {
             Cfg.screenSize = screenSize;
         }
+        
+
         self.render(function () {
             map.on(Consts.event.ZOOM, function () {
                 delete self.metersPerDegree;
                 self.update();
-            });
+            });            
         });
 
         return result;
@@ -124,6 +137,13 @@ class Scale extends Control {
             a.unshift(n);
         }
         return a.join('.');
+    }
+    updateModel() {
+        this.model.estimatedMapSize = this.getLocaleString("estimatedMapSize");
+    }
+    updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

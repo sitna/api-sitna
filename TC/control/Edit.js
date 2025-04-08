@@ -15,10 +15,29 @@ import Polygon from '../../SITNA/feature/Polygon.js';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import WebComponentControl from './WebComponentControl.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.wrap = wrap;
 
 const elementName = 'sitna-edit';
+
+class EditModel {
+    constructor() {
+        this.select = "";
+        this.newPoint = "";
+        this.newLine = "";
+        this.newPolygon = "";
+        this.otherTools = "";
+        this.importFromOtherLayer = "";
+        this.download = "";
+        this.featureEditing = "";
+        this.thereAreNoCompatibleFeatures = "";
+        this.ok = "";
+        this.save = "";
+        this.saveAs = "";
+    }
+};
 
 class Edit extends WebComponentControl {
     #classSelector;
@@ -70,6 +89,7 @@ class Edit extends WebComponentControl {
         self.polygonDrawControl = null;
         //self.cutDrawControl = null;
         self.modifyControl = null;
+        self.model = new EditModel();
     }
 
     static get observedAttributes() {
@@ -566,6 +586,9 @@ class Edit extends WebComponentControl {
         if (Util.isFunction(callback)) {
             callback();
         }
+
+        self.controller = new Controller(self.model, new Observer(self));
+        self.updateModel();
         return self;
     }
 
@@ -1117,6 +1140,8 @@ class Edit extends WebComponentControl {
             const container = panel.getInfoContainer();
             self.getRenderedHtml(self.CLASS + '-import', { layers: self.getAvailableFeaturesToImport() }, function (html) {
                 panel.open(html, container);
+                self.controller.add(container)
+
                 container.querySelector('ul').addEventListener('mouseout', function (_e) {
                     self.highlightFeatures([]);
                 });
@@ -1163,6 +1188,28 @@ class Edit extends WebComponentControl {
     #cacheOriginalFeature(feature) {
         const self = this;
         self.#originalFeatures.set(feature, feature.clone());
+    }
+    async updateModel() {
+        const self = this;
+        
+        self.model.select = self.getLocaleString("select");
+        self.model.newPoint = self.getLocaleString("newPoint");
+        self.model.newLine = self.getLocaleString("newLine");
+        self.model.newPolygon = self.getLocaleString("newPolygon");
+        self.model.otherTools = self.getLocaleString("otherTools");
+        self.model.importFromOtherLayer = self.getLocaleString("importFromOtherLayer");
+        self.model.download = self.getLocaleString("download");
+        self.model.featureEditing = self.getLocaleString("featureEditing");
+        self.model.thereAreNoCompatibleFeatures = self.getLocaleString("thereAreNoCompatibleFeatures");
+        self.model.ok = self.getLocaleString("ok");
+        self.model.save = self.getLocaleString("save");
+        self.model.saveAs = self.getLocaleString("saveAs");
+        if (self.featureImportPanel)
+            self.featureImportPanel.setTitles({ main: self.getLocaleString('importFromOtherLayer') });
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 

@@ -1,9 +1,9 @@
 <li data-extent="{{extent}}">
     <span><a href="{{url}}" title="{{name}}">{{name}}</a></span>
     <input class="tc-textbox tc-hidden" type="text" value="{{name}}" />
-    <sitna-button variant="minimal" text="{{i18n "save"}}" icon-text="&#x2714;" class="tc-btn-save tc-hidden"></sitna-button>
-    <sitna-button variant="minimal" text="{{i18n "cancel"}}" icon="close" class="tc-btn-cancel tc-hidden"></sitna-button>
-    <sitna-button variant="minimal" text="{{i18n "editMapName"}}" icon="edit" class="tc-btn-edit"></sitna-button>
-    <sitna-toggle text="{{i18n "viewMapExtent"}}" checked-icon-text="&#xe917;" unchecked-icon-text="&#xe917;" class="tc-btn-view"></sitna-toggle>
-    <sitna-button variant="minimal" text="{{i18n "deleteMap"}}" icon="delete" class="tc-btn-delete"></sitna-button>
+    <sitna-button variant="minimal" class="tc-btn-save tc-hidden">[[save]]</sitna-button>
+    <sitna-button variant="minimal" text="[[cancel]]" icon="close" class="tc-btn-cancel tc-hidden"></sitna-button>
+    <sitna-button variant="minimal" text="[[editMapName]]" icon="edit" class="tc-btn-edit"></sitna-button>
+    <sitna-toggle text="[[viewMapExtent]]" checked-icon-text="&#xe917;" unchecked-icon-text="&#xe917;" class="tc-btn-view"></sitna-toggle>
+    <sitna-button variant="minimal" title="[[deleteMap]]" icon="delete" class="tc-btn-delete"></sitna-button>
 </li>
