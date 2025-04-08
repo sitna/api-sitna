@@ -4,8 +4,8 @@ import Util from '../Util.js';
 import MapContents from './MapContents.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import Vector from '../../SITNA/layer/Vector.js';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 
 TC.control = TC.control || {};
@@ -36,6 +36,8 @@ class BasemapSelectorModel {
         this.baseLayerNotCompatible_instructions = "";
         this.metadata = "";
         this.fileDefault = "";
+        this.notAvailableTo3D = "";
+        this.reprojectionNeeded = "";
     }
 }
 
@@ -49,7 +51,7 @@ class BasemapSelector extends MapContents {
         LOAD_CRS_BUTTON: this.CLASS + '-crs-btn-load',
         CRS_DIALOG: this.CLASS + '-crs-dialog',
         CRS_LIST: this.CLASS + '-crs-list',
-        VIEW_BTN: this.CLASS + '-btn-view',
+        VIEW_TOGGLE: this.CLASS + '-btn-view',
         CURRENT_CRS_NAME: this.CLASS + '-cur-crs-name',
         CURRENT_CRS_CODE: this.CLASS + '-cur-crs-code',
         TREE: this.CLASS + '-tree',
@@ -211,24 +213,22 @@ class BasemapSelector extends MapContents {
         const self = this;
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
         await super.render(callback, Util.extend({}, self.options, { controlId: self.id }));
-        self.controller = new Controller(self.model, new Observer(self.div));        
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.dialogController =new Controller(self.modelDialog, new Observer(self._dialogDiv));
         return self;
     }
 
     addUIEventListeners() {
         const self = this;
-        self.div.querySelector(`.${self.#cssClasses.VIEW_BTN}`)?.addEventListener(Consts.event.CLICK, function (e) {
+        self.div.querySelector(`.${self.#cssClasses.VIEW_TOGGLE}`)?.addEventListener('change', function (_e) {
             self.toggleView();
-            e.target.blur();
         }, { passive: true });
 
         if (self.options.dialogMore) {
             const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
 
-            dialog.querySelector(`.${self.#cssClasses.VIEW_BTN}`)?.addEventListener(Consts.event.CLICK, function (e) {
+            dialog.querySelector(`.${self.#cssClasses.VIEW_TOGGLE}`)?.addEventListener('change', function (_e) {
                 self.toggleMoreLayersDialogView();
-                e.target.blur();
-                e.stopPropagation();
             }, { passive: true });
 
             dialog.addEventListener('change', TC.EventTarget.listenerBySelector('input[type=radio]', function (e) {
@@ -269,8 +269,8 @@ class BasemapSelector extends MapContents {
 
                         radio.checked = checked;
                         if (mustReproject) {
-                            radio.classList.add(Consts.classes.DISABLED);
-                            li.setAttribute('title', self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded'));
+                            radio.classList.add(Consts.classes.DISABLED);                            
+                            self.dialogController.setAttribute(self.map.on3DView ? "notAvailableTo3D" : "reprojectionNeeded", "title", li);                            
                         }
                         else {
                             radio.classList.remove(Consts.classes.DISABLED);
@@ -281,7 +281,7 @@ class BasemapSelector extends MapContents {
                     radio.checked = checked;
                     if (layer.mustReproject) {
                         radio.classList.add(Consts.classes.DISABLED);
-                        li.setAttribute('title', self.map.on3DView ? self.getLocaleString('notAvailableTo3D') : self.getLocaleString('reprojectionNeeded'));
+                        self.dialogController.setAttribute(self.map.on3DView ? "notAvailableTo3D" : "reprojectionNeeded", "title", li);
                     }
                     else {
                         radio.classList.remove(Consts.classes.DISABLED);
@@ -551,7 +551,8 @@ class BasemapSelector extends MapContents {
 
         modalBody.classList.remove(Consts.classes.LOADING);
 
-        dialog.querySelector('.' + self.CLASS + '-name').innerHTML = layer.title || layer.name;
+        const nameContainer = dialog.querySelector('.' + self.CLASS + '-name');
+        if (nameContainer) nameContainer.innerHTML = layer.title || layer.name;
         Util.showModal(dialog);
     }
 
@@ -573,10 +574,9 @@ class BasemapSelector extends MapContents {
 
         const parentTree = self.div.querySelector(`.${self.#cssClasses.TREE}`);
         const isGrid = parentTree.classList.contains(self.#cssClasses.GRID);
-        const button = dialog.querySelector(`.${self.#cssClasses.VIEW_BTN}`);
-        button.classList.toggle(self.#cssClasses.DETAILS, isGrid);
-        button.classList.toggle(self.#cssClasses.GRID, !isGrid);
-        button.setAttribute('title', self.getLocaleString(isGrid ? 'showDetailsView' : 'showGridView'));
+        const toggle = dialog.querySelector(`.${self.#cssClasses.VIEW_TOGGLE}`);
+        toggle.checked = isGrid;
+        toggle.setAttribute('title', self.getLocaleString(isGrid ? 'showDetailsView' : 'showGridView'));
 
         if (modalBody.childElementCount > 0) {
             dialog.classList.remove(Consts.classes.HIDDEN);
@@ -600,7 +600,7 @@ class BasemapSelector extends MapContents {
             return {};
         };
         const renderBody = function () {
-            const isGrid = dialog.querySelector(`.${self.#cssClasses.VIEW_BTN}`).classList.contains(self.#cssClasses.DETAILS);
+            const isGrid = dialog.querySelector(`.${self.#cssClasses.VIEW_TOGGLE}`).checked;
             const moreBaseLayers = self.#moreBaseLayers.slice();
             for (var i = 0, ii = moreBaseLayers.length; i < ii; i++) {
                 if (!moreBaseLayers[i]) {
@@ -616,9 +616,8 @@ class BasemapSelector extends MapContents {
                 tree.classList.toggle(self.#cssClasses.DETAILS, !isGrid);
                 tree.classList.toggle(self.#cssClasses.GRID, isGrid);
                 modalBody.classList.remove(Consts.classes.LOADING);
-
                 self.update(tree);
-                new Controller(self.modelDialog, new Observer(self._dialogDiv));
+                self.dialogController.add(modalBody);
                 
             });
         };
@@ -646,9 +645,9 @@ class BasemapSelector extends MapContents {
     #toggleUI(container) {
         const tree = container.querySelector(`.${this.#cssClasses.TREE}`);
         if (tree) {
-            const btn = container.querySelector(`.${this.#cssClasses.VIEW_BTN}`);
-            const isGrid = btn.classList.toggle(this.#cssClasses.DETAILS);
-            btn.setAttribute('title', this.getLocaleString(btn.classList.toggle(this.#cssClasses.GRID) ? 'showGridView' : 'showDetailsView'));
+            const toggle = container.querySelector(`.${this.#cssClasses.VIEW_TOGGLE}`);
+            const isGrid = toggle.checked;
+            toggle.setAttribute('title', this.getLocaleString(isGrid ? 'showDetailsView' : 'showGridView'));
             tree.classList.remove(this.#cssClasses.DETAILS, this.#cssClasses.GRID);
             setTimeout(() => tree.classList.add(isGrid ? this.#cssClasses.GRID : this.#cssClasses.DETAILS), 20);
         }
@@ -799,13 +798,16 @@ class BasemapSelector extends MapContents {
         this.modelDialog.baseLayerNotCompatible_instructions = this.getLocaleString("baseLayerNotCompatible.instructions");
         this.modelDialog.metadata = this.model.metadata = this.getLocaleString("metadata");
 
+        this.modelDialog.notAvailableTo3D = this.getLocaleString("notAvailableTo3D");
+        this.modelDialog.reprojectionNeeded = this.getLocaleString("reprojectionNeeded");
+
         Object.keys(formatDescriptions).forEach((format) => {
             this.modelDialog[format] = this.model[format] = this.getLocaleString(Util.getSimpleMimeType(format)) ||
                 self.getLocaleString('viewMetadata');
         });
         this.model.fileDefault = this.modelDialog.fileDefault = this.getLocaleString('viewMetadata');
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }

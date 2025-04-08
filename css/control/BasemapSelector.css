@@ -6,50 +6,19 @@
         position: relative;
     }
 
-        .tc-ctl-bms h2 button.tc-icon-btn {
-            position: absolute;
-            top: -0.1em;
-            right: 0;
-            border: none;
-            background: none;
-            color: var(--sec-btn-color);
-            font-size: 24px;
-        }
-
-            .tc-ctl-bms h2 button.tc-icon-btn:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
-                font-family: var(--icon-font-family);
-                font-size: 0.75em;
-                content: '\e914';
-                width: 1.5em;
-                height: 1.5em;
-            }
-
-.tc-modal.tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
-    line-height: 1.5em;
-}
-
-            .tc-ctl-bms h2 button.tc-icon-btn.tc-details:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view.tc-details:before {
-                content: '\e914';
-            }
-
-            .tc-ctl-bms h2 button.tc-icon-btn.tc-grid:before, .tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view.tc-grid:before {
-                content: '\e913';
-            }
-
-.tc-ctl-bms-more-dialog button.tc-ctl-bms-btn-view {
-    position: relative;
-    border: none;
-    background: none;
-    color: var(--sec-btn-color);
-    font-size: 1.4em;
-    width: 1.4em;
-}
-
-.tc-ctl-bms-more-dialog .tc-ctl-bms-btn-view:before {
+.tc-ctl-bms sitna-toggle.tc-ctl-bms-btn-view {
+    font-weight: normal;
+    font-size: 1rem;
     position: absolute;
-    top: 0;
-    left: 0;
+    left: auto;
+    top: auto;
+    bottom: 0.2em;
+    right: 0;
+}
+
+.tc-ctl-bms-more-dialog sitna-toggle.tc-ctl-bms-btn-view {
+    position: relative;
+    font-size: 1.25em;
 }
 
 .tc-ctl-bms ul.tc-ctl-bms-branch {
@@ -166,7 +135,7 @@
 .tc-ctl-bms-more-dialog .tc-ctl-bms-metadata ul {
     list-style-type: none;
     display: flex;
-    gap: 1em;
+    gap: 2.5em;
     padding: 0;
     margin: 0;
 }

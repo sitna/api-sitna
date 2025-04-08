@@ -3,13 +3,13 @@
     <div class="tc-modal-window">
         <div class="tc-modal-header">
             <h3>[[backgroundMaps]]</h3>
-            <button type="button" class="tc-icon-btn tc-ctl-bms-btn-view tc-details" title="[[showDetailsView]]"></button>
+            <sitna-toggle variant="switch" checked checked-icon-text="&#xe913;" unchecked-icon-text="&#xe914;" class="tc-ctl-bms-btn-view" title="[[showDetailsView]]"></sitna-toggle>
             <div class="tc-modal-close" title="[[close]]"></div>
         </div>
         <div class="tc-modal-body">
         </div>
         <div class="tc-modal-footer">
-            <button type="button" class="tc-button tc-modal-close">[[close]]</button>
+            <sitna-button class="tc-modal-close">[[close]]</sitna-button>
         </div>
     </div>
 </div>
@@ -25,7 +25,7 @@
             <ul class="tc-ctl-bms-crs-list tc-crs-list"></ul>
         </div>
         <div class="tc-modal-footer">
-            <button type="button" class="tc-button tc-modal-close">[[cancel]]</button>
+            <sitna-button class="tc-modal-close" aria-label="[[cancel]]">[[cancel]]</sitna-button>
         </div>
     </div>
 </div>
