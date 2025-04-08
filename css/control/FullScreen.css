@@ -28,17 +28,17 @@
     }        
 
 /* GLS: en Safari IOS no pasa a ocupar toda la pantalla, así que aplicamos por CSS */
-html:fullscreen .tc-map {
+html:fullscreen .tc-map:not(.tc-collapsed) {
     height: 100vh;
     width: 100vw;
 }
 
-html:-moz-full-screen .tc-map {
+html:-moz-full-screen .tc-map:not(.tc-collapsed) {
     height: 100vh;
     width: 100vw;
 }
 
-html:-webkit-full-screen .tc-map {
+html:-webkit-full-screen .tc-map:not(.tc-collapsed) {
     height: 100vh;
     width: 100vw;
 }
@@ -52,7 +52,7 @@ body:fullscreen {
         height: 0;
     }
 
-    body:fullscreen > .tc-map {
+    body:fullscreen > .tc-map:not(.tc-collapsed) {
         top: 0;
         height: 100%;
     }
@@ -67,7 +67,7 @@ body:fullscreen {
     height: 0 !important;
 }*/
 
-.tc-ctl-fscreen-to-map {
+.tc-ctl-fscreen-to-map:not(.tc-collapsed) {
     top: 0 !important;
     height: 100% !important;
 }
