@@ -4,6 +4,7 @@
     display: none;
     order: 3;
     flex-grow: 3;
+    gap: 0.2em;
 }
 
     .tc-ctl-ftools.tc-active {
@@ -12,72 +13,38 @@
         transform-origin: top center;
     }
 
-    .tc-ctl-ftools button.tc-icon-btn {
+    .tc-ctl-ftools sitna-button {
         position: relative;
-        text-indent: -1000vw;
-        width: 1.2em;
-        height: 1.2em;
-        display: inline-block;
-        background-color: transparent;
-        color: var(--main-hl-color);
-        padding: 0;
-        border-width: 0;
-        margin-top: 0.15em;
-        z-index: 10010;
-        transition: all .2s ease;
+        font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+        --glyph-color: var(--main-hl-color);
     }
 
-        .tc-ctl-ftools button.tc-icon-btn:before {
-            position: absolute;
-            color: var(--main-hl-color);
-            font-size: 1em;
-            height: 100%;
-            width: 100%;
-            text-align: center;
-            text-indent: 0;
-            vertical-align: middle;
-            content: "\2193";
-            left: 0;
-            top: 0;
-        }
-
-        .tc-ctl-ftools button.tc-icon-btn.tc-hidden {
+        .tc-ctl-ftools sitna-button.tc-hidden {
             display: none;
         }
 
-    .tc-ctl-ftools button.tc-ctl-ftools-dl-btn:before {
-        font-family: var(--icon-font-family);
-        content: var(--icon-download);
+    .tc-ctl-ftools sitna-button.tc-ctl-ftools-dl-btn {
+        --icon-text: var(--icon-download);
     }
 
-    .tc-ctl-ftools button.tc-ctl-ftools-share-btn:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) * 0.75);
-        content: var(--icon-share);
+    .tc-ctl-ftools sitna-button.tc-ctl-ftools-share-btn {
+        --icon-text: var(--icon-share);
     }
 
-    .tc-ctl-ftools button.tc-ctl-ftools-zoom-btn:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) * 0.75);
-        content: var(--icon-extent);
+    .tc-ctl-ftools sitna-button.tc-ctl-ftools-zoom-btn {
+        --icon-text: var(--icon-extent);
     }
 
-    .tc-ctl-ftools button.tc-ctl-ftools-elev-btn:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) * 0.75);
-        content: var(--icon-elevation);
+    .tc-ctl-ftools sitna-button.tc-ctl-ftools-elev-btn {
+        --icon-text: var(--icon-elevation);
     }
 
-    .tc-ctl-ftools button.tc-ctl-ftools-prof-btn:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) * 0.75);
-        content: var(--icon-profile);
+    .tc-ctl-ftools sitna-button.tc-ctl-ftools-prof-btn {
+        --icon-text: var(--icon-profile);
     }
 
-    .tc-ctl-ftools button.tc-ctl-ftools-del-btn:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) * 0.75);
-        content: var(--icon-delete);
+    .tc-ctl-ftools sitna-button.tc-ctl-ftools-del-btn {
+        --icon-text: var(--icon-delete);
     }
 
 table.tc-ctl-ftools-zoom {

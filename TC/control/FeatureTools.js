@@ -7,6 +7,8 @@ import Print from './Print';
 import Point from '../../SITNA/feature/Point';
 import Polyline from '../../SITNA/feature/Polyline';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 TC.control.infoShare = infoShare;
@@ -40,6 +42,34 @@ const getClusteredFeatures = function (feature) {
     return [];
 };
 
+class FeatureToolsModel {
+    constructor() {
+        this.downloadFeature = "";
+        this.download = "";
+        this.shareFeature = "";
+        this.share = "";
+        this.zoomToFeature = "";
+        this.viewElevation = "";
+        this.viewElevationProfile = "";
+        this.deleteFeature = "";
+    }
+}
+class FeatureToolShareModel {
+    constructor() {
+        this.feature = "";
+        this.share = "";
+        this.close = "";
+    }
+}
+class FeatureToolDataModel {
+    constructor() {
+        this.linkInNewWindow = "";
+        this.open = "";
+        this["featureInfo.complexData.array"] = "";
+        this.viewEnlargedImage = "";
+    }
+}
+
 class FeatureTools extends Control {
     TITLE_SEPARATOR = ' › ';
     FILE_TITLE_SEPARATOR = '__';
@@ -57,6 +87,9 @@ class FeatureTools extends Control {
         if (!self.options.dialogDiv) {
             document.body.appendChild(self._dialogDiv);
         }
+        self.model = new FeatureToolsModel();
+        self.dialogModel = new FeatureToolShareModel();
+        self.dataModel = new FeatureToolDataModel();
     }
 
     async register(map) {
@@ -66,6 +99,7 @@ class FeatureTools extends Control {
                 const control = e.control;
                 if (control.caller || control.currentFeature) {
                     self.addUI(control);
+                    self.dataController = new Controller(self.dataModel, new Observer(control.getInfoContainer() || control.getTableContainer()));
                 }
                 // TODO: ¿Y si miramos si la feature del control ya está asociada a otro control abierto para decir si decoramos o no?
             })
@@ -101,6 +135,7 @@ class FeatureTools extends Control {
             elevation: self.options.displayElevation
         });
         await self.renderData({ elevation: self.options.displayElevation });
+        self.dialogController = new Controller(self.dialogModel, new Observer(self._dialogDiv));
     }
 
     addUI(ctl) {
@@ -144,6 +179,9 @@ class FeatureTools extends Control {
                                 self.#setToolButtonHandlers(ctl);
 
                                 self.#decorateDisplay(ctl);
+                                self.controller = new Controller(self.model, new Observer(tools));
+                                self.updateModel();
+
                             }
                         });
                     }
@@ -531,6 +569,36 @@ class FeatureTools extends Control {
                 });
             });
         }
+    }
+    async updateModel() {
+        const self = this;
+        self.model.downloadFeature = self.getLocaleString("downloadFeature");
+        self.model.download = self.getLocaleString("download");
+        self.model.shareFeature = self.getLocaleString("shareFeature");
+        self.model.share = self.getLocaleString("share");
+        self.model.zoomToFeature = self.getLocaleString("zoomToFeature");
+        self.model.viewElevation = self.getLocaleString("viewElevation");
+        self.model.viewElevationProfile = self.getLocaleString("viewElevationProfile");
+        self.model.deleteFeature = self.getLocaleString("deleteFeature");
+
+        self.dialogModel.feature = self.getLocaleString("feature");
+        self.dialogModel.share = self.getLocaleString("share");
+        self.dialogModel.close = self.getLocaleString("close");
+
+        if (self.printControl) {
+            self.printControl.model.print = self.getLocaleString("print");
+            self.printControl.model.printThisContent = self.getLocaleString("printThisContent");
+        }
+        self.dataModel.linkInNewWindow = self.getLocaleString("linkInNewWindow");
+        self.dataModel.open = self.getLocaleString("open");
+        self.dataModel["featureInfo.complexData.array"] = self.getLocaleString("featureInfo.complexData.array");
+        self.dataModel.viewEnlargedImage = self.getLocaleString("featureInfo.complexData.array");
+        
+        
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
