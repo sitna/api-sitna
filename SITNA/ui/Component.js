@@ -28,6 +28,23 @@ class Component extends HTMLElement {
         return elementName;
     }
 
+    createTemplate() {
+        const templateId = `for-${this.tagName.toLowerCase()}`;
+        let template = document.querySelector(`template[id="${templateId}"]`);
+        if (!template) {
+            template = document.createElement('template');
+            template.setAttribute('id', templateId);
+            template.innerHTML = '<slot></slot>';
+            document.body.appendChild(template);
+            return true;
+        }
+        return false;
+    }
+
+    getTemplate() {
+        return document.querySelector(`template[id="for-${this.tagName.toLowerCase()}"]`);
+    }
+
     static #getStylePath() {
         return `${TC.apiLocation}css/ui/`;
     }
