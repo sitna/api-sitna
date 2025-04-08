@@ -1,12 +1,12 @@
 ﻿import TC from '../TC';
 
 class Controller {
-    constructor(model, view) {
+    constructor(model, view) {        
         this.model = model;
         this.view = view;
         //recorrer todos los atributos de la vista
         Object.getOwnPropertyNames(this.model).forEach((propName) => {
-            if (view.hasOwnProperty(propName)) {
+            if (Object.prototype.hasOwnProperty.call(view, propName)) {
                 this.model["#" + propName] = this.model[propName];
                 Object.defineProperty(this.model, propName, {
                     get: function () {
@@ -57,7 +57,59 @@ class Controller {
             }
             self.view[property] = self.model[property];
         })
-    }    
+    }
+    setPropertyModel(key,model) {
+        const self = this;
+        Object.defineProperty(model, key, {
+            get: function () {
+                return this["#" + key];
+            },
+            set: function (value) {
+                this["#" + key] = value;
+                self.view[key] = value;
+            },
+            enumerable: true,
+            configurable: true
+        });
+    }
+    setAttribute(property, attrName, node) {
+        if (this.model.hasOwnProperty(property)) {
+            const model = this.model;
+            const view = this.view;
+            const _prop = Object.getOwnPropertyDescriptor(model, property);
+            //had not getter a setter, then I create once por the new property
+            if (!_prop.get && !_prop.set) {
+                model["#" + property] = model[property];
+                Object.defineProperty(model, property, {
+                    get: function () {
+                        return this["#" + property];
+                    },
+                    set: function (value) {
+                        this["#" + property] = value;
+                        view[property] = value;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+                //
+            view.addListener(property, {
+                node: node,
+                attribute: attrName,
+                get: function () {
+                    return node.attributes[attrName].value;
+                },
+                set: function (value) {
+                    node.setAttribute(attrName, value);
+                }
+            })
+            
+            view[property] = model[property];
+        }
+        else {
+            throw 'No existe esta clave en el modelo';
+        }
+    }
 }
 TC.mvc = TC.mvc || {};
 TC.mvc.Controller = Controller;
