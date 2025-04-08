@@ -6,16 +6,16 @@ var TC = TC || {};
 
 (function () {
     if (!TC.apiLocation) {
-        if (typeof SITNA_BASE_URL !== "undefined") {
+        if (globalThis?.SITNA_BASE_URL) {
             // Obtenemos la URL base de la configuración SITNA_BASE_URL (necesario para usar como paquete npm)
-            TC.apiLocation = SITNA_BASE_URL;
+            TC.apiLocation = globalThis.SITNA_BASE_URL;
             if (!TC.apiLocation.endsWith('/')) {
                 TC.apiLocation = TC.apiLocation + '/';
             }
         }
         else {
             // Obtenemos la URL base de la dirección del script
-            const script = document.currentScript;
+            const script = document.currentScript ?? document.scripts[document.scripts.length - 1];
             const src = script.getAttribute('src');
             TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
             globalThis.SITNA_BASE_URL = TC.apiLocation;
@@ -396,1215 +396,231 @@ TC.ajax = function (options = {}) {
 const projectionDataCache = {
     // Precargamos los códigos más usados
     '25830': {
-        accuracy: 1.0,
-        area: "Europe between 6°W and 0°W: Faroe Islands offshore; Ireland - offshore; Jan Mayen - offshore; Norway including Svalbard - offshore; Spain - onshore and offshore.",
-        authority: "EPSG",
-        bbox: [
-            80.49,
-            -6.0,
-            35.26,
-            0.01
-        ],
         code: "25830",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 30N",
+        wkt: "PROJCS[\"ETRS89 / UTM zone 30N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25830\"]]",
         proj4: "+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            15959
-        ],
+        bbox: [80.49, -6, 35.26, 0.01],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 30N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25830\"]]"
+        area: "Europe between 6°W and 0°W: Faroe Islands offshore; Ireland - offshore; Jan Mayen - offshore; Norway including Svalbard - offshore; Spain - onshore and offshore.",
+        accuracy: 1
     },
     '4326': {
-        accuracy: "",
-        area: "World.",
-        authority: "EPSG",
-        bbox: [
-            90.0,
-            -180.0,
-            -90.0,
-            180.0
-        ],
         code: "4326",
-        default_trans: 0,
         kind: "CRS-GEOGCRS",
         name: "WGS 84",
+        wkt: "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]",
         proj4: "+proj=longlat +datum=WGS84 +no_defs +type=crs",
-        trans: [
-            3858,
-            3859,
-            8037,
-            9618,
-            9704,
-            9706,
-            9708,
-            10084,
-            15781
-        ],
+        bbox: [90, -180, -90, 180],
         unit: "degree (supplier to define representation)",
-        wkt: "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"
-    },
-    '4258': {
-        accuracy: "",
-        area: "Europe - onshore and offshore: Albania; Andorra; Austria; Belgium; Bosnia and Herzegovina; Bulgaria; Croatia; Cyprus; Czechia; Denmark; Estonia; Faroe Islands; Finland; France; Germany; Gibraltar; Greece; Hungary; Ireland; Italy; Kosovo; Latvia; Liechtenstein; Lithuania; Luxembourg; Malta; Moldova; Monaco; Montenegro; Netherlands; North Macedonia; Norway including Svalbard and Jan Mayen; Poland; Portugal; Romania; San Marino; Serbia; Slovakia; Slovenia; Spain; Sweden; Switzerland; United Kingdom (UK) including Channel Islands and Isle of Man; Vatican City State.",
-        authority: "EPSG",
-        bbox: [
-            84.73,
-            -16.1,
-            32.88,
-            40.18
-        ],
-        code: "4258",
-        default_trans: 0,
-        kind: "CRS-GEOGCRS",
-        name: "ETRS89",
-        proj4: "+proj=longlat +ellps=GRS80 +no_defs +type=crs",
-        trans: [
-            5334,
-            5335,
-            7001,
-            7711,
-            7712,
-            7713,
-            7714,
-            7715,
-            7716,
-            7717,
-            7718,
-            7719,
-            7958,
-            7959,
-            8361,
-            8362,
-            9276,
-            9278,
-            9283,
-            9304,
-            9410,
-            9411,
-            9412,
-            9413,
-            9414,
-            9484,
-            9485,
-            9499,
-            9584,
-            9585,
-            9586,
-            9587,
-            9588,
-            9589,
-            9590,
-            9591,
-            9592,
-            9593,
-            9594,
-            9597,
-            9600,
-            9605,
-            9606,
-            9607,
-            9608,
-            9609,
-            9727,
-            9728,
-            9729,
-            9730,
-            9731,
-            9750,
-            9884,
-            9885,
-            9908,
-            9909,
-            9914,
-            9915,
-            9916,
-            9917,
-            9918,
-            9919,
-            9925,
-            9926,
-            10001,
-            10003,
-            10021,
-            10022,
-            10023,
-            10024,
-            10025,
-            10026,
-            10027,
-            10028,
-            10029,
-            10030,
-            10031,
-            10032,
-            10033,
-            10034,
-            10106,
-            10107,
-            10130,
-            10133
-        ],
-        unit: "degree (supplier to define representation)",
-        wkt: "GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]]"
+        area: "World.",
+        accuracy: null
     },
     '3857': {
-        accuracy: "",
-        area: "World between 85.06°S and 85.06°N.",
-        authority: "EPSG",
-        bbox: [
-            85.06,
-            -180.0,
-            -85.06,
-            180.0
-        ],
         code: "3857",
-        default_trans: 0,
         kind: "CRS-PROJCRS",
         name: "WGS 84 / Pseudo-Mercator",
+        wkt: "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]",
         proj4: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs +type=crs",
-        trans: [
-            9189,
-            9690,
-            9691,
-            15960
-        ],
+        bbox: [85.06, -180, -85.06, 180],
         unit: "metre",
-        wkt: "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]"
+        area: "World between 85.06°S and 85.06°N.",
+        accuracy: null
     },
     '900913': {
-        accuracy: "",
-        area: "",
-        authority: "EPSG",
-        bbox: [
-            0.0,
-            0.0,
-            0.0,
-            0.0
-        ],
         code: "900913",
-        default_trans: 0,
         kind: "CRS-PROJCRS",
         name: "Google Maps Global Mercator",
+        wkt: "PROJCS[\"Google Maps Global Mercator (deprecated)\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs\"],AUTHORITY[\"EPSG\",\"900913\"]]",
         proj4: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs +type=crs",
-        trans: [],
-        unit: "",
-        wkt: "PROJCS[\"Google Maps Global Mercator (deprecated)\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs\"],AUTHORITY[\"EPSG\",\"900913\"]]"
+        bbox: [0, 0, 0, 0],
+        unit: null,
+        area: null,
+        accuracy: null
     },
     '25828': {
-        accuracy: 1.0,
-        area: "Europe between 18°W and 12°W: Faroe Islands - offshore; Ireland - offshore; Jan Mayen - offshore; Portugal - offshore mainland; Spain - offshore mainland; United Kingdom (UKCS) - offshore.",
-        authority: "EPSG",
-        bbox: [
-            72.44,
-            -16.1,
-            34.93,
-            -11.99
-        ],
         code: "25828",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 28N",
+        wkt: "PROJCS[\"ETRS89 / UTM zone 28N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25828\"]]",
         proj4: "+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        bbox: [72.44, -16.1, 34.93, -11.99],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 28N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25828\"]]"
+        area: "Europe between 18°W and 12°W: Faroe Islands - offshore; Ireland - offshore; Jan Mayen - offshore; Portugal - offshore mainland; Spain - offshore mainland; United Kingdom (UKCS) - offshore.",
+        accuracy: 1
     },
     '25829': {
-        accuracy: 1.0,
-        area: "Europe between 12°W and 6°W: Faroe Islands - onshore and offshore; Ireland - offshore; Jan Mayen - onshore and offshore; Portugal - onshore and offshore; Spain - onshore and offshore; United Kingdom - UKCS offshore.",
-        authority: "EPSG",
-        bbox: [
-            74.13,
-            -12.0,
-            34.91,
-            -6.0
-        ],
         code: "25829",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 29N",
+        wkt: "PROJCS[\"ETRS89 / UTM zone 29N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25829\"]]",
         proj4: "+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        bbox: [74.13, -12, 34.91, -6],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 29N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25829\"]]"
+        area: "Europe between 12°W and 6°W: Faroe Islands - onshore and offshore; Ireland - offshore; Jan Mayen - onshore and offshore; Portugal - onshore and offshore; Spain - onshore and offshore; United Kingdom - UKCS offshore.",
+        accuracy: 1
     },
     '25831': {
-        accuracy: 1.0,
-        area: "Europe between 0°E and 6°E: Andorra; Belgium - onshore and offshore; Denmark - offshore; Germany - offshore; Jan Mayen - offshore; Norway including Svalbard - onshore and offshore; Spain - onshore and offshore.",
-        authority: "EPSG",
-        bbox: [
-            82.45,
-            0.0,
-            37.0,
-            6.01
-        ],
         code: "25831",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 31N",
+        wkt: "PROJCS[\"ETRS89 / UTM zone 31N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25831\"]]",
         proj4: "+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        bbox: [82.45, 0, 37, 6.01],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 31N\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"25831\"]]"
+        area: "Europe between 0°E and 6°E: Andorra; Belgium - onshore and offshore; Denmark - offshore; Germany - offshore; Jan Mayen - offshore; Norway including Svalbard - onshore and offshore; Spain - onshore and offshore.",
+        accuracy: 1
     },
     '23030': {
-        accuracy: 10.0,
-        area: "Europe - between 6°W and 0°W - Channel Islands (Jersey, Guernsey); France offshore; Gibraltar; Ireland offshore; Norway including Svalbard - offshore; Spain - onshore; United Kingdom - UKCS offshore.",
-        authority: "EPSG",
-        bbox: [
-            80.49,
-            -6.0,
-            35.26,
-            0.01
-        ],
         code: "23030",
-        default_trans: 1133,
         kind: "CRS-PROJCRS",
         name: "ED50 / UTM zone 30N",
+        wkt: "PROJCS[\"ED50 / UTM zone 30N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23030\"]]",
         proj4: "+proj=utm +zone=30 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1025,
-            1043,
-            1052,
-            1075,
-            1087,
-            1133,
-            1134,
-            1135,
-            1136,
-            1137,
-            1138,
-            1139,
-            1140,
-            1142,
-            1143,
-            1144,
-            1145,
-            1147,
-            1245,
-            1275,
-            1311,
-            1440,
-            1450,
-            1588,
-            1589,
-            1590,
-            1612,
-            1613,
-            1626,
-            1627,
-            1628,
-            1629,
-            1630,
-            1631,
-            1632,
-            1633,
-            1634,
-            1635,
-            1650,
-            1783,
-            1784,
-            1810,
-            1853,
-            1961,
-            1985,
-            1989,
-            1998,
-            1999,
-            3904,
-            5040,
-            5661,
-            8046,
-            8047,
-            8569,
-            8570,
-            8653,
-            8654,
-            9224,
-            9408,
-            9409,
-            9735,
-            9736,
-            15753,
-            15895,
-            15907,
-            15932,
-            15933,
-            15964
-        ],
+        bbox: [80.49, -6, 35.26, 0.01],
         unit: "metre",
-        wkt: "PROJCS[\"ED50 / UTM zone 30N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23030\"]]"
+        area: "Europe - between 6°W and 0°W - Channel Islands (Jersey, Guernsey); France offshore; Gibraltar; Ireland offshore; Norway including Svalbard - offshore; Spain - onshore; United Kingdom - UKCS offshore.",
+        accuracy: 10
     },
     '23028': {
-        accuracy: 10.0,
-        area: "Europe - between 18°W and 12°W - Ireland offshore.",
-        authority: "EPSG",
-        bbox: [
-            56.57,
-            -16.1,
-            48.43,
-            -12.0
-        ],
         code: "23028",
-        default_trans: 1133,
         kind: "CRS-PROJCRS",
         name: "ED50 / UTM zone 28N",
+        wkt: "PROJCS[\"ED50 / UTM zone 28N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23028\"]]",
         proj4: "+proj=utm +zone=28 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1025,
-            1043,
-            1052,
-            1075,
-            1087,
-            1133,
-            1134,
-            1135,
-            1136,
-            1137,
-            1138,
-            1139,
-            1140,
-            1142,
-            1143,
-            1144,
-            1145,
-            1147,
-            1245,
-            1275,
-            1311,
-            1440,
-            1450,
-            1588,
-            1589,
-            1590,
-            1612,
-            1613,
-            1626,
-            1627,
-            1628,
-            1629,
-            1630,
-            1631,
-            1632,
-            1633,
-            1634,
-            1635,
-            1650,
-            1783,
-            1784,
-            1810,
-            1853,
-            1961,
-            1985,
-            1989,
-            1998,
-            1999,
-            3904,
-            5040,
-            5661,
-            8046,
-            8047,
-            8569,
-            8570,
-            8653,
-            8654,
-            9224,
-            9408,
-            9409,
-            9735,
-            9736,
-            15753,
-            15895,
-            15907,
-            15932,
-            15933,
-            15964
-        ],
+        bbox: [56.57, -16.1, 48.43, -12],
         unit: "metre",
-        wkt: "PROJCS[\"ED50 / UTM zone 28N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23028\"]]"
+        area: "Europe - between 18°W and 12°W - Ireland offshore.",
+        accuracy: 10
     },
     '23029': {
-        accuracy: 10.0,
-        area: "Europe - between 12°W and 6°W - Faroe Islands - onshore; Spain - mainland onshore; Ireland offshore.",
-        authority: "EPSG",
-        bbox: [
-            62.41,
-            -12.0,
-            36.13,
-            -6.0
-        ],
         code: "23029",
-        default_trans: 1133,
         kind: "CRS-PROJCRS",
         name: "ED50 / UTM zone 29N",
+        wkt: "PROJCS[\"ED50 / UTM zone 29N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23029\"]]",
         proj4: "+proj=utm +zone=29 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1025,
-            1043,
-            1052,
-            1075,
-            1087,
-            1133,
-            1134,
-            1135,
-            1136,
-            1137,
-            1138,
-            1139,
-            1140,
-            1142,
-            1143,
-            1144,
-            1145,
-            1147,
-            1245,
-            1275,
-            1311,
-            1440,
-            1450,
-            1588,
-            1589,
-            1590,
-            1612,
-            1613,
-            1626,
-            1627,
-            1628,
-            1629,
-            1630,
-            1631,
-            1632,
-            1633,
-            1634,
-            1635,
-            1650,
-            1783,
-            1784,
-            1810,
-            1853,
-            1961,
-            1985,
-            1989,
-            1998,
-            1999,
-            3904,
-            5040,
-            5661,
-            8046,
-            8047,
-            8569,
-            8570,
-            8653,
-            8654,
-            9224,
-            9408,
-            9409,
-            9735,
-            9736,
-            15753,
-            15895,
-            15907,
-            15932,
-            15933,
-            15964
-        ],
+        bbox: [62.41, -12, 36.13, -6],
         unit: "metre",
-        wkt: "PROJCS[\"ED50 / UTM zone 29N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23029\"]]"
+        area: "Europe - between 12°W and 6°W - Faroe Islands - onshore; Spain - mainland onshore; Ireland offshore.",
+        accuracy: 10
     },
     '23031': {
-        accuracy: 10.0,
-        area: "Europe - between 0°E and 6°E - Andorra; Denmark (North Sea); Germany offshore; Netherlands offshore; Norway including Svalbard - onshore and offshore; Spain - onshore (mainland and Balearic Islands); United Kingdom (UKCS) offshore.",
-        authority: "EPSG",
-        bbox: [
-            82.45,
-            0.0,
-            38.56,
-            6.01
-        ],
         code: "23031",
-        default_trans: 1133,
         kind: "CRS-PROJCRS",
         name: "ED50 / UTM zone 31N",
+        wkt: "PROJCS[\"ED50 / UTM zone 31N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23031\"]]",
         proj4: "+proj=utm +zone=31 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1025,
-            1043,
-            1052,
-            1075,
-            1087,
-            1133,
-            1134,
-            1135,
-            1136,
-            1137,
-            1138,
-            1139,
-            1140,
-            1142,
-            1143,
-            1144,
-            1145,
-            1147,
-            1245,
-            1275,
-            1311,
-            1440,
-            1450,
-            1588,
-            1589,
-            1590,
-            1612,
-            1613,
-            1626,
-            1627,
-            1628,
-            1629,
-            1630,
-            1631,
-            1632,
-            1633,
-            1634,
-            1635,
-            1650,
-            1783,
-            1784,
-            1810,
-            1853,
-            1961,
-            1985,
-            1989,
-            1998,
-            1999,
-            3904,
-            5040,
-            5661,
-            8046,
-            8047,
-            8569,
-            8570,
-            8653,
-            8654,
-            9224,
-            9408,
-            9409,
-            9735,
-            9736,
-            15753,
-            15895,
-            15907,
-            15932,
-            15933,
-            15964
-        ],
+        bbox: [82.45, 0, 38.56, 6.01],
         unit: "metre",
-        wkt: "PROJCS[\"ED50 / UTM zone 31N\",GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"23031\"]]"
+        area: "Europe - between 0°E and 6°E - Andorra; Denmark (North Sea); Germany offshore; Netherlands offshore; Norway including Svalbard - onshore and offshore; Spain - onshore (mainland and Balearic Islands); United Kingdom (UKCS) offshore.",
+        accuracy: 10
     },
     '32630': {
-        accuracy: "",
-        area: "Between 6°W and 0°W, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Burkina Faso. Côte' Ivoire (Ivory Coast). Faroe Islands - offshore. France. Ghana. Gibraltar. Ireland - offshore Irish Sea. Mali. Mauritania. Morocco. Spain. United Kingdom (UK).",
-        authority: "EPSG",
-        bbox: [
-            84.0,
-            -6.0,
-            0.0,
-            0.0
-        ],
         code: "32630",
-        default_trans: 0,
         kind: "CRS-PROJCRS",
         name: "WGS 84 / UTM zone 30N",
+        wkt: "PROJCS[\"WGS 84 / UTM zone 30N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32630\"]]",
         proj4: "+proj=utm +zone=30 +datum=WGS84 +units=m +no_defs +type=crs",
-        trans: [
-            9189,
-            9690,
-            9691,
-            15960
-        ],
+        bbox: [84, -6, 0, 0],
         unit: "metre",
-        wkt: "PROJCS[\"WGS 84 / UTM zone 30N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32630\"]]"
+        area: "Between 6°W and 0°W, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Burkina Faso. Côte' Ivoire (Ivory Coast). Faroe Islands - offshore. France. Ghana. Gibraltar. Ireland - offshore Irish Sea. Mali. Mauritania. Morocco. Spain. United Kingdom (UK).",
+        accuracy: null
     },
     '32628': {
-        accuracy: "",
-        area: "Between 18°W and 12°W, northern hemisphere between equator and 84°N, onshore and offshore. Gambia. Greenland. Guinea. Guinea-Bissau. Iceland. Ireland - offshore Porcupine Basin. Mauritania. Morocco. Senegal. Sierra Leone. Western Sahara.",
-        authority: "EPSG",
-        bbox: [
-            84.0,
-            -18.0,
-            0.0,
-            -12.0
-        ],
         code: "32628",
-        default_trans: 0,
         kind: "CRS-PROJCRS",
         name: "WGS 84 / UTM zone 28N",
+        wkt: "PROJCS[\"WGS 84 / UTM zone 28N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32628\"]]",
         proj4: "+proj=utm +zone=28 +datum=WGS84 +units=m +no_defs +type=crs",
-        trans: [
-            9189,
-            9690,
-            9691,
-            15960
-        ],
+        bbox: [84, -18, 0, -12],
         unit: "metre",
-        wkt: "PROJCS[\"WGS 84 / UTM zone 28N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32628\"]]"
+        area: "Between 18°W and 12°W, northern hemisphere between equator and 84°N, onshore and offshore. Gambia. Greenland. Guinea. Guinea-Bissau. Iceland. Ireland - offshore Porcupine Basin. Mauritania. Morocco. Senegal. Sierra Leone. Western Sahara.",
+        accuracy: null
     },
     '32629': {
-        accuracy: "",
-        area: "Between 12°W and 6°W, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Côte D'Ivoire (Ivory Coast). Faroe Islands. Guinea. Ireland. Jan Mayen. Liberia, Mali. Mauritania. Morocco. Portugal. Sierra Leone. Spain. United Kingdom (UK). Western Sahara.",
-        authority: "EPSG",
-        bbox: [
-            84.01,
-            -12.01,
-            0.0,
-            -6.0
-        ],
         code: "32629",
-        default_trans: 0,
         kind: "CRS-PROJCRS",
         name: "WGS 84 / UTM zone 29N",
+        wkt: "PROJCS[\"WGS 84 / UTM zone 29N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32629\"]]",
         proj4: "+proj=utm +zone=29 +datum=WGS84 +units=m +no_defs +type=crs",
-        trans: [
-            9189,
-            9690,
-            9691,
-            15960
-        ],
+        bbox: [84, -12, 0, -6],
         unit: "metre",
-        wkt: "PROJCS[\"WGS 84 / UTM zone 29N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32629\"]]"
+        area: "Between 12°W and 6°W, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Côte D'Ivoire (Ivory Coast). Faroe Islands. Guinea. Ireland. Jan Mayen. Mali. Mauritania. Morocco. Portugal. Sierra Leone. Spain. United Kingdom (UK). Western Sahara.",
+        accuracy: null
     },
     '32631': {
-        accuracy: "",
-        area: "Between 0°E and 6°E, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Andorra. Belgium. Benin. Burkina Faso. Denmark - North Sea. France. Germany - North Sea. Ghana. Luxembourg. Mali. Netherlands. Niger. Nigeria. Norway. Spain. Togo. United Kingdom (UK) - North Sea.",
-        authority: "EPSG",
-        bbox: [
-            84.0,
-            0.0,
-            0.0,
-            6.0
-        ],
         code: "32631",
-        default_trans: 0,
         kind: "CRS-PROJCRS",
         name: "WGS 84 / UTM zone 31N",
+        wkt: "PROJCS[\"WGS 84 / UTM zone 31N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32631\"]]",
         proj4: "+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs +type=crs",
-        trans: [
-            9189,
-            9690,
-            9691,
-            15960
-        ],
+        bbox: [84, 0, 0, 6],
         unit: "metre",
-        wkt: "PROJCS[\"WGS 84 / UTM zone 31N\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"32631\"]]"
+        area: "Between 0°E and 6°E, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Andorra. Belgium. Benin. Burkina Faso. Denmark - North Sea. France. Germany - North Sea. Ghana. Luxembourg. Mali. Netherlands. Niger. Nigeria. Norway. Spain. Togo. United Kingdom (UK) - North Sea.",
+        accuracy: null
     },
     '4230': {
-        accuracy: 10.0,
-        area: "Europe - west: Andorra; Cyprus; Denmark - onshore and offshore; Faroe Islands - onshore; France - offshore; Germany - offshore North Sea; Gibraltar; Greece - offshore; Israel - offshore; Italy including San Marino and Vatican City State; Ireland offshore; Malta; Netherlands - offshore; North Sea; Norway including Svalbard - onshore and offshore; Portugal - mainland - offshore; Spain - onshore; Türkiye (Turkey) - onshore and offshore; United Kingdom - UKCS offshore east of 6°W including Channel Islands (Guernsey and Jersey). Egypt - Western Desert; Iraq - onshore; Jordan.",
-        authority: "EPSG",
-        bbox: [
-            84.73,
-            -16.1,
-            25.71,
-            48.61
-        ],
         code: "4230",
-        default_trans: 1133,
         kind: "CRS-GEOGCRS",
         name: "ED50",
-        proj4: "+proj=longlat +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +no_defs +type=crs",
-        trans: [
-            1025,
-            1043,
-            1052,
-            1075,
-            1087,
-            1133,
-            1134,
-            1135,
-            1136,
-            1137,
-            1138,
-            1139,
-            1140,
-            1142,
-            1143,
-            1144,
-            1145,
-            1147,
-            1245,
-            1275,
-            1311,
-            1440,
-            1450,
-            1588,
-            1589,
-            1590,
-            1612,
-            1613,
-            1626,
-            1627,
-            1628,
-            1629,
-            1630,
-            1631,
-            1632,
-            1633,
-            1634,
-            1635,
-            1650,
-            1783,
-            1784,
-            1810,
-            1853,
-            1961,
-            1985,
-            1989,
-            1998,
-            1999,
-            3904,
-            5040,
-            5661,
-            8046,
-            8047,
-            8569,
-            8570,
-            8653,
-            8654,
-            9224,
-            9408,
-            9409,
-            9735,
-            9736,
-            15753,
-            15895,
-            15907,
-            15932,
-            15933,
-            15964
-        ],
+        wkt: "GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]]",
+        proj4: "+proj=longlat +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +no_defs +type=crs +axis=neu",
+        bbox: [84.73, -16.1, 25.71, 48.61],
         unit: "degree (supplier to define representation)",
-        wkt: "GEOGCS[\"ED50\",DATUM[\"European_Datum_1950\",SPHEROID[\"International 1924\",6378388,297],TOWGS84[-87,-98,-121,0,0,0,0]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4230\"]]"
+        area: "Europe - west: Andorra; Cyprus; Denmark - onshore and offshore; Faroe Islands - onshore; France - offshore; Germany - offshore North Sea; Gibraltar; Greece - offshore; Israel - offshore; Italy including San Marino and Vatican City State; Ireland offshore; Malta; Netherlands - offshore; North Sea; Norway including Svalbard - onshore and offshore; Portugal - mainland - offshore; Spain - onshore; Türkiye (Turkey) - onshore and offshore; United Kingdom - UKCS offshore east of 6°W including Channel Islands (Guernsey and Jersey). Egypt - Western Desert; Iraq - onshore; Jordan.",
+        accuracy: 10
     },
     '3040': {
-        accuracy: 1.0,
-        area: "Europe between 18°W and 12°W: Faroe Islands - offshore; Ireland - offshore; Jan Mayen - offshore; Portugal - offshore mainland; Spain - offshore mainland; United Kingdom (UKCS) - offshore.",
-        authority: "EPSG",
-        bbox: [
-            72.44,
-            -16.1,
-            34.93,
-            -11.99
-        ],
         code: "3040",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 28N (N-E)",
-        proj4: "+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        wkt: "PROJCS[\"ETRS89 / UTM zone 28N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3040\"]]",
+        proj4: "+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs +axis=neu",
+        bbox: [72.44, -16.1, 34.93, -11.99],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 28N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-15],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3040\"]]"
+        area: "Europe between 18°W and 12°W: Faroe Islands - offshore; Ireland - offshore; Jan Mayen - offshore; Portugal - offshore mainland; Spain - offshore mainland; United Kingdom (UKCS) - offshore.",
+        accuracy: 1
     },
     '3041': {
-        accuracy: 1.0,
-        area: "Europe between 12°W and 6°W: Faroe Islands - onshore and offshore; Ireland - offshore; Jan Mayen - onshore and offshore; Portugal - onshore and offshore; Spain - onshore and offshore; United Kingdom - UKCS offshore.",
-        authority: "EPSG",
-        bbox: [
-            74.13,
-            -12.0,
-            34.91,
-            -6.0
-        ],
         code: "3041",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 29N (N-E)",
-        proj4: "+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        wkt: "PROJCS[\"ETRS89 / UTM zone 29N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3041\"]]",
+        proj4: "+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs +axis=neu",
+        bbox: [74.13, -12, 34.91, -6],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 29N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-9],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3041\"]]"
+        area: "Europe between 12°W and 6°W: Faroe Islands - onshore and offshore; Ireland - offshore; Jan Mayen - onshore and offshore; Portugal - onshore and offshore; Spain - onshore and offshore; United Kingdom - UKCS offshore.",
+        accuracy: 1
     },
     '3042': {
-        accuracy: 1.0,
-        area: "Europe between 6°W and 0°W: Faroe Islands offshore; Ireland - offshore; Jan Mayen - offshore; Norway including Svalbard - offshore; Spain - onshore and offshore.",
-        authority: "EPSG",
-        bbox: [
-            80.49,
-            -6.0,
-            35.26,
-            0.01
-        ],
         code: "3042",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 30N (N-E)",
-        proj4: "+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        wkt: "PROJCS[\"ETRS89 / UTM zone 30N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3042\"]]",
+        proj4: "+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs +axis=neu",
+        bbox: [80.49, -6, 35.26, 0.01],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 30N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3042\"]]"
+        area: "Europe between 6°W and 0°W: Faroe Islands offshore; Ireland - offshore; Jan Mayen - offshore; Norway including Svalbard - offshore; Spain - onshore and offshore.",
+        accuracy: 1
     },
     '3043': {
-        accuracy: 1.0,
-        area: "Europe between 0°E and 6°E: Andorra; Belgium - onshore and offshore; Denmark - offshore; Germany - offshore; Jan Mayen - offshore; Norway including Svalbard - onshore and offshore; Spain - onshore and offshore.",
-        authority: "EPSG",
-        bbox: [
-            82.45,
-            0.0,
-            37.0,
-            6.01
-        ],
         code: "3043",
-        default_trans: 1149,
         kind: "CRS-PROJCRS",
         name: "ETRS89 / UTM zone 31N (N-E)",
-        proj4: "+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
-        trans: [
-            1149,
-            1571,
-            7913,
-            7952,
-            7953,
-            8365,
-            8442,
-            9365,
-            9369,
-            9386,
-            9454,
-            9740,
-            9759,
-            9764,
-            9867,
-            9878,
-            9941,
-            9965,
-            9970,
-            9975,
-            10108,
-            10161,
-            10181,
-            10186,
-            10192,
-            10197,
-            10205,
-            10210,
-            10215,
-            10220,
-            10225,
-            10230,
-            10238,
-            10251,
-            10255,
-            10259,
-            10263,
-            10267,
-            10271,
-            10273,
-            10278,
-            10469,
-            15959
-        ],
+        wkt: "PROJCS[\"ETRS89 / UTM zone 31N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3043\"]]",
+        proj4: "+proj=utm +zone=31 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs +axis=neu",
+        bbox: [82.45, 0, 37, 6.01],
         unit: "metre",
-        wkt: "PROJCS[\"ETRS89 / UTM zone 31N (N-E)\",GEOGCS[\"ETRS89\",DATUM[\"European_Terrestrial_Reference_System_1989\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6258\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4258\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",3],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3043\"]]"
-    }
-};
-
-const parseResponseObject = function (obj) {
-    let result = false;
-    if (obj.status === 'ok' && obj.number_result > 0) {
-        result = obj.results[0];
-    }
-    return result;
+        area: "Europe between 0°E and 6°E: Andorra; Belgium - onshore and offshore; Denmark - offshore; Germany - offshore; Jan Mayen - offshore; Norway including Svalbard - onshore and offshore; Spain - onshore and offshore.",
+        accuracy: 1
+    },
 };
 
 TC.getProjectionData = function (options = {}) {
     const crs = options.crs || '';
     const match = crs.match(/\d{4,6}$/g);
     let code = match ? match[0] : '';
-    const url = Consts.url.EPSG + '?format=json&q=' + code + (options.deprecated ? '%20deprecated%3A1' : '');
     let projData = projectionDataCache[code];
     if (projData) {
         if (options.sync) {
@@ -1613,63 +629,46 @@ TC.getProjectionData = function (options = {}) {
         return Promise.resolve(projData);
     }
 
-    const deprecatedOpts = Object.assign({}, options, { deprecated: true });
-
     if (options.sync) {
-        let result;
-        const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function (_e) {
-            if (xhr.readyState == 4) {
-                if (xhr.status == 404) {
-                    result = false;
-                } else if (xhr.status != 200) {
-                    result = false;
-                } else {
-                    result = xhr.responseText;
+        const request = function (url) {
+            let result = false;
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function (_e) {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 404) {
+                        result = false;
+                    } else if (xhr.status != 200) {
+                        result = false;
+                    } else {
+                        result = xhr.responseText;
+                    }
                 }
+            };
+            xhr.open('GET', url, false);
+
+            try {
+                xhr.send(null);
+            } catch (error) {
+                result = false;
             }
+            return result;
         };
-        xhr.open('GET', url, false);
 
-        try {
-            xhr.send(null);
-        } catch (error) {
-            result = false;
-        }
-        if (result) {
-            result = parseResponseObject(JSON.parse(result));
-            if (result.number_result == 0 && !options.deprecated) {
-                result = TC.getProjectionData(deprecatedOpts);
-            }
-        }
-        return result;
+        const jsonObj = JSON.parse(request(`${TC.apiLocation}resources/data/crs/${code}.json`));
+        projectionDataCache[code] = jsonObj;
+        return jsonObj;
     }
-
-    const endFn = function (resolve) {
-        const proxificationTool = new TC.tool.Proxification(TC.proxify);
-        proxificationTool.fetchJSON(url, options).then((response) => {
-            const data = parseResponseObject(response);
-            if (!data && !options.deprecated) {
-                TC.getProjectionData(deprecatedOpts).then((data) => resolve(data));
-            }
-            else {
-                projectionDataCache[code] = data;
-                resolve(data);
-            }
-        });
-    };
-
-    return new Promise(function (resolve, _reject) {
-        if (!TC.tool.Proxification) {
-            import('./TC/tool/Proxification').then((module) => {
-                TC.tool.Proxification = module.default;
-                endFn(resolve);
-            });
-        }
-        else {
-            endFn(resolve);
-        }
-    });
+    return fetch(`${TC.apiLocation}resources/data/crs/${code}.json`)
+        .then((response) => {
+            return response
+                .json()
+                .then((json) => {
+                    projectionDataCache[code] = json;
+                    return json;
+                })
+                .catch(() => false);
+        })
+        .catch(() => false);
 };
 
 TC.loadProjDef = function (options = {}) {
@@ -1706,8 +705,8 @@ TC.loadProjDef = function (options = {}) {
         const ogcHttpUriCode = ogcHttpUriPrefix + code;
         var axisUnawareDef;
         if (typeof def === 'object') {
-            axisUnawareDef = TC.Util.extend({}, def);
-            def = TC.Util.extend({}, def);
+            axisUnawareDef = { ...def };
+            def = { ...def };
             if (axisUnawareDef.axis) {
                 delete axisUnawareDef.axis;
             }
@@ -1726,12 +725,9 @@ TC.loadProjDef = function (options = {}) {
             proj4.defs(crs, axisUnawareDef);
             getDef(crs).name = name;
         }
-        if (window.ol && ol.proj) {
+        if (globalThis.ol && ol.proj) {
             if (!options.silent) {
-                if (!ol.proj.get(epsgCode) && !ol.proj.get(urnCode) && !ol.proj.get(urnxCode)) {
-                    // https://openlayers.org/en/latest/apidoc/module-ol_proj_proj4.html
-                    ol.proj.proj4.register(proj4);
-                }
+                ol.proj.proj4.register(proj4);
             }
         }
         getDef(epsgCode).name = name;
@@ -1742,7 +738,7 @@ TC.loadProjDef = function (options = {}) {
     const loadDefResponse = function (data) {
         const result = !!data;
         if (result) {
-            loadDef(data.code, data.proj4, data.name);
+            loadDef(data.code, data.wkt || data.proj4, data.name);
         }
         return result;
     };
@@ -1785,6 +781,17 @@ TC.loadProjDef = function (options = {}) {
         }
     }
 };
+
+const projDataEntries = Object.entries(projectionDataCache);
+for (let i = 0; i < projDataEntries.length; i++) {
+    const projData = projDataEntries[i][1];
+    TC.loadProjDef({
+        crs: 'EPSG:' + projData.code,
+        name: projData.name,
+        def: projData.proj4,
+        silent: i < projDataEntries.length - 1,
+    });
+}
 
 TC.inherit = function (childCtor, parentCtor) {
     childCtor.prototype = Object.create(parentCtor.prototype);
@@ -1889,7 +896,7 @@ TC.cookie = function (key, value, options) {
 
     // key and at least value given, set cookie...
     if (arguments.length > 1 && (!/Object/.test(Object.prototype.toString.call(value)) || value === null)) {
-        options = TC.Util.extend({}, options);
+        options = { ...options };
 
         if (value === null) {
             options.expires = -1;
