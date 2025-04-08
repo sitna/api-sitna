@@ -27,6 +27,7 @@
             initialExtent: [606239, 4738249, 614387, 4744409],
             // Añadimos la capa de GeoPamplona del catálogo de edificios filtrada para mostrar solamente los de uso cultural.
             // Añadimos también la capa de IDENA de museos filtrada para mostrar solamente los que están en Pamplona.
+            // Añadimos también la capa de IDENA de edificios religiosos filtrando por los contenidos en un polígono dado.
             workLayers: [
                 {
                     id: "layer1",
@@ -42,7 +43,21 @@
                     type: SITNA.Consts.layerType.WMS,
                     url: "//idena.navarra.es/ogc/ows",
                     layerNames: "IDENA:DOTACI_Sym_Museos",
-                    filter: "POBLACION='Pamplona'"
+                    filter: "POBLACION='Pamplona / Iruña'"
+                },
+                {
+                    id: "layer3",
+                    title: "Edificios religiosos",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "//idena.navarra.es/ogc/ows",
+                    layerNames: "DOTACI_Sym_EdifReligi",
+                    filter: SITNA.filter.within("the_geom", new SITNA.feature.Polygon([
+                        [602979.48141, 4743332.473680002],
+                        [602979.48141, 4737828.473680002],
+                        [614563.48141, 4737828.473680002],
+                        [614563.48141, 4743332.473680002],
+                        [602979.48141, 4743332.473680002]
+                    ]))
                 }
             ]
         });
