@@ -80,8 +80,9 @@ import '../SITNA/feature/Polygon';
 import '../SITNA/feature/MultiPolygon';
 import filterNs from './filter';
 import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
-import Controller from './Controller';
-import Observer from './Observer';
+import './Controller.js';
+import './Observer.js';
+import { GMLFilter } from '../SITNA/filter.js'
 
 TC.EventTarget = EventTarget;
 TC.i18n = TC.i18n || i18n;
@@ -369,7 +370,8 @@ const _loadIntoMap = async function (stringOrJson) {
                         renderOptions: {
                             opacity: stateLayer.o,
                             hide: !stateLayer.v
-                        }
+                        },
+                        groupIndex: stateLayer.g,
                     };
                     if (stateLayer.fn) {
                         // Capa de archivo serializada
@@ -1076,7 +1078,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     renderOptions: {
                         opacity: stateLayer.o,
                         hide: !stateLayer.v
-                    }
+                    },
+                    groupIndex: stateLayer.g,
                 };
                 if (stateLayer.u) {
                     lyrCfg.url = Util.isOnCapabilities(stateLayer.u, stateLayer.u.indexOf(window.location.protocol) < 0) || stateLayer.u;
@@ -1551,7 +1554,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         v: layer.getVisibility(),
                         h: layer.options.hideTitle,
                         ur: layer.unremovable,
-                        f: layer.filter && (layer.filter instanceof filterNs.Filter ? layer.filter.getText() : layer.filter),
+                        f: layer.filter && (layer.filter instanceof filterNs.Filter ? layer.filter.getText() : (layer.filter instanceof GMLFilter ? layer.filter.getFilterText(layer) :layer.filter)),
                         t: layer.title,
                         i: layer.id
                     };
@@ -1576,8 +1579,11 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     ur: layer.unremovable,
                     fn: layer.file,
                     t: layer.title,
-                    i: layer.id
+                    i: layer.id,
                 };
+                if (layer.groupIndex !== undefined) {
+                    entry.g = layer.groupIndex;
+                }
                 state.layers.push(entry);
             }
         });
@@ -2465,14 +2471,14 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 const code = 'EPSG:' + projData.code;
                 TC.loadProjDef({
                     crs: code,
-                    def: projData.def,
+                    def: projData.proj4 || projData.wkt,
                     name: projData.name,
                     silent: options.silent ?? index < array.length - 1 // Solo registramos proj4 en la última iteración
                 });
                 return {
                     code: code,
                     name: projData.name,
-                    proj4: projData.proj4,
+                    def: projData.proj4 ||projData.wkt,
                     unit: projData.unit
                 };
             });
@@ -3032,7 +3038,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             const data = await this.wrap.exportFeatures(featuresToExport, options);
             if (format === Consts.format.KMZ) {
                 const zip = new JSZip();
-                const fileName = (options.fileName || 'doc') + '.kml';
+                const fileName = (/(.+)\.kmz$/i.exec(options.fileName)?.[1] ?? 'doc') + '.kml';
                 zip.file(fileName, data);
                 const blob = await zip.generateAsync({ type: "blob", mimeType: mimeType, compression: "DEFLATE" });
                 return blob;
@@ -3156,12 +3162,14 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         if (options.layers) {
             const layerIds = new Set(options.layers.map((l) => l.id));
             const onFeaturesImport = function (e) {
-                for (const layer of e.targetLayers) {
-                    layer.state = Layer.state.IDLE;
-                    this.trigger(Consts.event.LAYERUPDATE, { layer });
-                    layerIds.delete(layer.id);
-                    if (layerIds.size === 0) {
-                        this.off(Consts.event.FEATURESIMPORT, onFeaturesImport);
+                if (e.targetLayers) {
+                    for (const layer of e.targetLayers) {
+                        layer.state = Layer.state.IDLE;
+                        this.trigger(Consts.event.LAYERUPDATE, { layer });
+                        layerIds.delete(layer.id);
+                        if (layerIds.size === 0) {
+                            this.off(Consts.event.FEATURESIMPORT, onFeaturesImport);
+                        }
                     }
                 }
             };
@@ -3521,7 +3529,6 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     }
     setLanguage(locale) {
         const self = this;
-        const activeControl = self.activeControl; 
         if (i18n.currentLocaleKey != locale) {
             self.trigger(Consts.event.BEFORECHANGELANGUAGE, { lang: locale });    
             //self.wait(new Promise((resolve) => { setTimeout(resolve, 1) }));
@@ -3537,8 +3544,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     }
                     await (() => { return new Promise((resolve) => { setTimeout(resolve, 100) }) })();
                     self.options.locale = i18n.currentLocaleKey = locale;
-                    await Promise.all(self.controls.filter((c) => c.changeLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
-                        return control.changeLanguage?.apply(control);
+                    await Promise.all(self.controls.filter((c) => c.updateLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
+                        return control.updateLanguage?.apply(control);
                     }));
                     
                     const titles = self.div.querySelectorAll("[data-i18n-title]");
