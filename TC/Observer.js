@@ -1,4 +1,5 @@
 ﻿import TC from '../TC';
+import Util from './Util';
 
 function getAllElements(node) {
     let elements = [];
@@ -23,6 +24,7 @@ class Observer {
         
     }
     #addElement(_element) {
+        if (!_element) return;
         // Get all elements within the root element
         const elements = _element instanceof Array ?
             [..._element, ..._element.reduce((pv, va) => { return pv.concat(...va.querySelectorAll('*')) }, [])]
@@ -86,7 +88,7 @@ class Observer {
                                 n.textContent = "";
                             }
                             else
-                                n.textContent = n._original.replace(m[0], value);
+                                n.textContent = Util.htmlToText(n._original.replace(m[0], value));
                         }
                     });
                 }
@@ -120,6 +122,9 @@ class Observer {
     }
     add(node) {
         this.#addElement(node);
+    }
+    addListener(key, properties) {
+        this.#addListener(key, properties);
     }
     
 }
