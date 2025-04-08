@@ -17,23 +17,6 @@
     cursor: pointer;
 }
 
-.tc-ctl-wfsedit-view input[type=checkbox] {
-    display: none;
-}
-
-    .tc-ctl-wfsedit-view input[type=checkbox] + label:before {
-        font-family: var(--icon-font-family);
-        font-size: 1.2em;
-        margin-left: 0.5em;
-        display: inline-block;
-        content: var(--icon-invisible);
-        width: 1.2em;
-    }
-
-    .tc-ctl-wfsedit-view input[type=checkbox]:checked + label:before {
-        content: var(--icon-visible);
-    }
-
 .tc-ctl-wfsedit .tc-ctl-wfsedit-layer-sel {
     display: inline-block;
     margin-top: 0.5em;
@@ -45,14 +28,11 @@
 .tc-ctl-wfsedit-save {
     display: flex;
     padding-top: 0.5em;
-    text-align: right;
 }
 
-    .tc-ctl-wfsedit-save > button {
-        padding: 0;
-        width: 50%;
-        height: 2em;
-    }
+.tc-ctl-wfsedit-save sitna-button {
+    flex-grow: 1;
+}
 
 .tc-ctl-wfsedit .tc-ctl-wfsedit-btn-save {
     border-top-right-radius: 0;
@@ -81,6 +61,10 @@
     margin-top: 0.5em;
 }
 
+.tc-ctl-wfsedit-view sitna-toggle {
+    font-size: 1em;
+}
+
 .tc-ctl-wfsedit .tc-ctl-wfsedit-view.tc-hidden, .tc-ctl-wfsedit .tc-ctl-wfsedit-edit.tc-hidden {
     display: none;
 }
@@ -89,31 +73,13 @@
     display: none;
 }
 
-.tc-ctl-wfsedit-view button.tc-ctl-wfsedit-btn-crop {
+.tc-ctl-wfsedit-view sitna-button.tc-ctl-wfsedit-btn-crop {
     position: absolute;
-    top: 0.2em;
-    right: 0.2em;
-    border: none;
-    background-color: transparent;
-    text-indent: -1000vw;
-    color: var(--glyph-color);
-    width: 1.2em;
-    height: 1.2em;
-    line-height: 1.2em;
-    padding: 0;
-    outline: none;
+    top: 0;
+    right: 0;
+    --icon-font-family: 'mapskin';
+    --icon-text: '\e0a6';
 }
-
-    .tc-ctl-wfsedit-view button.tc-ctl-wfsedit-btn-crop:before {
-        font-family: mapskin;
-        content: '\e0a6';
-        position: absolute;
-        text-indent: 0;
-        left: 0;
-        font-size: 1.2em;
-        width: 1em;
-        height: 1em;
-    }
 
 .tc-ctl-wfsedit-view input[type=color] {
     display: none;

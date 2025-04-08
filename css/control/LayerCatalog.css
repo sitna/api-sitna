@@ -100,16 +100,23 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     cursor: default;
 }
 
-.tc-ctl-lcat li.tc-ctl-lcat-node > input[type="checkbox"].tc-ctl-lcat-btn-info {
+.tc-ctl-lcat li.tc-ctl-lcat-node > .tc-ctl-lcat-btn-info {
     position: absolute;
     right: 0;
     top: 0;
     margin-left: 0.2em;
     margin-right: 0.2em;
     z-index: 10000;
+    font-size: 1rem;
+    --icon-font-family: initial;
+    --icon-font-weight: bold;
+    --icon-font-line-height: 1.8em;
+    --unchecked-icon-text: 'i';
+    --checked-icon-text: 'i';
 }
 
-.tc-ctl-lcat li.tc-ctl-lcat-search-group input[type="checkbox"].tc-ctl-lcat-search-btn-info:focus, .tc-ctl-lcat li.tc-ctl-lcat-node input[type="checkbox"].tc-ctl-lcat-btn-info:focus {
+.tc-ctl-lcat li.tc-ctl-lcat-search-group .tc-ctl-lcat-search-btn-info:focus,
+.tc-ctl-lcat li.tc-ctl-lcat-node .tc-ctl-lcat-btn-info:focus {
     outline: 0;
 }
 
@@ -166,20 +173,14 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     .tc-ctl-lcat .tc-ctl-lcat-info-close:hover {
         color: #000;
     }
+.tc-ctl-lcat .tc-ctl-lcat-info {
+    --glyph-bg-color: transparent;
+}
 
 .tc-ctl-lcat .tc-ctl-lcat-info h3 {
     margin: 0.3em;
     font-size: 1.1em;
 }
-
-    .tc-ctl-lcat .tc-ctl-lcat-info h3:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) / 2);
-        content: var(--icon-info);
-        font-weight: normal;
-        color: #600;
-        margin-right: 0.3em;
-    }
 
 .tc-ctl-lcat-info h4 {
     font-size: 1em;
@@ -286,15 +287,13 @@ div.tc-ctl-lcat-legend {
     position: relative;
 }
 
-    .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-search,
-    .tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree {
+    .tc-ctl-lcat h2 sitna-toggle {
         position: absolute;
-        top: -0.1em;
+        top: auto;
+        bottom: 0.2em;
         right: 0;
-        border: none;
-        background: none;
-        color: var(--sec-btn-color);
-        font-size: var(--icon-font-grid-size);
+        left: auto;
+        font-size: 1rem;
     }
 
 .tc-ctl-lcat-node .tc-incompatible:before {
@@ -306,17 +305,6 @@ div.tc-ctl-lcat-legend {
     .tc-ctl-lcat-node .tc-incompatible:before:hover {
         color: rgb(249, 237, 20);
     }
-
-.tc-ctl-lcat h2 button.tc-ctl-lcat-btn-search:before {
-    font-family: 'mapskin';
-    content: '\e003';
-}
-
-.tc-ctl-lcat h2 button.tc-ctl-lcat-btn-tree:before {
-    font-family: var(--icon-font-family);
-    font-size: 1em;
-    content: '\e91c';
-}
 
 .tc-ctl-lcat-search.tc-hidden {
     display: none;
@@ -439,22 +427,27 @@ div.tc-ctl-lcat-legend {
         margin: 0;
     }
 
-.tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info {
+.tc-ctl-lcat-search ul .tc-ctl-lcat-search-btn-info {
     position: absolute;
     right: 0;
     margin-top: 0.1em;
     margin-right: 0.2em;
     z-index: 10000;
-    font-size: 1.2em;
+    font-size: 1rem;
 }
 
-    .tc-ctl-lcat-tree ul input[type="checkbox"].tc-ctl-lcat-btn-info:before,
-    .tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info:before {
-        font-size: 0.75em;
-        font-family: var(--icon-font-family);
-        content: var(--icon-info);
-    }
+/* LEGACY: controles de Pamplona */
+.tc-ctl-lcat-tree ul input[type="checkbox"].tc-ctl-lcat-btn-info,
+.tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info {
+    font-size: 1rem;
+}
 
+/* LEGACY: controles de Pamplona */
+.tc-ctl-lcat-tree ul input[type="checkbox"].tc-ctl-lcat-btn-info:before, .tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info:before {
+    font-size: 0.75em;
+    font-family: var(--icon-font-family);
+    content: var(--icon-info);
+}
 
 .tc-ctl-lcat-search ul p {
     display: none;
@@ -535,19 +528,17 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         height: 1.6em;
     }
 
+    .tc-ctl-lcat li.tc-ctl-lcat-node > .tc-ctl-lcat-btn-info, .tc-ctl-lcat-search ul .tc-ctl-lcat-search-btn-info {
+        font-size: 0.8rem;
+    }
+
+    /* LEGACY: controles de Pamplona */
     .tc-ctl-lcat li.tc-ctl-lcat-node > input[type="checkbox"].tc-ctl-lcat-btn-info, .tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info {
         font-size: 1rem;
     }
 
-    .tc-ctl-lcat h2 button.tc-icon-btn {
-        float: right;
-        position: relative;
-        top: -2px;
-        border: none;
-        background: none;
-        font-size: 12px;
-        outline: none;
-        padding: 0;
+    .tc-ctl-lcat h2 sitna-toggle {
+        font-size: 1rem;
     }
 
     .tc-ctl-lcat .tc-ctl-lcat-info-close {
@@ -557,7 +548,6 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         height: 1.5em;
         cursor: pointer;
         font-size: 1.25em;
-        margin-top: 0.2 em;
     }
 
     .tc-ctl-lcat li.tc-ctl-lcat-node > span {

@@ -18,7 +18,7 @@
 
 .tc-ctl-finfo-coords-pair {
     display: inline-block;
-    color: #999;
+    color: var(--sitna-bg1-txt1-color);
     white-space: nowrap;
     margin-right: 0.5em;
 }
@@ -47,7 +47,7 @@
 
 .tc-ctl-finfo .tc-ctl-finfo-result h3 {
     font-size: 1em;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--sec-divider-color);
     margin: 0 0.2em 0.5em 0;
     cursor: text;
     user-select: text;
@@ -58,7 +58,7 @@
     font-size: 0.9em;
     margin: 0 0 0.5em 0;
     color: var(--title-color);
-    text-shadow: 0 0 0.3em #fff;
+    text-shadow: 0 0 0.3em var(--main-bg-color);
     cursor: pointer;
     user-select: text;
 }
@@ -115,7 +115,7 @@ video.tc-video-attr, img.tc-img-attr {
     margin: auto;
 }
 
-.tc-ctl-finfo-val.tc-img-attr, .tc-ctl-finfo-val.tc-video-attr, .tc-ctl-finfo-val.tc-img-attr, .tc-ctl-finfo-val.tc-embed-attr, .tc-ctl-finfo-val.tc-audio-attr {
+.tc-ctl-finfo-val.tc-img-attr, .tc-ctl-finfo-val.tc-video-attr, .tc-ctl-finfo-val.tc-embed-attr, .tc-ctl-finfo-val.tc-audio-attr {
     overflow-x: auto;
     max-width: calc(41vw - 3em);
     padding: 0;
@@ -159,7 +159,7 @@ a.tc-embed-attr {
 
 iframe.tc-embed-attr {
     margin-top: 6px;
-    border: 0.2em #eee solid;
+    border: 0.2em var(--sitna-bg11-txt1-color) solid;
 }
 
 audio.tc-audio-attr {
@@ -257,65 +257,30 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
 .tc-ctl-finfo-btn {
     order: 2;
     display: flex;
+    gap: 0.3em;
+    align-items: center;
 }
 
 .tc-ctl-popup-menu .tc-ctl-finfo-btn {
     flex-direction: column;
 }
 
-    .tc-ctl-finfo-btn button,
-    .tc-ctl-finfo-btn input[type=checkbox] {
-        display: inline-block;
-        width: 1.2em;
-        height: 1.2em;
-        line-height: 1.2em;
-        padding: 0;
-        text-align: right;
-        font-size: 1em;
-        cursor: pointer;
-        overflow: hidden;
+
+    .tc-ctl-finfo-btn sitna-button.tc-hidden,
+    .tc-ctl-finfo-btn sitna-toggle.tc-hidden {
+        display: none;
     }
 
-        .tc-ctl-finfo-btn button.tc-hidden,
-        .tc-ctl-finfo-btn input[type=checkbox].tc-hidden {
-            display: none;
-        }
-
-.tc-map .tc-icon-btn.tc-ctl-finfo-btn-dl:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
-    content: var(--icon-download-all);
-}
-
-.tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] {
-    display: none;
-}
-
-    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox] {
+    .tc-ctl-finfo-btn sitna-toggle.tc-ctl-finfo-btn-show-all {
         display: inline-flex;
     }
 
-        .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:before {
-            font-family: var(--icon-font-family);
-            font-size: calc(var(--icon-font-grid-size) * 2 / 3);
-            line-height: 1.3em;
-            content: '\e91f';
-        }
-
-    .tc-ctl-finfo-btn input.tc-ctl-finfo-btn-show-all[type=checkbox]:checked:before {
-        content: '\e91e';
-    }
-
-.tc-icon-btn.tc-ctl-finfo-btn-zoom-all:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
-    content: '\e90e';
+.tc-ctl-finfo-btn-zoom-all {
+    --icon-text: '\e90e';
 }
 
-.tc-icon-btn.tc-ctl-finfo-btn-del-all:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
-    content: var(--icon-delete);
+.tc-ctl-finfo-btn-del-all {
+    --icon-text: var(--icon-delete);
 }
 
 .tc-modal.tc-ctl-finfo-img-dialog.tc-visible {

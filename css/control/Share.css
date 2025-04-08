@@ -11,9 +11,10 @@
 }
 
 
-.tc-ctl-share-select sitna-tab:before {
-    padding-right: 0.5em;
-}
+    .tc-ctl-share-select sitna-tab:before {
+        padding-right: 0.5em;
+        font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+    }
 
 .tc-ctl-share-select sitna-tab.tc-ctl-share-select-url:before {
     content: '\e92d';
@@ -137,6 +138,7 @@ div.tc-ctl-share-url-box {
     display: flex;
     justify-content: space-evenly;
     flex-basis: 100%;
+    --glyph-bg-color: transparent;
 }
 .tc-ctl-share .tc-image .tc-ctl-share-icons button {
     flex-grow:1
@@ -160,10 +162,6 @@ div.tc-ctl-share-url-box {
 .tc-ctl-share .tc-image .tc-ctl-share-icons {
     margin-top: 0em;
     margin-bottom: 0em;
-}
-
-.tc-ctl-share .tc-image .tc-ctl-share-label-qr {
-    vertical-align: bottom;
 }
 
 .tc-ctl-share .tc-ctl-share-icons.tc-loading:before {
@@ -310,7 +308,7 @@ div.tc-ctl-share-url-box {
     }
 
     @media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height: 40em) {
-        .tc-ctl-share .tc-ctl-share-url-box .tc-toggle {
+        .tc-ctl-share .tc-ctl-share-url-box sitna-toggle {
             margin: 0.4em 0.5em;
         }
         .tc-ctl-share .tc-ctl-share-icons sitna-button:hover {

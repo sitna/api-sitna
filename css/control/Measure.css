@@ -14,6 +14,10 @@
         width: 50%;
     }
 
+        .tc-ctl-meas-select sitna-tab:before {
+            font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+        }
+
         .tc-ctl-meas-select sitna-tab.tc-ctl-meas-select-mode-polyline:before {
             content: '\e90b';
         }

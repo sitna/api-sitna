@@ -1,4 +1,8 @@
 ﻿
+.tc-ctl-search {
+    --glyph-bg-color: transparent;
+}
+
 .tc-ctl-search-list > li {
     border-bottom: 0.15em solid rgba(90, 117, 134, 0.3);
 }
@@ -61,7 +65,6 @@
     font-family: Arial, helvetica, sans-serif;
     text-overflow: ellipsis;
     text-wrap: none;
-    margin-right: 0.4em;
 }
 
 .tc-ctl-search .tc-ctl-search-txt {
@@ -71,43 +74,24 @@
     border: 1px solid var(--input-border-color);
     color: var(--input-color);
     background-color: var(--input-bg-color);
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
-    border-right: none;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    border-radius: var(--border-radius);
 }
 
-button.tc-ctl-btn.tc-ctl-search-btn {
-    position: relative;
-    border: 1px solid;
-    color: var(--tab-color);
-    background-color: var(--input-bg-color);
-    border-left-width: 0;
-    border-color: var(--input-border-color);
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
-    box-sizing: border-box;
-    width: 2.5em;
-    height: 2em;
-    vertical-align: top;
-    text-align: center;
-    text-indent: -1000vw;
-}
-
-    button.tc-ctl-btn.tc-ctl-search-btn:before {
-        position: absolute;
-        font-size: 1em;
-        height: 100%;
-        width: 100%;
-        text-align: center;
-        text-indent: 0;
-        line-height: 2em;
-        font-family: var(--icon-font-family);
-        content: var(--icon-search);
-        left: 0;
-        top: 0;
+    /* Quitar X de la derecha del control */
+    .tc-ctl-search .tc-ctl-search-txt::-webkit-search-decoration,
+    .tc-ctl-search .tc-ctl-search-txt::-webkit-search-cancel-button,
+    .tc-ctl-search .tc-ctl-search-txt::-webkit-search-results-button,
+    .tc-ctl-search .tc-ctl-search-txt::-webkit-search-results-decoration {
+        display: none;
     }
+
+.tc-ctl-search sitna-button.tc-ctl-search-btn {
+    position: absolute;
+    left: auto;
+    right: 0.8em;
+    margin-top: 0.25em;
+    --icon-text: var(--icon-search);
+}
 
 @keyframes fadeInRight {
     0% {
@@ -133,45 +117,16 @@ button.tc-ctl-btn.tc-ctl-search-btn {
     }
 }
 
-button.tc-ctl-btn.tc-ctl-search-share-btn {
-    position: relative;
-    border: 1px solid;
-    color: var(--tab-color);
-    background-color: var(--input-bg-color);
-    border-left-width: 0;
-    border-right-width: 0;
-    border-color: var(--input-border-color);
-    box-sizing: border-box;
-    width: 2em;
-    height: 2em;
-    vertical-align: top;
-    text-align: center;
-    text-indent: -1000vw;
-    opacity: 1;
-    visibility: visible;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+.tc-ctl-search sitna-button.tc-ctl-search-share-btn {
+    position: absolute;
+    left: auto;
+    right: 2.8em;
+    margin-top: 0.25em;
+    --icon-text: var(--icon-share);
 }
-
-    button.tc-ctl-btn.tc-ctl-search-share-btn:before {
-        animation: fadeInRight 800ms 1;
-        position: absolute;
-        font-size: 1em;
-        height: 100%;
-        width: 100%;
-        text-align: center;
-        text-indent: 0;
-        line-height: 2em;
-        font-family: var(--icon-font-family);
-        content: var(--icon-share);
-        left: 0;
-        top: 0;
-    }
-
-    button.tc-ctl-btn.tc-ctl-search-share-btn.tc-hidden {
-        display: none;        
+    
+.tc-ctl-search sitna-button.tc-ctl-search-share-btn.tc-hidden {
+        display: none;
     }
 
 .tc-ctl-search .tc-ctl-search-list {

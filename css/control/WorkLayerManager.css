@@ -33,9 +33,9 @@
     line-height: 1.6em;
     text-align: center;
     font-size: 0.67em;
-    font-weight: normal;
-    background-color: var(--main-hl-color);
-    color: #fff;
+    font-weight: bold;
+    background-color: var(--sec-divider-color);
+    color: var(--text-sec-color);
     vertical-align: top;
 }
 
@@ -47,13 +47,21 @@
 .tc-ctl-wlm li.tc-ctl-wlm-elm {
     position: relative;
     background-color: var(--main-bg-color);
-    border: 1px solid #999;
+    border: 1px solid var(--tab-border-color);
     border-radius: var(--border-radius);
     padding: 0.3em;
     margin-top: -1px;
     box-sizing: border-box;
-    transition: none;
+    transition: background-color linear 0.1s;
 }
+
+    .tc-ctl-wlm li.tc-ctl-wlm-elm.sortable-chosen {
+        background-color: color-mix(in srgb, var(--text-main-color) 10%, var(--main-bg-color));
+    }
+
+        .tc-ctl-wlm li.tc-ctl-wlm-elm.sortable-chosen .tc-ctl-wlm-dd {
+            background-color: color-mix(in srgb, var(--text-main-color) 10%, var(--active-zone-bg-color));
+        }
 
     .tc-ctl-wlm li.tc-ctl-wlm-elm.tc-dragend {
         transition: all .1s linear;
@@ -65,6 +73,19 @@
 
 .tc-ctl-wlm.tc-3d li.tc-ctl-wlm-elm.tc-ctl-wlm-elm-notvisible {
     color: #000;
+}
+
+.tc-ctl-wlm li.tc-ctl-wlm-elm .tc-ctl-wlm-cb-info {
+    --icon-font-family: initial;
+    --icon-font-weight: bold;
+    --icon-font-line-height: 1.8em;
+    --unchecked-icon-text: 'i';
+    --checked-icon-text: 'i';
+}
+
+.tc-ctl-wlm li.tc-ctl-wlm-elm .tc-ctl-wlm-cb-visibility {
+    --unchecked-icon-text: '\e911';
+    --checked-icon-text: '\e910';
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-lyr {
@@ -128,14 +149,14 @@
     position: relative;
 }
 
-    .tc-ctl-wlm h2 button {
+    .tc-ctl-wlm h2 sitna-button {
         position: absolute;
-        top: -0.1em;
+        top: auto;
+        left: auto;
+        bottom: 0.2em;
+        margin-right: 0.2em;
         right: 0;
-        border: none;
-        background: none;
-        color: var(--sec-btn-color);
-        font-size: 1.4em;
+        font-size: 1rem;
     }
 
 .tc-ctl-wlm .tc-ctl-wlm-dd {
@@ -163,13 +184,6 @@
     cursor: pointer;
 }
 
-    .tc-ctl-wlm h2 button.tc-ctl-lcat-btn-del-all:before, .tc-ctl-wlm .tc-ctl-wlm-del-all:before {
-        font-family: var(--icon-font-family);
-        content: var(--icon-delete);
-        width: 1.2em;
-        height: 1.2em;
-    }
-
 .tc-ctl-wlm .tc-ctl-wlm-dd:after {
     position: absolute;
     width: 100%;
@@ -180,9 +194,8 @@
     content: '\21a5\21a7';
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-input button.tc-ctl-wlm-btn-zoom:before {
-    font-family: var(--icon-font-family);
-    content: '\e917';
+.tc-ctl-wlm .tc-ctl-wlm-input sitna-button.tc-ctl-wlm-btn-zoom {
+    --icon-text: '\e917';
 }
 
 .tc-ctl-wlm input[type=range] {
@@ -285,6 +298,7 @@
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-metadata ul {
+    display: flex;
     list-style-type: none;
     padding: 0;
     margin: 0;
@@ -319,10 +333,10 @@
     margin-right: 1em;
     padding: 0.5em;
     font-size: 0.8em;
-    background-color: #eee;
+    background-color: var(--sitna-bg11-txt1-color);
     z-index: 20000;
     border-radius: var(--border-radius);
-    color: #666;
+    color: var(--text-sec-color);
     padding: 0.3em;
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
 }
@@ -347,7 +361,6 @@
 
     .tc-ctl-wlm-input sitna-button.tc-loading {
         animation: pulsation 2s infinite;
-        -webkit-animation: pulsation 2s infinite;
     }
 
 .tc-ctl-wlm-tools {
@@ -366,6 +379,7 @@ li.tc-ctl-wlm-elm:focus {
 .tc-ctl-wlm .tc-ctl-wlm-tools sitna-button.tc-ctl-wlm-btn-more {
     order: 1000;
     display: none;
+    --icon-text: '\2022\2022\2022';
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-tools * {
@@ -454,5 +468,4 @@ li.tc-ctl-wlm-elm:focus {
     /*Set the size of the magnifier glass:*/
     width: 100px;
     height: 100px;
-}
 }
