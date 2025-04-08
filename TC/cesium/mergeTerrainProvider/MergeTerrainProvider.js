@@ -2,7 +2,20 @@
 
 import * as D3 from 'd3-polygon';
 import { fromArrayBuffer } from 'geotiff';
+const haversineDistance = function (lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Radio de la Tierra en metros
+    const φ1 = TC.Util.degToRad(lat1);
+    const φ2 = TC.Util.degToRad(lat2);
+    const Δφ = TC.Util.degToRad(lat2 - lat1);
+    const Δλ = TC.Util.degToRad(lon2 - lon1);
 
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distancia en metros
+}
 const MergeTerrainProvider = function (options, view, fallbackOptions) {
 
     this.noDataValue = options.noDataValue;
@@ -24,8 +37,11 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         //else if (options.type === "ARCGIS" || (!options.type && options.url.indexOf("ARCGIS") >= 0)) {
         //    return new cesium.ArcGISTiledElevationTerrainProvider(options);ogc
         //}
-        else
+        else if (options.type === "WCS" || (!options.type && options.url.indexOf("WCS") >= 0)) {
             return new cesium.WCSTerrainProvider(options, view);
+        }
+        else
+            return new cesium.CesiumTerrainProvider(options, view);
     });
     
     this.defaultFallbackProvider = new cesium.EllipsoidTerrainProvider();
@@ -43,14 +59,12 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
         });
     }
 
-    cesium.CesiumTerrainProvider.call(this, options);
-
-    this.boundaries = Array.isArray(fallbackOptions.boundaries) ? fallbackOptions.boundaries : [fallbackOptions.boundaries];
-
-    cesium.when.all([this._readyPromise, this.fallbackProvider[0].readyPromise, this.surfaceHasTilesToRender], function () {
+    cesium.CesiumTerrainProvider.call(this, options);    
+    this.boundaries = Array.isArray(fallbackOptions.boundaries) ? fallbackOptions.boundaries : [fallbackOptions.boundaries];    
+    cesium.when.all([...this.fallbackProvider.map((provider) => provider.readyPromise), this._readyPromise.promise, this.surfaceHasTilesToRender.promise], function () {
         this.commutingProvidersReady = true;
         this.commutingProvidersPromises.resolve();
-    }.bind(this))
+    }.bind(this))    
 };
 (function () {
 
@@ -166,10 +180,15 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
 
                     })
                 if (fallbackProvider) {
-                    fallbackProvider.requestTileGeometry.apply(self, [x, y, level])
+                    fallbackProvider.requestTileGeometry.apply(fallbackProvider, [x, y, level])
                         .then(function (terrainData) {
-                            manageAttributions(fallbackProvider);
-                            promise.resolve(terrainData);
+                            if (terrainData._minimumHeight && self.fallback[self.fallbackProvider.indexOf(fallbackProvider)] && terrainData._minimumHeight === self.fallback[self.fallbackProvider.indexOf(fallbackProvider)].noDataValue) {
+                                promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
+                            }
+                            else {
+                                manageAttributions(fallbackProvider);
+                                promise.resolve(terrainData);
+                            }                                
                         }).otherwise(function () {
                             promise.resolve(self.defaultFallbackProvider.requestTileGeometry([x, y, level]));
                         });
@@ -187,7 +206,7 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
             otherwise();
         } else if (!this.isInDefaultBoundaries(x, y, level)) {
             otherwise();
-        } else {
+        } else {            
             cesium.CesiumTerrainProvider.prototype.requestTileGeometry.apply(self, [x, y, level])
                 .then(function (args, terrainData) {
                     if (terrainData._minimumHeight === self.noDataValue) {
@@ -1071,12 +1090,16 @@ const MergeTerrainProvider = function (options, view, fallbackOptions) {
 
                         if (level <= resultat.minLevel &&
                             level >= resultat.maxLevel) {
-
+                            if (self.description.constraints && self.description.constraints.meterPerPixel) {
+                                const rectangle = self.tilingScheme.tileXYToNativeRectangle(x, y, level);
+                                if ((haversineDistance(rectangle.south, rectangle.west, rectangle.north, rectangle.west) / 65) > self.description.constraints.meterPerPixel)
+                                    return cesium.when.defer().reject();
+                            }
                             if (resultat.isTileInside(x, y, level) == true) {
                                 retour = resultat.getHeightmapTerrainData(x, y, level);
                             } else {
                                 retour = cesium.when.defer().reject();
-                            }
+                            }                            
                         } else {
                             retour = cesium.when.defer().reject();
                         }
