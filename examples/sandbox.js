@@ -1,10 +1,14 @@
-import { basicSetup, EditorView } from 'codemirror';
+import { basicSetup, EditorView, } from 'codemirror';
+import { keymap } from "@codemirror/view"
 import { html } from '@codemirror/lang-html';
+import { indentWithTab } from "@codemirror/commands"
 
 let sandbox;
+let code;
 
 const renderDocument = (html, css, js) => {
 	const style = /.*\.css/gmi.test(css) ? '<link rel="stylesheet" href="' + css + '" \/>' : '<style>' + css + '<\/style>';
+	//html = html.replace('<script type="text/javascript" src="examples.js"></script>', '');
 	const script = '<script src="' + js + '" ><\/script>';
 	if (/<head>[\s\S]*<\/head>/.test(html)) {
 		const pos = html.search('</head>');
@@ -17,47 +21,44 @@ const renderDocument = (html, css, js) => {
 	}
 	return html;
 }
+const updateListenerExtension = EditorView.updateListener.of((update) => {
+	if (update.docChanged) {
+		document.querySelector("#command .play").classList.add("changed");
+	}
+});
 
 class Sandbox {
 	constructor(data, DOMobject, iFrameDiv) {
+		code = data;
 		this.frameDiv = iFrameDiv;
-		let timeout;
-		let updateListenerExtension = EditorView.updateListener.of((update) => {
-			if (update.docChanged) {
-				if (timeout) {
-					clearTimeout(timeout);
-				}
-
-				timeout = setTimeout(() => {
-					const code = update.state.doc.toString();
-					this.RefreshViewer(code);
-					
-				}, 1000);
-			}
-		});
+		
 		this.viewEditor = new EditorView({
 			doc: data,
-			extensions: [basicSetup, html(), updateListenerExtension],
+			extensions: [basicSetup, updateListenerExtension, html(), keymap.of([indentWithTab])],
 			parent: DOMobject,
 			//parent: document.body
 		});
-		this.RefreshViewer(data);
+
+		this.RefreshViewer(data, document.body.classList.contains("fullscreen"));
 	}
-	RefreshViewer(code) {
-		this.frameDiv.querySelector("iframe")?.remove();		
-		this.frameDiv.insertAdjacentHTML('beforeend','<iframe src="about:blank" width="100%" height="600" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allowfullscreen="" frameborder="0"></iframe>')
-		const frame = this.frameDiv.querySelector("iframe");
-		
+	RefreshViewer(code, full) {
+		let frame = this.frameDiv.querySelector("iframe");
+		if (frame) {
+			frame.contentDocument.clear();
+			frame.src = "about:blank";
+			frame.remove();
+		}
+		this.frameDiv.insertAdjacentHTML('beforeend', '<iframe src="about:blank" width="100%" height="100%" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allowfullscreen="" frameborder="0"></iframe>')
+		frame = this.frameDiv.querySelector("iframe");
+		if (!full)
+			code = renderDocument(code, 'examples.css', '../sitna.js');
+		//else
+		//	code = this.RefreshViewer(code, document.body.classList.contains("fullscreen"));		
 		frame.contentDocument.open();
-		frame.contentDocument.write(renderDocument(code, 'examples.css', '../sitna.js'))
+		frame.contentDocument.write(code)
 		frame.contentDocument.close();
+		
 	}
-	NewWindow() {
-		const popUp = window.open("about:blank");
-		popUp.document.open();
-		popUp.document.write(renderDocument(this.viewEditor.state.doc.toString(), 'examples.css', '../sitna.js'))
-		popUp.document.close();
-	}	
 
 }
 
@@ -65,17 +66,58 @@ document.addEventListener("DOMContentLoaded", function () {
 	window.addEventListener("message", (event) => {
 		if (event.data) {
 			const frameDiv = window.document.querySelector('#codeViewer div');
-			sandbox = new Sandbox(event.data, document.getElementById("codeEditor"), frameDiv);
+			sandbox = new Sandbox(event.data, document.getElementById("codeEditorBox"), frameDiv);
 		}
 	});
-	document.querySelector(".close").addEventListener("click", function (e) {
-		parent.document.querySelector(".example-sandbox").remove();
-	});
-	document.querySelector(".new-window").addEventListener("click", function (e) {
 
-		sandbox.NewWindow();
+	document.querySelector(".collapse").addEventListener("click", function (e) {
+		const editor = document.querySelector("#codeEditor");
+		editor.classList.toggle("collapsed");
+		if (editor.classList.contains("collapsed")) {
+			this.title = "Desplegar";
+		}
+		else {
+			this.title = "Replegar";
+		}
 	});
+	document.querySelector(".play").addEventListener("click", function (e) {
+		sandbox.RefreshViewer(sandbox.viewEditor.state.doc.toString(), document.body.classList.contains("fullscreen"));
+		document.querySelector("#command .play").classList.remove("changed");
+	});
+	document.querySelector(".copy").addEventListener("click", function (e) {
+		const self = this;
+		navigator.clipboard.writeText(sandbox.viewEditor.state.doc.toString());		
+		this.title = "Copiado";
+		this.classList.add("copied");
+		setTimeout(() => {
+			self.title = "Copiar al portapapeles";
+			self.classList.remove("copied");
+		}, 1000)
+
+	});
+	document.querySelector(".copy").addEventListener("mouseout", function (e) {
+		this.setAttribute("aria-label", "Copiar al portapapeles");
+	});
+	if (document.location.search) {
+		fetch(document.location.search.substr(1)).then(async function (response) {
+			let code = await response.text();
+			document.title = /\<title>(.+)\<\/title>/gm.exec(code)[1];
+			document.body.classList.add("fullscreen");
+			const frameDiv = window.document.querySelector('#codeViewer div');
+			code = code.replace('<script type="text/javascript" src="examples.js"></script>', '')
+			sandbox = new Sandbox(code, document.getElementById("codeEditorBox"), frameDiv);
+		});
+	}
+	else {
+		const code = sessionStorage.getItem("sandboxCode");
+		if (code) {
+			const frameDiv = document.querySelector('#codeViewer div');
+			sandbox = new Sandbox(code, document.getElementById("codeEditorBox"), frameDiv);
+		}
+    }
+	
 })
+
 
 
 

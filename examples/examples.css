@@ -15,6 +15,7 @@
     top: 60px;
     max-width: 50%;
     padding-right: 2em;
+    z-index: 100000;
 }
 
     .instructions.fade-out {
@@ -122,6 +123,22 @@ body > pre.prettyprint {
         transition: visibility 0s .25s, opacity .25s linear;
     }
 
+pre.code-toolbar#view-source > .toolbar:hover {
+    background-color: initial;
+    border-color: #e1e1e8;
+    color: #767676;
+}
+
+pre.code-toolbar#view-source > .toolbar .toolbar-item:hover {
+    background-color: #cc0000;
+    color: #fff;
+}
+
+pre.code-toolbar#view-source > .toolbar button {
+    padding: 7px 8px;
+    cursor: pointer;
+}
+
 div.tc-map.tc-lo div.tc-ctl-rpanel {
     top: 26em;
 }
@@ -148,6 +165,25 @@ div.tc-map.tc-lo.tc-3d div.tc-ctl-rpanel {
     left: 3.75em;
 }
 
+body > pre.prettyprint.edit-mode {
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+iframe.code-play {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+    z-index: 100000;
+}
+
 @media screen and (min-width: 380px) {
     div.tc-map div.tc-ctl.tc-ctl-rpanel div.tc-ctl-rpanel-grp {
         width: auto;
@@ -161,5 +197,3 @@ div.tc-map.tc-lo.tc-3d div.tc-ctl-rpanel {
         left: 3.75em;
     }
 }
-
-
