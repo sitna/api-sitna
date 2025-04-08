@@ -1,24 +1,18 @@
 <div class="tc-ctl-mod-btn">
-    <button type="button" class="tc-ctl-btn tc-ctl-mod-btn-select" disabled title="{{i18n "select"}}">{{i18n "select"}}</button><button type="button" class="tc-ctl-btn tc-ctl-mod-btn-delete" disabled title="{{i18n "deleteSelectedFeatures"}}">
-        {{i18n "deleteSelectedFeatures"}}
-    </button><button type="button" class="tc-ctl-btn tc-ctl-mod-btn-del-vertex" disabled title="{{i18n "deleteVertices"}}">
-        {{i18n "deleteVertices"}}
-    </button><button type="button" class="tc-ctl-btn tc-ctl-mod-btn-join" disabled title="{{i18n "joinGeometries.tooltip"}}">
-        {{i18n "joinGeometries"}}
-    </button><button type="button" class="tc-ctl-btn tc-ctl-mod-btn-split" disabled title="{{i18n "splitGeometry"}}">
-        {{i18n "splitGeometry"}}
-    </button><button type="button" class="tc-ctl-btn tc-ctl-mod-btn-text" contenteditable="true" disabled title="{{i18n "addText"}}">
-        {{i18n "addText"}}
-    </button>
+    <sitna-button variant="icon" class="tc-ctl-mod-btn-select" disabled title="[[select]]">[[select]]</sitna-button>
+    <sitna-button variant="icon" class="tc-ctl-mod-btn-delete" disabled title="[[deleteSelectedFeatures]]">[[deleteSelectedFeatures]]</sitna-button>
+    <sitna-button variant="icon" class="tc-ctl-mod-btn-del-vertex" disabled title="[[deleteVertices]]">[[deleteVertices]]</sitna-button>
+    <sitna-button variant="icon" class="tc-ctl-mod-btn-join" disabled title="[[joinGeometries.tooltip]]">[[joinGeometries]]</sitna-button>
+    <sitna-button variant="icon" class="tc-ctl-mod-btn-split" disabled title="[[splitGeometry]]">[[splitGeometry]]</sitna-button>
+    <sitna-button variant="icon" class="tc-ctl-mod-btn-text" contenteditable="true" disabled title="[[addText]]">[[addText]]</sitna-button>
 </div>
 <div class="tc-ctl-mod-style{{#unless stylable}} tc-hidden{{/unless}}">
     <sitna-feature-styler></sitna-feature-styler>
 </div>
 <div class="tc-ctl-mod-style-label tc-hidden">
-    <input type="text" class="tc-ctl-mod-txt tc-textbox" placeholder="{{i18n "writeTextForFeature"}}" style="font-size:{{fontSize}}pt;font-color:{{fontColor}};text-shadow: 0 0 {{labelOutlineWidth}}px {{labelOutlineColor}};" />
-    {{i18n "textColor"}}
+    <input type="text" class="tc-ctl-mod-txt tc-textbox" placeholder="[[writeTextForFeature]]" style="font-size:{{fontSize}}pt;font-color:{{fontColor}};text-shadow: 0 0 {{labelOutlineWidth}}px {{labelOutlineColor}};" />
+    [[textColor]]
     <input type="color" class="tc-ctl-mod-fnt-c" value="{{fontColor}}" />
-    {{i18n "fontSize"}}
+    [[fontSize]]
     <input type="number" class="tc-ctl-mod-fnt-s tc-textbox" value="{{fontSize}}" min="7" max="20" inputmode="decimal" />
 </div>
-<div class="tc-ctl-mod-attr tc-hidden"></div>

@@ -10,6 +10,8 @@ import MultiPolyline from '../../SITNA/feature/MultiPolyline';
 import Polygon from '../../SITNA/feature/Polygon';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon';
 import './FeatureStyler';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
@@ -91,6 +93,21 @@ const vertexGeometryFilter = function (elm) {
 const className = 'tc-ctl-mod';
 const elementName = 'sitna-modify';
 
+class ModifyModel {
+    constructor() {
+        this.select = "";
+        this.deleteSelectedFeatures = "";
+        this.deleteVertices = "";
+        this["joinGeometries.tooltip"] = "";
+        this.joinGeometries = "";
+        this.splitGeometry = "";
+        this.addText = "";
+        this.writeTextForFeature = "";
+        this.textColor = "";
+        this.fontSize = "";
+    }
+}
+
 class Modify extends WebComponentControl {
     #classSelector = '.' + className;
     #deleteBtn;
@@ -120,6 +137,7 @@ class Modify extends WebComponentControl {
             .initProperty('mode')
             .initProperty('snapping')
             .initProperty('stylable');
+        self.model = new ModifyModel();
     }
 
     static get observedAttributes() {
@@ -199,8 +217,8 @@ class Modify extends WebComponentControl {
         const self = this;
         self.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
         const mode = self.mode;
-        self.#deleteVertexBtn.classList.toggle(Consts.classes.ACTIVE, mode === Modify.mode.VERTEX_DELETE);
-        self.#selectBtn.classList.toggle(Consts.classes.ACTIVE, self.isActive && mode !== Modify.mode.VERTEX_DELETE);
+        self.#deleteVertexBtn.active = mode === Modify.mode.VERTEX_DELETE;
+        self.#selectBtn.active = self.isActive && mode !== Modify.mode.VERTEX_DELETE;
     }
 
     register(map) {
@@ -277,11 +295,9 @@ class Modify extends WebComponentControl {
     async loadTemplates() {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-mod.mjs');
-        const attributesTemplatePromise = import('../templates/tc-ctl-mod-attr.mjs');
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-attr'] = (await attributesTemplatePromise).default;
         self.template = template;
     }
 
@@ -313,6 +329,8 @@ class Modify extends WebComponentControl {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            self.controller = new Controller(self.model, new Observer(self));
+            self.updateModel();
         });
     }
 
@@ -366,7 +384,7 @@ class Modify extends WebComponentControl {
 
     activate() {
         const self = this;
-        self.#selectBtn.classList.add(Consts.classes.ACTIVE);
+        self.#selectBtn.active = true;
         super.activate.call(self);
         self.wrap.activate(self.mode);
         self.#setVertexDeleteModeState(self.getSelectedFeatures());
@@ -379,7 +397,7 @@ class Modify extends WebComponentControl {
             self.#setFeatureSelectedState([]);
         }
         if (self.#selectBtn) {
-            self.#selectBtn.classList.remove(Consts.classes.ACTIVE);
+            self.#selectBtn.active = false;
             if (self.layer) {
                 self.unselectFeatures(self.getSelectedFeatures());
             }
@@ -552,11 +570,11 @@ class Modify extends WebComponentControl {
         const self = this;
         self.textActive = active;
         if (active) {
-            self.#textBtn.classList.add(Consts.classes.ACTIVE, active);
+            self.#textBtn.active = true;
             self.#labelSection.classList.remove(Consts.classes.HIDDEN);
         }
         else {
-            self.#textBtn.classList.remove(Consts.classes.ACTIVE, active);
+            self.#textBtn.active = false;
             self.#labelSection.classList.add(Consts.classes.HIDDEN);
         }
         self.displayLabelText();
@@ -730,6 +748,22 @@ class Modify extends WebComponentControl {
             }
             self.#setFeatureSelectedState([newFeature]);
         }
+    }
+    updateModel() {        
+        this.model.select = this.getLocaleString('select');
+        this.model.deleteSelectedFeatures = this.getLocaleString('deleteSelectedFeatures');
+        this.model.deleteVertices = this.getLocaleString('deleteVertices');
+        this.model["joinGeometries.tooltip"] = this.getLocaleString('joinGeometries.tooltip');
+        this.model.joinGeometries = this.getLocaleString('joinGeometries');
+        this.model.splitGeometry = this.getLocaleString('splitGeometry');
+        this.model.addText = this.getLocaleString('addText');
+        this.model.writeTextForFeature = this.getLocaleString('writeTextForFeature');
+        this.model.textColor = this.getLocaleString('textColor');
+        this.model.fontSize = this.getLocaleString('fontSize');
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
