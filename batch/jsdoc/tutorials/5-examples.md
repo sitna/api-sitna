@@ -1,9 +1,15 @@
 
 <script type="text/javascript">
+	const timer = ()=> {
+		return new Promise((resolve) => {
+			setTimeout(() => {			  
+			  resolve();
+			}, 200);
+		  });
+	}
     (async () => {
 		document.addEventListener("DOMContentLoaded", async (event) => {
-		const content = await fetch("../Examples/");
-        const xml = await content.text();
+			await timer(); 
 		const container = document.querySelector("#founded");
 		const counter = document.querySelector("#ejemplos-encontrados");
 		let lastPattern="";
@@ -22,8 +28,7 @@
 		const paintToast=(itemData,pattern)=>{
 			const li=document.createElement("li");
 			const link=document.createElement("a");
-			link.href="../examples/" + itemData["id"];
-			link.target="_blank";
+			link.href="../examples/" + itemData["id"];			
 			if(pattern)
 				link.innerHTML="<p class=\"title\">" + AddHighLight(itemData.title,pattern) + "</p><p class=\"summary\">" + AddHighLight(itemData.summary || "",pattern) + "</p>";
 			else
