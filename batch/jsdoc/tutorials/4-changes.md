@@ -1,3 +1,19 @@
+### [4.5.0](https://github.com/sitna/api-sitna/releases/tag/v4.5.0)
+- Cambios en interfaz de usuario para mejorar la usabilidad y accesibilidad.
+- Actualización a OpenLayers 10.
+- Añadidas capacidades MVC a los controles.
+- Cambiados los servicios de modelo digital de terreno fuera de Navarra para la vista 3D (IGN España y Copernicus).
+- Añadidos formatos DXF y GeoPackage en el control de descargas.
+- Eliminación de dependencia de epsg.io.
+- Corrección de errores.
+
+### [4.4.1](https://github.com/sitna/api-sitna/releases/tag/v4.4.1)
+- Corregido error en el proceso de compartir entidades dibujadas.
+- Corregido título erróneo en los resultados de consulta por línea y recinto.
+- Corregidos errores en la representación de fechas en los atributos de entidades.
+- Corregida la exportación de fechas a shapefile.
+- Corrección de otros errores.
+
 ### [4.4.0](https://github.com/sitna/api-sitna/releases/tag/v4.4.0)
 - Rediseñado el control de compartir aprovechando las herramientas de compartición nativas del sistema operativo.
 - Añadida opción al control de descarga de imágenes para copiarlas al portapapeles en vez de descargarlas.
@@ -80,7 +96,7 @@ la [extensión máxima]{@linkplain SITNA.Map#getMaxExtent} del mapa.
 - Añadida la ortofoto 2020 de la comarca de Pamplona a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
 - Añadida herramienta para obtener datos de elevación de entidades puntuales. Si estas tienen datos de elevación, se muestran junto con las obtenidas de servicios MDT.
 - Añadida herramienta para obtener perfil de elevación de entidades lineales. Si estas tienen datos de elevación, se permite la representación simultánea de perfiles de elevaciones propias y obtenidas de servicios MDT.
-- Definida [convención de nombres de atributo de entidad](tutorial-4-embedding.html) para incrustar imágenes, vídeos y otros recursos. Se utiliza 
+- Definida [convención de nombres de atributo de entidad](tutorial-3-embedding.html) para incrustar imágenes, vídeos y otros recursos. Se utiliza 
 esa convención para mostrar esos elementos en tablas de atributos y de resultados de consulta.
 - Añadidas notificaciones para ayudar a impedir interrupción de grabación del track.
 - Mejorada la importación de archivos replicando las capas en las que están organizadas las entidades dentro del archivo.
