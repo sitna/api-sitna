@@ -122,7 +122,7 @@ class FullScreen extends Control {
     updateModel(){
         this.model["fscreen.tip"] = this.getLocaleString("fscreen.tip");
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }
