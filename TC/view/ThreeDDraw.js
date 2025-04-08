@@ -1,6 +1,6 @@
-﻿import '../../SITNA/feature/Point';
-import '../../SITNA/feature/Polyline';
-import '../../SITNA/feature/Polygon';
+﻿import '../../SITNA/feature/Point.js';
+import '../../SITNA/feature/Polyline.js';
+import '../../SITNA/feature/Polygon.js';
 
 //var DrawOptions = {
 //    fillColor: null,
@@ -587,7 +587,7 @@ export default class ThreeDDraw extends EventTarget {
             this.onEntityClick_(event)
         }
         else if (this.vertexRemoveMode) {
-            const pickedVertex = this.#viewer_.scene.pick(event.position);
+            this.#viewer_.scene.pick(event.position);
         }
         else {
             const position = this.#viewer_.scene.globe.pick(this.#viewer_.camera.getPickRay(event.position), this.#viewer_.scene)
