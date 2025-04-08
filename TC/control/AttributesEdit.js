@@ -6,12 +6,14 @@ import Modify from './Modify';
 import Draw from './Draw';
 import Toggle from '../../SITNA/ui/Toggle';
 import Feature from '../../SITNA/feature/Feature';
+import Observer from '../Observer';
+import Controller from '../Controller';
 
 TC.control = TC.control || {};
 
 const elementName = 'sitna-attributes-edit';
 
-const getDataType = (value) => {
+const getDataTypeFromValue = (value) => {
     if (value === null) {
         return;
     }
@@ -21,13 +23,14 @@ const getDataType = (value) => {
     }
     if (type === 'string') {
         // Revisamos casos especiales
-        if (Date.parse(value)) {
-            if (/:/.test(value)) return 'datetime';
-            return 'date';
+        if (Date.parse(value) && !/EPSG/.test(value)) {
+            if (/:/.test(value)) return Consts.dataType.DATETIME;
+            return Consts.dataType.DATE;
         }
         if (/^[0-2]\d:[0-5]\d$/.test(value)) {
-            return 'time';
+            return Consts.dataType.TIME;
         }
+        return Consts.dataType.STRING;
     }
     return type;
 };
@@ -51,6 +54,22 @@ const findAttribute = (attributes, path, equalsPredicate) => {
     }
     return attribute;
 }
+class AttributesEditModel {
+    constructor() {
+        this.featureAttributes = "";
+        this.addItem = "";
+        this.addNewAttribute = "";
+        this.removeAttribute = "";
+        this.selectDataType = "";
+        this.text = "";
+        this.number = "";
+        this.integer = "";
+        this.boolean = "";
+        this.date = "";
+        this.time = "";
+        this.datetime = "";
+    }
+}
 
 class AttributesEdit extends WebComponentControl {
 
@@ -59,7 +78,8 @@ class AttributesEdit extends WebComponentControl {
     #clientControl;
     #clientControlAbortController;
     #selectors;
-    attributeProposal;
+    #attributeProposals = new WeakMap();
+    #newAttributes = new WeakMap();
 
     static PROPOSAL = 'proposal';
 
@@ -82,6 +102,7 @@ class AttributesEdit extends WebComponentControl {
             TEXT_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="text"]`,
             TOGGLE: `.${AttributesEdit.prototype.CLASS}-body > table sitna-toggle`
         }
+        this.model = new AttributesEditModel();
     }
 
     get sealed() {
@@ -106,11 +127,11 @@ class AttributesEdit extends WebComponentControl {
     }
 
     async render(callback) {
-        const renderObject = {
-            attributeProposal: this.attributeProposal
-        };
+        const renderObject = {};
 
         if (this.#feature) {
+            renderObject.attributeProposal = this.#attributeProposals.get(this.#feature);
+            const newAttributes = this.#newAttributes.get(this.#feature);
             let featureData = this.#feature.getData();
             const layer = this.#feature.layer;
             this.#attributeData = [];
@@ -134,8 +155,11 @@ class AttributesEdit extends WebComponentControl {
                     if (Array.isArray(layerMetadata)) {
                         layerMetadataItem = layerMetadata?.find(byName(key, equalsPredicate));
                     }
-                    attributeData.type = layerMetadataItem?.type ?? getDataType(value);
-                    attributeData.optional = layerMetadataItem?.optional;
+                    const newAttributeMetadata = newAttributes?.find((attr) => attr.name === key);
+                    attributeData.type = layerMetadataItem?.type ??
+                        newAttributeMetadata?.type ??
+                        getDataTypeFromValue(value);
+                    attributeData.optional = layerMetadataItem?.optional ?? newAttributeMetadata?.optional;
                     if (attributeData.type === 'object') {
                         attributeData.value = getFeatureMetadata(value, layerMetadataItem?.value, equalsPredicate);
                     }
@@ -191,6 +215,39 @@ class AttributesEdit extends WebComponentControl {
                 return result ?? [];
             };
 
+            const getCommonFeatureMetadata = function (metadata1, metadata2, equalsPredicate) {
+                let result = null;
+                if (Array.isArray(metadata1) && Array.isArray(metadata2)) {
+                    for (const item1 of metadata1) {
+                        const item2 = metadata2.find(byName(item1.name, equalsPredicate));
+                        result ??= [];
+                        if (item2) {
+                            if (item2.multiple !== item1.multiple) {
+                                continue;
+                            }
+                            if (item2.optional !== item1.optional) {
+                                continue;
+                            }
+                            if (item1.type !== item2.type) {
+                                continue;
+                            }
+                            const newItem = { ...item1 };
+                            newItem.value = getCommonFeatureMetadata(item1.value, item2.value, equalsPredicate);
+                            if (newItem.value.length === 0) {
+                                if (item2.value === item1.value) {
+                                    newItem.value = item1.value;
+                                }
+                                else {
+                                    newItem.value = undefined;
+                                }
+                            }
+                            result.push(newItem);
+                        }
+                    }
+                }
+                return result ?? [];
+            };
+
             const getDataFromMetadata = function (metadata) {
                 if (!Array.isArray(metadata)) {
                     return metadata;
@@ -239,18 +296,25 @@ class AttributesEdit extends WebComponentControl {
                                 if (accAttributeMetadata === null) {
                                     return null;
                                 }
-                                return mergeFeatureMetadata(accAttributeMetadata, currentAttributeMetadata);
+                                return getCommonFeatureMetadata(accAttributeMetadata, currentAttributeMetadata);
                             }
                             return currentAttributeMetadata;
                         }, null);
                 };
                 // Para obtener la estructura de atributos primero miramos en todas las entidades de la capa
                 // Si no hay estructura común miramos solamente en las entidades de la misma geometría
-                let featureAttributeData = getCommonAttributeData(featuresToCheck);
-                if (!featureAttributeData) {
-                    featureAttributeData = getCommonAttributeData(featuresToCheck.filter(f => f instanceof this.#feature.constructor));
+                // Si sigue sin haber, quitamos la entidad actual si está vacía (entidad nueva)
+                let featureAttributeData;
+                if (Object.keys(this.#feature.getData()).length) {
+                    featureAttributeData = getCommonAttributeData(featuresToCheck);
+                    if (!featureAttributeData.length) {
+                        featureAttributeData = getCommonAttributeData(featuresToCheck.filter((f) => f instanceof this.#feature.constructor));
+                    }
                 }
-                if (featureAttributeData) {
+                else {
+                    featureAttributeData = getCommonAttributeData(featuresToCheck.filter((f) => f !== this.#feature));
+                }
+                if (featureAttributeData.length) {
                     if (layerAttributeMetadata.length) {
                         const mergeAttributes = function (layerAttributes, featureAttributes) {
                             if (featureAttributes) {
@@ -404,6 +468,8 @@ class AttributesEdit extends WebComponentControl {
             if (Util.isFunction(callback)) {
                 callback();
             }
+            this.controller = new Controller(this.model, new Observer(this));
+            this.updateModel();
         });
     }
 
@@ -437,10 +503,12 @@ class AttributesEdit extends WebComponentControl {
             buffer.insertAdjacentHTML('beforeend', html);
             this.#addUIEventListeners(buffer);
             const tbody = this.querySelector(`${this.#selectors.BODY} > table > tbody`);
-            const anchor = tbody.querySelector('tr:last-of-type');
+            const lastRows = Array.from(tbody.querySelectorAll('tr:last-of-type'));
+            const anchor = lastRows[lastRows.length - 1];
             if (anchor) anchor.insertAdjacentElement('afterend', buffer.firstElementChild);
             else tbody.appendChild(buffer.firstElementChild);
             this.#setAttributeElements();
+            this.controller.add(tbody);
         }
     }
 
@@ -694,7 +762,7 @@ class AttributesEdit extends WebComponentControl {
                     case 'date':
                         // Obtiene el valor yyyy-mm-dd
                         if (value) {
-                            pointer[name] = new Date(value).toISOString().substr(0, 10);
+                            pointer[name] = new Date(value).toISOString().substring(0, 10);
                         }
                         else {
                             pointer[name] = value;
@@ -703,7 +771,7 @@ class AttributesEdit extends WebComponentControl {
                     case 'dateTime':
                         // Obtiene el valor yyyy-mm-ddThh:mm:ss
                         if (value) {
-                            pointer[name] = new Date(value).toISOString().substr(0, 19);
+                            pointer[name] = new Date(value).toISOString().substring(0, 19);
                         }
                         else {
                             pointer[name] = value;
@@ -728,9 +796,10 @@ class AttributesEdit extends WebComponentControl {
     removeFeatureAttribute(path) {
         if (this.#feature) {
             if (path.length) {
-                if (path.length ===1 && path[0] === this.attributeProposal) {
+                const proposal = this.#attributeProposals.get(this.#feature);
+                if (path.length ===1 && path[0] === proposal) {
                     this.removeAttributeElement(path);
-                    this.attributeProposal = null;
+                    this.#attributeProposals.delete(this.#feature);
                     this.addAttributeElement({});
                 }
                 else {
@@ -740,7 +809,7 @@ class AttributesEdit extends WebComponentControl {
                         let featuresToChange = [this.#feature];
                         let warningMessage = 'removeAttribute.confirm';
                         // Revisamos si el atributo está en todas las entidades de la capa
-                        if (layer.features.every((f) => {
+                        if (layer.features.length > 1 && layer.features.every((f) => {
                             let featureData = f.getData();
                             for (const pathElement of path) {
                                 if (Object.prototype.hasOwnProperty.call(featureData, pathElement)) {
@@ -791,6 +860,9 @@ class AttributesEdit extends WebComponentControl {
                                 }
                                 delete featureData[name];
                             });
+                            const newAttributes = this.#newAttributes.get(this.#feature);
+                            const attributeIndex = newAttributes?.findIndex((attr) => attr.name === path[path.length - 1]);
+                            if (attributeIndex >= 0) newAttributes.splice(attributeIndex, 1);
                             this.removeAttributeElement(path);
                             this.#triggerFeatureModify();
                         });
@@ -895,11 +967,13 @@ class AttributesEdit extends WebComponentControl {
                     throw Error(this.getLocaleString('forbiddenAttribute.error', { name: attributeName }));
                 }
             }
-            if (!featureTypeMetadata || attribute?.optional || TC.confirm(this.getLocaleString('tableMetadataExists.warning'))) {
+            if (!featureTypeMetadata || attribute?.optional ||
+                this.#feature.layer.features.length === 1 ||
+                TC.confirm(this.getLocaleString('tableMetadataExists.warning'))) {
                 if (attribute) {
                     type = attribute.type;
                 }
-                this.attributeProposal = proposalInput.value;
+                this.#attributeProposals.set(this.#feature, proposalInput.value);
                 this.newAttributeElement.remove();
                 this.newAttributeElement = null;
                 await this.addAttributeElement({ name: proposalInput.value, type: AttributesEdit.PROPOSAL });
@@ -912,34 +986,56 @@ class AttributesEdit extends WebComponentControl {
 
     async #acceptProposal(type) {
         if (type) {
-            const name = this.attributeProposal;
-            this.attributeProposal = null;
-            this.attributeProposalElement.remove();
-            this.attributeProposalElement = null;
             if (this.#feature) {
+                const name = this.#attributeProposals.get(this.#feature);
+                this.#attributeProposals.delete(this.#feature);
+                let newAttributes;
+                if (!this.#newAttributes.has(this.#feature)) {
+                    newAttributes = [];
+                    this.#newAttributes.set(this.#feature, newAttributes);
+                }
+                newAttributes.push({ name, type, optional: true });
+                this.attributeProposalElement.remove();
+                this.attributeProposalElement = null;
                 const value = type === Consts.dataType.BOOLEAN ? false : null;
+                const newData = { [name]: value };
                 const layer = this.#feature.layer;
                 const featureTypeMetadata = await this.#getFeatureTypeMetadata(layer);
                 if (featureTypeMetadata) {
                     const lcName = name.toLowerCase();
-                    const existingAttr = featureTypeMetadata.attributes.find((attr) => attr.name.toLowerCase() === lcName);
+                    const existingAttr = featureTypeMetadata?.attributes.find((attr) => attr.name.toLowerCase() === lcName);
                     if (!existingAttr) {
                         featureTypeMetadata.attributes.push({ name, type, isId: false, optional: true });
                         layer.setFeatureTypeMetadata(featureTypeMetadata);
                     }
-                    layer
-                        .features
-                        .forEach((f) => {
-                            f.setData({ [name]: value });
-                        });
+                    layer.features.forEach((f) => f.setData({ ...newData }));
                 }
                 else {
-                    this.#feature.setData({ [name]: value });
+                    this.#feature.setData(newData);
                 }
+                await this.addAttributeElement({ name, type });
+                await this.addAttributeElement({});
             }
-            await this.addAttributeElement({ name, type });
-            await this.addAttributeElement({});
         }
+    }
+    updateModel() {
+        const self = this;
+        self.model.featureAttributes = self.getLocaleString("featureAttributes");
+        self.model.addItem = self.getLocaleString("featureAttributes");
+        self.model.removeAttribute = self.getLocaleString("removeAttribute");
+        self.model.selectDataType = self.getLocaleString("selectDataType");
+        self.model.text = self.getLocaleString("text");
+        self.model.number = self.getLocaleString("number");
+        self.model.integer = self.getLocaleString("integer");
+        self.model.boolean = self.getLocaleString("boolean");
+        self.model.date = self.getLocaleString("date");
+        self.model.time = self.getLocaleString("time");
+        self.model.datetime = self.getLocaleString("datetime");
+        self.model.addNewAttribute = self.getLocaleString("addNewAttribute");
+    }
+    async updateLanguage() {
+        const self = this;
+        self.updateModel();
     }
 }
 
