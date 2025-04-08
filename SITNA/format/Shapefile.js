@@ -1,4 +1,4 @@
-﻿import BinaryFormat, { FieldNameError } from './BinaryFormat.js';
+﻿import BinaryFormat, { FieldNameError, TimeNotSupportedError } from './BinaryFormat.js';
 import Consts from '../../TC/Consts.js';
 import Geometry from '../../TC/Geometry.js';
 import Point from '../feature/Point.js';
@@ -116,6 +116,9 @@ const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
                 optional: rh.dataType !== '+',
             })),
         equals: genericEquals,
+        originalMetadata: {
+            encoding: cpg
+        },
     };
 
     return (shapes instanceof Array ? shapes : [shapes]).map((collection) => {
@@ -144,19 +147,24 @@ const importFile = async function ({ fileName, shp, dbf, prj, str, cst, cpg }) {
 };
 
 const exportFeatures = async function (features, options = {}) {
-    const defaultEncoding = "ISO-8859-1";
     //generar shape
+
+    let encoding = defaultEncoding;
 
     const featuresToExport = features.filter(f => !f.options.noExport);
 
     //agrupar por capa
-    const layerIds = featuresToExport.reduce(function (rv, feature) {
+    const featuresByLayerId = featuresToExport.reduce(function (rv, feature) {
         var id = feature.id.substr(0, feature.id.lastIndexOf("."));
         //si el id no tiene parte numérica intentamos agrupar por otro método
-        if (!id && feature.folders && feature.folders.length)
-            id = feature.folders[feature.folders.length - 1];
-        if (!id && feature.layer && feature.layer.title)
-            id = feature.layer.title.substr(0, feature.layer.title.lastIndexOf("."));
+        if (!id.length) {
+            if (feature.folders?.length) {
+                id = feature.folders[feature.folders.length - 1];
+            }
+            if (feature.layer?.title) {
+                id = feature.layer.title.substr(0, feature.layer.title.lastIndexOf("."));
+            }
+        }
         //var id = feature.layer? (typeof(feature.layer)==="string"?feature.layer:feature.layer.id) :feature.id.substr(0, feature.id.lastIndexOf("."));
         (rv[id] = rv[id] || []).push(feature);
         return rv;
@@ -196,9 +204,11 @@ const exportFeatures = async function (features, options = {}) {
     ]);
 
     let layerId;
-    for (layerId in layerIds) {
+    for (layerId in featuresByLayerId) {
+        const features = featuresByLayerId[layerId];
+
         //agrupar las features por tipos
-        const groups = layerIds[layerId].reduce(fillGroupMap, new Map());
+        const groups = features.reduce(fillGroupMap, new Map());
         for (let [geometryType, featureList] of groups.entries()) {
 
             if (!options.adaptNames) {
@@ -211,156 +221,183 @@ const exportFeatures = async function (features, options = {}) {
                 }
             }
 
-            const firstFeature = featureList[0] ?? {};
-            const featureTypeMetadata = await firstFeature.layer?.getFeatureTypeMetadata();
-            const equalsPredicate = featureTypeMetadata?.equals ?? genericEquals;
+            const metadataCollection = await Promise.all(featureList.map((f) => f.layer?.getFeatureTypeMetadata()));
+            const metadataGroups = {};
+            for (let i = 0; i < metadataCollection.length; i++) {
+                let fMetadata = metadataCollection[i];
+                if (typeof fMetadata === 'function') {
+                    fMetadata = metadataCollection[i] = fMetadata(featureList[i]);
+                }
+                const name = fMetadata?.name ?? '_';
+                metadataGroups[name] ??= { metadata: fMetadata, features: [] };
+                metadataGroups[name].features.push(featureList[i]);
+            }
 
-            const dbfMetadata = featureTypeMetadata
-                ?.attributes
-                .filter((attr) => !attr.isId)
-                .filter((attr) => featureList.some((feat) => Object.keys(feat.data).some((key) => equalsPredicate(key, attr.name))))
-                .map((attr) => {
-                    const name = attr.name;
-                    if (featureTypeMetadata.origin === Consts.format.SHAPEFILE && attr.originalType) {
+            const groupEntries = Object.entries(metadataGroups);
+            for (const [groupName, group] of groupEntries) {
+                const featureTypeMetadata = group.metadata;
+                const groupFeatures = group.features;
+
+                const equalsPredicate = featureTypeMetadata?.equals ?? genericEquals;
+                encoding = featureTypeMetadata?.originalMetadata?.encoding ?? defaultEncoding;
+
+                const dbfMetadata = featureTypeMetadata
+                    ?.attributes
+                    ?.filter((attr) => !attr.isId)
+                    .filter((attr) => groupFeatures.some((feat) => Object.keys(feat.data).some((key) => equalsPredicate(key, attr.name))))
+                    .map((attr) => {
+                        if (attr.type === Consts.dataType.TIME && !options.acceptTimeLoss) {
+                            throw new TimeNotSupportedError();
+                        }
+                        const name = attr.name;
+                        if (featureTypeMetadata.origin === Consts.format.SHAPEFILE && attr.originalType) {
+                            return {
+                                name,
+                                type: attr.originalType.dataType,
+                                size: attr.originalType.length - attr.originalType.decimalCount,
+                                decimalCount: attr.originalType.decimalCount
+                            };
+                        }
+                        const type = dbfDataTypes.get(attr.type) || dbfDataType.CHARACTER;
+                        let size;
+                        switch (type) {
+                            case dbfDataType.CHARACTER:
+                                size = 254;
+                                break;
+                            case dbfDataType.LOGICAL:
+                                size = 1;
+                                break;
+                            case dbfDataType.DATE:
+                            case dbfDataType.TIMESTAMP:
+                                size = 8;
+                                break;
+                            case dbfDataType.NUMERIC:
+                            case dbfDataType.FLOAT:
+                                size = 18;
+                                break;
+                        }
                         return {
                             name,
-                            type: attr.originalType.dataType,
-                            size: attr.originalType.length - attr.originalType.decimalCount,
-                            decimalCount: attr.originalType.decimalCount
+                            type,
+                            size
                         };
-                    }
-                    const type = dbfDataTypes.get(attr.type) || dbfDataType.CHARACTER;
-                    let size;
-                    switch (type) {
-                        case dbfDataType.CHARACTER:
-                            size = 254;
-                            break;
-                        case dbfDataType.LOGICAL:
-                            size = 1;
-                            break;
-                        case dbfDataType.DATE:
-                        case dbfDataType.TIMESTAMP:
-                            size = 8;
-                            break;
-                        case dbfDataType.NUMERIC:
-                        case dbfDataType.FLOAT:
-                            size = 18;
-                            break;
-                    }
-                    return {
-                        name,
-                        type,
-                        size
-                    };
-                });
+                    });
 
-            arrPromises.push(new Promise(function (resolve) {
-                const data = featureList.map(function (feat) {
-                    const data = {};
-                    for (var key in feat.data) {
-                        const val = feat.data[key];
-                        data[key] = typeof val === 'string' ?
-                            val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
-                            val;
-                    }
-                    if (feat.getStyle().label && !feat.data.name) {
-                        data.name = feat.getStyle().label;
-                    }
-                    return data;
-                });
-                const geometries = featureList.map(function (feat) {
-                    let geometry = feat.geometry;
-                    // Para que guarde bien los agujeros, hay que guardar los anillos en sentido antihorario
-                    const reverseRings = (polygon) => {
-                        const result = [];
-                        result.push(polygon[0]);
-                        for (var i = 1; i < polygon.length; i++) {
-                            let reversedRing;
-                            if (Geometry.getArea(polygon[i]) > 0) reversedRing = polygon[i].reverse();
-                            else reversedRing = polygon[i];
-                            result.push(reversedRing);
+                arrPromises.push(new Promise(function (resolve) {
+                    const data = groupFeatures.map(function (feat) {
+                        const data = {};
+                        for (var key in feat.data) {
+                            const val = feat.data[key];
+                            data[key] = typeof val === 'string' ?
+                                val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
+                                val;
                         }
-                        return result;
-                    }
-                    //Al formato shapefile hay que pasarle una colección de anillos/líneas, por tanto hay que 
-                    // meter la geometría de Polyline en un array
-                    if (feat instanceof Polyline) {
-                        return [geometry];
-                    }
-                    if (feat instanceof Polygon) {
-                        return reverseRings(geometry);
-                    }
-                    if (feat instanceof MultiPolygon) {
-                        geometry = [];
-                        for (const pol of feat.geometry) {
-                            geometry.push(reverseRings(pol));
+                        if (feat.getStyle().label && !feat.data.name) {
+                            data.name = feat.getStyle().label;
                         }
-                    }
-                    return geometry;
-                });
+                        return data;
+                    });
+                    const geometries = groupFeatures.map(function (feat) {
+                        let geometry = feat.geometry;
+                        // Para que guarde bien los agujeros, hay que guardar los anillos en sentido antihorario
+                        const reverseRings = (polygon) => {
+                            const result = [];
+                            result.push(polygon[0]);
+                            for (var i = 1; i < polygon.length; i++) {
+                                let reversedRing;
+                                if (Geometry.getArea(polygon[i]) > 0) reversedRing = polygon[i].reverse();
+                                else reversedRing = polygon[i];
+                                result.push(reversedRing);
+                            }
+                            return result;
+                        }
+                        //Al formato shapefile hay que pasarle una colección de anillos/líneas, por tanto hay que 
+                        // meter la geometría de Polyline en un array
+                        if (feat instanceof Polyline) {
+                            return [geometry];
+                        }
+                        if (feat instanceof Polygon) {
+                            return reverseRings(geometry);
+                        }
+                        if (feat instanceof MultiPolygon) {
+                            geometry = [];
+                            for (const pol of feat.geometry) {
+                                geometry.push(reverseRings(pol));
+                            }
+                        }
+                        return geometry;
+                    });
 
-                const fileName = layerId + (groups.size > 1 ? '_' + geometryType : '');
-                //generamos el un shape mas sus allegados por grupo
-                if (dbfMetadata) {
-                    // Convertimos fechas a formato YYYYMMDD
-                    for (const property of dbfMetadata) {
-                        if (property.type === dbfDataType.DATE) {
-                            for (const dataElm of data) {
-                                const val = dataElm[property.name];
-                                if (val) {
-                                    const date = new Date(val);
-                                    dataElm[property.name] = date.getFullYear() +
-                                        (date.getMonth() + 1).toString().padStart(2, '0') +
-                                        date.getDate().toString().padStart(2, '0');
-                                }
-                                else {
-                                    dataElm[property.name] = ''.padEnd(8, '');
+                    const fileName = layerId + (groups.size > 1 || groupEntries.length > 1 ? '_' + groupName : '');
+                    //generamos el un shape mas sus allegados por grupo
+                    if (dbfMetadata) {
+                        // Convertimos fechas a formato YYYYMMDD
+                        for (const property of dbfMetadata) {
+                            if (property.type === dbfDataType.DATE) {
+                                for (const dataElm of data) {
+                                    const val = dataElm[property.name];
+                                    if (val) {
+                                        const date = new Date(val);
+                                        dataElm[property.name] = date.getFullYear() +
+                                            (date.getMonth() + 1).toString().padStart(2, '0') +
+                                            date.getDate().toString().padStart(2, '0');
+                                    }
+                                    else {
+                                        dataElm[property.name] = ''.padEnd(8, '');
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Cambiamos el nombre de las propiedades al de los metadatos
-                    // Evitamos así los problemas de prefijos de GML
-                    for (const elmData of data) {
-                        for (const prop in elmData) {
-                            const val = elmData[prop];
-                            const metadataProp = dbfMetadata.find((mdProp) => featureTypeMetadata.equals(mdProp.name, prop));
-                            if (metadataProp && metadataProp.name !== prop) {
-                                delete elmData[prop];
-                                elmData[metadataProp.name] = val;
+                        // Convertimos el tipo de datos 'F' a 'N' porque no es compatible con dBase III
+                        for (const property of dbfMetadata) {
+                            if (property.type === dbfDataType.FLOAT) {
+                                property.type = dbfDataType.NUMERIC;
                             }
                         }
-                    }
 
-                    // Eliminamos propiedades complejas (p.e. INSPIRE)
-                    for (const elmData of data) {
-                        for (const prop in elmData) {
-                            const val = elmData[prop];
-                            if (val && typeof val === 'object') {
-                                elmData[prop] = '';
+                        // Cambiamos el nombre de las propiedades al de los metadatos
+                        // Evitamos así los problemas de prefijos de GML
+                        for (const elmData of data) {
+                            for (const prop in elmData) {
+                                const val = elmData[prop];
+                                const metadataProp = dbfMetadata.find((mdProp) => equalsPredicate(mdProp.name, prop));
+                                if (metadataProp && metadataProp.name !== prop) {
+                                    delete elmData[prop];
+                                    elmData[metadataProp.name] = val;
+                                }
                             }
                         }
-                    }
 
-                    // No pasamos los atributos a shpWrite porque no tiene en cuenta metadatos, usamos dbf para ello
-                    shpWrite.write([]
-                        , geometryType
-                        , geometries
-                        , function (_empty, content) {
-                            content.dbf = dbf.structure(data, dbfMetadata);
-                            resolve({ fileName, content });
-                        });
-                }
-                else {
-                    shpWrite.write(data
-                        , geometryType
-                        , geometries
-                        , function (_empty, content) {
-                            resolve({ fileName, content });
-                        });
-                }
-            }));
+                        // Eliminamos propiedades complejas (p.e. INSPIRE)
+                        for (const elmData of data) {
+                            for (const prop in elmData) {
+                                const val = elmData[prop];
+                                if (val && typeof val === 'object') {
+                                    elmData[prop] = '';
+                                }
+                            }
+                        }
+
+                        // No pasamos los atributos a shpWrite porque no tiene en cuenta metadatos, usamos dbf para ello
+                        shpWrite.write([]
+                            , geometryType
+                            , geometries
+                            , function (_empty, content) {
+                                content.dbf = dbf.structure(data, dbfMetadata);
+                                resolve({ fileName, content });
+                            });
+                    }
+                    else {
+                        shpWrite.write(data
+                            , geometryType
+                            , geometries
+                            , function (_empty, content) {
+                                resolve({ fileName, content });
+                            });
+                    }
+                }));
+            }
         }
     }
 
@@ -377,8 +414,8 @@ const exportFeatures = async function (features, options = {}) {
         zip.file(resolve.fileName + ".shx", resolve.content.shx.buffer);
         zip.file(resolve.fileName + ".dbf", resolve.content.dbf.buffer);
         zip.file(resolve.fileName + ".prj", proj.wkt);
-        zip.file(resolve.fileName + ".cst", defaultEncoding);
-        zip.file(resolve.fileName + ".cpg", defaultEncoding);
+        zip.file(resolve.fileName + ".cst", encoding);
+        zip.file(resolve.fileName + ".cpg", encoding);
     });
     return await zip.generateAsync({ type: "blob" });
 };
@@ -462,7 +499,8 @@ class Shapefile extends BinaryFormat {
     async writeFeatures(features, options = {}) {
         return await exportFeatures(features.map((f) => f._wrap.parent), {
             crs: options.featureProjection,
-            adaptNames: options.adaptNames
+            adaptNames: options.adaptNames,
+            acceptTimeLoss: options.acceptTimeLoss,
         });
     }
 
