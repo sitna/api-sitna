@@ -273,7 +273,7 @@ class Attribution extends Control {
         self.model.attributionGithubTooltip = self.getLocaleString("attributionGithubTooltip");
         self.model.others = self.getLocaleString("others");
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
     }
