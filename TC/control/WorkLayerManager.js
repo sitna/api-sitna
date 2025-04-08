@@ -632,21 +632,27 @@ class WorkLayerManager extends TOC {
                     layer._title = layerTitle = layerTitle + " (" + (index + 1) + ")";
                 }
                 const prevLi = self.div.querySelector("ul li[data-layer-id='" + layer.id + "']");
-                if (layer.features?.length) {
-                    if (layer.features.some(f => f.getPath().length)) {
-                        const mainTitleElm = prevLi.querySelector(".tc-ctl-wlm-lyr");
-                        mainTitleElm.innerHTML = layerTitle;
-                        mainTitleElm.title = mainTitleElm.textContent;
-                        // Obtenemos las rutas de todas las entidades y eliminamos los duplicados
-                        const uniquePaths = [...new Set(layer.features.map(f => f.getPath().join(' &rsaquo; ')))];
-                        prevLi.querySelector(".tc-ctl-wlm-path").innerHTML = uniquePaths.join(' &bull; ');
+                if (prevLi) {
+                    const mainTitleElm = prevLi.querySelector(`.${self.CLASS}-lyr`);
+                    mainTitleElm.textContent = layer._title;
+                    mainTitleElm.title = layer._title;
+                    const secTitleElm = prevLi.querySelector(`.${self.CLASS}-path`);
+                    if (layer.features?.length) {
+                        if (layer.features.some(f => f.getPath().length)) {
+                            //const mainTitleElm = prevLi.querySelector(".tc-ctl-wlm-lyr");
+                            //mainTitleElm.innerHTML = layerTitle;
+                            //mainTitleElm.title = mainTitleElm.textContent;
+                            // Obtenemos las rutas de todas las entidades y eliminamos los duplicados
+                            const uniquePaths = [...new Set(layer.features.map(f => f.getPath().join(' &rsaquo; ')))];
+                            secTitleElm.innerHTML = uniquePaths.join(' &bull; ');
+                        }
+                        else {
+                            secTitleElm.innerHTML = layerTitle;
+                            secTitleElm.title = secTitleElm.textContent;
+                        }
                     }
-                    else {
-                        const secTitleElm = prevLi.querySelector(".tc-ctl-wlm-path");
-                        secTitleElm.innerHTML = layerTitle;
-                        secTitleElm.title = secTitleElm.textContent;
-                    }
-                }                
+                }
+                                
             }
         }
     }
@@ -786,7 +792,7 @@ class WorkLayerManager extends TOC {
         self.groupModel.singleLayer = self.getLocaleString("singleLayer");
         self.groupModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
     }
-    async changeLanguage() {
+    async updateLanguage() {
         const self = this;
         self.updateModel();
         if (self.map ?.magnifier ?.model){
