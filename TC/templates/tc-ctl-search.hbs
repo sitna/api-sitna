@@ -1,7 +1,12 @@
 <h2>[[search1]]</h2>
 <div class="tc-ctl-search-content">
-    <input type="search" class="tc-ctl-search-txt" placeholder="[[searchPlaceholder]]" title="[[searchInstructions]]" />
-    <sitna-button variant="minimal" title="[[share]]" class="tc-ctl-search-share-btn tc-hidden">[[share]]</sitna-button>
-    <sitna-button variant="minimal" title="[[searchInstructions]]" class="tc-ctl-search-btn">[[search2]]</sitna-button>
-    <ul class="tc-ctl-search-list tc-hidden"></ul>
+    <div class="tc-ctl-search-box">
+        <input type="search" class="tc-ctl-search-txt" placeholder="[[searchPlaceholder]]" title="[[searchInstructions]]">
+        <sitna-button variant="minimal" title="[[share]]" class="tc-ctl-search-share-btn tc-hidden">[[share]]</sitna-button>
+        <sitna-button variant="minimal" title="[[searchInstructions]]" class="tc-ctl-search-btn">[[search2]]</sitna-button>
+    </div>
+    <div class="tc-ctl-search-list-container" tabindex="-1">
+        <ul class="tc-ctl-search-examples tc-hidden"></ul>
+        <ul class="tc-ctl-search-results tc-hidden"></ul>
+    </div>
 </div>

@@ -1154,19 +1154,19 @@
  * @property {string} label - Texto descriptivo del resultado.
  */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import { Defaults } from '../Cfg';
-import Control from '../Control';
-import Feature from '../../SITNA/feature/Feature';
-import Vector from '../../SITNA/layer/Vector';
-import infoShare from './infoShare';
-import filter from '../filter';
-import autocomplete from '../ui/autocomplete';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import { Defaults } from '../Cfg.js';
+import Control from '../Control.js';
+import Feature from '../../SITNA/feature/Feature.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import infoShare from './infoShare.js';
+import filter from '../filter.js';
+import autocomplete from '../ui/autocomplete.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 TC.filter = filter;
@@ -1244,7 +1244,7 @@ class SearchType {
                     featurePrefix: type.featurePrefix,
                     featureType: type.getFeatureTypes(),
                     maxFeatures: 3000,
-                    properties: type.filter.getGoToFilter(id),
+                    filter: type.filter.getGoToFilter(id),
                     outputFormat: type.outputFormat,
                     styles: type.styles
                 };
@@ -1812,11 +1812,11 @@ class SearchType {
         }
 
         if (label && color) {
-            var liHTML = '<li header><span class="tc-header">' + label + '</span>';
+            var liHTML = '<li class="tc-header"><span class="tc-header">' + label + '</span>';
 
             liHTML += color.map(function (elm) {
                 if (elm.color) {
-                    return '<span class="tc-header-color" title="' + elm.title + '" style="color: ' + elm.color + ';"></span>';
+                    return '<span class="tc-header-color" title="' + elm.title + '" style="background-color: ' + elm.color + ';"></span>';
                 }
             }).join('') + '</li>';
 
@@ -1934,6 +1934,29 @@ class SearchType {
         });
 
         return results;
+    }
+
+    getSuggestionListExamplesElement() {
+        let result = null;
+        if (this.examples) {
+            result = document.createElement('li');
+            result.dataset.role = this.typeName;
+            result.classList.add(this.parent.CLASS + '-examples');
+            result.textContent = this.parent.getLocaleString('examples') + ': ';
+            for (const example of this.examples) {
+                const button = document.createElement('sitna-button');
+                button.classList.add(this.parent.CLASS + '-example');
+                button.textContent = example;
+                button.addEventListener(Consts.event.CLICK, () => {
+                    this.parent.resultsList.replaceChildren();
+                    this.parent.textInput.value = example;
+                    this.parent.hideExamples();
+                    this.parent.button.dispatchEvent(new Event(Consts.event.CLICK));
+                });
+                result.appendChild(button);
+            }
+        }
+        return result;
     }
 
     parseFeatures(data) {
@@ -2064,7 +2087,9 @@ class Search extends Control {
     POL_LABEL = 'Pol: ';
     PAR_LABEL = 'Par: ';
 
-    UTMX_LEN = 7;
+    UTMX_LEN = 6;
+    UTMX_MIN_LEN = 6;
+    UTMX_MAX_LEN = 7;
     UTMY_LEN = 7;
 
     availableSearchTypes = {};
@@ -2415,7 +2440,7 @@ class Search extends Control {
 
         this.mimimumPatternLength = this.options.minimumPatternLength ?? 3;
 
-        this.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "properties", "outputFormat"];
+        this.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "filter", "outputFormat"];
 
         this.queryableFeatures = this.options.queryableFeatures || false;
 
@@ -2684,7 +2709,8 @@ class Search extends Control {
             self.textInput.setAttribute('placeHolder', self.options.placeHolder.trim());
         }
 
-        self.resultsList = self.div.querySelector('.' + self.CLASS + '-list');
+        self.examplesList = self.div.querySelector('.' + self.CLASS + '-examples');
+        self.resultsList = self.div.querySelector('.' + self.CLASS + '-results');
         self.button = self.div.querySelector('.' + self.CLASS + '-btn');
         if (self.options.instructions) {
             self.textInput.setAttribute('title', self.options.instructions.trim());
@@ -2794,7 +2820,7 @@ class Search extends Control {
             self.search(self.textInput.value, function (list) {
                 if (list.length === 1) {
                     self.textInput.value = list[0].label;
-                    self.#goToResult(list[0].id, self.resultsList.querySelector('li:not([header])').dataset.role);
+                    self.#goToResult(list[0].id, self.resultsList.querySelector('li:not(.tc-header)').dataset.role);
                     self.resultsList.classList.add(Consts.classes.HIDDEN);
                 }
                 else if (list.length === 0) {
@@ -2805,22 +2831,26 @@ class Search extends Control {
 
         // desde keypress y desde la lupa
         const searchAgain = function () {
-            self.textInput.value = self.resultsList.label || self.resultsList.querySelector('li:not([header]) > a > span').textContent;
+            self.textInput.value = self.resultsList.label || self.resultsList.querySelector('li:not(.tc-header) > a > span').textContent;
             self.lastPattern = self.textInput.value;
-            self.#goToResult(self.resultsList.id || unescape(self.resultsList.querySelector('li:not([header]) > a').getAttribute('href')).substring(1), self.resultsList.querySelector('li:not([header])').dataset.role);
+            self.#goToResult(self.resultsList.id || unescape(self.resultsList.querySelector('li:not(.tc-header) > a').getAttribute('href')).substring(1), self.resultsList.querySelector('li:not([header])').dataset.role);
             self.resultsList.classList.add(Consts.classes.HIDDEN);
         };
         self.button.addEventListener(Consts.event.CLICK, function () {
             self.getLayer().then(function (l) {
-                if (self.resultsList.querySelectorAll('li > a:not(.tc-ctl-search-li-loading):not(.tc-ctl-search-li-empty)').length > 1) { }
-                else if (l.features.length > 0) {
-                    l.map.zoomToFeatures(l.features);
-                }
-                else if (self.resultsList.querySelectorAll('li > a:not(.tc-ctl-search-li-loading):not(.tc-ctl-search-li-empty)').length === 1) {
-                    searchAgain();
-                }
-                else {
-                    self.textInput.dispatchEvent(new Event("keyup"));
+                const resultElements = self.resultsList.querySelectorAll('li > a:not(.tc-ctl-search-li-loading):not(.tc-ctl-search-li-empty)');
+                if (resultElements.length <= 1) {
+                    if (l.features.length > 0) {
+                        l.map.zoomToFeatures(l.features);
+                    }
+                    else {
+                        if (resultElements.length === 1) {
+                            searchAgain();
+                        }
+                        else {
+                            self.textInput.dispatchEvent(new Event("keyup"));
+                        }
+                    }
                 }
             });
         }, { passive: true, signal: self.controller.signal });
@@ -2833,7 +2863,7 @@ class Search extends Control {
         }), { passive: true, signal: self.controller.signal });
 
         self.textInput.addEventListener('keypress', function (e) {
-            if (e.which == 13) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -2847,6 +2877,18 @@ class Search extends Control {
                 return false;
             }
         }, { signal: self.controller.signal });
+        self.textInput.addEventListener('keyup', function (e) {
+            switch (e.key) {
+                case 'Clear':
+                case 'Delete':
+                case 'Backspace':
+                    if (self.textInput.value.length === 0) {
+                        self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
+                        self.showExamples();
+                        search();
+                    }
+            }
+        }, { signal: self.controller.signal });
         self.textInput.addEventListener("search", function () {
             if (self.textInput.value.length === 0) {
                 delete self.toShare;
@@ -2858,10 +2900,25 @@ class Search extends Control {
         self.textInput.addEventListener("input", function () {
             if (self.textInput.value.length === 0) {
                 self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
-                self.resultsList.classList.add(Consts.classes.HIDDEN);
+                self.showExamples();
                 search();
             }
+            else {
+                self.hideExamples();
+            }
         }, { signal: self.controller.signal });
+        const onfocus = () => {
+            if (self.textInput.value.length === 0) self.showExamples();
+        };
+        const onblur = (e) => {
+            if (!self.div.contains(e.relatedTarget) && e.relatedTarget !== self.textInput) {
+                self.hideExamples();
+            }
+        };
+        self.textInput.addEventListener("focus", onfocus, { signal: self.controller.signal });
+        self.textInput.addEventListener("focusin", onfocus, { signal: self.controller.signal });
+        self.textInput.addEventListener("focusout", onblur, { signal: self.controller.signal });
+        self.textInput.addEventListener("blur", onblur, { signal: self.controller.signal });
         self.textInput.addEventListener("targetCleared.autocomplete", function () {
             self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
             self.resultsList.classList.add(Consts.classes.HIDDEN);
@@ -2871,6 +2928,9 @@ class Search extends Control {
                 self.resultsList.classList.remove(Consts.classes.HIDDEN);
             }
         }, { signal: self.controller.signal });
+
+        self.examplesList.addEventListener("focusout", onblur, { signal: self.controller.signal });
+        self.examplesList.addEventListener("blur", onblur, { signal: self.controller.signal });
 
         const getNextSibling = function (elem, selector) {
             // Get the next sibling element
@@ -2902,15 +2962,15 @@ class Search extends Control {
         const onKeydown = function (e) {
             if (!e.ctrlKey && !e.altKey && !e.shiftKey) {
                 if (e.keyCode === 40) { // down arrow
-                    if (self.textInput == document.activeElement && self.resultsList.querySelector('li:not([header]) a')) {
+                    if (self.textInput == document.activeElement && self.resultsList.querySelector('li:not(.tc-header) a')) {
                         // Scenario 1: We're focused on the search input; move down to the first li
-                        self.resultsList.querySelector('li:not([header]) a').focus();
-                    } else if (self.resultsList.querySelector('li:not([header]):last-child a') === document.activeElement) { //} else if (self.resultsList.querySelector('li:not([header]):last a').is(':focus')) {
+                        self.resultsList.querySelector('li:not(.tc-header) a').focus();
+                    } else if (self.resultsList.querySelector('li:not(.tc-header):last-child a') === document.activeElement) { //} else if (self.resultsList.querySelector('li:not([header]):last a').is(':focus')) {
                         // Scenario 2: We're focused on the last li; move up to search input
                         self.textInput.focus();
                     } else {
                         // Scenario 3: We're in the list but not on the last element, simply move down
-                        getNextSibling(document.activeElement.parentElement, 'li:not([header])')
+                        getNextSibling(document.activeElement.parentElement, 'li:not(.tc-header)')
                             .querySelector('a').focus();
                     }
                     e.preventDefault(); // Stop page from scrolling
@@ -2918,12 +2978,12 @@ class Search extends Control {
                 } else if (e.keyCode === 38) { // up arrow
                     if (self.textInput == document.activeElement) {
                         // Scenario 1: We're focused on the search input; move down to the last li
-                        self.resultsList.querySelector('li:not([header]):last-child a').focus();
-                    } else if (document.activeElement == self.resultsList.querySelector('li:not([header]) a')) {
-                        self.resultsList.querySelector('li:not([header]):last-child a').focus();
+                        self.resultsList.querySelector('li:not(.tc-header):last-child a').focus();
+                    } else if (document.activeElement == self.resultsList.querySelector('li:not(.tc-header) a')) {
+                        self.resultsList.querySelector('li:not(.tc-header):last-child a').focus();
                     } else {
                         // Scenario 3: We're in the list but not on the first element, simply move up
-                        getPreviousSibling(document.activeElement.parentElement, 'li:not([header])')
+                        getPreviousSibling(document.activeElement.parentElement, 'li:not(.tc-header)')
                             .querySelector('a').focus();
                     }
                     e.preventDefault(); // Stop page from scrolling
@@ -2935,6 +2995,24 @@ class Search extends Control {
 
         self.textInput.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
         self.resultsList.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
+    }
+
+    showExamples() {
+        this.examplesList.replaceChildren();
+        const searchTypesWithExamples = this
+            .allowedSearchTypes
+            .filter((type) => type.examples)
+            .sort((a, b) => b.searchWeight - a.searchWeight);
+        const hasExamples = searchTypesWithExamples.length > 0;
+        for (const searchType of searchTypesWithExamples) {
+            this.examplesList.insertAdjacentHTML('beforeend', searchType.getSuggestionListHeader());
+            this.examplesList.insertAdjacentElement('beforeend', searchType.getSuggestionListExamplesElement());
+        }
+        this.examplesList.classList.toggle(Consts.classes.HIDDEN, !hasExamples);
+    }
+
+    hideExamples() {
+        this.examplesList.classList.add(Consts.classes.HIDDEN);
     }
 
     #loadAvailableSearchTypes() {
@@ -3020,7 +3098,8 @@ class Search extends Control {
             searchFunction: self.getCadastralRef,
             queryFactory: self.getCadastralRefQuery,
             goToIdFormat: self.MUN + '{0}' + self.POL + '{1}' + self.PAR + '{2}',
-            idPropertiesIdentifier: '#'
+            idPropertiesIdentifier: '#',
+            examples: ['olite, 16, 1934', '191, 16, 1934'],
         };
 
         self.availableSearchTypes[Consts.searchType.COORDINATES] = {
@@ -3032,7 +3111,15 @@ class Search extends Control {
                 return {
                     labelKey: self.availableSearchTypes[Consts.searchType.COORDINATES].labelKey || self.getLocaleString('search.list.coordinates')
                 };
-            }
+            },
+            examples: [
+                '42,21022 -1,51577',
+                '42,21022, -1,51577',
+                '42.21022 -1.51577',
+                '42.21022, -1.51577',
+                '622513 4674183',
+                '622513, 4674183',
+            ],
         };
 
         self.availableSearchTypes[Consts.searchType.MUNICIPALITY] = {
@@ -3067,7 +3154,8 @@ class Search extends Control {
                 }
             ],
             searchFunction: self.getStringPattern.bind(this, [Consts.searchType.MUNICIPALITY]),
-            stringPatternToCheck: self.stringPatternValidators.s_or_t
+            stringPatternToCheck: self.stringPatternValidators.s_or_t,
+            examples: ['egüés', 'eguesibar'],
         };
 
         //self.availableSearchTypes[Consts.searchType.TOWN] = {
@@ -3207,7 +3295,13 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.STREET])
+            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.STREET]),
+            examples: [
+                'roncesvalles, burguete',
+                'orreaga, auritz',
+                'burguete, roncesvalles',
+                'auritz, orreaga',
+            ],
         };
 
         self.availableSearchTypes[Consts.searchType.POSTALADDRESS] = {
@@ -3246,7 +3340,15 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.POSTALADDRESS])
+            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.POSTALADDRESS]),
+            examples: [
+                'roncesvalles, burguete, 12',
+                'orreaga, auritz, 12',
+                'roncesvalles, 12, burguete',
+                'orreaga, 12, auritz',
+                'burguete, 12, roncesvalles',
+                'auritz, 12, orreaga',
+            ],
         };
 
         self.availableSearchTypes[Consts.searchType.TOWN] = {
@@ -3283,7 +3385,11 @@ class Search extends Control {
                 }
             ],
             searchFunction: self.getStringPattern.bind(this, [Consts.searchType.TOWN]),
-            stringPatternToCheck: self.stringPatternValidators.s_or_t
+            stringPatternToCheck: self.stringPatternValidators.s_or_t,
+            examples: [
+                'hiriberri',
+                'villanueva',
+            ],
         };
 
         self.availableSearchTypes[Consts.searchType.PLACENAME] = {
@@ -3453,7 +3559,11 @@ class Search extends Control {
 
                     return [_pattern];
                 }
-            }
+            },
+            examples: [
+                'n121a',
+                'n-121-a',
+            ],
         };
 
         self.availableSearchTypes[Consts.searchType.ROADMILESTONE] = {
@@ -3508,7 +3618,13 @@ class Search extends Control {
 
                     return [_pattern, match[5].trim()];
                 }
-            }
+            },
+            examples: [
+                'n121 3',
+                'n-121 3',
+                'n121, 3',
+                'n-121, 3',
+            ],
         };
 
         return self;
@@ -3764,83 +3880,88 @@ class Search extends Control {
         return TC.cache.search.municipalities;
     }
 
-    getCoordinates(pattern) {
+    async getCoordinates(pattern) {
         const self = this;
-        return new Promise(function (resolve, reject) {
-            var match = pattern.match(new RegExp('^' + self.UTMX_LABEL.trim().toLowerCase() + '*\\s*([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim().toLowerCase() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
-            if (match) {
-                pattern = match[1] + ' ' + match[2];
-            }
+        const verboseUtm = new RegExp('^' + self.UTMX_LABEL.trim().toLowerCase() +
+            '*\\s*([-+]?[0-9]{' + self.UTMX_MIN_LEN + ',' + self.UTMX_MAX_LEN +
+            '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim().toLowerCase() +
+            '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$')
+        const verboseGeo = new RegExp('^' + self.LAT_LABEL.trim().toLowerCase() +
+            '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim().toLowerCase() +
+            '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$');
+        const shortUtm = new RegExp('^([-+]?[0-9]{' + self.UTMX_MIN_LEN + ',' + self.UTMX_MAX_LEN +
+            '}(?:[.,]\\d+)?)\\s*\\,?\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$');
+        const shortGeo = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/;
 
-            match = pattern.match(new RegExp('^' + self.LAT_LABEL.trim().toLowerCase() + '*\\s*([-+]?\\d{1,3}([.,]\\d+)?)\\,?\\s*' + self.LON_LABEL.trim().toLowerCase() + '*\\s*([-+]?\\d{1,2}([.,]\\d+)?)$'));
-            if (match) {
+        var match = pattern.match(verboseUtm);
+        if (match) {
+            pattern = match[1] + ' ' + match[2];
+        }
+
+        match = pattern.match(verboseGeo);
+        if (match) {
+            pattern = match[1] + ' ' + match[3];
+        }
+
+        if (/\d/.test(pattern) && (shortUtm.test(pattern) || shortGeo.test(pattern))) {
+            match = shortGeo.exec(pattern);
+            if (match && (match[1].indexOf(',') > -1 || match[3].indexOf(',') > -1)) {
+                match[1] = match[1].replace(',', '.');
+                match[3] = match[3].replace(',', '.');
+
                 pattern = match[1] + ' ' + match[3];
             }
 
-            if (/\d/.test(pattern) && (new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').test(pattern) || /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.test(pattern))) {
-                match = /^([-+]?\d{1,3}([.,]\d+)?)\,?\s*([-+]?\d{1,2}([.,]\d+)?)$/.exec(pattern);
-                if (match && (match[1].indexOf(',') > -1 || match[3].indexOf(',') > -1)) {
+            if (!match || match && (match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180 && (match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90) {
+
+                match = shortUtm.exec(pattern);
+                if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
                     match[1] = match[1].replace(',', '.');
-                    match[3] = match[3].replace(',', '.');
+                    match[2] = match[2].replace(',', '.');
 
-                    pattern = match[1] + ' ' + match[3];
+                    pattern = match[1] + ' ' + match[2];
                 }
 
-                if (!match || match && (match[1].indexOf(',') > -1 ? match[1].replace(',', '.') : match[1]) <= 180 && (match[3].indexOf(',') > -1 ? match[3].replace(',', '.') : match[3]) <= 90) {
+                // parse coordinates
+                pattern = pattern
+                    .replace(self.UTMX_LABEL, '')
+                    .replace(self.UTMY_LABEL, '')
+                    .replace(self.LON_LABEL, '')
+                    .replace(self.LAT_LABEL, '');
+                var coords = Util.parseCoords(pattern);
+                if (coords) {
+                    var xValue = coords[0].value;
+                    var yValue = coords[1].value;
+                    var xLabel = coords[0].type === Consts.UTM ? self.UTMX : self.LAT;
+                    var yLabel = coords[1].type === Consts.UTM ? self.UTMY : self.LON;
+                    var id = xLabel + xValue + yLabel + yValue;
 
-                    match = new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$').exec(pattern);
-                    if (match && (match[1].indexOf(',') > -1 || match[2].indexOf(',') > -1)) {
-                        match[1] = match[1].replace(',', '.');
-                        match[2] = match[2].replace(',', '.');
-
-                        pattern = match[1] + ' ' + match[2];
+                    var point = self.getPoint(id);
+                    if (point && !self.insideLimit(point)) {
+                        xValue = coords[1].value;
+                        yValue = coords[0].value;
+                        xLabel = coords[1].type === Consts.UTM ? self.UTMX : self.LAT;
+                        yLabel = coords[0].type === Consts.UTM ? self.UTMY : self.LON;
+                        id = xLabel + xValue + yLabel + yValue;
+                        point = self.getPoint(id);
                     }
 
-                    // parse coordinates
-                    pattern = pattern.replace(self.UTMX_LABEL, '').replace(self.UTMY_LABEL, '').replace(self.LON_LABEL, '').replace(self.LAT_LABEL, '');
-                    var coords = Util.parseCoords(pattern);
-                    if (coords) {
-                        var xValue = coords[0].value;
-                        var yValue = coords[1].value;
-                        var xLabel = coords[0].type === Consts.UTM ? self.UTMX : self.LAT;
-                        var yLabel = coords[1].type === Consts.UTM ? self.UTMY : self.LON;
-                        var id = xLabel + xValue + yLabel + yValue;
+                    if (point) {
+                        self.availableSearchTypes[Consts.searchType.COORDINATES].label =
+                            /^X([-+]?\d+(?:\.\d+)?)Y([-+]?\d+(?:\.\d+)?)$/.test(id) ?
+                                self.getLocaleString('search.list.coordinates.utm') + self.map.crs :
+                                self.getLocaleString('search.list.coordinates.geo');
 
-                        var point = self.getPoint(id);
-                        if (point && !self.insideLimit(point)) {
-                            xValue = coords[1].value;
-                            yValue = coords[0].value;
-                            xLabel = coords[1].type === Consts.UTM ? self.UTMX : self.LAT;
-                            yLabel = coords[0].type === Consts.UTM ? self.UTMY : self.LON;
-                            id = xLabel + xValue + yLabel + yValue;
-                            point = self.getPoint(id);
-                        }
-
-                        if (point) {
-                            self.availableSearchTypes[Consts.searchType.COORDINATES].label = /^X([-+]?\d+(?:\.\d+)?)Y([-+]?\d+(?:\.\d+)?)$/.test(id) ? self.getLocaleString('search.list.coordinates.utm') + self.map.crs : self.getLocaleString('search.list.coordinates.geo');
-
-                            //console.log('getCoordinates promise resuelta');
-                            resolve([{
-                                id: id, label: self.getLabel(id), dataRole: Consts.searchType.COORDINATES
-                            }]);
-                        }
-                        else {
-                            //console.log('getCoordinates promise resuelta');
-                            reject();
-                        }
-                    } else {
                         //console.log('getCoordinates promise resuelta');
-                        reject();
+                        return [{
+                            id: id, label: self.getLabel(id), dataRole: Consts.searchType.COORDINATES
+                        }];
                     }
-                } else {
-                    //console.log('getCoordinates promise resuelta');
-                    reject();
                 }
-            } else {
-                //console.log('getCoordinates promise resuelta');
-                reject();
             }
-        });
+        }
+        // Si llegamos aquí es que no es una búsqueda de coordenadas
+        throw "Search: Not a coordinates search";
     }
 
     async getCadastralRef(pattern) {
@@ -3854,7 +3975,7 @@ class Search extends Control {
         if (!/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(pattern) && self.getSearchTypeByRole(Consts.searchType.CADASTRALPARCEL).suggestionRoot)
             _pattern = self.getSearchTypeByRole(Consts.searchType.CADASTRALPARCEL).suggestionRoot + ', ' + pattern;
 
-        if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !new RegExp('^([-+]?[0-9]{' + self.UTMX_LEN + '})\\s*\\,\\s*([-+]?[0-9]{' + self.UTMY_LEN + '})$').test(pattern)) {
+        if (/^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.test(_pattern) && !new RegExp('^([-+]?[0-9]{' + self.UTMX_MIN_LEN + ',' + self.UTMX_MAX_LEN + '})\\s*\\,\\s*([-+]?[0-9]{' + self.UTMY_LEN + '})$').test(pattern)) {
             const list = await self.getMunicipalities();
             match = /^(.*)\,(\s*\d{1,2}\s*)\,(\s*\d{1,4}\s*)$/.exec(_pattern);
             if (match) {
@@ -4481,7 +4602,7 @@ class Search extends Control {
                 geometryName: type.geometryName,
                 featurePrefix: type.featurePrefix,
                 featureType: type.featureType,
-                properties: new TC.filter.and(
+                filter: new TC.filter.and(
                     new TC.filter.equalTo(type.queryProperties.firstQueryWord, match[1].trim()),
                     new TC.filter.equalTo(type.queryProperties.secondQueryWord, match[2].trim()),
                     new TC.filter.equalTo(type.queryProperties.thirdQueryWord, match[3].trim())),
@@ -4511,7 +4632,7 @@ class Search extends Control {
             featurePrefix: type.featurePrefix,
             featureType: type.getFeatureTypes(),
             maxFeatures: 3000,
-            properties: type.filter.getGoToFilter(id),
+            filter: type.filter.getGoToFilter(id),
             outputFormat: type.outputFormat,
             styles: type.styles
         };
@@ -4535,7 +4656,7 @@ class Search extends Control {
             featurePrefix: type.featurePrefix,
             featureType: type.getFeatureTypes(),
             maxFeatures: 3000,
-            properties: type.filter.getGoToFilter(id),
+            filter: type.filter.getGoToFilter(id),
             outputFormat: type.outputFormat,
             styles: type.styles
         };
@@ -4618,7 +4739,7 @@ class Search extends Control {
             }
 
             var localeDecimalSeparator = 1.1.toLocaleString(locale).substring(1, 2);
-            match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
+            match = result.match(new RegExp('^' + self.UTMX_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMX_MIN_LEN + ',' + self.UTMX_MAX_LEN + '}(?:[.,]\\d+)?)\\s*\\,?\\s*' + self.UTMY_LABEL.trim() + '*\\s*([-+]?[0-9]{' + self.UTMY_LEN + '}(?:[.,]\\d+)?)$'));
             if (match) {
                 if (!Number.isInteger(parseFloat(match[1])))
                     result = result.replace(match[1], match[1].replace('.', localeDecimalSeparator));
