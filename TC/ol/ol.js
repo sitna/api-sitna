@@ -4504,7 +4504,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     clearTimeout(_timeout);
                     _timeout = setTimeout(function () {
                         self.parent.tree = null;//eliminar cache del arbol de la capa ya que se cambia las features
-                        self.parent.map.trigger(Consts.event.FEATURESADD, {
+                        self.parent.map?.trigger(Consts.event.FEATURESADD, {
                             layer: self.parent, features: [f]
                         });
                     }, 50);
