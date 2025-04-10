@@ -41,7 +41,6 @@ files
                     inputDate: true,
                     inputTime: true,
                     inputDatetime: true,
-                    isPlainObject: true,
                 },
                 knownHelpersOnly: true
             });
