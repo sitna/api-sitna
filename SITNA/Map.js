@@ -1,11 +1,11 @@
-import TC from '../TC';
-import Consts from '../TC/Consts';
-import Cfg from '../TC/Cfg';
-import Util from '../TC/Util';
-import BasicMap from '../TC/Map';
-import Search from '../TC/control/Search';
-import FeatureInfo from '../TC/control/FeatureInfo';
-import filter from '../TC/filter';
+import TC from '../TC.js';
+import Consts from '../TC/Consts.js';
+import Cfg from '../TC/Cfg.js';
+import Util from '../TC/Util.js';
+import BasicMap from '../TC/Map.js';
+import Search from '../TC/control/Search.js';
+import FeatureInfo from '../TC/control/FeatureInfo.js';
+import filter from '../TC/filter.js';
 TC.Map = BasicMap;
 TC.filter = filter;
 
