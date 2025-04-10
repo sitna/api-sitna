@@ -107,12 +107,12 @@
     <Content Include="css\control\ImageMagnifier.css" />
     <Content Include="css\control\TrackEdit.css" />
     <Content Include="css\control\LayerLegend.css" />
-    <Content Include="css\img\geo-track.png" />
     <Content Include="css\img\icon-copy.svg" />
     <Content Include="css\img\icon-share.svg" />
     <Content Include="css\img\tcCtlLayerLegendLoading.svg" />
     <Content Include="css\img\thumb-basemap-grey.png" />
-    <Content Include="css\img\thumb-ortho2023.jpg" />
+	<Content Include="css\img\thumb-ortho2023.jpg" />
+    <Content Include="css\img\thumb-ortho2024.jpg" />
     <Content Include="css\img\thumb-orthophoto.jpg" />
     <Content Include="css\img\thumb-topo-pamplona.jpg" />
     <Content Include="css\ui\sitna-tab.css" />
