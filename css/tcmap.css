@@ -98,7 +98,7 @@
     --sitna-color-06: #c52737; /*rojo*/
     --sitna-color-07: #3b3bc6; /*azul*/
     --sitna-background-color: var(--sitna-color-01);
-    --sitna-text-color: var(--sitna-color-03);
+    --sitna-text-color: var(--sitna-color-05);
     --sitna-main-accent-color: var(--sitna-color-04);
     --sitna-main-accent-contrast-color: var(--sitna-color-01);
     --sitna-secondary-accent-color: var(--sitna-color-03);
