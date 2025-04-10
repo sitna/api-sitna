@@ -18,7 +18,7 @@ function getAllElements(node) {
 class Observer { 
     #listener;
     constructor(object) {
-        const instance = this;
+        /*const instance = this;*/
         this.#listener = new Map();
         this.#addElement(object);
         
@@ -61,12 +61,14 @@ class Observer {
                             });
 
                             break;
-                        case "tc-vc-click":
-                            element.addEventListener("click", (evt) => { instance.handler.apply(instance, [attr.value, evt]) })
-                            break;
-                        case "tc-vc-change":
-                            element.addEventListener("change", (evt) => { instance.handler.apply(instance, [attr.value, evt]) })
-                            break;
+
+                            //TODO modelar eventos
+                        //case "tc-vc-click":
+                        //    element.addEventListener("click", (evt) => { instance.handler.apply(instance, [attr.value, evt]) })
+                        //    break;
+                        //case "tc-vc-change":
+                        //    element.addEventListener("change", (evt) => { instance.handler.apply(instance, [attr.value, evt]) })
+                        //    break;
                     }
                 }
             });
@@ -104,7 +106,7 @@ class Observer {
         else{
             this.#listener.set(key, [properties]);
         }
-        if (!this.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(this, key)) {
             Object.defineProperty(this, key, {
                 get: function() {
                     const prop = this.#listener.get(key)[0];
