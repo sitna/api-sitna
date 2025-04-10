@@ -1,11 +1,11 @@
-import TC from '../../TC';
-import Consts from '../../TC/Consts';
-import Util from '../../TC/Util';
-import Cfg from '../../TC/Cfg';
-import Control from '../../TC/Control';
-//import Popup from '../../TC/control/Popup';
-//import ResultsPanel from '../../TC/control/ResultsPanel';
-import ControlContainer from '../../TC/control/ControlContainer';
+import TC from '../../TC.js';
+import Consts from '../../TC/Consts.js';
+import Util from '../../TC/Util.js';
+import Cfg from '../../TC/Cfg.js';
+import Control from '../../TC/Control.js';
+//import Popup from '../../TC/control/Popup.js';
+//import ResultsPanel from '../../TC/control/ResultsPanel.js';
+import ControlContainer from '../../TC/control/ControlContainer.js';
 
 /**
  * Espacio de nombres de las entidades geográficas del mapa.

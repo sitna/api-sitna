@@ -1,4 +1,4 @@
-﻿import MultiPoint from './MultiPoint';
+﻿import MultiPoint from './MultiPoint.js';
 
 /**
  * Entidad geográfica que representa un conjunto de marcadores (puntos con icono asociado).

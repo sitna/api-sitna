@@ -1,7 +1,7 @@
-﻿import Consts from '../../TC/Consts';
-import Cfg from '../../TC/Cfg';
-import Util from '../../TC/Util';
-import Feature from './Feature';
+﻿import Consts from '../../TC/Consts.js';
+import Cfg from '../../TC/Cfg.js';
+import Util from '../../TC/Util.js';
+import Feature from './Feature.js';
 
 /**
  * Entidad geográfica que representa un punto del mapa.

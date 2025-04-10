@@ -1,5 +1,5 @@
-﻿import Feature from './Feature';
-import Consts from '../../TC/Consts';
+﻿import Feature from './Feature.js';
+import Consts from '../../TC/Consts.js';
 
 /**
  * Entidad geográfica que representa un conjunto de puntos.

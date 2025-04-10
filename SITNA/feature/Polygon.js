@@ -1,5 +1,5 @@
-﻿import Consts from '../../TC/Consts';
-import Feature from './Feature';
+﻿import Consts from '../../TC/Consts.js';
+import Feature from './Feature.js';
 
 /**
  * Entidad geográfica con geometría poligonal.

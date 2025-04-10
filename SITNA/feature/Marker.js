@@ -1,8 +1,8 @@
-﻿import TC from '../../TC';
-import Point from './Point';
-import Consts from '../../TC/Consts';
-import Cfg from '../../TC/Cfg';
-import i18n from '../../TC/i18n';
+﻿import TC from '../../TC.js';
+import Point from './Point.js';
+import Consts from '../../TC/Consts.js';
+import Cfg from '../../TC/Cfg.js';
+import i18n from '../../TC/i18n.js';
 
 TC.i18n = TC.i18n || i18n;
 

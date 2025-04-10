@@ -1,9 +1,9 @@
-import TC from '../../TC';
-import Util from '../../TC/Util';
-import Consts from '../../TC/Consts';
-import Cfg from '../../TC/Cfg';
-import Layer from '../../SITNA/layer/Layer';
-import Vector from './Vector';
+import TC from '../../TC.js';
+import Util from '../../TC/Util.js';
+import Consts from '../../TC/Consts.js';
+import Cfg from '../../TC/Cfg.js';
+import Layer from '../../SITNA/layer/Layer.js';
+import Vector from './Vector.js';
 import { GMLFilter } from '../filter.js';
 import ol_filter from 'ol/format/filter/Filter.js';
 TC.layer = TC.layer || {};

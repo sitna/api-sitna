@@ -1,6 +1,6 @@
-﻿import Consts from '../../TC/Consts';
-import Feature from './Feature';
-import Polygon from './Polygon';
+﻿import Consts from '../../TC/Consts.js';
+import Feature from './Feature.js';
+import Polygon from './Polygon.js';
 
 /**
  * Entidad geográfica que representa un círculo en el mapa.

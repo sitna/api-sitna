@@ -1,6 +1,6 @@
-﻿import Consts from '../../TC/Consts';
-import Feature from './Feature';
-import Polyline from './Polyline';
+﻿import Consts from '../../TC/Consts.js';
+import Feature from './Feature.js';
+import Polyline from './Polyline.js';
 
 /**
  * Entidad geográfica que representa un conjunto de líneas de varios segmentos en el mapa.

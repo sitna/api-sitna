@@ -1,5 +1,5 @@
-﻿import Consts from '../../TC/Consts';
-import Feature from './Feature';
+﻿import Consts from '../../TC/Consts.js';
+import Feature from './Feature.js';
 
 /**
  * Entidad geográfica que representa una línea de varios segmentos en el mapa.

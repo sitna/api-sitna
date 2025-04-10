@@ -1,8 +1,8 @@
-import TC from '../../TC';
-import Consts from '../../TC/Consts';
-import Util from '../../TC/Util';
+import TC from '../../TC.js';
+import Consts from '../../TC/Consts.js';
+import Util from '../../TC/Util.js';
 import localforage from 'localforage';
-import Proxification from '../../TC/tool/Proxification';
+import Proxification from '../../TC/tool/Proxification.js';
 import wwBlob from '../../workers/tc-caps-web-worker-blob.mjs';
 
 const isWebWorkerEnabled = Object.prototype.hasOwnProperty.call(window, 'Worker');
