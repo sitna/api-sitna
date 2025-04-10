@@ -136,12 +136,12 @@ Consts.url = {
     SPLIT_REGEX: /([^:]*:)?\/\/([^:]*:?[^@]*@)?([^:\/\?]*):?([^\/\?]*)/,
     EPSG: 'https://epsg.io/'
 };
-if (typeof SITNA_BASE_URL !== "undefined") {
-    Consts.url.ERROR_LOGGER = SITNA_BASE_URL + 'errors/logger.ashx';
+if (typeof globalThis.SITNA_BASE_URL !== "undefined") {
+    Consts.url.ERROR_LOGGER = globalThis.SITNA_BASE_URL + 'errors/logger.ashx';
 }
 else {
     // Obtenemos la URL base de la dirección del script
-    const script = document.currentScript;
+    const script = document.currentScript ?? document.scripts[document.scripts.length - 1];
     const src = script.getAttribute('src');
     const apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
     Consts.url.ERROR_LOGGER = apiLocation + 'errors/logger.ashx';
