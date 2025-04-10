@@ -148,6 +148,30 @@ div.tc-ctl-coords-main {
     display: none;
 }
 
+.tc-ctl-coords-crs-code {
+    display: inline-block;
+    font-weight: bold;
+    background-color: var(--sec-divider-color);
+    color: var(--text-sec-color);
+    padding: 0.1em 0.2em;
+    border-radius: calc(var(--border-radius) / 2);
+    pointer-events: none;
+}
+
+.tc-ctl-coords-crs-desc {
+    display: inline-block;
+    margin-left: 1em;
+    pointer-events: none;
+}
+
+    .tc-ctl-coords-crs-desc.tc-loading {
+        width: min(50%, 20em);
+        height: 1em;
+        background-color: var(--sec-divider-color);
+        border-radius: var(--border-radius);
+        animation: soft-pulsation 1.2s infinite;
+    }
+
 .tc-ctl-coords.tc-3d span.tc-ctl-coords-crs {
     display: inline;
 }

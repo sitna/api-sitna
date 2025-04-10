@@ -307,6 +307,7 @@
 .tc-ctl-wlm .tc-ctl-wlm-metadata li {
     display: inline-block;
     margin-right: 1em;
+    min-width: 1.5em;
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-metadata span {

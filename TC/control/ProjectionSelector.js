@@ -112,8 +112,16 @@ class ProjectionSelector extends Control {
                         else {
                             const button = document.createElement('button');
                             button.setAttribute('type', 'button');
-                            button.textContent = projObj.name + ' (' + projObj.code + ')';
                             button.dataset.crsCode = projObj.code;
+                            const codeSpan = document.createElement('span');
+                            codeSpan.classList.add(self.CLASS + '-crs-code');
+                            codeSpan.textContent = projObj.code;
+                            const descriptionSpan = document.createElement('span');
+                            descriptionSpan.textContent = projObj.name;
+                            descriptionSpan.classList.add(self.CLASS + '-crs-desc');
+                            button.appendChild(codeSpan);
+                            button.appendChild(descriptionSpan);
+
                             const li = document.createElement('li');
                             li.appendChild(button);
                             if (blCRSList.filter(function (crs) {
