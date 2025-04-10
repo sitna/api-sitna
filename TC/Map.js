@@ -403,7 +403,9 @@ const _loadIntoMap = async function (stringOrJson) {
         try {
             await Promise.all(promises);
         }
-        catch (_e) { }
+        catch (e) {
+            TC.error(e);
+        }
     });
 };
 
@@ -2467,13 +2469,13 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             .map((crs) => TC.getProjectionData({ crs: Util.getCRSCode(crs) })));
         let projList = projectionDataList
             .filter((projData) => !!projData)
-            .map(function (projData, index, array) {
+            .map(function (projData) {
                 const code = 'EPSG:' + projData.code;
                 TC.loadProjDef({
                     crs: code,
                     def: projData.proj4 || projData.wkt,
                     name: projData.name,
-                    silent: options.silent ?? index < array.length - 1 // Solo registramos proj4 en la última iteración
+                    silent: true,
                 });
                 return {
                     code: code,
@@ -2990,7 +2992,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             if (isZip) {
                 const featureDictionary = new Map();
                 featuresToExport.forEach((feature) => {
-                    const fileName = feature.layer?.file;
+                    const fileName = feature.layer?.file ?? (feature.layer?.title + Util.getFileExtensionFromFormat(format));
                     if (fileName) {
                         let feats = featureDictionary.get(fileName);
                         if (!feats) {
@@ -3005,7 +3007,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
                 const exportByFile = async (fileName, features) => {
                     const format = getFormatFromFileName(fileName);
-                    return await this.exportFeatures(features, { format });
+                    return await this.exportFeatures(features, { ...options, format, fileName });
                 };
 
                 const entries = Array.from(featureDictionary.entries());
@@ -3110,11 +3112,21 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         p.innerHTML = text;
         toast.appendChild(p);
         toast.addEventListener(Consts.event.CLICK, toastHide, { passive: true });
+        //const toast = document.createElement('sitna-toast');
+        //toast.duration = duration;
+        //toast.textContent = text;
         container.appendChild(toast);
         toastInfo = toasts[text] = {
             toast: toast
         };
 
+        //if (options.type) {
+        //    toast.type = options.type;
+        //}
+
+        //if (options.callback) {
+        //    toast.callback = options.callback;
+        //}
         var className = '';
         switch (options.type) {
             case Consts.msgType.INFO:
