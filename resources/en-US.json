@@ -385,6 +385,7 @@
   "search.placeholder": "Municipality, town, street, address, parcel…",
   "searching": "Searching...",
   "searchLayersByText": "Search layers by text",
+  "examples": "Examples",
   "select": "Select",
   "deleteVertices": "Delete vertices",
   "verticesCannotBeDeleted": "Vertices cannot be deleted from this feature because it already has the minimum amount",

@@ -385,6 +385,7 @@
   "search.placeholder": "Municipio, casco urbano, calle, dirección…",
   "searching": "Buscando...",
   "searchLayersByText": "Buscar capas por texto",
+  "examples": "Ejemplos",
   "select": "Seleccionar",
   "deleteVertices": "Eliminar vértices",
   "verticesCannotBeDeleted": "No se pueden eliminar vértices de esta entidad porque ya tiene la cantidad mínima",
