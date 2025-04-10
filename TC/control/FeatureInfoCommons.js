@@ -1011,8 +1011,10 @@ class FeatureInfoCommons extends Click {
                     Consts.classes.FROMRIGHT);
             });
         target.querySelectorAll('.' + self.CLASS + '-features table:not(.tc-complex-attr)').forEach(function (table) {
-            self.controller.setAttribute('clickToShowOnMap', 'title', table);
-            self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+            if (self.controller) { 
+                self.controller.setAttribute('clickToShowOnMap', 'title', table);
+                self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+            }
             //table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
         });
 
