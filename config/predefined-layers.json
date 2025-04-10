@@ -45,6 +45,21 @@
     "overviewMapLayer": "mapabase"
   },
   {
+    "id": "ortofoto2024",
+    "title": "Ortofoto 2024",
+    "type": "WMTS",
+    "url": "//idena.navarra.es/ogc/wmts/",
+    "matrixSet": "epsg25830",
+    "layerNames": "ortofoto2024",
+    "encoding": "RESTful",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho2024.jpg",
+    "fallbackLayer": "ortofoto2024_dinamico",
+    "overviewMapLayer": "mapabase"
+  },
+  {
     "id": "ortofoto2023",
     "title": "Ortofoto 2023",
     "type": "WMTS",
@@ -294,6 +309,18 @@
     "isDefault": false,
     "hideTree": true,
     "thumbnail": "css/img/thumb-orthophoto.jpg",
+    "overviewMapLayer": "mapabase_dinamico"
+  },
+  {
+    "id": "ortofoto2024_dinamico",
+    "title": "Ortofoto 2024",
+    "type": "WMS",
+    "url": "//idena.navarra.es/ogc/wms",
+    "layerNames": "ortofoto_5000_2024",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho2024.jpg",
     "overviewMapLayer": "mapabase_dinamico"
   },
   {
