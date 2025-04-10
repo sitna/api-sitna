@@ -117,18 +117,13 @@ class FeatureInfo extends FeatureInfoCommons {
                 });
             });
 
-            var visibleLayers = false;
-            for (var i = 0; i < self.map.workLayers.length; i++) {
-                var layer = self.map.workLayers[i];
-                if (layer.type === Consts.layerType.WMS) {
-                    if (layer.getVisibility() && layer.names.length > 0) {
-                        visibleLayers = true;
-                        break;
-                    }
-                }
-            }
+            const visibleLayersAvailable = self.map.workLayers
+                .filter((l) => l.type === Consts.layerType.WMS)
+                .filter((l) => l.getVisibility())
+                .some((l) => l.names.length > 0);
+
             self.queryResolution = self.map.getResolution();
-            if (visibleLayers) {
+            if (visibleLayersAvailable) {
                 await self.wrap.getFeatureInfo(coords, self.queryResolution);
             }
             else {
@@ -360,8 +355,10 @@ class FeatureInfo extends FeatureInfoCommons {
     importQuery(query) {
         const self = this;
         if (query.filter) {
-            self.map.setResolution(query.res)
-                .then(() => super.importQuery.call(self, query));
+            self.map.ready(() => {
+                self.map.setResolution(query.res)
+                    .then(() => super.importQuery.call(self, query));
+            })
         }
     }
 }
