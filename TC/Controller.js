@@ -73,7 +73,7 @@ class Controller {
         });
     }
     setAttribute(property, attrName, node) {
-        if (this.model.hasOwnProperty(property)) {
+        if (Object.prototype.hasOwnProperty.call(this.model, property)) {
             const model = this.model;
             const view = this.view;
             const _prop = Object.getOwnPropertyDescriptor(model, property);
