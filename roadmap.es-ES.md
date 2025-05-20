@@ -1,7 +1,7 @@
 # Hoja de ruta
 *Read this in [English](./roadmap.md).*
 
-Mejoras planeadas a día de 07/08/2023:
+Mejoras planeadas a día de 20/05/2025:
 1.	~~Eliminación de la dependencia de jQuery.~~ :heavy_minus_sign: :two::zero::zero:
 2.	~~Eliminación de la dependencia de Modernizr.~~ :heavy_minus_sign: :two::zero::zero:
 3.	~~Migración a OpenLayers 5.~~ :arrow_up: :two::zero::zero:
@@ -43,13 +43,13 @@ Mejoras planeadas a día de 07/08/2023:
 39. ~~Herramienta para borrar de un golpe todas las rutas (tracks) cargadas.~~ ✨ :four::one::zero:
 40. ~~WKB como formato soportado de entrada y salida.~~ ✨ :four::one::zero:
 41. ~~Uso del modo integrado en el sistema operativo para compartir.~~ ⚡ :four::four::zero:
-42. ~~Compartir por WhatsApp web en dispositivos sin la aplicación WhatsApp.~~ ✨
-43. Opción de copiar o compartir imagen de mapa. ✨
-44. Opción de compartir el PDF al imprimir. ✨
-45. Migración a OpenLayers 7 y modo WebGL. ⬆️
+42. ~~Compartir por WhatsApp web en dispositivos sin la aplicación WhatsApp.~~ ✨ :four::four::zero:
+43. ~~Opción de copiar o compartir imagen de mapa.~~ ✨ :four::four::zero:
+44. ~~Opción de compartir el PDF al imprimir.~~ ✨ :four::four::zero:
+45. Migración a OpenLayers 10 y modo WebGL. ⬆️
 46. Capacidad de admitir coordenadas geográficas al añadir marcadores. ✨
-47. Página recopiladora de ejemplos. 📚
-48. Sandbox para los ejemplos. 📚
+47. ~~Página recopiladora de ejemplos.~~ 📚 :four::four::zero:
+48. ~~Sandbox para los ejemplos.~~ 📚 :four::four::zero:
 49. Lectura de entidades geográficas desde documentos geográficos cargados en memoria. ✨
 50. Control simple de geoposicionamiento. ✨
 51. Controles del [comparador de mapas de Navarra](https://comparamapas.navarra.es/). ✨
@@ -60,5 +60,8 @@ Mejoras planeadas a día de 07/08/2023:
 56. Ampliación de la lista de formatos de descarga de imágenes. ⚡
 57. Disponibilidad de las constricciones de acceso al servicio junto a la acreditación. ✨
 58. Enlace al texto descriptivo de los servicios WMS en la lista de capas disponibles. ✨
+59. Soporte a dimensión temporal en capas WMS. ✨
+60. Actualización de Cesium para soporte de 3D Tiles. :arrow_up:
+61. Enrutamiento mediante OpenRouteService. ✨
 
 :hash::hash::hash: Mejora añadida en la versión \#.\#.\#
