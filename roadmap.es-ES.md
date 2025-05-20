@@ -30,7 +30,7 @@ Mejoras planeadas a día de 07/08/2023:
 26. ~~Capa de [OpenTopoMap](https://opentopomap.org/).~~ ✨ :four::zero::zero:
 27. ~~Clases para instanciar entidades geográficas.~~ ✨ :four::zero::zero:
 28. ~~Operador "distinto de" en el control de consultas WFS.~~ ✨ :four::zero::zero:
-29. Editor de archivos geográficos. ✨
+29. ~~Editor de archivos geográficos.~~ ✨ :four::two::zero:
 30. Réplica de funcionalidad en vista 2D a vista 3D. ✨
 31. Leyenda para capas vectoriales. ✨
 32. Paleta de colores automática para las entidades geográficas. ✨
@@ -42,8 +42,8 @@ Mejoras planeadas a día de 07/08/2023:
 38. ~~Herramienta para reeditar una consulta WFS ejecutada o compartida.~~ ✨ :four::one::zero:
 39. ~~Herramienta para borrar de un golpe todas las rutas (tracks) cargadas.~~ ✨ :four::one::zero:
 40. ~~WKB como formato soportado de entrada y salida.~~ ✨ :four::one::zero:
-41. Uso del modo integrado en el sistema operativo para compartir. ⚡
-42. Compartir por WhatsApp web en dispositivos sin la aplicación WhatsApp. ✨
+41. ~~Uso del modo integrado en el sistema operativo para compartir.~~ ⚡ :four::four::zero:
+42. ~~Compartir por WhatsApp web en dispositivos sin la aplicación WhatsApp.~~ ✨
 43. Opción de copiar o compartir imagen de mapa. ✨
 44. Opción de compartir el PDF al imprimir. ✨
 45. Migración a OpenLayers 7 y modo WebGL. ⬆️
