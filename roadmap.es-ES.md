@@ -48,8 +48,8 @@ Mejoras planeadas a día de 20/05/2025:
 44. ~~Opción de compartir el PDF al imprimir.~~ ✨ :four::four::zero:
 45. Migración a OpenLayers 10 y modo WebGL. ⬆️
 46. Capacidad de admitir coordenadas geográficas al añadir marcadores. ✨
-47. ~~Página recopiladora de ejemplos.~~ 📚 :four::four::zero:
-48. ~~Sandbox para los ejemplos.~~ 📚 :four::four::zero:
+47. ~~Página recopiladora de ejemplos.~~ :memo: :four::four::zero:
+48. ~~Sandbox para los ejemplos.~~ :memo: :four::four::zero:
 49. Lectura de entidades geográficas desde documentos geográficos cargados en memoria. ✨
 50. Control simple de geoposicionamiento. ✨
 51. Controles del [comparador de mapas de Navarra](https://comparamapas.navarra.es/). ✨
