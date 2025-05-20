@@ -1,7 +1,7 @@
 # Roadmap
 *Leer esto en [español](./roadmap.es-ES.md).*
 
-Planned upgrades as on 08/07/2023:
+Planned upgrades as on 05/20/2025:
 1.	~~Removal of jQuery dependency.~~ :heavy_minus_sign: :two::zero::zero:
 2.	~~Removal of Modernizr dependency.~~ :heavy_minus_sign: :two::zero::zero:
 3.	~~Migration to OpenLayers 5.~~ :arrow_up: :two::zero::zero:
@@ -30,7 +30,7 @@ Planned upgrades as on 08/07/2023:
 26. ~~[OpenTopoMap](https://opentopomap.org/) layer.~~ ✨ :four::zero::zero:
 27. ~~Classes for creating feature instances.~~ ✨ :four::zero::zero:
 28. ~~_"Different from"_ operator in the WFS queries control.~~ ✨ :four::zero::zero:
-29. Geographic file editing. ✨
+29. ~~Geographic~~ file editing. ✨ 4️⃣2️⃣0️⃣
 30. Functionality transfer from 2D view to 3D view. ✨
 31. Vector layer legend. ✨
 32. Automatic feature color palette. ✨
@@ -42,14 +42,14 @@ Planned upgrades as on 08/07/2023:
 38. ~~Tool to edit a previous executed of shared WFS query.~~ ✨ :four::one::zero:
 39. ~~Tool to remove at once all loaded tracks.~~ ✨ :four::one::zero:
 40. ~~WKB as a supported input/output format.~~ ✨ :four::one::zero:
-41. OS integrated share tool use. ⚡
-42. _WhatsApp web_ sharing in devices that do not have WhatsApp installed. ✨
-43. Option to copy or share a map image. ✨
-44. Option to share PDF when printing. ✨
+41. ~~OS integrated share tool use.~~ ⚡ 4️⃣4️⃣0️⃣
+42. ~~_WhatsApp web_ sharing in devices that do not have WhatsApp installed.~~ ✨ 4️⃣4️⃣0️⃣
+43. ~~Option to copy or share a map image.~~ ✨ 4️⃣4️⃣0️⃣
+44. ~~Option to share PDF when printing.~~ ✨ 4️⃣4️⃣0️⃣
 45. Migration to OpenLayers 7 and WebGL rendering mode. ⬆️
 46. Capability of accepting geographic coordinates when adding markers. ✨
-47. Example compilation page. 📚
-48. Sandboxes for examples. 📚
+47. ~~Example compilation page.~~ :memo: 4️⃣4️⃣0️⃣
+48. ~~Sandboxes for examples.~~ 📝 4️⃣4️⃣0️⃣
 49. Feature reading from geographic documents loaded in memory. ✨
 50. Simple geolocation control. ✨
 51. Controls from the [map comparator of Navarre](https://comparamapas.navarra.es/?lang=en-US). ✨
@@ -60,5 +60,8 @@ Planned upgrades as on 08/07/2023:
 56. Image download format list expansion. ⚡
 57. Service access constraints availability with attributions. ✨
 58. Links to WMS service abstracts at available layer catalog. ✨
+59. Time dimension support in WMS layers. ✨
+60. Cesium update for 3D Tiles support. ⬆️
+61. Routing with OpenRouteService. ✨
 
 :hash::hash::hash: Upgrade fulfilled with version \#.\#.\#
