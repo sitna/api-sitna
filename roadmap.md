@@ -46,7 +46,7 @@ Planned upgrades as on 05/20/2025:
 42. ~~_WhatsApp web_ sharing in devices that do not have WhatsApp installed.~~ ✨ 4️⃣4️⃣0️⃣
 43. ~~Option to copy or share a map image.~~ ✨ 4️⃣4️⃣0️⃣
 44. ~~Option to share PDF when printing.~~ ✨ 4️⃣4️⃣0️⃣
-45. Migration to OpenLayers 7 and WebGL rendering mode. ⬆️
+45. Migration to OpenLayers 10 and WebGL rendering mode. ⬆️
 46. Capability of accepting geographic coordinates when adding markers. ✨
 47. ~~Example compilation page.~~ :memo: 4️⃣4️⃣0️⃣
 48. ~~Sandboxes for examples.~~ 📝 4️⃣4️⃣0️⃣
