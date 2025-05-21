@@ -30,7 +30,7 @@ Planned upgrades as on 05/20/2025:
 26. ~~[OpenTopoMap](https://opentopomap.org/) layer.~~ ✨ :four::zero::zero:
 27. ~~Classes for creating feature instances.~~ ✨ :four::zero::zero:
 28. ~~_"Different from"_ operator in the WFS queries control.~~ ✨ :four::zero::zero:
-29. ~~Geographic~~ file editing. ✨ 4️⃣2️⃣0️⃣
+29. ~~Geographic file editing.~~ ✨ 4️⃣2️⃣0️⃣
 30. Functionality transfer from 2D view to 3D view. ✨
 31. Vector layer legend. ✨
 32. Automatic feature color palette. ✨
