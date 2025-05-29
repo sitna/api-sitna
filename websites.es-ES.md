@@ -36,7 +36,6 @@
     * [Visor de puntos](https://administracionelectronica.navarra.es/ApiSitnaIFrames/VisorPunto.aspx?x=614672&y=4741153&detalles=Departamento%20de%20Universidad,%20Innovaci%C3%B3n%20y%20Transformaci%C3%B3n%20Digital "Visor de puntos. Gobierno de Navarra")
     * [Helpbidea](https://administracionelectronica.navarra.es/helpbidea/Buscar.html "Direcciones de Navarra")
     * [Registro SINAI (Sistema Navarro de I+D+i)](https://administracionelectronica.navarra.es/RegistroSinai.Internet/RegistroSINAI)   
-    * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire)
     * [Censo de instalaciones deportivas de Navarra](https://www.navarra.es/CensoInstalacionesDeportivas)
   * Acceso autenticado:
