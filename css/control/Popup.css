@@ -78,6 +78,11 @@
     overflow-x: auto;
 }
 
+    .tc-ctl-popup-content div {
+        cursor: initial;
+        user-select: text;
+    }
+
 .tc-ctl-popup .tc-ctl-popup-content {
     display: none;
 }
