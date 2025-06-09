@@ -1,5 +1,5 @@
-import OgcApiProcessesElevationService from './OgcApiProcessesElevationService';
-import Util from '../Util';
+import OgcApiProcessesElevationService from './OgcApiProcessesElevationService.js';
+import Util from '../Util.js';
 
 class ElevationServiceIGNEs extends OgcApiProcessesElevationService {
     constructor() {
@@ -33,7 +33,7 @@ class ElevationServiceIGNEs extends OgcApiProcessesElevationService {
                 type: 'Feature',
                 geometry: {
                     type: 'Point',
-                    coordinates: c
+                    coordinates: [c[0], c[1]],
                 }
             }))
         }
