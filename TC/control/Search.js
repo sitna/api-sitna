@@ -3651,6 +3651,17 @@ class Search extends Control {
                 if (!Object.prototype.hasOwnProperty.call(allowedSearchTypesOptions, newName)) {
                     allowedSearchTypesOptions[newName] = allowedSearchTypesOptions[oldName];
                 }
+                else {
+                    // Si ya existe la propiedad, la sobrescribimos
+                    const oldSearchTypeOptions = allowedSearchTypesOptions[oldName];
+                    const newSearchTypeOptions = allowedSearchTypesOptions[newName];
+                    if (typeof oldSearchTypeOptions === 'boolean' || typeof newSearchTypeOptions === 'boolean') {
+                        allowedSearchTypesOptions[newName] = oldSearchTypeOptions;
+                    }
+                    else {
+                        allowedSearchTypesOptions[newName] = Object.assign(newSearchTypeOptions, oldSearchTypeOptions);
+                    }
+                }
                 delete allowedSearchTypesOptions[oldName];
             }
         }
