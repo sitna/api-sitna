@@ -1,10 +1,8 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-//import { Defaults } from '../Cfg';
-//import Util from '../Util';
-import WebComponentControl from './WebComponentControl';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import WebComponentControl from './WebComponentControl.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 

@@ -1,8 +1,8 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util, { MapImage } from '../Util';
-import Control from '../Control';
-import Proxification from '../tool/Proxification';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util, { MapImage } from '../Util.js';
+import Control from '../Control.js';
+import Proxification from '../tool/Proxification.js';
 
 TC.control = TC.control || {};
 

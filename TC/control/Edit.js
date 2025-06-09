@@ -15,8 +15,8 @@ import Polygon from '../../SITNA/feature/Polygon.js';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import WebComponentControl from './WebComponentControl.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.wrap = wrap;
 

@@ -1,7 +1,7 @@
-﻿import TC from '../../TC';
-import Control from '../Control';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Control from '../Control.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 class NavBarModel {

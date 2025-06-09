@@ -1,5 +1,5 @@
-﻿import TC from '../../TC';
-import Control from '../Control';
+﻿import TC from '../../TC.js';
+import Control from '../Control.js';
 
 TC.control = TC.control || {};
 

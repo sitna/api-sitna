@@ -1,7 +1,7 @@
-﻿import TC from '../../TC';
-import Util from '../Util';
-import Consts from '../Consts';
-import Toggle from '../../SITNA/ui/Toggle';
+﻿import TC from '../../TC.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
+import Toggle from '../../SITNA/ui/Toggle.js';
 
 TC.control = TC.control || {};
 

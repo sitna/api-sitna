@@ -1,13 +1,13 @@
-﻿import WebComponentControl from './WebComponentControl';
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Modify from './Modify';
-import Draw from './Draw';
-import Toggle from '../../SITNA/ui/Toggle';
-import Feature from '../../SITNA/feature/Feature';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import WebComponentControl from './WebComponentControl.js';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Modify from './Modify.js';
+import Draw from './Draw.js';
+import Toggle from '../../SITNA/ui/Toggle.js';
+import Feature from '../../SITNA/feature/Feature.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 

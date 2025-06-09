@@ -1,7 +1,7 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import GeometryFeatureInfo from './GeometryFeatureInfo';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import GeometryFeatureInfo from './GeometryFeatureInfo.js';
 
 TC.control = TC.control || {};
 

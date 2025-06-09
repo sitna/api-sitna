@@ -60,13 +60,13 @@
   * </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import ThreeDView from '../view/ThreeD';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import ThreeDView from '../view/ThreeD.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 TC.view = TC.view || {};

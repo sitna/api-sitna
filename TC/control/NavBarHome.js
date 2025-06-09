@@ -1,9 +1,9 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 
 TC.control = TC.control || {};

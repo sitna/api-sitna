@@ -33,10 +33,10 @@
   * </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Container from './Container';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Container from './Container.js';
 
 TC.control = TC.control || {};
 

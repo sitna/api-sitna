@@ -72,13 +72,13 @@
   * @property {boolean|SITNA.control.GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import FeatureInfoCommons from './FeatureInfoCommons';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import FeatureInfoCommons from './FeatureInfoCommons.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 

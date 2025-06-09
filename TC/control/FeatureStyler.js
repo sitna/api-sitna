@@ -1,16 +1,16 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import { Defaults } from '../Cfg';
-import Util from '../Util';
-import WebComponentControl from './WebComponentControl';
-import Point from '../../SITNA/feature/Point';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import { Defaults } from '../Cfg.js';
+import Util from '../Util.js';
+import WebComponentControl from './WebComponentControl.js';
+import Point from '../../SITNA/feature/Point.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 Consts.event.STYLECHANGE = 'stylechange.tc';
 

@@ -5,8 +5,8 @@ import Control from '../Control.js';
 import MapContents from './MapContents.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import Vector from '../../SITNA/layer/Vector.js';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 

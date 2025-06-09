@@ -1,5 +1,5 @@
-﻿import TC from '../../TC';
-import TabContainer from './TabContainer';
+﻿import TC from '../../TC.js';
+import TabContainer from './TabContainer.js';
 TC.control = TC.control || {};
 TC.control.SelectContainer = TabContainer;
 const SelectContainer = TC.control.SelectContainer;

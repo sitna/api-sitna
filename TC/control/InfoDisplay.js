@@ -1,4 +1,4 @@
-﻿import Control from '../Control';
+﻿import Control from '../Control.js';
 
 class InfoDisplay extends Control {
     getInfoContainer() {

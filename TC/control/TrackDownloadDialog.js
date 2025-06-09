@@ -1,5 +1,5 @@
-﻿import TC from '../../TC';
-import FeatureDownloadDialog from './FeatureDownloadDialog';
+﻿import TC from '../../TC.js';
+import FeatureDownloadDialog from './FeatureDownloadDialog.js';
 
 TC.control = TC.control || {};
 

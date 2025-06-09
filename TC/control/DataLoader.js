@@ -90,10 +90,10 @@
   * @property {SITNA.layer.WmsOptions[]} items - Lista de sugerencias de servicios externos WMS.
   */
 
-import TC from '../../TC';
-import TabContainer from './TabContainer';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import TC from '../../TC.js';
+import TabContainer from './TabContainer.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 class DataloaderModel{

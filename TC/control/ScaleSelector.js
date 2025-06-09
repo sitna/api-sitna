@@ -1,10 +1,10 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import Scale from './Scale';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import Scale from './Scale.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 

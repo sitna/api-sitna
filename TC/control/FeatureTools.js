@@ -1,14 +1,14 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import infoShare from './infoShare';
-import Print from './Print';
-import Point from '../../SITNA/feature/Point';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import infoShare from './infoShare.js';
+import Print from './Print.js';
+import Point from '../../SITNA/feature/Point.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 TC.control.infoShare = infoShare;

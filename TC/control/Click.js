@@ -31,9 +31,9 @@
   * </script>
   */
 
-import TC from '../../TC';
-import wrap from '../ol/ol';
-import Control from '../Control';
+import TC from '../../TC.js';
+import wrap from '../ol/ol.js';
+import Control from '../Control.js';
 
 TC.control = TC.control || {};
 TC.wrap = wrap;

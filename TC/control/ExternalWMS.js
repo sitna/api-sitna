@@ -3,8 +3,8 @@ import Consts from '../Consts.js';
 import Util from '../Util.js';
 import Control from '../Control.js';
 import Raster from '../../SITNA/layer/Raster.js';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
@@ -16,7 +16,7 @@ class ExternalWMSModel {
         this.addService = "";
         this.addWMS = "";
     }
-};
+}
 
 class ExternalWMS extends Control {
     #addedUrls = [];

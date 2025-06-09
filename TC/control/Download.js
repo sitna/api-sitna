@@ -5,8 +5,8 @@ import Util from '../Util.js';
 import MapInfo from './MapInfo.js';
 import filter from '../filter.js';
 import Polygon from '../../SITNA/feature/Polygon.js';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 TC.filter = filter;

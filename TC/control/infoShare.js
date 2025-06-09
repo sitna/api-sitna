@@ -1,6 +1,6 @@
-﻿import TC from '../../TC';
-import Util from '../Util';
-import Consts from '../Consts';
+﻿import TC from '../../TC.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
 
 TC.control = TC.control || {};
 

@@ -16,14 +16,14 @@
   * </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import ProjectionSelector from './ProjectionSelector';
-import Popup from './Popup';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import ProjectionSelector from './ProjectionSelector.js';
+import Popup from './Popup.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
