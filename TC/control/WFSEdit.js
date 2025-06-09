@@ -64,8 +64,8 @@ import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
 import Polygon from '../../SITNA/feature/Polygon.js';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 TC.Geometry = Geometry;
@@ -935,7 +935,7 @@ class WFSEdit extends SWCacheClient {
             }
             for (key in layerEditData.attributes) {
                 const attr = layerEditData.attributes[key];
-                attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
+                if (typeof attr.type === 'string') attr.type = attr.type.substr(attr.type.indexOf(':') + 1);
             }
             return layerEditData;
         });
