@@ -1,9 +1,9 @@
-﻿import WebComponentControl from './WebComponentControl';
-import Consts from '../Consts';
-import Util from '../Util';
-import TC from '../../TC';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import WebComponentControl from './WebComponentControl.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import TC from '../../TC.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 const optionElementName = 'sitna-language-option';
 class LanguageSelectorModel {
@@ -114,7 +114,8 @@ class LanguageSelector extends WebComponentControl {
     static PARAMETER_NAME = "lang";
     static COOKIE_NAME = 'SITNA.language';
     static #currentLocale;
-
+    static #tagAttributeName;
+    static #originalNodes = new WeakMap();
     constructor() {
         super(...arguments);
 
@@ -127,7 +128,7 @@ class LanguageSelector extends WebComponentControl {
         if (self.options.noReload) {
             self.noReload = true;
         }
-        self.tagAttributeName = self.options.tagAttributeName || 'data-sitna-i18n';
+        LanguageSelector.tagAttributeName = self.options.tagAttributeName || 'data-sitna-i18n';
         self.model = new LanguageSelectorModel();
    }
 
@@ -293,6 +294,7 @@ class LanguageSelector extends WebComponentControl {
             LanguageSelector.currentLocale = lang;
             self.map.setLanguage(lang).then(() => {
                 console.log("language changed");
+                LanguageSelector.setDocumentTexts();
             }, (err) => {
                 console.log("language not changed: " + err);
             });
@@ -303,10 +305,11 @@ class LanguageSelector extends WebComponentControl {
     }
 
     static setDocumentTexts() {
-        document.querySelectorAll(`[${self.tagAttributeName}]`).forEach(function (elm) {
-            let html = elm.innerHTML;
+        document.querySelectorAll(`[${LanguageSelector.tagAttributeName}]`).forEach(function (elm) {            
+            let html = LanguageSelector.#originalNodes.has(elm) ? LanguageSelector.#originalNodes.get(elm):elm.innerHTML;
             const braces = html.match(/\{\{([^\{\}]+)\}\}/g);
             if (braces) {
+                LanguageSelector.#originalNodes.set(elm, html);
                 for (var i = 0, len = braces.length; i < len; i++) {
                     const b = braces[i];
                     const key = b.match(/[^\{\}]+/)[0];
@@ -336,6 +339,10 @@ class LanguageSelector extends WebComponentControl {
             lang = lang.substr(0, hyphenIdx);
         }
         Util.storage.setCookie(LanguageSelector.COOKIE_NAME, lang, { expires: expirationDate });
+        LanguageSelector.#currentLocale = Util.getLocaleUserChoice({
+            cookieName: LanguageSelector.COOKIE_NAME,
+            paramName: LanguageSelector.PARAMETER_NAME
+        });
     }
     static get cookieName() {
         return LanguageSelector.COOKIE_NAME;
