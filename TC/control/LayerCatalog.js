@@ -64,8 +64,8 @@ import WorkLayerManager from './WorkLayerManager.js';
 import Layer from '../../SITNA/layer/Layer.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import autocomplete from '../ui/autocomplete.js';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 TC.UI = TC.UI || {};
@@ -218,8 +218,8 @@ class LayerCatalog extends ProjectionSelector {
             for (const layer of self.layers) {
                 await self.renderBranch(layer);
                 //title en los botones del arbol expandir contraer
-                self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button").forEach((button) => button.title = expandText);
-                self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button").forEach((button) => button.title = collapseText);
+                self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = expandText);
+                self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = collapseText);
                 self.controller.add(self.getLayerRootNode(layer));
             }
             if (Util.isFunction(callback)) {
@@ -973,8 +973,8 @@ class LayerCatalog extends ProjectionSelector {
                     metadata: !layer.MetadataURL ? null : layer.MetadataURL.reduce(function (vi, va) {
                         vi.push({
                             format: va.Format,
-                            formatDescription: Util.getLocaleString(self.map.options.locale, Util.getSimpleMimeType(va.Format)) ||
-                                Util.getLocaleString(self.map.options.locale, 'viewMetadata'),
+                            formatDescription: Util.getLocaleString(self.map.getLocale(), Util.getSimpleMimeType(va.Format)) ||
+                                Util.getLocaleString(self.map.getLocale(), 'viewMetadata'),
                             type: va.type,
                             url: va.OnlineResource
                         });
@@ -1193,8 +1193,8 @@ class LayerCatalog extends ProjectionSelector {
         expandText = self.getLocaleString('expand');
         collapseText = self.getLocaleString('collapse');
         self.layers.forEach((layer) => {
-            self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button").forEach((button) => button.title = expandText);
-            self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button").forEach((button) => button.title = collapseText);
+            self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = expandText);
+            self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = collapseText);
         });
         self.updateModel();
     }
