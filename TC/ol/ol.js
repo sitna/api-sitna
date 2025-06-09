@@ -1,23 +1,23 @@
-import { VERSION } from 'ol/util';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import Overlay from 'ol/Overlay';
-import Collection from 'ol/Collection';
-import { extend } from 'ol/array';
-import { assert } from 'ol/asserts';
-import { asArray, asString } from 'ol/color';
-import { toRadians } from 'ol/math';
-import { padNumber } from 'ol/string';
-import MapEventType from 'ol/MapEventType';
-import MapBrowserEventType from 'ol/MapBrowserEventType';
-import { OverviewMap, ScaleLine, Zoom, ZoomToExtent } from 'ol/control';
-import ZoomSlider from 'ol/control/ZoomSlider';
-import { listen, unlistenByKey } from 'ol/events';
-import { shiftKeyOnly, click, never } from 'ol/events/condition';
-import e_EventType from 'ol/events/EventType';
-import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, extend as extend_e } from 'ol/extent';
-import Feature from 'ol/Feature';
-import { createStyleFunction } from 'ol/Feature';
+import { VERSION } from '../../node_modules/ol/util.js';
+import Map from '../../node_modules/ol/Map.js';
+import View from '../../node_modules/ol/View.js';
+import Overlay from '../../node_modules/ol/Overlay.js';
+import Collection from '../../node_modules/ol/Collection.js';
+import { extend } from '../../node_modules/ol/array.js';
+import { assert } from '../../node_modules/ol/asserts.js';
+import { asArray, asString } from '../../node_modules/ol/color.js';
+import { toRadians } from '../../node_modules/ol/math.js';
+import { padNumber } from '../../node_modules/ol/string.js';
+import MapEventType from '../../node_modules/ol/MapEventType.js';
+import MapBrowserEventType from '../../node_modules/ol/MapBrowserEventType.js';
+import { OverviewMap, ScaleLine, Zoom, ZoomToExtent } from '../../node_modules/ol/control.js';
+import ZoomSlider from '../../node_modules/ol/control/ZoomSlider.js';
+import { listen, unlistenByKey } from '../../node_modules/ol/events.js';
+import { shiftKeyOnly, click, never } from '../../node_modules/ol/events/condition.js';
+import e_EventType from '../../node_modules/ol/events/EventType.js';
+import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, extend as extend_e } from '../../node_modules/ol/extent.js';
+import Feature from '../../node_modules/ol/Feature.js';
+import { createStyleFunction } from '../../node_modules/ol/Feature.js';
 import {
     Geometry as g_Geometry,
     Point,
@@ -27,26 +27,26 @@ import {
     Polygon,
     MultiPolygon,
     Circle as g_Circle
-} from 'ol/geom';
-import GeometryCollection from 'ol/geom/GeometryCollection';
-import { deflateCoordinates } from 'ol/geom/flat/deflate';
-import { inflateCoordinates } from 'ol/geom/flat/inflate';
-import { linearRingLength } from 'ol/geom/flat/length';
-import { xhr } from 'ol/featureloader';
-import GMLBase from '../../lib/ol/format/GMLBase';
-import XMLFeature from 'ol/format/XMLFeature';
-import GML from 'ol/format/GML';
-import { WFS, WKT, WKB, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format';
-import GeoJSON from '../../lib/ol/format/GeoJSON';
-import FeatureFormat from 'ol/format/Feature';
-import GPX from '../../lib/ol/format/GPX';
-import KML from '../../lib/ol/format/KML';
-import GeoPackage from '../../SITNA/format/GeoPackage';
-import Shapefile from '../../SITNA/format/Shapefile';
-import { transformGeometryWithOptions } from 'ol/format/Feature.js';
-import GML2 from 'ol/format/GML2';
-import GML3 from 'ol/format/GML3';
-import GML32 from '../../lib/ol/format/GML32';
+} from '../../node_modules/ol/geom.js';
+import GeometryCollection from '../../node_modules/ol/geom/GeometryCollection.js';
+import { deflateCoordinates } from '../../node_modules/ol/geom/flat/deflate.js';
+import { inflateCoordinates } from '../../node_modules/ol/geom/flat/inflate.js';
+import { linearRingLength } from '../../node_modules/ol/geom/flat/length.js';
+import { xhr } from '../../node_modules/ol/featureloader.js';
+import GMLBase from '../../lib/ol/format/GMLBase.js';
+import XMLFeature from '../../node_modules/ol/format/XMLFeature.js';
+import GML from '../../node_modules/ol/format/GML.js';
+import { WFS, WKT, WKB, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from '../../node_modules/ol/format.js';
+import GeoJSON from '../../lib/ol/format/GeoJSON.js';
+import FeatureFormat from '../../node_modules/ol/format/Feature.js';
+import GPX from '../../lib/ol/format/GPX.js';
+import KML from '../../lib/ol/format/KML.js';
+import GeoPackage from '../../SITNA/format/GeoPackage.js';
+import Shapefile from '../../SITNA/format/Shapefile.js';
+import { transformGeometryWithOptions } from '../../node_modules/ol/format/Feature.js';
+import GML2 from '../../node_modules/ol/format/GML2.js';
+import GML3 from '../../node_modules/ol/format/GML3.js';
+import GML32 from '../../lib/ol/format/GML32.js';
 import {
     defaults,
     Draw,
@@ -57,13 +57,13 @@ import {
     Modify,
     /*DragAndDrop, */
     DoubleClickZoom
-} from 'ol/interaction';
-import DragAndDrop from '../../lib/ol/interaction/DragAndDrop';
-import { Layer, Tile, Image as l_Image, Vector as l_Vector, Heatmap } from 'ol/layer';
-import TileGrid from 'ol/tilegrid/TileGrid';
-import { unByKey } from 'ol/Observable';
+} from '../../node_modules/ol/interaction.js';
+import DragAndDrop from '../../lib/ol/interaction/DragAndDrop.js';
+import { Layer, Tile, Image as l_Image, Vector as l_Vector, Heatmap } from '../../node_modules/ol/layer.js';
+import TileGrid from '../../node_modules/ol/tilegrid/TileGrid.js';
+import { unByKey } from '../../node_modules/ol/Observable.js';
 
-import BaseObject from 'ol/Object';
+import BaseObject from '../../node_modules/ol/Object.js';
 import {
     METERS_PER_UNIT,
     Projection,
@@ -72,20 +72,20 @@ import {
     getTransform,
     transform,
     transformExtent
-} from 'ol/proj';
-import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from 'ol/proj/epsg4326';
-import { register } from 'ol/proj/proj4';
-import { getVectorContext, toContext } from 'ol/render';
-import r_EventType from 'ol/render/EventType';
-import { Vector as s_Vector, Cluster, ImageWMS, WMTS, ImageCanvas } from 'ol/source';
-//import OGCMapTile from 'ol/source/OGCMapTile';
-import TileEventType from 'ol/source/TileEventType';
-import VectorEventType from 'ol/source/VectorEventType';
-import { optionsFromCapabilities } from 'ol/source/WMTS';
-import { defaultImageLoadFunction } from 'ol/source/Image';
-import { createLoader } from 'ol/source/wms';
-import { decode } from 'ol/Image.js';
-import { Style, RegularShape, Circle as s_Circle, Fill, Icon, Stroke, Text } from 'ol/style';
+} from '../../node_modules/ol/proj.js';
+import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from '../../node_modules/ol/proj/epsg4326.js';
+import { register } from '../../node_modules/ol/proj/proj4.js';
+import { getVectorContext, toContext } from '../../node_modules/ol/render.js';
+import r_EventType from '../../node_modules/ol/render/EventType.js';
+import { Vector as s_Vector, Cluster, ImageWMS, WMTS, ImageCanvas } from '../../node_modules/ol/source.js';
+//import OGCMapTile from '../../node_modules/ol/source/OGCMapTile.js';
+import TileEventType from '../../node_modules/ol/source/TileEventType.js';
+import VectorEventType from '../../node_modules/ol/source/VectorEventType.js';
+import { optionsFromCapabilities } from '../../node_modules/ol/source/WMTS.js';
+import { defaultImageLoadFunction } from '../../node_modules/ol/source/Image.js';
+import { createLoader } from '../../node_modules/ol/source/wms.js';
+import { decode } from '../../node_modules/ol/Image.js';
+import { Style, RegularShape, Circle as s_Circle, Fill, Icon, Stroke, Text } from '../../node_modules/ol/style.js';
 import {
     parse,
     parseNode,
@@ -104,7 +104,7 @@ import {
     makeSimpleNodeFactory,
     OBJECT_PROPERTY_NODE_FACTORY,
     XML_SCHEMA_INSTANCE_URI
-} from 'ol/xml';
+} from '../../node_modules/ol/xml.js';
 import {
     readDecimal,
     readBoolean,
@@ -116,29 +116,28 @@ import {
     writeDecimalTextNode,
     writeBooleanTextNode,
     writeNonNegativeIntegerTextNode
-} from 'ol/format/xsd';
-import Image from 'ol/Image';
+} from '../../node_modules/ol/format/xsd.js';
+import Image from '../../node_modules/ol/Image.js';
 
 import proj4 from 'proj4';
-import TC from '../../TC';
-import wrap from '../wrap';
-import Util from '../Util';
-import Consts from '../Consts';
-import Feature_s from '../../SITNA/feature/Feature';
-import Point_s from '../../SITNA/feature/Point';
-import Marker from '../../SITNA/feature/Marker';
-import Polyline from '../../SITNA/feature/Polyline';
-import Polygon_s from '../../SITNA/feature/Polygon';
-import MultiPoint_s from '../../SITNA/feature/MultiPoint';
-import MultiMarker from '../../SITNA/feature/MultiMarker';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import MultiPolygon_s from '../../SITNA/feature/MultiPolygon';
-import Circle from '../../SITNA/feature/Circle';
-import Layer_s from '../../SITNA/layer/Layer';
-import Raster from '../../SITNA/layer/Raster';
-import Geometry from '../Geometry';
+import TC from '../../TC.js';
+import wrap from '../wrap.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
+import Feature_s from '../../SITNA/feature/Feature.js';
+import Point_s from '../../SITNA/feature/Point.js';
+import Marker from '../../SITNA/feature/Marker.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import Polygon_s from '../../SITNA/feature/Polygon.js';
+import MultiPoint_s from '../../SITNA/feature/MultiPoint.js';
+import MultiMarker from '../../SITNA/feature/MultiMarker.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import MultiPolygon_s from '../../SITNA/feature/MultiPolygon.js';
+import Circle from '../../SITNA/feature/Circle.js';
+import Layer_s from '../../SITNA/layer/Layer.js';
+import Raster from '../../SITNA/layer/Raster.js';
+import Geometry from '../Geometry.js';
 import FeatureTypeParser from '../tool/FeatureTypeParser.js';
-import filter from '../../SITNA/filter.js';
 import { GMLFilter } from '../../SITNA/filter.js';
 
 TC.wrap = wrap;
@@ -2225,7 +2224,7 @@ TC.wrap.Map.prototype.enableDragAndDrop = function (options = {}) {
                 if (li) {
                     li.removeWait(self.parent._featureImportWaitId);
                 }
-                map.toast(Util.getLocaleString(map.options.locale, 'fileImport.invalidObjects'), { type: Consts.msgType.WARNING });
+                map.toast(Util.getLocaleString(map.getLocale(), 'fileImport.invalidObjects'), { type: Consts.msgType.WARNING });
             };
             if (DataTransferItem.prototype.getAsFileSystemHandle) {
                 // Rama de File System Access API
@@ -3141,6 +3140,25 @@ const bufferExtent = function (extent, resolution, width) {
     return extent.map((v, i) => i < 2 ? v - extentBuffer : v + extentBuffer);
 };
 
+TC.wrap.layer.Raster.prototype.getResolutionBounds = function (params) {
+    const self = this;
+    const result = {};
+    if (self.parent.capabilities) {
+        const getResolutionFromScale = (scale) => scale / (self.parent.map?.getMetersPerUnit() ?? 1) * 0.00028;
+
+        const nodes = params.LAYERS.split().map((name) => self.parent.getLayerNodeByName(name));
+        const minScaleDenominator = Math.min(...nodes.map((node) => parseFloat(node?.MinScaleDenominator ?? 0)));
+        if (minScaleDenominator > 0) {
+            result.minResolution = getResolutionFromScale(minScaleDenominator);
+        }
+        const maxScaleDenominator = Math.max(...nodes.map((node) => parseFloat(node?.MaxScaleDenominator ?? Infinity)));
+        if (maxScaleDenominator < Infinity) {
+            result.maxResolution = getResolutionFromScale(maxScaleDenominator);
+        }
+    }
+    return result;
+};
+
 TC.wrap.layer.Raster.prototype.createWMSLayer = function (url, params, options) {
     const self = this;
     var result = null;
@@ -3204,11 +3222,12 @@ TC.wrap.layer.Raster.prototype.createWMSLayer = function (url, params, options) 
         source: source
     };
 
-    if (options.minResolution) {
-        layerOptions.minResolution = options.minResolution;
+    const { minResolution, maxResolution } = self.getResolutionBounds(params);
+    if (options.minResolution || minResolution) {
+        layerOptions.minResolution = options.minResolution ?? minResolution;
     }
-    if (options.maxResolution) {
-        layerOptions.maxResolution = options.maxResolution;
+    if (options.maxResolution || maxResolution) {
+        layerOptions.maxResolution = options.maxResolution ?? maxResolution;
     }
     result = new ol.layer.Image(layerOptions);
 
@@ -3379,6 +3398,13 @@ TC.wrap.layer.Raster.prototype.getParams = function () {
  *  Parameter: object
  */
 TC.wrap.layer.Raster.prototype.setParams = function (params) {
+    const { minResolution, maxResolution } = this.getResolutionBounds(params);
+    if (!this.parent.options.minResolution && minResolution) {
+        this.layer.setMinResolution(minResolution);
+    }
+    if (!this.parent.options.maxResolution && maxResolution) {
+        this.layer.setMaxResolution(maxResolution);
+    }
     this.layer.getSource().updateParams(params);
 };
 
@@ -3540,6 +3566,46 @@ const isParamStyle = function (options) {
     return false;
 };
 
+const getNativeFeatureData = function (olFeature) {
+    let isPoint, isLine, isPolygon, feature;
+    if (olFeature) {
+        const olGeom = olFeature.getGeometry();
+        switch (olGeom && olGeom.getType()) {
+            case 'Point':
+            case 'MultiPoint':
+                isPoint = true;
+                break;
+            case 'LineString':
+            case 'MultiLineString':
+                isLine = true;
+                break;
+            case 'Polygon':
+            case 'MultiPolygon':
+                isPolygon = true;
+                break;
+        }
+        if (olFeature._wrap) {
+            feature = olFeature._wrap.parent;
+        }
+        else {
+            // Si la API SITNA no ha completado su feature, creamos un mock-up para que no fallen las funciones de estilo
+            feature = {
+                id: TC.wrap.Feature.prototype.getId.call({
+                    feature: olFeature
+                }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
+                features: olFeature.get('features'),
+                getData: function () {
+                    return TC.wrap.Feature.prototype.getData.call({
+                        feature: olFeature
+                    });
+                }
+            };
+        }
+        return [feature, isPoint, isLine, isPolygon];
+    }
+    return [null, false, false, false];
+};
+
 // Transformación de opciones de estilo en un estilo nativo OL.
 const createNativeStyle = function (options, olFeat) {
     if (Util.isFunction(options)) {
@@ -3553,44 +3619,7 @@ const createNativeStyle = function (options, olFeat) {
     const styleFunction = function (olFeat) {
 
         const nativeStyleOptions = [];
-
-        var feature;
-        var isPoint, isLine, isPolygon;
-        if (olFeat) {
-            const olGeom = olFeat.getGeometry();
-            switch (olGeom && olGeom.getType()) {
-                case 'Point':
-                case 'MultiPoint':
-                    isPoint = true;
-                    break;
-                case 'LineString':
-                case 'MultiLineString':
-                    isLine = true;
-                    break;
-                case 'Polygon':
-                case 'MultiPolygon':
-                    isPolygon = true;
-                    break;
-            }
-            if (olFeat._wrap) {
-                feature = olFeat._wrap.parent;
-            }
-            else {
-                // Si la API SITNA no ha completado su feature, creamos un mock-up para que no fallen las funciones de estilo
-                feature = {
-                    id: TC.wrap.Feature.prototype.getId.call({
-                        feature: olFeat
-                    }), // GLS añado el id de la feature para poder filtrar por la capa a la cual pertenece                    
-                    features: olFeat.get('features'),
-                    getData: function () {
-                        return TC.wrap.Feature.prototype.getData.call({
-                            feature: olFeat
-                        });
-                    }
-                };
-            }
-        }
-
+        const [feature, isPoint, isLine, isPolygon] = getNativeFeatureData(olFeat);
         let styles = options.styles || {};
         let isCluster = feature && Array.isArray(feature.features) && feature.features.length > 1;
         const externalStyles = mergeMapAndGeneralStyles(options.layer);
@@ -3635,7 +3664,7 @@ const createNativeStyle = function (options, olFeat) {
             styleOptions = styles.point;
             (styleOptions instanceof Array ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
                 var circleOptions = {
-                    radius: getStyleValue(currentStyle.radius, feature) ||
+                    radius: getStyleValue(currentStyle.radius, feature) ??
                         (getStyleValue(currentStyle.height, feature) + getStyleValue(currentStyle.width, feature)) / 4
                 };
                 if (currentStyle.fillColor) {
@@ -3715,6 +3744,167 @@ const createNativeStyle = function (options, olFeat) {
     return isDynamicStyle ? styleFunction : styleFunction(olFeat);
 };
 
+const getFlatStyleExpression = function (value, feature) {
+    if (typeof value === 'string') {
+        const match = value.match(/^\$\{(.+)\}$/);
+        if (match) {
+            return ['get', match[1]];
+        }
+    }
+    else if (Util.isFunction(value)) {
+        return value(feature);
+    }
+    return value;
+};
+
+// Transformación de opciones de estilo en un estilo nativo "plano".
+const createFlatStyle = function (options, olFeat) {
+    if (Util.isFunction(options)) {
+        return function (f) {
+            return createFlatStyle(options(f._wrap.parent));
+        }
+    }
+
+
+    const flatStyle = [];
+
+    const [feature, isPoint, isLine, isPolygon] = getNativeFeatureData(olFeat);
+    const styles = options.styles || {};
+    let styleOptions = {};
+    let currentFlatStyle = {};
+    if (styles.line && (isLine || !olFeat)) {
+        styleOptions = styles.line;
+        const lineFlatRule = {
+            else: true,
+            filter: ['==', ['geometry-type'], 'LineString'],
+            style: {},
+        };
+        flatStyle.push(lineFlatRule);
+        currentFlatStyle = lineFlatRule.style;
+        for (const currentStyle of (styleOptions instanceof Array ? styleOptions : [styleOptions])) {
+            Object.assign(currentFlatStyle, {
+                'stroke-color': getFlatStyleExpression(currentStyle.strokeColor, feature),
+                'stroke-width': getFlatStyleExpression(currentStyle.strokeWidth, feature),
+            });
+            if (currentStyle.lineDash) {
+                Object.assign(currentFlatStyle, {
+                    'stroke-line-dash': currentStyle.lineDash,
+                });
+            }
+        }
+    }
+
+    if (styles.polygon && (isPolygon || !olFeat)) {
+        styleOptions = styles.polygon;
+        const polygonFlatRule = {
+            else: true,
+            filter: ['==', ['geometry-type'], 'Polygon'],
+            style: {},
+        };
+        flatStyle.push(polygonFlatRule);
+        currentFlatStyle = polygonFlatRule.style;
+        for (const currentStyle of (styleOptions instanceof Array ? styleOptions : [styleOptions])) {
+            Object.assign(currentFlatStyle, {
+                'stroke-color': getFlatStyleExpression(currentStyle.strokeColor, feature),
+                'stroke-width': getFlatStyleExpression(currentStyle.strokeWidth, feature),
+            });
+            if (currentStyle.lineDash) {
+                Object.assign(currentFlatStyle, {
+                    'stroke-line-dash': currentStyle.lineDash,
+                });
+            }
+            if (currentStyle.fillColor) {
+                Object.assign(currentFlatStyle, {
+                    'fill-color': getFlatStyleExpression(currentStyle.fillColor, feature),
+                });
+            }
+        }
+    }
+
+    if (styles.point && (isPoint || !olFeat)) {
+        styleOptions = styles.point;
+        const pointFlatRule = {
+            else: true,
+            filter: ['==', ['geometry-type'], 'Point'],
+            style: {},
+        };
+        currentFlatStyle = pointFlatRule.style;
+        for (const currentStyle of (styleOptions instanceof Array ? styleOptions : [styleOptions])) {
+            let circleRadius = getFlatStyleExpression(currentStyle.radius, feature) ||
+                (getStyleValue(currentStyle.height, feature) + getStyleValue(currentStyle.width, feature)) / 4;
+            if (Number.isNaN(circleRadius)) circleRadius = TC.Cfg.styles?.point?.radius;
+            if (!Number.isNaN(circleRadius)) {
+                Object.assign(currentFlatStyle, {
+                    'circle-radius': circleRadius,
+                });
+                if (currentStyle.fillColor) {
+                    Object.assign(currentFlatStyle, {
+                        'circle-fill-color': getFlatStyleExpression(currentStyle.fillColor, feature),
+                    });
+                }
+                if (currentStyle.strokeColor) {
+                    Object.assign(currentFlatStyle, {
+                        'circle-stroke-color': getFlatStyleExpression(currentStyle.strokeColor, feature),
+                        'circle-stroke-width': getFlatStyleExpression(currentStyle.strokeWidth, feature),
+                        'circle-stroke-line-dash': currentStyle.lineDash,
+                    });
+                }
+                flatStyle.push(pointFlatRule);
+            }
+        }
+
+    }
+
+    if (styles.marker && (isPoint || !olFeat)) {
+        styleOptions = styles.marker;
+        const pointFlatRule = {
+            else: true,
+            filter: ['==', ['geometry-type'], 'Point'],
+            style: {},
+        };
+        currentFlatStyle = pointFlatRule.style;
+        for (const currentStyle of (styleOptions instanceof Array ? styleOptions : [styleOptions])) {
+
+            const cssStyle = Util.getFeatureStyleFromCss(currentStyle.cssClass);
+            const iconUrl = currentStyle.url || cssStyle?.url;
+
+            var ANCHOR_DEFAULT_UNITS = 'fraction';
+            if (iconUrl) {
+                let iconSize;
+                if (cssStyle?.width) {
+                    iconSize = [cssStyle.width, cssStyle.height];
+                }
+                else if (currentStyle.width && currentStyle.height) {
+                    iconSize = [getStyleValue(currentStyle.width, feature), getStyleValue(currentStyle.height, feature)];
+                }
+                Object.assign(currentFlatStyle, {
+                    'icon-cross-origin': 'anonymous',
+                    'icon-anchor': currentStyle.anchor || styles.marker.anchor || [0.5, 1],
+                    'icon-anchor-x-units': currentStyle.anchorXUnits || ANCHOR_DEFAULT_UNITS,
+                    'icon-anchor-y-units': currentStyle.anchorYUnits || ANCHOR_DEFAULT_UNITS,
+                    'icon-src': iconUrl,
+                    'icon-width': iconSize?.[0],
+                    'icon-height': iconSize?.[1],
+                    //10/11/2021 URI: Recuperamos la rotación de los iconos que viene en grados y lo pasamos a radianes
+                    'icon-rotation': currentStyle.rotation ? currentStyle.rotation / 180 * Math.PI : undefined,
+                });
+            }
+        }
+
+        if (styleOptions.label || styleOptions.labelKey) {
+            Object.assign(currentFlatStyle, createFlatTextStyle(styleOptions));
+        }
+
+    }
+    //10/11/2021 URI:Si entre la opciones de estilos trae un globo (balloon), seguramente se trate de la importación de un KML. Creamos un atributo nuevo llamado _balloon que posteriormente
+    //será leido en el método getTemplate de la feature para pintar el bocadillo tipado
+    for (const styleRule of flatStyle) {
+        if (styleOptions.balloon) styleRule._balloon = createFlatTextStyle({ text: styleOptions.balloon });
+    }
+
+    return flatStyle;
+};
+
 const createNativeTextStyle = function (styleObj, feature) {
     if (!(styleObj?.label || styleObj?.labelKey)) {
         return;
@@ -3768,6 +3958,44 @@ const createNativeTextStyle = function (styleObj, feature) {
     }
     //
     return new ol.style.Text(textOptions);
+};
+
+const createFlatTextStyle = function (styleOptions, feature) {
+    const flatStyle = {};
+    let text = getFlatStyleExpression(styleOptions.labelKey || styleOptions.label, feature);
+    if (!Array.isArray(text)) text = '' + text;
+    flatStyle['text-value'] = text;
+    flatStyle['text-overflow'] = true;
+
+    if (styleOptions.fontSize) {
+        flatStyle['text-font'] = getFlatStyleExpression(styleOptions.fontSize, feature) + 'pt sans-serif';
+    }
+    else if (styleOptions.font) {
+        flatStyle['text-font'] = styleOptions.font;
+    }
+    if (styleOptions.labelRotationKey) {
+        flatStyle['text-rotation'] = -Math.PI * getFlatStyleExpression(styleOptions.labelRotationKey, feature) / 180;
+    }
+    if (styleOptions.fontColor) {
+        flatStyle['text-fill-color'] = getFlatStyleExpression(styleOptions.fontColor, feature);
+    }
+    if (styleOptions.labelOutlineColor) {
+        flatStyle['text-stroke-color'] = getFlatStyleExpression(styleOptions.labelOutlineColor, feature);
+        flatStyle['text-stroke-width'] = getFlatStyleExpression(styleOptions.labelOutlineWidth, feature);
+    }
+    if (styleOptions.labelOffset) {
+        flatStyle['text-offset-x'] = getFlatStyleExpression(styleOptions.labelOffset[0]);
+        flatStyle['text-offset-y'] = getFlatStyleExpression(styleOptions.labelOffset[1]);
+    }
+    //09/11/2021 URI: Antes no se le podía especificar la escala de la fuente de los labels        
+    if (styleOptions.textScale) {
+        flatStyle['text-scale'] = getFlatStyleExpression(styleOptions.textScale);
+    }
+    //09/11/2021 URI: Antes no se le podía especificar la alineación de la fuente de los labels           
+    if (styleOptions.textAlign) {
+        flatStyle['text-align'] = getFlatStyleExpression(styleOptions.textAlign);
+    }
+    return flatStyle;
 };
 
 var toHexString = function (number) {
@@ -5741,7 +5969,7 @@ TC.wrap.control.Geolocation.prototype.initSnap = function (coordinate, eventPixe
                         data.n = closestFeature.get('name');
                 }
 
-                var locale = self.parent.map.options.locale && self.parent.map.options.locale.replace('_', '-') || undefined;
+                var locale = self.parent.map.getLocale() || undefined;
                 data.x = self.map.wrap.isGeo() ? closestPoint[0].toLocaleString(locale, { minimumFractionDigits: 5 }) : Math.round(closestPoint[0]).toLocaleString(locale);
                 data.y = self.map.wrap.isGeo() ? closestPoint[1].toLocaleString(locale, { minimumFractionDigits: 5 }) : Math.round(closestPoint[1]).toLocaleString(locale);
 
@@ -6910,7 +7138,7 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
     var self = this;
     var map = self.parent.map;
     return new Promise(function (resolve, _reject) {
-        map.wrap.getMap().then(function (olMap) {
+        map.wrap.getMap().then(async function (olMap) {
             var targetServices = {};
             var auxInfo = {};
             const requestPromises = [];
@@ -6966,7 +7194,10 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
                     //var targetService = {
                     //    layers: [], mapLayers: [layer]
                     //};
-                    var disgregatedNames = layer.getDisgregatedLayerNames();
+
+                    const isFromRasterOrigin = (await layer.describeLayer(true)).every((l) => l.owsType === "WCS");
+                    
+                    var disgregatedNames = isFromRasterOrigin ? layer.availableNames : layer.getDisgregatedLayerNames();
                     if (options.layerName) { // Mirar si en las opciones pone que solo busque en una capa
                         if (disgregatedNames.indexOf(options.layerName) >= 0 && olLayer._wrap.getInfo(options.layerName).queryable) {
                             addLayerToService(targetService, layer, options.layerName);
@@ -8591,7 +8822,14 @@ TC.wrap.Feature.prototype.showPopup = function (options = {}) {
 
             self._innerCentroid = self.getInnerPoint({ clipBox: currentExtent });
 
-            popupCtl.contentDiv.innerHTML = options.html || self.parent.getInfo({ locale: map.options.locale });
+            const html = options.html || self.parent.getInfo({ locale: map.getLocale() });
+            let container = popupCtl.contentDiv;
+            if (options.shadow) {
+                container = document.createElement('div');
+                popupCtl.contentDiv.appendChild(container);
+                container = container.shadowRoot ?? container.attachShadow({ mode: 'open' });
+            }
+            container.innerHTML = html;
 
             var parentOptions = self.parent.options;
             if (Util.isEmptyObject(parentOptions) && self.parent.layer &&
@@ -8730,6 +8968,9 @@ TC.wrap.Feature.prototype.getTemplate = function () {
 TC.wrap.Feature.prototype.getData = function () {
     var self = this;
     var result = self.feature.getProperties();
+    //URI: Borramos "geometry"" de la lista de propiedades si es nula. esto pasa si la capa es un heatmap
+    if (self.feature.getProperties()[self.feature.getGeometryName()] === null)
+        delete result[self.feature.getGeometryName()];
     // En caso de clusters
     if (Array.isArray(result.features)) {
         if (result.features.length === 1) {
@@ -9632,7 +9873,8 @@ TC.wrap.control.OfflineMapMaker.prototype.getRequestSchemas = function (options)
         var layer = layers[i];
         var schema = {
             layerId: layer.id,
-            tileMatrixSet: layer.matrixSet
+            tileMatrixSet: layer.matrixSet,
+            supportedCrs: options.crs,
         };
         var olSource = layer.wrap.layer.getSource();
         if (olSource.getUrls) {
