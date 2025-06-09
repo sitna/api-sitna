@@ -1,5 +1,4 @@
-import Consts from './TC/Consts';
-import loadjs from 'loadjs';
+import Consts from './TC/Consts.js';
 import proj4 from 'proj4';
 
 var TC = TC || {};
@@ -17,7 +16,7 @@ var TC = TC || {};
             // Obtenemos la URL base de la dirección del script
             const script = document.currentScript ?? document.scripts[document.scripts.length - 1];
             const src = script.getAttribute('src');
-            TC.apiLocation = src.substr(0, src.lastIndexOf('/') + 1);
+            TC.apiLocation = src.substring(0, src.lastIndexOf('/') + 1);
             globalThis.SITNA_BASE_URL = TC.apiLocation;
         }
     }
@@ -130,7 +129,7 @@ var _showLoadFailedError = function (url) {
 
     const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
     const subject = "Error al cargar " + url;
-    const body = TC.Util.getLocaleString(mapObj ? mapObj.options.locale : 'es-ES', "urlFailedToLoad", { url: url });
+    const body = TC.Util.getLocaleString(mapObj ? mapObj.getLocale() : 'es-ES', "urlFailedToLoad", { url: url });
 
     // tostada sin la pila
     TC.error(
@@ -203,112 +202,63 @@ TC.loadJSInOrder = function (condition, url, callback) {
     return TC.loadJS(condition, url, callback, true);
 };
 
-const addCrossOriginAttr = function (path, scriptEl) {
-    if (!TC.Util.isSameOrigin(path)) {
-        scriptEl.crossOrigin = "anonymous";
-    }
-};
+const loadedUrls = new Set();
 
-TC.loadJS = function (condition, url, callback, inOrder = false, notCrossOrigin) {
-    return new Promise(function (resolve, _reject) {
-        const endFn = function () {
-            if (TC.Util.isFunction(callback)) {
-                callback();
-            }
-            resolve();
-        };
-
-        var urls = Array.isArray(url) ? url : [url];
-        urls = urls.map(function (elm) {
-            if (!/\.js$/i.test(elm) && elm.indexOf(TC.apiLocation) === 0) { // Si pedimos un archivo sin extensión y es nuestro se la ponemos según el entorno
-                return elm + (TC.isDebug ? '.js' : '.min.js');
-            }
-            return elm;
-        });
-
-        if (condition) {
-            urls = urls instanceof Array ? urls : [urls];
-
-            var name = "";
-            const getName = function (path) {
-                return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
-            };
-            if (urls.length > 1) {
-                var toReduce = urls.slice(0).filter(function (path, index) {
-                    if (loadjs.isDefined(getName(path))) {
-                        urls.splice(index, 1);
-                        loadjs.ready(getName(path), endFn);
-                        return false;
-                    } else {
-                        return true;
+TC.loadJS = async function (condition, url, callback, inOrder = false, notCrossOrigin) {
+    const requestPromises = [];
+    if (condition) {
+        const urls = Array.isArray(url) ? url : [url];
+        for (const urlString of urls) {
+            const url = new URL(urlString, location.href);
+            const fullUrlString = url.toString();
+            if (!loadedUrls.has(fullUrlString)) {
+                loadedUrls.add(fullUrlString);
+                requestPromises.push(new Promise((resolve, reject) => {
+                    const elm = document.createElement('script');
+                    elm.src = urlString;
+                    elm.async = !inOrder;
+                    if (!notCrossOrigin && !TC.Util.isSameOrigin(elm.src)) {
+                        elm.crossOrigin = 'anonymous';
                     }
-                });
-                if (toReduce.length === 1) {
-                    name = getName(toReduce[0]);
-                } else if (toReduce.length > 0) {
-                    name = toReduce.reduce(function (prev, curr) {
-                        return getName(prev) + "_" + getName(curr);
-                    });
-                }
-            } else {
-                name = getName(urls[0]);
-            }
-
-            if (name.length > 0) {
-                if (!loadjs.isDefined(name)) {
-                    var options = {
-                        async: !inOrder,
-                        numRetries: 1
+                    elm.onload = resolve;
+                    elm.onerror = function (e) {
+                        loadedUrls.remove(fullUrlString);
+                        console.error(e);
+                        reject();
                     };
-
-                    if (!notCrossOrigin && !TC.Util.detectIE()) {
-                        options.before = addCrossOriginAttr;
-                    }
-
-                    loadjs(urls, name, options);
-                    loadjs.ready(name, {
-                        success: function () {
-                            endFn();
-                        },
-                        error: function (pathsNotFound) {
-                            _showLoadFailedError(pathsNotFound);
-                        }
-                    });
-                } else {
-                    // Esto vuelve a añadir el script al head si se está pidiendo un script cargado previamente.
-                    //urls.forEach(function (url) {
-                    //    const urlObj = new URL(url, location.href);
-                    //    const script = Array.from(document.scripts).filter((scr) => scr.src === urlObj.href)[0];
-                    //    if (script) {
-                    //        document.head.appendChild(script.cloneNode());
-                    //    }
-                    //});
-                    loadjs.ready(name, endFn);
-                }
+                    document.head.appendChild(elm);
+                }));
             }
         }
-        else {
-            endFn();
-        }
-    });
+    }
+    await Promise.all(requestPromises);
+    if (TC.Util.isFunction(callback)) {
+        callback();
+    }
 };
 
 TC.loadCSS = function (url) {
-    const getName = function (path) {
-        return path.split('/').reverse().slice(0, 2).reverse().join('_').toLowerCase();
-    };
 
-    const name = getName(url);
-    if (!loadjs.isDefined(name)) {
-        loadjs(url, name, {
-            error: function (pathsNotFound) {
-                _showLoadFailedError(pathsNotFound);
-            },
-            numRetries: 1
-        });
-    } else {
-        loadjs.ready(name, {});
-    }
+    const urlObj = new URL(url, location.href);
+    const fullUrlString = urlObj.toString();
+    return new Promise((resolve, reject) => {
+        if (loadedUrls.has(fullUrlString)) {
+            resolve();
+        }
+        else {
+            loadedUrls.add(fullUrlString);
+            const elm = document.createElement('link');
+            elm.rel = 'stylesheet';
+            elm.href = url;
+            elm.onload = resolve;
+            elm.onerror = function (e) {
+                loadedUrls.remove(fullUrlString);
+                console.error(e);
+                reject();
+            };
+            document.head.appendChild(elm);
+        }
+    });
 };
 
 // Transformación de petición AJAX de jQuery a promesa nativa
