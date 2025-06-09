@@ -2,8 +2,8 @@
 import Util from '../Util.js';
 import Consts from '../Consts.js';
 import MapInfo from './MapInfo.js';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -317,7 +317,7 @@ class Share extends MapInfo {
                         url: url
                     }
                     //obtenemos la descripcion
-                    sharedOps["text"] = document.querySelector("meta[name='description'][lang='" + self.map.options.locale + "'],meta[name='description'][lang='" + self.map.options.locale.substring(0, 2) + "']")?.getAttribute("content")
+                    sharedOps["text"] = document.querySelector("meta[name='description'][lang='" + self.map.getLocale() + "'],meta[name='description'][lang='" + self.map.getLocale().substring(0, 2) + "']")?.getAttribute("content")
                     if (navigator.userActivation?.isActive)
                         await navigator.share(sharedOps);
                     else {

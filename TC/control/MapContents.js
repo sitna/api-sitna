@@ -1,8 +1,8 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import Proxification from '../tool/Proxification';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Proxification from '../tool/Proxification.js';
 
 TC.control = TC.control || {};
 
@@ -237,10 +237,10 @@ class MapContents extends Control {
                     img.src = i.src;
                 }).catch(function (err) {
                     if (err.status && (err.status === 404 || err.status === 401))
-                        TC.error(Util.getLocaleString(layer.map.options.locale, 'simbologyImgNotFound',
+                        TC.error(Util.getLocaleString(layer.map.getLocale(), 'simbologyImgNotFound',
                             { url: imgSrc }));
                     else if (proxificationTool._image.ErrorType.UNEXPECTEDCONTENTTYPE === err.message) {
-                        TC.error(Util.getLocaleString(layer.map.options.locale, 'simbologyNotCompatible'));
+                        TC.error(Util.getLocaleString(layer.map.getLocale(), 'simbologyNotCompatible'));
                         //URI:Añado este atributo data para que no se intente obtener la leyenda cade vez que se cambia el zoom del mapa
                         img.src = Consts.BLANK_IMAGE
                     }

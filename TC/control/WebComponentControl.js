@@ -1,10 +1,10 @@
-﻿import TC from '../../TC';
-import BasicMap from '../Map';
-import Util from '../Util';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import i18n from '../i18n';
-import Handlebars from '../../lib/handlebars/helpers';
+﻿import TC from '../../TC.js';
+import BasicMap from '../Map.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import i18n from '../i18n.js';
+import Handlebars from '../../lib/handlebars/helpers.js';
 
 TC.control = TC.control || {};
 TC.i18n = TC.i18n || i18n;
@@ -203,7 +203,7 @@ class WebComponentControl extends HTMLElement {
         }
         const template = self.template[templateId];
         if (typeof template !== 'function') {
-            await self.#processTemplates({ locale: self.map && self.map.options.locale, className: self.CLASS });
+            await self.#processTemplates({ locale: self.map?.getLocale(), className: self.CLASS });
             return endFn(self.template[templateId]);
         }
         else {
@@ -408,8 +408,8 @@ class WebComponentControl extends HTMLElement {
     }
 
     getLocaleString(key, texts) {
-        const self = this;
-        const locale = self.map ? self.map.options.locale : Cfg.locale;
+        const map = this.map ?? TC.Map.get(this.closest(`.${Consts.classes.MAP}`));
+        const locale = map ? map.getLocale() : Cfg.locale;
         return Util.getLocaleString(locale, key, texts);
     }
 

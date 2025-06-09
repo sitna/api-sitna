@@ -31,11 +31,11 @@
   * </script> 
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Cfg from '../Cfg';
-import FeatureInfoCommons from './FeatureInfoCommons';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Cfg from '../Cfg.js';
+import FeatureInfoCommons from './FeatureInfoCommons.js';
 import md5 from 'md5';
 
 TC.control = TC.control || {};
@@ -303,7 +303,7 @@ class FeatureInfo extends FeatureInfoCommons {
             tValue = value;
             sValue = null;
         }
-        const locale = self.map.options.locale || Cfg.locale;
+        const locale = self.map.getLocale() || Cfg.locale;
         let elevationString = tValue === null ? '-' : Util.formatNumber(Math.round(tValue), locale) + ' m';
         let heightString = sValue ? sValue.toLocaleString(locale, { maximumFractionDigits: 1 }) + ' m' : '-';
         const elevationDisplay = self.getDisplayTarget().querySelector(`.${self.CLASS}-elev`);

@@ -1,9 +1,9 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Control from '../Control';
-import Layer from '../../SITNA/layer/Layer';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Control from '../Control.js';
+import Layer from '../../SITNA/layer/Layer.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 TC.Control = Control;
@@ -240,7 +240,7 @@ class Attribution extends Control {
             mainData: self.mainDataAttribution,
             otherData: self.dataAttributions,
             isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(Consts.classes.COLLAPSED) : true,
-            lang: self.map?.options.locale
+            lang: self.map?.getLocale(),
         }, function () {
             //if(!self.controller)
             self.controller = new Controller(self.model, new AttributionView(self.div));

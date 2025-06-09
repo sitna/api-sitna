@@ -1,17 +1,17 @@
-﻿import WebComponentControl from './WebComponentControl';
-import TC from '../../TC';
-import Feature from '../../SITNA/feature/Feature';
-import Point from '../../SITNA/feature/Point';
-import Polyline from '../../SITNA/feature/Polyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPoint from '../../SITNA/feature/MultiPoint';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-import Cfg from '../Cfg';
-import Consts from '../Consts';
-import Util from '../Util';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import WebComponentControl from './WebComponentControl.js';
+import TC from '../../TC.js';
+import Feature from '../../SITNA/feature/Feature.js';
+import Point from '../../SITNA/feature/Point.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import Cfg from '../Cfg.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -400,7 +400,7 @@ class Measurement extends WebComponentControl {
             self.#measurementData.length = options.length;
         }
         self.setMode(mode).then(function () {
-            const locale = self.map.options.locale || Cfg.locale;
+            const locale = self.map.getLocale() || Cfg.locale;
             if (mode === Consts.geom.POLYGON) {
                 let area = self.#measurementData.area;
                 self.units.forEach(function (unit, _index, array) {

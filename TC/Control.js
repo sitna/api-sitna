@@ -1,10 +1,10 @@
-import TC from '../TC';
-import Consts from './Consts';
-import Util from './Util';
-import Cfg from './Cfg';
-import EventTarget from './EventTarget';
-import i18n from './i18n';
-import Handlebars from '../lib/handlebars/helpers';
+import TC from '../TC.js';
+import Consts from './Consts.js';
+import Util from './Util.js';
+import Cfg from './Cfg.js';
+import EventTarget from './EventTarget.js';
+import i18n from './i18n.js';
+import Handlebars from '../lib/handlebars/helpers.js';
 
 TC.i18n = TC.i18n || i18n;
 TC._hbs = Handlebars;
@@ -169,7 +169,7 @@ TC.inherit(TC.Control, EventTarget);
         }
         const template = self.template[templateId];
         if (typeof template !== 'function') {
-            await processTemplates(self.template, { locale: self.map && self.map.options.locale, className: self.CLASS });
+            await processTemplates(self.template, { locale: self.map?.getLocale(), className: self.CLASS });
             return endFn(self.template[templateId]);
         }
         else {
@@ -332,8 +332,8 @@ TC.inherit(TC.Control, EventTarget);
     };
 
     ctlProto.getLocaleString = function (key, texts) {
-        var self = this;
-        var locale = self.map ? self.map.options.locale : Cfg.locale;
+        const map = this.map ?? TC.Map.get(this.div.closest(`.${Consts.classes.MAP}`));
+        const locale = map ? map.getLocale() : Cfg.locale;
         return Util.getLocaleString(locale, key, texts);
     };
 
