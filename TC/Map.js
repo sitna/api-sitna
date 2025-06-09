@@ -1,84 +1,84 @@
-import localforage from 'localforage';
+import localforage from '../node_modules/localforage/dist/localforage.min.js';
 
-import TC from '../TC';
-import Consts from './Consts';
-import Cfg from './Cfg';
-import Util from './Util';
-import EventTarget from './EventTarget';
-import i18n from './i18n';
-import Layer from '../SITNA/layer/Layer';
-import Raster from '../SITNA/layer/Raster';
-import Vector from '../SITNA/layer/Vector';
-import wrap from './ol/ol';
-import './control/Attribution';
-import './control/BasemapSelector';
-import './control/CacheBuilder';
-import './control/Click';
-import './control/Container';
-import ControlContainer from './control/ControlContainer';
-import './control/Coordinates';
-import './control/DataLoader';
-import './control/Download';
-import './control/Draw';
-import './control/DrawMeasureModify';
-import './control/Edit';
-import './control/Elevation';
-import './control/ExternalWMS';
-import './control/FeatureDownloadDialog';
-import FeatureInfo from './control/FeatureInfo';
-import './control/FeatureInfoCommons';
-import './control/FeatureTools';
-import './control/FileEdit';
-import './control/FileImport';
-import './control/FullScreen';
-import './control/Geolocation';
-import './control/GeometryFeatureInfo';
-import './control/infoShare';
-import './control/LanguageSelector';
-import './control/LayerCatalog';
-import './control/Legend';
-import './control/LineFeatureInfo';
-import './control/ListTOC';
-import LoadingIndicator from './control/LoadingIndicator';
-import './control/MapContents';
-import './control/MapInfo';
-import './control/Measure';
-import './control/Measurement';
-import './control/Modify';
-import MultiFeatureInfo from './control/MultiFeatureInfo';
-import './control/NavBar';
-import './control/NavBarHome';
-import './control/OfflineMapMaker';
-import './control/OverviewMap';
-import './control/PolygonFeatureInfo';
-import Popup from './control/Popup';
-import './control/Print';
-import './control/PrintMap';
-import './control/ProjectionSelector';
-import './control/ResultsPanel';
-import './control/Scale';
-import './control/ScaleBar';
-import './control/ScaleSelector';
-import './control/Search';
-import './control/SelectContainer';
-import './control/Share';
-import './control/StreetView';
-import './control/SWCacheClient';
-import './control/TabContainer';
-import ThreeD from './control/ThreeD';
-import './control/TOC';
-import './control/WFSEdit';
-import './control/WFSQuery';
-import './control/WorkLayerManager';
-import { JL } from 'jsnlog';
-import '../SITNA/feature/Point';
-import '../SITNA/feature/MultiPoint';
-import Marker from '../SITNA/feature/Marker';
-import '../SITNA/feature/Polyline';
-import '../SITNA/feature/MultiPolyline';
-import '../SITNA/feature/Polygon';
-import '../SITNA/feature/MultiPolygon';
-import filterNs from './filter';
+import TC from '../TC.js';
+import Consts from './Consts.js';
+import Cfg from './Cfg.js';
+import Util from './Util.js';
+import EventTarget from './EventTarget.js';
+import i18n from './i18n.js';
+import Layer from '../SITNA/layer/Layer.js';
+import Raster from '../SITNA/layer/Raster.js';
+import Vector from '../SITNA/layer/Vector.js';
+import wrap from './ol/ol.js';
+import './control/Attribution.js';
+import './control/BasemapSelector.js';
+import './control/CacheBuilder.js';
+import './control/Click.js';
+import './control/Container.js';
+import ControlContainer from './control/ControlContainer.js';
+import './control/Coordinates.js';
+import './control/DataLoader.js';
+import './control/Download.js';
+import './control/Draw.js';
+import './control/DrawMeasureModify.js';
+import './control/Edit.js';
+import './control/Elevation.js';
+import './control/ExternalWMS.js';
+import './control/FeatureDownloadDialog.js';
+import FeatureInfo from './control/FeatureInfo.js';
+import './control/FeatureInfoCommons.js';
+import './control/FeatureTools.js';
+import './control/FileEdit.js';
+import './control/FileImport.js';
+import './control/FullScreen.js';
+import './control/Geolocation.js';
+import './control/GeometryFeatureInfo.js';
+import './control/infoShare.js';
+import './control/LanguageSelector.js';
+import './control/LayerCatalog.js';
+import './control/Legend.js';
+import './control/LineFeatureInfo.js';
+import './control/ListTOC.js';
+import LoadingIndicator from './control/LoadingIndicator.js';
+import './control/MapContents.js';
+import './control/MapInfo.js';
+import './control/Measure.js';
+import './control/Measurement.js';
+import './control/Modify.js';
+import MultiFeatureInfo from './control/MultiFeatureInfo.js';
+import './control/NavBar.js';
+import './control/NavBarHome.js';
+import './control/OfflineMapMaker.js';
+import './control/OverviewMap.js';
+import './control/PolygonFeatureInfo.js';
+import Popup from './control/Popup.js';
+import './control/Print.js';
+import './control/PrintMap.js';
+import './control/ProjectionSelector.js';
+import './control/ResultsPanel.js';
+import './control/Scale.js';
+import './control/ScaleBar.js';
+import './control/ScaleSelector.js';
+import './control/Search.js';
+import './control/SelectContainer.js';
+import './control/Share.js';
+import './control/StreetView.js';
+import './control/SWCacheClient.js';
+import './control/TabContainer.js';
+import ThreeD from './control/ThreeD.js';
+import './control/TOC.js';
+import './control/WFSEdit.js';
+import './control/WFSQuery.js';
+import './control/WorkLayerManager.js';
+import { JL } from '../node_modules/jsnlog/jsnlog.min.js';
+import '../SITNA/feature/Point.js';
+import '../SITNA/feature/MultiPoint.js';
+import Marker from '../SITNA/feature/Marker.js';
+import '../SITNA/feature/Polyline.js';
+import '../SITNA/feature/MultiPolyline.js';
+import '../SITNA/feature/Polygon.js';
+import '../SITNA/feature/MultiPolygon.js';
+import filterNs from './filter.js';
 import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
 import './Controller.js';
 import './Observer.js';
@@ -287,7 +287,7 @@ const _loadIntoMap = async function (stringOrJson) {
                     obj = JSON.parse(stringOrJson);
                 }
                 catch (err2) {
-                    TC.error(Util.getLocaleString(self.options.locale, 'mapStateNotValid'));
+                    TC.error(Util.getLocaleString(self.getLocale(), 'mapStateNotValid'));
                     return;
                 }
             }
@@ -702,6 +702,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
      */
     div = null;
 
+    #locale;
+
     RECENT_FILES_STORE_KEY_PREFIX = 'TC.fileImportRecent.';
 
     recentFiles = [];
@@ -799,6 +801,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         mergeOptions.call(self, options);
 
         self.id = options.id || TC.getUID({ prefix: 'map-' });
+        self.#locale = this.options?.locale?.replace('_', '-') ?? Cfg.locale ?? "es-ES";
 
         self.crossOrigin = self.options.crossOrigin;
 
@@ -1164,7 +1167,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             });
         };
 
-        const locale = this.options.locale;
+        const locale = this.getLocale();
 
         TC.i18n.loadResources(!TC.i18n[locale], TC.apiLocation + 'resources/', locale).finally(function () {
             // Si no hay tamaño definido en el div, lo ponemos a pantalla completa
@@ -1224,7 +1227,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     if (!ignoreError || error.status != 404) {
                         const mapObj = TC.Map.get(document.querySelector('.' + Consts.classes.MAP));
                         TC.error(
-                            Util.getLocaleString(mapObj.options.locale, "urlFailedToLoad",
+                            Util.getLocaleString(mapObj.getLocale(), "urlFailedToLoad",
                                 { url: error.url }),
                             [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.EMAIL],
                             "Error al cargar " + error.url);
@@ -1674,13 +1677,13 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     obj = JSON.parse(Util.base64ToUtf8(hash));
                 }
                 catch (err) {
-                    TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                    TC.error(Util.getLocaleString(this.getLocale(), 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
                     return;
                 }
             }
 
             if (Util.detectIE() && window.location.href.length === 2047) {
-                TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValidForEdge'), Consts.msgErrorMode.TOAST);
+                TC.error(Util.getLocaleString(this.getLocale(), 'mapStateNotValidForEdge'), Consts.msgErrorMode.TOAST);
             }
 
             if (obj) {
@@ -1733,11 +1736,11 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 }
 
                 if (inValidState) {
-                    TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+                    TC.error(Util.getLocaleString(this.getLocale(), 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
                 }
                 return obj;
             }
-            TC.error(Util.getLocaleString(this.options.locale, 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
+            TC.error(Util.getLocaleString(this.getLocale(), 'mapStateNotValid'), Consts.msgErrorMode.TOAST);
         }
     }
 
@@ -1898,7 +1901,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
             }
 
-            const zIndex = layer.options?.zIndex ?? layer.zIndex ?? (layer.stealth ? 1 : 0);
+            const zIndex = layer.options?.zIndex ?? layer.zIndex ?? ((layer.stealth && !layer.isBase) ? 1 : 0);
             self.#layerBuffer.add(layer.id || layer, zIndex, layer.isBase);
 
             if (self.getLayer(layer.id)) {
@@ -2466,7 +2469,9 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     async loadProjections(options = {}) {
         const crsList = options.crsList || [];
         const projectionDataList = await Promise.all(crsList
-            .map((crs) => TC.getProjectionData({ crs: Util.getCRSCode(crs) })));
+            .map((crs) => Util.getCRSCode(crs))
+            .filter((crs) => crs && crs.length)
+            .map((crs) => TC.getProjectionData({ crs })));
         let projList = projectionDataList
             .filter((projData) => !!projData)
             .map(function (projData) {
@@ -2786,7 +2791,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     async #getMiscellaneousVectorsLayer() {
         if (!this.#vectors) {
             this.#vectors = await this.addLayer({
-                id: TC.getUID(), title: TC.i18n[this.options.locale].vectorLayer, type: Consts.layerType.VECTOR
+                id: TC.getUID(), title: TC.i18n[this.getLocale()].vectorLayer, type: Consts.layerType.VECTOR
             });
         }
         return this.#vectors;
@@ -3514,7 +3519,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     return l._fileHandle.isSameEntry(handle);
                 })) {
                 if (isSame) {
-                    self.toast(Util.getLocaleString(self.options.locale, 'fileLoadedMoreThanOnce'), { type: Consts.msgType.WARNING });
+                    self.toast(Util.getLocaleString(self.getLocale(), 'fileLoadedMoreThanOnce'), { type: Consts.msgType.WARNING });
                 }
             }
             let handles = [entry.mainHandle || entry];
@@ -3555,7 +3560,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         await TC.i18n.loadResources(false, null, locale);                        
                     }
                     await (() => { return new Promise((resolve) => { setTimeout(resolve, 100) }) })();
-                    self.options.locale = i18n.currentLocaleKey = locale;
+                    self.#locale = i18n.currentLocaleKey = locale;
                     await Promise.all(self.controls.filter((c) => c.updateLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
                         return control.updateLanguage?.apply(control);
                     }));
@@ -3578,6 +3583,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             return endPromise
         }
         return Promise.reject("Same language");
+    }
+
+    getLocale() {
+        return this.#locale;
     }
 }
 
@@ -3664,7 +3673,7 @@ var crsLayerError = function (map, layer) {
     } else {
         reason = 'layerNameNotValid';
     }
-    errorMessage += Util.getLocaleString(map.options.locale, reason);
+    errorMessage += Util.getLocaleString(map.getLocale(), reason);
     TC.error(errorMessage);
     map.trigger(Consts.event.LAYERERROR, { layer: layer, reason: reason });
 
@@ -3680,7 +3689,7 @@ const appendRasterEvents = function (layer) {
             if (!wrap._tileloaderror) {
                 const path = layer.getPath();
                 const title = path.length ? path[path.length - 1] : layer.title;
-                layer.map.toast(Util.getLocaleString(layer.map.options.locale, 'tileload.error',
+                layer.map.toast(Util.getLocaleString(layer.map.getLocale(), 'tileload.error',
                     { name: title, error: event.error.text }),
                     { type: Consts.msgType.ERROR });
                 wrap._tileloaderror = true;
