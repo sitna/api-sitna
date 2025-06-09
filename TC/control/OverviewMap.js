@@ -9,12 +9,12 @@
   * @property {string|object} layer - Identificador de capa para usar como mapa de fondo u objeto de opciones de capa.
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
-import Raster from '../../SITNA/layer/Raster';
-import Vector from '../../SITNA/layer/Vector';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Raster from '../../SITNA/layer/Raster.js';
+import Vector from '../../SITNA/layer/Vector.js';
 
 TC.control = TC.control || {};
 TC.Control = Control;
@@ -61,7 +61,12 @@ class OverviewMap extends Control {
                     lyrObj = findLayerById(layer, map.options.baseLayers);
                 }
                 if (Util.isPlainObject(lyrObj)) {
-                    lyr = new Raster(lyrObj);
+                    if (lyrObj.type === Consts.layerType.VECTOR || lyrObj.type === Consts.layerType.KML || lyrObj.type === Consts.layerType.WFS) {
+                        lyr = new Vector(lyrObj);
+                    }
+                    else {
+                        lyr = new Raster(lyrObj);
+                    }
                 }
             }
             else {
@@ -75,14 +80,6 @@ class OverviewMap extends Control {
                     lyr = new Raster(layer);
                 }
             }
-
-            return lyr;
-        };
-
-        const registerLayer = function (layer) {
-            var lyr;
-
-            lyr = instanceLayer(layer);
 
             return lyr;
         };
@@ -104,7 +101,7 @@ class OverviewMap extends Control {
                 var newLayer = self.map.baseLayer.overviewMapLayer || self.options.layer;
                 let ovMapLayer;
                 if (self.layer.id !== newLayer) {
-                    ovMapLayer = registerLayer(newLayer);
+                    ovMapLayer = instanceLayer(newLayer);
                 } else if (Consts.event.PROJECTIONCHANGE.includes(e.type)) {
                     ovMapLayer = self.layer;
                 }
@@ -120,14 +117,14 @@ class OverviewMap extends Control {
 
         const ctl = await super.register.call(self, map);
         self.wrap = new TC.wrap.control.OverviewMap(self);
-        map.loaded(function () {
-            self.defaultLayer = registerLayer(self.options.layer);
-            self.layer = registerLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.availableBaseLayers[0]);
+        await map.loaded();
+        self.defaultLayer = instanceLayer(self.options.layer);
+        self.layer = instanceLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.availableBaseLayers[0]);
 
-            self.#registerWrap().then(() => resetOVMapProjection({ crs: map.crs }));
+        await self.#registerWrap();
+        resetOVMapProjection({ crs: map.crs });
 
-            map.on(Consts.event.PROJECTIONCHANGE + ' ' + Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));
-        });
+        map.on(Consts.event.PROJECTIONCHANGE + ' ' + Consts.event.BASELAYERCHANGE, changeBaseLayer.bind(self));
 
         return ctl;
     }
