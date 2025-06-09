@@ -12,10 +12,10 @@
   */
 
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import FeatureInfoCommons from './FeatureInfoCommons';
-import filter from '../filter';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import FeatureInfoCommons from './FeatureInfoCommons.js';
+import filter from '../filter.js';
 
 TC.control = TC.control || {};
 TC.filter = filter;
@@ -36,6 +36,13 @@ class GeometryFeatureInfo extends FeatureInfoCommons {
 
         self.on(Consts.event.CONTROLDEACTIVATE, function (_e) {
             self.wrap.cancelDraw();
+        });
+
+        map.on(Consts.event.LAYERREMOVE, function (_e) {
+            if (map.workLayers.every((layer) => layer.stealth)) {
+                self.filterLayer && self.filterLayer.clearFeatures();
+                self.filterFeature = null;
+            }
         });
 
         return await result;
