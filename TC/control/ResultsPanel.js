@@ -8,18 +8,15 @@
 })();
 
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import InfoDisplay from './InfoDisplay';
-import Point from '../../SITNA/feature/Point';
-/*import mainTemplate from '../templates/tc-ctl-rpanel.mjs';
-import tableTemplate from '../templates/tc-ctl-rpanel-table.mjs';
-import chartTemplate from '../templates/tc-ctl-rpanel-chart.mjs';*/
-import itemToolContainer from './itemToolContainer';
-import Button from '../../SITNA/ui/Button';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import InfoDisplay from './InfoDisplay.js';
+import Point from '../../SITNA/feature/Point.js';
+import itemToolContainer from './itemToolContainer.js';
+import Button from '../../SITNA/ui/Button.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -958,7 +955,7 @@ class ResultsPanel extends InfoDisplay {
         }
     }
 
-    open(html, container) {
+    open(html, container, options = {}) {
         const self = this;
 
         self.onOpen();
@@ -990,16 +987,20 @@ class ResultsPanel extends InfoDisplay {
         //infoElm.innerHTML = '';
 
         if (html) {
+            let containerElm;
             if (container) {
+                containerElm = container;
                 self.getTableContainer = function () {
                     return container;
                 };
-                container.innerHTML = html;
-                container.style.display = '';
             } else {
-                tableElm.innerHTML = html;
-                tableElm.style.display = '';
+                containerElm = tableElm;
             }
+            containerElm.style.display = '';
+            if (options.shadow) {
+                containerElm = containerElm.shadowRoot ?? containerElm.attachShadow({ mode: 'open' });
+            }
+            containerElm.innerHTML = html;
         }
         else {
             if (chartElm.childElementCount) {
@@ -1430,7 +1431,7 @@ class ResultsPanel extends InfoDisplay {
     getElevationChartTooltip(data) {
         const self = this;
 
-        const locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
+        const locale = self.map.getLocale() || undefined;
         const coords = self.elevationProfileChartData.coords;
         const getElevationByDataElem = function (dataElem) {
             return dataElem.value ? parseInt(dataElem.value.toFixed(0)).toLocaleString(locale) : "0";
