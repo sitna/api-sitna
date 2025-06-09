@@ -63,14 +63,15 @@
   * https://idena.navarra.es/ogc/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Cfg from '../Cfg';
-import SWCacheClient from './SWCacheClient';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Cfg from '../Cfg.js';
+import SWCacheClient from './SWCacheClient.js';
+import Raster from '../../SITNA/layer/Raster.js';
 import md5 from 'md5';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
@@ -159,17 +160,19 @@ class OfflineMapModel {
         this.availableOfflineMaps = "";
         this.selectAtLeastOne = "";
         this.maxRes = "";
+        this["3dViewNotIncluded"] = "";
+        this["3dViewIncluded"] = "";
         this.ok = "";
         this.cancel = "";        
     }
-};
+}
 
 class OfflineMapOffLineModel {
     constructor() {
         this.offlineMap = "";
         this.returnToOnlineMaps = "";
     }
-};
+}
 
 class OfflineMapMaker extends SWCacheClient {
     MAP_DEFINITION_PARAM_NAME = "map-def";
@@ -211,12 +214,14 @@ class OfflineMapMaker extends SWCacheClient {
         'scaleBar',
         'scaleSelector',
         'state',
-        'workLayerManager'
+        'workLayerManager',
+        'threeD'
     ];
     #loadedCount;
     #offlineMapHintDiv;
     #selectors;
     #state;
+    #baseLayersFor3d = new Map();
 
     constructor() {
         super(...arguments);
@@ -249,7 +254,8 @@ class OfflineMapMaker extends SWCacheClient {
             RNGMAXRES: cs + '-rng-maxres',
             SEARCH: cs + '-map-available-srch',
             EMPTYLIST: cs + '-map-available-empty',
-            OFFLINEHIDDEN: '[data-no-cb]'
+            OFFLINEHIDDEN: '[data-no-cb]',
+            INCLUDE3DCBOX: cs + '-3d',
         };
 
         self.storedMaps = [];
@@ -550,7 +556,8 @@ class OfflineMapMaker extends SWCacheClient {
                     if (layer.wrap.getCompatibleMatrixSets(map.crs).includes(layer.matrixSet)) {
                         const tml = self.wrap.getRequestSchemas({
                             extent: self.extent,
-                            layers: [layer]
+                            layers: [layer],
+                            crs: map.crs,
                         })[0].tileMatrixLimits;
 
                         li.classList.toggle(Consts.classes.HIDDEN, !tml.length);
@@ -575,7 +582,7 @@ class OfflineMapMaker extends SWCacheClient {
                         if (Date.prototype.toLocaleString) {
                             var opt = {};
                             opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
-                            time = new Date().toLocaleString(self.map.options.locale.replace('_', '-'), opt);
+                            time = new Date().toLocaleString(self.map.getLocale(), opt);
                         }
                         else {
                             time = new Date().toString();
@@ -683,6 +690,19 @@ class OfflineMapMaker extends SWCacheClient {
         });
 
         map.loaded(function () {
+
+            //const availableCacheableLayers = map
+            //    .availableBaseLayers
+            //    .filter((layer) => layer.type === Consts.layerType.WMTS) // Capas cacheables
+            //    .map((obj) => new Raster(obj));
+
+            //const isLayerSupported = await Promise.all(availableCacheableLayers
+            //    .map(async (layer) => {
+            //        await layer.getCapabilitiesPromise();
+            //        return layer.isCompatible(map.crs);
+            //    }));
+            //const supportedLayers = availableCacheableLayers.filter((_layer, idx) => isLayerSupported[idx]);
+            ////
 
             self.layerPromise.then(function (layer) {
                 map.putLayerOnTop(layer);
@@ -1093,6 +1113,36 @@ class OfflineMapMaker extends SWCacheClient {
         li.querySelector(self.#selectors.DELETEBTN).classList.remove(Consts.classes.HIDDEN);
     }
 
+    #set3dState() {
+        this._dialogDiv.querySelector(this.#selectors.INCLUDE3DCBOX).textContent = this.getLocaleString(this.is3dViewIncluded ? '3dViewIncluded' : '3dViewNotIncluded');
+        if (this.is3dViewIncluded) {
+            this.baseLayers.forEach((layer) => this.#get3dLayer(layer));
+        }
+        else {
+            this.#baseLayersFor3d.clear();
+        }
+        this.#showEstimatedMapSize();
+    }
+
+    #get3dLayer(layer) {
+        let result = this.#baseLayersFor3d.get(layer);
+        if (!result) {
+            const matrixSet = layer.wrap.getCompatibleMatrixSets('EPSG:4326')[0];
+            if (matrixSet) {
+                result = new layer.constructor({
+                    id: layer.id + '_4326_fallback',
+                    url: layer.url,
+                    type: layer.type,
+                    encoding: layer.encoding,
+                    layerNames: layer.layerNames,
+                    matrixSet,
+                });
+                this.#baseLayersFor3d.set(layer, result);
+            }
+        }
+        return result;
+    }
+
     #updateResolutions(options = {}) {
         const self = this;
         const resDiv = self._dialogDiv.querySelector(`.${self.CLASS}-res`);
@@ -1122,7 +1172,7 @@ class OfflineMapMaker extends SWCacheClient {
             resLevel = parseInt(range.value);
             var resValue = Math.floor(new Number(resolutions[resLevel]) * 1000) / 1000;
             resText = self.getLocaleString('metersPerPixel', {
-                value: resValue.toLocaleString((self.map ? self.map.options.locale : Cfg.locale).replace('_', '-'))
+                value: resValue.toLocaleString((self.map ? self.map.getLocale() : Cfg.locale).replace('_', '-'))
             });
             resLeft = (resLevel + 1) * 100 / (resolutions.length + 1) + '%';
             range.disabled = false;
@@ -1204,25 +1254,14 @@ class OfflineMapMaker extends SWCacheClient {
         return result;
     }
 
-    #showEstimatedMapSize() {
-        const self = this;
+    async #showEstimatedMapSize() {
         let text = '';
-        self.tileCount = 0;
-        for (var i = 0, ii = self.requestSchemas.length; i < ii; i++) {
-            var schema = self.requestSchemas[i];
-            for (var j = 0, jj = schema.tileMatrixLimits.length; j < jj; j++) {
-                var tml = schema.tileMatrixLimits[j];
-                if (tml.res < self.minResolution) {
-                    break;
-                }
-                self.tileCount += (tml.cr - tml.cl + 1) * (tml.rb - tml.rt + 1);
-            }
+        this.tileCount = (await this.#getCacheUrlList()).length;
+        if (this.tileCount) {
+            this.estimatedMapSize = Math.round(this.tileCount * this.options.averageTileSize / 1048576);
+            text = this.getLocaleString('xTiles', { quantity: formatNumber(this.tileCount) }) + ' (' + this.#formatSize(this.estimatedMapSize) + ')';
         }
-        if (self.tileCount) {
-            self.estimatedMapSize = Math.round(self.tileCount * self.options.averageTileSize / 1048576);
-            text = self.getLocaleString('xTiles', { quantity: formatNumber(self.tileCount) }) + ' (' + self.#formatSize(self.estimatedMapSize) + ')';
-        }
-        self._dialogDiv.querySelector(self.#selectors.TILECOUNT).innerHTML = text;
+        this._dialogDiv.querySelector(this.#selectors.TILECOUNT).innerHTML = text;
     }
 
     #getListElementByMapName(name) {
@@ -1348,11 +1387,11 @@ class OfflineMapMaker extends SWCacheClient {
         self._dialogDiv.querySelector(self.#selectors.TILECOUNT).innerHTML = '';
         self.extent = null;
         self.#loadedCount = 0;
-        if (self.boxDraw) {
-            self
-                .boxDraw
-                .cancel()
-                .deactivate();
+        if (self.boxDraw && self.map.activeControl === self.boxDraw) {
+                self
+                    .boxDraw
+                    .cancel()
+                    .deactivate();
         }
     }
 
@@ -1412,24 +1451,26 @@ class OfflineMapMaker extends SWCacheClient {
         const self = this;
         const requestId = Date.now().toString();
         self.createCache(options.name || self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME, {
-            requestId: requestId,
-            urlList: urlList,
+            requestId,
+            urlList,
             silent: options.silent
         });
         return requestId;
     }
 
-    requestCache(options = {}) {
-        const self = this;
-        if (self.map) {
-            var extent = options.extent || self.extent || self.map.getExtent();
-            self.updateRequestSchemas({ extent: extent });
+    async #getCacheUrlList(options = {}) {
+        const urlList = new Set();
+        if (this.map) {
+            const extent = options.extent || this.extent || this.map.getExtent();
 
-            if (self.requestSchemas) {
-                var filterTml = function (elm, i, arr) {
-                    var result = elm.res >= self.minResolution;
+            if (this.requestSchemas) {
+
+                let baseLayers = this.baseLayers.slice();
+
+                const createTmlFilter = (minResolution) => function (elm, i, arr) {
+                    var result = elm.res >= minResolution;
                     if (!result && i > 0) {
-                        result = arr[i - 1].res > self.minResolution;
+                        result = arr[i - 1].res > minResolution;
                     }
                     return result;
                 };
@@ -1443,24 +1484,187 @@ class OfflineMapMaker extends SWCacheClient {
                     };
                 };
                 // Solo mantenemos los esquemas hasta el nivel de resolución mínima o el inmediatamente inferior a ella si no lo tiene
-                var requestSchemas = self.requestSchemas.map(function (schema) {
-                    return {
+                const filterTml = createTmlFilter(this.minResolution);
+                let requestSchemas = this.requestSchemas.map((schema) => ({
+                    layerId: schema.layerId,
+                    tileMatrixSet: schema.tileMatrixSet,
+                    tileMatrixLimits: schema.tileMatrixLimits.filter(filterTml)
+                }));
+
+                // Eliminamos del esquema todo lo irrelevante para la petición
+                requestSchemas.forEach((rs) => {
+                    rs.tileMatrixLimits = rs.tileMatrixLimits.map(trimTml);
+                });
+
+                let extentFor3d;
+                let degreeMinResolution;
+
+                // Teselas raster para 3D
+                if (this.is3dViewIncluded) {
+                    extentFor3d = Util.reprojectExtent(extent, this.map.crs, 'EPSG:4326');
+                    degreeMinResolution = this.minResolution / Util.getMetersPerDegree(extentFor3d) / 2;
+                    const filterTmlIn3d = createTmlFilter(degreeMinResolution);
+                    const baseLayersFor3d = Array.from(this.#baseLayersFor3d.values());
+                    requestSchemas = requestSchemas.concat(
+                        baseLayersFor3d
+                            .map((layerFor3d) => this.wrap.getRequestSchemas({
+                                layers: [layerFor3d],
+                                extent: extentFor3d,
+                                crs: 'EPSG:4326',
+                            })[0])
+                            .map((schema) => ({
+                                layerId: schema.layerId,
+                                tileMatrixSet: schema.tileMatrixSet,
+                                tileMatrixLimits: schema.tileMatrixLimits.filter(filterTmlIn3d)
+                            }))
+                    );
+                    baseLayers = baseLayers.concat(baseLayersFor3d);
+                }
+
+                for (const schema of requestSchemas) {
+                    var urlPattern = null;
+                    for (const l of baseLayers) {
+                        if (l.id === schema.layerId) {
+                            urlPattern = this.wrap.getGetTilePattern(l);
+                            if (l.getFallbackLayer) {
+                                // Esto se usa para meter en almacenamiento local el capabilities de la capa de fallback y evitar errores cuando no haya red
+                                l.getFallbackLayer();
+                            }
+                            if (l.thumbnail) {
+                                urlList.add(l.thumbnail);
+                            }
+                            break;
+                        }
+                    }
+                    if (urlPattern) {
+                        for (const tml of schema.tileMatrixLimits) {
+                            for (var r = tml.rt; r <= tml.rb; r++) {
+                                for (var c = tml.cl; c <= tml.cr; c++) {
+                                    urlList.add(urlPattern.replace('{TileMatrixSet}', schema.tileMatrixSet).replace('{TileMatrix}', tml.mId).replace('{TileCol}', c).replace('{TileRow}', r));
+                                }
+                            }
+                        }
+                    }
+                }
+                // modelo digital de terreno para 3D
+                if (this.is3dViewIncluded) {
+                    let terrainUrl = this.map.options?.views?.threeD.terrain.url;
+                    if (terrainUrl) {
+                        //urlList.add(TC.apiLocation + 'chunks/vendors-node_modules_cesium_Source_Cesium_js.sitna.debug.js');
+                        //urlList.add(TC.apiLocation + 'chunks/TC_cesium_cesium_js.sitna.debug.js');
+                        //urlList.add(TC.apiLocation + 'chunks/vendors-node_modules_d3-polygon_src_contains_js-node_modules_geotiff_dist-module_geotiff_js.sitna.debug.js');
+                        //urlList.add(TC.apiLocation + 'chunks/TC_cesium_mergeTerrainProvider_MergeTerrainProvider_js.sitna.debug.js');
+                        urlList.add(TC.apiLocation + 'resources/data/contornoNavarra.json');
+                        urlList.add(TC.apiLocation + 'resources/data/contornoEspana.json');
+                        urlList.add(TC.apiLocation + 'lib/cesium/build/Assets/approximateTerrainHeights.json');
+
+                        let baseUrl = terrainUrl;
+                        if (terrainUrl.endsWith('layer.json')) baseUrl = terrainUrl.replace('layer.json', '');
+                        if (!baseUrl.endsWith('/')) baseUrl += '/';
+                        terrainUrl = baseUrl + 'layer.json';
+                        urlList.add(terrainUrl);
+
+                        const response = await fetch(terrainUrl);
+                        const terrainOptions = await response.json();
+                        const schema = terrainOptions.schema ?? 'tms';
+                        const tileUrlTemplates = terrainOptions.tiles ?? ["{z}/{x}/{y}.terrain?v={version}"];
+                        const version = terrainOptions.version ?? "1.1.0";
+                        const [minLon, minLat, maxLon, maxLat] = terrainOptions.bounds ?? [-180.00, -90.00, 180.00, 90.00];
+                        const crs = terrainOptions.projection ?? 'EPSG:4326';
+
+                        const minZoom = terrainOptions.minzoom ?? 0;
+                        const maxZoom = terrainOptions.maxzoom ?? 20;
+                        const minZoomFactor = 2 ** minZoom;
+
+                        let xInTiles = 2;
+                        let yInTiles = 1;
+                        if (crs !== 'EPSG:4326') {
+                            xInTiles = 1;
+                        }
+                        xInTiles *= minZoomFactor;
+                        yInTiles *= minZoomFactor;
+                        let tileWidth = (maxLon - minLon) / xInTiles;
+                        let tileHeight = (maxLat - minLat) / yInTiles;
+
+                        const minX = Math.max(minLon, extentFor3d[0]);
+                        const maxX = Math.min(maxLon, extentFor3d[2]);
+                        const minY = Math.max(minLat, extentFor3d[1]);
+                        const maxY = Math.min(maxLat, extentFor3d[3]);
+                        for (let zoom = minZoom; zoom <= maxZoom; zoom++) {
+                            const availableTiles = terrainOptions.available[zoom];
+                            for (let x = 0; x < xInTiles; x++) {
+                                const xInDegrees = minLon + x * tileWidth;
+                                if (xInDegrees > maxX) break;
+                                if (xInDegrees + tileWidth < minX) continue;
+                                for (let y = 0; y < yInTiles; y++) {
+                                    let yInDegrees;
+                                    if (schema === 'tms') {
+                                        yInDegrees = minLat + y * tileHeight;
+                                        if (yInDegrees > maxY) break;
+                                        if (yInDegrees + tileHeight < minY) continue;
+                                    }
+                                    else {
+                                        yInDegrees = maxLat - y * tileHeight;
+                                        if (yInDegrees < minY) break;
+                                        if (yInDegrees - tileHeight > maxY) continue;
+                                    }
+                                    for (const index in tileUrlTemplates) {
+                                        const tileUrlTemplate = tileUrlTemplates[index];
+                                        const tileBounds = availableTiles[index];
+                                        if (tileBounds) {
+                                            if (x < tileBounds.startX || x > tileBounds.endX || y < tileBounds.startY || y > tileBounds.endY) continue;
+                                            urlList.add(baseUrl + tileUrlTemplate.replace('{z}', zoom).replace('{x}', x).replace('{y}', y).replace('{version}', version));
+                                        }
+                                    }
+                                }
+                            }
+                            xInTiles *= 2;
+                            yInTiles *= 2;
+                            tileWidth /= 2;
+                            tileHeight /= 2;
+                        }
+                    }
+                }
+            }
+        }
+        return Array.from(urlList.values());
+    }
+
+    async requestCache(options = {}) {
+        const self = this;
+        if (self.map) {
+            var extent = options.extent || self.extent || self.map.getExtent();
+            self.updateRequestSchemas({ extent: extent });
+
+            if (self.requestSchemas) {
+
+                const createTmlFilter = (minResolution) => function (elm, i, arr) {
+                    var result = elm.res >= minResolution;
+                    if (!result && i > 0) {
+                        result = arr[i - 1].res > minResolution;
+                    }
+                    return result;
+                };
+                // Solo mantenemos los esquemas hasta el nivel de resolución mínima o el inmediatamente inferior a ella si no lo tiene
+                const filterTml = createTmlFilter(self.minResolution);
+                const requestSchemasForCurrentCrs = self
+                    .requestSchemas
+                    .filter((rs) => !rs.supportedCrs || Util.CRSCodesEqual(rs.supportedCrs, self.map.crs))
+                    .map((schema) => ({
                         layerId: schema.layerId,
                         tileMatrixSet: schema.tileMatrixSet,
-                        tileMatrixLimits: schema.tileMatrixLimits.filter(filterTml)
-                    };
-                });
+                        tileMatrixLimits: schema.tileMatrixLimits.filter(filterTml),
+                    }));
+
                 // Actualizamos el extent para que coincida con las teselas del último nivel de los esquemas
-                // También eliminamos del esquema todo lo irrelevante para la petición
-                var intersectionExtent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
-                requestSchemas.forEach(function updateExtent(rs) {
+                let intersectionExtent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
+                requestSchemasForCurrentCrs.forEach(function updateExtent(rs) {
                     const tml = rs.tileMatrixLimits[rs.tileMatrixLimits.length - 1];
                     const unitsPerTile = tml.res * tml.tSize;
                     intersectionExtent[0] = Math.min(intersectionExtent[0], tml.origin[0] + unitsPerTile * tml.cl);
                     intersectionExtent[1] = Math.min(intersectionExtent[1], tml.origin[1] - unitsPerTile * (tml.rb + 1));
                     intersectionExtent[2] = Math.max(intersectionExtent[2], tml.origin[0] + unitsPerTile * (tml.cr + 1));
                     intersectionExtent[3] = Math.max(intersectionExtent[3], tml.origin[1] - unitsPerTile * tml.rt);
-                    rs.tileMatrixLimits = rs.tileMatrixLimits.map(trimTml);
                 });
 
                 // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
@@ -1513,36 +1717,7 @@ class OfflineMapMaker extends SWCacheClient {
 
                 // Guardado mediante service workers
                 if (self.serviceWorkerEnabled) {
-                    const urlList = [];
-                    for (var i = 0, len = requestSchemas.length; i < len; i++) {
-                        var schema = requestSchemas[i];
-                        var urlPattern = null;
-                        for (var j = 0, lenj = self.baseLayers.length; j < lenj; j++) {
-                            var l = self.baseLayers[j];
-                            if (l.id === schema.layerId) {
-                                urlPattern = self.wrap.getGetTilePattern(l);
-                                if (l.getFallbackLayer) {
-                                    // Esto se usa para meter en almacenamiento local el capabilities de la capa de fallback y evitar errores cuando no haya red
-                                    l.getFallbackLayer();
-                                }
-                                if (l.thumbnail) {
-                                    urlList.push(l.thumbnail);
-                                }
-                                break;
-                            }
-                        }
-                        if (urlPattern) {
-                            for (var k = 0, lenk = schema.tileMatrixLimits.length; k < lenk; k++) {
-                                const tml = schema.tileMatrixLimits[k];
-                                for (var r = tml.rt; r <= tml.rb; r++) {
-                                    for (var c = tml.cl; c <= tml.cr; c++) {
-                                        urlList.push(urlPattern.replace('{TileMatrixSet}', schema.tileMatrixSet).replace('{TileMatrix}', tml.mId).replace('{TileCol}', c).replace('{TileRow}', r));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    urlList.push(u);
+                    const urlList = [u].concat(await self.#getCacheUrlList(options));
                     self.cacheUrlList(urlList, { name: u });
                 }
             }
@@ -1633,12 +1808,19 @@ class OfflineMapMaker extends SWCacheClient {
     }
 
     updateRequestSchemas(options = {}) {
-        const self = this;
         const opts = { ...options };
-        opts.extent = opts.extent || self.extent;
-        opts.layers = opts.layers || self.baseLayers;
-        self.requestSchemas = self.wrap.getRequestSchemas(opts);
-        return self.requestSchemas;
+        opts.extent = opts.extent || this.extent;
+        opts.is3dViewIncluded = this.is3dViewIncluded;
+        opts.layers = opts.layers || this.baseLayers;
+        opts.crs = opts.crs || this.map.crs;
+        this.requestSchemas = this.wrap.getRequestSchemas(opts);
+        if (opts.is3dViewIncluded) {
+            opts.crs = 'EPSG:4326';
+            opts.extent = Util.reprojectExtent(opts.extent, this.map.crs, opts.crs);
+            opts.layers = Array.from(this.#baseLayersFor3d.values());
+            this.requestSchemas = this.requestSchemas.concat(this.wrap.getRequestSchemas(opts));
+        }
+        return this.requestSchemas;
     }
 
     getResolutions() {
@@ -1673,36 +1855,22 @@ class OfflineMapMaker extends SWCacheClient {
         }
         return location.pathname + newParams + location.hash;
     }
+
     updateModel() {
-        const self = this;
-        self.model.offlineMaps = self.getLocaleString("offlineMaps");
-        self.model["cb.filter.plhr"] = self.getLocaleString("cb.filter.plhr");
-        self.model["cb.noMaps"] = self.getLocaleString("cb.noMaps");
-        self.model.noMatches = self.getLocaleString("noMatches");
-        self.model.newOfflineMap = self.getLocaleString("newOfflineMap");
-        self.model.cancel = self.getLocaleString("cancel");
-        self.model["cb.DownloadingMap"] = self.getLocaleString("cb.DownloadingMap");
-        self.model.save = self.getLocaleString("save");
-        self.model.editMapName = self.getLocaleString("editMapName");
-        self.model.viewMapExtent = self.getLocaleString("viewMapExtent");
-        self.model.deleteMap = self.getLocaleString("deleteMap");
+        for (const key in this.model) {
+            if (!key.startsWith("#")) {
+                this.model[key] = this.getLocaleString(key);
+            }
+        }
 
-        self.model.nameRequired = self.getLocaleString("nameRequired");
-        self.model.close = self.getLocaleString("close");
-        self.model.availableOfflineMaps = self.getLocaleString("availableOfflineMaps");
-        self.model.selectAtLeastOne = self.getLocaleString("selectAtLeastOne");
-        self.model.maxRes = self.getLocaleString("maxRes");
-        self.model.ok = self.getLocaleString("ok");
-        self.model.cancel = self.getLocaleString("cancel");
-
-        if (self.offlineController) {
-            self.offlineModel.offlineMap = self.getLocaleString("offlineMap");
-            self.offlineModel.returnToOnlineMaps = self.getLocaleString("returnToOnlineMaps");
+        if (this.offlineController) {
+            this.offlineModel.offlineMap = this.getLocaleString("offlineMap");
+            this.offlineModel.returnToOnlineMaps = this.getLocaleString("returnToOnlineMaps");
         }
     }
+
     async updateLanguage() {
-        const self = this;
-        self.updateModel();
+        this.updateModel();
     }
 }
 
