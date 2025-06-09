@@ -1,5 +1,5 @@
-﻿import TC from '../TC';
-import Util from './Util';
+﻿import TC from '../TC.js';
+import Util from './Util.js';
 
 function getAllElements(node) {
     let elements = [];

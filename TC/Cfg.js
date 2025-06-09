@@ -1,6 +1,6 @@
-import TC from '../TC';
-import Consts from './Consts';
-import Util from './Util';
+import TC from '../TC.js';
+import Consts from './Consts.js';
+import Util from './Util.js';
 
 let availableBaseLayers;
 // Carga síncrona de las capas de fondo predefinidas

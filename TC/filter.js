@@ -1,4 +1,4 @@
-﻿import TC from '../TC';
+﻿import TC from '../TC.js';
 TC.filter = {};
 
 TC.filter.Operators = [

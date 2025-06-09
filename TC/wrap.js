@@ -1,5 +1,5 @@
-import TC from '../TC';
-import EventTarget from './EventTarget';
+import TC from '../TC.js';
+import EventTarget from './EventTarget.js';
 
 // OpenLayers connectors
 const wrap = {

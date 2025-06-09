@@ -1,4 +1,4 @@
-﻿import TC from '../TC';
+﻿import TC from '../TC.js';
 
 class Controller {
     constructor(model, view) {        
