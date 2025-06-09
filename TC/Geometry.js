@@ -1,4 +1,4 @@
-﻿import TC from '../TC';
+﻿import TC from '../TC.js';
 
 // intersect a segment against one of the 4 lines that make up the bbox
 const intersectBox = function (a, b, edge, bbox) {
@@ -27,7 +27,7 @@ const bitCode = function (p, bbox) {
     return code;
 };
 
-const getAreaUnderEdge = (ring, idx) => {
+const getDoubleAreaUnderEdge = (ring, idx) => {
     const nIdx = (idx + 1) % ring.length;
     const cur = ring[idx];
     const next = ring[nIdx];
@@ -55,11 +55,11 @@ const Geometry = {
             return geometry.reduce((accArea, elm) => accArea + Geometry.getArea(elm), 0);
         }
         if (Geometry.isRing(geometry)) {
-            let area = 0;
+            let doubleArea = 0;
             for (let i = 0; i < geometry.length; i++) {
-                area += getAreaUnderEdge(geometry, i);
+                doubleArea += getDoubleAreaUnderEdge(geometry, i);
             }
-            return area;
+            return doubleArea / 2;
         }
         return 0;
     },
@@ -127,18 +127,15 @@ const Geometry = {
         return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
     },
     getFlatCoordinates: function (geom) {
-        const reductionFn = function (prev, cur) {
-            return prev.concat(cur);
-        };
         switch (true) {
             case Geometry.isPoint(geom):
                 return [geom];
             case Geometry.isRing(geom):
                 return geom;
             case Geometry.isRingCollection(geom):
-                return geom.reduce(reductionFn);
+                return geom.flat();
             case Geometry.isMultiRingCollection(geom):
-                return geom.reduce(reductionFn).reduce(reductionFn);
+                return geom.flat(2);
             default:
                 return [];
         }
