@@ -9,7 +9,7 @@ Version: 1.4
 Modificado por Fernando Lacunza
 */
 
-import TC from '../../TC';
+import TC from '../../TC.js';
 TC.UI = TC.UI || {};
 
 (function() {    
