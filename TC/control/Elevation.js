@@ -1,16 +1,16 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import Control from '../Control';
-import Feature from '../../SITNA/feature/Feature';
-import Point from '../../SITNA/feature/Point';
-import Polyline from '../../SITNA/feature/Polyline';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import Geometry from '../Geometry';
-import InfoDisplay from './InfoDisplay';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Feature from '../../SITNA/feature/Feature.js';
+import Point from '../../SITNA/feature/Point.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Geometry from '../Geometry.js';
+import InfoDisplay from './InfoDisplay.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 TC.control = TC.control || {};
 
 const pointElevationCache = new WeakMap();
@@ -64,6 +64,11 @@ class Elevation extends Control {
 
         self.displayElevation = true;
         self.resultsPanel = null;
+    }
+
+    async render(callback) {
+        this.elevationDataModel = new ElevationModel();
+        return await super.render(callback);
     }
 
     async register(map) {
@@ -156,7 +161,7 @@ class Elevation extends Control {
             if (elevationValues) {
                 const targets = [];
                 let target;
-                const locale = self.map.options.locale || Cfg.locale;
+                const locale = self.map.getLocale() || Cfg.locale;
                 const displayControls = self.map.getControlsByClass(InfoDisplay);
                 displayControls
                     .filter(ctl => ctl.caller && ctl.caller.highlightedFeature === feature)
@@ -191,6 +196,7 @@ class Elevation extends Control {
                         target.querySelectorAll(`tr[class|=${self.CLASS}-pair]`).forEach(elm => elm.remove());
                         target.insertAdjacentHTML('beforeend', html);
                         self.elevationDataController = new Controller(self.elevationDataModel, new Observer(target));
+                        self.updateModel();
                     });
                 });
             }
@@ -304,7 +310,6 @@ class Elevation extends Control {
             if (featureOrCoords instanceof Feature && !options.ignoreCaching) {
                 cacheElevationProfile(featureOrCoords, elevationData);
             }
-            self.elevationDataModel = new ElevationModel();
             renderProfile(elevationData);
         };
 
