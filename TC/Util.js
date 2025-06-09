@@ -1,9 +1,9 @@
-import TC from '../TC';
-import Consts from './Consts';
-import i18n from './i18n';
+import TC from '../TC.js';
+import Consts from './Consts.js';
+import i18n from './i18n.js';
 import proj4 from 'proj4';
 import UAParser from 'ua-parser-js';
-import Handlebars from '../lib/handlebars/helpers';
+import Handlebars from '../lib/handlebars/helpers.js';
 
 TC.i18n = TC.i18n || i18n;
 
@@ -245,7 +245,7 @@ var Util = {
     },
 
     getMapLocale: function (map) {
-        return map.options && map.options.locale && map.options.locale.replace('_', '-') || "es-ES";
+        return map.getLocale();
     },
 
     regex: {
@@ -808,13 +808,21 @@ var Util = {
     },
 
     getCRSCode: function (crs) {
-        var result = null;
+        let result = null;
         crs = crs.trim();
+        if (crs === 'CRS:84') return crs.replace(':', '');
         if (/^EPSG:\d{4,6}$/g.test(crs) || //formato EPSG
             /^urn:ogc:def:crs:EPSG:.*:\d{4,6}/g.test(crs) || // formato URN
             /http:\/\/www.opengis.net\/gml\/srs\/epsg.xml#\d{4,6}$/g.test(crs)) { // formato GML
-            var match = crs.trim().match(/^.+[:#](\d{4,6})$/); // devuelve la parte numérica del código
+            const match = crs.match(/^.+[:#](\d{4,6})$/); // devuelve la parte numérica del código
             if (match) {
+                result = match[1];
+            }
+        }
+        if (!result) {
+            let match = crs.match(/^https?:\/\/www.opengis.net\/def\/crs\/OGC\/(?:0|1\.3)\/(.+)$/);
+            if (match) {
+                // formato URI
                 result = match[1];
             }
         }
