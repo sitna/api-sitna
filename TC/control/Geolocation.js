@@ -35,8 +35,9 @@ import Polyline from '../../SITNA/feature/Polyline.js';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
 import Point from '../../SITNA/feature/Point.js';
 import Marker from '../../SITNA/feature/Marker.js';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Geometry from '../Geometry.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
@@ -48,6 +49,7 @@ Consts.classes.UNPLUGGED = "tc-unplugged";
 const isPolyline = feat => feat instanceof Polyline;
 const isMultiPolyline = feat => feat instanceof MultiPolyline;
 const isAnyLine = feat => isPolyline(feat) || isMultiPolyline(feat);
+const isPoint = (feat) => feat instanceof Point;
 const getFirstPoint = feat => isMultiPolyline(feat) ? feat.geometry[0][0] : feat.geometry[0];
 const getLastPoint = feat => isMultiPolyline(feat) ? feat.geometry[0][feat.geometry[0].length - 1] : feat.geometry[feat.geometry.length - 1];
 
@@ -422,13 +424,46 @@ class Geolocation extends Control {
                         }, 0);
                     };
                     self.on(self.const.event.IMPORTEDTRACK, importedGPX);
-                    for (let i = 0; i < e.features.length; i++) {
-                        const feature = e.features[i];
+                    // Creamos la lista de entidades a importar. 
+                    const lineFeatures = e.features.filter(isAnyLine);
+                    const trackFeatures = lineFeatures.map((elm) => [elm]);
+                    const pointFeatures = e.features.filter(isPoint);
+                    if (trackFeatures.length === 1) {
+                        // Si solo hay un track, añadimos todos los puntos a ese track
+                        trackFeatures[0] = trackFeatures[0].concat(pointFeatures);
+                    }
+                    else {
+                        // Si hay más de un track, añadimos los puntos al track más cercano
+                        const getClosestTrackIndex = function (point, tracks) {
+                            let closestTrackIndex = -1;
+                            let minDistance = Infinity;
+                            const [px, py] = point.getCoordinates();
+                            for (let i = 0; i < tracks.length; i++) {
+                                const trackDistance = Math.min(...tracks[i]
+                                    .getCoordsArray()
+                                    .map((coord) => Geometry.getSquaredDistance(coord, [px, py])));
+                                if (trackDistance < minDistance) {
+                                    minDistance = trackDistance;
+                                    closestTrackIndex = i;
+                                }
+                            }
+                            return closestTrackIndex;
+                        };
+                        pointFeatures.forEach((point) => {
+                            const closestTrackIndex = getClosestTrackIndex(point, lineFeatures);
+                            if (closestTrackIndex !== -1) {
+                                trackFeatures[closestTrackIndex].push(point);
+                            }
+                        });
+                    }
+
+                    for (let i = 0; i < trackFeatures.length; i++) {
+                        const features = trackFeatures[i];
                         await self.importTrack({
                             ...e, ...{
-                                features: [feature],
-                                trackIndex: e.features.length > 1 ? i : undefined,
-                                trackCount: e.features.length,
+                                features,
+                                trackIndex: trackFeatures.length > 1 ? i : undefined,
+                                trackCount: trackFeatures.length,
                             }
                         });
                     }
@@ -955,6 +990,7 @@ class Geolocation extends Control {
         if (!self.isDisabled) {
             if (options.fileName && options.features && options.features.length > 0) {
                 await self.map?.wait(async () => {
+                    await self.map.ready();
                     const selectedTrackUid = options.uid || self.currentTrackUid;
                     let fileName = options.fileName;
                     const addPromises = [];
@@ -1016,16 +1052,11 @@ class Geolocation extends Control {
                         // IDs de las features de los track no he conseguido reproducir el problema del anterior comentario.
                         self.trackLayer.clearFeatures();
 
-                        const throwEvent = options.trackCount === undefined || options.trackIndex === options.trackCount - 1;
+                        const throwEvent = options.trackCount === undefined || options.trackCount === 1 || options.trackIndex === options.trackCount - 1;
                         if (throwEvent) self.trigger(self.const.event.IMPORTEDTRACK, { selectedTrackUid, uid });
                     }
                     else {
-                        if (self.trackLayer) {
-                            self.map.removeLayer(self.trackLayer);
-                            self.trackLayer = undefined;
-                        }
-
-                        TC.alert(self.getLocaleString("geo.trk.upload.error4"));
+                       TC.alert(self.getLocaleString("geo.trk.upload.error4"));
                     }
 
                     if (self.trackLayer) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
@@ -2084,7 +2115,7 @@ class Geolocation extends Control {
         }
 
         var done = previous.d;
-        //var locale = self.map.options.locale && self.map.options.locale.replace('_', '-') || undefined;
+        //var locale = self.map.getLocale()?.replace('_', '-') || undefined;
 
         if (self.elevationChartData) {
             self.setSecondaryElevationProfileCoordinates(self.elevationChartData.coords);
@@ -2467,7 +2498,7 @@ class Geolocation extends Control {
                 newTrack = tracks.find(t => t.uid == options.uid);
             }
             else if (options.fileHandle) {
-                const areSameEntries = await Promise.all(tracks.map((t) => t.fileHandle.isSameEntry(options.fileHandle)));
+                const areSameEntries = await Promise.all(tracks.map((t) => t.fileHandle?.isSameEntry(options.fileHandle)));
                 const fileHandleTracks = tracks.filter((_t, i) => areSameEntries[i]);
                 if (options.trackIndex !== undefined) {
                     newTrack = fileHandleTracks[options.trackIndex];
