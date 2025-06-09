@@ -120,7 +120,7 @@ function copyCrs(cb) {
 //}
 
 const spawnProcess = function (cmd, args, cb) {
-    const ls = spawn(path.resolve('./node_modules/.bin/' + cmd), args);
+    const ls = spawn(path.resolve('./node_modules/.bin/' + cmd), args, { shell: true });
     ls.stdout.on('data', data => console.log(`stdout: ${data}`));
     ls.stderr.on('data', data => {
         throw data;
