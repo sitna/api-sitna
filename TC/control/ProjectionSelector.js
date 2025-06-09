@@ -1,7 +1,7 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Control from '../Control';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
 
 TC.control = TC.control || {};
 
@@ -30,9 +30,13 @@ class ProjectionSelector extends Control {
         self._dialogDiv.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('button:not(.' + self.#cssClasses.LOAD_CRS_BUTTON + ')', function (e) {
             const crs = e.target.dataset.crsCode;
             if (crs) {
-                self.setProjection({
-                    crs: crs,
-                    allowFallbackLayer: true
+                TC.getProjectionData({ crs: Util.getCRSCode(crs) }).then((projData) => {
+                    TC.loadProjDef({
+                        crs,
+                        def: projData.proj4 || projData.wkt,
+                        name: projData.name,
+                        callback: () => self.setProjection({ crs, allowFallbackLayer: true }),
+                    })
                 });
             }
         }), { passive: true });
