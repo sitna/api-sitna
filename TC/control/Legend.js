@@ -1,9 +1,9 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import MapContents from './MapContents';
-import './LayerLegend';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import MapContents from './MapContents.js';
+import './LayerLegend.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 
 TC.control = TC.control || {};
@@ -182,6 +182,7 @@ class Legend extends MapContents {
             let layerLegend;
             layerLegend = self.div.querySelector('sitna-layer-legend#stl-' + layer.id);
             if (!layerLegend) {
+                if (layerLoaded.includes(layer.id)) return;
                 layerLegend = document.createElement('sitna-layer-legend');
                 layerLegend.id = "stl-" + layer.id;
                 layerLegend.dataset.layerId = layer.id;
@@ -217,8 +218,8 @@ class Legend extends MapContents {
                             if (index === 0) return ul.firstChild;
                             if (loadOrder.length - 1 === index) return ul.lastElementChild;
                             const layerId = loadOrder[index+1];
-                            const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
-                            return referenceElement || getReferenceElement(++index);
+                        const referenceElement = ul.querySelector('*[data-layer-id="' + layerId + '"]');
+                        return referenceElement || getReferenceElement(++index);
 
                     };
                     ul.insertBefore(layerLegend, getReferenceElement(loadOrder.indexOf(layer.id)));
