@@ -1,5 +1,5 @@
-import TC from '../../TC';
-import Consts from '../Consts';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
 
 TC.tool = TC.tool || {};
 

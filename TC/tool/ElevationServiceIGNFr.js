@@ -1,5 +1,5 @@
-import ElevationService from './ElevationService';
-import Util from '../Util';
+import ElevationService from './ElevationService.js';
+import Util from '../Util.js';
 
 const FALLBACK_RESOURCE_ID = 'ign_rge_alti_wld';
 const DELIMITER = '|';

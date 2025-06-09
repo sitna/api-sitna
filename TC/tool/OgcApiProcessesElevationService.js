@@ -1,4 +1,4 @@
-﻿import ElevationService from './ElevationService';
+﻿import ElevationService from './ElevationService.js';
 
 class OgcApiProcessesElevationService extends ElevationService {
     async request(options = {}) {

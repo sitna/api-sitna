@@ -1,7 +1,7 @@
-import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import Geometry from '../Geometry';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import Geometry from '../Geometry.js';
 
 /**
  * Colección de identificadores de servicios para obtener elevaciones de puntos.

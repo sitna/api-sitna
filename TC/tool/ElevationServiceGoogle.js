@@ -1,7 +1,7 @@
-import TC from '../../TC';
-import ElevationService from './ElevationService';
-import Util from '../Util';
-import Consts from '../Consts';
+import TC from '../../TC.js';
+import ElevationService from './ElevationService.js';
+import Util from '../Util.js';
+import Consts from '../Consts.js';
 
 // https://developers.google.com/maps/documentation/javascript/elevation?hl=es
 

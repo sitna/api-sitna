@@ -1,6 +1,6 @@
-﻿import TC from '../../TC';
-import Util from '../../TC/Util';
-import Proxification from './Proxification';
+﻿import TC from '../../TC.js';
+import Util from '../../TC/Util.js';
+import Proxification from './Proxification.js';
 import wwBlob from '../../workers/tc-dft-web-worker-blob.mjs';
 
 class FeatureTypeParser {

@@ -1,5 +1,5 @@
-﻿import Util from '../Util';
-import { circle, square, triangle, polygon, line } from './WellKnowNameTemplates';
+﻿import Util from '../Util.js';
+import { circle, square, triangle, polygon, line } from './WellKnowNameTemplates.js';
 const equilateralTrianglePoints = function  (sideLength, offset = 0) {
     // Calcular la altura del triángulo equilátero
     const height = (Math.sqrt(3) / 2) * sideLength;

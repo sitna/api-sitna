@@ -1,6 +1,6 @@
-import TC from '../../TC';
-import ElevationService from './ElevationService';
-import Consts from '../Consts';
+import TC from '../../TC.js';
+import ElevationService from './ElevationService.js';
+import Consts from '../Consts.js';
 
 class ElevationServiceIDENA extends ElevationService {
     constructor() {
