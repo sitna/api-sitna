@@ -1,0 +1,118 @@
+﻿:host {
+    position: relative;
+    display: block;
+    visibility: visible;
+    left: -50%;
+    width: 100%;
+    background-color: black;
+    font-size: 0.9em;
+    color: #fff;
+    text-align: center;
+    border-radius: var(--border-radius);
+    padding: 0.6em 0.5em;
+    margin-left: -0.15em;
+    margin-top: 0.3em;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+    animation: pop 0.3s;
+    box-sizing: content-box;
+    transition-property: opacity, display;
+    transition-duration: 0.3s;
+    transition-behavior: allow-discrete;
+    --highlight-color: white;
+
+    @starting-style {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+}
+
+:host([type]) .container {
+    margin-right: 0;
+}
+
+:host([type]) .container:before {
+    display: block;
+    position: absolute;
+    left: 0.4em;
+    width: 1em;
+    height: 1em;
+    line-height: 1em;
+    color: black;
+    border-radius: calc(var(--border-radius) / 2);
+}
+
+:host([type="info"]) {
+    --highlight-color: var(--sitna-info-color);
+}
+
+:host([type="warning"]) {
+    --highlight-color: var(--sitna-warning-color);
+}
+
+:host([type="error"]) {
+    --highlight-color: var(--sitna-error-color);
+}
+
+:host([type="info"]) .container:before {
+    font-family: var(--icon-font-family);
+    content: var(--icon-info);
+    background-color: var(--sitna-info-color);
+}
+
+:host([type="warning"]) .container:before {
+    content: '!';
+    font-weight: bold;
+    background-color: var(--sitna-warning-color);
+}
+
+:host([type="error"]) .container:before {
+    content: '\1f7ae';
+    background-color: var(--sitna-error-color);
+}
+
+.container {
+    display: flex;
+    margin: 0 1em;
+    align-items: center;
+    justify-content: center;
+}
+
+sitna-button {
+    display: none;
+    margin-left: 1em;
+}
+
+.fuse {
+    position: absolute;
+    display: none;
+    height: 3px;
+    left: var(--border-radius);
+    bottom: 3px;
+    width: calc(100% - calc(var(--border-radius) * 2));
+    background-color: var(--highlight-color);
+    animation: roundtime var(--sitna-toast-duration) linear forwards;
+    transform-origin: left center;
+}
+
+:host([fuse]) .fuse {
+    display: block;
+}
+
+@keyframes roundtime {
+    to {
+        /* More performant than animating `width` */
+        transform: scaleX(0);
+    }
+}
+
+@keyframes pop {
+    from {
+        transform: translateY(30%);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
