@@ -828,6 +828,8 @@ div.tc-ctl-rpanel-heading-samehw {
 .tc-ctl-rpanel .tc-ctl-rpanel-info {
     flex-basis: 100%;
     display: block;
+    padding: 0.5em;
+    box-sizing: border-box;
 }
 
     .tc-ctl-rpanel .tc-ctl-rpanel-info h3 {
