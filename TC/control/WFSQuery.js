@@ -86,28 +86,28 @@
   * </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import Control from '../Control';
-import infoShare from './infoShare';
-import ControlContainer from './ControlContainer';
-import WorkLayerManager from './WorkLayerManager';
-import FeatureInfoCommons from './FeatureInfoCommons';
-import Click from './Click';
-import filter from '../filter';
-import autocomplete from '../ui/autocomplete';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import infoShare from './infoShare.js';
+import ControlContainer from './ControlContainer.js';
+import WorkLayerManager from './WorkLayerManager.js';
+import FeatureInfoCommons from './FeatureInfoCommons.js';
+import Click from './Click.js';
+import filter from '../filter.js';
+import autocomplete from '../ui/autocomplete.js';
 //cargo los objetos features, si no, no resaltara las geometrías
-import Point from '../../SITNA/feature/Point';
-import Polyline from '../../SITNA/feature/Polyline';
-import Polygon from '../../SITNA/feature/Polygon';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon';
-import Button from '../../SITNA/ui/Button';
+import Point from '../../SITNA/feature/Point.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
+import Button from '../../SITNA/ui/Button.js';
 
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 
 TC.control = TC.control || {};
@@ -407,7 +407,7 @@ const _onFeaturesUpdate = function (e) {
 const _onBeforeApplyQuery = function (e) {
     const ctl = e.layer.owner;
     if (ctl && e.layer === ctl.resultsLayer && e.query) {
-        ctl.setQueryToSearch({ filter: e.query });
+        ctl.setQueryToSearch({ filter: e.query.filter });
     }
 };
 
@@ -849,8 +849,7 @@ class WFSQuery extends Control {
 
     async render(callback) {
         this._dialogDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-share-dialog', {});
-        if (this.map)
-            locale = this.map.options.locale;
+        if (this.map) locale = this.map.getLocale();
 
         await super.render.call(this, callback);
     }
@@ -882,7 +881,7 @@ class WFSQuery extends Control {
 
         self.getRenderedHtml(self.CLASS + "-filter", {
             conditions: self.getCurrentQuery().filter.map(f => self.#getTemplateObjFromFilter(f)),
-            locale: self.map.options.locale
+            locale: self.map.getLocale()
         }, (html) => {
             whereDiv.innerHTML = html;
             whereDiv.querySelectorAll(`.${self.CLASS}-where-cond-view`).forEach(function (btn, idx) {
@@ -1210,23 +1209,35 @@ class WFSQuery extends Control {
                 await self.map.loaded();
                 let sharedQueryToSearch = JSON.parse(state.queryResult);
                 if (sharedQueryToSearch.wms && sharedQueryToSearch.filter) {
-                    let wmsLayer = self.map.workLayers.filter(l => l.url && l.url === sharedQueryToSearch.wms.url &&
-                        l.names.join() === sharedQueryToSearch.wms.names.join());
-                    if (wmsLayer.length > 0) {
-                        const currentQuery = self.getCurrentQuery();
-                        currentQuery.layer = wmsLayer[0];
-                        currentQuery.name = sharedQueryToSearch.name;
-                        currentQuery.title = sharedQueryToSearch.title;
+                    const endProcess = async function () {
+                        let wmsLayer = self.map.workLayers.filter(l => l.url && l.url === sharedQueryToSearch.wms.url &&
+                            l.names.join() === sharedQueryToSearch.wms.names.join());
+                        if (wmsLayer.length > 0) {
+                            const currentQuery = self.getCurrentQuery();
+                            currentQuery.layer = wmsLayer[0];
+                            currentQuery.name = sharedQueryToSearch.name;
+                            currentQuery.title = sharedQueryToSearch.title;
 
-                        self.setQueryToSearch({ doZoom: sharedQueryToSearch.doZoom });
+                            self.setQueryToSearch({ doZoom: sharedQueryToSearch.doZoom });
 
-                        const data = await currentQuery.layer.describeFeatureType(currentQuery.name);
-                        self.#manageDescribeFeature(data, false);
-                        self.#sendQuery(sharedQueryToSearch.filter);
-                        // registramos el estado compartido por si se comparte de nuevo sin hacer uso del control
-                        self.setQueryToSearch({ filter: sharedQueryToSearch.filter, doZoom: sharedQueryToSearch.doZoom });
-                        currentQuery.filter = [filter.Filter.fromText(sharedQueryToSearch.filter)];
-                        self.#cache.queried = self.#cache.current = Object.assign({}, currentQuery, { filter: [...currentQuery.filter] });
+                            const data = await currentQuery.layer.describeFeatureType(currentQuery.name);
+                            self.#manageDescribeFeature(data, false);
+                            self.#sendQuery(sharedQueryToSearch.filter);
+                            // registramos el estado compartido por si se comparte de nuevo sin hacer uso del control
+                            self.setQueryToSearch({ filter: sharedQueryToSearch.filter, doZoom: sharedQueryToSearch.doZoom });
+                            currentQuery.filter = [filter.Filter.fromText(sharedQueryToSearch.filter)];
+                            self.#cache.queried = self.#cache.current = Object.assign({}, currentQuery, { filter: [...currentQuery.filter] });
+                            return true;
+                        }
+                        return false;
+                    };
+                    if (!(await endProcess())) {
+                        const onLayerAdd = async function (_e) {
+                            if (await endProcess()) {
+                                self.map.off(Consts.event.LAYERADD, onLayerAdd);
+                            }
+                        };
+                        self.map.on(Consts.event.LAYERADD, onLayerAdd)
                     }
                 } else {
                     alert('shared query error');
@@ -1994,7 +2005,7 @@ class WFSQuery extends Control {
         }
         else {
             Util.closeModal();
-            layer.map.toast(Util.getLocaleString(layer.map.options.locale, "query.LayerNotAvailable"), { type: Consts.msgType.ERROR });
+            layer.map.toast(Util.getLocaleString(layer.map.getLocale(), "query.LayerNotAvailable"), { type: Consts.msgType.ERROR });
         }
     }
 
@@ -2312,7 +2323,7 @@ class WFSQuery extends Control {
     }
     async updateLanguage() {
         const self = this;
-        locale = self.map.options.locale;
+        locale = self.map.getLocale();
         self.updateModel();
     }
 
