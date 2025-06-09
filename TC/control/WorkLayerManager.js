@@ -1,16 +1,16 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Util from '../Util';
-import TOC from './TOC';
-import Button from '../../SITNA/ui/Button';
-import '../../SITNA/ui/Toggle';
-import MapContents from './MapContents';
-import Vector from '../../SITNA/layer/Vector';
-import itemToolContainer from './itemToolContainer';
-import { CreateSymbolizer } from './LayerLegend';
-import ImageMagnifier from './ImageMagnifier';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import TOC from './TOC.js';
+import Button from '../../SITNA/ui/Button.js';
+import '../../SITNA/ui/Toggle.js';
+import MapContents from './MapContents.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import itemToolContainer from './itemToolContainer.js';
+import { CreateSymbolizer } from './LayerLegend.js';
+import ImageMagnifier from './ImageMagnifier.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -74,6 +74,7 @@ class WorkLayerManager extends TOC {
 
         self._uiElementSelector = `ul > li.${self.CLASS}-elm`;
         self._toolContainerSelector = `.${self.CLASS}-tools`;
+        //self._addonsContainerSelector = `.${self.CLASS}-addonsContainer`;
 
         self.model = new WorkLayerManagerModel();
 
@@ -266,8 +267,8 @@ class WorkLayerManager extends TOC {
             });
         if (!map.magnifier) {
             map.magnifier = new ImageMagnifier(3, {
-                textToOpen: Util.getLocaleString(map.options.locale, "clickToEnlarge"),
-                textToClose: Util.getLocaleString(map.options.locale, "clickToClose")
+                textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
+                textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
             });            
             document.body.appendChild(map.magnifier);
         }
@@ -443,7 +444,7 @@ class WorkLayerManager extends TOC {
                 getLegendImgByPost(layer).then(async function (_src) {
 
                     try {
-                        if (layer.availableNames?.some((name) => layer.getInfo(name).legend.length)) {
+                        if (!layer.customLegend && layer.availableNames?.some((name) => layer.getInfo(name).legend.length)) {
                             const legendObject = layer.getLegend ? await layer.getLegend(true) : null;
                             if (legendObject) {
 
@@ -469,7 +470,7 @@ class WorkLayerManager extends TOC {
                     catch (ex) {
                         console.info(ex);
                     }
-
+                    layerData.customLegend = layer.customLegend;
                     self.getRenderedHtml(self.CLASS + '-elm', layerData).then(function (out) {
                         const parser = new DOMParser();
                         const li = parser.parseFromString(out, 'text/html').body.firstChild;
@@ -545,6 +546,8 @@ class WorkLayerManager extends TOC {
                         const layerIdx = layerList.indexOf(layer);
 
                         self.getItemTools().forEach(tool => self.addItemToolUI(li, tool));
+                        //self.getAddons().forEach(tool => self.addAddonUI(li, tool));
+
 
                         var inserted = false;
                         for (i = 0; i < lis.length; i++) {
