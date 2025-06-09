@@ -18,8 +18,8 @@ import mainTemplate from '../templates/tc-ctl-3d.mjs';
 import overlayTemplate from '../templates/tc-view-3d-overlay.mjs';
 import camControlsTemplate from '../templates/tc-view-3d-cm-ctls.mjs';
 
-import Controller from '../Controller';
-import Observer from '../Observer';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.view = TC.view || {};
 TC.control = TC.control || {};
@@ -70,7 +70,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
         getLocaleString: function (key, texts) {
             var self = this;
-            var locale = self.map ? self.map.options.locale : TC.Cfg.locale;
+            var locale = self.map ? self.map.getLocale() : TC.Cfg.locale;
             return Util.getLocaleString(locale, key, texts);
         },
 
@@ -1376,14 +1376,15 @@ const ThreeD = (function (namespace, signature, factory) {
     };
     CameraControls.prototype.updateModel = function () {
         const self = this;
-        self.model["threed.tilt.reset"] = Util.getLocaleString(self.parent.map.options.locale, "threed.tilt.reset");
-        self.model["threed.tilt.drag"] = Util.getLocaleString(self.parent.map.options.locale, "threed.tilt.drag");
-        self.model["threed.tilt.left"] = Util.getLocaleString(self.parent.map.options.locale, "threed.tilt.left");
-        self.model["threed.tilt.right"] = Util.getLocaleString(self.parent.map.options.locale, "threed.tilt.right");
-        self.model["threed.rotate.reset"] = Util.getLocaleString(self.parent.map.options.locale, "threed.rotate.reset");
-        self.model["threed.rotate.drag"] = Util.getLocaleString(self.parent.map.options.locale, "threed.rotate.drag");
-        self.model["threed.rotate.right"] = Util.getLocaleString(self.parent.map.options.locale, "threed.rotate.right");
-        self.model["threed.rotate.left"] = Util.getLocaleString(self.parent.map.options.locale, "threed.rotate.left");
+        const locale = self.parent.map.getLocale()
+        self.model["threed.tilt.reset"] = Util.getLocaleString(locale, "threed.tilt.reset");
+        self.model["threed.tilt.drag"] = Util.getLocaleString(locale, "threed.tilt.drag");
+        self.model["threed.tilt.left"] = Util.getLocaleString(locale, "threed.tilt.left");
+        self.model["threed.tilt.right"] = Util.getLocaleString(locale, "threed.tilt.right");
+        self.model["threed.rotate.reset"] = Util.getLocaleString(locale, "threed.rotate.reset");
+        self.model["threed.rotate.drag"] = Util.getLocaleString(locale, "threed.rotate.drag");
+        self.model["threed.rotate.right"] = Util.getLocaleString(locale, "threed.rotate.right");
+        self.model["threed.rotate.left"] = Util.getLocaleString(locale, "threed.rotate.left");
     }
 
     const TwoDLinkedFeatureInfo = function (map) {
@@ -1404,8 +1405,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 const resultsPanelOptions = {
                     "content": "table",
                     "titles": {
-                        "main": Util.getLocaleString(map.map.options.locale, "threed.rs.panel.gfi"),
-                        "max": Util.getLocaleString(map.map.options.locale, "threed.rs.panel.gfi")
+                        "main": Util.getLocaleString(map.map.getLocale(), "threed.rs.panel.gfi"),
+                        "max": Util.getLocaleString(map.map.getLocale(), "threed.rs.panel.gfi")
                     }
                 };
 
@@ -2782,7 +2783,7 @@ const ThreeD = (function (namespace, signature, factory) {
         }
 
         if (options.state) {
-            self.map.toast(Util.getLocaleString(self.map.options.locale, 'threed.apply3DState'), { type: Consts.msgType.INFO });
+            self.map.toast(Util.getLocaleString(self.map.getLocale(), 'threed.apply3DState'), { type: Consts.msgType.INFO });
         }
 
         if (!self.waiting) {
