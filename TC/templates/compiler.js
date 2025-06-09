@@ -2,10 +2,12 @@
 const handlebars = require('handlebars');
 
 const files = fs.readdirSync(__dirname);
+console.log(__dirname);
 files
     .filter(f => f.endsWith('.hbs'))
     .forEach(function (file) {
         const templateName = file.substr(0, file.lastIndexOf('.hbs'));
+        console.log(templateName);
         const template = handlebars
             .precompile(fs.readFileSync(__dirname + '\\' + file, "utf8"), {
                 knownHelpers: {
