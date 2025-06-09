@@ -1,12 +1,10 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-//import { Defaults } from '../Cfg';
-import Util from '../Util';
-import WebComponentControl from './WebComponentControl';
-import ImageMagnifier from './ImageMagnifier';
-import { fivePointStarPoints, crossPoints } from '../tool/WellKnowNameFactory';
-import Factory from '../tool/WellKnowNameFactory';
-import { line as lineTemplate, polygon as polygonTemplate } from '../tool/WellKnowNameTemplates';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Util from '../Util.js';
+import WebComponentControl from './WebComponentControl.js';
+import ImageMagnifier from './ImageMagnifier.js';
+import Factory from '../tool/WellKnowNameFactory.js';
+import { line as lineTemplate } from '../tool/WellKnowNameTemplates.js';
 
 
 TC.control = TC.control || {};
@@ -632,6 +630,11 @@ class LayerLegend extends WebComponentControl {
         self.classList.add(loadingClassName);
         if (self.#layer.getVisibility() || self.#on3DMode) {
             try {
+                if (self.#layer.customLegend)
+                    if(self.#layer.availableNames.some((name => self.#layer.isVisibleByScale(name)))) {
+                        await self.setData([]);
+                    return;
+                }
                 var legendObject = await self.#layer.getLegend(self.#on3DMode || self.#wcsLayer);
                 legendObject = legendObject?.filter((data) => data);
                 if (legendObject && legendObject.length)
@@ -676,12 +679,18 @@ class LayerLegend extends WebComponentControl {
 
         const layer = map.layers.findByProperty("id", this.dataset.layerId);
         if (!(layer instanceof SITNA.layer.Raster)) return;
-
-        self.#wcsLayer = (await layer.describeLayer?.(true))?.every((dl) => dl.owsType === "WCS");
+        try {
+            self.#wcsLayer = (await layer.describeLayer?.(true))?.every((dl) => dl.owsType === "WCS");
+        }
+        catch (DescribeLayerExc) { 
+            //controlamos un posible error de describeLayer
+            console.info(DescribeLayerExc);
+        }
+        
         self.#on3DMode = map.on3DView;
         self.#map = map;
         if (!self.#layer)
-            self.#layer = layer;        
+            self.#layer = layer;
         
         let timer = null;
         const _onZoomEvent = function (_e) {
@@ -719,8 +728,8 @@ class LayerLegend extends WebComponentControl {
 
         if (!map.magnifier) {
             map.magnifier = new ImageMagnifier(3, {
-                textToOpen: Util.getLocaleString(map.options.locale, "clickToEnlarge"),
-                textToClose: Util.getLocaleString(map.options.locale, "clickToClose")
+                textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
+                textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
             });
             //map.magnifier.register(map);
             document.body.appendChild(map.magnifier);            
