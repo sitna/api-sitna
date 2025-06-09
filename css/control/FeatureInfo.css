@@ -276,7 +276,7 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
     }
 
 .tc-ctl-finfo-btn-zoom-all {
-    --icon-text: '\e90e';
+    --icon-text: var(--icon-extent);
 }
 
 .tc-ctl-finfo-btn-del-all {
