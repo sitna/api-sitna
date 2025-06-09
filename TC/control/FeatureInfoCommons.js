@@ -10,8 +10,8 @@ import ControlContainer from './ControlContainer.js';
 import infoShare from './infoShare.js';
 import Feature from '../../SITNA/feature/Feature.js';
 import Point from '../../SITNA/feature/Point.js';
-import Observer from '../Observer';
-import Controller from '../Controller';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
@@ -747,8 +747,11 @@ class FeatureInfoCommons extends Click {
 
         content.querySelectorAll('table:not(.tc-complex-attr)').forEach(function (table) {
             if (!table.parentElement.classList.contains(Consts.classes.CHECKED)) {
-                self.controller.setAttribute('clickToShowOnMap', 'title', table);
-                self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+                Promise.any([self.getPopup(), self.getResultsPanel()]).then(() => {
+                    if (table.title)
+                        self.controller.setAttribute('clickToShowOnMap', 'title', table);
+                    self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
+                });
                 //table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
             }
             // En iPad se usa click en vez de touchstart para evitar que se resalte una feature al hacer scroll
@@ -897,7 +900,7 @@ class FeatureInfoCommons extends Click {
             }
 
             if (featureLi.querySelector('table')) {
-                featureLi.querySelector('table').setAttribute('title', self.getLocaleString('clickToCenter'));
+                featureLi.querySelector('table').setAttribute('title', feature.geometry ? self.getLocaleString('clickToCenter'): "");
             }
 
             // Añadida esta condición porque si el servicio no devuelve datos parseables como feature se devuelve una pseudofeature sin geometría
@@ -1011,10 +1014,11 @@ class FeatureInfoCommons extends Click {
                     Consts.classes.FROMRIGHT);
             });
         target.querySelectorAll('.' + self.CLASS + '-features table:not(.tc-complex-attr)').forEach(function (table) {
-            if (self.controller) { 
-                self.controller.setAttribute('clickToShowOnMap', 'title', table);
+            Promise.any([self.getPopup(), self.getResultsPanel()]).then(() => {
+                if(table.title)
+                    self.controller.setAttribute('clickToShowOnMap', 'title', table);
                 self.controller.model.clickToShowOnMap = self.getLocaleString('clickToShowOnMap');
-            }
+            });
             //table.setAttribute('title', self.getLocaleString('clickToShowOnMap'));
         });
 
