@@ -32,13 +32,13 @@
   * </script>
   */
 
-import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import Control from '../Control';
-import Controller from '../Controller';
-import Observer from '../Observer';
+import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -61,6 +61,9 @@ class StreetView extends Control {
     #startLonLat = null;
     #previousActiveControl;
     #transitioning;
+    #previousWidth;
+    #previousHeight;
+    #previousZIndex;
 
     register(map) {
         const self = this;
@@ -268,7 +271,6 @@ class StreetView extends Control {
             // Añadimos aviso de que este botón no se pulsa, se arrastra
             self.div.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
                 const btnRect = e.target.getBoundingClientRect();
-                console.log(btnRect);
                 if (e.clientX >= btnRect.left &&
                     e.clientX <= btnRect.right &&
                     e.clientY >= btnRect.top &&
@@ -376,7 +378,7 @@ class StreetView extends Control {
 
         TC.loadJS(
             !window.google || !google.maps,
-            gMapsUrl + "&language=" + self.map.options.locale.substr(0, 2),
+            gMapsUrl + "&language=" + self.map.getLocale().substr(0, 2),
             function () {                
                 if (window.google) {
                     setMarker();
@@ -491,6 +493,8 @@ class StreetView extends Control {
                             const zIndexMap = parseInt(window.getComputedStyle(mapDiv).zIndex, 10);
 
                             mapDiv.classList.add(Consts.classes.COLLAPSED);
+                            self.#previousWidth = mapDiv.style.width;
+                            self.#previousHeight = mapDiv.style.height;
                             mapDiv.style.width = self.options.ovmapW || "25vh";
                             mapDiv.style.height = self.options.ovmapH || "25vh";
                             if (self.map.on3DView)//si es en modo 3d se oculta el mapa 2D para que no interfiera
@@ -501,8 +505,10 @@ class StreetView extends Control {
                             view.classList.add(Consts.classes.VISIBLE);
 
                             const zIndexView = parseInt(window.getComputedStyle(view).zIndex, 10);
-                            if (zIndexMap <= zIndexView)
+                            if (zIndexMap <= zIndexView) {
+                                self.#previousZIndex = mapDiv.style.zIndex;
                                 mapDiv.style.zIndex = (zIndexView + 1)
+                            }
 
 
                             // Por si no salta transitionend
@@ -540,7 +546,9 @@ class StreetView extends Control {
 
         const endProcess = function () {
             mapDiv.classList.remove(Consts.classes.COLLAPSED);
-            mapDiv.style.width = mapDiv.style.height = mapDiv.style.zIndex = "";
+            mapDiv.style.width = self.#previousWidth ?? '';
+            mapDiv.style.height = self.#previousHeight ?? '';
+            mapDiv.style.zIndex = self.#previousZIndex ?? '';
             if (self.map.on3DView)//si es en modo 3d se oculta el mapa 2D para que no interfiera
                 self.map.div.style.display = '';
             const resizeEvent = document.createEvent('HTMLEvents');
