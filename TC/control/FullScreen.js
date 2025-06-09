@@ -1,9 +1,9 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Control from '../Control';
-import Util from '../Util';
-import Controller from '../Controller';
-import Observer from '../Observer';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Control from '../Control.js';
+import Util from '../Util.js';
+import Controller from '../Controller.js';
+import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
@@ -40,7 +40,11 @@ class FullScreen extends Control {
             btn.addEventListener('click', function () {
                 self.#byBtn = true;
                 if (self.isFullScreen()) {
-                    document.exitFullscreen();
+                    // Si se ha activado el modo pantalla desde F11, mostrará el error "Document not active"
+                    document.exitFullscreen().catch((e) => {
+                        if (!(e instanceof TypeError)) throw e;
+                        return false;
+                    });
                 } else {
                     document.body.requestFullscreen();
                 }
@@ -102,8 +106,8 @@ class FullScreen extends Control {
     }
 
     isFullScreen() {
-        const windowWidth = window.innerWidth * window.devicePixelRatio;
-        const windowHeight = window.innerHeight * window.devicePixelRatio;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
         const screenWidth = window.screen.width;
         const screenHeight = window.screen.height;
 
@@ -111,7 +115,10 @@ class FullScreen extends Control {
     }
 
     isElementFullScreen() {
-        return document.fullscreenElement !== null;
+        if (document.fullscreenElement === null) return false;
+        if (document.mozFullscreenElement === null) return false;
+        if (document.webkitFullscreenElement === null) return false;
+        return true;
     }
 
     async loadTemplates() {
