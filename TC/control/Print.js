@@ -1,10 +1,10 @@
-﻿import TC from '../../TC';
-import Consts from '../Consts';
-import Cfg from '../Cfg';
-import Util from '../Util';
-import Control from '../Control';
-import Observer from '../Observer';
-import Controller from '../Controller';
+﻿import TC from '../../TC.js';
+import Consts from '../Consts.js';
+import Cfg from '../Cfg.js';
+import Util from '../Util.js';
+import Control from '../Control.js';
+import Observer from '../Observer.js';
+import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
@@ -116,6 +116,13 @@ class Print extends Control {
         }
         return self;
     }
+
+    getLocaleString(key, texts) {
+        const map = TC.Map.get(this.getRenderTarget()?.closest(`.${Consts.classes.MAP}`));
+        const locale = map ? map.getLocale() : Cfg.locale;
+        return Util.getLocaleString(locale, key, texts);
+    }
+
     updateModel() {
         const self = this;
         self.model.printThisContent = self.getLocaleString("printThisContent");
