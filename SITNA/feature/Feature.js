@@ -418,7 +418,7 @@ class Feature {
             if (template) {
                 // GLS: Contemplo en la expresión regular la opción de que el nombre del campo se componga de $[aaa/abc/loQueMeInteresa] 
                 // (la expresión no está limitada a 2 niveles), hasta ahora se manejaba $[loQueMeInteresa]
-                result = template.replace(/\$\[?(?:\w+\/)*([^><]+)\]/g, function (match, p1) {
+                result = template.replace(/\$\[?(?:\w+\/)*([^><[]+)\]/g, function (match, p1) {
                     //esto es por si la feature viene de un KML con este formato de datos
                     /*
                      * <Data name="nombre del atributo">
@@ -626,8 +626,8 @@ class Feature {
             var resultsPanelOptions = {
                 content: "table",
                 titles: {
-                    main: Util.getLocaleString(map.options.locale, "rsp.title"),
-                    max: Util.getLocaleString(map.options.locale, "rsp.title")
+                    main: Util.getLocaleString(map.getLocale(), "rsp.title"),
+                    max: Util.getLocaleString(map.getLocale(), "rsp.title")
                 }
             };
             var controlContainer = map.getControlsByClass(ControlContainer)[0];
@@ -662,7 +662,7 @@ class Feature {
             });
 
             panel.menuDiv.innerHTML = '';
-            panel.open(options.html || this.getInfo({ locale: map.options.locale }), panel.getInfoContainer());
+            panel.open(options.html || this.getInfo({ locale: map.getLocale() }), panel.getInfoContainer(), { shadow: options.shadow });
 
             const resizeObserver = new ResizeObserver(entries => {
                 for (let entry of entries) {
@@ -699,23 +699,24 @@ class Feature {
             TC.control.FeatureInfoCommons = FeatureInfoCommons;
         }
 
-        let html;
+        const opts = Util.extend({}, options);
+
         if (this.getTemplate()) {
-            html = this.getInfo();
+            opts.html = this.getInfo();
+            opts.shadow = true;
         }
         else {
             if (typeof this.data === 'string') {
-                html = this.data;
+                opts.html = this.data;
             }
             else {
-                html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({
+                opts.html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({
                     // Quitamos los atributos que son otras entidades (p.e. referencePoint)
                     attributes: this.attributes.filter((attr) => !(attr.value instanceof Feature)),
                     singleFeature: true
                 });
             }
         }
-        const opts = Util.extend({}, options, { html: html });
         let control;
         if (options.control && TC.control) {
             const optionsControl = options.control;
