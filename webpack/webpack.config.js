@@ -55,7 +55,12 @@ module.exports = {
                     ]
                 }
             }
-        ]
+        ],
+        parser: {
+            javascript: {
+                importMeta: false,
+            }
+        },
     },
     ignoreWarnings: [/Failed to parse source map/],
     plugins: [
