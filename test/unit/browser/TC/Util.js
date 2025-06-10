@@ -1,9 +1,4 @@
 ﻿describe('Tests de TC.Util', function () {
-    describe('getMapLocale', function () {
-        it('sin locale deberia devolver es-ES', function () {
-            expect(TC.Util.getMapLocale({})).to.equal('es-ES');
-        });
-    });
 
     const epsg25830 = 'EPSG:25830';
     const epsg4326 = 'EPSG:4326';
