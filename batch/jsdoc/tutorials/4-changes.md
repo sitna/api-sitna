@@ -1,3 +1,6 @@
+### [4.6.1](https://github.com/sitna/api-sitna/releases/tag/v4.6.1)
+- Corrección de errores.
+
 ### [4.6.0](https://github.com/sitna/api-sitna/releases/tag/v4.6.0)
 - Añadida colección de ejemplos en el control de búsquedas.
 - Cambiados estilos de elementos de interfaz de usuario.

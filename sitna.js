@@ -1,40 +1,40 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.6.0
+ * @version 4.6.1
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
  */
 
-import TC from './TC';
-import Util from './TC/Util';
-import Consts from './TC/Consts';
-import i18n from './TC/i18n';
-import SitnaMap from './SITNA/Map';
-import Feature from './SITNA/feature/Feature';
-import Point from './SITNA/feature/Point';
-import MultiPoint from './SITNA/feature/MultiPoint';
-import Marker from './SITNA/feature/Marker';
-import MultiMarker from './SITNA/feature/MultiMarker';
-import Polyline from './SITNA/feature/Polyline';
-import MultiPolyline from './SITNA/feature/MultiPolyline';
-import Polygon from './SITNA/feature/Polygon';
-import MultiPolygon from './SITNA/feature/MultiPolygon';
-import Circle from './SITNA/feature/Circle';
-import Layer from './SITNA/layer/Layer';
-import Raster from './SITNA/layer/Raster';
-import Vector from './SITNA/layer/Vector';
-import './TC/tool/ExcelExport';
-import './TC/tool/Proxification';
-import Map from './TC/Map';
-import Cfg from './TC/Cfg';
-import wrap from './TC/wrap';
+import TC from './TC.js';
+import Util from './TC/Util.js';
+import Consts from './TC/Consts.js';
+import i18n from './TC/i18n.js';
+import SitnaMap from './SITNA/Map.js';
+import Feature from './SITNA/feature/Feature.js';
+import Point from './SITNA/feature/Point.js';
+import MultiPoint from './SITNA/feature/MultiPoint.js';
+import Marker from './SITNA/feature/Marker.js';
+import MultiMarker from './SITNA/feature/MultiMarker.js';
+import Polyline from './SITNA/feature/Polyline.js';
+import MultiPolyline from './SITNA/feature/MultiPolyline.js';
+import Polygon from './SITNA/feature/Polygon.js';
+import MultiPolygon from './SITNA/feature/MultiPolygon.js';
+import Circle from './SITNA/feature/Circle.js';
+import Layer from './SITNA/layer/Layer.js';
+import Raster from './SITNA/layer/Raster.js';
+import Vector from './SITNA/layer/Vector.js';
+import './TC/tool/ExcelExport.js';
+import './TC/tool/Proxification.js';
+import Map from './TC/Map.js';
+import Cfg from './TC/Cfg.js';
+import wrap from './TC/wrap.js';
 import { JL } from 'jsnlog';
 // Importamos para precargar estilos y evitar FOUC
-import Button from './SITNA/ui/Button';
-import './SITNA/ui/Toggle';
-import './SITNA/ui/Tab';
-import filter from './SITNA/filter';
+import Button from './SITNA/ui/Button.js';
+import './SITNA/ui/Toggle.js';
+import './SITNA/ui/Tab.js';
+import filter from './SITNA/filter.js';
 
 TC.isDebug = true;
 
@@ -57,7 +57,7 @@ const feature = {
     Circle
 };
 
-const ui= {
+const ui = {
     Button: Button
 }
 
@@ -75,7 +75,7 @@ TC.wrap = wrap;
 globalThis.TC = globalThis.TC || TC;
 //window.JL = JL;
 
-TC.version = '4.6.0';
+TC.version = '4.6.1';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
