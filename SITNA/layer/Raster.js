@@ -5,7 +5,6 @@ import Cfg from '../../TC/Cfg.js';
 import Layer from '../../SITNA/layer/Layer.js';
 import Vector from './Vector.js';
 import { GMLFilter } from '../filter.js';
-import ol_filter from 'ol/format/filter/Filter.js';
 TC.layer = TC.layer || {};
 
 Consts.BLANK_IMAGE = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAQAIBRAA7';
@@ -768,21 +767,15 @@ class Raster extends Layer {
         }
         if (options.normalized) {
             result = result
-                .map(function (crs) {
-                    return Util.getCRSCode(crs);
-                }) // códigos numéricos
-                .filter(function (code) {
-                    return code !== null;
-                })
+                .map((crs) => Util.getCRSCode(crs)) // códigos numéricos
+                .filter((code) => code !== null)
                 .reduce(function (prev, cur) {
                     if (prev.indexOf(cur) < 0) {
                         prev.push(cur);
                     }
                     return prev;
                 }, []) // códigos numéricos sin duplicados
-                .map(function (code) {
-                    return 'EPSG:' + code;
-                }); // códigos normalizados
+                .map((code) => /^\d+$/.test(code) ? 'EPSG:' + code : code); // códigos normalizados
         }
         return result;
     }
@@ -1491,8 +1484,8 @@ class Raster extends Layer {
                 if (self.map) {
                     md.formatDescription = formatDescriptions[md.format] =
                         formatDescriptions[md.format] ||
-                        Util.getLocaleString(self.map.options.locale, Util.getSimpleMimeType(md.format)) ||
-                        Util.getLocaleString(self.map.options.locale, 'viewMetadata');
+                        Util.getLocaleString(self.map.getLocale(), Util.getSimpleMimeType(md.format)) ||
+                        Util.getLocaleString(self.map.getLocale(), 'viewMetadata');
                 }
                 else {
                     md.formatDescription = formatDescriptions[md.format];
@@ -1953,7 +1946,7 @@ class Raster extends Layer {
             request: 'DescribeLayer',
             service: "WMS",
             version: "1.1.1",            
-            outputFormat: "application/json"
+            outputFormat: Consts.mimeType.JSON,
         }, layerNames ? { Layers: layerNames } : {}));
         let urlPromises = describeLayerPromises[self.options.url];
         if (!urlPromises) {
@@ -1965,7 +1958,7 @@ class Raster extends Layer {
             }));
         }
         const response = await urlPromises.get(layerNames);
-        if (response.contentType.startsWith("application/json")) {
+        if (response.contentType.startsWith(Consts.mimeType.JSON)) {
             return full ? JSON.parse(response.responseText).layerDescriptions : JSON.parse(response.responseText).layerDescriptions[0];
         }
         else {
@@ -1974,7 +1967,14 @@ class Raster extends Layer {
             if (error) {
                 throw Error(error.textContent);
             } else {
-                return xmlDoc.querySelector("LayerDescription");
+                return Array.from(xmlDoc.querySelectorAll("LayerDescription"))
+                    .map((elm) => {
+                        const result = {};
+                        for (const attr of elm.attributes) {
+                            result[attr.nodeName] = attr.nodeValue;
+                        }
+                        return result;
+                    });
             }
         }
     }
@@ -2112,7 +2112,7 @@ class Raster extends Layer {
                                 }]
                             }                            
                         }],                        
-                        title: Util.getLocaleString(self.map.options.locale, 'simbologyNotAvailable')
+                        title: Util.getLocaleString(self.map.getLocale(), 'simbologyNotAvailable')
                     }]
                 }
             })];
