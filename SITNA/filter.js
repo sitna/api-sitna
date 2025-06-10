@@ -1,6 +1,6 @@
-﻿import { and, bbox, between, contains, disjoint, during, dwithin, equalTo, greaterThan, greaterThanOrEqualTo, intersects, isNull, lessThan, lessThanOrEqualTo, like, not, notEqualTo, or, within } from 'ol/format/filter';
-import ol_filter from 'ol/format/filter/Filter.js';
-import WFS from 'ol/format/WFS.js';
+﻿import { and, bbox, between, contains, disjoint, during, dwithin, equalTo, greaterThan, greaterThanOrEqualTo, intersects, isNull, lessThan, lessThanOrEqualTo, like, not, notEqualTo, or, within } from '../node_modules/ol/format/filter.js';
+import ol_filter from '../node_modules/ol/format/filter/Filter.js';
+import WFS from '../node_modules/ol/format/WFS.js';
 import Layer from './layer/Layer.js';
 
 //const filter = { and, bbox, between, contains, disjoint, during, dwithin, equalTo, greaterThan, greaterThanOrEqualTo, intersects, isNull, lessThan, lessThanOrEqualTo, like, not, notEqualTo, or, within }
