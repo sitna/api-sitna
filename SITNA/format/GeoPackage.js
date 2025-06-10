@@ -1,13 +1,13 @@
-﻿import BinaryFormat, { FieldNameError } from './BinaryFormat';
-import WKT from 'ol/format/WKT';
-import Consts from '../../TC/Consts';
-import Util from '../../TC/Util';
-import Point from '../feature/Point';
-import MultiPoint from '../feature/MultiPoint';
-import Polyline from '../feature/Polyline';
-import MultiPolyline from '../feature/MultiPolyline';
-import Polygon from '../feature/Polygon';
-import MultiPolygon from '../feature/MultiPolygon';
+﻿import BinaryFormat, { FieldNameError } from './BinaryFormat.js';
+import WKT from '../../node_modules/ol/format/WKT.js';
+import Consts from '../../TC/Consts.js';
+import Util from '../../TC/Util.js';
+import Point from '../feature/Point.js';
+import MultiPoint from '../feature/MultiPoint.js';
+import Polyline from '../feature/Polyline.js';
+import MultiPolyline from '../feature/MultiPolyline.js';
+import Polygon from '../feature/Polygon.js';
+import MultiPolygon from '../feature/MultiPolygon.js';
 
 let dataTypes;
 let gpDataTypes;
