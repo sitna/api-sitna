@@ -302,6 +302,8 @@
   "mapTitle": "Map title",
   "marker": "Marker",
   "maxRes": "Maximum resolution",
+  "3dViewNotIncluded": "3D view will not be included",
+  "3dViewIncluded": "3D view will be included",
   "measure": "Measure",
   "drawAndMeasure": "Draw & measure",
   "metadata": "Metadata",

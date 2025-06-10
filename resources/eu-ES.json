@@ -302,6 +302,8 @@
   "mapTitle": "Maparen izenburua",
   "marker": "Marka",
   "maxRes": "Bereizmen maximoa",
+  "3dViewNotIncluded": "3D bista ez da barne hartuko",
+  "3dViewIncluded": "3D bista barne hartuko da",
   "measure": "Neurtu",
   "drawAndMeasure": "Marraztu eta neurtu",
   "metadata": "Metadatuak",
