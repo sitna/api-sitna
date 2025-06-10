@@ -93,7 +93,7 @@ class Marker extends Point {
         super(coords, options);
 
         if (!this.wrap.isNative(coords)) {
-            const locale = this.layer?.map ? this.layer.map.options.locale : Cfg.locale;
+            const locale = this.layer?.map ? this.layer.map.getLocale() : Cfg.locale;
             this.title = this.options.title || TC.i18n[locale][Consts.MARKER];
             this.wrap.createMarker(coords, options);
         }
