@@ -1,6 +1,6 @@
-﻿import Component from './Component';
-import Consts from '../../TC/Consts';
-import Util from '../../TC/Util';
+﻿import Component from './Component.js';
+import Consts from '../../TC/Consts.js';
+import Util from '../../TC/Util.js';
 
 const elementName = "sitna-tab";
 

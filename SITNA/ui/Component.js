@@ -1,4 +1,4 @@
-﻿import TC from '../../TC';
+﻿import TC from '../../TC.js';
 
 const elementName = 'sitna-component';
 
