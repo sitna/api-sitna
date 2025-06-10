@@ -116,6 +116,7 @@
     <Content Include="css\img\thumb-orthophoto.jpg" />
     <Content Include="css\img\thumb-topo-pamplona.jpg" />
     <Content Include="css\ui\sitna-tab.css" />
+    <Content Include="css\ui\sitna-toast.css" />
     <Content Include="css\ui\sitna-toggle.css" />
     <Content Include="css\ui\sitna-button.css" />
     <Content Include="examples\cfg.DrawMeasureModifyOptions.snapping.html" />
@@ -152,6 +153,7 @@
     <Content Include="SITNA\format\GeoPackage.js" />
     <Content Include="SITNA\format\Shapefile.js" />
     <Content Include="SITNA\ui\Tab.js" />
+    <Content Include="SITNA\ui\Toast.js" />
     <Content Include="SITNA\ui\Toggle.js" />
     <Content Include="SITNA\ui\Button.js" />
     <Content Include="SITNA\ui\Component.js" />
@@ -200,6 +202,7 @@
     <Content Include="test\unit\browser\layer\Vector.js" />
     <Content Include="test\unit\browser\TC\Cfg.js" />
     <Content Include="test\unit\browser\TC\Consts.js" />
+    <Content Include="test\unit\browser\TC\Geometry.js" />
     <Content Include="webpack\cesium.webpack.config.debug.js" />
     <Content Include="webpack\cesium.webpack.config.js" />
     <Content Include="errors\rollbar.js" />
@@ -685,6 +688,7 @@
     <Content Include="resources\data\contornoEspana.json" />
     <Content Include="batch\jsdoc\tutorials\5-examples.md" />
     <Content Include="config\predefined-layers.json" />
+    <Content Include="batch\icons\SITNA.json" />
     <None Include="Properties\PublishProfiles\local.pubxml" />
     <Content Include="layout\pamplona\config.json" />
     <Content Include="layout\pamplona\resources\es-ES.json" />
