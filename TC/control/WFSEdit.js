@@ -438,7 +438,7 @@ class WFSEdit extends SWCacheClient {
             .on(Consts.event.LAYERERROR, function (e) {
                 const layer = e.layer;
                 if (layer.type === Consts.layerType.WFS && !layer.options.readOnly) {
-                    if (e.reason === Consts.WFSErrors.MAX_NUM_FEATURES) {
+                    if (e.message === Consts.WFSErrors.MAX_NUM_FEATURES) {
                         map.toast(self.getLocaleString('query.msgTooManyResults', { limit: e.data.limit }), { type: Consts.msgType.WARNING });
                     }
                     if (self.layer === layer || self.layer && self.layer.wfsLayer === layer) {
