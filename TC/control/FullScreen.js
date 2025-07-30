@@ -28,7 +28,7 @@ class FullScreen extends Control {
         if (document.fullscreenEnabled) {
 
             const onFullscreenChange = () => {
-                const isFullScreen = btn.classList.toggle(Consts.classes.ACTIVE, self.isFullScreen() || self.isElementFullScreen());
+                const isFullScreen = btn.classList.toggle(Consts.classes.ACTIVE, Util.detectMobile() ? self.isElementFullScreen() : self.isElementFullScreen());
                 const titleKey = isFullScreen ?
                     (self.isElementFullScreen() ? 'fscreen.tip.return' : 'fscreen.tip.keyboard') :
                     'fscreen.tip';
@@ -39,7 +39,7 @@ class FullScreen extends Control {
 
             btn.addEventListener('click', function () {
                 self.#byBtn = true;
-                if (self.isFullScreen()) {
+                if (Util.detectMobile() ? self.isElementFullScreen() : self.isFullScreen()) {
                     // Si se ha activado el modo pantalla desde F11, mostrará el error "Document not active"
                     document.exitFullscreen().catch((e) => {
                         if (!(e instanceof TypeError)) throw e;
@@ -96,7 +96,7 @@ class FullScreen extends Control {
             // GLS: 19/02/2019 en lugar de ocultar el botón, deshabilitamos el control para que no quede espacio de más entre los botones
             self.disable();
         }
-    
+
         self.renderPromise().then(function () {
             self.controller = new Controller(self.model, new Observer(self.div));
             self.updateModel();
