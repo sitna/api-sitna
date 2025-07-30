@@ -22,7 +22,7 @@ class Controller {
                 view[propName] = model[propName];
             }
             if (typeof model[propName] === 'function' || model[propName] instanceof Promise) {
-                this.view.addListener(model,propName, model[propName]);
+                this.view.addEventListener(model,propName);
             }
         })
         
@@ -39,6 +39,7 @@ class Controller {
         //check if the model need a new getter and setter
         Object.getOwnPropertyNames(self.view).forEach((property) => {
             const _prop = Object.getOwnPropertyDescriptor(self.model, property);
+            if (!_prop) throw `Model has not defined property ${property} for ${self.CLASS}`;
             //had not getter a setter, then I create once por the new property
             if (!_prop.get && !_prop.set) {
                 self.model["#" + property] = self.model[property];
