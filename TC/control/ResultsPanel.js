@@ -113,9 +113,9 @@ class ResultsPanel extends InfoDisplay {
         MIN_HEIGHT: 75,
         MAX_HEIGHT: 128,
 
-        MIN_WIDTH: 215,
-        MEDIUM_WIDTH: 310,
-        MAX_WIDTH: 445
+        //MIN_WIDTH: 215,
+        //MEDIUM_WIDTH: 310,
+        //MAX_WIDTH: 445
     };
     contentType = {
         TABLE: {
@@ -203,6 +203,7 @@ class ResultsPanel extends InfoDisplay {
     }
 
     hide(classElement) {
+        classElement = classElement ?? 'tc-ctl-rpanel-sidebar-body';
         this.#manageClassList(classElement, this.classes.SHOW_OUT, this.classes.SHOW_IN);
 
         const elm = this.div.querySelector('.' + classElement);
@@ -1086,17 +1087,10 @@ class ResultsPanel extends InfoDisplay {
                     const getChartSize = function () {
                         const panelStyle = getComputedStyle(self.getContainerElement());
                         const docWidth = document.documentElement.clientWidth / 100 * 40; // css panel contendor
-                        const r = {
-                            height: docWidth > 445 ? options.maxHeight || self.CHART_SIZE.MAX_HEIGHT : options.minHeight || self.CHART_SIZE.MIN_HEIGHT
+                        return {
+                            height: docWidth > 445 ? options.maxHeight || self.CHART_SIZE.MAX_HEIGHT : options.minHeight || self.CHART_SIZE.MIN_HEIGHT,
+                            width: parseFloat(panelStyle.width) * 0.95,
                         };
-                        // Si el panel ocupa el ancho del mapa dejamos el ancho del perfil que ocupe todo, en cualquier otro caso tenemos tres anchos predefinidos.
-                        if (panelStyle.width === getComputedStyle(self.map.div).width) {
-                            r.width = parseFloat(panelStyle.width) * 0.95;
-                        }
-                        else {
-                            r.width = docWidth > 445 ? options.maxWidth || self.CHART_SIZE.MAX_WIDTH : docWidth > 310 ? options.mediumWidth || self.CHART_SIZE.MEDIUM_WIDTH : options.minWidth || self.CHART_SIZE.MIN_WIDTH;
-                        }
-                        return r;
                     };
                     const gradIds = ['grad' + TC.getUID()];
 
