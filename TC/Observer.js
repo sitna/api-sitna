@@ -23,6 +23,80 @@ class Observer {
         this.#addElement(object);
         
     }
+    
+    #readAttributes(attribute, element) {
+        const observer = this;
+        switch (attribute.name.toLowerCase()) {
+
+            case "tc-vc-model":
+                this.#addListener(attribute.value, {
+                    node: element,
+                    get: function () {
+                        return element.value;
+                    },
+                    set: function (value) {
+                        element.value = value;
+                    }
+                });
+
+                break;
+
+            //Modelado de eventos
+            case "tc-vc-click":                
+                element.addEventListener("click", this.getEventListener.bind(element, attribute.value, this));
+                delete element[attribute.name.toLowerCase()];
+                break;
+
+            case "tc-vc-change":
+                element.addEventListener("change", this.getEventListener.bind(element, attribute.value, this));
+                delete element[attribute.name.toLowerCase()];
+                break;
+            //modelado de propiedades
+            case "tc-vc-value":                
+                this.#addProperty(attribute.value, {
+                    node: element,
+                    get: function () {
+                        return element.value;
+                    },
+                    set: function (value) {
+                        element.value = value;
+                    }
+                });
+                element.attributes.removeNamedItem(attribute.name.toLowerCase())
+                break;
+            case "tc-vc-disabled":
+                var conditions = {};
+                var reduceHandler = attribute.value.includes("&") ? (vi, va) => vi & va : (vi, va) => vi | va;
+                var initialValue = attribute.value.includes("&");
+                attribute.value.split(/\||\&/gm).forEach((condition) => {
+                    condition = condition.trim();
+                    observer.#addProperty(condition.startsWith("!") ? condition.substr(1) : condition, {
+                        node: element,
+                        get: function () {
+                            return !!element.disabled;
+                        },
+                        set: function (value) {
+                            conditions[condition] = (value == (condition.startsWith("!") ? false : true));
+                            element.disabled = !!Object.values(conditions).reduce(reduceHandler, initialValue)
+                        }
+                    });
+                })                
+                element.attributes.removeNamedItem(attribute.name.toLowerCase())
+                break;
+            case "tc-vc-visible":
+                this.#addProperty(attribute.value.startsWith("!") ? attribute.value.substr(1) : attribute.value, {
+                    node: element,
+                    get: function () {
+                        return element.style.display !== "none";
+                    },
+                    set: function (value) {
+                        element.style.display = (attribute.value.startsWith("!") ? !value : value) ? "" : "none";
+                    }
+                });
+                element.attributes.removeNamedItem(attribute.name.toLowerCase())
+                break;
+        }
+    }
     #addElement(_element) {
         if (!_element) return;
         // Get all elements within the root element
@@ -40,36 +114,16 @@ class Observer {
                         node: element,
                         attribute: attr.name,
                         get: function () {
-                            return element.attributes[attr.name].value;
+                            return element[attr.name] || element.attributes[attr.name].value;
                         },
                         set: function (value) {
-                            element.setAttribute(attr.name, value);
+                            if (element[attr.name]) element[attr.name] = value;
+                            else element.setAttribute(attr.name, value);
                         }
                     });
                 }
                 if (attr.name.toLowerCase().startsWith("tc-vc-")) {
-                    switch (attr.name.toLowerCase()) {
-                        case "tc-vc-model":
-                            this.#addListener(attr.value, {
-                                node: element,
-                                get: function () {
-                                    return element.value;
-                                },
-                                set: function (value) {
-                                    element.value = value;
-                                }
-                            });
-
-                            break;
-
-                            //TODO modelar eventos
-                        //case "tc-vc-click":
-                        //    element.addEventListener("click", (evt) => { instance.handler.apply(instance, [attr.value, evt]) })
-                        //    break;
-                        //case "tc-vc-change":
-                        //    element.addEventListener("change", (evt) => { instance.handler.apply(instance, [attr.value, evt]) })
-                        //    break;
-                    }
+                    this.#readAttributes(attr, element)
                 }
             });
             //busca en el contenido
@@ -107,26 +161,68 @@ class Observer {
             this.#listener.set(key, [properties]);
         }
         if (!Object.prototype.hasOwnProperty.call(this, key)) {
+            if (typeof (key[properties]) !== 'function') {
+                Object.defineProperty(this, key, {
+                    get: function () {
+                        const prop = this.#listener.get(key)[0];
+                        return prop.get(prop.node);
+                    },
+                    set: function (value) {
+                        this.#listener.get(key).forEach((prop, i) => {
+                            if (prop.node.nodeType===1 && prop.node[key] !== undefined)
+                                prop.node[key] = value;
+                            else
+                                prop.set(value, prop.node);
+                        })
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+            else
+                this[properties] = key[properties];
+        }        
+    }
+    #addProperty(key, properties) {
+        if (this.#listener.has(key)) {
+            if (!this.#listener.get(key).find((prop) => properties.node === prop.node))
+                this.#listener.set(key, [...this.#listener.get(key), properties]);
+            //console.log(key + ": " + this.#listener.get(key));
+        }
+        else {
+            this.#listener.set(key, [properties]);
+        }
+        if (!Object.prototype.hasOwnProperty.call(this, key)) {
             Object.defineProperty(this, key, {
-                get: function() {
-                    const prop = this.#listener.get(key)[0];
+                get: function () {
+                    const prop = this.#listener.get(key)[0];                    
                     return prop.get(prop.node);
                 },
-                set: function(value) {
-                    this.#listener.get(key).forEach((prop,i) => {
-                        prop.set(value, prop.node);
+                set: function (value) {
+                    this.#listener.get(key).forEach((prop, i) => {
+                        if (prop.node[key] !== undefined)
+                            prop.node[key] = value;
+                        else
+                            prop.set(value, prop.node);
                     })
                 },
                 enumerable: true,
                 configurable: true
             });
-        }
+            
+        }    
     }
     add(node) {
         this.#addElement(node);
     }
     addListener(key, properties) {
         this.#addListener(key, properties);
+    }
+    getEventListener(key,view,event) { 
+        view.#listener.get(key).apply(this, [event]);
+    }
+    addEventListener(model,key) {
+        this.#listener.set(key, model[key]);
     }
     
 }
