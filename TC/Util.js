@@ -1324,7 +1324,7 @@ var Util = {
 
         const minDistance = options.minDistance || 30;
         const maxCrossDistance = options.maxCrossDistance || 30;
-        const maxAllowedTime = options.maxAllowedTime || 1000;
+        const maxAllowedTime = options.maxAllowedTime || 200;
         var touchStartCoords = { 'x': -1, 'y': -1 }, // X and Y coordinates on mousedown or touchstart events.
             touchEndCoords = { 'x': -1, 'y': -1 },// X and Y coordinates on mouseup or touchend events.
             startTime = 0,// Time on swipeStart
@@ -1486,6 +1486,7 @@ var Util = {
     },
 
     downloadBlob: function (filename, blob) {
+        //var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
         var link = document.createElement("a");
         if (link.download !== undefined) {
             var url = URL.createObjectURL(blob);
@@ -2208,6 +2209,7 @@ var Util = {
     },
 
     toAbsolutePath: function (href) {
+        //var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
         var link = document.createElement("a");
         link.href = href;
         return link.href;
@@ -2522,10 +2524,47 @@ var Util = {
             serifWidth !== getWidth(font + ',serif');
     },
     htmlToText: function (html) {
+        //var node = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
         var node = document.createElement("div");
         node.innerHTML = html
         return node.textContent;
-    },    
+    }, 
+    iso8601ToMilliseconds: function (period) {
+        const regex = /P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?/;
+        const matches = period.match(regex);
+
+        if (!matches) {
+            throw new Error("Formato de periodo ISO 8601 no válido");
+        }
+
+        const years = parseInt(matches[1] || 0, 10);
+        const months = parseInt(matches[2] || 0, 10);
+        const weeks = parseInt(matches[3] || 0, 10);
+        const days = parseInt(matches[4] || 0, 10);
+        const hours = parseInt(matches[5] || 0, 10);
+        const minutes = parseInt(matches[6] || 0, 10);
+        const seconds = parseInt(matches[7] || 0, 10);
+
+        const milliseconds =
+            years * 365 * 24 * 60 * 60 * 1000 +
+            months * 30 * 24 * 60 * 60 * 1000 +
+            weeks * 7 * 24 * 60 * 60 * 1000 +
+            days * 24 * 60 * 60 * 1000 +
+            hours * 60 * 60 * 1000 +
+            minutes * 60 * 1000 +
+            seconds * 1000;
+
+        return milliseconds;
+    },
+    isInViewport: function (element) {
+        const rect = element.getBoundingClientRect();
+        return (
+            rect.top >= 0 &&
+            rect.left >= 0 &&
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
+    }
 };
 
 const _queryHeaderConstructor = function (capabilities) {
