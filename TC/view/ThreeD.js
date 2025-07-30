@@ -1728,6 +1728,9 @@ const ThreeD = (function (namespace, signature, factory) {
                         format: layer.format || layer.options.format
                     }
                 };
+                if (layer.time) {
+                    options.parameters.TIME = layer.wrap.getParams().TIME;
+                }
 
                 var bindEXBBox = function () {
                     var bbox = [];
@@ -2836,6 +2839,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 options.callback();
             }
             
+            
         };
 
         try {
@@ -2863,7 +2867,7 @@ const ThreeD = (function (namespace, signature, factory) {
                             // capas de trabajo
                             self.map.workLayers.filter(function (elem) {
                                 return elem.type === Consts.layerType.WMTS || elem.type === Consts.layerType.WMS;
-                            }).reverse().forEach(function (layer) {
+                            }).forEach(function (layer) {
                                 self.view3D.addLayer.call(self, layer);
                             });
 
@@ -3206,7 +3210,10 @@ const ThreeD = (function (namespace, signature, factory) {
                                 }
                             }
 
-                            self.view3D.workLayers.splice(e.newIndex, 0, self.view3D.workLayers.splice(e.oldIndex, 1)[0]);
+                            //self.view3D.workLayers.splice(e.newIndex, 0, self.view3D.workLayers.splice(e.oldIndex, 1)[0]);
+                            const currentPos = self.view3D.workLayers.findIndex((wl) => wl.imageryProvider.tcLayer === e.layer);
+                            const newPos = currentPos + e.oldIndex - e.newIndex;
+                            self.view3D.workLayers.splice(newPos, 0, self.view3D.workLayers[currentPos])
                             break;
                         }
                     }
@@ -4620,8 +4627,7 @@ const ThreeD = (function (namespace, signature, factory) {
                         } else {
                             //var convertedLayer = rasterConverter.convert(layer, self.view3D.crs);
                             rasterConverter.convert(layer, self.view3D.crs).then(function (convertedLayer) {
-                                if (convertedLayer) {
-
+                                if (convertedLayer) {                         
                                     if (convertedLayer.enablePickFeatures !== undefined) {
                                         convertedLayer.enablePickFeatures = false;
                                         convertedLayer.tcLayer = layer;
