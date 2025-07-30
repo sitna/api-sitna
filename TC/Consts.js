@@ -180,7 +180,8 @@ Consts.classes = {
     PANEL_CONTENT: 'tc-panel-content',
     PANEL_TAB: 'tc-panel-tab',
     FULL_SCREEN: 'tc-fullscreen',
-    NOT_AVAILABLE: 'tc-legend-not-available'
+    NOT_AVAILABLE: 'tc-legend-not-available',
+    TIME_DIMENSION:'tc-time-dimension'
 };
 Consts.msgType = {
     INFO: 'info',
@@ -201,12 +202,12 @@ Consts.event = {
     MAPREADY: 'mapready.tc',
     MAPCHANGE: 'mapchange.tc',
     BEFORELAYERADD: 'beforelayeradd.tc',
-    LAYERADD: 'layeradd.tc',
-    LAYERREMOVE: 'layerremove.tc',
+    LAYERADD: 'sitna:layeradd',
+    LAYERREMOVE: 'sitna:layerremove',
     LAYERORDER: 'layerorder.tc',
     BEFORELAYERUPDATE: 'beforelayerupdate.tc',
-    LAYERUPDATE: 'layerupdate.tc',
-    LAYERERROR: 'layererror.tc',
+    LAYERUPDATE: 'sitna:layerupdate',
+    LAYERERROR: 'sitna:layererror',
     BEFOREBASELAYERCHANGE: 'beforebaselayerchange.tc',
     BASELAYERCHANGE: 'baselayerchange.tc',
     BEFOREUPDATE: 'beforeupdate.tc',
@@ -267,7 +268,8 @@ Consts.event = {
     BEFOREAPPLYQUERY: 'beforeapplyquery.tc',
     RECENTFILEADD: 'recentfileadd.tc',
     CHANGELANGUAGE: 'changelanguage.tc',
-    BEFORECHANGELANGUAGE: 'beforechangelanguage.tc'
+    BEFORECHANGELANGUAGE: 'beforechangelanguage.tc',
+    TIMECHANGE: 'timechange.tc'
 };
 
 Consts.layer = {
