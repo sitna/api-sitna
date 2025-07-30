@@ -391,6 +391,7 @@ class DrawMeasureModify extends Measure {
                 self.getElevationControl().then(function (ctl) {
                     if (ctl.resultsPanel) {
                         ctl.resultsPanel.currentFeature = e.feature;
+                        if (self.elevationProfileActive) ctl.displayElevationProfile(e.feature);
                     }
                 });
                 self.getModifyControl().then((ctl) => {
