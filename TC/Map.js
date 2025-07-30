@@ -3,10 +3,12 @@ import localforage from '../node_modules/localforage/dist/localforage.min.js';
 import TC from '../TC.js';
 import Consts from './Consts.js';
 import Cfg from './Cfg.js';
+import { Defaults } from './Cfg.js';
 import Util from './Util.js';
 import EventTarget from './EventTarget.js';
 import i18n from './i18n.js';
 import Layer from '../SITNA/layer/Layer.js';
+import LayerEvent from '../SITNA/layer/LayerEvent.js';
 import Raster from '../SITNA/layer/Raster.js';
 import Vector from '../SITNA/layer/Vector.js';
 import wrap from './ol/ol.js';
@@ -470,7 +472,7 @@ const _checkMaxFeatures = async function (numMaxfeatures, urlData, data) {
         if (response instanceof XMLDocument) {
             const exception = response.querySelector("ExceptionReport Exception");
             if (exception) {
-                return{
+                return {
                     errors: [{
                         key: Consts.WFSErrors.INDETERMINATE,
                         params: {
@@ -497,7 +499,7 @@ const _checkMaxFeatures = async function (numMaxfeatures, urlData, data) {
         }
         return featFounds;
     }
-    catch(e) {
+    catch (e) {
         return {
             errors: [{
                 key: Consts.WFSErrors.INDETERMINATE,
@@ -714,7 +716,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
     #layerBuffer;
     #extraStates;
-    
+
     constructor(div, options = {}) {
         super();
         const self = this;
@@ -724,7 +726,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
         let loadingLayerCount = 0;
         this.div = Util.getDiv(div);
-        
+
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
          * @event MAPLOAD
@@ -942,7 +944,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         };
 
         var init = async function () {
-            
+
             self.state = self.options.stateful ? await self.checkLocation() : undefined;
 
             if (self.options.layout) {
@@ -974,7 +976,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     (e.layer === self.baseLayer ||
                         self.baseLayer && e.layer.getFallbackLayer?.()?.id === self.baseLayer.id)) {
                     if (typeof self.state !== "undefined") {
-                        if (self.state.crs) {
+                        if (self.state.crs && self.crs !== self.state.crs) {
                             self.loaded(function () {
                                 self.setProjection({
                                     crs: self.state.crs,
@@ -1008,7 +1010,13 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             }
             else {
                 self.crs = self.options.crs;
-                self.initialExtent = self.options.initialExtent;
+                if (self.crs !== Defaults.crs && Defaults.initialExtent.every((val, i) => val === self.options.initialExtent[i])) {
+                    // No se ha especificado extent adecuado al CRS, lo reprojectamos al CRS del mapa.
+                    self.initialExtent = Util.reprojectExtent(Defaults.initialExtent, Defaults.crs, self.crs);
+                }
+                else {
+                    self.initialExtent = self.options.initialExtent;
+                }
                 self.maxExtent = self.options.maxExtent;
             }
 
@@ -1058,8 +1066,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             };
 
             self.on(Consts.event.BEFORELAYERUPDATE, _triggerLayersBeforeUpdateEvent);
-            self.on(Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
-            self.on(Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
+            self.addEventListener(Consts.event.LAYERUPDATE, _triggerLayersUpdateEvent);
+            self.addEventListener(Consts.event.LAYERERROR, _triggerLayersUpdateEvent);
 
             for (let lyrCfg of self.options.baseLayers) {
                 if (typeof lyrCfg === 'string') {
@@ -1119,6 +1127,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         const stateLayer = ((self.state && self.state.layers) || []).find((stateLayer) => stateLayer.u === lyrCfg.url && stateLayer.i === lyrCfg.id)
                         if (stateLayer && stateLayer.n && stateLayer.a && stateLayer.n !== stateLayer.a)
                             layer.setLayerNames(stateLayer.n);
+                        const time = self.state?.layers.findByProperty("i", layer.id)?.m;
+                        if (time) {
+                            layer.setTime.apply(layer, time.split("/").map((t) => new Date(Number.parseFloat(t))));
+                        }
                     }.bind())
                         .catch(function (error) {
                             // no hacemos nada porque al llegar a este punto ya hemos gestionado el error en la instrucción crsLayerError(self, lyr); en la línea 4888														
@@ -1323,7 +1335,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                                                 titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
                                             const content = self.div.querySelectorAll("[data-i18n-content]");
                                             if (content.length)
-                                                content.forEach((node) => node.innerHTML= Util.getLocaleString(locale, node.dataset.i18nContent));
+                                                content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
                                             resolve();
                                         });
                                     }
@@ -1559,13 +1571,21 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         v: layer.getVisibility(),
                         h: layer.options.hideTitle,
                         ur: layer.unremovable,
-                        f: layer.filter && (layer.filter instanceof filterNs.Filter ? layer.filter.getText() : (layer.filter instanceof GMLFilter ? layer.filter.getFilterText(layer) :layer.filter)),
+                        f: layer.filter && (layer.filter instanceof filterNs.Filter ? layer.filter.getText() : (layer.filter instanceof GMLFilter ? layer.filter.getFilterText(layer) : layer.filter)),
                         t: layer.title,
                         i: layer.id
                     };
                     //24/11/2021 URI: Añadir el hidetree si no tiene el valor por defecto que es true
                     if (layer.hideTree === false) {
                         entry.x = 0;
+                    }
+                    if (layer.time) {
+                        const time = layer.getTime();
+                        if (time) {
+                            //URI "m" de moment
+                            entry["m"] = time;
+                        }
+
                     }
                     const availableNames = Array.isArray(layer.availableNames) ? layer.availableNames.join(',') : layer.availableNames;
                     if (entry.n !== availableNames)
@@ -1795,7 +1815,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         layer.wrap.setMatrixSet(compatibleMatrixSet);
                     }
                     else {
-                        layer.mustReproject = (this?.state?.base === layer.id)?false:true;
+                        layer.mustReproject = true;
                     }
                 }
             }
@@ -1828,7 +1848,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     else {
                         throw crsLayerError(this, layer);
                     }
-                    
+
                 } else {
                     throw crsLayerError(this, layer);
                 }
@@ -1969,7 +1989,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 const previousLayers = layerIndex < 0 ? wrappedLayers : wrappedLayers.slice(0, layerIndex);
                 self.wrap.insertLayer(l.wrap.layer, { previousLayers });
             }
-            self.trigger(Consts.event.LAYERADD, { layer: l });
+            self.dispatchEvent(new LayerEvent(Consts.event.LAYERADD, { layer: l }));
             self.#layerBuffer.checkMapLoad();
             if (Util.isFunction(callback)) {
                 callback(l);
@@ -2060,7 +2080,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         const olLayer = await layer.wrap.getLayer();
         self.wrap.removeLayer(olLayer);
         self.#layerBuffer.remove(layer.id);
-        self.trigger(Consts.event.LAYERREMOVE, { layer: layer });
+        self.dispatchEvent(new LayerEvent(Consts.event.LAYERREMOVE, { layer }));
         self.#layerBuffer.checkMapLoad();
         layer.map = null;
         return layer;
@@ -2168,33 +2188,38 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         }
         if (!found) {
             TC.error('Base layer is not available');
+            return result;
         }
-        else {
-            if (!layer.isCompatible(self.getCRS())) {
-                let fallbackLayer = layer.fallbackLayer;
-                if (typeof fallbackLayer === 'string') {
-                    fallbackLayer = self.getAvailableBaseLayer(fallbackLayer);
-                    if (fallbackLayer) {
-                        fallbackLayer = new Raster(fallbackLayer);
-                        await fallbackLayer.getCapabilitiesPromise();
-                    }
-                }
-                if (!fallbackLayer?.isCompatible(self.getCRS())) {
-                    TC.error('Base layer must be reprojected');
-                    return result;
-                }
-            }
-            self.trigger(Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer });
 
-            result = layer;
-            await self.wrap.getMap();
-            const olLayer = await layer.wrap.getLayer();
-            await self.wrap.setBaseLayer(olLayer);
-            self.baseLayer = layer;
-            self.trigger(Consts.event.BASELAYERCHANGE, { layer: layer });
-            if (Util.isFunction(callback)) {
-                callback();
+        if (layer.type === Consts.layerType.WMS ||
+            layer.type === Consts.layerType.WMTS && !Util.CRSCodesEqual(layer.getProjection(), self.crs)) {
+            layer.setProjection({ crs: self.crs });
+        }
+
+        if (!layer.isCompatible(self.getCRS())) {
+            let fallbackLayer = layer.fallbackLayer;
+            if (typeof fallbackLayer === 'string') {
+                fallbackLayer = self.getAvailableBaseLayer(fallbackLayer);
+                if (fallbackLayer) {
+                    fallbackLayer = new Raster(fallbackLayer);
+                    await fallbackLayer.getCapabilitiesPromise();
+                }
             }
+            if (!fallbackLayer?.isCompatible(self.getCRS())) {
+                TC.error('Base layer must be reprojected');
+                return result;
+            }
+        }
+        self.trigger(Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer });
+
+        result = layer;
+        await self.wrap.getMap();
+        const olLayer = await layer.wrap.getLayer();
+        await self.wrap.setBaseLayer(olLayer);
+        self.baseLayer = layer;
+        self.trigger(Consts.event.BASELAYERCHANGE, { layer: layer });
+        if (Util.isFunction(callback)) {
+            callback();
         }
         return result;
     }
@@ -2478,14 +2503,14 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 const code = 'EPSG:' + projData.code;
                 TC.loadProjDef({
                     crs: code,
-                    def: projData.proj4 || projData.wkt,
+                    def: projData.wkt || projData.proj4,
                     name: projData.name,
                     silent: true,
                 });
                 return {
                     code: code,
                     name: projData.name,
-                    def: projData.proj4 ||projData.wkt,
+                    def: projData.wkt || projData.proj4,
                     unit: projData.unit
                 };
             });
@@ -3182,7 +3207,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 if (e.targetLayers) {
                     for (const layer of e.targetLayers) {
                         layer.state = Layer.state.IDLE;
-                        this.trigger(Consts.event.LAYERUPDATE, { layer });
+                        this.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, { layer }));
                         layerIds.delete(layer.id);
                         if (layerIds.size === 0) {
                             this.off(Consts.event.FEATURESIMPORT, onFeaturesImport);
@@ -3547,38 +3572,38 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     setLanguage(locale) {
         const self = this;
         if (i18n.currentLocaleKey != locale) {
-            self.trigger(Consts.event.BEFORECHANGELANGUAGE, { lang: locale });    
+            self.trigger(Consts.event.BEFORECHANGELANGUAGE, { lang: locale });
             //self.wait(new Promise((resolve) => { setTimeout(resolve, 1) }));
             const endPromise = new Promise(async (resolve, reject) => {
-                try {                    
+                try {
                     if (!i18n[locale]) {
                         //cargar los recursos del nuevo idioma
                         await TC.i18n.loadResources(true, TC.apiLocation + 'resources/', locale);
                         await TC.i18n.loadResources(true, self.layout.i18n, locale);
                     }
                     else {
-                        await TC.i18n.loadResources(false, null, locale);                        
+                        await TC.i18n.loadResources(false, null, locale);
                     }
                     await (() => { return new Promise((resolve) => { setTimeout(resolve, 100) }) })();
                     self.#locale = i18n.currentLocaleKey = locale;
                     await Promise.all(self.controls.filter((c) => c.updateLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
                         return control.updateLanguage?.apply(control);
                     }));
-                    
+
                     const titles = self.div.querySelectorAll("[data-i18n-title]");
                     if (titles.length)
                         titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
                     const content = self.div.querySelectorAll("[data-i18n-content]");
                     if (content.length)
                         content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
-                    self.trigger(Consts.event.CHANGELANGUAGE, { lang: locale });                    
+                    self.trigger(Consts.event.CHANGELANGUAGE, { lang: locale });
                     resolve();
                 }
                 catch (err) {
                     reject(err);
-                }                
-                
-            });             
+                }
+
+            });
             self.wait(endPromise);
             return endPromise
         }
@@ -3667,15 +3692,15 @@ const mergeOptions = function () {
 
 var crsLayerError = function (map, layer) {
     var errorMessage = 'Layer "' + layer.title + '" ("' + layer.names + '"): ';
-    var reason;
+    var message;
     if (layer.isValidFromNames()) {
-        reason = 'layerSrsNotCompatible';
+        message = 'layerSrsNotCompatible';
     } else {
-        reason = 'layerNameNotValid';
+        message = 'layerNameNotValid';
     }
-    errorMessage += Util.getLocaleString(map.getLocale(), reason);
+    errorMessage += Util.getLocaleString(map.getLocale(), message);
     TC.error(errorMessage);
-    map.trigger(Consts.event.LAYERERROR, { layer: layer, reason: reason });
+    map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer, message }));
 
     const error = Error(errorMessage);
     error.layerId = layer.id;
