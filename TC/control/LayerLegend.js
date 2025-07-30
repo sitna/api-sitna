@@ -621,11 +621,11 @@ class LayerLegend extends WebComponentControl {
     async getLegend() {
         const self = this;
         if (!self.#layer || !self.#layer.map || !(self.#layer instanceof SITNA.layer.Raster)) return;
-        if (!self.#layer.availableNames.some((layername) => self.#layer.isVisibleByScale(layername)) && self.#on3DMode) {
-            self.innerHTML = "";
-            return
-        }
         self.innerHTML = "";
+        if (!self.containerControl.IsVisible() || (!self.#layer.availableNames.some((layername) => self.#layer.isVisibleByScale(layername)) && !self.#on3DMode)) {
+            
+            return;
+        }        
         (self.#layer?.map || self.#map).magnifier.hideMagnifier();
         self.classList.add(loadingClassName);
         if (self.#layer.getVisibility() || self.#on3DMode) {
@@ -687,7 +687,7 @@ class LayerLegend extends WebComponentControl {
             console.info(DescribeLayerExc);
         }
         
-        self.#on3DMode = map.on3DView;
+        self.#on3DMode = !!map.on3DView;
         self.#map = map;
         if (!self.#layer)
             self.#layer = layer;
@@ -706,6 +706,16 @@ class LayerLegend extends WebComponentControl {
             if (event.layer.getVisibility() || self.#on3DMode)
                 self.getLegend();
         }
+
+        self.containerControl.inBoxChange((value) => {
+            if (value) setTimeout(() => {
+                self.getLegend();
+            }, 300);
+        })
+
+        //self.containerControl.inBoxPromise.promise.then((value) => {
+        //    if (value) self.getLegend();
+        //})
         
         self.unBindZoomEvent = () => {
             map.off(Consts.event.ZOOM, _onZoomEvent);
