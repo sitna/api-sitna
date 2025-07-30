@@ -136,6 +136,7 @@ import MultiPolygon_s from '../../SITNA/feature/MultiPolygon.js';
 import Circle from '../../SITNA/feature/Circle.js';
 import Layer_s from '../../SITNA/layer/Layer.js';
 import Raster from '../../SITNA/layer/Raster.js';
+import LayerEvent from '../../SITNA/layer/LayerEvent.js';
 import Geometry from '../Geometry.js';
 import FeatureTypeParser from '../tool/FeatureTypeParser.js';
 import { GMLFilter } from '../../SITNA/filter.js';
@@ -556,14 +557,13 @@ ol.format.GML2CRS84 = GML2CRS84;
 //ol.format.GML3.prototype.SEGMENTS_PARSERS[gml32Namespace] = ol.format.GML3.prototype.SEGMENTS_PARSERS[gmlNamespace];
 
 ol.proj.addEquivalentProjections(ol.proj.EPSG4326.PROJECTIONS);
-
 ol.proj.proj4.register(proj4);
 // OpenLayers usa para las proyecciones geográficas un valor ol.proj.METERS_PER_UNIT.degrees, calculado con una esfera, salvo
 // EPSG:4326, en la que usa ol.proj.EPSG4326.METERS_PER_UNIT, calculado con el geoide. Esto hace que las proyecciones en EPSG:4258 salgan desplazadas,
 // pese a que para todos los efectos son iguales a las EPSG:4326. Para evitar eso, introducimos en las 4258 el valor ol.proj.EPSG4326.METERS_PER_UNIT.
-//ol.proj.get('EPSG:4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
-//ol.proj.get('urn:ogc:def:crs:EPSG::4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
-//ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
+ol.proj.get('EPSG:4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
+ol.proj.get('urn:ogc:def:crs:EPSG::4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
+ol.proj.get('http://www.opengis.net/gml/srs/epsg.xml#4258').metersPerUnit_ = ol.proj.EPSG4326.METERS_PER_UNIT;
 
 // Reescribimos la obtención de proyección para que soporte códigos tipo EPSG:X, urn:ogc:def:crs:EPSG::X y http://www.opengis.net/gml/srs/epsg.xml#X
 //ol.proj.oldGet = ol.proj.get;
@@ -930,7 +930,7 @@ const getResolutionOptions = function (mapWrap, layer, options) {
         layerForResolutions = mapWrap.parent.getBaseLayer();
     }
 
-    const res = layerForResolutions.getResolutions ? layerForResolutions.getResolutions() : [];
+    const res = options?.resolutions ?? (layerForResolutions.getResolutions ? layerForResolutions.getResolutions() : []);
     var maxRes;
     var minRes;
 
@@ -1002,17 +1002,24 @@ TC.wrap.Map.prototype.setMap = function () {
     var addEquivalentProjections = function () {
         // Añadimos proyecciones equivalentes y transformaciones necesarias.
         var crsCode = self.parent.crs.substr(self.parent.crs.lastIndexOf(':') + 1);
+        const epsgProj = ol.proj.get('EPSG:' + crsCode);
 
         var projOptions = {
             units: proj4Obj.oProj.units
         };
 
+        if (epsgProj) {
+            projOptions.units = epsgProj.getUnits();
+            projOptions.metersPerUnit = epsgProj.getMetersPerUnit();
+            projOptions.axisOrientation = epsgProj.getAxisOrientation();
+        }
+
         var equivalentProjections = [];
         if (crsCode !== '4326') { // Este código ya está metido, no lo machacamos
-            projOptions.code = 'EPSG:' + crsCode;
-            equivalentProjections.push(new ol.proj.Projection(projOptions));
-            projOptions.code = 'urn:ogc:def:crs:EPSG::' + crsCode;
-            equivalentProjections.push(new ol.proj.Projection(projOptions));
+            const epsgProjOptions = Object.assign({}, projOptions, { code: 'EPSG:' + crsCode });
+            equivalentProjections.push(new ol.proj.Projection(epsgProjOptions));
+            const urnProjOptions = Object.assign({}, projOptions, { code: 'urn:ogc:def:crs:EPSG::' + crsCode });
+            equivalentProjections.push(new ol.proj.Projection(urnProjOptions));
 
             ol.proj.addEquivalentProjections(equivalentProjections);
         }
@@ -1023,14 +1030,7 @@ TC.wrap.Map.prototype.setMap = function () {
 
     addEquivalentProjections();
 
-    var projOptions = {
-        code: self.parent.crs,
-        units: proj4Obj.oProj.units
-    };
-    if (self.parent.crs === 'EPSG:4326') {
-        projOptions.axisOrientation = 'neu';
-    }
-    var projection = new ol.proj.Projection(projOptions);
+    var projection = new ol.proj.get(self.parent.crs);
 
     var interactions = ol.interaction.defaults();
 
@@ -1180,7 +1180,6 @@ TC.wrap.Map.prototype.setMap = function () {
     const limitZoomLevels = function (layer, options) {
         if (layer) {
             var pms = getResolutionOptions(self, layer, options);
-
             var view = new ol.View(pms);
             self.map.setView(view);
             self.map.render();
@@ -1190,13 +1189,14 @@ TC.wrap.Map.prototype.setMap = function () {
     self.parent.on(Consts.event.BEFOREBASELAYERCHANGE, function (evt) {
         // Solo se limitan las resoluciones cuando estamos en un CRS por defecto, donde no se repixelan teselas
         if (self.parent.crs === self.parent.options.crs && !self.parent.on3DView && evt.newLayer.type !== Consts.layerType.VECTOR) {
-            const oldResolutions = evt.oldLayer.getResolutions();
+            const oldResolutions = evt.oldLayer.getResolutions() ?? evt.oldLayer.map.getResolutions();
             let modelLayer = evt.newLayer;
             const limitZoomOptions = {};
             if (!evt.newLayer.getResolutions() && oldResolutions) {
                 // Si la capa nueva no tiene resoluciones y la vieja sí, mantenemos las resoluciones anteriores.
                 // Esto evita que OpenLayers se invente los niveles de zoom y las resoluciones para la capa dinámica.
                 modelLayer = evt.oldLayer;
+                limitZoomOptions.resolutions = oldResolutions;
                 // Pero mantenemos los límites de resolución de la nueva capa.
                 limitZoomOptions.minResolution = evt.newLayer.minResolution;
                 limitZoomOptions.maxResolution = evt.newLayer.maxResolution;
@@ -1356,6 +1356,26 @@ TC.wrap.Map.prototype.setProjection = function (options = {}) {
         }
     }
 
+    // Rehacemos las resoluciones máximas y mínimas para adaptarse a la nueva unidad
+    self.parent.workLayers.forEach(l => {
+        if (l.type === Consts.layerType.WMS) {
+            const { minResolution, maxResolution } = l.wrap.getResolutionBounds({
+                layerNames: l.wrap.layer.getSource().getParams().LAYERS,
+                crs: options.crs,
+            });
+            if (minResolution) {
+                l.wrap.layer.setMinResolution(minResolution);
+            }
+            if (maxResolution) {
+                l.wrap.layer.setMaxResolution(maxResolution);
+            }
+            const oldExtent = l.getExtent({ crs: options.crs });
+            if (oldExtent) {
+                l.wrap.layer.setExtent(l.getExtent());
+            }
+        }
+    });
+
     // Reescribimos el extent de las capas para que sigan siendo visibles
     self.parent.workLayers.forEach(l => {
         if (l.type === Consts.layerType.WMS) {
@@ -1449,7 +1469,7 @@ TC.wrap.Map.prototype.insertLayer = function (olLayer, indexOrObject) {
             wrap.parent.state = Layer_s.state.LOADING;
             if (loadingTileCount <= 0) {
                 loadingTileCount = 0;
-                self.parent.trigger(Consts.event.BEFORELAYERUPDATE, { layer: wrap.parent });
+                self.parent.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, { layer: wrap.parent }));
             }
             olLayer._loadingTileCount = olLayer._loadingTileCount + 1;
         };
@@ -1463,7 +1483,7 @@ TC.wrap.Map.prototype.insertLayer = function (olLayer, indexOrObject) {
             if (loadingTileCount <= 0) {
                 loadingTileCount = 0;
                 wrap.parent.state = Layer_s.state.IDLE;
-                self.parent.trigger(Consts.event.LAYERUPDATE, { layer: wrap.parent });
+                self.parent.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, { layer: wrap.parent }));
             }
         });
     }
@@ -1531,7 +1551,7 @@ TC.wrap.Map.prototype.setBaseLayer = function (olLayer) {
                 if (olLayer._wrap.parent.type === Consts.layerType.WMTS) {
                     var layerProjectionOptions = { crs: self.parent.crs, oldCrs: olLayer.getSource().getProjection().getCode() };
 
-                    if (layerProjectionOptions.oldCrs !== layerProjectionOptions.crs) {
+                    if (!Util.CRSCodesEqual(layerProjectionOptions.oldCrs, layerProjectionOptions.crs)) {
                         olLayer._wrap.parent.setProjection(layerProjectionOptions);
                     }
                 }
@@ -3140,20 +3160,24 @@ const bufferExtent = function (extent, resolution, width) {
     return extent.map((v, i) => i < 2 ? v - extentBuffer : v + extentBuffer);
 };
 
-TC.wrap.layer.Raster.prototype.getResolutionBounds = function (params) {
+TC.wrap.layer.Raster.prototype.getResolutionBounds = function ({ layerNames, crs }) {
     const self = this;
     const result = {};
-    if (self.parent.capabilities) {
-        const getResolutionFromScale = (scale) => scale / (self.parent.map?.getMetersPerUnit() ?? 1) * 0.00028;
+    if (crs && layerNames) {
+        const metersPerUnit = getMetersPerUnit(ol.proj.get(crs),
+            self.parent.map ? Util.reprojectExtent(self.parent.map.getExtent(), self.parent.map.crs, crs) : undefined);
+        if (self.parent.capabilities) {
+            const getResolutionFromScaleDenominator = (denominator) => denominator * 0.00028 / metersPerUnit;
 
-        const nodes = params.LAYERS.split().map((name) => self.parent.getLayerNodeByName(name));
-        const minScaleDenominator = Math.min(...nodes.map((node) => parseFloat(node?.MinScaleDenominator ?? 0)));
-        if (minScaleDenominator > 0) {
-            result.minResolution = getResolutionFromScale(minScaleDenominator);
-        }
-        const maxScaleDenominator = Math.max(...nodes.map((node) => parseFloat(node?.MaxScaleDenominator ?? Infinity)));
-        if (maxScaleDenominator < Infinity) {
-            result.maxResolution = getResolutionFromScale(maxScaleDenominator);
+            const nodes = layerNames.split().map((name) => self.parent.getLayerNodeByName(name));
+            const minScaleDenominator = Math.min(...nodes.map((node) => parseFloat(node?.MinScaleDenominator ?? 0)));
+            if (minScaleDenominator > 0) {
+                result.minResolution = getResolutionFromScaleDenominator(minScaleDenominator);
+            }
+            const maxScaleDenominator = Math.max(...nodes.map((node) => parseFloat(node?.MaxScaleDenominator ?? Infinity)));
+            if (maxScaleDenominator < Infinity) {
+                result.maxResolution = getResolutionFromScaleDenominator(maxScaleDenominator);
+            }
         }
     }
     return result;
@@ -3222,7 +3246,10 @@ TC.wrap.layer.Raster.prototype.createWMSLayer = function (url, params, options) 
         source: source
     };
 
-    const { minResolution, maxResolution } = self.getResolutionBounds(params);
+    const { minResolution, maxResolution } = self.getResolutionBounds({
+        layerNames: params.LAYERS,
+        crs: options.map?.crs
+    });
     if (options.minResolution || minResolution) {
         layerOptions.minResolution = options.minResolution ?? minResolution;
     }
@@ -3251,7 +3278,6 @@ var createWmtsSource = function (options) {
 
     // Ponemos wrapX = true porque OL 10.1 recorta el extent del mapa base de IDENA. Con esto no recorta nada.
     sourceOptions.wrapX = true;
-
 
     // Parche: OL calcula fullTileRanges_ en base a la extensión cubierta por los límites del último nivel de zoom. 
     // Esto es un problema porque mapabase tiene límites más extensos en los primeros niveles de zoom que en los últimos.
@@ -3398,7 +3424,10 @@ TC.wrap.layer.Raster.prototype.getParams = function () {
  *  Parameter: object
  */
 TC.wrap.layer.Raster.prototype.setParams = function (params) {
-    const { minResolution, maxResolution } = this.getResolutionBounds(params);
+    const { minResolution, maxResolution } = this.getResolutionBounds({
+        layerNames: params.LAYERS,
+        crs: this.parent.map?.crs,
+    });
     if (!this.parent.options.minResolution && minResolution) {
         this.layer.setMinResolution(minResolution);
     }
@@ -3411,7 +3440,7 @@ TC.wrap.layer.Raster.prototype.setParams = function (params) {
 TC.wrap.layer.Raster.prototype.setMatrixSet = function (matrixSet) {
     const self = this;
     if (self.parent.type === Consts.layerType.WMTS) {
-        const newSource = createWmtsSource.call(self, Util.extend({}, self.parent.options, { matrixSet: matrixSet }));
+        const newSource = createWmtsSource.call(self, Util.extend({}, self.parent.options, { matrixSet }));
         const newResolutions = newSource.getResolutions();
         // Ponemos un extra a la resolución máxima si viene de la lista de resoluciones
         // porque para OpenLayers la resolución mínima es inclusiva y la máxima exclusiva (no queremos ese comportamiento)
@@ -4160,9 +4189,9 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
         return function (extent, resolution, projection) {
             self.parent.state = Layer_s.state.LOADING;
             if (self.parent.map) {
-                self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
+                self.parent.map.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, {
                     layer: self.parent
-                });
+                }));
             }
             internalLoader.call(this, extent, resolution, projection);
         };
@@ -4202,9 +4231,9 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
             const format = vectorOptions.format;
             self.parent.state = Layer_s.state.LOADING;
             if (self.parent.map) {
-                self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
+                self.parent.map.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, {
                     layer: self.parent
-                });
+                }));
             }
             self.parent.proxificationTool.fetch(url, { method: "GET", nomanage: true }).then(async function (response) {
                 if (response.ok) {
@@ -4230,17 +4259,18 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                         self.parent.title = (xDocFilename ? xDocFilename.textContent : "") + (xDocFilename && xDocFilename.textContent != self.parent.title ? " (" + self.parent.title + ")" : self.parent.title)
 
                     if (self.parent.map) {
-                        self.parent.map.trigger(Consts.event.LAYERUPDATE, {
+                        self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, {
                             layer: self.parent
-                        });
+                        }));
                     }
                 }
             }).catch(function (response) {
                 self.parent.state = Layer_s.state.IDLE;
                 if (self.parent.map) {
-                    self.parent.map.trigger(Consts.event.LAYERERROR, {
-                        layer: self.parent, reason: response
-                    });
+                    self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, {
+                        layer: self.parent,
+                        message: response
+                    }));
                 }
             })
 
@@ -4253,9 +4283,9 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
             loader: function (extent, resolution, projection) {
                 self.parent.state = Layer_s.state.LOADING;
                 if (self.parent.map) {
-                    self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
+                    self.parent.map.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, {
                         layer: self.parent
-                    });
+                    }));
                 }
                 var format = this.getFormat();
                 try {
@@ -4265,17 +4295,18 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     this.addFeatures(fs);
                     self.parent.state = Layer_s.state.IDLE;
                     if (self.parent.map) {
-                        self.parent.map.trigger(Consts.event.LAYERUPDATE, {
+                        self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, {
                             layer: self.parent, newData: options.data
-                        });
+                        }));
                     }
                 }
                 catch (e) {
                     self.parent.state = Layer_s.state.IDLE;
                     if (self.parent.map) {
-                        self.parent.map.trigger(Consts.event.LAYERERROR, {
-                            layer: self.parent, reason: e.message
-                        });
+                        self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, {
+                            layer: self.parent,
+                            message: e.message
+                        }));
                     }
                 }
             }
@@ -4313,9 +4344,9 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                 var serviceUrl = options.url;
                 if (serviceUrl) {
                     self.parent.state = Layer_s.state.LOADING;
-                    self.parent.map.trigger(Consts.event.BEFORELAYERUPDATE, {
+                    self.parent.map.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, {
                         layer: self.parent
-                    });
+                    }));
 
                     const isFilterText = function () {
                         return typeof options.properties === "string";
@@ -4327,12 +4358,12 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                             feats = outputFormat.readFeatures(data);
                         }
                         catch (e) {
-                            self.parent.map.trigger(Consts.event.LAYERERROR, { layer: self.parent, reason: e.message });
+                            self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self.parent, message: e.message }));
                         }
                         const triggerLayerUpdate = function () {
-                            self.parent.map.trigger(Consts.event.LAYERUPDATE, {
+                            self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, {
                                 layer: self.parent, newData: data
-                            });
+                            }));
                         };
                         const onFeaturesAdd = function (e) {
                             if (e.layer === self.parent) {
@@ -4351,10 +4382,10 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                     };
                     const manageError = (error) => {
                         if (error instanceof XMLDocument) {
-                            self.parent.map.trigger(Consts.event.LAYERERROR, { layer: self.parent, reason: error.querySelector("ExceptionText").innerHTML });
+                            self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self.parent, message: error.querySelector("ExceptionText").innerHTML }));
                         }
                         else {
-                            self.parent.map.trigger(Consts.event.LAYERERROR, { layer: self.parent, reason: error });
+                            self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self.parent, message: error }));
                         }
                     };
                     const getRequestLength = (options) => {
@@ -4533,12 +4564,12 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                                 }
                                 var firstNode = response.data.children[0];
                                 if (firstNode.tagName.toLowerCase().indexOf("exception") >= 0) {
-                                    self.parent.map.trigger(Consts.event.LAYERERROR, { layer: self.parent, reason: firstNode.querySelector("ExceptionText").innerHTML });
+                                    self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self.parent, message: firstNode.querySelector("ExceptionText").innerHTML }));
                                 }
                                 else if (firstNode.tagName.toLowerCase().indexOf("featurecollection") >= 0) {
                                     let numOfFeaturesFounded = parseInt((firstNode.attributes.numberMatched || firstNode.attributes.numberOfFeatures).value, 10);
                                     if (Number.isNaN(numOfFeaturesFounded) || numOfFeaturesFounded >= parseInt(numMaxFeatures, 10)) {
-                                        self.parent.map.trigger(Consts.event.LAYERERROR, { layer: self.parent, reason: Consts.WFSErrors.MAX_NUM_FEATURES, data: { limit: parseInt(numMaxFeatures, 10), founded: numOfFeaturesFounded } });
+                                        self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self.parent, message: Consts.WFSErrors.MAX_NUM_FEATURES, data: { limit: parseInt(numMaxFeatures, 10), founded: numOfFeaturesFounded } }));
                                         return;
                                     }
                                     else if (!Number.isNaN(numOfFeaturesFounded) && numOfFeaturesFounded === 0) {
@@ -4574,9 +4605,9 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
     if (usesGenericLoader) {
         source.on(CHANGE, function (_e) {
             if (self.parent.map) {
-                self.parent.map.trigger(Consts.event.LAYERUPDATE, {
+                self.parent.map.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, {
                     layer: self.parent
-                });
+                }));
             }
         });
     }
@@ -6894,14 +6925,16 @@ TC.wrap.control.OverviewMap.prototype.reset = async function (options = {}) {
         if (layer.type === Consts.layerType.WMTS) {
             var layerProjectionOptions = { crs: crs || self.parent.map.crs, oldCrs: layer.wrap.layer.getSource().getProjection().getCode() }; // , allowFallbackLayer: true
 
-            if (layerProjectionOptions.oldCrs !== layerProjectionOptions.crs) {
+            if (!Util.CRSCodesEqual(layerProjectionOptions.oldCrs, layerProjectionOptions.crs)) {
                 layer.setProjection(layerProjectionOptions);
             }
         }
 
         const olLayer = await layer.wrap.getLayer();
 
-        var olView = new ol.View(getResolutionOptions(self.parent.map.wrap, olLayer._wrap.parent));
+        const viewOptions = getResolutionOptions(self.parent.map.wrap, olLayer._wrap.parent);
+
+        var olView = new ol.View(viewOptions);
         const olMap = self.ovMap.getOverviewMap();
 
         if (olView.getResolutions() || olView.getProjection().getCode() !== olMap.getView().getProjection().getCode()) {
@@ -7196,7 +7229,7 @@ TC.wrap.control.FeatureInfo.prototype.getFeatureInfo = function (coords, resolut
                     //};
 
                     const isFromRasterOrigin = (await layer.describeLayer(true)).every((l) => l.owsType === "WCS");
-                    
+
                     var disgregatedNames = isFromRasterOrigin ? layer.availableNames : layer.getDisgregatedLayerNames();
                     if (options.layerName) { // Mirar si en las opciones pone que solo busque en una capa
                         if (disgregatedNames.indexOf(options.layerName) >= 0 && olLayer._wrap.getInfo(options.layerName).queryable) {
@@ -9270,6 +9303,8 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
 
                     if (!self.viewport) self.viewport = olMap.getViewport();
 
+                    const clickEvent = Consts.event.CLICK === 'touchstart' ? 'touchend' : Consts.event.CLICK;
+
                     if (self.interaction) {
                         olMap.removeInteraction(self.interaction);
                         if (self._pointerdownHandler) {
@@ -9277,7 +9312,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                             self._pointerdownHandler = null;
                         }
                         if (self._clickHandler) {
-                            self.viewport.removeEventListener('click', self._clickHandler);
+                            self.viewport.removeEventListener(clickEvent, self._clickHandler);
                             self._clickHandler = null;
                         }
                         if (self._mouseMoveHandler && self._mouseOverHandler) {
@@ -9290,9 +9325,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                         self._pointerdownHandler = self.pointerdownHandler.bind(self);
                         self._clickHandler = self.clickHandler.bind(self);
                         self.viewport.addEventListener('pointerdown', self._pointerdownHandler);
-                        // No usar Consts.event.CLICK, porque eso en móviles es pointerdown
-                        // y salta prematuramente
-                        self.viewport.addEventListener('click', self._clickHandler);
+                        self.viewport.addEventListener(clickEvent, self._clickHandler);
                         if (self.parent.measurer) {
                             self._mouseMoveHandler = self.mouseMoveHandler.bind(self);
                             self._mouseOverHandler = self.mouseOverHandler.bind(self);
