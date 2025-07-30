@@ -2026,7 +2026,7 @@ class Geolocation extends Control {
 
         await Promise.all(promises);
         await self.getStoredTracks();
-        self.#bindTracks();
+        await self.#bindTracks();
     }
 
     /* Obtengo los tracks desde vble local */
@@ -2450,7 +2450,7 @@ class Geolocation extends Control {
 
     #onLayerError() {
         const self = this;
-        self.map.off(Consts.event.LAYERERROR, self.#onLayerError);
+        self.map.removeEventListener(Consts.event.LAYERERROR, self.#onLayerError);
         self.clearFileInput(self.track.trackImportFile);
 
         TC.alert(self.getLocaleString("geo.trk.upload.error3"));
@@ -2462,7 +2462,7 @@ class Geolocation extends Control {
             self.clear(self.const.layer.TRACK);
 
             if (self.map) {
-                self.map.on(Consts.event.LAYERERROR, self.#onLayerError);
+                self.map.addEventListener(Consts.event.LAYERERROR, self.#onLayerError);
                 self.map.wrap.loadFiles([file], { control: self });
             }
         }
