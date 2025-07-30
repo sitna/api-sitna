@@ -1,0 +1,38 @@
+
+<div class="controlsRow noBreak">
+    <sitna-button variant="icon" class="tc-btn-first" tc-vc-click="first" tc-vc-disabled="playMode | atTheBegin" title="[[time.first]]">[[time.first]]</sitna-button>
+    <sitna-button variant="icon" class="tc-btn-backward" title="[[time.backward]]" tc-vc-click="previous" tc-vc-disabled="playMode | atTheBegin">[[time.backward]]</sitna-button>
+    <div{{#if interval}} class="tc-ctl-timeline-datetime" {{/if}}>
+        {{#if dateTimeMode}}
+        {{#if interval}}<label>[[time.from]]</label>{{/if}}
+        <input type="datetime-local" id="timeCalendar" min="[[dateTimeMin]]" max="[[dateTimeMax]]" step="[[dateTimeStep]]" tc-vc-value="dateTimeValue" tc-vc-disabled="playMode" tc-vc-change="dateTimeChange" title="[[time.dateTime]]">
+        {{#if interval}}
+        <label>[[time.to]]</label><input type="datetime-local" id="timeCalendar2" tc-vc-value="dateTimeValue2" min="[[dateTimeMin2]]" max="[[dateTimeMax2]]" step="[[dateTimeStep]]" tc-vc-change="dateTimeChange2" title="[[time.dateTime2]]" tc-vc-disabled="playMode">
+        {{/if}}
+        {{else}}
+        {{#if interval}}<label>[[time.from]]</label>{{/if}}
+        <input type="date" id="dayCalendar" min="[[dateMin]]" max="[[dateMax]]" step="[[dateStep]]" title="[[time.date]]" tc-vc-value="dateValue" tc-vc-change="dateChange" tc-vc-disabled="playMode" >
+        {{#if interval}}
+        <label>[[time.to]]</label><input type="date" id="dayCalendar2" title="[[time.date2]]" min="[[dateMin2]]" max="[[dateMax2]]" step="[[dateStep]]" tc-vc-change="dateChange2" tc-vc-value="dateValue2" tc-vc-disabled="playMode">
+        {{/if}}
+        {{/if}}
+</div>
+    <sitna-button variant="icon" class="tc-btn-forward" title="[[time.forward]]" tc-vc-click="next" tc-vc-disabled="playMode | atTheEnd">[[time.forward]]</sitna-button>
+    <sitna-button variant="icon" class="tc-btn-last" tc-vc-click="last" title="[[time.last]]" tc-vc-disabled="playMode  | atTheEnd">[[time.last]]</sitna-button>
+</div>
+<div class="controlsRow noBreak">
+    <sitna-button variant="icon" class="tc-btn-play" title="[[time.start]]" tc-vc-click="start" tc-vc-disabled="playMode">[[time.start]]</sitna-button>
+    <sitna-button variant="icon" class="tc-btn-speedDown" title="[[time.speedDown]]" tc-vc-click="speedChange" tc-vc-disabled="minSpeedValue">[[time.speedDown]]</sitna-button>
+    <!--<input type="number" id="speed" min="1" max="8" value="[[speed]]" title="[[time.animationSpeed]]" tc-vc-change="speedChange">-->
+    <span title="[[time.animationSpeed]]">[[speed]]</span>
+    <sitna-button variant="icon" class="tc-btn-speedUp" title="[[time.speedUp]]" tc-vc-click="speedChange" tc-vc-disabled="maxSpeedValue">[[time.speedUp]]</sitna-button>
+    <sitna-button variant="icon" class="tc-btn-pause" title="[[time.pause]]" tc-vc-click="stop" disabled tc-vc-disabled="!playMode">[[time.pause]]</sitna-button>
+</div>
+<div>
+    <datalist id="sliderValues">
+        {{#each .}}
+            <option{{#if label}} label="{{label}}"{{/if}}>{{value}}</option>
+        {{/each}}
+    </datalist>
+    <input type="range" id="slider" class="fullWidth" title="[[time.range]]" min="[[sliderMin]]" max="[[sliderMax]]" step="[[sliderStep]]" list="sliderValues" tc-vc-change="sliderChange" tc-vc-value="sliderValue" tc-vc-disabled="playMode">
+</div>
