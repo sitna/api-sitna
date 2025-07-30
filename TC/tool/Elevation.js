@@ -76,7 +76,14 @@ class Elevation {
                 import('./' + ctorName).then(function (elevationModule) {
                     const ElevationService = elevationModule.default;
                     TC.tool[ctorName] = ElevationService;
-                    resolve(new ElevationService(srvOptions));
+                    try {
+                        resolve(new ElevationService(srvOptions));
+                    }
+                    catch (e) {
+                        if (e instanceof TypeError) {
+                            resolve(null); // Si el constructor no es válido, devolvemos null para que no se use este servicio
+                        }
+                    }
                 });
             });
         });
@@ -117,7 +124,7 @@ class Elevation {
         if (!Object.prototype.hasOwnProperty.call(opts, 'includeHeights')) {
             opts.includeHeights = isSinglePoint;
         }
-        const services = await self.getServices();
+        const services = (await self.getServices()).filter((s) => !!s);
         const responses = new Array(services.length);
         responses.fill(false);
 
