@@ -1,17 +1,24 @@
 ﻿const signalEvents = new WeakMap();
 const getNativeListener = function (evt, callback) {
     const result = function (evt) {
-        const cbParameter = {
-            type: evt.type,
-            target: this,
-            currentTarget: this
-        };
-        if (evt.detail) {
-            Object.keys(evt.detail).forEach(function (key) {
-                if (!(key in cbParameter)) {
-                    cbParameter[key] = evt.detail[key];
-                }
-            });
+        let cbParameter;
+        // Si el evento es un CustomEvent, se crea un objeto con los parámetros del evento
+        if (evt instanceof CustomEvent) {
+            cbParameter = {
+                type: evt.type,
+                target: this,
+                currentTarget: this
+            };
+            if (evt.detail) {
+                Object.keys(evt.detail).forEach(function (key) {
+                    if (!(key in cbParameter)) {
+                        cbParameter[key] = evt.detail[key];
+                    }
+                });
+            }
+        }
+        else {
+            cbParameter = evt;
         }
         return callback.call(this, cbParameter);
     }.bind(this);
@@ -54,6 +61,18 @@ const EventTarget = function () {
 };
 
 const etProto = EventTarget.prototype;
+
+etProto.addEventListener = function () {
+    this.$events.addEventListener(...arguments);
+};
+
+etProto.removeEventListener = function () {
+    this.$events.removeEventListener(...arguments);
+};
+
+etProto.dispatchEvent = function () {
+    this.$events.dispatchEvent(...arguments);
+};
 
 etProto.on = function (events, callback, options) {
     const et = this;
