@@ -3,6 +3,7 @@ import Cfg from '../../TC/Cfg.js';
 import Util from '../../TC/Util.js';
 import Consts from '../../TC/Consts.js';
 import Layer from './Layer.js';
+import LayerEvent from './LayerEvent.js';
 import Feature from '../feature/Feature.js';
 import Point from '../feature/Point.js';
 import Marker from '../feature/Marker.js';
@@ -867,7 +868,7 @@ class Vector extends Layer {
 
         self.state = Layer.state.LOADING;
         self.map.trigger(Consts.event.BEFOREUPDATE);
-        self.map.trigger(Consts.event.BEFORELAYERUPDATE, { layer: self });
+        self.map.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, { layer: self }));
 
         id.forEach(function (id) {
             nodes.push(Layer.prototype.setNodeVisibility.call(self, id, visible));
@@ -933,7 +934,7 @@ class Vector extends Layer {
 
         }
         self.state = Layer.state.IDLE;
-        self.map.trigger(Consts.event.LAYERUPDATE, { layer: self });
+        self.map.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, { layer: self }));
         self.map.trigger(Consts.event.UPDATE);
         return nodes.length > 1 ? nodes : nodes[0];
     }
@@ -1031,14 +1032,14 @@ class Vector extends Layer {
         const self = this;
         self.wrap.setProjection(options);
         if (options.crs && options.oldCrs) {
-            self.map.trigger(Consts.event.BEFORELAYERUPDATE, { layer: self });
+            self.map.dispatchEvent(new LayerEvent(Consts.event.BEFORELAYERUPDATE, { layer: self }));
             self.features.forEach(function (feat) {
                 feat.setCoordinates(feat.getCoordinates({
                     geometryCrs: options.oldCrs,
                     crs: options.crs
                 }));
             });
-            self.map.trigger(Consts.event.LAYERUPDATE, { layer: self });
+            self.map.dispatchEvent(new LayerEvent(Consts.event.LAYERUPDATE, { layer: self }));
         }
     }
 
@@ -1196,7 +1197,8 @@ class Vector extends Layer {
         }
 
         // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
-        const precision = Math.pow(10, (self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION) + 1);
+        const isGeo = self.map?.wrap.isGeo() || self.owner?.map?.wrap.isGeo();
+        const precision = Math.pow(10, (isGeo ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION) + 1);
         let commonStyles = null;
         const features = options.features || self.features;
 
@@ -1431,7 +1433,7 @@ class Vector extends Layer {
                 })
                     .catch(function (error) {
                         if (self.map) {
-                            self.map.trigger(Consts.event.LAYERERROR, { layer: self, reason: 'couldNotGetCapabilities' });
+                            self.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self, message: 'couldNotGetCapabilities' }));
                         }
                         reject(error);
                     });
