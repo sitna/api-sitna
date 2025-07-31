@@ -113,6 +113,118 @@ TC.filter = filter;
  * </script>
  */
 
+/**
+ * @event SITNA.Map#sitna:layerupdate
+ * @type {SITNA.layer.LayerEvent}
+ * @description Evento que se dispara cuando una capa del mapa se ha actualizado.
+ * El evento se dispara una vez que la capa ha cargado todos sus datos y cada vez que se recarga.
+ * @see SITNA.Map#sitna:layererror
+ * @example <caption>[Ver en vivo](../examples/Event.layerupdate.html)</caption> {@lang html}
+    <div id="mapa"/>
+    <script>
+        // Creamos un mapa por defecto.
+        const myMap = new SITNA.Map("mapa");
+        
+        const layerId = "filtered-layer";
+
+        // Añadimos una función que escucha al evento de carga de capa para hacer zoom sobre la entidad cargada.
+        myMap.addEventListener("sitna:layerupdate", function (e) {
+            if (e.layer.id === layerId) {
+                myMap.zoomToFeatures(e.layer.features);
+            }
+        });
+
+        // Esperamos a que el mapa esté cargado.
+        myMap.loaded(() => {
+            // Añadimos la capa de recintos de municipio filtrada para mostrar solamente el recinto de Abáigar.
+            myMap.addLayer({
+                id: layerId,
+                type: SITNA.Consts.layerType.WFS,
+                url: "https://idena.navarra.es/ogc/wfs",
+                featureType: "CATAST_Pol_Municipio",
+                filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>CMUNICIPIO</ogc:PropertyName><ogc:Literal><![CDATA[1]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
+            });
+        });
+    </script>
+ */
+
+/**
+ * @event SITNA.Map#sitna:layererror
+ * @type {SITNA.layer.LayerEvent}
+ * @description Evento que se dispara cuando una capa del mapa sufre un error durante el proceso de carga.
+ * @see SITNA.Map#sitna:layerupdate
+ */
+
+/**
+ * @event SITNA.Map#sitna:layeradd
+ * @type {SITNA.layer.LayerEvent}
+ * @description Evento que se dispara cuando una capa se añade al mapa, antes de que se cargen sus datos.
+ * @see SITNA.Map#sitna:layerremove
+ * @example <caption>[Ver en vivo](../examples/Event.layeradd.html)</caption> {@lang html}
+    <div id="lista" class="instructions">
+        <ol></ol>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Creamos un mapa con un control de gestión de capas cargadas y un control de catálogo de capas.
+        const myMap = new SITNA.Map("mapa", {
+            layout: "layout/ctl-container",
+            controls: {
+                workLayerManager: {
+                    div: "slot1"
+                },
+                layerCatalog: {
+                    div: "slot2",
+                    layers: [
+                        {
+                            id: "idena",
+                            title: "IDENA",
+                            hideTitle: true,
+                            type: SITNA.Consts.layerType.WMS,
+                            url: "https://idena.navarra.es/ogc/wms",
+                            hideTree: false
+                        }
+                    ]
+                }
+            }
+        });
+
+        // Esperamos a que el mapa esté cargado.
+        myMap.loaded(() => {
+
+            // Añadimos dos funciones que escuchan a los eventos de capa añadida y capa eliminada.
+
+            myMap.addEventListener("sitna:layeradd", function (e) {
+                if (e.layer.type === SITNA.Consts.layerType.WMS) {
+                    const item = document.createElement("li");
+                    item.textContent = e.layer.layerNames.join();
+                    document.querySelector('#lista ol').insertAdjacentElement("beforeend", item);
+                }
+            });
+
+            myMap.addEventListener("sitna:layerremove", function (e) {
+                if (e.layer.type === SITNA.Consts.layerType.WMS) {
+                    const layerNames = e.layer.layerNames.join();
+                    document
+                        .querySelectorAll("#lista ol li")
+                        .forEach((item) => {
+                            if (item.textContent === layerNames) {
+                                item.remove();
+                            }
+                        });
+                }
+            });
+        })
+    </script>
+ */
+
+/**
+ * @event SITNA.Map#sitna:layerremove
+ * @type {SITNA.layer.LayerEvent}
+ * @description Evento que se dispara cuando se quita una capa del mapa.
+ * @see SITNA.Map#sitna:layeradd
+ */
+
 const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     #searchControl;
     #searchLayer;
@@ -932,6 +1044,26 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
         </script>
     */
 
+    /**
+     * Registra un evento del mapa.
+     * @method addEventListener
+     * @memberof SITNA.Map
+     * @instance
+     * @param {string} event - Tipo de evento.
+     * @param {function} listener - Función a la que se le pasa el evento como parámetro.     
+     * @see SITNA.layer.LayerEvent
+     */
+
+    /**
+     * Elimina un detector de evento de mapa previamente registrado con [addEventListener]{@link SITNA.Map#addEventListener}.
+     * @method removeEventListener
+     * @memberof SITNA.Map
+     * @instance
+     * @param {string} event - Tipo de evento.
+     * @param {function} listener - Función a eliminar de la lista de detectores de evento.     
+     * @see SITNA.layer.LayerEvent
+     */
+
     async getQueryableData(searchType, callback) {
         const self = this;
 
@@ -1453,7 +1585,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
                             geometryName: this.geometryName,
                             featurePrefix: this.featurePrefix,
                             featureType: this.featureType,
-                            properties: getProperties(id),
+                            filter: getProperties(id),
                             outputFormat: this.outputFormat,
                             styles: this.styles
                         }
@@ -1703,8 +1835,8 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     removeSearch(callback) {
         const self = this;
         if (self.search) {
-            for (var i = 0, ii = self.search.layer.features.length; i < ii; i++) {
-                self.search.layer.removeFeature(self.search.layer.features[i]);
+            for (const feature of self.search.layer.features) {
+                self.search.layer.removeFeature(feature);
             }
             self.search = null;
         }
