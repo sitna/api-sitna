@@ -624,7 +624,7 @@
     "url": "https://data.geopf.fr/wmts",
     "encoding": "KVP",
     "layerNames": "ORTHOIMAGERY.ORTHOPHOTOS",
-    "matrixSet": "PM_0_21",
+    "matrixSet": "PM_0_19",
     "format": "image/jpeg",
     "thumbnail": "css/img/thumb-ortho-fr-ign.jpg",
     "fallbackLayer": "ign-fr-orto-dyn",
