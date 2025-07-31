@@ -160,8 +160,7 @@ class OfflineMapModel {
         this.availableOfflineMaps = "";
         this.selectAtLeastOne = "";
         this.maxRes = "";
-        this["3dViewNotIncluded"] = "";
-        this["3dViewIncluded"] = "";
+        this.mapNotVisibleAtFullExtent = "";
         this.ok = "";
         this.cancel = "";        
     }
@@ -221,7 +220,6 @@ class OfflineMapMaker extends SWCacheClient {
     #offlineMapHintDiv;
     #selectors;
     #state;
-    #baseLayersFor3d = new Map();
 
     constructor() {
         super(...arguments);
@@ -255,7 +253,6 @@ class OfflineMapMaker extends SWCacheClient {
             SEARCH: cs + '-map-available-srch',
             EMPTYLIST: cs + '-map-available-empty',
             OFFLINEHIDDEN: '[data-no-cb]',
-            INCLUDE3DCBOX: cs + '-3d',
         };
 
         self.storedMaps = [];
@@ -288,17 +285,17 @@ class OfflineMapMaker extends SWCacheClient {
         // Carga de mapas guardados
         if (self.localStorage) {
             for (var i = 0, len = self.localStorage.length; i < len; i++) {
-                var key = self.localStorage.key(i);
+                const key = self.localStorage.key(i);
                 // Tenemos en cuenta los mapas antiguos (TC.offline.map.)
                 if ((key.indexOf(self.LOCAL_STORAGE_KEY_PREFIX) === 0 || key.indexOf('TC.offline.map.') === 0) &&
                     key !== self.LOCAL_STORAGE_KEY_PREFIX + self.ROOT_CACHE_NAME + '.hash') {
                     // Es un nombre de mapa y no es el hash de integridad de la cache root
-                    var values = self.localStorage.getItem(key).split(" ");
-                    var extent = getExtentFromString(values.shift());
-                    var name = values.join(" ");
-                    var map = {
-                        name: name,
-                        extent: extent,
+                    const values = self.localStorage.getItem(key).split(" ");
+                    const extent = getExtentFromString(values.shift());
+                    const name = values.join(" ");
+                    const map = {
+                        name,
+                        extent,
                         url: decodeURIComponent(key.substr(self.LOCAL_STORAGE_KEY_PREFIX.length))
                     };
                     self.storedMaps.push(map);
@@ -536,7 +533,7 @@ class OfflineMapMaker extends SWCacheClient {
             .on(Consts.event.DRAWSTART, function (_e) {
                 self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: Consts.msgType.INFO });
             })
-            .on(Consts.event.DRAWEND, function (e) {
+            .on(Consts.event.DRAWEND, async function (e) {
                 var points = e.feature.geometry[0];
                 var pStart = points[0];
                 var pEnd = points[2];
@@ -546,9 +543,10 @@ class OfflineMapMaker extends SWCacheClient {
                 var maxy = Math.max(pStart[1], pEnd[1]);
                 self.setExtent([minx, miny, maxx, maxy]);
                 const checkboxes = self._dialogDiv.querySelectorAll('input[type=checkbox]');
+                const availableLayers = await self.#getAvailableLayers();
                 checkboxes.forEach(function (checkbox) {
                     // Comprobamos que la extensión del mapa está disponible a alguna resolución
-                    const layer = self.map.getLayer(checkbox.value);
+                    const layer = availableLayers.find((l) => l.id === checkbox.value);
                     var li = checkbox;
                     while (li && li.tagName !== 'LI') {
                         li = li.parentElement;
@@ -614,9 +612,6 @@ class OfflineMapMaker extends SWCacheClient {
                 return !!blList.querySelector('li[data-layer-uid="' + layer.id + '"]');
             };
             var isValidLayer = layer.type === Consts.layerType.WMTS && !layer.mustReproject;
-            if (Util.detectSafari() && Util.detectIOS()) {
-                isValidLayer = isValidLayer && Util.isSameOrigin(layer.url);
-            }
             if (isValidLayer && !isLayerAdded()) {
                 result = true;
                 self.getRenderedHtml(self.CLASS + '-bl-node', layer, function (html) {
@@ -634,7 +629,7 @@ class OfflineMapMaker extends SWCacheClient {
                 // Capamos las resoluciones de la capa
                 const resolutions = layer.getResolutions();
                 if (resolutions) {
-                    const cachedResolutions = resolutions.filter(r => r >= self.currentMapDefinition.res);
+                    const cachedResolutions = resolutions.filter((r) => r >= self.currentMapDefinition.res);
                     if (cachedResolutions.length) {
                         layer.setResolutions(cachedResolutions);
                     }
@@ -652,14 +647,16 @@ class OfflineMapMaker extends SWCacheClient {
             })
             .on(Consts.event.LAYERREMOVE, function (e) {
                 //14/03/2019 GLS: esperamos a que se haya renderizado el dialogo para obtener la lista
-                self.renderPromise().then(function () {
+                self.renderPromise().then(() => {
                     const layer = e.layer;
-                    if (layer.type === Consts.layerType.WMTS) {
-                        const li = self._dialogDiv
-                            .querySelector(self.#selectors.BLLIST)
-                            .querySelector('li[data-layer-uid="' + layer.id + '"]');
-                        li.parentElement.removeChild(li);
-                    }
+                    self.#getAvailableLayers().then((availableBaseLayers) => {
+                        if (layer.type === Consts.layerType.WMTS && !availableBaseLayers.find((l) => l.id === layer.id)) {
+                            const li = self._dialogDiv
+                                .querySelector(self.#selectors.BLLIST)
+                                .querySelector('li[data-layer-uid="' + layer.id + '"]');
+                            li.parentElement.removeChild(li);
+                        }
+                    });
                 });
             })
             .on(Consts.event.PROJECTIONCHANGE, function (_e) {
@@ -689,19 +686,9 @@ class OfflineMapMaker extends SWCacheClient {
             }
         });
 
-        map.loaded(function () {
+        map.loaded(async () => {
 
-            //const availableCacheableLayers = map
-            //    .availableBaseLayers
-            //    .filter((layer) => layer.type === Consts.layerType.WMTS) // Capas cacheables
-            //    .map((obj) => new Raster(obj));
-
-            //const isLayerSupported = await Promise.all(availableCacheableLayers
-            //    .map(async (layer) => {
-            //        await layer.getCapabilitiesPromise();
-            //        return layer.isCompatible(map.crs);
-            //    }));
-            //const supportedLayers = availableCacheableLayers.filter((_layer, idx) => isLayerSupported[idx]);
+            const supportedLayers = await this.#getAvailableLayers();
             ////
 
             self.layerPromise.then(function (layer) {
@@ -710,8 +697,7 @@ class OfflineMapMaker extends SWCacheClient {
 
             self.renderPromise().then(function () {
                 self.div.querySelector(self.#selectors.NEWBTN).disabled = false;
-                map.baseLayers.forEach(addRenderedListNode);
-
+                supportedLayers.forEach(addRenderedListNode);
             });
 
             if (self.mapIsOffline) {
@@ -721,8 +707,7 @@ class OfflineMapMaker extends SWCacheClient {
                     return layerUrl === mapDef.url[mapDefLayer.urlIdx] && layer.layerNames === mapDefLayer.id && layer.matrixSet === mapDef.tms[mapDefLayer.tmsIdx];
                 };
                 // Añadimos al mapa las capas guardadas que no están por defecto
-                const missingLayers = map.availableBaseLayers
-                    .filter((abl) => abl.type === Consts.layerType.WMTS) // Capas cacheables
+                const missingLayers = supportedLayers
                     .filter((abl) => { // Que estén en el mapa sin conexión
                         return mapDef.layers.some((l) => isSameLayer(abl, l));
                     })
@@ -883,12 +868,13 @@ class OfflineMapMaker extends SWCacheClient {
 
             self.addUIEventListeners();
 
-            if (Util.isFunction(callback)) {
-                callback();
-            }
             self.controller = new Controller(self.model, new Observer(self.div));
             self.controller.add(self._dialogDiv);
             self.updateModel();
+
+            if (Util.isFunction(callback)) {
+                callback();
+            }
         });
 
         // Control para evitar que se cancele una descarga de cache al salir de la página
@@ -976,6 +962,9 @@ class OfflineMapMaker extends SWCacheClient {
                         btn.classList.add(Consts.classes.ACTIVE);
                         btn.setAttribute('title', self.getLocaleString('removeMapExtent'));
                     }
+                    else {
+                        btn.setAttribute('title', self.getLocaleString('viewMapExtent'));
+                    }
                 }
             }
         }), { passive: true });
@@ -1025,13 +1014,14 @@ class OfflineMapMaker extends SWCacheClient {
         trackSearch.addEventListener('keyup', searchListener);
         trackSearch.addEventListener('search', searchListener);
 
-        self._dialogDiv.querySelector(self.#selectors.BLLIST).addEventListener('change', TC.EventTarget.listenerBySelector('input[type=checkbox]', function (e) {
+        self._dialogDiv.querySelector(self.#selectors.BLLIST).addEventListener('change', TC.EventTarget.listenerBySelector('input[type=checkbox]', async function (e) {
             const checkbox = e.target;
             if (checkbox.checked) {
-                self.baseLayers.push(self.map.getLayer(checkbox.value));
+                const layer = (await self.#getAvailableLayers()).find((l) => l.id === checkbox.value);
+                self.baseLayers.push(layer);
             }
             else {
-                for (var i = 0, ii = self.baseLayers.length; i < ii; i++) {
+                for (var i = self.baseLayers.length - 1; i >= 0; i--) {
                     const bl = self.baseLayers[i];
                     if (bl.id === checkbox.value) {
                         self.baseLayers.splice(i, 1);
@@ -1044,6 +1034,7 @@ class OfflineMapMaker extends SWCacheClient {
             self.#updateThumbnails();
             self.#updateReadyState();
             self.#showEstimatedMapSize();
+            self.#updateMaxResolutionWarning();
         }));
 
         const range = self._dialogDiv.querySelector(self.#selectors.RNGMAXRES);
@@ -1053,6 +1044,7 @@ class OfflineMapMaker extends SWCacheClient {
             });
             self.#updateThumbnails();
             self.#showEstimatedMapSize();
+            self.#updateMaxResolutionWarning();
         };
         range.addEventListener('input', rangeListener);
         range.addEventListener('change', rangeListener);
@@ -1113,34 +1105,26 @@ class OfflineMapMaker extends SWCacheClient {
         li.querySelector(self.#selectors.DELETEBTN).classList.remove(Consts.classes.HIDDEN);
     }
 
-    #set3dState() {
-        this._dialogDiv.querySelector(this.#selectors.INCLUDE3DCBOX).textContent = this.getLocaleString(this.is3dViewIncluded ? '3dViewIncluded' : '3dViewNotIncluded');
-        if (this.is3dViewIncluded) {
-            this.baseLayers.forEach((layer) => this.#get3dLayer(layer));
-        }
-        else {
-            this.#baseLayersFor3d.clear();
-        }
-        this.#showEstimatedMapSize();
-    }
+    async #getAvailableLayers() {
+        if (!this.map) return [];
 
-    #get3dLayer(layer) {
-        let result = this.#baseLayersFor3d.get(layer);
-        if (!result) {
-            const matrixSet = layer.wrap.getCompatibleMatrixSets('EPSG:4326')[0];
-            if (matrixSet) {
-                result = new layer.constructor({
-                    id: layer.id + '_4326_fallback',
-                    url: layer.url,
-                    type: layer.type,
-                    encoding: layer.encoding,
-                    layerNames: layer.layerNames,
-                    matrixSet,
-                });
-                this.#baseLayersFor3d.set(layer, result);
-            }
-        }
-        return result;
+        const availableCacheableLayers = this
+            .map
+            .availableBaseLayers
+            .filter((layer) => layer.type === Consts.layerType.WMTS) // Capas cacheables
+            .map((obj) => new Raster(obj));
+
+        const isLayerSupported = await Promise.all(availableCacheableLayers
+            .map(async (layer) => {
+                try {
+                    await layer.getCapabilitiesPromise();
+                }
+                catch (_e) {
+                    return false;
+                }
+                return layer.isCompatible(this.map.crs);
+            }));
+        return availableCacheableLayers.filter((_layer, idx) => isLayerSupported[idx]);
     }
 
     #updateResolutions(options = {}) {
@@ -1264,6 +1248,16 @@ class OfflineMapMaker extends SWCacheClient {
         this._dialogDiv.querySelector(this.#selectors.TILECOUNT).innerHTML = text;
     }
 
+    #updateMaxResolutionWarning() {
+        if (this.map) {
+            const rect = this.map.div.getBoundingClientRect();
+            const offlineMapWidth = (this.extent[2] - this.extent[0]) / this.minResolution;
+            const offlineMapHeight = (this.extent[3] - this.extent[1]) / this.minResolution;
+            const isEnough = offlineMapHeight > rect.width && offlineMapWidth > rect.height;
+            this._dialogDiv.querySelector(`.${this.CLASS}-res-warn`).classList.toggle(Consts.classes.HIDDEN, isEnough)
+        }
+    }
+
     #getListElementByMapName(name) {
         const self = this;
         const lis = self.div.querySelectorAll(self.#selectors.LISTITEM);
@@ -1298,7 +1292,8 @@ class OfflineMapMaker extends SWCacheClient {
         const self = this;
         var result = false;
         if (self.localStorage) {
-            self.localStorage.setItem(self.LOCAL_STORAGE_KEY_PREFIX + encodeURIComponent(map.url), map.extent + " " + map.name);
+            const value = `${map.extent} ${map.name}`;
+            self.localStorage.setItem(self.LOCAL_STORAGE_KEY_PREFIX + encodeURIComponent(map.url), value);
             result = true;
         }
         return result;
@@ -1496,31 +1491,6 @@ class OfflineMapMaker extends SWCacheClient {
                     rs.tileMatrixLimits = rs.tileMatrixLimits.map(trimTml);
                 });
 
-                let extentFor3d;
-                let degreeMinResolution;
-
-                // Teselas raster para 3D
-                if (this.is3dViewIncluded) {
-                    extentFor3d = Util.reprojectExtent(extent, this.map.crs, 'EPSG:4326');
-                    degreeMinResolution = this.minResolution / Util.getMetersPerDegree(extentFor3d) / 2;
-                    const filterTmlIn3d = createTmlFilter(degreeMinResolution);
-                    const baseLayersFor3d = Array.from(this.#baseLayersFor3d.values());
-                    requestSchemas = requestSchemas.concat(
-                        baseLayersFor3d
-                            .map((layerFor3d) => this.wrap.getRequestSchemas({
-                                layers: [layerFor3d],
-                                extent: extentFor3d,
-                                crs: 'EPSG:4326',
-                            })[0])
-                            .map((schema) => ({
-                                layerId: schema.layerId,
-                                tileMatrixSet: schema.tileMatrixSet,
-                                tileMatrixLimits: schema.tileMatrixLimits.filter(filterTmlIn3d)
-                            }))
-                    );
-                    baseLayers = baseLayers.concat(baseLayersFor3d);
-                }
-
                 for (const schema of requestSchemas) {
                     var urlPattern = null;
                     for (const l of baseLayers) {
@@ -1546,85 +1516,6 @@ class OfflineMapMaker extends SWCacheClient {
                         }
                     }
                 }
-                // modelo digital de terreno para 3D
-                if (this.is3dViewIncluded) {
-                    let terrainUrl = this.map.options?.views?.threeD.terrain.url;
-                    if (terrainUrl) {
-                        //urlList.add(TC.apiLocation + 'chunks/vendors-node_modules_cesium_Source_Cesium_js.sitna.debug.js');
-                        //urlList.add(TC.apiLocation + 'chunks/TC_cesium_cesium_js.sitna.debug.js');
-                        //urlList.add(TC.apiLocation + 'chunks/vendors-node_modules_d3-polygon_src_contains_js-node_modules_geotiff_dist-module_geotiff_js.sitna.debug.js');
-                        //urlList.add(TC.apiLocation + 'chunks/TC_cesium_mergeTerrainProvider_MergeTerrainProvider_js.sitna.debug.js');
-                        urlList.add(TC.apiLocation + 'resources/data/contornoNavarra.json');
-                        urlList.add(TC.apiLocation + 'resources/data/contornoEspana.json');
-                        urlList.add(TC.apiLocation + 'lib/cesium/build/Assets/approximateTerrainHeights.json');
-
-                        let baseUrl = terrainUrl;
-                        if (terrainUrl.endsWith('layer.json')) baseUrl = terrainUrl.replace('layer.json', '');
-                        if (!baseUrl.endsWith('/')) baseUrl += '/';
-                        terrainUrl = baseUrl + 'layer.json';
-                        urlList.add(terrainUrl);
-
-                        const response = await fetch(terrainUrl);
-                        const terrainOptions = await response.json();
-                        const schema = terrainOptions.schema ?? 'tms';
-                        const tileUrlTemplates = terrainOptions.tiles ?? ["{z}/{x}/{y}.terrain?v={version}"];
-                        const version = terrainOptions.version ?? "1.1.0";
-                        const [minLon, minLat, maxLon, maxLat] = terrainOptions.bounds ?? [-180.00, -90.00, 180.00, 90.00];
-                        const crs = terrainOptions.projection ?? 'EPSG:4326';
-
-                        const minZoom = terrainOptions.minzoom ?? 0;
-                        const maxZoom = terrainOptions.maxzoom ?? 20;
-                        const minZoomFactor = 2 ** minZoom;
-
-                        let xInTiles = 2;
-                        let yInTiles = 1;
-                        if (crs !== 'EPSG:4326') {
-                            xInTiles = 1;
-                        }
-                        xInTiles *= minZoomFactor;
-                        yInTiles *= minZoomFactor;
-                        let tileWidth = (maxLon - minLon) / xInTiles;
-                        let tileHeight = (maxLat - minLat) / yInTiles;
-
-                        const minX = Math.max(minLon, extentFor3d[0]);
-                        const maxX = Math.min(maxLon, extentFor3d[2]);
-                        const minY = Math.max(minLat, extentFor3d[1]);
-                        const maxY = Math.min(maxLat, extentFor3d[3]);
-                        for (let zoom = minZoom; zoom <= maxZoom; zoom++) {
-                            const availableTiles = terrainOptions.available[zoom];
-                            for (let x = 0; x < xInTiles; x++) {
-                                const xInDegrees = minLon + x * tileWidth;
-                                if (xInDegrees > maxX) break;
-                                if (xInDegrees + tileWidth < minX) continue;
-                                for (let y = 0; y < yInTiles; y++) {
-                                    let yInDegrees;
-                                    if (schema === 'tms') {
-                                        yInDegrees = minLat + y * tileHeight;
-                                        if (yInDegrees > maxY) break;
-                                        if (yInDegrees + tileHeight < minY) continue;
-                                    }
-                                    else {
-                                        yInDegrees = maxLat - y * tileHeight;
-                                        if (yInDegrees < minY) break;
-                                        if (yInDegrees - tileHeight > maxY) continue;
-                                    }
-                                    for (const index in tileUrlTemplates) {
-                                        const tileUrlTemplate = tileUrlTemplates[index];
-                                        const tileBounds = availableTiles[index];
-                                        if (tileBounds) {
-                                            if (x < tileBounds.startX || x > tileBounds.endX || y < tileBounds.startY || y > tileBounds.endY) continue;
-                                            urlList.add(baseUrl + tileUrlTemplate.replace('{z}', zoom).replace('{x}', x).replace('{y}', y).replace('{version}', version));
-                                        }
-                                    }
-                                }
-                            }
-                            xInTiles *= 2;
-                            yInTiles *= 2;
-                            tileWidth /= 2;
-                            tileHeight /= 2;
-                        }
-                    }
-                }
             }
         }
         return Array.from(urlList.values());
@@ -1638,44 +1529,44 @@ class OfflineMapMaker extends SWCacheClient {
 
             if (self.requestSchemas) {
 
-                const createTmlFilter = (minResolution) => function (elm, i, arr) {
-                    var result = elm.res >= minResolution;
-                    if (!result && i > 0) {
-                        result = arr[i - 1].res > minResolution;
-                    }
-                    return result;
-                };
-                // Solo mantenemos los esquemas hasta el nivel de resolución mínima o el inmediatamente inferior a ella si no lo tiene
-                const filterTml = createTmlFilter(self.minResolution);
-                const requestSchemasForCurrentCrs = self
-                    .requestSchemas
-                    .filter((rs) => !rs.supportedCrs || Util.CRSCodesEqual(rs.supportedCrs, self.map.crs))
-                    .map((schema) => ({
-                        layerId: schema.layerId,
-                        tileMatrixSet: schema.tileMatrixSet,
-                        tileMatrixLimits: schema.tileMatrixLimits.filter(filterTml),
-                    }));
+                //const createTmlFilter = (minResolution) => function (elm, i, arr) {
+                //    var result = elm.res >= minResolution;
+                //    if (!result && i > 0) {
+                //        result = arr[i - 1].res > minResolution;
+                //    }
+                //    return result;
+                //};
+                //// Solo mantenemos los esquemas hasta el nivel de resolución mínima o el inmediatamente inferior a ella si no lo tiene
+                //const filterTml = createTmlFilter(self.minResolution);
+                //const requestSchemasForCurrentCrs = self
+                //    .requestSchemas
+                //    .filter((rs) => !rs.supportedCrs || Util.CRSCodesEqual(rs.supportedCrs, self.map.crs))
+                //    .map((schema) => ({
+                //        layerId: schema.layerId,
+                //        tileMatrixSet: schema.tileMatrixSet,
+                //        tileMatrixLimits: schema.tileMatrixLimits.filter(filterTml),
+                //    }));
 
-                // Actualizamos el extent para que coincida con las teselas del último nivel de los esquemas
-                let intersectionExtent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
-                requestSchemasForCurrentCrs.forEach(function updateExtent(rs) {
-                    const tml = rs.tileMatrixLimits[rs.tileMatrixLimits.length - 1];
-                    const unitsPerTile = tml.res * tml.tSize;
-                    intersectionExtent[0] = Math.min(intersectionExtent[0], tml.origin[0] + unitsPerTile * tml.cl);
-                    intersectionExtent[1] = Math.min(intersectionExtent[1], tml.origin[1] - unitsPerTile * (tml.rb + 1));
-                    intersectionExtent[2] = Math.max(intersectionExtent[2], tml.origin[0] + unitsPerTile * (tml.cr + 1));
-                    intersectionExtent[3] = Math.max(intersectionExtent[3], tml.origin[1] - unitsPerTile * tml.rt);
-                });
+                //// Actualizamos el extent para que coincida con las teselas del último nivel de los esquemas
+                //let intersectionExtent = [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY];
+                //requestSchemasForCurrentCrs.forEach(function updateExtent(rs) {
+                //    const tml = rs.tileMatrixLimits[rs.tileMatrixLimits.length - 1];
+                //    const unitsPerTile = tml.res * tml.tSize;
+                //    intersectionExtent[0] = Math.min(intersectionExtent[0], tml.origin[0] + unitsPerTile * tml.cl);
+                //    intersectionExtent[1] = Math.min(intersectionExtent[1], tml.origin[1] - unitsPerTile * (tml.rb + 1));
+                //    intersectionExtent[2] = Math.max(intersectionExtent[2], tml.origin[0] + unitsPerTile * (tml.cr + 1));
+                //    intersectionExtent[3] = Math.max(intersectionExtent[3], tml.origin[1] - unitsPerTile * tml.rt);
+                //});
 
                 // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
                 var precision = Math.pow(10, self.map.wrap.isGeo() ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION);
-                intersectionExtent = intersectionExtent.map(function (elm, idx) {
+                extent = extent.map(function (elm, idx) {
                     var round = idx < 3 ? Math.ceil : Math.floor;
                     return round(elm * precision) / precision;
                 });
 
                 var mapDefinition = {
-                    bBox: intersectionExtent,
+                    bBox: extent,
                     res: Math.floor(self.minResolution * 1000) / 1000, // Redondeamos previamente para que por errores de redondeo no haya confusión al identificar un mapa
                     url: [],
                     tms: [],
@@ -1706,7 +1597,7 @@ class OfflineMapMaker extends SWCacheClient {
                 });
 
                 var params = Util.getQueryStringParams();
-                var e = params[self.MAP_EXTENT_PARAM_NAME] = intersectionExtent.toString();
+                var e = params[self.MAP_EXTENT_PARAM_NAME] = extent.toString();
                 params[self.MAP_DEFINITION_PARAM_NAME] = btoa(JSON.stringify(mapDefinition));
                 if (self.serviceWorkerEnabled) {
                     params[self.SERVICE_WORKER_FLAG] = 1;
@@ -1810,16 +1701,9 @@ class OfflineMapMaker extends SWCacheClient {
     updateRequestSchemas(options = {}) {
         const opts = { ...options };
         opts.extent = opts.extent || this.extent;
-        opts.is3dViewIncluded = this.is3dViewIncluded;
         opts.layers = opts.layers || this.baseLayers;
         opts.crs = opts.crs || this.map.crs;
         this.requestSchemas = this.wrap.getRequestSchemas(opts);
-        if (opts.is3dViewIncluded) {
-            opts.crs = 'EPSG:4326';
-            opts.extent = Util.reprojectExtent(opts.extent, this.map.crs, opts.crs);
-            opts.layers = Array.from(this.#baseLayersFor3d.values());
-            this.requestSchemas = this.requestSchemas.concat(this.wrap.getRequestSchemas(opts));
-        }
         return this.requestSchemas;
     }
 
