@@ -1,5 +1,6 @@
 ﻿import TC from '../../TC.js';
 import Consts from '../Consts.js';
+import Util from '../Util.js';
 import MapContents from './MapContents.js';
 import './LayerLegend.js';
 import Controller from '../Controller.js';
@@ -82,7 +83,7 @@ class Legend extends MapContents {
             if (layer && !layer.customLegend) {
                 let layersInScale = false;
                 const lis = li.querySelectorAll('li.' + self.CLASS + '-leaf');
-                lis.forEach(function (l) {
+                for (const l of lis) {
                     if (l.classList.contains(self.CLASS + '-node-visible') && l.querySelectorAll("img").length) {
                         const uid = l.dataset.layerUid;
                         if (layer.isVisibleByScale(uid)) {
@@ -98,7 +99,7 @@ class Legend extends MapContents {
                             l.classList.remove(inScale);
                         }
                     }
-                });
+                }
                 layersInScale = layersInScale || !lis.length;
                 if (!lis.length) {
                     li.querySelectorAll('img').forEach(function (img) {
@@ -159,12 +160,12 @@ class Legend extends MapContents {
         return self;
     }
 
-    async updateLayerTree(layer,refresh) {
+    async updateLayerTree(layer, _refresh) {
         const self = this;
         
         if (!layer.isBase &&
             !layer.options.stealth &&
-            (!layer.availableNames || layer.availableNames?.some((name) => layer.getInfo(name).legend.length))) {
+            (!layer.availableNames || layer.availableNames?.some((name) => layer.getInfo(name).legend?.length))) {
 
             //// 09/04/2019 GLS: ignoramos el atributo que venga en la capa porque en la leyenda queremos que el árbol se muestre siempre y 
             //// nos ahorramos el tener que pasarlo en el estado del mapa
@@ -180,11 +181,11 @@ class Legend extends MapContents {
             //pero hasta que no se añaden la features no se puede obtener la simbología.
             if (layer.features && !layer.features.length) return;
             let layerLegend;
-            layerLegend = self.div.querySelector('sitna-layer-legend#stl-' + layer.id);
+            layerLegend = self.div.querySelector(`sitna-layer-legend[data-layer-id="${layer.id}"]`);
             if (!layerLegend) {
                 if (layerLoaded.includes(layer.id)) return;
                 layerLegend = document.createElement('sitna-layer-legend');
-                layerLegend.id = "stl-" + layer.id;
+                layerLegend.id = "stl-" + layer.id.replace(/\:|\s/gm,"_");//reemplazar ":" y " " por "_"
                 layerLegend.dataset.layerId = layer.id;
                 layerLegend.containerControl = self;
                 layerLoaded.push(layer.id);
@@ -206,7 +207,6 @@ class Legend extends MapContents {
                     const li = lis[0];
                     if (li.innerHTML !== layerLegend.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
                         li.innerHTML = layerLegend.innerHTML;
-                        li.setAttribute('class', layerLegend.getAttribute('class')); // Esto actualiza si un nodo deja de ser hoja o pasa a ser hoja
                     }
                     self.update();
 
@@ -230,6 +230,19 @@ class Legend extends MapContents {
                         });
                     else
                         self.update();
+
+                    self.inBoxChange = (callback) => { 
+                        const observer = new IntersectionObserver((entries) => {
+                            entries.forEach(entry => {
+                                callback(entry.isIntersecting)                                
+                            });
+                        });
+                        observer.observe(self.div);
+                    }
+
+
+                    
+
                 }                
             }
             catch (err) {
@@ -265,6 +278,11 @@ class Legend extends MapContents {
     getLayerUIElements() {
         const self = this;
         return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('sitna-layer-legend, li.' + self.CLASS + '-node');
+    }
+
+    isVisible() {
+        const self = this;
+        return Util.isInViewport(self.div) && self.div.checkVisibility();
     }
 
     updateModel() {

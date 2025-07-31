@@ -622,7 +622,7 @@ class LayerLegend extends WebComponentControl {
         const self = this;
         if (!self.#layer || !self.#layer.map || !(self.#layer instanceof SITNA.layer.Raster)) return;
         self.innerHTML = "";
-        if (!self.containerControl.IsVisible() || (!self.#layer.availableNames.some((layername) => self.#layer.isVisibleByScale(layername)) && !self.#on3DMode)) {
+        if (!self.containerControl.isVisible() || (!self.#layer.availableNames.some((layername) => self.#layer.isVisibleByScale(layername)) && !self.#on3DMode)) {
             
             return;
         }        
