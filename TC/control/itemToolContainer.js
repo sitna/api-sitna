@@ -10,6 +10,7 @@ const itemToolContainer = {
 
     _uiElementSelector: `ul > li`,
     _toolContainerSelector: '.tc-item-tools',
+    _addonsContainerSelector: '.tc-item-addons',
     isItemToolContainer: true,
 
     getItemTools: function () {
@@ -18,6 +19,13 @@ const itemToolContainer = {
             self.itemTools = [];
         }
         return self.itemTools;
+    },
+    getAddons: function () {
+        const self = this;
+        if (!self.addons) {
+            self.addons = [];
+        }
+        return self.addons;
     },
 
     getItemUIElements: function (selector) {
@@ -31,6 +39,10 @@ const itemToolContainer = {
     getToolContainer: function (itemElement) {
         const self = this;
         return itemElement.querySelector(self._toolContainerSelector);
+    },
+    getAddonsContainer: function (itemElement) {
+        const self = this;
+        return itemElement.querySelector(self._addonsContainerSelector);
     },
 
     addItemToolUI: function(elm, tool) {
@@ -63,12 +75,32 @@ const itemToolContainer = {
         }
     },
 
+    addAddonUI: async function (elm, tool) {
+        const self = this;
+        if (Util.isFunction(tool.renderFn)) {
+            const container = self.getAddonsContainer(elm);
+            const addon = await tool.renderFn(container, elm.dataset.layerId);
+            if (addon) {
+                container.appendChild(addon);
+            }
+        }
+
+    },
+
     addItemTool: function(options) {
         const self = this;
         self.getItemTools().push(options);
         self.getItemUIElements().forEach(function (elm) {
             self.addItemToolUI(elm, options);
         });
+    },
+    addAddon: function (options) {
+        const self = this;
+        self.getAddons().push(options);
+        self.getItemUIElements().forEach(function (elm) {
+            self.addAddonUI(elm, options);
+            //self.getAddonsContainer(elm).appendChild(options);
+        });        
     }
 
 };
