@@ -416,7 +416,12 @@ console.log("MILLISECONDS",end2-start2);
         children = children || [];
 
         if (children.length === 1 && typeof children[0] == 'string') {
-            return children[0];
+            if (!attributes)
+                return children[0];
+            else {                
+                return { ...attributes, textContent: children[0] };                
+            }
+                
         }
         // map each object
         children.forEach(function (child) {
@@ -512,6 +517,7 @@ console.log("MILLISECONDS",end2-start2);
                 }
             });
         }
+        
         // Convertimos OnlineResource a string
         if (Object.prototype.hasOwnProperty.call(layer, 'Attribution') && layer.Attribution.OnlineResource) {
             layer.Attribution.OnlineResource = flattenOnlineResource(layer.Attribution.OnlineResource);
@@ -858,10 +864,11 @@ console.log("MILLISECONDS",end2-start2);
         //    this.importScripts(e.data.url + 'TC/workers/tXml.js');
         //else
         //    this.importScripts('tXml.js');
+        
         var xml = simplify(tXml(e.data.text));
         var capabilities;
         switch (e.data.type) {
-            case "WMS":
+            case "WMS":                
                 capabilities = postprocessWMS(xml);
                 break;
             case "WMTS":
