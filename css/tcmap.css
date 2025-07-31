@@ -108,7 +108,7 @@
     --sitna-bg1-txt1-color: color-mix(in srgb, var(--sitna-background-color) 50%, var(--sitna-text-color)); /* #999999 */
     --sitna-bg3-txt1-color: color-mix(in srgb, var(--sitna-background-color) 75%, var(--sitna-text-color)); /* #cccccc */
     --sitna-bg8-txt1-color: color-mix(in srgb, var(--sitna-background-color) 88.89%, var(--sitna-text-color)); /* #e8e8e8 */
-    --sitna-bg5-txt1-color: color-mix(in srgb, var(--sitna-background-color) 83.33%, var(--sitna-text-color)); /* #dddddd */
+    --sitna-bg5-txt1-color: color-mix(in srgb, var(--sitna-background-color) 83.33%, var(--sitna-text-color)); /* #dddddd */    
     --sitna-bg11-txt1-color: color-mix(in srgb, var(--sitna-background-color) 91.67%, var(--sitna-text-color)); /* #eeeeee */
     --sitna-bg-a0-color: rgb(from var(--sitna-background-color) r g b / 0);
     --sitna-bg-a7-color: rgb(from var(--sitna-background-color) r g b / 0.7);
@@ -132,6 +132,7 @@
     --glyph-sec-color: var(--sitna-bg1-txt1-color);
     --glyph-hl-color: var(--main-hl-color);
     --glyph-bg-color: var(--sitna-bg5-txt1-color);
+    --glyph-disabled-bg-color: var(--sitna-bg8-txt1-color);
     --glyph-disabled-color: var(--sitna-bg3-txt1-color);
     --win-btn-color: var(--sitna-highlighted-text-color);
     --win-btn-bg-color: var(--sitna-bg-a0-color);
@@ -233,7 +234,7 @@
     --icon-print: '\e91b';
     --icon-placemark: '\e932';
     --icon-indeterminate: '?';
-    --checked-icon-text: '\2714';
+    --checked-icon-text: '\2714\fe0e'; /* \fe0e es la marca para forzar carácter monocromo */
     --unchecked-icon-text: '';
 }
 
@@ -805,8 +806,8 @@ html.tc-fullscreen, body.tc-fullscreen {
         top: auto;
         right: 0;
         bottom: 15px;
-        width: 25vh;
-        height: 25vh;
+        width: 25dvh;
+        height: 25dvh;
         z-index: 10012;
         border-top: 0.2em solid #fff;
         border-left: 0.2em solid #fff;
@@ -825,10 +826,10 @@ html.tc-fullscreen, body.tc-fullscreen {
         z-index: 10020;
         font-family: mapskin;
         content: '\e073';
-        font-size: 20vh;
+        font-size: 20dvh;
         color: #666;
         text-align: center;
-        line-height: 100vh;
+        line-height: 100dvh;
     }
 
     .tc-map .ol-viewport {
@@ -1383,7 +1384,7 @@ body .tc-modal .tc-modal-background {
 
 
 .tc-modal .tc-modal-body {
-    max-height: 60vh;
+    max-height: 60dvh;
     overflow: auto;
     padding: 0.9em;
     font-size: 0.9em;
