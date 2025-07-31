@@ -74,7 +74,7 @@ class WorkLayerManager extends TOC {
 
         self._uiElementSelector = `ul > li.${self.CLASS}-elm`;
         self._toolContainerSelector = `.${self.CLASS}-tools`;
-        //self._addonsContainerSelector = `.${self.CLASS}-addonsContainer`;
+        self._addonsContainerSelector = `.${self.CLASS}-addonsContainer`;
 
         self.model = new WorkLayerManagerModel();
 
@@ -299,6 +299,9 @@ class WorkLayerManager extends TOC {
 
         const inputRangeListener = function (e) {
             const range = e.target;
+            //Si el slider esta en el contenedor de addons no escucho el evento
+            if (self.div.querySelector(self._addonsContainerSelector).contains(e.target))
+                return;
             var li = range;
             do {
                 li = li.parentElement;
@@ -406,7 +409,7 @@ class WorkLayerManager extends TOC {
                 var layerData = {
                     title: layer.hideTitle ? '' : layerTitle,
                     hide: layer.renderOptions && layer.renderOptions.hide ? true : false,
-                    opacity: layer.renderOptions && layer.renderOptions.opacity ? layer.renderOptions.opacity * 100 : 100,
+                    opacity: layer.renderOptions && layer.renderOptions?.opacity >= 0 ? layer.renderOptions.opacity * 100 : 100,
                     customLegend: layer.customLegend,
                     unremovable: layer.unremovable,
                     id: layer.id
@@ -437,14 +440,14 @@ class WorkLayerManager extends TOC {
                 }
                 else {
                     layerData.hasExtent = true;
-                    layerData.hasInfo = false;
+                    layerData.hasInfo = Object.prototype.hasOwnProperty.call(layer, 'styles');
                     layerData.path = [layer.getPath()];
                 }
 
                 getLegendImgByPost(layer).then(async function (_src) {
 
                     try {
-                        if (!layer.customLegend && layer.availableNames?.some((name) => layer.getInfo(name).legend.length)) {
+                        if (!layer.customLegend && layer.availableNames?.some((name) => layer.getInfo(name).legend?.length)) {
                             const legendObject = layer.getLegend ? await layer.getLegend(true) : null;
                             if (legendObject) {
 
@@ -546,7 +549,7 @@ class WorkLayerManager extends TOC {
                         const layerIdx = layerList.indexOf(layer);
 
                         self.getItemTools().forEach(tool => self.addItemToolUI(li, tool));
-                        //self.getAddons().forEach(tool => self.addAddonUI(li, tool));
+                        self.getAddons().forEach(tool => self.addAddonUI(li, tool));
 
 
                         var inserted = false;
