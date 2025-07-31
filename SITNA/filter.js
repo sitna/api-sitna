@@ -283,7 +283,7 @@ function Dwithin(geometryName, geometry, distance, srsName) {
  * @memberof SITNA.filter
  * @param {string} propertyName Nombre de la propiedad a comparar.
  * @param {string|number} expression El valor a comparar.
- * @param {boolen=} matchCase Coincidencia de mayúsculas/minúsculas.
+ * @param {boolean=} matchCase Coincidencia de mayúsculas/minúsculas.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsEqualTo>`
  */
 function EqualTo(propertyName, expression, matchCase) {
@@ -429,7 +429,7 @@ function LessThanOrEqualTo(propertyName, expression) {
  * @param {string=} wildCard Carácter de patrón que coincide con cualquier secuencia de cero o más caracteres de cadena. El valor predeterminado es '*'.
  * @param {string=} singleChar Carácter de patrón que coincide con cualquier carácter de cadena simple. El valor predeterminado es '.'.
  * @param {string=} escapeChar Carácter de escape que se puede utilizar para escapar los caracteres del patrón. El valor predeterminado es '!'.
- * @param {boolen=} matchCase Coincidencia de mayúsculas/minúsculas.
+ * @param {boolean=} matchCase Coincidencia de mayúsculas/minúsculas.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsLike>`
  */
 function Like(propertyName, pattern ,wildCard ,singleChar ,escapeChar , matchCase) {
@@ -442,7 +442,7 @@ function Like(propertyName, pattern ,wildCard ,singleChar ,escapeChar , matchCas
  * @memberof SITNA.filter
  * @param {string} propertyName Nombre de la propiedad a comparar.
  * @param {string|number} expression El valor a comparar.
- * @param {boolen=} matchCase Coincidencia de mayúsculas/minúsculas.
+ * @param {boolean=} matchCase Coincidencia de mayúsculas/minúsculas.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsNotEqualTo>`
  */
 function NotEqualTo(propertyName, expression, matchCase) {
