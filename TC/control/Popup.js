@@ -18,6 +18,12 @@ class PopupModel {
         this.shareQuery = "";
     }
 }
+class PopupContentModel {
+    constructor() {
+        this.linkInNewWindow = "";
+        this.openInNewTab = "";
+    }
+}
 
 class Popup extends InfoDisplay {
     currentFeature = null;
@@ -28,6 +34,7 @@ class Popup extends InfoDisplay {
 
         self.wrap = new TC.wrap.control.Popup(self);
         self.model = new PopupModel();
+        self.contentModel = new PopupContentModel();
     }
 
     async register(map) {
@@ -133,6 +140,13 @@ class Popup extends InfoDisplay {
             callback();
         }
         self.controller = new Controller(self.model, new Observer(self.menuDiv));
+        const observer = new MutationObserver(mutationList =>
+            mutationList.filter(m => m.type === 'childList').forEach(m => {
+                if (m.addedNodes.length > 0) {
+                    self.contentController = new Controller(self.contentModel, new Observer(m.target));
+                }
+            }));
+        observer.observe(self.contentDiv, { childList: true, subtree: true }); 
         self.updateModel();
     }
 
@@ -232,6 +246,8 @@ class Popup extends InfoDisplay {
             self.caller.printToolModel.print = self.getLocaleString("print");
             self.caller.printToolModel.printThisContent = self.getLocaleString("printThisContent");
         }
+        self.contentModel.linkInNewWindow = self.getLocaleString("linkInNewWindow");
+        self.contentModel.openInNewTab = self.getLocaleString("openInNewTab");
     }
     async updateLanguage() {
         const self = this;
