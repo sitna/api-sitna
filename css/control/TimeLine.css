@@ -1,0 +1,157 @@
+﻿.tc-ctl-wlm-addonsContainer sitna-button {
+    --glyph-bg-color: var(--btn-bg-color);
+    --glyph-color: #fff;
+    --icon-font-grid-size: 18px;
+    margin-left: 0;
+    margin-right: 0;
+    flex-grow:1;
+}
+
+.tc-ctl-wlm-addonsContainer .controlsRow span {
+    flex-grow: 1;
+    text-align: center;    
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-backward {
+    --icon-text: '\f048';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-forward {
+    --icon-text: '\f051';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-last {
+    --icon-text: '\f050';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-first {
+    --icon-text: '\f049';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-play {
+    --icon-text: '\f04b';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-pause {
+    --icon-text: '\f04c';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-speedUp {
+    --icon-text: '\f04e';
+    --icon-font-family: FontAwesome
+}
+
+.tc-ctl-wlm-addonsContainer .tc-btn-speedDown {
+    --icon-text: '\f04a';
+    --icon-font-family: FontAwesome
+}
+
+
+
+.tc-ctl-wlm-addonsContainer .controlsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1px;
+}
+
+sitna-time-control.tc-ctl {
+    display: flex;
+    padding: 0.2em 0.2em 0 0.2em;
+    margin-top: 2%;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--sec-divider-color);
+    flex-direction: column;
+    gap: 0.5em
+}
+
+sitna-time-control.tc-ctl .tc-ctl-timeline-datetime {
+    display: grid;
+    padding: 0 2px;
+    flex-wrap: wrap;
+    row-gap: 2px;
+    column-gap: 2px;
+    grid-template-columns: fit-content(20%) 1fr;
+}
+
+sitna-time-control[lang='eu-ES'] .tc-ctl-timeline-datetime :nth-child(1) {
+    order: 2
+}
+
+sitna-time-control[lang='eu-ES'] .tc-ctl-timeline-datetime :nth-child(2) {
+    order: 1
+}
+
+sitna-time-control[lang='eu-ES'] .tc-ctl-timeline-datetime :nth-child(3) {
+    order: 4
+}
+
+sitna-time-control[lang='eu-ES'] .tc-ctl-timeline-datetime :nth-child(4) {
+    order: 3
+}
+
+sitna-time-control.tc-ctl .tc-ctl-timeline-datetime label {
+    FONT-SIZE: 85%;
+    LINE-HEIGHT: 1.75EM;
+}
+
+sitna-time-control.tc-ctl .tc-ctl-timeline-datetime input[type="datetime-local"] {
+    font-size: 85%;
+    width: 10em;
+}
+
+/*Estilos propio de los slider*/
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]:focus::-webkit-slider-runnable-track, .tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]::-webkit-slider-runnable-track {
+    background: var(--glyph-bg-color)
+}
+
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]:disabled::-webkit-slider-runnable-track {
+    background: var(--btn-disabled-bg-color);
+    cursor: default
+}
+
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]::-moz-range-track, .tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]:focus::-moz-range-track {
+    background: var(--glyph-bg-color)
+}
+
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]::-moz-range-track {
+    background: var(--btn-disabled-bg-color);
+    cursor: default
+}
+
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]::-ms-track, .tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]:focus::-ms-track {
+    background: var(--glyph-bg-color)
+}
+
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]::-ms-track {
+    background: var(--btn-disabled-bg-color);
+    cursor: default
+}
+
+.tc-ctl-wlm-addonsContainer sitna-time-control input[type=range]:disabled::-webkit-slider-thumb {
+    background: #999;
+    cursor: default
+}
+
+.tc-time-dimension .tc-ctl-lcat-leaf-time {    
+    font-size: 1.1em;
+    padding: 0 0.2em;
+}
+.tc-time-dimension .tc-ctl-lcat-leaf-time:before {
+    content: '\23F1\FE0E';
+    font-weight: bolder;
+    font-variant-emoji: unicode;
+}
+.tc-time-dimension span.tc-ctl-lcat-leaf-time:before,
+.tc-time-dimension span.tc-ctl-lcat-leaf-time:hover:before,
+.tc-time-dimension tc-ctl-lcat-node.tc-ctl-lcat-leaf.tc-checked span.tc-ctl-lcat-leaf-time:before {
+    color: var(--text-main-color);
+    font-style: normal;
+    cursor:default;
+}
