@@ -29,17 +29,17 @@
 
 /* GLS: en Safari IOS no pasa a ocupar toda la pantalla, así que aplicamos por CSS */
 html:fullscreen .tc-map:not(.tc-collapsed) {
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 
 html:-moz-full-screen .tc-map:not(.tc-collapsed) {
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 
 html:-webkit-full-screen .tc-map:not(.tc-collapsed) {
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 

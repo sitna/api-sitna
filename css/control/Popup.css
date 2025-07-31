@@ -74,7 +74,7 @@
 
 .tc-ctl-popup-content {
     align-self: flex-start;
-    max-height: calc(60vh + 4.5em);
+    max-height: calc(60dvh + 4.5em);
     overflow-x: auto;
 }
 

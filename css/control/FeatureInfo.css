@@ -97,7 +97,7 @@
 
 .tc-ctl-finfo .tc-ctl-finfo-result iframe {
     width: 40vw;
-    height: 40vh;
+    height: 40dvh;
     background-color: var(--main-bg-color);
     /*border:0;
     box-shadow: none;
@@ -111,7 +111,7 @@
 video.tc-video-attr, img.tc-img-attr {
     object-fit: scale-down;
     max-width: calc(min(30em, 100vw));
-    max-height: calc(min(30em, 100vh));
+    max-height: calc(min(30em, 100dvh));
     margin: auto;
 }
 
@@ -149,7 +149,7 @@ iframe.tc-video-attr,
     display: block;
     border: none;
     max-width: calc(min(30em, 100vw));
-    max-height: calc(min(30em, 100vh));
+    max-height: calc(min(30em, 100dvh));
     margin: auto;
 }
 
@@ -304,7 +304,7 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
     .tc-modal.tc-ctl-finfo-img-dialog .tc-modal-img img {
         object-fit: scale-down;
         max-width: 100vw;
-        max-height: 100vh;
+        max-height: 100dvh;
         /*border-radius: var(--border-radius);*/
         cursor: zoom-out;
     }
