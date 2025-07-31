@@ -70,9 +70,9 @@
 body > pre.prettyprint {
     position: absolute;
     left: 2vw;
-    top: 2vh;
+    top: 2dvh;
     right: 2vw;
-    bottom: 2vh;
+    bottom: 2dvh;
     margin: 0;
     overflow: auto;
     background-color: white;
@@ -105,7 +105,7 @@ body > pre.prettyprint {
     opacity: 0;
     position: absolute;
     font-style: italic;
-    top: 3vh;
+    top: 3dvh;
     right: 8em;
     z-index: 10011;
 }
