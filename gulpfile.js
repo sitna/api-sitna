@@ -109,7 +109,7 @@ function copyOnlineLibraries(cb) {
     });
 }
 function copyCrs(cb) {
-    fse.cpSync('node_modules/epsg-index/s', 'resources/data/crs', { recursive: true, force: false });
+    //fse.cpSync('node_modules/epsg-index/s', 'resources/data/crs', { recursive: true, force: false });
     fse.cpSync('resources/data/crs', sitnaBuild.targetPath + 'resources/data/crs', { recursive: true });
     cb();
 }
