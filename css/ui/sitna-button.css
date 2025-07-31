@@ -167,12 +167,14 @@ button.icon {
         top: 0;
     }
 
-    :host([variant="minimal"]) button:disabled {
-        background-color: transparent;
+    :host([variant="minimal"]) button:disabled {        
+        color: var(--btn-disabled-color);
+        background-color: var(--btn-disabled-bg-color);
+        border-color: var(--btn-disabled-border-color);
     }
 
-        :host([variant="minimal"]) button:disabled::before {
-            color: var(--glyph-disabled-color);
+        :host([variant="minimal"]) button:disabled::before {            
+            color: var(--btn-disabled-color);
         }
 
 button.link {
