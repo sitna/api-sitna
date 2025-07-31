@@ -1,3 +1,8 @@
+### [4.7.0](https://github.com/sitna/api-sitna/releases/tag/v4.7.0)
+- Añadido soporte para dimensión temporal en servicios WMS.
+- Añadidos archivos de declaración de tipos para TypeScript.
+- Corrección de errores.
+
 ### [4.6.1](https://github.com/sitna/api-sitna/releases/tag/v4.6.1)
 - Corrección de errores.
 
