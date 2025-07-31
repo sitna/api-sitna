@@ -214,7 +214,11 @@
     margin-top: 3px;
 }
 
-.tc-ctl-wlm li:only-child .tc-ctl-wlm-input {
+.tc-ctl-wlm .tc-ctl-wlm-addonsContainer {
+    width: 90%;
+}
+
+.tc-ctl-wlm li:only-child .tc-ctl-wlm-input, .tc-ctl-wlm li:only-child .tc-ctl-wlm-addonsContainer {
     width: 100%;
 }
 
@@ -352,7 +356,7 @@
     }
 
 .tc-ctl-wlm-input sitna-toggle,
-.tc-ctl-wlm-input sitna-button {
+.tc-ctl-wlm-input sitna-button{
     width: 1.5em;
     height: 1.5em;
     min-width: 1.5em;
