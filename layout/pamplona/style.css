@@ -286,7 +286,7 @@ html, body, #mapa:not(.tc-ctl-sv-active) {
 
 .tc-ctl-lcat-tree {
     padding-top: 0;
-    max-height: 43vh !important;
+    max-height: 43dvh !important;
     overflow-x:hidden;
 }
 
@@ -377,7 +377,7 @@ div.tc-panel-content > div.tc-ctl-prnmap-txt input.tc-ctl-prnmap-title, div.tc-c
 
 .olPopupContent .tc-ctl-finfo {
     width: 50vw;
-    height: 50vh;
+    height: 50dvh;
 }
 
 .tc-tools-panel {
@@ -485,7 +485,7 @@ div.tc-panel-content > div.tc-ctl-prnmap-txt input.tc-ctl-prnmap-title, div.tc-c
     margin-top: 0.3em;
     border-radius: 0.3em;
     padding: 1em;
-    max-height: 70vh;
+    max-height: 70dvh;
     overflow: auto;
     opacity: 1;
     width: 29.2em;
