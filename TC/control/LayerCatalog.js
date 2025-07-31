@@ -142,6 +142,7 @@ class LayerCatalogModel {
         this.changeCRS = "";
         this.cancel = "";
         this["wmsLayerNotCompatible.instructions"] = "";
+        this["time.dimension"] = "";
     }
 }
 class LayerCatalogResultModel {
@@ -150,7 +151,8 @@ class LayerCatalogResultModel {
         this.layerAlreadyAdded = "";
         this.clickToAddToMap = "";
         this.noMatches = "";
-        this.infoFromThisLayer = "";
+        this.infoFromThisLayer = "";   
+        this["time.dimension"] = "";
     }
 }
 
@@ -208,7 +210,7 @@ class LayerCatalog extends ProjectionSelector {
             self.controller = new Controller(self.model, new Observer(self.div));
             self.updateModel();
         } else {
-            await self.renderData({ layers: self.layers, enableSearch: true });
+            await self.renderData({ layers: self.layers, enableSearch: self.options.enableSearch });
             self.controller = new Controller(self.model, new Observer(self.div));
             self.updateModel();
 
@@ -326,6 +328,18 @@ class LayerCatalog extends ProjectionSelector {
         expandText = self.getLocaleString('expand');
         collapseText = self.getLocaleString('collapse');
 
+        map.addEventListener(Consts.event.LAYERERROR, function (e) {
+            const reason = e.message;
+            if (self.layers.some(f => f === e.layer)) {
+                if (reason) {
+                    TC.alert(self.getLocaleString(reason, { url: e.layer.url }));
+                }
+                self.getLayerNodes(e.layer).forEach(function (node) {
+                    node.classList.remove(Consts.classes.LOADING);
+                });
+            }
+        });
+
         map
             .on(Consts.event.BEFORELAYERADD + ' ' + Consts.event.BEFOREUPDATEPARAMS, function (e) {
                 self.getLayerNodes(e.layer).forEach(function (node) {
@@ -372,17 +386,6 @@ class LayerCatalog extends ProjectionSelector {
                                 });
                             }
                         }
-                    });
-                }
-            })
-            .on(Consts.event.LAYERERROR, function (e) {
-                const reason = e.reason;
-                if (self.layers.some(f => f === e.layer)) {
-                    if (reason) {
-                        TC.alert(self.getLocaleString(reason, { url: e.layer.url }));
-                    }
-                    self.getLayerNodes(e.layer).forEach(function (node) {
-                        node.classList.remove(Consts.classes.LOADING);
                     });
                 }
             })
@@ -611,6 +614,7 @@ class LayerCatalog extends ProjectionSelector {
                     model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
                     model.noMatches = self.getLocaleString("noMatches");
                     model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+                    model["time.dimension"] = self.getLocaleString("time.dimension");
                     self.resultController.push(controller);
                     
                 });
@@ -621,30 +625,32 @@ class LayerCatalog extends ProjectionSelector {
 
         if (!self.searchInit) {
             //botón de la lupa para alternar entre búsqueda y árbol
-            self.div.querySelector('h2 sitna-toggle').addEventListener('change', function (e) {
+            const viewToggle = self.div.querySelector('h2 sitna-toggle');
+            if (viewToggle) {
+                viewToggle.addEventListener('change', function (e) {
 
-                const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
-                const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
-                const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
+                    const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
+                    const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
+                    const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
 
-                const searchPaneMustShow = searchPane.classList.contains(Consts.classes.HIDDEN);
-                searchPane.classList.toggle(Consts.classes.HIDDEN, !searchPaneMustShow);
-                treePane.classList.toggle(Consts.classes.HIDDEN, searchPaneMustShow);
-                if (searchPaneMustShow) {
-                    self.textInput.focus();
-                    e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
-                }
-                else {
-                    e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
-
-                    //Si hay resaltados en el árbol, mostramos el panel de info
-                    const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li [checked]').length;
-                    if (selectedCount > 0) {
-                        infoPane.classList.remove(Consts.classes.HIDDEN);
+                    const searchPaneMustShow = searchPane.classList.contains(Consts.classes.HIDDEN);
+                    searchPane.classList.toggle(Consts.classes.HIDDEN, !searchPaneMustShow);
+                    treePane.classList.toggle(Consts.classes.HIDDEN, searchPaneMustShow);
+                    if (searchPaneMustShow) {
+                        self.textInput.focus();
+                        e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
                     }
-                }
-            }, { passive: true });
+                    else {
+                        e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
 
+                        //Si hay resaltados en el árbol, mostramos el panel de info
+                        const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li [checked]').length;
+                        if (selectedCount > 0) {
+                            infoPane.classList.remove(Consts.classes.HIDDEN);
+                        }
+                    }
+                }, { passive: true });
+            }
 
             //evento de expandir nodo de info
             //self._$div.off("click", ".tc-ctl-lcat-search button");                        
@@ -1179,11 +1185,13 @@ class LayerCatalog extends ProjectionSelector {
         this.model.close = self.getLocaleString("close");
         this.model["wmsLayerNotCompatible.instructions"] = self.getLocaleString("wmsLayerNotCompatible.instructions");
 
+        this.model["time.dimension"] = self.getLocaleString("time.dimension");
+
         self.resultController ?.forEach((controller) => {
             controller.model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
             controller.model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
             controller.model.noMatches = self.getLocaleString("noMatches");
-            controller.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
+            controller.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");            
         });
         Object.keys(self.infoModel).filter(key => !key.startsWith("#")).forEach(key => this.infoModel[key] = self.getLocaleString(key));
         
