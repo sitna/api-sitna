@@ -3,6 +3,10 @@
     --glyph-bg-color: transparent;
 }
 
+    .tc-ctl-search input[type=search] {
+        background-color: var(--input-bg-color);
+    }
+
 .tc-ctl-search-list-container ul {
     width: calc(100% - 0.5em);
 }
