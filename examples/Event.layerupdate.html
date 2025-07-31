@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de evento de mapa sitna:layerupdate</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de evento de mapa <a href="../doc/SITNA.Map.html#event:sitna:layerupdate">sitna:layerupdate</a>. 
+        En cuanto se carga la capa, se hace zoom a la entidad geográfica que es su contenido.
+</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div id="mapa"></div>
+    <script>
+        // Creamos un mapa por defecto.
+        const myMap = new SITNA.Map("mapa");
+
+        const layerId = "filtered-layer";
+
+        // Añadimos una función que escucha al evento de carga de capa para hacer zoom sobre la entidad cargada.
+        myMap.addEventListener("sitna:layerupdate", function (e) {
+            if (e.layer.id === layerId) {
+                myMap.zoomToFeatures(e.layer.features);
+            }
+        });
+
+        // Esperamos a que el mapa esté cargado.
+        myMap.loaded(() => {
+            // Añadimos la capa de recintos de municipio filtrada para mostrar solamente el recinto de Abáigar.
+            myMap.addLayer({
+                id: layerId,
+                type: SITNA.Consts.layerType.WFS,
+                url: "https://idena.navarra.es/ogc/wfs",
+                featureType: "CATAST_Pol_Municipio",
+                filter: '<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>CMUNICIPIO</ogc:PropertyName><ogc:Literal><![CDATA[1]]></ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>'
+            });
+        });
+    </script>
+</body>
+</html>

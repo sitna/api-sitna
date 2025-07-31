@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de eventos sitna:layeradd y sitna:layerremove</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        #lista {
+            top: 135px;
+            left: 60px;
+        }
+        #lista ol:empty::after {
+            font-style: italic;
+            content: "No hay capas cargadas"
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de eventos <a href="../doc/SITNA.Map.html#event:sitna:layeradd">sitna:layeradd</a> y
+        <a href="../doc/SITNA.Map.html#event:sitna:layerremove">sitna:layerremove</a>. Al añadir capas desde "capas disponibles" y
+    al eliminarlas en "capas cargadas" se va actualizando una lista de nombres de capa del mapa.
+</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div id="lista" class="instructions">
+        <ol></ol>
+    </div>
+    <div id="mapa"></div>
+    <script>
+        // Creamos un mapa con un control de gestión de capas cargadas y un control de catálogo de capas.
+        const myMap = new SITNA.Map("mapa", {
+            layout: "layout/ctl-container",
+            controls: {
+                workLayerManager: {
+                    div: "slot1"
+                },
+                layerCatalog: {
+                    div: "slot2",
+                    layers: [
+                        {
+                            id: "idena",
+                            title: "IDENA",
+                            hideTitle: true,
+                            type: SITNA.Consts.layerType.WMS,
+                            url: "https://idena.navarra.es/ogc/wms",
+                            hideTree: false
+                        }
+                    ]
+                }
+            }
+        });
+
+        // Esperamos a que el mapa esté cargado.
+        myMap.loaded(() => {
+
+            // Añadimos dos funciones que escuchan a los eventos de capa añadida y capa eliminada.
+
+            myMap.addEventListener("sitna:layeradd", function (e) {
+                if (e.layer.type === SITNA.Consts.layerType.WMS) {
+                    const item = document.createElement("li");
+                    item.textContent = e.layer.layerNames.join();
+                    document.querySelector('#lista ol').insertAdjacentElement("beforeend", item);
+                }
+            });
+
+            myMap.addEventListener("sitna:layerremove", function (e) {
+                if (e.layer.type === SITNA.Consts.layerType.WMS) {
+                    const layerNames = e.layer.layerNames.join();
+                    document
+                        .querySelectorAll("#lista ol li")
+                        .forEach((item) => {
+                            if (item.textContent === layerNames) {
+                                item.remove();
+                            }
+                        });
+                }
+            });
+        })
+    </script>
+</body>
+</html>
