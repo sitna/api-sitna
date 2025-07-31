@@ -42,11 +42,6 @@ TC.control = TC.control || {};
 
 class TabContainer extends Container {
 
-    constructor() {
-        super(...arguments);
-        const self = this;
-    }
-
     async loadTemplates() {
         const self = this;
         const module = await import('../templates/tc-ctl-tctr.mjs');
@@ -63,7 +58,7 @@ class TabContainer extends Container {
             controls: self.controlOptions
         }, function () {
             
-            self.div.querySelectorAll('sitna-tab').forEach((tab,index) => {
+            self.div.querySelectorAll('sitna-tab').forEach((tab) => {
                 const target = tab.target;
 
                 // GLS 24/01/2020 necesitamos un mutation observer para poder quitar el tc.collapsed cuando volvamos de  
