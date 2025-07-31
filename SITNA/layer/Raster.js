@@ -3,6 +3,7 @@ import Util from '../../TC/Util.js';
 import Consts from '../../TC/Consts.js';
 import Cfg from '../../TC/Cfg.js';
 import Layer from '../../SITNA/layer/Layer.js';
+import LayerEvent from '../../SITNA/layer/LayerEvent.js';
 import Vector from './Vector.js';
 import { GMLFilter } from '../filter.js';
 TC.layer = TC.layer || {};
@@ -190,7 +191,9 @@ class Raster extends Layer {
 
         self.wrap._promise = new Promise(function (resolve, reject) {
             const endCreateLayerFn = function (ollyr) {
+                const resetDisgregatedLayers = !self.wrap.layer;
                 self.wrap.setLayer(ollyr);
+                if (resetDisgregatedLayers) self.#disgregatedLayerNames = null;
                 if (ollyr) {
                     resolve(ollyr);
                 }
@@ -286,7 +289,7 @@ class Raster extends Layer {
                 })
                 .catch(function (error) {
                     if (self.map) {
-                        self.map.trigger(Consts.event.LAYERERROR, { layer: self, reason: 'couldNotGetCapabilities' });
+                        self.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self, message: 'couldNotGetCapabilities' }));
                     }
                     reject(error);
                 });
@@ -330,7 +333,7 @@ class Raster extends Layer {
             if (options.filter instanceof TC.filter.Filter) {
                 params.filter = options.filter.getText();
             }
-            //luego miramos si en un objeto filtro de los nuevos
+            //luego miramos si en un objeto filtro de los nuevos#createWmsLayer
             if (options.filter instanceof GMLFilter) {
                 params.filter = options.filter.getFilterText(self);
             }
@@ -342,6 +345,44 @@ class Raster extends Layer {
             else {
                 params.cql_filter = options.filter;
             }
+        }
+        try {
+            //chequear si alguna de las capas tiene dimensión temporal
+            if (self.getDisgregatedLayerNames().some((layerName) => {
+                const node = self.getLayerNodeByName(layerName);
+                if (node?.Dimension && node?.Dimension.name === "time") {
+                    let timeValues = node.Dimension.textContent.split('/');
+                    if (timeValues.length > 1) {
+                        //esto cuando se indica rango de fechas                    
+                        self.time = {
+                            firstTime: new Date(timeValues[0]).getTime(),
+                            lastTime: new Date(timeValues[1]).getTime(),
+                            from: new Date(node.Dimension.default),
+                            step: Util.iso8601ToMilliseconds(timeValues[2]),
+                        };
+
+                    }
+                    else {
+                        //esto cuando se indica lista discreta de fechas
+                        timeValues = node.Dimension.textContent.split(',');
+                        if (timeValues.some((value) => isNaN(Date.parse(value)))) throw 'No valid time dimension';
+                        self.time = {
+                            firstTime: new Date(timeValues[0]).getTime(),
+                            lastTime: new Date(timeValues[timeValues.length - 1]).getTime(),
+                            from: new Date(node.Dimension.default),
+                            range: timeValues.map((date) => new Date(date).getTime())
+                        };
+
+                    }
+                    return true;
+                }
+                return false;
+            })) {
+                Object.assign(params, { "TIME": self.time.from.toISOString() });
+            }
+        }
+        catch (ex) {
+            //self.map.toast(Util.getLocaleString(self.map.getLocale(), 'time.dimension.no.valid'), { type: Consts.msgType.WARNING });            
         }
 
         return self.wrap.createWMSLayer(self.getGetMapUrl(), params, options);
@@ -536,6 +577,34 @@ class Raster extends Layer {
             }
         }
         return self.names;
+    }
+
+    //TODO: Documentar
+    async setTime(timeOrValue,time2OrValue) {
+        //const source = this.wrap.layer.getSource();
+        const self = this;
+        const referred = Promise.withResolvers();
+        const tileLoadHandler = () => {
+            referred.resolve();
+            self.wrap.$events.off(Consts.event.TILELOAD, tileLoadHandler);
+        }
+        self.wrap.$events.on(Consts.event.TILELOAD, tileLoadHandler);
+        let time = timeOrValue instanceof Date ? timeOrValue.toISOString() : timeOrValue;
+        time += (time2OrValue && time2OrValue instanceof Date ? "/" + time2OrValue.toISOString() : "");
+        time += (time2OrValue && !(time2OrValue instanceof Date) ? "/" + time2OrValue : "");
+
+        self.wrap.setParams({ TIME: time });
+
+        return referred.promise;        
+    }    
+    //TODO: Documentar
+    getTime() {
+        const params = this.wrap.getParams();
+        if (params?.TIME) {
+            const times = params?.TIME.split("/");
+            return times.map((time) => new Date(time).getTime()).join("/");
+        }
+        return null;
     }
 
     /*
@@ -795,17 +864,18 @@ class Raster extends Layer {
         const self = this;
         if (options.crs) {
             switch (self.type) {
-                case Consts.layerType.WMTS:
-                    var matrixSet = self.wrap.getCompatibleMatrixSets(options.crs)[0];
-                    if (matrixSet) {
-                        self.matrixSet = matrixSet;
-                        self.wrap.setMatrixSet(matrixSet);
+                case Consts.layerType.WMTS: {
+                    let compatibleMatrixSets = self.wrap.getCompatibleMatrixSets(options.crs);
+                    if (compatibleMatrixSets.length) {
+                        self.matrixSet = compatibleMatrixSets.find((tms) => tms === self.options.matrixSet) || compatibleMatrixSets[0];
+                        self.wrap.setMatrixSet(self.matrixSet);
                     }
                     else {
                         self.wrap.setProjection(options);
                     }
-                    self.mustReproject = !matrixSet;
+                    self.mustReproject = !compatibleMatrixSets.length;
                     break;
+                }
                 case Consts.layerType.WMS:
                     self.wrap.setProjection(options);
                     self.mustReproject = !self.isCompatible(options.crs);
@@ -1051,6 +1121,9 @@ class Raster extends Layer {
                     abstract: !!capabilitiesNode.Abstract,
                     metadata: !!capabilitiesNode.MetadataURL
                 };
+                if (capabilitiesNode.Dimension?.name === "time") {
+                    rslt.time = true;
+                }
                 if (isRootNode) {
                     rootNode = rslt;
                 }
@@ -1809,7 +1882,7 @@ class Raster extends Layer {
             }
 
             // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
-            img.setAttribute("src", data.src);
+            img.setAttribute("src", data.src);            
             img.onload = function () {                
                 self.#get$events().trigger(Consts.event.TILELOAD, { tile: image });
             };
