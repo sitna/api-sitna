@@ -619,18 +619,18 @@ class WFSQuery extends Control {
     async register(map) {
         const self = this;
 
-        map.on(Consts.event.LAYERERROR, (e) => {
+        map.addEventListener(Consts.event.LAYERERROR, (e) => {
             if (e.layer === self.resultsLayer) {
                 if (self.modalDialog) {
                     self.modalDialog.getElementsByClassName("tc-modal-body")[0].classList.remove(loadingCssClass);
                 }
-                if (e.reason === Consts.WFSErrors.MAX_NUM_FEATURES) {
+                if (e.message === Consts.WFSErrors.MAX_NUM_FEATURES) {
                     self.showMessage(getLocaleString("query.msgTooManyResults", { limit: e.data.limit }), Consts.msgType.WARNING);
                 }
                 else {
-                    //console.error(e.reason);
+                    //console.error(e.message);
                     self.showMessage(getLocaleString("query.errorUndefined"), Consts.msgType.ERROR);
-                    throw new Error(e.reason);
+                    throw new Error(e.message);
                 }
             }
         });
