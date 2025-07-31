@@ -2,7 +2,7 @@
 <div class="tc-ctl-bms-tree tc-grid">
     <ul class="tc-ctl-bms-branch">
         {{#each baseLayers}}
-        {{> tc-ctl-bms-node controlId=../controlId}}
+        {{> tc-ctl-bms-node controlId=../controlId isDialog=../isDialog }}
         {{/each}}
         {{#if dialogMore}}
         <li class="tc-ctl-bms-node">
