@@ -40,7 +40,7 @@ div.tc-ctl-download-cnt label {
     animation: spin 2s infinite linear;
 }
 
-.tc-ctl-download-btn {
+.tc-ctl-download-help + .tc-ctl-download-btn {
     border-top-left-radius: var(--border-radius);
     border-bottom-left-radius: var(--border-radius);
 }

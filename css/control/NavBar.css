@@ -1,6 +1,7 @@
 ﻿
 .tc-ctl.tc-ctl-nav {
     top: calc(1.5em - 100%);
+    width: 2em;
     position: relative;
     left: 0.7em;
     padding: 0;

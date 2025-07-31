@@ -539,7 +539,7 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
         display: block;
     }
 
-/*En modo movil los resultpanel no tienen la altura de la tabla de datos prefijado en 20vh*/
+/*En modo movil los resultpanel no tienen la altura de la tabla de datos prefijado en 20dvh*/
 .tc-ctl-rpanel-info .tc-ctl-finfo-layer-content, .tc-ctl-rpanel-info .tc-ctl-finfo-layer-content ul {
     height: auto;
 }
@@ -946,8 +946,8 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
     position: relative; /* para que la impresora se mantega dentro del panel */
 }
 
-    .tc-ctl-rpanel-body.tc-ctl-rpanel-table, .tc-ctl-rpanel-body.tc-ctl-rpanel-info {
-        padding: 0px;
+    .tc-ctl-rpanel-body.tc-ctl-rpanel-table, .tc-ctl-rpanel-body.tc-ctl-rpanel-info:empty {
+        padding: 0;
     }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-title span.tc-ctl-rpanel-title-text {
