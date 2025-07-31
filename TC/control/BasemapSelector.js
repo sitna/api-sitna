@@ -100,23 +100,21 @@ class BasemapSelector extends MapContents {
         if (layer != self.map.getBaseLayer()) {
             if (layer.mustReproject) {
 
+                const fallbackLayer = layer.getFallbackLayer();
+
                 if (self.map.on3DView) {
-                    if (!layer.getFallbackLayer()) {
+                    if (!fallbackLayer) {
                         self.#currentSelection.checked = true;
                         e.stopPropagation();
                         return;
-                    } else if (layer.getFallbackLayer()) {
-                        const fallbackLayer = layer.getFallbackLayer();
-                        if (fallbackLayer) {
-                            fallbackLayer.getCapabilitiesPromise().then(function () {
-                                if (fallbackLayer.isCompatible(self.map.getCRS())) {
-                                    self.map.setBaseLayer(layer);
-                                }
-                            });
-                        }
-
-                        flagToCallback = true;
                     }
+                    fallbackLayer.getCapabilitiesPromise().then(function () {
+                        if (fallbackLayer.isCompatible(self.map.getCRS())) {
+                            self.map.setBaseLayer(layer);
+                        }
+                    });
+
+                    flagToCallback = true;
                 } else {
                     // provisonal
                     if (self.#currentSelection) {
@@ -127,7 +125,6 @@ class BasemapSelector extends MapContents {
                     const dialogOptions = {
                         layer: layer
                     };
-                    const fallbackLayer = layer.getFallbackLayer();
                     if (fallbackLayer) {
                         fallbackLayer.getCapabilitiesPromise().then(function () {
                             if (fallbackLayer.isCompatible(self.map.getCRS())) {
@@ -142,14 +139,8 @@ class BasemapSelector extends MapContents {
                     //layer.getCompatibleCRS({ normalized: true });
                     flagToCallback = false;
                 }
-
             }
             else {
-
-                if (layer.type === Consts.layerType.WMS || layer.type === Consts.layerType.WMTS && layer.getProjection() !== self.map.crs) {
-                    layer.setProjection({ crs: self.map.crs });
-                }
-
                 self.map.setBaseLayer(layer);
             }
         }
@@ -179,6 +170,7 @@ class BasemapSelector extends MapContents {
 
         map.on(Consts.event.BASELAYERCHANGE + ' ' + Consts.event.PROJECTIONCHANGE + ' ' + Consts.event.VIEWCHANGE, function (e) {
             self.update(self.div, e.layer);
+            self.update(self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog .tc-modal-body'), e.layer);
         });
 
 
@@ -211,7 +203,7 @@ class BasemapSelector extends MapContents {
 
     async render(callback) {
         const self = this;
-        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
+        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', { isDialog: true });
         await super.render(callback, Util.extend({}, self.options, { controlId: self.id }));
         self.controller = new Controller(self.model, new Observer(self.div));
         self.dialogController =new Controller(self.modelDialog, new Observer(self._dialogDiv));
@@ -248,52 +240,47 @@ class BasemapSelector extends MapContents {
 
         div = div || self.div;
 
-        await (self.#moreBaseLayersPromise || self.#getMoreBaseLayers());
-        Array.from(div.querySelectorAll(`ul.${self.CLASS}-branch li`)).forEach(function (li, _idx, arr) {
+        await (self.#moreBaseLayersPromise ?? self.#getMoreBaseLayers());
+        const liList = Array.from(div.querySelectorAll(`ul.${self.CLASS}-branch li`));
+        for (const li of liList) {
             const layer = self.getLayer(li.dataset.layerId);
             if (layer) {
-                const curBaseLayer = baseLayer || self.map.baseLayer;
+                layer.setProjection({ crs: self.map.crs });
+                const curBaseLayer = baseLayer ?? self.map.baseLayer;
                 const radio = li.querySelector('input[type=radio]');
-                const fbLayer = layer.getFallbackLayer && layer.getFallbackLayer();
-                let checked = curBaseLayer && (curBaseLayer === layer || curBaseLayer.id === layer.id);
+                const fbLayer = layer.getFallbackLayer?.();
+                let checked = curBaseLayer === layer || curBaseLayer?.id === layer.id;
                 if (!checked) {
-                    const otherLayerIsFallback = fbLayer && arr
+                    const otherLayerIsFallback = fbLayer && liList
                         .filter(elm => elm !== li)
                         .some(elm => elm.dataset.layerId === fbLayer.id);
                     checked = !otherLayerIsFallback && curBaseLayer && (curBaseLayer === fbLayer || fbLayer && curBaseLayer.id === fbLayer.id);
                 }
 
+                let mustReproject;
                 if (self.map.on3DView && layer.mustReproject && fbLayer) {
-                    fbLayer.getCapabilitiesPromise().then(function () {
-                        var mustReproject = !layer.getFallbackLayer().isCompatible(self.map.getCRS());
+                    await fbLayer.getCapabilitiesPromise();
+                    mustReproject = !layer.getFallbackLayer().isCompatible(self.map.getCRS());
+                }
+                else {
+                    mustReproject = layer.mustReproject;
+                }
 
-                        radio.checked = checked;
-                        if (mustReproject) {
-                            radio.classList.add(Consts.classes.DISABLED);                            
-                            self.dialogController.setAttribute(self.map.on3DView ? "notAvailableTo3D" : "reprojectionNeeded", "title", li);                            
-                        }
-                        else {
-                            radio.classList.remove(Consts.classes.DISABLED);
-                            li.removeAttribute('title');
-                        }
-                    });
-                } else {
-                    radio.checked = checked;
-                    if (layer.mustReproject) {
-                        radio.classList.add(Consts.classes.DISABLED);
-                        self.dialogController.setAttribute(self.map.on3DView ? "notAvailableTo3D" : "reprojectionNeeded", "title", li);
-                    }
-                    else {
-                        radio.classList.remove(Consts.classes.DISABLED);
-                        li.removeAttribute('title');
-                    }
+                radio.checked = checked;
+                if (mustReproject) {
+                    radio.classList.add(Consts.classes.DISABLED);
+                    self.dialogController.setAttribute(self.map.on3DView ? "notAvailableTo3D" : "reprojectionNeeded", "title", li);
+                }
+                else {
+                    radio.classList.remove(Consts.classes.DISABLED);
+                    li.removeAttribute('title');
                 }
 
                 if (checked) {
                     self.#currentSelection = radio;
                 }
             }
-        });
+        }
 
         self.updateScale();
     }
@@ -486,7 +473,7 @@ class BasemapSelector extends MapContents {
 
             Util.closeModal();
             const btn = e.currentTarget;
-            const crs = 'EPSG:' + btn.dataset.crsCode;
+            const crs = btn.dataset.crsCode ? ('EPSG:' + btn.dataset.crsCode) : self.map.crs;
 
             // dependerá del que esté activo
             const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-crs-dialog');
@@ -556,7 +543,7 @@ class BasemapSelector extends MapContents {
         Util.showModal(dialog);
     }
 
-    showMoreLayersDialog() {
+    async showMoreLayersDialog() {
         const self = this;
 
         const dialog = self._dialogDiv.querySelector('.' + self.CLASS + '-more-dialog');
@@ -609,7 +596,8 @@ class BasemapSelector extends MapContents {
             }
             self.getRenderedHtml(self.CLASS, {
                 baseLayers: moreBaseLayers.map(processLayer),
-                controlId: self.id
+                controlId: self.id,
+                isDialog: true,
             }, function (html) {
                 modalBody.innerHTML = html;
                 const tree = modalBody.querySelector(`.${self.#cssClasses.TREE}`);
@@ -621,7 +609,7 @@ class BasemapSelector extends MapContents {
                 
             });
         };
-        self.#getMoreBaseLayers(function (layerIdx) {
+        await self.#getMoreBaseLayers(function (layerIdx) {
             if (modalBody.classList.contains(Consts.classes.LOADING)) {
                 renderBody();
             }
@@ -636,10 +624,9 @@ class BasemapSelector extends MapContents {
                     });
                 }
             }
-        }).then(function () {
-            renderBody();
-            self.modelDialog.metadata = self.getLocaleString("metadata");
         });
+        renderBody();
+        self.modelDialog.metadata = self.getLocaleString("metadata");
     }
 
     #toggleUI(container) {
@@ -664,8 +651,7 @@ class BasemapSelector extends MapContents {
     }
 
     getLayer(id) {
-        const self = this;
-        return self.map && (self.map.getLayer(id) || self.#moreBaseLayers && self.#moreBaseLayers.find(layer => layer.id === id));
+        return this.map?.getLayer(id) ?? this.#moreBaseLayers?.find(layer => layer.id === id);
     }
 
     #getMoreBaseLayers(partialCallback) {
