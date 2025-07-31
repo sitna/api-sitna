@@ -40,7 +40,7 @@
 }
 
 :host input[type=checkbox]::before {
-    color: var(--cb-unchecked-color);
+    color: var(--cb-color);
     content: var(--unchecked-icon-text);
 }
 
@@ -68,6 +68,7 @@ input[type=checkbox] {
     position: relative;
     appearance: none;
     -webkit-appearance: none;
+    color: transparent;
     border: 0;
     margin: 0;
     border: solid 1px var(--cb-border-color);
@@ -91,7 +92,8 @@ input[type=checkbox] {
         top: 0;
         left: 0;
         font-family: var(--icon-font-family);
-        font-weight: var(--icon-font-weight); 
+        font-weight: var(--icon-font-weight);
+        font-variant-emoji: unicode;
         width: 100%;
         height: 100%;
         line-height: calc(var(--icon-font-line-height) - 0.25em);
@@ -106,6 +108,7 @@ input[type=checkbox] {
         top: 0;
         left: 0;
         font-family: var(--icon-font-family);
+        font-variant-emoji: unicode;
         width: 100%;
         height: 100%;
         line-height: calc(var(--icon-font-line-height) - 0.25em);
