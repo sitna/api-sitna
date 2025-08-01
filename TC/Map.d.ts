@@ -3,6 +3,8 @@ import Marker, { MarkerOptions } from "../SITNA/feature/Marker";
 import Layer, { LayerOptions } from "../SITNA/layer/Layer";
 import { StyleOptions } from "../SITNA/layer/Vector";
 import EventTarget from "./EventTarget";
+import LayerEvent, { LayerEventCallback } from "../SITNA/layer/LayerEvent";
+
 
 export interface LayoutOptions {
     config?: string;
@@ -108,6 +110,10 @@ export class BasicMap extends EventTarget {
     zoomToMarkers(options?: ZoomOptions): void;
     removeFeatures(features: Feature[]): void;
     exportImage(): string | null;
+
+    addEventListener(type: string, listener: LayerEventCallback, options?: boolean | EventListenerOptions): void;
+    removeEventListener(type: string, listener: LayerEventCallback, options?: boolean | EventListenerOptions): void;
+    dispatchEvent(event: LayerEvent): boolean;
 }
 
 export default BasicMap;

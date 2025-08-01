@@ -1,4 +1,4 @@
-type EventCallback = (event: object) => void;
+export type EventCallback = (event: Event) => void;
 
 interface EventListenerOptions {
     capture?: boolean;
