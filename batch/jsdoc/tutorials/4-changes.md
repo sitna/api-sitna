@@ -1,3 +1,6 @@
+### [4.7.1](https://github.com/sitna/api-sitna/releases/tag/v4.7.1)
+- Corrección de error en las rutas de importación de módulos en el paquete npm.
+
 ### [4.7.0](https://github.com/sitna/api-sitna/releases/tag/v4.7.0)
 - Añadido soporte para dimensión temporal en servicios WMS.
 - Añadida interfaz de programación para gestión de eventos.
