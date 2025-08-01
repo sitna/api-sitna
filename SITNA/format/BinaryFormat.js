@@ -1,5 +1,5 @@
-﻿import FeatureFormat from '../../node_modules/ol/format/Feature.js';
-import GeoJSON from '../../node_modules/ol/format/GeoJSON.js';
+﻿import FeatureFormat from 'ol/format/Feature.js';
+import GeoJSON from 'ol/format/GeoJSON.js';
 
 class BinaryFormat extends FeatureFormat {
     #geoJsonFormat;

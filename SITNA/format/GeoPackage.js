@@ -1,5 +1,5 @@
 ﻿import BinaryFormat, { FieldNameError } from './BinaryFormat.js';
-import WKT from '../../node_modules/ol/format/WKT.js';
+import WKT from 'ol/format/WKT.js';
 import Consts from '../../TC/Consts.js';
 import Util from '../../TC/Util.js';
 import Point from '../feature/Point.js';

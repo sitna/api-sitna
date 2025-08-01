@@ -1,4 +1,4 @@
-import localforage from '../node_modules/localforage/dist/localforage.min.js';
+import localforage from 'localforage';
 
 import TC from '../TC.js';
 import Consts from './Consts.js';
@@ -72,7 +72,7 @@ import './control/TOC.js';
 import './control/WFSEdit.js';
 import './control/WFSQuery.js';
 import './control/WorkLayerManager.js';
-import { JL } from '../node_modules/jsnlog/jsnlog.min.js';
+import { JL } from 'jsnlog';
 import '../SITNA/feature/Point.js';
 import '../SITNA/feature/MultiPoint.js';
 import Marker from '../SITNA/feature/Marker.js';

@@ -1,23 +1,23 @@
-import { VERSION } from '../../node_modules/ol/util.js';
-import Map from '../../node_modules/ol/Map.js';
-import View from '../../node_modules/ol/View.js';
-import Overlay from '../../node_modules/ol/Overlay.js';
-import Collection from '../../node_modules/ol/Collection.js';
-import { extend } from '../../node_modules/ol/array.js';
-import { assert } from '../../node_modules/ol/asserts.js';
-import { asArray, asString } from '../../node_modules/ol/color.js';
-import { toRadians } from '../../node_modules/ol/math.js';
-import { padNumber } from '../../node_modules/ol/string.js';
-import MapEventType from '../../node_modules/ol/MapEventType.js';
-import MapBrowserEventType from '../../node_modules/ol/MapBrowserEventType.js';
-import { OverviewMap, ScaleLine, Zoom, ZoomToExtent } from '../../node_modules/ol/control.js';
-import ZoomSlider from '../../node_modules/ol/control/ZoomSlider.js';
-import { listen, unlistenByKey } from '../../node_modules/ol/events.js';
-import { shiftKeyOnly, click, never } from '../../node_modules/ol/events/condition.js';
-import e_EventType from '../../node_modules/ol/events/EventType.js';
-import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, extend as extend_e } from '../../node_modules/ol/extent.js';
-import Feature from '../../node_modules/ol/Feature.js';
-import { createStyleFunction } from '../../node_modules/ol/Feature.js';
+import { VERSION } from 'ol/util.js';
+import Map from 'ol/Map.js';
+import View from 'ol/View.js';
+import Overlay from 'ol/Overlay.js';
+import Collection from 'ol/Collection.js';
+import { extend } from 'ol/array.js';
+import { assert } from 'ol/asserts.js';
+import { asArray, asString } from 'ol/color.js';
+import { toRadians } from 'ol/math.js';
+import { padNumber } from 'ol/string.js';
+import MapEventType from 'ol/MapEventType.js';
+import MapBrowserEventType from 'ol/MapBrowserEventType.js';
+import { OverviewMap, ScaleLine, Zoom, ZoomToExtent } from 'ol/control.js';
+import ZoomSlider from 'ol/control/ZoomSlider.js';
+import { listen, unlistenByKey } from 'ol/events.js';
+import { shiftKeyOnly, click, never } from 'ol/events/condition.js';
+import e_EventType from 'ol/events/EventType.js';
+import { getWidth, getHeight, containsCoordinate, containsExtent, buffer, extend as extend_e } from 'ol/extent.js';
+import Feature from 'ol/Feature.js';
+import { createStyleFunction } from 'ol/Feature.js';
 import {
     Geometry as g_Geometry,
     Point,
@@ -27,25 +27,25 @@ import {
     Polygon,
     MultiPolygon,
     Circle as g_Circle
-} from '../../node_modules/ol/geom.js';
-import GeometryCollection from '../../node_modules/ol/geom/GeometryCollection.js';
-import { deflateCoordinates } from '../../node_modules/ol/geom/flat/deflate.js';
-import { inflateCoordinates } from '../../node_modules/ol/geom/flat/inflate.js';
-import { linearRingLength } from '../../node_modules/ol/geom/flat/length.js';
-import { xhr } from '../../node_modules/ol/featureloader.js';
+} from 'ol/geom.js';
+import GeometryCollection from 'ol/geom/GeometryCollection.js';
+import { deflateCoordinates } from 'ol/geom/flat/deflate.js';
+import { inflateCoordinates } from 'ol/geom/flat/inflate.js';
+import { linearRingLength } from 'ol/geom/flat/length.js';
+import { xhr } from 'ol/featureloader.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
-import XMLFeature from '../../node_modules/ol/format/XMLFeature.js';
-import GML from '../../node_modules/ol/format/GML.js';
-import { WFS, WKT, WKB, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from '../../node_modules/ol/format.js';
+import XMLFeature from 'ol/format/XMLFeature.js';
+import GML from 'ol/format/GML.js';
+import { WFS, WKT, WKB, WMSCapabilities, WMSGetFeatureInfo, WMTSCapabilities, TopoJSON } from 'ol/format.js';
 import GeoJSON from '../../lib/ol/format/GeoJSON.js';
-import FeatureFormat from '../../node_modules/ol/format/Feature.js';
+import FeatureFormat from 'ol/format/Feature.js';
 import GPX from '../../lib/ol/format/GPX.js';
 import KML from '../../lib/ol/format/KML.js';
 import GeoPackage from '../../SITNA/format/GeoPackage.js';
 import Shapefile from '../../SITNA/format/Shapefile.js';
-import { transformGeometryWithOptions } from '../../node_modules/ol/format/Feature.js';
-import GML2 from '../../node_modules/ol/format/GML2.js';
-import GML3 from '../../node_modules/ol/format/GML3.js';
+import { transformGeometryWithOptions } from 'ol/format/Feature.js';
+import GML2 from 'ol/format/GML2.js';
+import GML3 from 'ol/format/GML3.js';
 import GML32 from '../../lib/ol/format/GML32.js';
 import {
     defaults,
@@ -57,13 +57,13 @@ import {
     Modify,
     /*DragAndDrop, */
     DoubleClickZoom
-} from '../../node_modules/ol/interaction.js';
+} from 'ol/interaction.js';
 import DragAndDrop from '../../lib/ol/interaction/DragAndDrop.js';
-import { Layer, Tile, Image as l_Image, Vector as l_Vector, Heatmap } from '../../node_modules/ol/layer.js';
-import TileGrid from '../../node_modules/ol/tilegrid/TileGrid.js';
-import { unByKey } from '../../node_modules/ol/Observable.js';
+import { Layer, Tile, Image as l_Image, Vector as l_Vector, Heatmap } from 'ol/layer.js';
+import TileGrid from 'ol/tilegrid/TileGrid.js';
+import { unByKey } from 'ol/Observable.js';
 
-import BaseObject from '../../node_modules/ol/Object.js';
+import BaseObject from 'ol/Object.js';
 import {
     METERS_PER_UNIT,
     Projection,
@@ -72,20 +72,20 @@ import {
     getTransform,
     transform,
     transformExtent
-} from '../../node_modules/ol/proj.js';
-import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from '../../node_modules/ol/proj/epsg4326.js';
-import { register } from '../../node_modules/ol/proj/proj4.js';
-import { getVectorContext, toContext } from '../../node_modules/ol/render.js';
-import r_EventType from '../../node_modules/ol/render/EventType.js';
-import { Vector as s_Vector, Cluster, ImageWMS, WMTS, ImageCanvas } from '../../node_modules/ol/source.js';
-//import OGCMapTile from '../../node_modules/ol/source/OGCMapTile.js';
-import TileEventType from '../../node_modules/ol/source/TileEventType.js';
-import VectorEventType from '../../node_modules/ol/source/VectorEventType.js';
-import { optionsFromCapabilities } from '../../node_modules/ol/source/WMTS.js';
-import { defaultImageLoadFunction } from '../../node_modules/ol/source/Image.js';
-import { createLoader } from '../../node_modules/ol/source/wms.js';
-import { decode } from '../../node_modules/ol/Image.js';
-import { Style, RegularShape, Circle as s_Circle, Fill, Icon, Stroke, Text } from '../../node_modules/ol/style.js';
+} from 'ol/proj.js';
+import { METERS_PER_UNIT as g_METERS_PER_UNIT, PROJECTIONS } from 'ol/proj/epsg4326.js';
+import { register } from 'ol/proj/proj4.js';
+import { getVectorContext, toContext } from 'ol/render.js';
+import r_EventType from 'ol/render/EventType.js';
+import { Vector as s_Vector, Cluster, ImageWMS, WMTS, ImageCanvas } from 'ol/source.js';
+//import OGCMapTile from 'ol/source/OGCMapTile.js';
+import TileEventType from 'ol/source/TileEventType.js';
+import VectorEventType from 'ol/source/VectorEventType.js';
+import { optionsFromCapabilities } from 'ol/source/WMTS.js';
+import { defaultImageLoadFunction } from 'ol/source/Image.js';
+import { createLoader } from 'ol/source/wms.js';
+import { decode } from 'ol/Image.js';
+import { Style, RegularShape, Circle as s_Circle, Fill, Icon, Stroke, Text } from 'ol/style.js';
 import {
     parse,
     parseNode,
@@ -104,7 +104,7 @@ import {
     makeSimpleNodeFactory,
     OBJECT_PROPERTY_NODE_FACTORY,
     XML_SCHEMA_INSTANCE_URI
-} from '../../node_modules/ol/xml.js';
+} from 'ol/xml.js';
 import {
     readDecimal,
     readBoolean,
@@ -116,8 +116,8 @@ import {
     writeDecimalTextNode,
     writeBooleanTextNode,
     writeNonNegativeIntegerTextNode
-} from '../../node_modules/ol/format/xsd.js';
-import Image from '../../node_modules/ol/Image.js';
+} from 'ol/format/xsd.js';
+import Image from 'ol/Image.js';
 
 import proj4 from 'proj4';
 import TC from '../../TC.js';
