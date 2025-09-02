@@ -115,3 +115,41 @@ module.exports = {
     }
 };
 ```
+
+### Cómo configurar Angular
+Alternativamente, si se utiliza Angular para desarrollar la aplicación, se puede configurar las rutas de acceso a los recursos necesarios para el funcionamiento 
+de la API SITNA mediante el archivo `angular.json`, añadiendo las siguientes líneas en la sección `assets`:
+``` javascript
+"assets": [
+    {
+        "glob": "**/*",
+        "input": "node_modules/api-sitna/config/",
+        "output": "/config/"
+    },
+    {
+        "glob": "**/*",
+        "input": "node_modules/api-sitna/css/",
+        "output": "/css/"
+    },
+    {
+        "glob": "**/*",
+        "input": "node_modules/api-sitna/layout/",
+        "output": "/layout/"
+    },
+    {
+        "glob": "**/*",
+        "input": "node_modules/api-sitna/lib/",
+        "output": "/lib/"
+    },
+    {
+        "glob": "**/*",
+        "input": "node_modules/api-sitna/resources/",
+        "output": "/resources/"
+    },
+    {
+        "glob": "**/*",
+        "input": "node_modules/api-sitna/wmts/",
+        "output": "/wmts/"
+    }
+],
+```
