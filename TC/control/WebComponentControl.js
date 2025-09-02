@@ -1,5 +1,4 @@
 ﻿import TC from '../../TC.js';
-import BasicMap from '../Map.js';
 import Util from '../Util.js';
 import Consts from '../Consts.js';
 import Cfg from '../Cfg.js';
@@ -53,7 +52,7 @@ class WebComponentControl extends HTMLElement {
             self.id = self.#id;
         }
         self.classList.add(WebComponentControl.prototype.CLASS, self.CLASS);
-        if (self.map instanceof BasicMap) {
+        if (self.map) {
             return;
         }
         const mapOption = self.getAttribute('for');
@@ -61,7 +60,7 @@ class WebComponentControl extends HTMLElement {
         if (mapOption) {
             const mapElement = document.getElementById(mapOption);
             if (mapElement) {
-                map = BasicMap.get(mapElement);
+                map = TC.getMap(mapElement);
                 if (map) {
                     map.addControl(self);
                 }
@@ -69,7 +68,7 @@ class WebComponentControl extends HTMLElement {
                     const observer = new MutationObserver(function (mutationList, observer) {
                         for (const mutation of mutationList) {
                             if (mutation.type === 'childList') {
-                                map = BasicMap.get(mapElement);
+                                map = TC.getMap(mapElement);
                                 if (map) {
                                     map.addControl(self);
                                     observer.disconnect();
@@ -90,7 +89,7 @@ class WebComponentControl extends HTMLElement {
                 }
             }
             while (element && !element.classList.contains(Consts.classes.MAP));
-            map = BasicMap.get(element);
+            map = TC.getMap(element);
             if (map) {
                 map.addControl(self);
             }

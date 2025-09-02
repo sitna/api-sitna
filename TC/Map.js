@@ -385,8 +385,10 @@ const _loadIntoMap = async function (stringOrJson) {
                         lyrCfg.layerNames = stateLayer.n ? stateLayer.n.split(',') : [];
                     }
                     promises.push(self.addOrUpdateLayer(lyrCfg).then(function (layer) {
-                        var rootNode = layer.wrap.getRootLayerNode();
-                        layer.title = rootNode.Title || rootNode.title;
+                        if (layer.wrap.getRootLayerNode) {
+                            var rootNode = layer.wrap.getRootLayerNode();
+                            layer.title = rootNode.Title || rootNode.title;
+                        }
                         /*URI:el setOpacity recibe un nuevo parametro. Que indica si se no se va a lanzar evento LAYEROPACITY
                         esto es porque en el loadstate al establecer la opacidad dedido a un timeout pasados X segundos se lanzaba 
                         este evento y producía un push en el state innecesario*/
@@ -622,8 +624,6 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     ///<field name='layers' type='array' elementType='TC.Layer'>Lista de todas las capas base cargadas en el mapa.</field>
     ///<field name='controls' type='array' elementType='TC.Control'>Lista de todos los controles del mapa.</field>
 
-    static _instances = [];
-
     /**
      * Indica si todos los controles del mapa están cargados.
      * @property isReady
@@ -720,12 +720,12 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     constructor(div, options = {}) {
         super();
         const self = this;
-        BasicMap._instances.push(this);
 
         //TC.Object.apply(self, arguments);
 
         let loadingLayerCount = 0;
         this.div = Util.getDiv(div);
+        TC.registerMap(this);
 
         /**
          * El mapa ha cargado todas sus capas iniciales y todos sus controles
@@ -1765,12 +1765,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     }
 
     static get(elm) {
-        for (var i = 0, len = this._instances.length; i < len; i++) {
-            const instance = this._instances[i];
-            if (instance.div === elm) {
-                return instance;
-            }
-        }
+        return TC.getMap(elm);
     }
 
     getCrs() {
@@ -2003,14 +1998,6 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         }
     }
 
-    /**
-     * Añade o actualiza una capa al mapa.
-     * @method addLayer
-     * @async
-     * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
-     * @param {function} [callback] Función de callback.
-     * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
-     */
     async addOrUpdateLayer(layer, callback) {
         const currentLayer = this.getLayer(layer.id);
         if (currentLayer) {

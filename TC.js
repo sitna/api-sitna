@@ -35,6 +35,15 @@ if (typeof TC.isDebug !== "boolean") {
     TC.isDebug = true;
 }
 
+const mapInstances = new Map();
+TC.getMap = function (mapDiv) {
+    return mapInstances.get(mapDiv);
+};
+
+TC.registerMap = function (map) {
+    mapInstances.set(map.div, map);
+};
+
 TC.alert = function (text) {
     alert(text);
 };
