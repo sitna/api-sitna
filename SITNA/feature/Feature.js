@@ -6,6 +6,7 @@ import Control from '../../TC/Control.js';
 //import Popup from '../../TC/control/Popup.js';
 //import ResultsPanel from '../../TC/control/ResultsPanel.js';
 import ControlContainer from '../../TC/control/ControlContainer.js';
+import Handlebars from '../../lib/handlebars/helpers.js';
 
 /**
  * Espacio de nombres de las entidades geográficas del mapa.
@@ -693,12 +694,6 @@ class Feature {
 
     async showInfo(options = {}) {
 
-        if (!TC.control || !TC.control.FeatureInfoCommons) {
-            const { default: FeatureInfoCommons } = await import('../../TC/control/FeatureInfoCommons');
-            TC.control = TC.control || {};
-            TC.control.FeatureInfoCommons = FeatureInfoCommons;
-        }
-
         const opts = Util.extend({}, options);
 
         if (this.getTemplate()) {
@@ -710,22 +705,35 @@ class Feature {
                 opts.html = this.data;
             }
             else {
-                opts.html = await TC.control.FeatureInfoCommons.renderFeatureAttributeTable({
-                    // Quitamos los atributos que son otras entidades (p.e. referencePoint)
-                    attributes: this.attributes.filter((attr) => !(attr.value instanceof Feature)),
-                    singleFeature: true
-                });
+                const filterAttributes = (attributes) => {
+                    const result = {};
+                    for (const key in attributes) {
+                        const val = attributes[key];
+                        if (val instanceof Feature) {
+                            continue;
+                        }
+                        if (val && Util.isPlainObject(val)) {
+                            result[key] = filterAttributes(val);
+                        }
+                        else {
+                            result[key] = val;
+                        }
+                    }
+                    return result;
+                };
+                const templates = await Feature.loadInfoTemplates();
+                // Quitamos los atributos que son otras entidades (p.e. referencePoint)
+                const attributes = filterAttributes(this.attributes.filter((attr) => !(attr.value instanceof Feature)));
+                opts.html = await Util.getRenderedHtml(templates['tc-ctl-finfo-attr'], { attributes, singleFeature: true });
             }
         }
         let control;
         if (options.control && TC.control) {
             const optionsControl = options.control;
-            const { default: Popup } = await import('../../TC/control/Popup');
-            const { default: ResultsPanel } = await import('../../TC/control/ResultsPanel');
-            if (optionsControl instanceof Popup) {
+            if (optionsControl.CLASS === 'tc-ctl-popup') {
                 control = await this.showPopup(opts);
             }
-            else if (optionsControl instanceof ResultsPanel) {
+            else if (optionsControl.CLASS === 'tc-ctl-rpanel') {
                 control = await this.showResultsPanel(opts);
             }
         }
@@ -739,7 +747,34 @@ class Feature {
         }
         this.infoControl = control;
         this.toggleSelectedStyle(true);
-        TC.control.FeatureInfoCommons.addSpecialAttributeEventListeners(control.getContainerElement());
+        Feature.addSpecialAttributeEventListeners(control.getContainerElement());
+    }
+
+    static async showImageDialog(img) {
+        const templates = await Feature.loadInfoTemplates();
+        const html = await Util.getRenderedHtml(templates['tc-ctl-finfo-dialog'], {
+            src: img.getAttribute('src')
+        });
+        const container = document.createElement('div');
+        container.insertAdjacentHTML('beforeend', html);
+        document.body.appendChild(container);
+        Util.showModal(container.querySelector('.tc-ctl-finfo-img-dialog'), {
+            closeCallback: () => container.remove()
+        });
+        container.querySelector('.tc-modal-img img').addEventListener(Consts.event.CLICK, function (_e) {
+            Util.closeModal();
+        }, { passive: true });
+        return container;
+    }
+
+    static addSpecialAttributeEventListeners(container) {
+        const self = this;
+        container.querySelectorAll('img.tc-img-attr').forEach(function (img) {
+            img.addEventListener(Consts.event.CLICK, function (e) {
+                setTimeout(() => self.showImageDialog(e.target), 50);
+                e.stopPropagation(); // No queremos zoom si pulsamos en una imagen
+            }, { passive: true });
+        });
     }
 
     select() {
@@ -775,6 +810,44 @@ class Feature {
 
     toGML(version, srsName) {
         return this.wrap.toGML(version, srsName);
+    }
+
+    static async getInfoTemplates() {
+        const cssClassName = 'tc-ctl-finfo';
+        const mainTemplatePromise = import('../../TC/templates/tc-ctl-finfo.mjs');
+        const attributesTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr.mjs');
+        const objectTemplatePromise = import('../../TC/templates/tc-ctl-finfo-object.mjs');
+        const buttonsTemplatePromise = import('../../TC/templates/tc-ctl-finfo-buttons.mjs');
+        const dialogTemplatePromise = import('../../TC/templates/tc-ctl-finfo-dialog.mjs');
+        const valueTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-val.mjs');
+        const videoTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-video.mjs');
+        const imageTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-image.mjs');
+        const audioTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-audio.mjs');
+        const embedTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-embed.mjs');
+
+        const template = {};
+        template[cssClassName] = (await mainTemplatePromise).default;
+        template[cssClassName + '-attr'] = (await attributesTemplatePromise).default;
+        template[cssClassName + '-object'] = (await objectTemplatePromise).default;
+        template[cssClassName + '-buttons'] = (await buttonsTemplatePromise).default;
+        template[cssClassName + '-dialog'] = (await dialogTemplatePromise).default;
+        template[cssClassName + '-attr-val'] = (await valueTemplatePromise).default;
+        template[cssClassName + '-attr-video'] = (await videoTemplatePromise).default;
+        template[cssClassName + '-attr-image'] = (await imageTemplatePromise).default;
+        template[cssClassName + '-attr-audio'] = (await audioTemplatePromise).default;
+        template[cssClassName + '-attr-embed'] = (await embedTemplatePromise).default;
+        return template;
+    }
+
+    static async loadInfoTemplates() {
+        const templates = await Feature.getInfoTemplates();
+        for (const key in templates) {
+            templates[key] = Handlebars.template(templates[key]);
+        }
+        for (const key in templates) {
+            Handlebars.registerPartial(key, templates[key]);
+        }
+        return templates;
     }
 }
 

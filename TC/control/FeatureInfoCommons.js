@@ -258,34 +258,11 @@ class FeatureInfoCommons extends Click {
 
     async loadTemplates() {
         const self = this;
-        self.template = await FeatureInfoCommons.loadTemplates();
+        self.template = await Feature.getInfoTemplates();
     }
 
     static async loadTemplates() {
-        const mainTemplatePromise = import('../templates/tc-ctl-finfo.mjs');
-        const attributesTemplatePromise = import('../templates/tc-ctl-finfo-attr.mjs');
-        const objectTemplatePromise = import('../templates/tc-ctl-finfo-object.mjs');
-        const buttonsTemplatePromise = import('../templates/tc-ctl-finfo-buttons.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-finfo-dialog.mjs');
-        const valueTemplatePromise = import('../templates/tc-ctl-finfo-attr-val.mjs');
-        const videoTemplatePromise = import('../templates/tc-ctl-finfo-attr-video.mjs');
-        const imageTemplatePromise = import('../templates/tc-ctl-finfo-attr-image.mjs');
-        const audioTemplatePromise = import('../templates/tc-ctl-finfo-attr-audio.mjs');
-        const embedTemplatePromise = import('../templates/tc-ctl-finfo-attr-embed.mjs');
-
-
-        const template = {};
-        template[cssClassName] = (await mainTemplatePromise).default;
-        template[cssClassName + '-attr'] = (await attributesTemplatePromise).default;
-        template[cssClassName + '-object'] = (await objectTemplatePromise).default;
-        template[cssClassName + '-buttons'] = (await buttonsTemplatePromise).default;
-        template[cssClassName + '-dialog'] = (await dialogTemplatePromise).default;
-        template[cssClassName + '-attr-val'] = (await valueTemplatePromise).default;
-        template[cssClassName + '-attr-video'] = (await videoTemplatePromise).default;
-        template[cssClassName + '-attr-image'] = (await imageTemplatePromise).default;
-        template[cssClassName + '-attr-audio'] = (await audioTemplatePromise).default;
-        template[cssClassName + '-attr-embed'] = (await embedTemplatePromise).default;
-        return template;
+        return await Feature.getInfoTemplates();
     }
 
     async render() {
@@ -1257,7 +1234,8 @@ class FeatureInfoCommons extends Click {
 
         return self.#layersPromise;
     }
-    _generateTitle(displayControl) {
+
+    #generateTitle(displayControl) {
         const self = this;
         var printTitle = self.getLocaleString("feature");
         if (displayControl === self.getDisplayControl()) {
@@ -1292,7 +1270,7 @@ class FeatureInfoCommons extends Click {
             }
         }
         else {
-            var printTitle = self._generateTitle(displayControl);
+            var printTitle = self.#generateTitle(displayControl);
 
             // Si hay datos porque el popup es de un GFI con éxito o es de una feature resaltada damos la opción de imprimirlos
             if (self.lastFeatureCount || displayControl.currentFeature && displayControl.currentFeature.showsPopup === true) {
@@ -1307,7 +1285,7 @@ class FeatureInfoCommons extends Click {
             }
         }
 
-        FeatureInfoCommons.addSpecialAttributeEventListeners(displayControl.getContainerElement());
+        Feature.addSpecialAttributeEventListeners(displayControl.getContainerElement());
 
     }
 
@@ -1426,35 +1404,6 @@ class FeatureInfoCommons extends Click {
         return await self.prototype.getRenderedHtml.call(self.#staticMethodMock, cssClassName + '-attr-val', options);
     }
 
-    static async showImageDialog(img) {
-        const self = this;
-        if (!self.#staticMethodMock.template) {
-            self.#staticMethodMock.template = await self.loadTemplates();
-        }
-        const html = await self.prototype.getRenderedHtml.call(self.#staticMethodMock, cssClassName + '-dialog', {
-            src: img.getAttribute('src')
-        });
-        const container = document.createElement('div');
-        container.insertAdjacentHTML('beforeend', html);
-        document.body.appendChild(container);
-        Util.showModal(container.querySelector(`.${cssClassName}-img-dialog`), {
-            closeCallback: () => container.remove()
-        });
-        container.querySelector('.tc-modal-img img').addEventListener(Consts.event.CLICK, function (_e) {
-            Util.closeModal();
-        }, { passive: true });
-        return container;
-    }
-
-    static addSpecialAttributeEventListeners(container) {
-        const self = this;
-        container.querySelectorAll('img.tc-img-attr').forEach(function (img) {
-            img.addEventListener(Consts.event.CLICK, function (e) {
-                setTimeout(() => self.showImageDialog(e.target), 50);
-                e.stopPropagation(); // No queremos zoom si pulsamos en una imagen
-            }, { passive: true });
-        });
-    }
     async updateModel() {
         const self = this;
         self.model.crs = self.getLocaleString("crs");
@@ -1500,7 +1449,7 @@ class FeatureInfoCommons extends Click {
         const self = this;
         self.updateModel();
         if (self.printCtl)
-            self.printCtl.title = self._generateTitle(self.getDisplayControl());
+            self.printCtl.title = self.#generateTitle(self.getDisplayControl());
     }
 }
 

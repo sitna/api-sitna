@@ -94,7 +94,7 @@ import Control from '../Control.js';
 import infoShare from './infoShare.js';
 import ControlContainer from './ControlContainer.js';
 import WorkLayerManager from './WorkLayerManager.js';
-import FeatureInfoCommons from './FeatureInfoCommons.js';
+import Feature from '../../SITNA/feature/Feature.js';
 import Click from './Click.js';
 import filter from '../filter.js';
 import autocomplete from '../ui/autocomplete.js';
@@ -1369,7 +1369,7 @@ class WFSQuery extends Control {
                     });
                 });
 
-                FeatureInfoCommons.addSpecialAttributeEventListeners(tabla);
+                Feature.addSpecialAttributeEventListeners(tabla);
                 tabla.querySelectorAll("td > img, td > video, td > audio, td > iframe").forEach((e) => e.parentNode.classList.add("tc-multimedia"));
                 tabla.querySelectorAll("video").forEach((v) => {
                     v.addEventListener(Consts.event.CLICK, function (e) {
