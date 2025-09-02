@@ -1,3 +1,6 @@
+### [4.7.2](https://github.com/sitna/api-sitna/releases/tag/v4.7.2)
+- Eliminación de dependencias circulares.
+
 ### [4.7.1](https://github.com/sitna/api-sitna/releases/tag/v4.7.1)
 - Corrección de error en las rutas de importación de módulos en el paquete npm.
 
