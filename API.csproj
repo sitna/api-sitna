@@ -1924,6 +1924,7 @@
     <TypeScriptCompile Include="SITNA\feature\Polygon.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Polyline.d.ts" />
     <TypeScriptCompile Include="SITNA\layer\Layer.d.ts" />
+    <TypeScriptCompile Include="SITNA\layer\LayerEvent.d.ts" />
     <TypeScriptCompile Include="SITNA\layer\Raster.d.ts" />
     <TypeScriptCompile Include="SITNA\layer\Vector.d.ts" />
     <TypeScriptCompile Include="SITNA\Map.d.ts" />
