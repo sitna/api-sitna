@@ -1,4 +1,5 @@
 ﻿import TC from '../TC.js';
+import wrap from './ol/ol.js';
 TC.filter = {};
 
 TC.filter.Operators = [
@@ -521,20 +522,20 @@ TC.filter.Spatial = function (tagName, geometryName, geometry, opt_srsName) {
     this.geometryName = geometryName;
     this.geometry = geometry;
     this.srsName = opt_srsName;
-    this.wrap = new TC.wrap.Filter(this);
+    this.wrap = new wrap.Filter(this);
 };
 
 TC.filter.Spatial.prototype.clone = function () {
     const result = TC.filter.Filter.prototype.clone.call(this);
-    result.wrap = new TC.wrap.Filter(result);
+    result.wrap = new wrap.Filter(result);
     return result;
 }
 
-TC.wrap.Filter = function (filter) {
+wrap.Filter = function (filter) {
     this.parent = filter;
 };
 
-TC.wrap.Filter.prototype.getAxisOrientation = function () {
+wrap.Filter.prototype.getAxisOrientation = function () {
     // Establecemos el srsName a EPSG:xxxx o urn:x-ogc:def:crs:EPSG:xxxx dependiendo del orden de eje de coordenadas del CRS.
     // Esto se debe a que GeoServer hace asunciones en el orden de los ejes dependiendo del formato de srsName que se use.
     // Más información: https://docs.geoserver.org/latest/en/user/services/wfs/basics.html#wfs-basics-axis
