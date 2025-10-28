@@ -429,12 +429,16 @@ class Edit extends WebComponentControl {
 
         self.modifyControlAttributesEditor = await self.getModifyControlAttributeEditor();
         self.modifyControlAttributesEditor.clientControl = self.modifyControl;
+        self.modifyControlAttributesEditor.autofill = self.options.autofill;
         self.pointDrawControlAttributesEditor = await self.getPointDrawControlAttributeEditor();
         self.pointDrawControlAttributesEditor.clientControl = self.pointDrawControl;
+        self.pointDrawControlAttributesEditor.autofill = self.options.autofill;
         self.lineDrawControlAttributesEditor = await self.getLineDrawControlAttributeEditor();
         self.lineDrawControlAttributesEditor.clientControl = self.lineDrawControl;
+        self.lineDrawControlAttributesEditor.autofill = self.options.autofill;
         self.polygonDrawControlAttributesEditor = await self.getPolygonDrawControlAttributeEditor();
         self.polygonDrawControlAttributesEditor.clientControl = self.polygonDrawControl;
+        self.polygonDrawControlAttributesEditor.autofill = self.options.autofill;
 
         const featureUpdateTimestamps = new WeakMap();
         const addElevation = async function (feature) {

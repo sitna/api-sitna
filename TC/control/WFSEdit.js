@@ -324,7 +324,8 @@ class WFSEdit extends SWCacheClient {
             div: self.div.querySelector(`.${self.CLASS}-edit`),
             styles: self.styles,
             downloadElevation: self.options.downloadElevation,
-            snapping: self.options.snapping
+            snapping: self.options.snapping,
+            autofill: false,
         });
 
         self.editControl = await self.#editPromise;

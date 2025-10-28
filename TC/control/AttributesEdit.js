@@ -102,6 +102,7 @@ class AttributesEdit extends WebComponentControl {
             TEXT_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="text"]`,
             TOGGLE: `.${AttributesEdit.prototype.CLASS}-body > table sitna-toggle`
         }
+        this.autofill = this.options.autofill !== false;
         this.model = new AttributesEditModel();
     }
 
@@ -234,7 +235,7 @@ class AttributesEdit extends WebComponentControl {
                             const newItem = { ...item1 };
                             newItem.value = getCommonFeatureMetadata(item1.value, item2.value, equalsPredicate);
                             if (newItem.value.length === 0) {
-                                if (item2.value === item1.value) {
+                                if (item2.value === item1.value && self.autofill) {
                                     newItem.value = item1.value;
                                 }
                                 else {
@@ -345,9 +346,9 @@ class AttributesEdit extends WebComponentControl {
                                         result.splice(++lastIndex, 0, featureAttribute);
                                     }
                                 }
-                                // Criterio adoptado: 
+                                // Criterio adoptado:
                                 // Solamente devolvemos los atributos de la capa que están en todas las entidades existentes
-                                result = result.filter((attr) => featureAttributes.find(byName(attr.name, featureTypeMetadata.equals)));
+                                if (!renderObject.sealed) result = result.filter((attr) => featureAttributes.find(byName(attr.name, featureTypeMetadata.equals)));
                                 return result;
                             }
                             return layerAttributes;
