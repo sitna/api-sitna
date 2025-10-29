@@ -12,7 +12,7 @@ TC.i18n = TC.i18n || i18n;
  * @memberof SITNA.feature
  * @extends SITNA.feature.Point
  * @param {number[]} coordinates - Coordenadas del punto expresadas en las unidades del CRS del mapa.
- * @param {SITNA.feature.MarkerOptions} [options] Objeto de opciones de marcador.
+ * @param {MarkerOptions} [options] Objeto de opciones de marcador.
  * @see SITNA.Map#addMarker
  * @see SITNA.layer.Vector#addMarker
  * @see SITNA.layer.Vector#addMarkers
@@ -74,7 +74,7 @@ TC.i18n = TC.i18n || i18n;
  * @method getStyle
  * @memberof SITNA.feature.Marker
  * @instance
- * @returns {SITNA.feature.MarkerStyleOptions}
+ * @returns {MarkerStyleOptions}
  */
 
 /**
@@ -82,7 +82,7 @@ TC.i18n = TC.i18n || i18n;
  * @method setStyle
  * @memberof SITNA.feature.Marker
  * @instance
- * @param {SITNA.feature.MarkerStyleOptions} style - Objeto de opciones de estilo de marcador.
+ * @param {MarkerStyleOptions} style - Objeto de opciones de estilo de marcador.
  * @returns {SITNA.feature.Marker} La propia entidad geográfica.
  */
 
@@ -106,17 +106,15 @@ export default Marker;
  * Opciones de estilo de marcador (punto con un icono). Para determinar qué icono se va a asignar al marcador, se leen las propiedades `url` y `cssClass`, en ese orden de preferencia.
  * Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef MarkerStyleOptions
- * @memberof SITNA.feature
- * @mixin
- * @mixes SITNA.feature.LabelStyleOptions
- * @see SITNA.layer.StyleOptions
+ * @interface MarkerStyleOptions
+ * @extends LabelStyleOptions
+ * @see VectorStyleOptions
  * @see layout_cfg
  * @property {number[]} [anchor=[0.5, 1]] - Posicionamiento relativo del icono respecto al punto del mapa, representado por un array de dos números entre 0 y 1, siendo [0, 0] la esquina superior izquierda del icono y [1, 1] la esquina inferior derecha del icono.
  * @property {string} [labelRotationKey] - Nombre del campo del cual extraer la rotación a aplicar a la etiqueta. El valor tiene que estar en grados.
  * @property {string[]} [classes=["tc-marker1", "tc-marker2", "tc-marker3", "tc-marker4", "tc-marker5"]] - 
  * Lista de nombres de clase CSS a utilizar para asignar iconos a los marcadores según grupo
- * (Ver propiedad `group` de {@link SITNA.feature.MarkerOptions}). Cuando se añade un nuevo grupo de marcadores, se le asignará la clase correspondiente
+ * (Ver propiedad `group` de {@link MarkerOptions}). Cuando se añade un nuevo grupo de marcadores, se le asignará la clase correspondiente
  * al siguiente elemento del array. Si hay más grupos que elementos en `classes`, se repite el ciclo a lo largo
  * del array. La API extraerá la URL de la imagen del atributo `background-image` de la clase CSS asignada.
  * [Ver ejemplo de uso](../examples/cfg.MarkerOptions.2.html).
@@ -136,10 +134,9 @@ export default Marker;
  * Opciones de marcador (punto con un icono). Para determinar qué icono se va a asignar al marcador, se leen las propiedades `url`, `cssClass` `group`, en ese orden de preferencia.
  * Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef MarkerOptions
- * @memberof SITNA.feature
- * @extends SITNA.feature.FeatureOptions
- * @mixes SITNA.feature.MarkerStyleOptions
+ * @interface MarkerOptions
+ * @mixes FeatureOptions
+ * @mixes MarkerStyleOptions
  * @see SITNA.Map#addMarker
  * @property {number[]} [anchor=[0.5, 1]] - Posicionamiento relativo del icono respecto al punto del mapa, representado por un array de dos números entre 0 y 1, siendo [0, 0] la esquina superior izquierda del icono y [1, 1] la esquina inferior derecha del icono.
  * @property {string} [angle] - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `labelRotationKey`.*

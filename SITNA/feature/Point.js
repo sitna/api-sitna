@@ -9,7 +9,7 @@ import Feature from './Feature.js';
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
  * @param {number[]} coordinates - Coordenadas del punto expresadas en las unidades del CRS del mapa.
- * @param {SITNA.feature.PointOptions} [options] Objeto de opciones del punto.
+ * @param {PointOptions} [options] Objeto de opciones del punto.
  * @see SITNA.layer.Vector#addPoint
  * @see SITNA.layer.Vector#addPoints
  * @see SITNA.layer.Vector#addFeature
@@ -87,7 +87,7 @@ import Feature from './Feature.js';
  * @method getStyle
  * @memberof SITNA.feature.Point
  * @instance
- * @returns {SITNA.feature.PointStyleOptions}
+ * @returns {PointStyleOptions}
  */
 
 /**
@@ -95,7 +95,7 @@ import Feature from './Feature.js';
  * @method setStyle
  * @memberof SITNA.feature.Point
  * @instance
- * @param {SITNA.feature.PointStyleOptions} style - Objeto de opciones de estilo de punto.
+ * @param {PointStyleOptions} style - Objeto de opciones de estilo de punto.
  * @returns {SITNA.feature.Point} La propia entidad geográfica.
  */
 
@@ -172,13 +172,11 @@ export default Point;
 /**
  * Opciones de estilo de punto. Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef PointStyleOptions
- * @memberof SITNA.feature
- * @mixin
- * @mixes SITNA.feature.StrokeStyleOptions
- * @mixes SITNA.feature.FillStyleOptions
- * @mixes SITNA.feature.LabelStyleOptions
- * @see SITNA.layer.StyleOptions
+ * @interface PointStyleOptions
+ * @mixes StrokeStyleOptions
+ * @mixes FillStyleOptions
+ * @mixes LabelStyleOptions
+ * @see VectorStyleOptions
  * @see layout_cfg
  * @property {string} [fillColor="#000000" ("#333366" en clusters)] - Color de relleno, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fillOpacity=0.3 (0.6 en clusters)] - Opacidad de relleno, valor de 0 a 1.
@@ -198,10 +196,9 @@ export default Point;
  * Opciones de punto. Hay que tener en cuenta que el archivo `config.json` de una maquetación 
  * puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef PointOptions
- * @memberof SITNA.feature
- * @extends SITNA.feature.FeatureOptions
- * @mixes SITNA.feature.PointStyleOptions
+ * @interface PointOptions
+ * @mixes FeatureOptions
+ * @mixes PointStyleOptions
  * @property {object|string} [data] - Diccionario de pares clave-valor que representa los atributos alfanuméricos 
  * de la entidad geográfica o bien cadena de caracteres con el código HTML asociado al mismo. Al pulsar sobre el punto, bien una tabla con los atributos o bien el HTML especificado se mostrarán en un bocadillo.
  * @property {string} [fillColor="#000000" ("#333366" en clusters)] - Color de relleno, representado en formato hex triplet (`#RRGGBB`).

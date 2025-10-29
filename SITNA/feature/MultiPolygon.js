@@ -8,7 +8,7 @@ import Consts from '../../TC/Consts.js';
  * @extends SITNA.feature.Feature
  * @param {Array.<Array.<Array.<number[]>>>} coordinates - Coordenadas de la geometría expresadas como un array de
  * coordenadas de objetos {@link SITNA.feature.Polygon}.
- * @param {SITNA.feature.PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.feature.Polygon
  * @see SITNA.layer.Vector#addMultiPolygon
  * @see SITNA.layer.Vector#addMultiPolygons
@@ -152,7 +152,7 @@ import Consts from '../../TC/Consts.js';
  * @method getStyle
  * @memberof SITNA.feature.MultiPolygon
  * @instance
- * @returns {SITNA.feature.PolygonStyleOptions}
+ * @returns {PolygonStyleOptions}
  */
 
 /**
@@ -160,7 +160,7 @@ import Consts from '../../TC/Consts.js';
  * @method setStyle
  * @memberof SITNA.feature.MultiPolygon
  * @instance
- * @param {SITNA.feature.PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
+ * @param {PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
  * @returns {SITNA.feature.MultiPolygon} La propia entidad geográfica.
  */
 
@@ -241,7 +241,7 @@ class MultiPolygon extends Feature {
      * @method getLength
      * @memberof SITNA.feature.MultiPolygon
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Suma de las longitudes de todos los polígonos, en metros.
      */
     getLength(options) {
@@ -254,7 +254,7 @@ class MultiPolygon extends Feature {
      * @method getArea
      * @memberof SITNA.feature.MultiPolygon
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Total de áreas de los polígonos en metros cuadrados.
      */
     getArea(options) {

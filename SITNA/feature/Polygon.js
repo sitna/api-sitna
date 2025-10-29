@@ -10,7 +10,7 @@ import Feature from './Feature.js';
  * Estas son un array de anillos, siendo el primer anillo las coordenadas del contorno del polígono 
  * y los anillos subsiguientes las coordenadas del los agujeros en el polígono si estos existen.
  * Cada anillo es un array de las coordenadas de cada uno de los vértices del contorno que definen.
- * @param {SITNA.feature.PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.layer.Vector#addPolygon
  * @see SITNA.layer.Vector#addPolygons
  * @see SITNA.layer.Vector#addFeature
@@ -163,7 +163,7 @@ import Feature from './Feature.js';
  * @method getStyle
  * @memberof SITNA.feature.Polygon
  * @instance
- * @returns {SITNA.feature.PolygonStyleOptions}
+ * @returns {PolygonStyleOptions}
  */
 
 /**
@@ -171,7 +171,7 @@ import Feature from './Feature.js';
  * @method setStyle
  * @memberof SITNA.feature.Polygon
  * @instance
- * @param {SITNA.feature.PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
+ * @param {PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
  * @returns {SITNA.feature.Polygon} La propia entidad geográfica.
  */
 
@@ -247,7 +247,7 @@ class Polygon extends Feature {
      * @method getLength
      * @memberof SITNA.feature.Polygon
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Longitud total del polígono en metros.
      */
     getLength(options) {
@@ -259,7 +259,7 @@ class Polygon extends Feature {
      * @method getArea
      * @memberof SITNA.feature.Polygon
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Área del polígono en metros cuadrados.
      */
     getArea(options) {
@@ -276,13 +276,11 @@ export default Polygon;
 /**
  * Opciones de estilo de polígono. Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef PolygonStyleOptions
- * @memberof SITNA.feature
- * @mixin
- * @mixes SITNA.feature.StrokeStyleOptions
- * @mixes SITNA.feature.FillStyleOptions
- * @mixes SITNA.feature.LabelStyleOptions
- * @see SITNA.layer.StyleOptions
+ * @interface PolygonStyleOptions
+ * @mixes StrokeStyleOptions
+ * @mixes FillStyleOptions
+ * @mixes LabelStyleOptions
+ * @see VectorStyleOptions
  * @see layout_cfg
  * @property {string} [fillColor="#000000"] - Color de relleno, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fillOpacity=0.3] - Opacidad de relleno, valor de 0 a 1.
@@ -301,10 +299,9 @@ export default Polygon;
  * Opciones de entidad poligonal. Hay que tener en cuenta que el archivo `config.json` de una maquetación
  * puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef PolygonOptions
- * @memberof SITNA.feature
- * @extends SITNA.feature.FeatureOptions
- * @mixes SITNA.feature.PolygonStyleOptions
+ * @interface PolygonOptions
+ * @mixes FeatureOptions
+ * @mixes PolygonStyleOptions
  * @property {object|string} [data] - Diccionario de pares clave-valor que representa los atributos alfanuméricos
  * de la entidad geográfica o bien cadena de caracteres con el código HTML asociado al mismo. Al pulsar sobre el polígono, bien una tabla con los atributos o bien el HTML especificado se mostrarán en un bocadillo.
  * @property {string} [fillColor="#000000"] - Color de relleno, representado en formato hex triplet (`#RRGGBB`).

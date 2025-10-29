@@ -8,7 +8,7 @@ import Feature from './Feature.js';
  * @extends SITNA.feature.Feature
  * @param {Array.<number[]>} coordinates - Coordenadas de la línea expresadas como un array de coordenadas 
  * de puntos (los vértices de la línea) en las unidades del CRS del mapa.
- * @param {SITNA.feature.PolylineOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {PolylineOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.layer.Vector#addPolyline
  * @see SITNA.layer.Vector#addPolylines
  * @see SITNA.layer.Vector#addFeature
@@ -108,7 +108,7 @@ import Feature from './Feature.js';
  * @method getStyle
  * @memberof SITNA.feature.Polyline
  * @instance
- * @returns {SITNA.feature.PolylineStyleOptions}
+ * @returns {PolylineStyleOptions}
  */
 
 /**
@@ -116,7 +116,7 @@ import Feature from './Feature.js';
  * @method setStyle
  * @memberof SITNA.feature.Polyline
  * @instance
- * @param {SITNA.feature.PolylineStyleOptions} style - Objeto de opciones de estilo de línea.
+ * @param {PolylineStyleOptions} style - Objeto de opciones de estilo de línea.
  * @returns {SITNA.feature.Polyline} La propia entidad geográfica.
  */
 
@@ -167,7 +167,7 @@ class Polyline extends Feature {
      * @method getLength
      * @memberof SITNA.feature.Polyline
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Longitud total de la línea en metros.
      */
     getLength(options) {
@@ -184,12 +184,10 @@ export default Polyline;
 /**
  * Opciones de estilo de línea. Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef PolylineStyleOptions
- * @memberof SITNA.feature
- * @mixin
- * @mixes SITNA.feature.StrokeStyleOptions
- * @mixes SITNA.feature.LabelStyleOptions
- * @see SITNA.layer.StyleOptions
+ * @interface PolylineStyleOptions
+ * @mixes StrokeStyleOptions
+ * @mixes LabelStyleOptions
+ * @see VectorStyleOptions
  * @see layout_cfg
  * @property {string} [fontColor="#000000"] - Color del texto de la etiqueta descriptiva de la entidad geográfica, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fontSize=10] - Tamaño en puntos tipográficos (`pt`) de la fuente del texto de la etiqueta descriptiva de la entidad geográfica.
@@ -206,10 +204,9 @@ export default Polyline;
  * Opciones de entidad lineal. Hay que tener en cuenta que el archivo `config.json` de una maquetación
  * puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef PolylineOptions
- * @memberof SITNA.feature
- * @extends SITNA.feature.FeatureOptions
- * @mixes SITNA.feature.PolylineStyleOptions
+ * @interface PolylineOptions
+ * @mixes FeatureOptions
+ * @mixes PolylineStyleOptions
  * @property {object|string} [data] - Diccionario de pares clave-valor que representa los atributos alfanuméricos 
  * de la entidad geográfica o bien cadena de caracteres con el código HTML asociado al mismo. Al pulsar sobre la línea, bien una tabla con los atributos o bien el HTML especificado se mostrarán en un bocadillo.
  * @property {string} [fontColor="#000000"] - Color del texto de la etiqueta descriptiva de la entidad geográfica, representado en formato hex triplet (`#RRGGBB`).

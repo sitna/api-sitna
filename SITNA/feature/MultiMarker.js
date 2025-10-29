@@ -6,7 +6,7 @@
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
  * @param {Array.<number[]>} coordinates - Array de las coordenadas de cada punto expresadas en el CRS del mapa.
- * @param {SITNA.feature.MarkerOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {MarkerOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.feature.Marker
  * @see SITNA.layer.Vector#addMultiMarker
  * @see SITNA.layer.Vector#addMultiMarkers
@@ -59,7 +59,7 @@
  * @method getStyle
  * @memberof SITNA.feature.MultiMarker
  * @instance
- * @returns {SITNA.feature.MarkerStyleOptions}
+ * @returns {MarkerStyleOptions}
  */
 
 /**
@@ -67,7 +67,7 @@
  * @method setStyle
  * @memberof SITNA.feature.MultiMarker
  * @instance
- * @param {SITNA.feature.MarkerStyleOptions} style - Objeto de opciones de estilo de marcador.
+ * @param {MarkerStyleOptions} style - Objeto de opciones de estilo de marcador.
  * @returns {SITNA.feature.MultiMarker} La propia entidad geográfica.
  */
 

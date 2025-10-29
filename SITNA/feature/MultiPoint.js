@@ -7,7 +7,7 @@ import Consts from '../../TC/Consts.js';
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
  * @param {Array.<number[]>} coordinates - Array de las coordenadas de cada punto expresadas en el CRS del mapa.
- * @param {SITNA.feature.PointOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {PointOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.feature.Point
  * @see SITNA.layer.Vector#addMultiPoint
  * @see SITNA.layer.Vector#addMultiPoints
@@ -55,7 +55,7 @@ import Consts from '../../TC/Consts.js';
  * @method setStyle
  * @memberof SITNA.feature.MultiPoint
  * @instance
- * @param {SITNA.feature.PointStyleOptions} style - Objeto de opciones de estilo de punto.
+ * @param {PointStyleOptions} style - Objeto de opciones de estilo de punto.
  * @returns {SITNA.feature.MultiPoint} La propia entidad geográfica.
  */
 

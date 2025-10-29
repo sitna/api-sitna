@@ -7,11 +7,11 @@ import Polygon from './Polygon.js';
  * @class Circle
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
- * @param {SITNA.feature.CircleGeometry|Array.<number[]>} geometry - Si el parámetro es un array, las coordenadas
+ * @param {CircleGeometry|Array.<number[]>} geometry - Si el parámetro es un array, las coordenadas
  * del círculo expresadas como un array de dos elementos, el primero son las coordenadas del centro 
  * en las unidades del CRS del mapa y el segundo son las coordenadas de un punto de su circunferencia, 
  * en las unidades del CRS actual del mapa (metros por defecto).
- * @param {SITNA.feature.PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.layer.Vector#addCircle
  * @see SITNA.layer.Vector#addFeature
  * @see SITNA.layer.Vector#addFeatures
@@ -112,7 +112,7 @@ import Polygon from './Polygon.js';
  * @method getStyle
  * @memberof SITNA.feature.Circle
  * @instance
- * @returns {SITNA.feature.PolygonStyleOptions}
+ * @returns {PolygonStyleOptions}
  */
 
 /**
@@ -120,7 +120,7 @@ import Polygon from './Polygon.js';
  * @method setStyle
  * @memberof SITNA.feature.Circle
  * @instance
- * @param {SITNA.feature.PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
+ * @param {PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
  * @returns {SITNA.feature.Circle} La propia entidad geográfica.
  */
 
@@ -170,7 +170,7 @@ class Circle extends Feature {
      * @method setCoordinates
      * @memberof SITNA.feature.Circle
      * @instance
-     * @param {SITNA.feature.CircleGeometry|Array.<number[]>} geometry - Si el parámetro es un array, las coordenadas
+     * @param {CircleGeometry|Array.<number[]>} geometry - Si el parámetro es un array, las coordenadas
      * del círculo expresadas como un array de dos elementos, el primero son las coordenadas del centro
      * en las unidades del CRS del mapa y el segundo son las coordenadas de un punto de su circunferencia,
      * en las unidades del CRS actual del mapa (metros por defecto).
@@ -199,7 +199,7 @@ class Circle extends Feature {
      * @method getRadius
      * @memberof SITNA.feature.Circle
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Longitud del radio en metros.
      */
     getRadius(options) {
@@ -241,8 +241,7 @@ export default Circle;
 
 /**
  * Objeto de descripción de la geometría de un círculo.
- * @typedef CircleGeometry
- * @memberof SITNA.feature
+ * @interface CircleGeometry
  * @property {number[]} center - Coordenadas del centro del círculo en el CRS del mapa.
  * @property {number} radius - Radio del círculo en la unidad de longitud del CRS actual del mapa (metros por defecto).
  */

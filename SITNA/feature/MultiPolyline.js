@@ -9,7 +9,7 @@ import Polyline from './Polyline.js';
  * @extends SITNA.feature.Feature
  * @param {Array.<Array.<number[]>>} coordinates - Coordenadas de las líneas expresadas como un array de 
  * coordenadas de objetos {@link SITNA.feature.Polyline}.
- * @param {SITNA.feature.PolylineOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {PolylineOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.feature.Polyline
  * @see SITNA.layer.Vector#addMultiPolyline
  * @see SITNA.layer.Vector#addMultiPolylines
@@ -113,7 +113,7 @@ import Polyline from './Polyline.js';
  * @method getStyle
  * @memberof SITNA.feature.MultiPolyline
  * @instance
- * @returns {SITNA.feature.PolylineStyleOptions}
+ * @returns {PolylineStyleOptions}
  */
 
 /**
@@ -121,7 +121,7 @@ import Polyline from './Polyline.js';
  * @method setStyle
  * @memberof SITNA.feature.MultiPolyline
  * @instance
- * @param {SITNA.feature.PolylineStyleOptions} style - Objeto de opciones de estilo de línea.
+ * @param {PolylineStyleOptions} style - Objeto de opciones de estilo de línea.
  * @returns {SITNA.feature.MultiPolyline} La propia entidad geográfica.
  */
 
@@ -191,7 +191,7 @@ class MultiPolyline extends Feature {
      * @method getLength
      * @memberof SITNA.feature.MultiPolyline
      * @instance
-     * @param {SITNA.feature.MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
+     * @param {MeasurementOptions} [options] - Parámetros referentes al CRS que hay que considerar para la medida.
      * @returns {number} Suma de las longitudes de todas las líneas, en metros.
      */
     getLength = function (options) {
