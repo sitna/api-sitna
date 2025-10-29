@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.7.3
+ * @version 4.8.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -24,6 +24,8 @@ import Circle from './SITNA/feature/Circle.js';
 import Layer from './SITNA/layer/Layer.js';
 import Raster from './SITNA/layer/Raster.js';
 import Vector from './SITNA/layer/Vector.js';
+import control from './SITNA/control.js';
+import ui from './SITNA/ui.js';
 import './TC/tool/ExcelExport.js';
 import './TC/tool/Proxification.js';
 import Map from './TC/Map.js';
@@ -75,13 +77,13 @@ TC.wrap = wrap;
 globalThis.TC = globalThis.TC || TC;
 //window.JL = JL;
 
-TC.version = '4.7.3';
+TC.version = '4.8.0';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
 // Método que se usa en varios proyectos
 // TODO: eliminar de todos los sitios
-if (!Object.prototype.hasOwnProperty.call(Array.prototype, 'findByProperty')) {
+if (!Object.hasOwn(Array.prototype, 'findByProperty')) {
     Object.defineProperty(Array.prototype, "findByProperty", {
         enumerable: false,
         writable: true,
@@ -255,5 +257,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 Cfg.layout = TC.apiLocation + 'layout/responsive';
 
-export { Cfg, SitnaMap as Map, Consts, feature, layer, tool, filter, ui };
+export { Cfg, SitnaMap as Map, Consts, feature, layer, control, ui, tool, filter };
 
