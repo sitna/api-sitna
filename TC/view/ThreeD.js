@@ -3382,7 +3382,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
             var geolocation2D = self.view3D.linked2DControls.geolocation;
             switch (true) {
-                case geolocation2D.const.event.IMPORTEDTRACK.indexOf(event.type) > -1:
+                case geolocation2D.const.event.TRACKIMPORT.indexOf(event.type) > -1:
                 case event.target.className.indexOf('draw') > -1 && event.target.parentElement.classList.contains(geolocation2D.const.className.SELECTEDTRACK):
                 case !(event.target.parentElement && event.target.parentElement.classList.contains(geolocation2D.const.className.SELECTEDTRACK)):
                 case event.target.className.indexOf('stop') > -1:
@@ -3667,13 +3667,13 @@ const ThreeD = (function (namespace, signature, factory) {
                             document.removeEventListener('click', lstEventListener);
                         });
 
-                        geolocation2D.off(geolocation2D.const.event.IMPORTEDTRACK, geolocation_videoControls_);
+                        geolocation2D.off(geolocation2D.const.event.TRACKIMPORT, geolocation_videoControls_);
 
                     };
 
                     document.addEventListener('click', lstEventListener);
 
-                    geolocation2D.on(geolocation2D.const.event.IMPORTEDTRACK, geolocation_videoControls_);
+                    geolocation2D.on(geolocation2D.const.event.TRACKIMPORT, geolocation_videoControls_);
 
 
                     geolocation2D._setGeotracking = TC.wrap.control.Geolocation.prototype.setGeotracking;
