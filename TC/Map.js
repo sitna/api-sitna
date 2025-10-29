@@ -12,66 +12,12 @@ import LayerEvent from '../SITNA/layer/LayerEvent.js';
 import Raster from '../SITNA/layer/Raster.js';
 import Vector from '../SITNA/layer/Vector.js';
 import wrap from './ol/ol.js';
-import './control/Attribution.js';
-import './control/BasemapSelector.js';
-import './control/CacheBuilder.js';
-import './control/Click.js';
-import './control/Container.js';
 import ControlContainer from './control/ControlContainer.js';
-import './control/Coordinates.js';
-import './control/DataLoader.js';
-import './control/Download.js';
-import './control/Draw.js';
-import './control/DrawMeasureModify.js';
-import './control/Edit.js';
-import './control/Elevation.js';
-import './control/ExternalWMS.js';
-import './control/FeatureDownloadDialog.js';
 import FeatureInfo from './control/FeatureInfo.js';
-import './control/FeatureInfoCommons.js';
-import './control/FeatureTools.js';
-import './control/FileEdit.js';
-import './control/FileImport.js';
-import './control/FullScreen.js';
-import './control/Geolocation.js';
-import './control/GeometryFeatureInfo.js';
-import './control/infoShare.js';
-import './control/LanguageSelector.js';
-import './control/LayerCatalog.js';
-import './control/Legend.js';
-import './control/LineFeatureInfo.js';
-import './control/ListTOC.js';
 import LoadingIndicator from './control/LoadingIndicator.js';
-import './control/MapContents.js';
-import './control/MapInfo.js';
-import './control/Measure.js';
-import './control/Measurement.js';
-import './control/Modify.js';
 import MultiFeatureInfo from './control/MultiFeatureInfo.js';
-import './control/NavBar.js';
-import './control/NavBarHome.js';
-import './control/OfflineMapMaker.js';
-import './control/OverviewMap.js';
-import './control/PolygonFeatureInfo.js';
 import Popup from './control/Popup.js';
-import './control/Print.js';
-import './control/PrintMap.js';
-import './control/ProjectionSelector.js';
-import './control/ResultsPanel.js';
-import './control/Scale.js';
-import './control/ScaleBar.js';
-import './control/ScaleSelector.js';
-import './control/Search.js';
-import './control/SelectContainer.js';
-import './control/Share.js';
-import './control/StreetView.js';
-import './control/SWCacheClient.js';
-import './control/TabContainer.js';
 import ThreeD from './control/ThreeD.js';
-import './control/TOC.js';
-import './control/WFSEdit.js';
-import './control/WFSQuery.js';
-import './control/WorkLayerManager.js';
 import { JL } from 'jsnlog';
 import '../SITNA/feature/Point.js';
 import '../SITNA/feature/MultiPoint.js';
@@ -107,10 +53,10 @@ TC.control = TC.control || {};
  * Para más información consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/initialExtent:property"}}{{/crossLink}}.
  * @param {array} [options.maxExtent] Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima. Para más información consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/maxExtent:property"}}{{/crossLink}}.
  * @param {string} [options.layout] URL de una carpeta de maquetación. Consultar SITNA.Cfg.{{#crossLink "SITNA.Cfg/layout:property"}}{{/crossLink}} para ver instrucciones de uso de maquetaciones.
- * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "SITNA.layer.LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
- * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "SITNA.layer.LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
- * @param {SITNA.control.MapControlOptions} [options.controls] Opciones de controles de mapa.
- * @param {SITNA.layer.StyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
+ * @param {array} [options.baseLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "LayerOptions"}}{{/crossLink}} para incluir dichas capas como mapas de fondo. 
+ * @param {array} [options.workLayers] Lista de identificadores de capa o instancias de la clase {{#crossLink "LayerOptions"}}{{/crossLink}} para incluir dichas capas como contenido del mapa. 
+ * @param {MapControlsOptions} [options.controls] Opciones de controles de mapa.
+ * @param {VectorStyleOptions} [options.styles] Opciones de estilo de entidades geográficas.
  * @param {string} [options.locale="es-ES"] Código de idioma de la interfaz de usuario. Este código debe ser obedecer la sintaxis definida por la <a href="https://en.wikipedia.org/wiki/IETF_language_tag">IETF</a>.
  * Los valores posibles son <code>es-ES</code>, <code>eu-ES</code> y <code>en-US</code>.
  * @param {string} [options.proxy] URL del proxy utilizado para peticiones a dominios remotos (ver TC.Cfg.{{#crossLink "TC.Cfg/proxy:property"}}{{/crossLink}}).
@@ -350,7 +296,7 @@ const _loadIntoMap = async function (stringOrJson) {
                         lyrCfg.renderOptions = { "opacity": stateLayer.o, "hide": !stateLayer.v };
                         lyrCfg.unremovable = stateLayer.ur;
                         lyrCfg.title = stateLayer.t;
-                        lyrCfg.hideTree = Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true;
+                        lyrCfg.hideTree = Object.hasOwn(stateLayer, "x") ? !!stateLayer.x : true;
                         if (stateLayer.n)
                             lyrCfg.layerNames = stateLayer.n;
                         if (stateLayer.a)
@@ -368,7 +314,7 @@ const _loadIntoMap = async function (stringOrJson) {
                         hideTitle: stateLayer.h,
                         unremovable: stateLayer.ur,
                         title: stateLayer.t,
-                        hideTree: Object.prototype.hasOwnProperty.call(stateLayer, "x") ? !!stateLayer.x : true,
+                        hideTree: Object.hasOwn(stateLayer, "x") ? !!stateLayer.x : true,
                         renderOptions: {
                             opacity: stateLayer.o,
                             hide: !stateLayer.v
@@ -584,10 +530,10 @@ const getFiltersForLayers = async function (layer, availableLayers, filter) {
         //para duplicar el filtro con los nombres de las geometrias y los emvolvemos en un filtro OR
         else if (geometryFields.length > 1) {
             const changeGeometryName = function (filter, geometryName) {
-                if (Object.prototype.hasOwnProperty.call(filter, 'geometryName')) {
+                if (Object.hasOwn(filter, 'geometryName')) {
                     filter.geometryName = geometryName;
                 }
-                if (Object.prototype.hasOwnProperty.call(filter, 'condition')) {
+                if (Object.hasOwn(filter, 'condition')) {
                     changeGeometryName(filter.condition);
                 }
                 filter.conditions?.forEach((c) => changeGeometryName(c));
@@ -787,7 +733,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         // GLS: mergeOptions es inclusivo, para poder sobrescribir los tipos de búsqueda, añado con valor a false las que el usuario no haya configurado.
         if (options && options.controls && options.controls.search && options.controls.search.allowedSearchTypes) {
             for (var allowed in Cfg.controls.search.allowedSearchTypes) {
-                if (!Object.prototype.hasOwnProperty.call(options.controls.search.allowedSearchTypes, allowed)) {
+                if (!Object.hasOwn(options.controls.search.allowedSearchTypes, allowed)) {
                     options.controls.search.allowedSearchTypes[allowed] = false;
                 }
             }
@@ -1214,12 +1160,12 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     ignoreError = true;
                 }
                 else if (
-                    Object.prototype.hasOwnProperty.call(layout, 'config') ||
-                    Object.prototype.hasOwnProperty.call(layout, 'markup') ||
-                    Object.prototype.hasOwnProperty.call(layout, 'style') ||
-                    Object.prototype.hasOwnProperty.call(layout, 'script') ||
-                    Object.prototype.hasOwnProperty.call(layout, 'href') ||
-                    Object.prototype.hasOwnProperty.call(layout, 'i18n')
+                    Object.hasOwn(layout, 'config') ||
+                    Object.hasOwn(layout, 'markup') ||
+                    Object.hasOwn(layout, 'style') ||
+                    Object.hasOwn(layout, 'script') ||
+                    Object.hasOwn(layout, 'href') ||
+                    Object.hasOwn(layout, 'i18n')
                 ) {
                     layoutURLs = Util.extend({}, layout);
                 }
@@ -1331,11 +1277,9 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                                             self.div.insertAdjacentHTML('beforeend', data);
                                             //new Observer(self.div);
                                             const titles = self.div.querySelectorAll("[data-i18n-title]");
-                                            if (titles.length)
-                                                titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
+                                            titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
                                             const content = self.div.querySelectorAll("[data-i18n-content]");
-                                            if (content.length)
-                                                content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
+                                            content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
                                             resolve();
                                         });
                                     }
@@ -1709,15 +1653,15 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             if (obj) {
                 var inValidState = false;
                 //chequeo la integriadad del objeto restaurado del State
-                if (!Object.prototype.hasOwnProperty.call(obj, "ext")) {
+                if (!Object.hasOwn(obj, "ext")) {
                     inValidState = true;
                     obj.ext = this.options.initialExtent;
                 }
-                if (!Object.prototype.hasOwnProperty.call(obj, "base")) {
+                if (!Object.hasOwn(obj, "base")) {
                     inValidState = true;
                     obj.base = this.options.defaultBaseLayer;
                 }
-                if (!Object.prototype.hasOwnProperty.call(obj, "layers")) {
+                if (!Object.hasOwn(obj, "layers")) {
                     inValidState = true;
                     obj.layers = [];
                 }
@@ -1725,15 +1669,14 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     for (var i = obj.layers.length - 1; i >= 0; i--) {
                         const stateLayer = obj.layers[i];
                         if (!stateLayer ||
-                            !(Object.prototype.hasOwnProperty.call(stateLayer, "u") && Object.prototype.hasOwnProperty.call(stateLayer, "n") ||
-                                Object.prototype.hasOwnProperty.call(stateLayer, "fn"))) {
+                            !(Object.hasOwn(stateLayer, "u") && Object.hasOwn(stateLayer, "n") ||
+                                Object.hasOwn(stateLayer, "fn"))) {
                             inValidState = true;
                             obj.layers.length = obj.layers.length - 1;
                             continue;
                         }
-                        else if (!Object.prototype.hasOwnProperty.call(stateLayer, "o") ||
-                            !Object.prototype.hasOwnProperty.call(stateLayer, "v") ||
-                            !Object.prototype.hasOwnProperty.call(stateLayer, "h")) {
+                        else if (!Object.hasOwn(stateLayer, "o") || !Object.hasOwn(stateLayer, "v") ||
+                            !Object.hasOwn(stateLayer, "h")) {
                             inValidState = true;
                             Util.extend(stateLayer, {
                                 o: stateLayer.o || 1,
@@ -1744,7 +1687,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     }
                 }
 
-                if (Object.prototype.hasOwnProperty.call(obj, "vw3")) {
+                if (Object.hasOwn(obj, "vw3")) {
 
                     if (!obj.vw3) {
                         inValidState = true;
@@ -1891,7 +1834,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
      * Añade una capa al mapa.
      * @method addLayer
      * @async
-     * @param {TC.Layer|TC.cfg.LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
+     * @param {TC.Layer|LayerOptions|string} layer Objeto de capa, objeto de opciones del constructor de la capa, o identificador de capa.
      * @param {function} [callback] Función de callback.
      * @return {Promise} Promesa de objeto {{#crossLink "TC.Layer"}}{{/crossLink}}
      */
@@ -2204,7 +2147,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         const olLayer = await layer.wrap.getLayer();
         await self.wrap.setBaseLayer(olLayer);
         self.baseLayer = layer;
-        self.trigger(Consts.event.BASELAYERCHANGE, { layer: layer });
+        self.dispatchEvent(new LayerEvent(Consts.event.BASELAYERCHANGE, { layer }));
         if (Util.isFunction(callback)) {
             callback();
         }
@@ -2290,12 +2233,21 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     async addControl(control, options) {
         let ctl;
         if (typeof control === 'string') {
-            const ctorName = control.substr(0, 1).toUpperCase() + control.substr(1);
-            if (!TC.control?.[ctorName]) {
-                const module = await import(/* webpackMode: "eager" */ './control/' + ctorName);
-                TC.control[ctorName] ??= module.default;
+            if (/^[a-z]+-/.test(control)) {
+                // Puede ser un nombre de custom element
+                const Ctor = window.customElements.get(control);
+                if (Ctor) {
+                    ctl = new Ctor(undefined, options);
+                }
             }
-            ctl = new TC.control[ctorName](undefined, options);
+            if (!ctl) {
+                const ctorName = control.substring(0, 1).toUpperCase() + control.substring(1);
+                if (!TC.control?.[ctorName]) {
+                    const module = await import(/* webpackMode: "eager" */ './control/' + ctorName);
+                    TC.control[ctorName] ??= module.default;
+                }
+                ctl = new TC.control[ctorName](undefined, options);
+            }
         }
         else {
             ctl = control;
@@ -2819,7 +2771,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
      * @method addPoint
      * @async
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
-     * @param {SITNA.feature.PointStyleOptions} [options] Opciones del punto.
+     * @param {PointStyleOptions} [options] Opciones del punto.
      */
     addPoint(coord, options) {
         if (options && options.layer) {
@@ -2844,7 +2796,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
      * @method addMarker
      * @async
      * @param {array} coord Array de dos números representando la coordenada del punto en las unidades del CRS del mapa.
-     * @param {TC.cfg.MarkerStyleOptions} [options] Opciones del marcador.
+     * @param {MarkerStyleOptions} [options] Opciones del marcador.
      */
     async addMarker(coord, options = {}, callback) {
         let opts;
@@ -3073,7 +3025,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 // Quitamos los estados nulos o vacíos
                 if (state) {
                     for (let key in state) {
-                        if (Object.prototype.hasOwnProperty.call(state, key)) {
+                        if (Object.hasOwn(state, key)) {
                             return true;
                         }
                     }
@@ -3560,39 +3512,29 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         const self = this;
         if (i18n.currentLocaleKey != locale) {
             self.trigger(Consts.event.BEFORECHANGELANGUAGE, { lang: locale });
-            //self.wait(new Promise((resolve) => { setTimeout(resolve, 1) }));
-            const endPromise = new Promise(async (resolve, reject) => {
-                try {
-                    if (!i18n[locale]) {
-                        //cargar los recursos del nuevo idioma
-                        await TC.i18n.loadResources(true, TC.apiLocation + 'resources/', locale);
-                        await TC.i18n.loadResources(true, self.layout.i18n, locale);
-                    }
-                    else {
-                        await TC.i18n.loadResources(false, null, locale);
-                    }
-                    await (() => { return new Promise((resolve) => { setTimeout(resolve, 100) }) })();
-                    self.#locale = i18n.currentLocaleKey = locale;
-                    await Promise.all(self.controls.filter((c) => c.updateLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
-                        return control.updateLanguage?.apply(control);
-                    }));
-
-                    const titles = self.div.querySelectorAll("[data-i18n-title]");
-                    if (titles.length)
-                        titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
-                    const content = self.div.querySelectorAll("[data-i18n-content]");
-                    if (content.length)
-                        content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
-                    self.trigger(Consts.event.CHANGELANGUAGE, { lang: locale });
-                    resolve();
+            return self.wait(async () => {
+                if (!i18n[locale]) {
+                    //cargar los recursos del nuevo idioma
+                    await TC.i18n.loadResources(true, TC.apiLocation + 'resources/', locale);
+                    await TC.i18n.loadResources(true, self.layout.i18n, locale);
                 }
-                catch (err) {
-                    reject(err);
+                else {
+                    await TC.i18n.loadResources(false, null, locale);
                 }
+                await Util.getTimedPromise(null, 100);
+                self.#locale = i18n.currentLocaleKey = locale;
+                await Promise.all(self.controls.filter((c) => c.updateLanguage && !(c instanceof TC.control.LoadingIndicator)).map((control) => {
+                    return control.updateLanguage?.apply(control);
+                }));
 
+                const langMarkedElements = self.div.querySelectorAll("[data-lang]");
+                langMarkedElements.forEach((node) => { node.dataset.lang = locale });
+                const titles = self.div.querySelectorAll("[data-i18n-title]");
+                titles.forEach((node) => node.title = TC.Util.getLocaleString(locale, node.dataset.i18nTitle));
+                const content = self.div.querySelectorAll("[data-i18n-content]");
+                content.forEach((node) => node.innerHTML = Util.getLocaleString(locale, node.dataset.i18nContent));
+                self.trigger(Consts.event.CHANGELANGUAGE, { lang: locale });
             });
-            self.wait(endPromise);
-            return endPromise
         }
         return Promise.reject("Same language");
     }
@@ -3615,7 +3557,7 @@ var deleteTreeCache = function (layer) {
 const mergeLayerOptions = function (optionsArray, propertyName) {
     // lista de opciones de capa de los argumentos
     const layerOptions = optionsArray
-        .filter(elm => Object.prototype.hasOwnProperty.call(elm, propertyName))
+        .filter(elm => Object.hasOwn(elm, propertyName))
         .map((elm) => ({ [propertyName]: elm[propertyName] }));
     // añadimos las opciones de capa de la configuración general
     layerOptions.unshift({ [propertyName]: Cfg[propertyName] });
