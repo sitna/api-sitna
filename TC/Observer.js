@@ -168,7 +168,7 @@ class Observer {
                         return prop.get(prop.node);
                     },
                     set: function (value) {
-                        this.#listener.get(key).forEach((prop, i) => {
+                        this.#listener.get(key).forEach((prop) => {
                             if (prop.node.nodeType===1 && prop.node[key] !== undefined)
                                 prop.node[key] = value;
                             else
@@ -199,7 +199,7 @@ class Observer {
                     return prop.get(prop.node);
                 },
                 set: function (value) {
-                    this.#listener.get(key).forEach((prop, i) => {
+                    this.#listener.get(key).forEach((prop) => {
                         if (prop.node[key] !== undefined)
                             prop.node[key] = value;
                         else
