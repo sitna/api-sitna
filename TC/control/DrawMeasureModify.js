@@ -1,12 +1,11 @@
 ﻿
 /**
   * Opciones del control de dibujo, medida y modificación de geometrías en el mapa.
-  * @typedef DrawMeasureModifyOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface DrawMeasureModifyOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {boolean|SITNA.ElevationOptions} [displayElevation=false] - Si se establece a un valor verdadero, los puntos dibujados mostrarán la elevación del mapa en las 
+  * @property {boolean|ElevationOptions} [displayElevation=false] - Si se establece a un valor verdadero, los puntos dibujados mostrarán la elevación del mapa en las 
   * coordenadas del punto, y las líneas dibujadas mostrarán un gráfico con su perfil de elevación.
   * @property {string} [mode] - Modo de dibujo, es decir, qué tipo de geometría se va a dibujar.
   * 
@@ -337,6 +336,7 @@ class DrawMeasureModify extends Measure {
                 const feature = e.control.currentFeature;
                 if (feature instanceof Polyline && self.layer.features.indexOf(feature) >= 0) {
                     if (self.elevationProfileActive) {
+                        const html = e.control.getInfoContainer().innerHTML;
                         e.control.hide();
                         self.getElevationControl().then(function (ctl) {
                             if (ctl.resultsPanel) {
@@ -345,7 +345,9 @@ class DrawMeasureModify extends Measure {
                                     ctl.resultsPanel.maximize();
                                 }
                             }
-                            ctl.displayElevationProfile(feature);
+                            ctl.displayElevationProfile(feature).then(() => {
+                                ctl.resultsPanel.getInfoContainer().innerHTML = html;
+                            });
                         });
                     }
                 }
@@ -931,7 +933,7 @@ class DrawMeasureModify extends Measure {
         if (showHideBtn) {
             const layerPromises = this.drawControls.reduce(function (i, a) { return i.concat([a.getLayer()]) }, []);
             Promise.all(layerPromises).then(function () {
-                showHideBtn.disabled = !self.drawControls.some(dc => dc.layer.features.length || (dc.isActive && dc.historyIndex > 0));
+                showHideBtn.disabled = !self.drawControls.some((dc) => dc.layer.features.length || (dc.isActive && dc.historyIndex > 0));
                 showHideBtn.active = false;
                 showHideBtn.title = self.getLocaleString("hideSketch");
             });
