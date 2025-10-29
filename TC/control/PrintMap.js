@@ -1,10 +1,9 @@
 ﻿
 /**
   * Opciones de control de impresión.
-  * @typedef PrintMapOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface PrintMapOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {string} [logo] - URL del archivo de imagen del logo a añadir a la hoja de impresión.
   * @property {PrintMapLegendOptions} [legend] - Opciones de configuración para mostrar la leyenda del mapa en una segunda página de impresión.
@@ -12,9 +11,8 @@
 
 /**
   * Opciones de leyenda para la impresión.
-  * @typedef PrintMapLegendOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.PrintMapOptions
+  * @interface PrintMapLegendOptions
+  * @see PrintMapOptions
   * @property {boolean} [visible=false] - Determina si junto a la página del mapa se imprime una segunda página con la leyenda.
   * @property {string} [orientation="portrait"] - Determina la orientación de la página de impresión que contiene la leyenda. Puede tomar el valor `portrait` (vertical) o `landscape` (horizontal).
   */

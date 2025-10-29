@@ -5,11 +5,10 @@
   * Si el control `WFSQuery` está en el mapa, verifica si las capas de servicios WMS están asociadas a un WFS paralelo. Si es así, ofrece un interfaz de usuario
   * para poder hacer consultas a la capa en base a los valores de las propiedades de los elementos de la capa. Esta interfaz de usuario es accesible desde el control
   * `workLayerManager`.
-  * @typedef WFSQueryOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
-  * @property {SITNA.layer.StyleOptions} [styles] - Opciones de estilo de las geometrías de las entidades resultado de la consulta.
-  * @property {SITNA.layer.StyleOptions} [highlightStyles] - Opciones de estilo de las geometrías de las entidades resaltadas.
+  * @interface WFSQueryOptions
+  * @see MapControlsOptions
+  * @property {VectorStyleOptions} [styles] - Opciones de estilo de las geometrías de las entidades resultado de la consulta.
+  * @property {VectorStyleOptions} [highlightStyles] - Opciones de estilo de las geometrías de las entidades resaltadas.
   * @example <caption>[Ver en vivo](../examples/cfg.WFSQueryOptions.html)</caption> {@lang html}
   * <div id="mapa" />
   * <script>
@@ -548,7 +547,7 @@ class WFSQueryFilterModel {
     constructor() {
         this.view = "";
         this["query.tooltipRemoveCond"] = "";
-    };
+    }
 }
 
 class WFSQueryShareModel {

@@ -1,19 +1,18 @@
 ﻿/**
   * Opciones básicas de vista.  
   * @_typedef ViewOptions  
-  * @_see SITNA.ThreeDViewOptions
+  * @_see ThreeDViewOptions
   * @_property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.   
   */
 
 /**
   * Configuración adicional necesaria del control 3D en el mapa. Se define el elemento del DOM en el cual se renderizará la vista 3D.
-  * @typedef ThreeDViewOptions
-  * @memberof SITNA
+  * @interface ThreeDViewOptions
   * @_extends ViewOptions
-  * @see SITNA.MapViewOptions
+  * @see MapViewOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear la vista o valor de atributo id de dicho elemento.  
   *
-  * @example <caption>Definición de objeto SITNA.ThreeDViewOptions</caption> {@lang javascript}
+  * @example <caption>Definición de objeto ThreeDViewOptions</caption> {@lang javascript}
   *     {  
   *         div: "IDElementoDOM"
   *     }

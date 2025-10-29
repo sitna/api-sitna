@@ -1,10 +1,9 @@
 ﻿
 /**
   * Opciones de control de obtención de información de entidades de mapa por click.
-  * @typedef FeatureInfoOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
-  * @see SITNA.control.MultiFeatureInfoModeOptions
+  * @interface FeatureInfoOptions
+  * @see MapControlsOptions
+  * @see MultiFeatureInfoModeOptions
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a los clics hechos en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {boolean} [persistentHighlights] - Cuando el control `featureInfo` muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías

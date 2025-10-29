@@ -1,10 +1,9 @@
 ﻿
 /**
   * Opciones de un control que contiene pestañas de selección.
-  * @typedef TabContainerOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface TabContainerOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [deselectableTabs=false] - Si se establece a `true`, las pestañas se pueden deseleccionar pulsando sobre ellas 
   * cuando ya estaban seleccionadas previamente.

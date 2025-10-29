@@ -1,10 +1,9 @@
 ﻿
 /**
   * Opciones de control de StreetView.
-  * @typedef StreetViewOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface StreetViewOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {string} [googleMapsKey] - El control de StreetView hace uso de la API de Google Maps para funcionar. 
   * Esta propiedad establece la clave de uso asociada al sitio donde está alojada la aplicación que usa la API SITNA. 

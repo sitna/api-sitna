@@ -1,10 +1,9 @@
 ﻿
 /**
   * Opciones de control de obtención de información de entidades de mapa por línea o por recinto.
-  * @typedef GeometryFeatureInfoOptions
+  * @interface GeometryFeatureInfoOptions
   * @extends FeatureInfoOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MultiFeatureInfoModeOptions
+  * @see MultiFeatureInfoModeOptions
   * @property {PolylineStyleOptions|PolygonStyleOptions} [filterStyle] - Estilo de la entidad cuya geometría servirá de filtro espacial para la consulta.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta muestra también resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si este valor es verdadero, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 

@@ -6,12 +6,11 @@
   * en el ámbito de la aplicación que contiene el visor el _[Service Worker](https://developer.mozilla.org/es/docs/Web/API/Service_Worker_API)_ 
   * creado para el funcionamiento de este control en modo desconectado.
   * Para ello basta con copiar el archivo [tc-cb-service-worker.js](https://raw.githubusercontent.com/sitna/api-sitna/master/TC/workers/tc-cb-service-worker.js) a la carpeta raíz de dicha aplicación.
-  * @typedef WFSEditOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface WFSEditOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {SITNA.ElevationOptions|boolean} [downloadElevation=false] - Si se establece a un valor verdadero, el control ofrecerá la opción de añadir elevaciones
+  * @property {ElevationOptions|boolean} [downloadElevation=false] - Si se establece a un valor verdadero, el control ofrecerá la opción de añadir elevaciones
   * a las geometrías cuando se descarguen las entidades.
   * @property {boolean} [highlightChanges=true] - Si se establece a un valor verdadero, se resaltarán en el mapa con estilo distintivo
   * las entidades modificadas, con un estilo distinto según el tipo de edición (entidad añadida, modificada o eliminada).
@@ -19,7 +18,7 @@
   * modificadas junto con las mismas entidades antes de ser modificadas, para poder establecer comparaciones.
   * @property {boolean} [snapping=true] - Si se establece a un valor verdadero, la edición de geometrías tendrá un comportamiento 
   * en el que los vértices se "pegarán" y alinearán con otros vértices y aristas al acercarlos a ellos, a la manera de imanes.
-  * @property {SITNA.layer.StyleOptions} [styles] - Opciones de los estilos de las entidades editadas, por tipo de geometría.
+  * @property {VectorStyleOptions} [styles] - Opciones de los estilos de las entidades editadas, por tipo de geometría.
   * @example <caption>[Ver en vivo](../examples/cfg.WFSEditOptions.html)</caption> {@lang html}
   * <div id="mapa"></div>
   * <script>

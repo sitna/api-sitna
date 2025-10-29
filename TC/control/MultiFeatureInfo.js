@@ -9,14 +9,13 @@
   * `GetFeature` de los servicios WFS. Esto implica que en este caso debe existir un servicio WFS asociado al servicio WMS que ofrezca 
   * los mismos datos que este. Servidores de mapas como GeoServer tienen este comportamiento por defecto. 
   * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
-  * @typedef MultiFeatureInfoOptions
+  * @interface MultiFeatureInfoOptions
   * @extends FeatureInfoOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @see MapControlsOptions
   * @property {boolean} [active] - Si se establece a `true`, el control asociado está activo, es decir, responde a las pulsaciones hechas en el mapa desde el que se carga.
   * Como máximo puede haber solamente un control activo en el mapa en cada momento.
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {SITNA.control.MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
+  * @property {MultiFeatureInfoModeOptions} [modes] - Opciones de configuración de los modos disponibles de selección.
   * @property {boolean} [persistentHighlights] - Cuando el control muestra los resultados de la consulta, si el servicio lo soporta, mostrará resaltadas sobre el mapa las geometrías
   * de las entidades geográficas de la respuesta. Si el valor de esta propiedad es `true`, dichas geometrías se quedan resaltadas en el mapa indefinidamente. 
   * En caso contrario, las geometrías resaltadas se borran en el momento en que se cierra el bocadillo de resultados o se hace una nueva consulta.
@@ -64,12 +63,11 @@
 /**
   * Opciones de los distintos modos de consulta espacial (por click, por línea o por recinto)
   * del [control de obtención de información de entidades de mapa por geometría]{@linkplain MultiFeatureInfoOptions}.
-  * @typedef MultiFeatureInfoModeOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MultiFeatureInfoOptions
-  * @property {boolean|SITNA.control.FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
-  * @property {boolean|SITNA.control.GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
-  * @property {boolean|SITNA.control.GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
+  * @interface MultiFeatureInfoModeOptions
+  * @see MultiFeatureInfoOptions
+  * @property {boolean|FeatureInfoOptions} [point=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por punto.
+  * @property {boolean|GeometryFeatureInfoOptions} [polyline] - Si se establece a un valor verdadero, el control permite la selección de entidades por línea.
+  * @property {boolean|GeometryFeatureInfoOptions} [polygon=true] - Si se establece a un valor verdadero, el control permite la selección de entidades por polígono.
   */
 
 import TC from '../../TC.js';

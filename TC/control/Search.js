@@ -3,42 +3,41 @@
   * Opciones de control de búsquedas. La configuración por defecto tiene como origen de datos el WFS de IDENA. 
   * Es posible establecer un origen de datos distinto en el que consultar, para ello en lugar de asignar un booleano a la propiedad, que activa o desactiva la búsqueda, 
   * se asignará un objeto con las propiedades a sobrescribir. Las propiedades a sobrescribir no siempre serán las mismas, variarán en función de la configuración que tenga la búsqueda que se quiera modificar.
-  * @typedef SearchOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface SearchOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
-  * @property {boolean|SITNA.control.CadastralParcelSearchOptions} [cadastralParcel=true] - Esta propiedad activa/desactiva la búsqueda de parcelas catastrales en el buscador del mapa. Formato: municipio, polígono, parcela.
+  * @property {boolean|CadastralParcelSearchOptions} [cadastralParcel=true] - Esta propiedad activa/desactiva la búsqueda de parcelas catastrales en el buscador del mapa. Formato: municipio, polígono, parcela.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.CadastralParcelSearchOptions}.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link CadastralParcelSearchOptions}.
   *
   * @property {boolean} [coordinates=true] - Esta propiedad activa/desactiva la localización de coordenadas en Sistema de Referencia ETRS89, bien UTM Huso 30 Norte (EPSG:25830) o latitud-longitud (EPSG:4258, EPSG:4326 o CRS:84) en el buscador del mapa.
-  * @property {SITNA.control.SearchTypeOptions[]} [customSearchTypes] - Colección de tipos de búsqueda personalizados.
+  * @property {SearchTypeOptions[]} [customSearchTypes] - Colección de tipos de búsqueda personalizados.
   * @property {string} [instructions="Buscar municipio, casco urbano, calle, dirección, referencia catastral, coordenadas UTM o latitud-longitud"] - Esta propiedad establece el atributo `title` del cajetín y del botón del buscador del mapa.
-  * @property {boolean|SITNA.control.MunicipalitySearchOptions} [municipality=true] - Esta propiedad activa/desactiva la búsqueda de municipios en el buscador del mapa.
+  * @property {boolean|MunicipalitySearchOptions} [municipality=true] - Esta propiedad activa/desactiva la búsqueda de municipios en el buscador del mapa.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.MunicipalitySearchOptions}.
-  * @property {boolean|SITNA.control.PlaceNameSearchOptions} [placeName=false] - Esta propiedad activa/desactiva la búsqueda de topónimos en el buscador del mapa.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link MunicipalitySearchOptions}.
+  * @property {boolean|PlaceNameSearchOptions} [placeName=false] - Esta propiedad activa/desactiva la búsqueda de topónimos en el buscador del mapa.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.PlaceNameSearchOptions}.
-  * @property {boolean|SITNA.control.PlaceNameMunicipalitySearchOptions} [placeNameMunicipality=false] - Esta propiedad activa/desactiva la búsqueda de topónimo en un municipio en el buscador del mapa. Formato: municipio, topónimo.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link PlaceNameSearchOptions}.
+  * @property {boolean|PlaceNameMunicipalitySearchOptions} [placeNameMunicipality=false] - Esta propiedad activa/desactiva la búsqueda de topónimo en un municipio en el buscador del mapa. Formato: municipio, topónimo.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.PlaceNameMunicipalitySearchOptions}.
-  * @property {boolean|SITNA.control.PostalAddressSearchOptions} [postalAddress=true] - Esta propiedad activa/desactiva la búsqueda de direcciones postales en el buscador del mapa. Formato: entidad de población, vía, portal.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link PlaceNameMunicipalitySearchOptions}.
+  * @property {boolean|PostalAddressSearchOptions} [postalAddress=true] - Esta propiedad activa/desactiva la búsqueda de direcciones postales en el buscador del mapa. Formato: entidad de población, vía, portal.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.PostalAddressSearchOptions}.
-  * @property {boolean|SITNA.control.RoadSearchOptions} [road=false] - Esta propiedad activa/desactiva la búsqueda de carreteras en el buscador del mapa.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link PostalAddressSearchOptions}.
+  * @property {boolean|RoadSearchOptions} [road=false] - Esta propiedad activa/desactiva la búsqueda de carreteras en el buscador del mapa.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.RoadSearchOptions}.
-  * @property {boolean|SITNA.control.RoadMilestoneSearchOptions} [roadMilestone=false] - Esta propiedad activa/desactiva la búsqueda de punto kilométrico en una carretera en el buscador del mapa. Formato: carretera, pk.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link RoadSearchOptions}.
+  * @property {boolean|RoadMilestoneSearchOptions} [roadMilestone=false] - Esta propiedad activa/desactiva la búsqueda de punto kilométrico en una carretera en el buscador del mapa. Formato: carretera, pk.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.RoadMilestoneSearchOptions}.
-  * @property {boolean|SITNA.control.StreetSearchOptions} [street=true] - Esta propiedad activa/desactiva la búsqueda de vías en el buscador del mapa.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link RoadMilestoneSearchOptions}.
+  * @property {boolean|StreetSearchOptions} [street=true] - Esta propiedad activa/desactiva la búsqueda de vías en el buscador del mapa.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.StreetSearchOptions}.
-  * @property {boolean|SITNA.control.TownSearchOptions} [town=true] - Esta propiedad activa/desactiva de cascos urbanos en el buscador del mapa.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link StreetSearchOptions}.
+  * @property {boolean|TownSearchOptions} [town=true] - Esta propiedad activa/desactiva de cascos urbanos en el buscador del mapa.
   *
-  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link SITNA.control.TownSearchOptions}.
+  * Para configurar un origen de datos distinto a IDENA, establecer como valor un objeto con el formato {@link TownSearchOptions}.
   * @example <caption>[Ver en vivo](../examples/cfg.SearchOptions.html)</caption> {@lang html}
   * <div id="mapa"></div>    
   * <script>
@@ -65,30 +64,29 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de parcelas catastrales.
-  * @typedef CadastralParcelSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface CadastralParcelSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
   * @property {string[]} featureType - Colección con el nombre de la capa o capas a consultar. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `queryProperties`.
   * @property {string} geometryName - Nombre del campo de la geometría de la parcela catastral.
   * @property {string} [outputFormat=[SITNA.Consts.format.JSON]{@link SITNA.Consts}] - Tipo de formato en el cual obtener los datos del servicio WFS. Valores admitidos: [SITNA.Consts.format.JSON]{@link SITNA.Consts}, 
   * [SITNA.Consts.format.GML3]{@link SITNA.Consts}, [SITNA.Consts.format.GML32]{@link SITNA.Consts} o [SITNA.Consts.format.GML]{@link SITNA.Consts}.
-  * @property {SITNA.control.CadastralParcelSearchOptionsExt} municipality - Definición de la fuente de datos para la búsqueda de parcela por nombre de municipio en lugar de por código del mismo.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de parcelas.
+  * @property {CadastralParcelSearchOptionsExt} municipality - Definición de la fuente de datos para la búsqueda de parcela por nombre de municipio en lugar de por código del mismo.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de parcelas.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:
   * - `firstQueryWord`: se indicará el campo o campos en los que buscar el código de municipio.
   * - `secondQueryWord`: se indicará el campo o campos en los que buscar el polígono.
   * - `thirdQueryWord`: se indicará el campo o campos en los que buscar la parcela.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
+  * @property {LayerStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
   * deberá haber tantas instancias como capas definidas en `featureType`.
   * 
   * No está disponible `cluster`.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   * 
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.CadastralParcelSearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera 
+  * @property {CadastralParcelSearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera 
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de varios colores, uno para cada tipo de parcela (urbana, rústica, mixta). 
   * El literal indica el tipo de búsqueda y los colores se obtendrán de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} url - Dirección del servicio WFS (las búsquedas en API SITNA están implementadas sobre el estándar [OGC Web Feature Service](http://www.opengeospatial.org/standards/wfs)).
@@ -189,9 +187,8 @@
 
 /**
   * Configuración del origen de datos auxiliar a la búsqueda de parcelas catastrales para la codificación de los nombres de municipio.
-  * @typedef CadastralParcelSearchOptionsExt
-  * @memberof SITNA.control
-  * @see SITNA.control.CadastralParcelSearchOptions
+  * @interface CadastralParcelSearchOptionsExt
+  * @see CadastralParcelSearchOptions
   * @property {string[]} featureType - Colección de nombre de capa o capas a consultar.
   * @property {string} idProperty - Nombre de campo que identifica unívocamente el municipio cuyos valores deben coincidir con los posibles valores del campo indicado en firstQueryWord.
   * @property {string} labelProperty - Nombre de campo en el que buscar el texto indicado.
@@ -215,15 +212,14 @@
 
 /**
   * Opciones de configuración del origen de datos de una búsqueda.
-  * @typedef SearchQueryPropertyOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.CadastralParcelSearchOptions
-  * @see SITNA.control.MunicipalitySearchOptions
-  * @see SITNA.control.PostalAddressSearchOptions
-  * @see SITNA.control.RoadSearchOptions
-  * @see SITNA.control.RoadMilestoneSearchOptions
-  * @see SITNA.control.StreetSearchOptions
-  * @see SITNA.control.TownSearchOptions
+  * @interface SearchQueryPropertyOptions
+  * @see CadastralParcelSearchOptions
+  * @see MunicipalitySearchOptions
+  * @see PostalAddressSearchOptions
+  * @see RoadSearchOptions
+  * @see RoadMilestoneSearchOptions
+  * @see StreetSearchOptions
+  * @see TownSearchOptions
   * @property {string[]} firstQueryWord - Colección de nombre de campo o campos a consultar para el 1º término del criterio de búsqueda, deben existir en la capa o capas definidas en la propiedad `FeatureType`.
   * @property {string[]} secondQueryWord - Colección de nombre de campo o campos a consultar para el 2º término del criterio de búsqueda, deben existir en la capa o capas definidas en la propiedad `FeatureType`.
   * @property {string[]} thirdQueryWord - Colección de nombre de campo o campos a consultar para el 3º término del criterio de búsqueda, deben existir en la capa o capas definidas en la propiedad `FeatureType`.
@@ -231,38 +227,36 @@
 
 /**
   * Opciones de configuración para la composición de la cabecera de una lista de sugerencias de búsqueda.
-  * @typedef SearchSuggestionHeadOptions
-  * @deprecated Usar {@link SITNA.control.SearchSuggestionHeaderOptions} en vez de este objeto.
-  * @memberof SITNA.control
-  * @see SITNA.control.CadastralParcelSearchOptions
-  * @see SITNA.control.MunicipalitySearchOptions
-  * @see SITNA.control.PostalAddressSearchOptions
-  * @see SITNA.control.RoadSearchOptions
-  * @see SITNA.control.RoadMilestoneSearchOptions
-  * @see SITNA.control.StreetSearchOptions
-  * @see SITNA.control.TownSearchOptions
+  * @interface SearchSuggestionHeadOptions
+  * @deprecated Usar {@link SearchSuggestionHeaderOptions} en vez de este objeto.
+  * @see CadastralParcelSearchOptions
+  * @see MunicipalitySearchOptions
+  * @see PostalAddressSearchOptions
+  * @see RoadSearchOptions
+  * @see RoadMilestoneSearchOptions
+  * @see StreetSearchOptions
+  * @see TownSearchOptions
   * @property {string} label - Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… Revisar la sección **Soporte multiidioma** en {@tutorial layout_cfg}.
-  * @property {SITNA.control.SearchResultColorDictionary|SITNA.control.SearchResultColor|string} color - Configuración para obtener el color que representa al tipo de búsqueda.
+  * @property {SearchResultColorDictionary|SearchResultColor|string} color - Configuración para obtener el color que representa al tipo de búsqueda.
   * Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
   * 
-  * La definición como string ha de ser para indicar el nombre de una propiedad presente en {@link SITNA.feature.PointStyleOptions}, {@link SITNA.feature.LineStyleOptions} o {@link SITNA.feature.PolygonStyleOptions}.
+  * La definición como string ha de ser para indicar el nombre de una propiedad presente en {@link PointStyleOptions}, {@link SITNA.feature.LineStyleOptions} o {@link PolygonStyleOptions}.
   */
 
 /**
   * Opciones de configuración para la composición de la cabecera de una lista de sugerencias de búsqueda.
-  * @typedef SearchSuggestionHeaderOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MunicipalitySearchOptions
-  * @see SITNA.control.PostalAddressSearchOptions
-  * @see SITNA.control.RoadSearchOptions
-  * @see SITNA.control.RoadMilestoneSearchOptions
-  * @see SITNA.control.StreetSearchOptions
-  * @see SITNA.control.TownSearchOptions
+  * @interface SearchSuggestionHeaderOptions
+  * @see MunicipalitySearchOptions
+  * @see PostalAddressSearchOptions
+  * @see RoadSearchOptions
+  * @see RoadMilestoneSearchOptions
+  * @see StreetSearchOptions
+  * @see TownSearchOptions
   * @property {string} labelKey - Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… Revisar la sección **Soporte multiidioma** en {@tutorial layout_cfg}.
-  * @property {SITNA.control.SearchResultColorSourceOptions|string} colorSource - Configuración para obtener el color que representa al tipo de búsqueda.
+  * @property {SearchResultColorSourceOptions|string} colorSource - Configuración para obtener el color que representa al tipo de búsqueda.
   * Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
   *
-  * La definición como string ha de ser para indicar el nombre de una propiedad presente en {@link SITNA.feature.PointStyleOptions}, {@link SITNA.feature.LineStyleOptions} o {@link SITNA.feature.PolygonStyleOptions}.
+  * La definición como string ha de ser para indicar el nombre de una propiedad presente en {@link PointStyleOptions}, {@link SITNA.feature.LineStyleOptions} o {@link PolygonStyleOptions}.
   * @example
   * {
   *     labelKey: "search.list.town",
@@ -272,32 +266,29 @@
 
 /**
   * Opciones de configuración para la composición de la cabecera de una lista de sugerencias de búsqueda.
-  * @typedef CadastralParcelSearchSuggestionHeaderOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.CadastralParcelSearchOptions
+  * @interface CadastralParcelSearchSuggestionHeaderOptions
+  * @see CadastralParcelSearchOptions
   * @property {string} labelKey - Clave del diccionario de traducciones que indica qué tipo de búsqueda es: Parcela Catastral, Municipio, Calle… Revisar la sección **Soporte multiidioma** en {@tutorial layout_cfg}.
-  * @property {SITNA.control.SearchSuggestionMutipleColorSourceOptions[]} colorSource - Configuración para obtener los colores que representan las parcelas catastrales.
+  * @property {SearchSuggestionMutipleColorSourceOptions[]} colorSource - Configuración para obtener los colores que representan las parcelas catastrales.
   * Se establece como color la primera coincidencia en `styles` que cumpla con la configuración.
   */
 
 /**
   * Algunas búsquedas hacen la consulta sobre varias capas. Este objeto define el color de los resultados de la búsqueda de cada capa. Estos colores también se mostrarán en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  * @typedef SearchResultColorDictionary
-  * @deprecated Usar una colección de {@link SITNA.control.SearchSuggestionMutipleColorSourceOptions} en vez de este objeto.
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchSuggestionHeaderOptions
-  * @property {SITNA.control.SearchResultColor} color - Configuración para obtener el color.
+  * @interface SearchResultColorDictionary
+  * @deprecated Usar una colección de {@link SearchSuggestionMutipleColorSourceOptions} en vez de este objeto.
+  * @see SearchSuggestionHeaderOptions
+  * @property {SearchResultColor} color - Configuración para obtener el color.
   * @property {string} title - Title para identificar al color. Se define con la clave del diccionario de traducciones. Revisar la sección **Soporte multiidioma** en {@tutorial layout_cfg}.
   */
 
 /**
   * Definición del color con el que se dibujará los resultados de la búsqueda en el mapa. Este color también se mostrará en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  * @typedef SearchResultColor
-  * @deprecated Usar {@link SITNA.control.SearchResultColorSourceOptions} en vez de este objeto.
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchSuggestionHeaderOptions
-  * @property {string} css - Nombre de la propiedad de los estilos de la cual extraer el color. Ha de ser alguna de las distintas propiedades de colores presentes en {@link SITNA.feature.PointStyleOptions},
-  * {@link SITNA.feature.PolylineStyleOptions} o {@link SITNA.feature.PolygonStyleOptions}.
+  * @interface SearchResultColor
+  * @deprecated Usar {@link SearchResultColorSourceOptions} en vez de este objeto.
+  * @see SearchSuggestionHeaderOptions
+  * @property {string} css - Nombre de la propiedad de los estilos de la cual extraer el color. Ha de ser alguna de las distintas propiedades de colores presentes en {@link PointStyleOptions},
+  * {@link PolylineStyleOptions} o {@link PolygonStyleOptions}.
   * @property {string} geomType - Nombre del tipo de geometría (el valor es un miembro de [SITNA.Consts.geom]{@link SITNA.Consts}).
   */
 
@@ -305,10 +296,9 @@
   * Ciertas búsquedas se realizan simultáneamente sobre varias capas, por lo que es de esperar que los resultados 
   * tengan entidades con distinta simbología. Este objeto es un elemento del diccionario que define los colores y 
   * textos descriptivos asociados a cada capa.
-  * @typedef SearchSuggestionMutipleColorSourceOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchSuggestionHeaderOptions
-  * @property {SITNA.control.SearchResultColorSourceOptions} colorSource - Configuración para obtener el color desde la capa.
+  * @interface SearchSuggestionMutipleColorSourceOptions
+  * @see SearchSuggestionHeaderOptions
+  * @property {SearchResultColorSourceOptions} colorSource - Configuración para obtener el color desde la capa.
   * @property {string} featureType - El nombre de la capa asociada a este color.
   * @property {string} tooltipKey - Clave del diccionario de textos que obtiene el texto descriptivo que se asociará al color. Para más información sobre los diccionarios de textos, revisar la sección **Soporte multiidioma** en {@tutorial layout_cfg}.
   * @example
@@ -326,12 +316,11 @@
   * Información de las propiedades de estilo de la capa donde se está realizando la búsqueda y de la que se extraerá 
   * el color con el que se dibujarán los resultados de la búsqueda en el mapa. Este color también se mostrará 
   * en la leyenda de la lista de sugerencias de resultados posibles de la búsqueda.
-  * @typedef SearchResultColorSourceOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchSuggestionHeaderOptions
+  * @interface SearchResultColorSourceOptions
+  * @see SearchSuggestionHeaderOptions
   * @property {string} geometryType - Nombre del tipo de geometría (el valor es un miembro de [SITNA.Consts.geom]{@link SITNA.Consts}).
-  * @property {string} propertyName - Nombre de la propiedad de los estilos de la cual extraer el color. Ha de ser alguna de las distintas propiedades de colores presentes en {@link SITNA.feature.PointStyleOptions},
-  * {@link SITNA.feature.PolylineStyleOptions} o {@link SITNA.feature.PolygonStyleOptions}.
+  * @property {string} propertyName - Nombre de la propiedad de los estilos de la cual extraer el color. Ha de ser alguna de las distintas propiedades de colores presentes en {@link PointStyleOptions},
+  * {@link PolylineStyleOptions} o {@link PolygonStyleOptions}.
   * @example
   * {
   *     geometryType: "point",
@@ -341,9 +330,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de municipios.
-  * @typedef MunicipalitySearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface MunicipalitySearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -355,17 +343,17 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias. 
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de municipios.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de municipios.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a la propiedad `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre del municipio.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
   * deberá haber tantas instancias como capas definidas en `featureType`.
   * 
   * No está disponible `cluster`.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{0}"] - Cadena con la plantilla que se utilizará en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -421,9 +409,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de direcciones postales.
-  * @typedef PostalAddressSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface PostalAddressSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a la dirección postal. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -435,20 +422,20 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de direcciones postales.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de direcciones postales.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre de la entidad de población.
   * - `secondQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre de la vía.
   * - `thirdQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el número de portal.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
   * deberá haber tantas instancias como capas definidas en `featureType`.
   * 
   * No está disponible cluster.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{1} {2}, {0}"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -509,9 +496,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de topónimo.
-  * @typedef PlaceNameSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface PlaceNameSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un topónimo. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -523,21 +509,21 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de topónimo.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de topónimo.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a la siguiente propiedad:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre del topónimo.
   * @property {string[]} renderFeatureType - Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`.
   *
   * No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
   * y `renderFeatureType` y 2 `styles`, por tanto, deberá haber tantas instancias como la suma de las capas definidas en `featureType` y en `renderFeatureType`.
   * 
   * No está disponible cluster.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{1} ({0})"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -596,9 +582,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de topónimo en un municipio.
-  * @typedef PlaceNameMunicipalitySearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface PlaceNameMunicipalitySearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un topónimo en un municipio. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -610,7 +595,7 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de topónimo en un municipio.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de topónimo en un municipio.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre del municipio.
@@ -618,14 +603,14 @@
   * @property {string[]} renderFeatureType - Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`.
   *
   * No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
   * y `renderFeatureType` y 2 `styles`, por tanto, deberá haber tantas instancias como la suma de las capas definidas en `featureType` y en `renderFeatureType`.
   * 
   * No está disponible cluster.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{1} ({0})"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -686,9 +671,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de carreteras.
-  * @typedef RoadSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface RoadSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a una carretera. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -700,21 +684,21 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de carreteras.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de carreteras.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a la siguiente propiedad:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre de la carretera.  
   * @property {string[]} renderFeatureType - Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`.
   *
   * No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
   * y `renderFeatureType` y 2 `styles`, por tanto, deberá haber tantas instancias como la suma de las capas definidas en `featureType` y en `renderFeatureType`.
   * 
   * La propiedad `cluster` será ignorada en este caso.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{0}"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -770,9 +754,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de punto kilométrico de carretera.
-  * @typedef RoadMilestoneSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface RoadMilestoneSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un punto kilométrico de una carretera. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -784,7 +767,7 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de punto kilométrico.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de punto kilométrico.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre de la carretera.
@@ -792,14 +775,14 @@
   * @property {string[]} renderFeatureType - Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`.
   *
   * No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
   * y `renderFeatureType` y 2 `styles`, por tanto, deberá haber tantas instancias como la suma de las capas definidas en `featureType` y en `renderFeatureType`.
   * 
   * No está disponible cluster.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{0}: PK {1}"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -857,9 +840,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de vías.
-  * @typedef StreetSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface StreetSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a una vía. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -871,7 +853,7 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de vías.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de vías.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a las siguientes propiedades:
   * - `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre de la entidad de población.
@@ -879,14 +861,14 @@
   * @property {string[]} renderFeatureType - Colección con los nombres de las capas auxiliares a añadir al resultado de la búsqueda en el mapa. Es posible indicar más de una capa si todas ellas cuentan con los campos definidos en `dataIdProperty`.
   *
   * No se muestran sugerencias en base a las capas auxiliares, únicamente se añade información en el momento de pintar en el mapa, es por ello que debe existir relación en los datos entre las capas definidas en `featureType` y `renderFeatureType` y que ambas cuenten con los campos definidos en `dataIdProperty`.
-  * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
   * y `renderFeatureType` y 2 `styles`, por tanto, deberá haber tantas instancias como la suma de las capas definidas en `featureType` y en `renderFeatureType`.
   * 
   * No está disponible cluster.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{1}, {0}"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -954,9 +936,8 @@
 
 /**
   * Opciones de configuración del origen de datos de la búsqueda de cascos urbanos.
-  * @typedef TownSearchOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.SearchOptions
+  * @interface TownSearchOptions
+  * @see SearchOptions
   * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
   * @property {string[]} dataIdProperty - Colección con el nombre del campo o campos que nos servirán para identificar unívocamente a un casco urbano. Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
   * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`. En caso de ser un WFS de GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -968,16 +949,16 @@
   * @property {string[]} outputProperties - Colección con los nombres de campos a mostrar (según la plantilla indicada en `suggestionTemplate`) en la lista de sugerencias.
   * Los campos indicados también se usan para controlar los posibles registros duplicados en la lista de sugerencias. Es decir, indicando código y nombre los resultados se agruparán por los 2 campos. 
   * Los campos definidos deben existir en la capa o capas definidas en la propiedad `featureType`.
-  * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de vías.
+  * @property {SearchQueryPropertyOptions} queryProperties - Definición de los campos por los que filtrar la búsqueda de vías.
   *
   * En este tipo de búsqueda es obligatorio dar un valor a la propiedad `firstQueryWord`: se indicará el campo o campos (tipo `string`) en los que buscar el nombre del casco urbano.
-  * @property {SITNA.layer.StyleOptions[]} styles - La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
+  * @property {VectorStyleOptions[]} styles - La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto, deberá haber tantas instancias como capas definidas en `featureType`.
   * 
   * No está disponible cluster.
-  * @property {SITNA.control.SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
+  * @property {SearchSuggestionHeadOptions} suggestionListHead - *__Obsoleta__: En lugar de esta propiedad utilice la propiedad equivalente `suggestionListHeader`.*
   *
   * Configuración de la cabecera a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color. El literal indica el tipo de búsqueda y el color será el que mejor representa a las entidades correspondientes en el mapa.
-  * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+  * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
   * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
   * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
   * @property {string} [suggestionTemplate="{1} ({0})"] - Cadena con el patrón a mostrar en la lista de sugerencias. Reemplaza el valor numérico (entre llaves) que corresponde con el índice de la colección `outputProperties` con el valor del campo. Las llaves de cierre y apertura son necesarias.
@@ -1034,9 +1015,8 @@
 /**
  * Objeto de configuración de tipo de búsqueda, define el origen de datos y cómo procesar los patrones de 
  * búsqueda y la lista de resultados.
- * @typedef SearchTypeOptions
- * @memberof SITNA.control
- * @see SITNA.control.SearchOptions
+ * @interface SearchTypeOptions
+ * @see SearchOptions
  * @see {@link http://www.opengeospatial.org/standards/wfs|OGC Web Feature Service Standard}
  * @property {string} featurePrefix - Prefijo del nombre de la capa o capas a definir en la propiedad `featureType`.
  * Si el WFS se sirve desde GeoServer, se trata del nombre del espacio de trabajo (workspace).
@@ -1047,13 +1027,13 @@
  * {@link SITNA.Consts} hay un enumerado de valores que puede adoptar esta propiedad.
  * @property {SITNA.control.SearchPatternParser} parser - Función que interpreta el texto introducido y extrae una lista de 
  * valores de los parámetros a consultar. El orden de los parámetros es el que indica la propiedad `queryProperties`.
- * @property {SITNA.control.SearchQueryPropertyOptions} queryProperties - Nombres de los campos de las
+ * @property {SearchQueryPropertyOptions} queryProperties - Nombres de los campos de las
  * capas que hay que consultar para aplicar los criterios de búsqueda.
- * @property {SITNA.layer.StyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
+ * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en las colecciones 1 y 2 siendo 1 la concatenación de `featureType`
  * y `renderFeatureType` y 2 `styles`, por tanto, deberá haber tantas instancias como la suma de las capas definidas en `featureType` y en `renderFeatureType`.
  *
  * La propiedad `cluster` será ignorada en este caso.
- * @property {SITNA.control.SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
+ * @property {SearchSuggestionHeaderOptions} suggestionListHeader - Configuración de la cabecera
  * a mostrar en la lista de sugerencias. La cabecera consta de un literal y de un color.
  * El literal indica el tipo de búsqueda y el color se obtendrá de una de las propiedades de la simbología de las entidades que se muestran en el mapa.
  * @property {string} suggestionTemplate - Cadena con el patrón a mostrar en la lista de sugerencias. 
@@ -1130,8 +1110,8 @@
  * @param {string} pattern - Texto introducido por el usuario para realizar la búsqueda.
  * @returns {Array|null} Lista ordenada de valores de los parámetros a consultar en la búsqueda. 
  * Si el patrón no concuerda con el tipo de búsqueda se devuelve un valor `null`.
- * @see SITNA.control.SearchTypeOptions
- * @see SITNA.control.SearchQueryPropertyOptions
+ * @see SearchTypeOptions
+ * @see SearchQueryPropertyOptions
  * @example {@lang javascript}
  // Ejemplo de función que interpreta coordenadas geográficas
  function parseCoordinates(pattern) {
@@ -1147,8 +1127,7 @@
 
 /**
  * Objeto de descripción de resultado de búsqueda.
- * @typedef SearchResult
- * @memberof SITNA.control
+ * @interface SearchResult
  * @property {string} dataRole - Identificador del tipo de búsqueda.
  * @property {string} id - Identificador único del resultado.
  * @property {string} label - Texto descriptivo del resultado.
