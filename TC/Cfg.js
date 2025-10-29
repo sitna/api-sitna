@@ -33,22 +33,22 @@ for (const abl of availableBaseLayers) {
 }
 
 /**
- * Opciones de configuración del mapa. Para más información de como usar objetos de este tipo, consultar {@tutorial 2-configuration}.
- * @typedef MapOptions
- * @memberof SITNA
+ * Opciones de configuración del mapa. Para más información de como usar objetos que implementan esta interfaz, 
+ * consultar {@tutorial 1-configuration}.
+ * @interface MapOptions
  * @see 2-configuration
- * @property {SITNA.layer.LayerOptions[]|string[]} [baseLayers=[SITNA.Consts.layer.IDENA_BASEMAP]{@link SITNA.Consts}, 
+ * @property {LayerOptions[]|string[]} [baseLayers=[SITNA.Consts.layer.IDENA_BASEMAP]{@link SITNA.Consts}, 
  * [SITNA.Consts.layer.IDENA_ORTHOPHOTO]{@link SITNA.Consts}, [SITNA.Consts.layer.IDENA_CADASTER]{@link SITNA.Consts}, 
  * [SITNA.Consts.layer.IDENA_CARTO]{@link SITNA.Consts}] - Lista con cualquier combinación de objetos de definición de capa o de identificadores de capas de la API SITNA
  * (miembros de [SITNA.Consts.layer]{@link SITNA.Consts}) para incluir dichas capas como mapas de fondo.
- * @property {SITNA.control.MapControlOptions} [controls] - Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.     
+ * @property {MapControlsOptions} [controls] - Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.     
  * @property {string} [crossOrigin] - Valor del atributo `crossorigin` de las imágenes del mapa para habilitar CORS. Es necesario establecer esta opción para poder utilizar el método {@link SITNA.Map#exportImage}.
  *
  * Los valores soportados son `anonymous` y `use-credentials`. Para más información, consulte [la documentación de MDN Web Docs](https://developer.mozilla.org/es/docs/Web/HTML/CORS_enabled_image).
  * @property {string} [crs=["EPSG:25830"]{@link https://epsg.io/25830}] - Código EPSG del sistema de referencia de coordenadas del mapa.
  * @property {string} [defaultBaseLayer=[SITNA.Consts.layer.IDENA_BASEMAP]{@link SITNA.Consts}] - Identificador de la capa base por defecto o índice de la capa base por defecto en la lista de capas base del mapa (Definida con la propiedad `baseLayers`).
  * @property {number[]} [initialExtent=[541084.221, 4640788.225, 685574.4632, 4796618.764]] - Extensión inicial del mapa definida por x mínima, y mínima, x máxima, y máxima, en las unidades del sistema de referencia de coordenadas del mapa (Ver propiedad `crs`). Por defecto la extensión es la de Navarra.
- * @property {string|SITNA.LayoutOptions} [layout="//sitna.navarra.es/api/layout/responsive"] - URL de la carpeta de maquetación u objeto de opciones de maquetación. Para prescindir de maquetación, establecer esta propiedad a `null`. Para más información al respecto de esta propiedad,
+ * @property {string|LayoutOptions} [layout="//sitna.navarra.es/api/layout/responsive"] - URL de la carpeta de maquetación u objeto de opciones de maquetación. Para prescindir de maquetación, establecer esta propiedad a `null`. Para más información al respecto de esta propiedad,
  * consulte el tutorial {@tutorial layout_cfg}.
  * @property {string} [locale="es-ES"] - Código de idioma de la interfaz de usuario. Este código debe obedecer la sintaxis definida por la IETF. Los valores posibles son `es-ES`, `eu-ES` y `en-US`.
  * @property {number[]|boolean} [maxExtent=false] - Extensión máxima del mapa definida por x mínima, y mínima, x máxima, y máxima, de forma que el centro del mapa nunca saldrá fuera de estos límites. 
@@ -83,9 +83,9 @@ for (const abl of availableBaseLayers) {
  * 
  * Si la propiedad `proxy` está establecida, todas las peticiones a dominios remotos las mandará al proxy para que este las redirija. 
  * De esta manera no infringimos las reglas de seguridad de JavaScript, dado que el proxy está alojado en el dominio propio.
- * @property {SITNA.layer.StyleOptions} [styles] - Opciones de estilo de las entidades geográficas.
- * @property {SITNA.MapViewOptions} [views] - Opciones de vistas de mapa, define qué vistas estarán disponibles para conmutar entre el mapa y las vistas adicionales configuradas aquí, y qué opciones se pasan a cada vista. Actualmente, únicamente existe la opción de configurar la vista `threed` que gestiona el control `threed` de {@link SITNA.control.MapControlOptions}.
- * @property {SITNA.layer.LayerOptions[]} [workLayers] - Lista de objetos de definición de capa para incluir dichas capas como contenido activo del mapa.
+ * @property {VectorStyleOptions} [styles] - Opciones de estilo de las entidades geográficas.
+ * @property {MapViewOptions} [views] - Opciones de vistas de mapa, define qué vistas estarán disponibles para conmutar entre el mapa y las vistas adicionales configuradas aquí, y qué opciones se pasan a cada vista. Actualmente, únicamente existe la opción de configurar la vista `threed` que gestiona el control `threed` de {@link MapControlsOptions}.
+ * @property {LayerOptions[]} [workLayers] - Lista de objetos de definición de capa para incluir dichas capas como contenido activo del mapa.
  */
 
 const Defaults = (function () {
@@ -149,12 +149,11 @@ const Defaults = (function () {
 
 
         /**
-        * Opciones de vistas de mapa, define qué vistas estarán disponibles para conmutar entre el mapa y las vistas adicionales configuradas aquí, y qué opciones se pasan a cada vista. Actualmente, únicamente existe la opción de configurar la vista `threed` que gestiona el control `threed` de {@link SITNA.control.MapControlOptions}.
-        * @typedef MapViewOptions
-        * @memberof SITNA
-        * @see SITNA.MapOptions
-        * @property {SITNA.ThreeDViewOptions} [threeD] - Se establece un valor *truthy* con las opciones de la vista del mapa.        
-        * @example <caption>Definición objeto SITNA.MapViewOptions[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang javascript}
+        * Opciones de vistas de mapa, define qué vistas estarán disponibles para conmutar entre el mapa y las vistas adicionales configuradas aquí, y qué opciones se pasan a cada vista. Actualmente, únicamente existe la opción de configurar la vista `threed` que gestiona el control `threed` de {@link MapControlsOptions}.
+        * @interface MapViewOptions
+        * @see MapOptions
+        * @property {ThreeDViewOptions} [threeD] - Se establece un valor *truthy* con las opciones de la vista del mapa.        
+        * @example <caption>Definición de objeto MapViewOptions[Ver en vivo](../examples/cfg.ThreeDOptions.html)</caption> {@lang javascript}
         *     { 
         *         threeD: { }
         *     }            
@@ -163,8 +162,8 @@ const Defaults = (function () {
         * <div id="vista3d"/>
         * <script>
         *     // Configuración adicional de una vista en la cual se renderizará la vista 3D.
-        *     SITNA.Cfg.views = { // Establecemos la propiedad `views` del mapa indicando como valor un objeto con la estructura definida en `SITNA.MapViewOptions`.
-        *         threeD: { // Establecemos la propiedad `threeD` configurando como valor un objeto siguiendo la estructura de `SITNA.ThreeDViewOptions`.
+        *     SITNA.Cfg.views = { // Establecemos la propiedad `views` del mapa indicando como valor un objeto con la estructura definida en `MapViewOptions`.
+        *         threeD: { // Establecemos la propiedad `threeD` configurando como valor un objeto siguiendo la estructura de `ThreeDViewOptions`.
         *             div: "vista3d" // Indicamos el identificador del DIV en el marcado en el cual cargar la vista 3D.
         *         }
         *     };
@@ -172,78 +171,72 @@ const Defaults = (function () {
         */
 
         /**
-         * Espacio de nombres de los controles de la interfaz de usuario.
-         * @namespace SITNA.control
-         */
-
-        /**
         * Opciones de controles de mapa, define qué controles se incluyen en un mapa y qué opciones se pasan a cada control.
-        * @typedef MapControlOptions
-        * @memberof SITNA.control
-        * @see SITNA.MapOptions
-        * @property {boolean|SITNA.control.ControlOptions} [attribution=true] - Si se establece a un valor *truthy*, el mapa tiene atribución. 
-        * @property {boolean|SITNA.control.ControlOptions} [basemapSelector=false] - Si se establece a un valor *truthy*, el mapa tiene un selector de mapas de fondo.
-        * @property {boolean|SITNA.control.ClickOptions} [click=false] - Si se establece a un valor *truthy*, el mapa tiene un control que gestiona los clics del usuario sobre su ventana de visualización.
+        * @interface MapControlsOptions
+        * @see MapOptions
+        * @property {boolean|ControlOptions} [attribution=true] - Si se establece a un valor *truthy*, el mapa tiene atribución. 
+        * @property {boolean|ControlOptions} [basemapSelector=false] - Si se establece a un valor *truthy*, el mapa tiene un selector de mapas de fondo.
+        * @property {boolean|ClickOptions} [click=false] - Si se establece a un valor *truthy*, el mapa tiene un control que gestiona los clics del usuario sobre su ventana de visualización.
         * La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.
-        * @property {boolean|SITNA.control.CoordinatesOptions} [coordinates=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de coordenadas y de sistema de referencia espacial.
-        * @property {boolean|SITNA.control.DataLoaderOptions} [dataLoader=false] - Si se establece a un valor *truthy*,  se muestra un control para añadir datos externos, en concreto servicios WMS y archivos locales de datos geográficos.
+        * @property {boolean|CoordinatesOptions} [coordinates=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de coordenadas y de sistema de referencia espacial.
+        * @property {boolean|DataLoaderOptions} [dataLoader=false] - Si se establece a un valor *truthy*,  se muestra un control para añadir datos externos, en concreto servicios WMS y archivos locales de datos geográficos.
         * 
-        * Hay más información sobre el funcionamiento del control en la página de documentación de {@link SITNA.control.DataLoaderOptions}.
-        * @property {boolean|SITNA.control.TabContainerOptions} [download=false] - Si se establece a un valor *truthy*, el mapa tiene un control que permite descargar la imagen actual del mapa o las capas cargadas como un archivo de datos vectoriales.
+        * Hay más información sobre el funcionamiento del control en la página de documentación de {@link DataLoaderOptions}.
+        * @property {boolean|TabContainerOptions} [download=false] - Si se establece a un valor *truthy*, el mapa tiene un control que permite descargar la imagen actual del mapa o las capas cargadas como un archivo de datos vectoriales.
         * Para llevar a cabo esta segunda operación, es necesario que las capas del mapa tengan asociado un servicio WFS al servicio WMS que muestra las entidades en el mapa (software como GeoServer realiza esto automáticamente).
         * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
-        * @property {boolean|SITNA.control.DrawMeasureModifyOptions} [drawMeasureModify=false] - Si se establece a un valor *truthy*, el mapa tiene un control para dibujar, medir y modificar geometrías en el mapa.
-        * @property {boolean|SITNA.control.FeatureInfoOptions} [featureInfo=true] - Si se establece a un valor *truthy*, el mapa responde a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición `getFeatureInfo` del standard WMS.
-        * @property {boolean|SITNA.control.ControlOptions} [fullScreen=false] - Si se establece a un valor *truthy*, el mapa incorpora un botón para activar el modo de pantalla completa.
-        * @property {boolean|SITNA.control.GeolocationOptions} [geolocation=false] - Si se establece a un valor *truthy*, se muestra un control para geolocalizar y crear, visualizar y guardar rutas.
-        * @property {boolean|SITNA.control.LayerCatalogOptions} [layerCatalog=false] - Si se establece a un valor *truthy*, se muestra un control para añadir capas de trabajo desde uno o varios servicios WMS.
+        * @property {boolean|DrawMeasureModifyOptions} [drawMeasureModify=false] - Si se establece a un valor *truthy*, el mapa tiene un control para dibujar, medir y modificar geometrías en el mapa.
+        * @property {boolean|FeatureInfoOptions} [featureInfo=true] - Si se establece a un valor *truthy*, el mapa responde a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición `getFeatureInfo` del standard WMS.
+        * @property {boolean|ControlOptions} [fullScreen=false] - Si se establece a un valor *truthy*, el mapa incorpora un botón para activar el modo de pantalla completa.
+        * @property {boolean|GeolocationOptions} [geolocation=false] - Si se establece a un valor *truthy*, se muestra un control para geolocalizar y crear, visualizar y guardar rutas.
+        * @property {boolean|LayerCatalogOptions} [layerCatalog=false] - Si se establece a un valor *truthy*, se muestra un control para añadir capas de trabajo desde uno o varios servicios WMS.
         *
         * Este control se usa habitualmente en combinación con `workLayerManager`. Hay más información de cómo funcionan ambos controles en 
-        * la página de documentación de {@link SITNA.control.LayerCatalogOptions}.
-        * @property {boolean|SITNA.control.ControlOptions} [legend=false] - Si se establece a un valor *truthy*, el mapa tiene leyenda.
-        * @property {boolean|SITNA.control.ControlOptions} [loadingIndicator=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de espera de carga.
-        * @property {boolean|SITNA.control.ControlOptions} [measure=false] - Si se establece a un valor *truthy*, el mapa tiene un medidor de longitudes, áreas y perímetros.
-        * @property {boolean|SITNA.control.MultiFeatureInfoOptions} [multiFeatureInfo=false] - Si se establece a un valor *truthy*, el mapa incluye un control que permite la
+        * la página de documentación de {@link LayerCatalogOptions}.
+        * @property {boolean|ControlOptions} [legend=false] - Si se establece a un valor *truthy*, el mapa tiene leyenda.
+        * @property {boolean|ControlOptions} [loadingIndicator=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de espera de carga.
+        * @property {boolean|ControlOptions} [measure=false] - Si se establece a un valor *truthy*, el mapa tiene un medidor de longitudes, áreas y perímetros.
+        * @property {boolean|MultiFeatureInfoOptions} [multiFeatureInfo=false] - Si se establece a un valor *truthy*, el mapa incluye un control que permite la
         * obtención de información de las entidades que se intersecan con puntos, líneas o polígonos dibujados por el usuario. Para líneas y polígonos, 
         * es necesario que las capas del mapa tengan asociado un servicio WFS al servicio WMS que muestra las entidades en el mapa (software como GeoServer realiza esto automáticamente).
         * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
-        * @property {boolean|SITNA.control.ControlOptions} [navBar=false] - Si se establece a un valor *truthy*, el mapa tiene una barra de navegación con control de zoom.
-        * @property {boolean|SITNA.control.OfflineMapMakerOptions} [offlineMapMaker=false] - Si se establece a un valor *truthy*, el mapa tiene un creador de mapas sin conexión para uso sin acceso a Internet.
+        * @property {boolean|ControlOptions} [navBar=false] - Si se establece a un valor *truthy*, el mapa tiene una barra de navegación con control de zoom.
+        * @property {boolean|OfflineMapMakerOptions} [offlineMapMaker=false] - Si se establece a un valor *truthy*, el mapa tiene un creador de mapas sin conexión para uso sin acceso a Internet.
         * 
         * Hay más información sobre los requisitos necesarios para el correcto funcionamiento del control en la página de documentación de
-        * {@link SITNA.control.OfflineMapMakerOptions}.
-        * @property {boolean|SITNA.control.OverviewMapOptions} [overviewMap=false] - Si se establece a un valor *truthy*, el mapa tiene un mapa de situación.
-        * @property {boolean|SITNA.control.ControlOptions} [popup=false] - Si se establece a un valor *truthy*, el mapa muestra los datos asociados a los marcadores cuando se pulsa sobre ellos.
-        * @property {boolean|SITNA.control.PrintMapOptions} [printMap=false] - Si se establece a un valor *truthy*, se muestra una herramienta para imprimir el mapa en PDF.
+        * {@link OfflineMapMakerOptions}.
+        * @property {boolean|OverviewMapOptions} [overviewMap=false] - Si se establece a un valor *truthy*, el mapa tiene un mapa de situación.
+        * @property {boolean|ControlOptions} [popup=false] - Si se establece a un valor *truthy*, el mapa muestra los datos asociados a los marcadores cuando se pulsa sobre ellos.
+        * @property {boolean|PrintMapOptions} [printMap=false] - Si se establece a un valor *truthy*, se muestra una herramienta para imprimir el mapa en PDF.
         *
         * El control permite al usuario elegir entre varios tamaños de hoja y orientación horizontal o vertical, además se le puede poner un título al documento de impresión.
         * 
         * Al pulsar el botón de imprimir se abre una previsualización como paso previo a la impresión. Ahí el usuario puede realizar unos últimos ajustes a la extensión del mapa.
         * 
         * El PDF se generará al pulsar en el botón dentro de la previsualización.
-        * @property {boolean|SITNA.control.ControlOptions} [scale=false] - Si se establece a un valor *truthy*, el mapa tiene un indicador numérico de escala.
-        * @property {boolean|SITNA.control.ControlOptions} [scaleBar=false] - Si se establece a un valor *truthy*, el mapa tiene un indicador gráfico de escala.
-        * @property {boolean|SITNA.control.ControlOptions} [scaleSelector=false] - Si se establece a un valor *truthy*, el mapa tiene un selector numérico de escala.
-        * @property {boolean|SITNA.control.SearchOptions} [search=false] - Si se establece a un valor *truthy*, el mapa tiene un buscador.
+        * @property {boolean|ControlOptions} [scale=false] - Si se establece a un valor *truthy*, el mapa tiene un indicador numérico de escala.
+        * @property {boolean|ControlOptions} [scaleBar=false] - Si se establece a un valor *truthy*, el mapa tiene un indicador gráfico de escala.
+        * @property {boolean|ControlOptions} [scaleSelector=false] - Si se establece a un valor *truthy*, el mapa tiene un selector numérico de escala.
+        * @property {boolean|SearchOptions} [search=false] - Si se establece a un valor *truthy*, el mapa tiene un buscador.
         * El buscador localiza coordenadas y busca entidades geográficas tales como: municipios, cascos urbanos, vías, portales, topónimos, topónimos por municipio, carreteras, puntos kilométricos y parcelas catastrales de IDENA. 
-        * Es posible establecer un origen de datos distinto a IDENA en el que buscar, consultar en {@link SITNA.control.SearchOptions}.
-        * @property {boolean|SITNA.control.ControlOptions} [share=false] - Si se establece a un valor *truthy*, el mapa tiene un control para compartir mapas por distintos canales.
+        * Es posible establecer un origen de datos distinto a IDENA en el que buscar, consultar en {@link SearchOptions}.
+        * @property {boolean|ControlOptions} [share=false] - Si se establece a un valor *truthy*, el mapa tiene un control para compartir mapas por distintos canales.
         * 
-        * Para que el control funcione correctamente, hay que establecer un valor verdadero a la opción `stateful` del mapa (Ver {@link SITNA.MapOptions}).
-        * @property {boolean|SITNA.control.StreetViewOptions} [streetView=true] - Si se establece a un valor *truthy*, el usuario podrá abrir una ventana de Google StreetView en la ubicación seleccionada en el mapa.
+        * Para que el control funcione correctamente, hay que establecer un valor verdadero a la opción `stateful` del mapa (Ver {@link MapOptions}).
+        * @property {boolean|StreetViewOptions} [streetView=true] - Si se establece a un valor *truthy*, el usuario podrá abrir una ventana de Google StreetView en la ubicación seleccionada en el mapa.
         * @property {boolean} [threed=false] - Si se establece a true, el mapa incorpora un botón para conmutar entre las vistas 2D y 3D.
         * Este control requiere de la configuración adicional de una vista en la cual se renderizará la vista 3D, para ello se deben seguir los siguientes pasos:
         *
         *    - Añadir en el marcado elemento del DOM en el cual renderizar la vista 3D.
-        *    - Establecer la propiedad `views` del mapa (Ver {@link SITNA.MapOptions}) indicando como valor un objeto con la estructura definida en {@link SITNA.MapViewOptions}.
-        *    - Establecer la propiedad `threeD` del objeto anterior configurando como valor un objeto siguiendo la estructura de {@link SITNA.ThreeDViewOptions}.
+        *    - Establecer la propiedad `views` del mapa (Ver {@link MapOptions}) indicando como valor un objeto con la estructura definida en {@link MapViewOptions}.
+        *    - Establecer la propiedad `threeD` del objeto anterior configurando como valor un objeto siguiendo la estructura de {@link ThreeDViewOptions}.
         *            
-        * @property {boolean|SITNA.control.ControlOptions} [TOC=false] - Si se establece a un valor *truthy*, el mapa tiene una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.
+        * @property {boolean|ControlOptions} [TOC=false] - Si se establece a un valor *truthy*, el mapa tiene una tabla de contenidos mostrando las capas de trabajo y los grupos de marcadores.
         * Los controles `TOC` y `workLayerManager` realizan varias funciones comunes, así rara vez será necesario tener los dos a la vez en un visor.
-        * @property {boolean|SITNA.control.WFSEditOptions} [WFSEdit=false] - Si se establece a un valor *truthy*, se añade un control para editar las entidades de las capas vectoriales de tipo [WFS]{@link SITNA.Consts} o de las
+        * @property {boolean|WFSEditOptions} [WFSEdit=false] - Si se establece a un valor *truthy*, se añade un control para editar las entidades de las capas vectoriales de tipo [WFS]{@link SITNA.Consts} o de las
         * capas de tipo [WMS]{@link SITNA.Consts} si estas tienen asociado un servicio WFS. Con este control se pueden crear, modificar y eliminar entidades. Las modificaciones pueden ser de geometría o de atributos.
-        * @property {boolean|SITNA.control.WFSQueryOptions} [WFSQuery=false] - Si se establece a un valor *truthy*, desde el control `workLayerManager` se pueden hacer consultas alfanuméricas a las capas del mapa.
-        * @property {boolean|SITNA.control.ControlOptions} [workLayerManager=false] - Si se establece a un valor *truthy*, se muestra un control para consultar y gestionar las capas de trabajo que están cargadas en el mapa.
+        * @property {boolean|WFSQueryOptions} [WFSQuery=false] - Si se establece a un valor *truthy*, desde el control `workLayerManager` se pueden hacer consultas alfanuméricas a las capas del mapa.
+        * @property {boolean|ControlOptions} [workLayerManager=false] - Si se establece a un valor *truthy*, se muestra un control para consultar y gestionar las capas de trabajo que están cargadas en el mapa.
         * Con este control se dispone de las siguientes funcionalidades: 
         * 
         *    - Consultar qué capas están cargadas en el mapa
@@ -256,7 +249,7 @@ const Defaults = (function () {
         *    - Si está también el control `WFSQuery`, ejecutar consultas alfanuméricas sobre las capas cargadas en el mapa, si cuentan con un servicio WFS pareado al WMS.
         * 
         * Los controles `workLayerManager` y `TOC` realizan varias funciones comunes, así rara vez será necesario tener los dos a la vez en un visor.
-        * @example <caption>Ejemplo de uso de propiedad `featureInfo` - [Ver en vivo](../examples/cfg.MapControlOptions.featureInfo.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `featureInfo` - [Ver en vivo](../examples/cfg.MapControlsOptions.featureInfo.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Añadimos el control featureInfo.
@@ -273,14 +266,14 @@ const Defaults = (function () {
         *     ];
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `fullScreen`[Ver en vivo](../examples/cfg.MapControlOptions.fullScreen.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `fullScreen`[Ver en vivo](../examples/cfg.MapControlsOptions.fullScreen.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Añadimos el control fullScreen.
         *     SITNA.Cfg.controls.fullScreen = true;
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `printMap`[Ver en vivo](../examples/cfg.MapControlOptions.printMap.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `printMap`[Ver en vivo](../examples/cfg.MapControlsOptions.printMap.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -291,7 +284,7 @@ const Defaults = (function () {
         *     };
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `share`[Ver en vivo](../examples/cfg.MapControlOptions.share.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `share`[Ver en vivo](../examples/cfg.MapControlsOptions.share.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -308,7 +301,7 @@ const Defaults = (function () {
         *     };
         *     var map = new SITNA.Map("mapa");
         * </script>
-        * @example <caption>Ejemplo de uso de propiedad `workLayerManager`[Ver en vivo](../examples/cfg.MapControlOptions.workLayerManager.html)</caption> {@lang html}
+        * @example <caption>Ejemplo de uso de propiedad `workLayerManager`[Ver en vivo](../examples/cfg.MapControlsOptions.workLayerManager.html)</caption> {@lang html}
         * <div id="mapa"></div>
         * <script>
         *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -381,60 +374,53 @@ const Defaults = (function () {
         layout: null,
         /**
         * Opciones de estilo de trazo.
-        * @typedef StrokeStyleOptions
-        * @memberof SITNA.feature
-        * @mixin
+        * @interface StrokeStyleOptions
         * @property {string} [strokeColor] - Color de trazo de línea, representado en formato hex triplet (`#RRGGBB`).
         * @property {number} [strokeOpacity] - Opacidad de trazo de línea, valor en el rango de 0 (tranparente) a 1 (opaco).
         * @property {number} [strokeWidth] - Anchura de trazo en píxeles del trazo de la línea.
-        * @see SITNA.feature.PointStyleOptions
-        * @see SITNA.feature.PolylineStyleOptions
-        * @see SITNA.feature.PolygonStyleOptions
+        * @see PointStyleOptions
+        * @see PolylineStyleOptions
+        * @see PolygonStyleOptions
         */
 
         /**
          * Opciones de estilo de relleno.
-         * @typedef FillStyleOptions
-         * @memberof SITNA.feature
-         * @mixin
+         * @interface FillStyleOptions
          * @property {string} [fillColor] - Color de relleno, representado en formato hex triplet (`#RRGGBB`).
          * @property {number} [fillOpacity] - Opacidad de relleno, valor en el rango de 0 (tranparente) a 1 (opaco).
-         * @see SITNA.feature.PointStyleOptions
-         * @see SITNA.feature.PolygonStyleOptions
+         * @see PointStyleOptions
+         * @see PolygonStyleOptions
          */
 
         /**
          * Opciones de estilo de etiqueta.
-         * @typedef LabelStyleOptions
-         * @memberof SITNA.feature
-         * @mixin
+         * @interface LabelStyleOptions
          * @property {string} [labelRotationKey] - Nombre del campo del cual extraer la rotación a aplicar a la etiqueta. El valor tiene que estar en grados.
          * @property {string} [fontColor="#000000"] - Color del texto de la etiqueta descriptiva de la entidad geográfica, representado en formato hex triplet (`#RRGGBB`).
          * @property {number} [fontSize=10] - Tamaño en puntos tipográficos (`pt`) de la fuente del texto de la etiqueta descriptiva de la entidad geográfica.
          * @property {string} [labelOutlineColor="#ffffff"] - Color del contorno del texto de la etiqueta descriptiva de la entidad geográfica, representado en formato hex triplet (`#RRGGBB`).
          * @property {number} [labelOutlineWidth=2] - Anchura en píxeles del trazo del contorno del texto de la etiqueta.
-         * @see SITNA.feature.PointStyleOptions
-         * @see SITNA.feature.PolylineStyleOptions
-         * @see SITNA.feature.PolygonStyleOptions
+         * @see PointStyleOptions
+         * @see PolylineStyleOptions
+         * @see PolygonStyleOptions
          */
 
         /**
         * Opciones de estilo de entidades geográficas.
-        * @typedef StyleOptions
-        * @memberof SITNA.layer
-        * @property {SITNA.feature.PointStyleOptions} [point] - Opciones de estilo de punto.
-        * @property {SITNA.feature.PolylineStyleOptions} [line] - Opciones de estilo de línea.
-        * @property {SITNA.feature.PolygonStyleOptions} [polygon] - Opciones de estilo de polígono.
-        * @property {SITNA.feature.MarkerStyleOptions} [marker] - Opciones de estilo de marcador (punto de mapa con icono).
-        * @property {SITNA.layer.ClusterStyleOptions} [cluster] - Opciones de estilo de cluster de puntos. Consultar la propiedad `cluster` de {@link SITNA.layer.LayerOptions} para saber cómo mostrar clusters.
-        * @property {SITNA.layer.HeatmapStyleOptions} [heatmap] - Opciones de estilo de mapa de calor.
-        * @see SITNA.MapOptions
-        * @see SITNA.control.WFSQueryOptions
-        * @see SITNA.control.CadastralParcelSearchOptions
-        * @see SITNA.control.MunicipalitySearchOptions
-        * @see SITNA.control.PostalAddressSearchOptions
-        * @see SITNA.control.StreetSearchOptions
-        * @see SITNA.control.TownSearchOptions
+        * @interface LayerStyleOptions
+        * @property {PointStyleOptions} [point] - Opciones de estilo de punto.
+        * @property {PolylineStyleOptions} [line] - Opciones de estilo de línea.
+        * @property {PolygonStyleOptions} [polygon] - Opciones de estilo de polígono.
+        * @property {MarkerStyleOptions} [marker] - Opciones de estilo de marcador (punto de mapa con icono).
+        * @property {ClusterStyleOptions} [cluster] - Opciones de estilo de cluster de puntos. Consultar la propiedad `cluster` de {@link LayerOptions} para saber cómo mostrar clusters.
+        * @property {HeatmapStyleOptions} [heatmap] - Opciones de estilo de mapa de calor.
+        * @see MapOptions
+        * @see WFSQueryOptions
+        * @see CadastralParcelSearchOptions
+        * @see MunicipalitySearchOptions
+        * @see PostalAddressSearchOptions
+        * @see StreetSearchOptions
+        * @see TownSearchOptions
         */
         styles: {
             point: {
@@ -561,7 +547,7 @@ const Defaults = (function () {
  * Hay que tener en cuenta que el archivo config.json de una maquetación puede sobreescribir los valores por defecto de las propiedades de este espacio de nombres 
  * (consultar el tutorial {@tutorial layout_cfg} para ver instrucciones de uso de maquetaciones).
  * @member Cfg
- * @type SITNA.MapOptions
+ * @implements MapOptions
  * @memberof SITNA
  @example <caption>Configuración de capas base[Ver en vivo](../examples/Cfg.baseLayers.html)</caption> {@lang html}
  * <div id="mapa"></div>
