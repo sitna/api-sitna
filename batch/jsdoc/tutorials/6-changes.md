@@ -1,3 +1,11 @@
+### [4.8.0](https://github.com/sitna/api-sitna/releases/tag/v4.8.0)
+- Se selecciona un color distinto para las entidades de cada capa nueva de tipo [vectorial]{@linkplain SITNA.Consts.layerType.VECTOR}.
+- Añadida documentación para la creación de controles de usuario personalizados.
+- Se permiten archivos de ruta que no tengan geometrías lineales.
+
+### [4.7.3](https://github.com/sitna/api-sitna/releases/tag/v4.7.3)
+- Corrección de errores del control de edición WFS.
+ 
 ### [4.7.2](https://github.com/sitna/api-sitna/releases/tag/v4.7.2)
 - Eliminación de dependencias circulares.
 
@@ -74,7 +82,7 @@
 - Añadido espacio de nombres {@link SITNA.layer} con las clases que representan capas del mapa.
 - Añadida herramienta para eliminar vértices de entidades geográficas dibujadas previamente.
 - Añadidas las capas OpenTopoMap, ortofoto 2022 y mapa base gris a la [lista de capas disponibles]{@linkplain SITNA.Consts}.
-- Añadido operador "no es igual a" para cadenas en el [control de consultas WFS]{@linkplain SITNA.control.WFSQueryOptions}.
+- Añadido operador "no es igual a" para cadenas en el [control de consultas WFS]{@linkplain WFSQueryOptions}.
 - Añadida capacidad de ser instalada como paquete npm.
 - Cambios de clases CSS para paliar interferencias con CSS de terceros.
 - Corrección de errores.
@@ -87,15 +95,15 @@
 ### [3.0.0](https://github.com/sitna/api-sitna/releases/tag/v3.0.0)
 - Añadida clase {@link SITNA.feature.Marker} para representar marcadores en un mapa.
 - Añadido control `download` para descarga de mapas.
-- Añadido control `drawMeasureModify` de [dibujo y medición]{@linkplain SITNA.control.DrawMeasureModifyOptions}.
-- Añadido control `WFSEdit` de [edición por medio de servicios WFS]{@linkplain SITNA.control.WFSEditOptions}.
+- Añadido control `drawMeasureModify` de [dibujo y medición]{@linkplain DrawMeasureModifyOptions}.
+- Añadido control `WFSEdit` de [edición por medio de servicios WFS]{@linkplain WFSEditOptions}.
 - Añadido control `share` para compartir mapa.
-- Añadido control `geolocation` para [geoposicionamiento]{@linkplain SITNA.control.GeolocationOptions}.
-- Añadido control `offlineMapMaker` que permite [crear mapas que son utilizables sin conexión a Internet]{@linkplain SITNA.control.OfflineMapMakerOptions}.
+- Añadido control `geolocation` para [geoposicionamiento]{@linkplain GeolocationOptions}.
+- Añadido control `offlineMapMaker` que permite [crear mapas que son utilizables sin conexión a Internet]{@linkplain OfflineMapMakerOptions}.
 - Añadido control `fullScreen` para la visualización a pantalla completa.
 - Añadido control `threed` para la visualización en 3D sobre un globo terráqueo.
 - Añadido control `multiFeatureInfo` para la obtención de información de entidades geográficas.
-[a través de tres tipos de filtros espaciales]{@linkplain SITNA.control.MultiFeatureInfoOptions}: punto, línea y recinto.
+[a través de tres tipos de filtros espaciales]{@linkplain MultiFeatureInfoOptions}: punto, línea y recinto.
 - El control de búsquedas permite la búsqueda por carretera y punto kilométrico.
 - Añadida la opción de configurar qué capa de fondo se utilizará en el mapa de situación según qué capa de fondo está en el mapa principal.
 - Añadido el estilo de mapa de calor para capas vectoriales.
@@ -213,8 +221,8 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 - El control `featureInfo` pasa a estar incluido por defecto en el mapa.
 - La [página de incrustación de visores con KML](//sitna.tracasa.es/kml/) pasa a usar OpenLayers 3.
 - Correción de errores de la [página de incrustación de visores con KML](//sitna.tracasa.es/kml/).
-- Añadido ejemplo a la documentación de [ClickOptions]{@link SITNA.control.ClickOptions}.
-- Añadido ejemplo a la documentación de [CoordinatesOptions]{@link SITNA.control.CoordinatesOptions}.
+- Añadido ejemplo a la documentación de {@link ClickOptions}.
+- Añadido ejemplo a la documentación de {@link CoordinatesOptions}.
 - Mejorada con botones triestado la usabilidad del control de medición.
 - Añadido indicador de carga de los elementos del visor.
 - Añadido registro centralizado de errores JavaScript.
@@ -224,7 +232,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 
 - Añadido el control de Google StreetView.
 - Añadido el control de gestión de clics en el mapa.
-- Añadidas [opciones]{@linkplain SITNA.control.CoordinatesOptions} de representación de coordenadas en el control `coordinates`.
+- Añadidas [opciones]{@linkplain CoordinatesOptions} de representación de coordenadas en el control `coordinates`.
 - Compatibilidad mejorada con dispositivos móviles.
 - Mejoras de rendimiento en el layout por defecto.
 - Mejoras en la documentación.
@@ -240,7 +248,7 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 ### 1.0.6
 
 - Añadido el control de información de entidades basado en la petición `getFeatureInfo` de WMS, activable con la propiedad
- `featureInfo` en [MapControlOptions]{@link SITNA.control.MapControlOptions}.
+ `featureInfo` en {@link MapControlsOptions}.
 - Añadidas las opciones de zoom al método {@link SITNA.Map#zoomToMarkers}: radio del
  área alrededor del marcador a mostrar y margen a dejar en los bordes.
 - Corregido error en el layout por defecto que impedía la funcionalidad de deslizar dedo para colapsar paneles.
@@ -264,8 +272,8 @@ esa convención para mostrar esos elementos en tablas de atributos y de resultad
 
 ### 1.0.3
 
-- Añadida la opción de deshabilitar el zoom en el mapa con la rueda de ratón mediante la propiedad `mousewWheelZoom` de {@link SITNA.MapOptions}.
-- Añadida la posibilidad de mostrar un marcador con su bocadillo de información asociada visible por defecto, mediante la propiedad `showPopup` de [MarkerOptions]{@link SITNA.feature.MarkerOptions}.
+- Añadida la opción de deshabilitar el zoom en el mapa con la rueda de ratón mediante la propiedad `mousewWheelZoom` de {@link MapOptions}.
+- Añadida la posibilidad de mostrar un marcador con su bocadillo de información asociada visible por defecto, mediante la propiedad `showPopup` de {@link MarkerOptions}.
 - Corrección de errores.
 
 ### 1.0
