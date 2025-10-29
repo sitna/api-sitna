@@ -5,7 +5,7 @@
         <div class="tc-ctl-legend-title">{{#if legendTitle}}{{{legendTitle}}}{{else}}{{{title}}}{{/if}}</div>
         {{#if legend}}
             {{#each legend}}
-        <div class="tc-ctl-legend-watch">
+        <div class="tc-ctl-legend-watch"{{#if geometryType}} data-geometry-type="{{geometryType}}"{{/if}}>
                 {{#if src}}
             <img src="" data-img="{{src}}" style="{{#if width}}width:{{width}}px;height:{{height}}px;{{/if}}{{#if scale}}transform:scale({{scale}});transform-origin:0 50% 0;{{/if}}" />
                 {{else}}
