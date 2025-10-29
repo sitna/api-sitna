@@ -1,5 +1,6 @@
 import TC from '../TC.js';
 import Consts from './Consts.js';
+import color from '../SITNA/color.js';
 import i18n from './i18n.js';
 import proj4 from 'proj4';
 import UAParser from 'ua-parser-js';
@@ -28,7 +29,7 @@ var path1 = ["Capability", "Request", "GetMap", "DCPType", "0", "HTTP", "Get", "
 var path2 = ["OperationsMetadata", "GetTile", "DCP", "HTTP", "Get", "0", "href"];
 var getOnPath = function (obj, p, i) {
     if (i < p.length - 1) {
-        if (Object.prototype.hasOwnProperty.call(obj, p[i])) {
+        if (Object.hasOwn(obj, p[i])) {
             return getOnPath(obj[p[i]], p, ++i);
         }
         else {
@@ -41,7 +42,6 @@ var getOnPath = function (obj, p, i) {
 
 const swipeHandlers = new WeakMap();
 const modalCloseHandlers = new WeakMap();
-const hasOwn = {}.hasOwnProperty;
 const templateCache = new Map();
 
 const countDecimals = (value) => {
@@ -155,7 +155,7 @@ var Util = {
         }
 
         if (obj.constructor &&
-            !hasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
+            !Object.hasOwn(obj.constructor.prototype, 'isPrototypeOf')) {
             return false;
         }
 
@@ -461,7 +461,7 @@ var Util = {
                 var classes = options.classes || TC.Cfg.styles.marker.classes;
                 className = classes[0];
                 if (options.group) {
-                    if (!Object.prototype.hasOwnProperty.call(markerGroupClassCache, options.group)) {
+                    if (!Object.hasOwn(markerGroupClassCache, options.group)) {
                         let i = Object.keys(markerGroupClassCache).length;
                         i = i % classes.length;
                         markerGroupClassCache[options.group] = classes[i];
@@ -2313,7 +2313,7 @@ var Util = {
 
     hasStyleOptions: function (options) {
         for (let value of stylePropertyNames.values()) {
-            if (Object.prototype.hasOwnProperty.call(options, value)) {
+            if (Object.hasOwn(options, value)) {
                 return true;
             }
         }
@@ -2367,7 +2367,7 @@ var Util = {
 
     getWebWorkerCrossOriginURL: function (url) {
         return new Promise(function (resolve, reject) {
-            if (Object.prototype.hasOwnProperty.call(window, 'Worker')) {
+            if (Object.hasOwn(window, 'Worker')) {
                 // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
                 if (Util.isSameOrigin(url)) {
                     resolve(url);
@@ -2564,7 +2564,9 @@ var Util = {
             rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
             rect.right <= (window.innerWidth || document.documentElement.clientWidth)
         );
-    }
+    },
+
+    color
 };
 
 const _queryHeaderConstructor = function (capabilities) {
