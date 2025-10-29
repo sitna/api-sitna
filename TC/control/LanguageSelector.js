@@ -349,7 +349,6 @@ class LanguageSelector extends WebComponentControl {
     }
 
     static set cookieName(value) {        
-        const refreshValue = LanguageSelector.COOKIE_NAME != value;        
         LanguageSelector.COOKIE_NAME = value;
         LanguageSelector.#currentLocale = null;
     }
