@@ -446,18 +446,13 @@ TC.tool.Proxification = function (proxy, options = {}) {
         };
 
         this.get = function (host, options) {
-            if (this.getList(options).length === 0) {
-                return null;
-            } else {
-                var filtered = this.getList(options).filter(function (h) {
-                    return h.key === host && options.exportable == h.exportable;
-                });
-                if (filtered.length === 0) {
-                    return null;
-                } else {
-                    return filtered[0];
-                }
+            const filtered = this.getList(options).filter(function (h) {
+                return h.key === host && options.exportable == h.exportable;
+            });
+            if (filtered.length > 0) {
+                return filtered[0];
             }
+            return null;
         };
 
         this.getList = function (options) {
@@ -471,7 +466,7 @@ TC.tool.Proxification = function (proxy, options = {}) {
                 newItem.exportable = options.exportable;
             }
             this.getList(options).push(newItem);
-            return this.getList(options)[this.getList(options).length - 1];
+            return newItem;
         };
 
         this.removeKey = function (src, options) {
@@ -676,7 +671,7 @@ TC.tool.Proxification = function (proxy, options = {}) {
             return new Promise(function (resolve, reject) {
                 var self = this;
 
-                var img = document.createElement("img");
+                var img = options.img ?? document.createElement("img");
 
                 if (options.exportable && !options.sameOrigin) {
                     img.dataset.checkCORSHeaders = true;
@@ -774,7 +769,7 @@ TC.tool.Proxification = function (proxy, options = {}) {
             return new Promise(function (resolve, reject) {
                 var self = this;
 
-                var img = document.createElement("img");
+                var img = options.img ?? document.createElement("img");
 
                 if (!options.sameOrigin) {
                     if (options.exportable) {
