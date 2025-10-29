@@ -25,6 +25,57 @@ class PopupContentModel {
     }
 }
 
+/**
+ * Interfaz de programación de un control de usuario que ofrece información de una entidad del mapa. 
+ * Controles que implementan esta interfaz provocan el lanzamiento del evento {@link SITNA.Map#sitna:infodisplay}.
+ * @interface FeatureInfoControl
+ * @property {SITNA.feature.Feature|null} currentFeature - Entidad geográfica asociada al control, 
+ * por tanto la información mostrada en el control es referente a esta entidad.
+ * @see {@link SITNA.Map#sitna:infodisplay}
+ * @example <caption>[Ver en vivo](../examples/control.featureInfoControl.html)</caption> {@lang html}
+    <div id="map-container"></div>
+    <script>
+        // Creamos un mapa con una capa vectorial cargada
+        var map = new SITNA.Map("map-container", {
+            workLayers: [
+                {
+                    id: "parques",
+                    type: SITNA.Consts.layerType.VECTOR,
+                    url: "./data/PARQUESNATURALES.json"
+                }
+            ]
+        });
+        // Cuando se muestra el control de información de entidad geográfica,
+        // modificamos el resultado
+        map.addEventListener("sitna:infodisplay", function (e) {
+            if (e.control.currentFeature) {
+                const infoContainer = e.control.getInfoContainer();
+                const button = document.createElement("sitna-button");
+                button.textContent = "Seleccionar tabla";
+                button.addEventListener("click", function () {
+                    const table = infoContainer.querySelector("table");
+                    const range = document.createRange();
+                    range.selectNodeContents(table);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                });
+                infoContainer.insertAdjacentElement("beforeend", button);
+            }
+        });
+    </script>
+ */
+
+/**
+ * Devuelve el elemento HTML donde se muestra la información de la entidad geográfica.
+ * @interface FeatureInfoControl
+ * @function
+ * @name FeatureInfoControl#getInfoContainer
+ * @returns {HTMLElement} Elemento HTML donde se muestra la información de la entidad geográfica.
+ */
+
+
+
 class Popup extends InfoDisplay {
     currentFeature = null;
 
