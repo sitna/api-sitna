@@ -72,7 +72,7 @@ const LegendStatusEnum = {
  * @class Raster
  * @memberof SITNA.layer
  * @extends SITNA.layer.Layer
- * @param {SITNA.layer.RasterOptions} [options] Objeto de opciones de configuración de la capa.
+ * @param {RasterOptions} [options] Objeto de opciones de configuración de la capa.
  * @see SITNA.Map#getLayer
  */
 class Raster extends Layer {
@@ -149,7 +149,7 @@ class Raster extends Layer {
                         self.availableNames.push(name);
 
                     }
-                    else if (Object.prototype.hasOwnProperty.call(name, 'name')) {
+                    else if (Object.hasOwn(name, 'name')) {
                         self.availableNames.push(name.name);
                         if (name.isVisible === undefined || name.isVisible) {
                             self.names.push(name.name);
@@ -537,7 +537,7 @@ class Raster extends Layer {
      * Establece los nombres de capas que deben estar visibles en un WMS. Si la lista está vacía, hace invisible la capa.
      * @method setLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
-     * @param {TC.cfg.LayerNameOptions} [options]
+     * @param {LayerNameOptions} [options]
      */
     /*
      *  setLayerNames: sets the visible layer names of a WMS layer
@@ -580,7 +580,7 @@ class Raster extends Layer {
     }
 
     //TODO: Documentar
-    async setTime(timeOrValue,time2OrValue) {
+    async setTime(timeOrValue, time2OrValue) {
         //const source = this.wrap.layer.getSource();
         const self = this;
         const referred = Promise.withResolvers();
@@ -595,8 +595,9 @@ class Raster extends Layer {
 
         self.wrap.setParams({ TIME: time });
 
-        return referred.promise;        
-    }    
+        return referred.promise;
+    }
+
     //TODO: Documentar
     getTime() {
         const params = this.wrap.getParams();
@@ -674,7 +675,7 @@ class Raster extends Layer {
      * Añade capas por nombre a las que ya están visibles en el WMS
      * @method addLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
-     * @param {TC.cfg.LayerNameOptions} [options]
+     * @param {LayerNameOptions} [options]
      */
     /*
      *  addLayerNames: adds layer names to the set of visible layer names of a WMS layer
@@ -700,7 +701,7 @@ class Raster extends Layer {
      * Elimina capas por nombre de las que están visibles en el WMS
      * @method addLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
-     * @param {TC.cfg.LayerNameOptions} [options]
+     * @param {LayerNameOptions} [options]
      */
     /*
      *  removeLayerNames: removes layer names from the set of visible layer names of a WMS layer
@@ -726,7 +727,7 @@ class Raster extends Layer {
      * Toma una lista de nombres de capa WMS y cambia su visibilidad: de visible a no visible y viceversa.
      * @method toggleLayerNames
      * @param {array|string} layerNames Array de strings con los nombres de capa o string con los nombres de capa separados por comas.
-     * @param {TC.cfg.LayerNameOptions} [options]
+     * @param {LayerNameOptions} [options]
      */
     /*
      *  toggleLayerNames: from a list, adds a layer name when it is not visible or removes a layer name when it is visible in a WMS layer
@@ -1835,7 +1836,7 @@ class Raster extends Layer {
                 params.SCALE = self.getOgcScale()
                 params.SRCWIDTH = self.map.div.clientWidth;
                 params.SRCHEIGHT = self.map.div.clientHeight;
-                
+
                 params.BBOX = BBOX.join(",");
                 params.LEGEND_OPTIONS = "hideEmptyRules:true;fontAntiAliasing:true";
                 if (self?.options?.params)
@@ -1881,15 +1882,16 @@ class Raster extends Layer {
                 }
             }
 
-            // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
-            img.setAttribute("src", data.src);            
-            img.onload = function () {                
+            img.onload = function () {
                 self.#get$events().trigger(Consts.event.TILELOAD, { tile: image });
             };
             img.onerror = function (error) {
-                img.setAttribute("src", Consts.BLANK_IMAGE);                
+                img.setAttribute("src", Consts.BLANK_IMAGE);
                 self.#get$events().trigger(Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
             };
+
+            // GLS: si establecemos por atributo directamente no actualiza, mediante setAttribute funciona siempre.
+            img.setAttribute("src", data.src);
         };
 
         // Viene sin nombre desde el control TOC, si es así lo ignoramos.
@@ -1926,7 +1928,7 @@ class Raster extends Layer {
                         if (matrixSet) {
 
                             if (matrixSet.TileMatrixSetLimits && matrixSet.TileMatrixSetLimits.length > 0) {
-                                
+
                                 //var level = matrixSetLimits[z];
                                 var level = matrixSet.TileMatrixSetLimits.findByProperty("TileMatrix", z);
                                 if (level && self.map && self.map.on3DView) {
@@ -1974,8 +1976,11 @@ class Raster extends Layer {
             } else {
                 if (!self.ignoreProxification) {
                     try {
-                        const img = await self.proxificationTool.fetchImage(src, { exportable: !self.map || self.map.crossOrigin });
-                        setSRC(img);
+                        await self.proxificationTool.fetchImage(src, {
+                            exportable: !self.map || self.map.crossOrigin,
+                            img // Le pasamos la imagen para que la proxificación la use en vez de crear una nueva
+                        });
+                        self.#get$events().trigger(Consts.event.TILELOAD, { tile: image });
                     }
                     catch (e) {
                         errorFn(e);
@@ -1989,14 +1994,6 @@ class Raster extends Layer {
                             img.crossOrigin = self.map ? self.map.crossOrigin : "anonymous";
                         }
                     }
-
-                    img.onload = function () {
-                        self.#get$events().trigger(Consts.event.TILELOAD, { tile: image });
-                    };
-                    img.onerror = function (error) {
-                        img.src = Consts.BLANK_IMAGE;
-                        self.#get$events().trigger(Consts.event.TILELOADERROR, { tile: image, error: { code: error.status, text: error.statusText } });
-                    };
 
                     img.src = self.names.length ? src : Consts.BLANK_IMAGE;
                 }
@@ -2018,7 +2015,7 @@ class Raster extends Layer {
         url.search = new URLSearchParams(Object.assign({
             request: 'DescribeLayer',
             service: "WMS",
-            version: "1.1.1",            
+            version: "1.1.1",
             outputFormat: Consts.mimeType.JSON,
         }, layerNames ? { Layers: layerNames } : {}));
         let urlPromises = describeLayerPromises[self.options.url];
@@ -2114,86 +2111,81 @@ class Raster extends Layer {
         const self = this;
         if (self.type !== Consts.layerType.WMS)
             return null;
-        //URI:Comprobamos que el servicio tiene cacheado la cmprobación si soporta leyenda JSON
+        //URI:Comprobamos que el servicio tiene cacheada la comprobación de si soporta leyenda JSON
         const urlForGetMap = self.getGetMapUrl();
-        var legendJSONSupported = Object.prototype.hasOwnProperty.call(TC.legendFormat, urlForGetMap) ? TC.legendFormat[urlForGetMap] : new Promise(async (resolve, reject) => {
+        var legendJSONSupported;
+        if (Object.hasOwn(TC.legendFormat, urlForGetMap)) {
+            legendJSONSupported = TC.legendFormat[urlForGetMap];
+        }
+        else {
             const url = self.getLegendFormatUrl();
             if (url) {
                 try {
-                    //URI: pedimos un getlegendgraphic esperadno que nos de una excpación XML
-                    var response = await Promise.all(
+                    //URI: pedimos un getlegendgraphic esperando que nos de una excepción XML
+                    let response = await Promise.all(
                         self.availableNames.map((name) => self.proxificationTool.fetch(self.getLegendFormatUrl(name, true), { retryAttempts: 1 }))
-                    );                    
+                    );
                     response = response[0];
                     switch (true) {
                         case response.contentType.toLowerCase().includes("application/json"):
-                            TC.legendFormat[urlForGetMap] = LegendStatusEnum.JSON;
-                            resolve(LegendStatusEnum.JSON);
+                            legendJSONSupported = LegendStatusEnum.JSON;
                             break;
                         case response.contentType.toLowerCase().includes("text/xml"):
                             if (response.responseText.includes('"OperationNotSupported"') ||
                                 response.responseText.includes('"MissingRights"')) {
-                                reject();
-                                TC.legendFormat[urlForGetMap] = LegendStatusEnum.UNAVAILABLE;
+                                legendJSONSupported = LegendStatusEnum.UNAVAILABLE;
                             }
                             else {
-                                resolve(LegendStatusEnum.PNG);
-                                TC.legendFormat[urlForGetMap] = LegendStatusEnum.PNG;
+                                legendJSONSupported = LegendStatusEnum.PNG;
                             }
                             break;
                         default:
-                            reject();
-                            TC.legendFormat[urlForGetMap] = LegendStatusEnum.UNAVAILABLE;
+                            legendJSONSupported = LegendStatusEnum.UNAVAILABLE;
                             break;
                     }
 
                 }
                 catch (err) {
-                    if (err?.status >= 400) {                        
+                    if (err?.status >= 400) {
                         if (err.status === 405 || err.status === 501) {
-                            resolve(LegendStatusEnum.NOT_ALLOWED);
+                            legendJSONSupported = LegendStatusEnum.NOT_ALLOWED;
                         }
                         else {
-                            TC.legendFormat[urlForGetMap] = LegendStatusEnum.UNAVAILABLE;
-                            reject(err);
+                            legendJSONSupported = LegendStatusEnum.UNAVAILABLE;
                         }
                         return;
                     }
 
-                    console.warn("GetLegendgraphic error no registrado")
+                    console.warn("GetLegendgraphic error no registrado");
 
                 }
             }
-        });
-        TC.legendFormat[urlForGetMap] = legendJSONSupported;
-        //URI: Si es una promesa es que otra capa con la misma url de base ha hecho la petición y esa a la espera de obtenerla
-        if (legendJSONSupported instanceof Promise)
-            legendJSONSupported = await legendJSONSupported;
+            TC.legendFormat[urlForGetMap] = legendJSONSupported;
+        }
 
         if (legendJSONSupported === LegendStatusEnum.UNAVAILABLE)
             throw legendJSONSupported;
-        if (legendJSONSupported === LegendStatusEnum.NOT_ALLOWED)
-        {
+        if (legendJSONSupported === LegendStatusEnum.NOT_ALLOWED) {
             return [self.getDisgregatedLayerNames().map((layerName) => {
                 return {
                     layerName: layerName,
-                    rules: [{                        
+                    rules: [{
                         symbolizers: [{
-                            Point: {                                
+                            Point: {
                                 'graphics': [{
                                     'external-graphic-url': 'data:image/svg+xml;base64,' + window.btoa('<svg height="18" id="svg8" version="1.1" viewBox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"><g id="g1439" transform="translate(0,-290.65)"><path d="m 12,292.65 c -5.511,0 -10,4.489 -10,10 0,5.511 4.489,10 10,10 5.511,0 10,-4.489 10,-10 0,-5.511 -4.489,-10 -10,-10 z m 0,2 c 1.8532,0 3.55051,0.63256 4.9043,1.68359 L 5.68164,307.55625 C 4.63016,306.20231 4,304.50363 4,302.65 c 0,-4.43012 3.56988,-8 8,-8 z m 6.32031,3.0957 C 19.37078,299.09929 20,300.79735 20,302.65 c 0,4.43012 -3.56988,8 -8,8 -1.85265,0 -3.55071,-0.62922 -4.9043,-1.67969 z" id="path1433" style="fill:#999;"/></g></svg>')
                                 }]
-                            }                            
-                        }],                        
-                        title: Util.getLocaleString(self.map.getLocale(), 'simbologyNotAvailable')
+                            }
+                        }],
+                        title: Util.getLocaleString(self.map.getLocale(), 'symbologyNotAvailable')
                     }]
                 }
             })];
         }
         //URI: Si es true es que el servicio soporta leyenda como JSON
-        const describeLayer = await self.describeLayer(true);        
+        const describeLayer = await self.describeLayer(true);
         const fetchFunction = legendJSONSupported === LegendStatusEnum.JSON ? self.proxificationTool.fetchJSON : self.proxificationTool.fetchImageAsBlob;
-        const layerNames = legendJSONSupported === LegendStatusEnum.JSON && describeLayer.every((dl) => dl.owsType === "WFS") ? self.availableNames : self.getDisgregatedLayerNames();        
+        const layerNames = legendJSONSupported === LegendStatusEnum.JSON && describeLayer.every((dl) => dl.owsType === "WFS") ? self.availableNames : self.getDisgregatedLayerNames();
         return Promise.all(
             layerNames.map(async (name) => {
                 try {
@@ -2207,7 +2199,7 @@ class Raster extends Layer {
                         Object.assign(params, {
                             type: "POST",
                             data: qs,
-                            contentType:"application/x-www-form-urlencoded"
+                            contentType: "application/x-www-form-urlencoded"
                         });
                     }
                     legendObject = (await fetchFunction.call(self.proxificationTool, url, params));
@@ -2320,13 +2312,12 @@ export default Raster;
 export { LegendStatusEnum };
 
 /**
- * Opciones de capa raster. Este objeto se utiliza al [configurar un mapa]{@linkplain SITNA.MapOptions}, el [control del catálogo de capas]{@linkplain LayerCatalogOptions}
+ * Opciones de capa raster. Este objeto se utiliza al [configurar un mapa]{@linkplain MapOptions}, el [control del catálogo de capas]{@linkplain LayerCatalogOptions}
  * o como parámetro al [añadir una capa]{@linkplain SITNA.Map#addLayer}.
- * @typedef RasterOptions
- * @memberof SITNA.layer
- * @extends SITNA.layer.LayerOptions
- * @see SITNA.MapOptions
- * @see SITNA.control.LayerCatalogOptions
+ * @interface RasterOptions
+ * @extends LayerOptions
+ * @see MapOptions
+ * @see LayerCatalogOptions
  * @see SITNA.Map#addLayer
  * @see SITNA.Map#setBaseLayer
  * @property {string} id - Identificador único de capa. No puede haber en un mapa dos capas con el mismo valor de `id`.
@@ -2343,12 +2334,12 @@ export { LegendStatusEnum };
  * @property {boolean} [hideTree] - Aplicable a capas de tipo [WMS]{@link SITNA.Consts}.
  * Si se establece a `true`, la capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.
  * @property {boolean} [isBase] - Si se establece a `true`, la capa es un mapa de fondo.
- * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link SITNA.MapOptions}.*
+ * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link MapOptions}.*
  *
  * Si se establece a true, la capa se muestra por defecto si forma parte de los mapas de fondo.
  * @property {string} [matrixSet] - Nombre de conjunto de matrices del servicio WMTS.
  * Esta propiedad es obligatoria para capas de tipo [WMTS]{@link SITNA.Consts}.
- * @property {SITNA.layer.LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
+ * @property {LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
  * @property {string} [thumbnail] - URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.
  * @property {string} [title] - Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.
  * @property {boolean} [transparent=true] - Indica si la capa tiene transparencia.
@@ -2406,7 +2397,7 @@ export { LegendStatusEnum };
 
 /*
  * Opciones de nombre de capa.
- * @typedef LayerNameOptions
+ * @interface LayerNameOptions
  * @property {boolean} [aggregate=true] - Siempre que sea posible se reemplaza en la lista {{#crossLink "SITNA.layer.Raster/names:property"}}{{/crossLink}} los nombres de capa por los nombres de las capas de grupo que las contienen.
  * @property {boolean} [lazy=false] - Determina si la capa nativa se actualiza en cuanto cambia la lista
  * {{#crossLink "SITNA.layer.Raster/names:property"}}{{/crossLink}} (valor `false`)
