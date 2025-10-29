@@ -5228,31 +5228,16 @@ TC.wrap.layer.Vector.prototype.setDraggable = function (draggable, onend, onstar
 };
 
 TC.wrap.layer.Vector.prototype.getFeaturesInExtent = function (extent, tolerance) {
-    var self = this;
-    var features = this.layer.getSource().getFeatures();
-    var featuresInExtent = [];
-
     if (tolerance) {
-        var leftCorner = self.parent.map.getPixelFromCoordinate([extent[0], extent[1]]);
-        var rightCorner = self.parent.map.getPixelFromCoordinate([extent[2], extent[3]]);
+        let leftCorner = this.parent.map.getPixelFromCoordinate([extent[0], extent[1]]);
+        let rightCorner = this.parent.map.getPixelFromCoordinate([extent[2], extent[3]]);
         leftCorner[0] -= tolerance[0] / 2;
         leftCorner[1] += tolerance[1];
         rightCorner[0] += tolerance[0] / 2;
-        extent = self.parent.map.getCoordinateFromPixel(leftCorner).concat(self.parent.map.getCoordinateFromPixel(rightCorner));
+        extent = this.parent.map.getCoordinateFromPixel(leftCorner).concat(this.parent.map.getCoordinateFromPixel(rightCorner));
     }
 
-    for (var i = 0; i < features.length; i++) {
-        var feat = features[i];
-
-        var geometry = feat.getGeometry();
-        var coordinate = geometry.getCoordinates();
-
-        if (ol.extent.containsCoordinate(extent, coordinate)) {
-            featuresInExtent.push(feat._wrap.parent);
-        }
-    }
-
-    return featuresInExtent;
+    return this.layer.getSource().getFeaturesInExtent(extent).map((f) => f._wrap.parent);
 };
 
 TC.wrap.layer.Vector.prototype.getAttribution = function () {
@@ -5350,6 +5335,18 @@ TC.wrap.control.ScaleBar.prototype.getText = function () {
     var self = this;
     if (self.ctl) {
         return self.ctl.renderedHTML_;
+    }
+};
+
+TC.wrap.control.ScaleBar.prototype.enable = function () {
+    if (this.ctl) {
+        this.parent.map.wrap.getMap().then((olMap) => this.ctl.setMap(olMap));
+    }
+};
+
+TC.wrap.control.ScaleBar.prototype.disable = function () {
+    if (this.ctl) {
+        this.ctl.setMap(null);
     }
 };
 
@@ -5584,7 +5581,7 @@ TC.wrap.control.Geolocation.prototype.addPosition = function (position, heading,
 
     var line = getGeotrackingLine.call(this);
     if (self.parent.geotrackingLayer.features && line) {
-        var last = line.geometry.length > 0 && line.geometry[line.geometry.length - 1];
+        var last = line.geometry.length > 0 && line.geometry.at(-1);
         if (last && last.length === 0) {
             self.parent.geotrackingLayer.features[0].geometry.push([x, y, altitude, m]);
             line.wrap.feature.getGeometry().appendCoordinate([x, y, altitude, m]);
@@ -9402,7 +9399,7 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
                                 // Esto es correcto y se utiliza para el funcionamiento interno de la interacción.
                                 // Lo que no es correcto es que replica la z y la m aparte de la x y la y.
                                 // Esto es un problema cuando se extiende una línea existente.
-                                const lastSketchCoord = self.interaction.sketchCoords_[self.interaction.sketchCoords_.length - 1];
+                                const lastSketchCoord = self.interaction.sketchCoords_.at(-1);
                                 lastSketchCoord.forEach((_val, idx, coord) => {
                                     if (idx > 1) {
                                         coord[idx] = null;
