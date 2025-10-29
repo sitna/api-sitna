@@ -203,9 +203,8 @@ class Elevation extends Control {
         }
     }
 
-    async displayElevationProfile(featureOrCoords, opts) {
+    async displayElevationProfile(featureOrCoords, options = {}) {
         const self = this;
-        const options = opts || {};
         let lines;
         switch (true) {
             case featureOrCoords instanceof Polyline:
@@ -219,20 +218,15 @@ class Elevation extends Control {
             default:
                 lines = [featureOrCoords];
         }
-        self.getProfilePanel().then(function (resultsPanel) {
-            resultsPanel.open();
-        });
-        const renderProfile = function (profile) {
-            self.getProfilePanel().then(function (resultsPanel) {
-                resultsPanel.renderPromise().then(function () {
-                    self.renderElevationProfile(profile);
-                });
-            });
+        const resultsPanel = await self.getProfilePanel();
+        resultsPanel.open();
+        const renderProfile = async function (profile) {
+            const resultsPanel = await self.getProfilePanel();
+            await resultsPanel.renderPromise();
+            self.renderElevationProfile(profile);
         };
         if (featureOrCoords instanceof Feature) {
-            self.getProfilePanel().then(function (resultsPanel) {
-                resultsPanel.setCurrentFeature(featureOrCoords);
-            });
+            resultsPanel.setCurrentFeature(featureOrCoords);
             const profile = getElevationProfileFromCache(featureOrCoords);
             if (profile) {
                 renderProfile(profile);
@@ -482,26 +476,6 @@ class Elevation extends Control {
     }
 
     _decorateChartPanel() {
-        const self = this;
-        self.resultsPanel.setCurrentFeature = function (feature) {
-            const that = this;
-            if (that.currentFeature) {
-                that.currentFeature.toggleSelectedStyle(false);
-            }
-            that.currentFeature = feature;
-            if (feature) {
-                feature.toggleSelectedStyle(true);
-            }
-        };
-
-        const oldClose = self.resultsPanel.close;
-        self.resultsPanel.close = function () {
-            const that = this;
-            if (that.currentFeature) {
-                that.currentFeature.toggleSelectedStyle(false);
-            }
-            oldClose.call(that);
-        };
     }
 
     getElevationTooltip(d) {
