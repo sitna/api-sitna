@@ -16,6 +16,7 @@ import MultiPolygon from '../feature/MultiPolygon.js';
 import Circle from '../feature/Circle.js';
 import FeatureTypeParser from '../../TC/tool/FeatureTypeParser.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
+import color from '../color.js';
 
 TC.Layer = Layer;
 TC.layer = TC.layer || {};
@@ -34,25 +35,24 @@ const capabilitiesPromises = {};
 const visibilityCache = new Map();
 const FEATURE_PROPERTY_NAME = '__f';
 
-
-const getMergedLegendImage = function (images) {
-    let offset = 0;
-    const margin = 2;
-    const svgs = images
-        .map(str => str.replace('data:image/svg+xml,', ''))
-        .map(str => decodeURIComponent(str));
-    const widths = svgs.map(str => parseFloat(str.match(/ width="([\d\.]*)"/)[1]));
-    const heights = svgs.map(str => parseFloat(str.match(/ height="([\d\.]*)"/)[1]));
-    const width = widths.reduce((acc, cur) => acc + cur + margin, 0);
-    const height = Math.max(...heights);
-    const offsetSvgs = svgs
-        .map((str, idx) => {
-            const result = str.replace('<svg xmlns="http://www.w3.org/2000/svg"', `<svg x="${offset}" y="${(height - heights[idx]) / 2}" `);
-            offset += widths[idx] + margin;
-            return result;
-        });
-    return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${offsetSvgs.join('')}</svg>`);
-};
+//const getMergedLegendImage = function (images) {
+//    let offset = 0;
+//    const margin = 2;
+//    const svgs = images
+//        .map(str => str.replace('data:image/svg+xml,', ''))
+//        .map(str => decodeURIComponent(str));
+//    const widths = svgs.map(str => parseFloat(str.match(/ width="([\d\.]*)"/)[1]));
+//    const heights = svgs.map(str => parseFloat(str.match(/ height="([\d\.]*)"/)[1]));
+//    const width = widths.reduce((acc, cur) => acc + cur + margin, 0);
+//    const height = Math.max(...heights);
+//    const offsetSvgs = svgs
+//        .map((str, idx) => {
+//            const result = str.replace('<svg xmlns="http://www.w3.org/2000/svg"', `<svg x="${offset}" y="${(height - heights[idx]) / 2}" `);
+//            offset += widths[idx] + margin;
+//            return result;
+//        });
+//    return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">${offsetSvgs.join('')}</svg>`);
+//};
 
 //URI esta función compara los estilos de las features extrayendo la parte comun para sacarla a los estilos de capa
 const compareStyles = function (objTo, objFrom, distinct = true) {
@@ -70,7 +70,7 @@ const compareStyles = function (objTo, objFrom, distinct = true) {
             else {
                 toStyle = [];
             }
-            if (Object.prototype.hasOwnProperty.call(objTo, key) && fnCompare(objFromValue.join(), toStyle.join(), distinct)) {
+            if (Object.hasOwn(objTo, key) && fnCompare(objFromValue.join(), toStyle.join(), distinct)) {
                 delete objTo[key];
             }
         }
@@ -78,7 +78,7 @@ const compareStyles = function (objTo, objFrom, distinct = true) {
             objTo[key] = compareStyles(objTo[key], objFromValue);
         }
         else {
-            if (Object.prototype.hasOwnProperty.call(objTo, key) && fnCompare(objFromValue, objTo[key], distinct)) {
+            if (Object.hasOwn(objTo, key) && fnCompare(objFromValue, objTo[key], distinct)) {
                 delete objTo[key];
             }
         }
@@ -91,7 +91,7 @@ const compareStyles = function (objTo, objFrom, distinct = true) {
  * @class Vector
  * @memberof SITNA.layer
  * @extends SITNA.layer.Layer
- * @param {SITNA.layer.VectorOptions} [options] Objeto de opciones de configuración de la capa.
+ * @param {VectorOptions} [options] Objeto de opciones de configuración de la capa.
  * @see SITNA.Map#getLayer
  */
 class Vector extends Layer {
@@ -115,6 +115,10 @@ class Vector extends Layer {
     #allowedGeometryTypes = new Set();
     #featureTypeMetadata;
     #featureTypeParser;
+
+    static minimumColorDistance = 192; // valor arbitrario (a ojíbiris)
+    static defaultColorSaturation = 0.9;
+    static defaultColorLightness = 0.5;
 
     constructor() {
         super(...arguments);
@@ -193,6 +197,18 @@ class Vector extends Layer {
             var ollyr = null;
             ollyr = self.wrap.createVectorLayer();
             self.wrap.setLayer(ollyr);
+
+            const optionStyles = self.options.styles || {};
+            if (!(optionStyles.point && optionStyles.marker && optionStyles.line && optionStyles.polygon)) {
+                const styles = {};
+                const nextStyles = Vector.getNextStyles();
+                if (!optionStyles.point) styles.point = nextStyles.point;
+                if (!optionStyles.marker) styles.marker = nextStyles.marker;
+                if (!optionStyles.line) styles.line = nextStyles.line;
+                if (!optionStyles.polygon) styles.polygon = nextStyles.polygon;
+                self.setStyles({ ...self.styles, ...styles });
+            }
+
             resolve(ollyr);
         });//Promise.resolve(ollyr);
     }
@@ -205,15 +221,85 @@ class Vector extends Layer {
             result = {
                 children: []
             };
+
+            const addFeatureGroupLegend = function (features) {
+                const legend = [];
+                // Creamos la leyenda de las entidades con estilo propio
+                const featureLegendMap = new Map();
+                let someFeaturesHaveNoStyle = false;
+                for (let i = 0, ii = features.length; i < ii; i++) {
+                    const feature = features[i];
+                    const featureLegend = feature.getLegend();
+                    if (featureLegend.src) {
+                        let existingLegend = featureLegendMap.get(featureLegend.src);
+                        if (existingLegend) {
+                            existingLegend.features.push(feature);
+                        }
+                        else {
+                            const newLegend = { ...featureLegend };
+                            newLegend.features = [feature];
+                            featureLegendMap.set(featureLegend.src, newLegend);
+                        }
+                    }
+                    else {
+                        someFeaturesHaveNoStyle = true;
+                    }
+                }
+                for (const featureLegend of featureLegendMap.values()) {
+                    legend.push(featureLegend);
+                }
+
+                if (someFeaturesHaveNoStyle) {
+                    if (self.styles) {
+                        const addLegendItem = function (geometryType, features, style) {
+                            if (features.length) {
+                                legend.push({
+                                    src: Util.getLegendImageFromStyle(style, { geometryType }),
+                                    geometryType,
+                                    features,
+                                });
+                            }
+                        };
+                        if (self.styles?.point) {
+                            addLegendItem(Consts.geom.POINT,
+                                features.filter((f) => (f instanceof Point) && !(f instanceof Marker) ||
+                                    (f instanceof MultiPoint) && !(f instanceof MultiMarker)), self.styles.point);
+                        }
+                        if (self.styles?.line) {
+                            addLegendItem(Consts.geom.POLYLINE,
+                                features.filter((f) => (f instanceof Polyline) || (f instanceof MultiPolyline)), self.styles.line);
+                        }
+                        if (self.styles?.polygon) {
+                            addLegendItem(Consts.geom.POLYGON,
+                                features.filter((f) => (f instanceof Polygon) || (f instanceof MultiPolygon)), self.styles.polygon);
+                        }
+                    }
+                }
+                if (self.cluster && self.cluster.styles?.point) {
+                    const geometryType = Consts.geom.POINT;
+                    legend.push({
+                        src: Util.getLegendImageFromStyle(
+                            Util.extend({}, self.cluster.styles?.point, { radius: Cfg.styles.point.radius + 2, offset: [0, 6] }),
+                            { geometryType }
+                        ),
+                        geometryType,
+                    });
+                }
+                return legend;
+            };
+
             const nodes = new Set();
-            self.features.forEach(f => {
+            for (const f of self.features) {
                 const path = f.getPath();
                 if (path.length) {
                     const node = Util.addArrayToTree(path, result);
-                    if (!nodes.has(node)) {
+                    if (nodes.has(node)) {
+                        node.features.push(f);
+                    }
+                    else {
                         nodes.add(node);
                         if (f.getVisibilityState() === Consts.visibility.NOT_VISIBLE) {
-                            if (!Object.prototype.hasOwnProperty.call(node, "visibilityState")) {
+                            if (!Object.hasOwn(node, "visibilityState")) {
                                 node.visibilityState = Consts.visibility.NOT_VISIBLE;
                             }
                         }
@@ -221,32 +307,36 @@ class Vector extends Layer {
                             node.visibilityState = Consts.visibility.VISIBLE;
                         }
 
-                        node.legend = [];
+                        node.features = [f];
                     }
-                    const featureLegend = f.getLegend();
-                    let nodeLegend = node.legend.find(f => f.src === featureLegend.src);
-                    if (!nodeLegend) {
-                        nodeLegend = Object.assign({}, featureLegend);
-                        nodeLegend.features = [];
-                        node.legend.push(nodeLegend);
-                    }
-                    nodeLegend.features.push(f);
                 }
+                else {
+                    result.features ??= [];
+                    nodes.add(result);
+                    result.features.push(f);
+                }
+            }
+
+            // Añadimos las leyendas de los nodos que tienen features
+            nodes.forEach(function createFeaturesLegend(node) {
+                node.legend = addFeatureGroupLegend(node.features);
+                delete node.features;
             });
 
             // Repasamos los nodos por si hay que hacerles una leyenda temática
             nodes.forEach(function createMultiLegend(node) {
-                if (node.legend.length > 1) {
+                const nonGeometryLegend = node.legend.filter((l) => !l.geometryType);
+                if (nonGeometryLegend.length > 1) {
                     // Hay varios símbolos para la carpeta, hay que confeccionar la leyenda
                     const commonPropertiesByLegendWatch = [];
                     // Averiguamos qué propiedades tienen valor común en cada grupo
-                    node.legend.forEach(function getFolderCommonPropertyValues(l) {
+                    nonGeometryLegend.forEach(function getFolderCommonPropertyValues(l) {
                         const commonProperties = l.features
                             .map(f => f.getData())
                             .reduce(function getFeatureCommonPropertyValues(properties, data) {
                                 for (var key in properties) {
                                     const property = data[key];
-                                    if (property && Object.prototype.hasOwnProperty.call(property, 'value')) {
+                                    if (property && Object.hasOwn(property, 'value')) {
                                         if (property.value !== properties[key].value) {
                                             delete properties[key];
                                         }
@@ -282,34 +372,13 @@ class Vector extends Layer {
                     const distinctKey = distinctKeys[0];
                     if (distinctKey) {
                         node.legendTitle = distinctKey;
-                        node.legend.forEach(function addTexts(l, idx) {
+                        nonGeometryLegend.forEach(function addTexts(l, idx) {
                             l.value = commonPropertiesByLegendWatch[idx][distinctKey];
                         });
                     }
                 }
             });
 
-            if (self.styles || self.cluster) {
-                const legendImages = [];
-                if (self.cluster) {
-                    legendImages.push(Util.getLegendImageFromStyle(
-                        Util.extend({}, self.cluster.styles?.point, { radius: Cfg.styles.point.radius + 2, offset: [0, 6] }),
-                        { geometryType: Consts.geom.POINT }
-                    ));
-                }
-                if (self.styles?.point) {
-                    legendImages.push(Util.getLegendImageFromStyle(self.styles.point, { geometryType: Consts.geom.POINT }));
-                }
-                if (self.styles?.line) {
-                    legendImages.push(Util.getLegendImageFromStyle(self.styles.line, { geometryType: Consts.geom.POLYLINE }));
-                }
-                if (self.styles?.polygon) {
-                    legendImages.push(Util.getLegendImageFromStyle(self.styles.polygon, { geometryType: Consts.geom.POLYGON }));
-                }
-                result.legend = {
-                    src: getMergedLegendImage(legendImages)
-                };
-            }
             result.name = self.name || result.name;
             result.customLegend = self.options.customLegend; //Atributo para pasar una plantilla HTML diferente a la por defecto (LegendNode.html)
             result.title = self.title || result.title;
@@ -387,7 +456,7 @@ class Vector extends Layer {
      * @instance
      * @async
      * @param {number[]|SITNA.feature.Point} coordsOrPoint - Si es un array, contiene dos números (la coordenada del punto).
-     * @param {SITNA.feature.PointOptions} [options] - Este parámetro se ignora si `coordsOrPoint` es una instancia de {@link SITNA.feature.Point}.
+     * @param {PointOptions} [options] - Este parámetro se ignora si `coordsOrPoint` es una instancia de {@link SITNA.feature.Point}.
      * @returns {Promise<SITNA.feature.Point>} Punto añadido.
      * @see [Ejemplo de uso](../examples/feature.Point.html)
      */
@@ -402,7 +471,7 @@ class Vector extends Layer {
      * @instance
      * @async
      * @param {Array.<number[]>|Array.<SITNA.feature.Point>} coordsOrPoints - Los elementos de esta lista son cualquiera de los que acepta el método [addPoint]{@link SITNA.layer.Vector#addPoint}.
-     * @param {SITNA.feature.PointOptions} [options] - Este parámetro se ignora si `coordsOrPointArray` contiene instancias de {@link SITNA.feature.Point}.
+     * @param {PointOptions} [options] - Este parámetro se ignora si `coordsOrPointArray` contiene instancias de {@link SITNA.feature.Point}.
      * @returns {Promise<SITNA.feature.Point[]>} Array de puntos.
      * @see [Ejemplo de uso](../examples/feature.Point.html)
      */
@@ -418,7 +487,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<number[]>|SITNA.feature.MultiPoint} coordsOrMultiPoint - Array con las coordenadas de los puntos en el CRS del mapa
      * u objeto {@link SITNA.feature.MultiPoint}.
-     * @param {SITNA.feature.PointOptions} [options]
+     * @param {PointOptions} [options]
      * @returns {Promise<SITNA.feature.MultiPoint>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.MultiPoint.html)
      */
@@ -434,7 +503,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<number[]>|SITNA.feature.MultiPoint>} coordsOrMultiPoint - Array cuyos elementos son objetos {@link SITNA.feature.MultiPoint}
      * o sus coordenadas en el CRS del mapa.
-     * @param {SITNA.feature.PointOptions} [options]
+     * @param {PointOptions} [options]
      * @returns {Promise<SITNA.feature.MultiPoint[]>} Array de entidades añadidas.
      */
     addMultiPoints = function (coordsOrMultiPointArray, options) {
@@ -449,7 +518,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<number[]>|SITNA.feature.Marker} coordsOrMarker - Las coordenadas del marcador en el CRS del mapa
      * o un objeto {@link SITNA.feature.Marker}.
-     * @param {SITNA.feature.MarkerOptions} [options]
+     * @param {MarkerOptions} [options]
      * @return {Promise<SITNA.feature.Marker>} Marcador añadido.
      * @see [Ejemplo de uso](../examples/feature.Marker.html)
      */
@@ -465,7 +534,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<number[]>|SITNA.feature.Marker>} coordsOrMarkers - Los elementos de esta lista 
      * son cualquiera de los que acepta el método [addMarker]{@link SITNA.layer.Vector#addMarker}.
-     * @param {SITNA.feature.MarkerOptions} [options]
+     * @param {MarkerOptions} [options]
      * @return {Promise<SITNA.feature.Marker[]>} Array de marcadores añadidos.
      */
     addMarkers(coordsOrMarkerArray, options) {
@@ -480,7 +549,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<number[]>|SITNA.feature.MultiMarker} coordsOrMultiMarker - Array con las coordenadas de los puntos en el CRS del mapa
      * u objeto {@link SITNA.feature.MultiMarker}.
-     * @param {SITNA.feature.MarkerOptions} [options]
+     * @param {MarkerOptions} [options]
      * @returns {Promise<SITNA.feature.MultiMarker>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.MultiMarker.html)
      */
@@ -496,7 +565,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<number[]>|SITNA.feature.MultiMarker>} coordsOrMultiMarker - Array cuyos elementos son objetos {@link SITNA.feature.MultiMarker}
      * o sus coordenadas en el CRS del mapa.
-     * @param {SITNA.feature.MarkerOptions} [options]
+     * @param {MarkerOptions} [options]
      * @returns {Promise<SITNA.feature.MultiMarker[]>} Array de entidades añadidas.
      */
     addMultiMarkers(coordsOrMultiMarkerArray, options) {
@@ -511,7 +580,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<number[]>|SITNA.feature.Polyline} coordsOrPolyline - Array de las coordenadas de los vértices de la línea
      * u objeto {@link SITNA.feature.Polyline}.
-     * @param {SITNA.feature.PolylineOptions} [options]
+     * @param {PolylineOptions} [options]
      * @return {Promise<SITNA.feature.Polyline>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.Polyline.html)
      */
@@ -527,7 +596,7 @@ class Vector extends Layer {
      * @async
      * @param {array} coordsOrPolylines - Los elementos de esta lista son cualquiera de los que acepta 
      * el método [addPolyline]{@link SITNA.layer.Vector#addPolyline}.
-     * @param {SITNA.feature.PolylineOptions} [options]
+     * @param {PolylineOptions} [options]
      * @return {Promise<SITNA.feature.Polyline[]>} Array de entidades añadidas.
      * @see [Ejemplo de uso](../examples/feature.Polyline.html)
      */
@@ -544,7 +613,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<number[]>>|SITNA.feature.MultiPolyline} coordsOrMultiPolyline - Array cuyos elementos son coordenadas de objetos {@link SITNA.feature.Polyline}
      * u objeto {@link SITNA.feature.MultiPolyline}.
-     * @param {SITNA.feature.PolylineOptions} [options]
+     * @param {PolylineOptions} [options]
      * @return {Promise<SITNA.feature.MultiPolyline>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.MultiPolyline.html)
      */
@@ -560,7 +629,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<Array.<number[]>>|SITNA.feature.MultiPolyline>} coordsOrMultiPolylines - Array cuyos elementos son objetos {@link SITNA.feature.MultiPolyline}
      * o sus coordenadas en el CRS del mapa.
-     * @param {SITNA.feature.PolylineOptions} [options]
+     * @param {PolylineOptions} [options]
      * @returns {Promise<SITNA.feature.MultiPolyline[]>} Array de entidades añadidas.
      * @see [Ejemplo de uso](../examples/feature.MultiPolyline.html)
      */
@@ -577,7 +646,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<number[]>>|SITNA.feature.Polygon} coordsOrPolygon - Array de las coordenadas de los contornos del polígono
      * u objeto {@link SITNA.feature.Polygon}.
-     * @param {SITNA.feature.PolygonOptions} [options]
+     * @param {PolygonOptions} [options]
      * @return {Promise<SITNA.feature.Polygon>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.Polygon.html)
      */
@@ -592,7 +661,7 @@ class Vector extends Layer {
      * @instance
      * @async
      * @param {array} coordsOrPolygons - Los elementos de esta lista son cualquiera de los que acepta el método [addPolygon]{@link SITNA.layer.Vector#addPolygon}.
-     * @param {SITNA.feature.PolygonOptions} [options]
+     * @param {PolygonOptions} [options]
      * @returns {Promise<SITNA.feature.Polygon[]>} Array de entidades añadidas.
      * @see [Ejemplo de uso](../examples/feature.Polygon.html)
      */
@@ -609,7 +678,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<Array.<number[]>>>|SITNA.feature.MultiPolygon} coordsOrMultiPolygon - Array cuyos elementos son coordenadas de objetos {@link SITNA.feature.Polygon}
      * u objeto {@link SITNA.feature.MultiPolygon}.
-     * @param {SITNA.feature.PolygonOptions} [options]
+     * @param {PolygonOptions} [options]
      * @return {Promise<SITNA.feature.MultiPolygon>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.MultiPolygon.html)
      */
@@ -625,7 +694,7 @@ class Vector extends Layer {
      * @async
      * @param {Array.<Array.<Array.<Array.<number[]>>>|SITNA.feature.MultiPolygon>} coordsOrMultiPolygons - Array cuyos elementos son objetos {@link SITNA.feature.MultiPolygon}
      * o sus coordenadas en el CRS del mapa.
-     * @param {SITNA.feature.PolygonOptions} [options]
+     * @param {PolygonOptions} [options]
      * @returns {Promise<SITNA.feature.MultiPolygon[]>} Array de entidades añadidas.
      */
     addMultiPolygons(coordsOrMultiPolygonArray, options) {
@@ -639,9 +708,9 @@ class Vector extends Layer {
      * @memberof SITNA.layer.Vector
      * @instance
      * @async
-     * @param {Array|SITNA.feature.CircleGeometry|SITNA.feature.Circle} geometryOrCircle - Si es un array, contiene dos elementos, el primero es
+     * @param {Array|CircleGeometry|SITNA.feature.Circle} geometryOrCircle - Si es un array, contiene dos elementos, el primero es
      * un array de dos números (la coordenada del centro) y el segundo es un número (el radio).
-     * @param {SITNA.feature.PolygonOptions} [options]
+     * @param {PolygonOptions} [options]
      * @returns {Promise<SITNA.feature.Circle>} Entidad añadida.
      * @see [Ejemplo de uso](../examples/feature.Circle.html)
      */
@@ -655,9 +724,9 @@ class Vector extends Layer {
      * @memberof SITNA.layer.Vector
      * @instance
      * @async
-     * @param {Array.<Array|SITNA.feature.CircleGeometry|SITNA.feature.Circle>} geometryOrCircles - Array
+     * @param {Array.<Array|CircleGeometry|SITNA.feature.Circle>} geometryOrCircles - Array
      * cuyos elementos son cualquiera de los que acepta el método [addCircle]{@link SITNA.layer.Vector#addCircle}.
-     * @param {SITNA.feature.PolygonOptions} [options]
+     * @param {PolygonOptions} [options]
      * @returns {Promise<SITNA.feature.Circle[]>} Array de entidades añadidas.
      * @see [Ejemplo de uso](../examples/feature.Circle.html)
      */
@@ -1448,23 +1517,59 @@ class Vector extends Layer {
         this.wrap.setDraggable(draggable, onend, onstart);
         return this;
     }
+
+    static getNextStyles(options = {}) {
+        const forbiddenColors = new Set(options.forbiddenColors);
+        forbiddenColors.add(Cfg.styles.point.strokeColor);
+        forbiddenColors.add(Cfg.styles.line.strokeColor);
+        forbiddenColors.add(Cfg.styles.polygon.strokeColor);
+        forbiddenColors.add(Cfg.styles.polygon.fillColor);
+        const strokeColor = Vector.getNextColor({ forbiddenColors: Array.from(forbiddenColors) });
+        const nextColor = { strokeColor };
+        return {
+            point: { ...Cfg.styles.point, ...nextColor },
+            marker: Cfg.styles.marker,
+            line: { ...Cfg.styles.line, ...nextColor },
+            polygon: { ...Cfg.styles.polygon, ...nextColor }
+        };
+    }
+
+    static getConstantColor(options = {}) {
+        return options.color || '#ff0000';
+    }
+
+    static getNextColorByGoldenAngle(options = {}) {
+        let result;
+        let count = 0;
+        const forbiddenColorsRgb1 = (options.forbiddenColors ?? []).map((value) => color.rgb255ToRgb1(color.hexToRgb(value)));
+        do {
+            result = color.goldenAngleColor.next().value;
+            count++;
+        }
+        while (count <= 10 && forbiddenColorsRgb1.some((fc) =>
+            color.getDistance(fc, color.rgb255ToRgb1(color.hexToRgb(result))) < color.mimimumCieDeltaE2000));
+        return result;
+    }
+
+    static getNextColor(options = {}) {
+        return Vector.getNextColorByGoldenAngle(options);
+    }
 }
 
 TC.layer.Vector = Vector;
 export default Vector;
 
 /**
- * Opciones de capa vectorial. Este objeto se utiliza al [configurar un mapa]{@linkplain SITNA.MapOptions} o el [control del catálogo de capas]{@linkplain LayerCatalogOptions},
+ * Opciones de capa vectorial. Objetos que cumplan esta interfaz se utilizan al [configurar un mapa]{@linkplain MapOptions} o el [control del catálogo de capas]{@linkplain LayerCatalogOptions},
  * o como parámetro al [añadir una capa]{@linkplain SITNA.Map#addLayer}.
- * @typedef VectorOptions
- * @memberof SITNA.layer
- * @extends SITNA.layer.LayerOptions
- * @see SITNA.MapOptions
- * @see SITNA.control.LayerCatalogOptions
+ * @interfaz VectorOptions
+ * @extends LayerOptions
+ * @see MapOptions
+ * @see LayerCatalogOptions
  * @see SITNA.Map#addLayer
  * @see SITNA.Map#setBaseLayer
  * @property {string} id - Identificador único de capa. No puede haber en un mapa dos capas con el mismo valor de `id`.
- * @property {SITNA.layer.ClusterOptions} [cluster] - La capa agrupa sus entidades puntuales cercanas entre sí en grupos (clusters).
+ * @property {ClusterOptions} [cluster] - La capa agrupa sus entidades puntuales cercanas entre sí en grupos (clusters).
  * @property {string} [featureType] - Nombre de la capa del servicio WFS que queremos representar. Propiedad obligatoria
  * solamente en capas de tipo `WFS`.
  * @property {string|SITNA.filter.Filter} [filter] - Filtro en formato [SITNA.filter]{@linkplain SITNA.filter}, GML o <a href="https://docs.geoserver.org/latest/en/user/tutorials/cql/cql_tutorial.html" target="_blank">CQL</a>. En el caso de tratarse de capas `WFS` se añade a las peticione GetFeature el parámetro <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#filter" target="_blank">filter</a> o <a href="https://docs.geoserver.org/latest/en/user/services/wms/vendor.html#cql-filter" target="_blank">cql_filter</a> correspondiente.
@@ -1474,20 +1579,20 @@ export default Vector;
  * @property {boolean} [hideTree] - Aplicable a capas de tipo [KML]{@link SITNA.Consts}.
  * Si se establece a `true`, la capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.
  * @property {boolean} [isBase] - Si se establece a `true`, la capa es un mapa de fondo.
- * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link SITNA.MapOptions}.*
+ * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link MapOptions}.*
  *
  * Si se establece a true, la capa se muestra por defecto si forma parte de los mapas de fondo.
- * @property {SITNA.layer.LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
+ * @property {LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
  * Si el valor es de tipo `string`, tiene que ser un identificador de capas de la API SITNA (un miembro de [SITNA.Consts.layer]{@link SITNA.Consts}).
  *
- * La capa del mapa de situación debe ser compatible con el sistema de referencia de coordenadas del mapa principal (ver propiedad `crs` de {@link SITNA.MapOptions}).
+ * La capa del mapa de situación debe ser compatible con el sistema de referencia de coordenadas del mapa principal (ver propiedad `crs` de {@link MapOptions}).
  * @property {string} [outputFormat] - Tipo MIME del formato en el cual se desea la respuesta del servicio `WFS`.
  * Para asignar valor a esta propiedad se pueden usar las constantes definidas en [SITNA.Consts.format]{@link SITNA.Consts}.
  * El valor por defecto es GML2, aunque se aconseja usar [JSON]{@link SITNA.Consts} si el servicio lo soporta; para saberlo, consultar previamente las capacidades del servicio. 
  * @property {string|string[]} [properties] - Lista de propiedades soliciadas (PropertyName) en la peticion GetFeature. Puede ser un array de cadenas o bien una cadena de textos separados por comas.
  * @property {boolean} [stealth] - Si se establece a `true`, la capa no aparece en la tabla de contenidos ni en la leyenda.
  * De este modo se puede añadir una superposición de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
- * @property {SITNA.layer.StyleOptions} [styles] - Descripción de los estilos que tendrán las entidades geográficas de la capa.
+ * @property {VectorStyleOptions} [styles] - Descripción de los estilos que tendrán las entidades geográficas de la capa.
  * @property {string} [thumbnail] - URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.
  * @property {string} [title] - Título de capa. Este valor se mostrará en la tabla de contenidos y la leyenda.
  * @property {string} [type=[SITNA.Consts.layerType.VECTOR]{@link SITNA.Consts}] - Tipo de capa.
@@ -1557,12 +1662,11 @@ export default Vector;
  *
  * Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef ClusterOptions
- * @memberof SITNA.layer
+ * @interface ClusterOptions
  * @property {number} distance - Distancia en píxels que tienen que tener como máximo los puntos entre sí para que se agrupen en un cluster.
  * @property {boolean} [animate] - Si se establece a `true`, los puntos se agrupan y desagrupan con una transición animada.
- * @property {SITNA.layer.ClusterStyleOptions} [styles] - Opciones de estilo de los clusters.
- * @see SITNA.layer.VectorOptions
+ * @property {ClusterStyleOptions} [styles] - Opciones de estilo de los clusters.
+ * @see VectorOptions
  * @example <caption>[Ver en vivo](../examples/cfg.LayerOptions.cluster.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
@@ -1588,12 +1692,11 @@ export default Vector;
 /**
  * Opciones de estilo de cluster de puntos. Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef ClusterStyleOptions
- * @memberof SITNA.layer
- * @see SITNA.layer.StyleOptions
+ * @interface ClusterStyleOptions
+ * @see VectorStyleOptions
  * @see layout_cfg
- * @property {SITNA.feature.PointStyleOptions} [point] - Opciones de estilo del punto que representa el cluster.
- * @see SITNA.layer.ClusterOptions
+ * @property {PointStyleOptions} [point] - Opciones de estilo del punto que representa el cluster.
+ * @see ClusterOptions
  * @example <caption>[Ver en vivo](../examples/cfg.ClusterStyleOptions.point.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
@@ -1659,9 +1762,8 @@ export default Vector;
 /**
  * Opciones de estilo de mapa de calor. Hay que tener en cuenta que el archivo `config.json` de una maquetación puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef HeatmapStyleOptions
- * @memberof SITNA.layer
- * @see SITNA.layer.StyleOptions
+ * @interface HeatmapStyleOptions
+ * @see VectorStyleOptions
  * @see layout_cfg
  * @property {number} [blur=15] - Ancho en píxeles del difuminado de las manchas del mapa de calor.
  * @property {string[]} [gradient=["#00f", "#0ff", "#0f0", "#ff0", "#f00"]] - Gradiente de colores de las manchas de mapa
