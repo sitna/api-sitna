@@ -1,3 +1,6 @@
+### [4.7.3](https://github.com/sitna/api-sitna/releases/tag/v4.7.3)
+- Corrección de errores del control de edición WFS.
+
 ### [4.7.2](https://github.com/sitna/api-sitna/releases/tag/v4.7.2)
 - Eliminación de dependencias circulares.
 
