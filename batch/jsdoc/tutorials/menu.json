@@ -18,7 +18,10 @@
       }
     }
   },
-  "2-css": {
+  "2-controls": {
+    "title": "Creación de controles de usuario"
+  },
+  "3-css": {
     "title": "Clases CSS para identificar elementos de la API",
     "children": {
       "layercatalog_css": {
@@ -26,13 +29,16 @@
       }
     }
   },
-  "3-embedding": {
+  "4-css_variables": {
+    "title": "Variables CSS para personalizar estilos"
+  },
+  "5-embedding": {
     "title": "Cómo añadir multimedia y páginas web incrustadas"
   },
-  "4-changes": {
+  "6-changes": {
     "title": "Historial de cambios"
   },
-  "5-examples": {
+  "7-examples": {
     "title": "Ejemplos"
   }
 }
