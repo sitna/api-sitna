@@ -231,7 +231,7 @@ TC.loadJS = async function (condition, url, callback, inOrder = false, notCrossO
                     }
                     elm.onload = resolve;
                     elm.onerror = function (e) {
-                        loadedUrls.remove(fullUrlString);
+                        loadedUrls.delete(fullUrlString);
                         console.error(e);
                         reject();
                     };
@@ -261,7 +261,7 @@ TC.loadCSS = function (url) {
             elm.href = url;
             elm.onload = resolve;
             elm.onerror = function (e) {
-                loadedUrls.remove(fullUrlString);
+                loadedUrls.delete(fullUrlString);
                 console.error(e);
                 reject();
             };
