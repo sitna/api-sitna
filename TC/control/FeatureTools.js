@@ -191,6 +191,9 @@ class FeatureTools extends Control {
                 self.updateUI(ctl);
             }
         }
+        else {
+            self.updateUI(ctl);
+        }
     }
 
     #decorateDisplay(displayControl) {
