@@ -30,22 +30,26 @@
                 <div class="tc-ctl-wlm-legend" data-layer-name="{{layerNames}}">
                     <h4>[[content]]:</h4>
                     {{#each legend}}
-                        {{#each this}}
+                        {{#if this.length}}
+                            {{#each this}}
                 <div>
                     <p>{{{title}}}</p>                  
                     
-                    {{#if symbols}}
-                    {{#each symbols}}
+                                {{#if symbols}}
+                                    {{#each symbols}}
                     <p>
                         <img data-img="{{this.src}}" />
                         <span>{{{this.title}}}</span>
                     </p>
-                    {{/each}}
-                    {{else}}
+                                    {{/each}}
+                                {{else}}
                     <img data-img="{{src}}" />
-                    {{/if}}
+                                {{/if}}
                 </div>
-                        {{/each}}
+                            {{/each}}
+                        {{else}}
+                            {{#if src}}<img data-img="{{src}}" />{{/if}}
+                        {{/if}}
                     {{/each}}
                 </div>
                 {{/if}}
