@@ -5,7 +5,7 @@ import localforage from 'localforage';
 import Proxification from '../../TC/tool/Proxification.js';
 import wwBlob from '../../workers/tc-caps-web-worker-blob.mjs';
 
-const isWebWorkerEnabled = Object.prototype.hasOwnProperty.call(window, 'Worker');
+const isWebWorkerEnabled = Object.hasOwn(window, 'Worker');
 
 const srcToURL = function (src) {
     const anchor = document.createElement('a');
@@ -55,7 +55,7 @@ const cleanOgcUrl = function (url) {
  * @class Layer
  * @memberof SITNA.layer
  * @abstract
- * @param {SITNA.layer.LayerOptions} [options] Objeto de opciones de configuración de la capa.
+ * @param {LayerOptions} [options] Objeto de opciones de configuración de la capa.
  * @see SITNA.Map#getLayer
  */
 class Layer {
@@ -122,10 +122,10 @@ class Layer {
         self.type = self.options.type || Consts.layerType.WMS;
         const defaultFormat = self.options.isBase ? Consts.mimeType.JPEG : Consts.mimeType.PNG;
         self.format = self.options.format || defaultFormat;
-        if (!Object.prototype.hasOwnProperty.call(self.options, 'hideTree')) {
+        if (!Object.hasOwn(self.options, 'hideTree')) {
             self.hideTree = true;
         }
-        if (!Object.prototype.hasOwnProperty.call(self.options, 'hideTitle')) {
+        if (!Object.hasOwn(self.options, 'hideTitle')) {
             self.hideTitle = false;
         }
 
@@ -257,10 +257,10 @@ class Layer {
 
     /*
      * <p>Devuelve un árbol de información de la capa. Como mínimo devuelve un nodo raíz con el título de la capa.</p>
-     * <p>En capas de servicios WMS es la jerarquía de capas obtenida del documento capabilities. Dependiendo del valor de la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/hideTree:property"}}{{/crossLink}},
+     * <p>En capas de servicios WMS es la jerarquía de capas obtenida del documento capabilities. Dependiendo del valor de la propiedad LayerOptions.{{#crossLink "LayerOptions/hideTree:property"}}{{/crossLink}},
      * puede mostrar un árbol de todas las capas del servicio o solo un árbol de las capas visibles inicialmente.</p>
      * <p>En capas de documentos KML cada nodo es una carpeta del documento.</p>
-     * <p>Si la propiedad TC.cfg.LayerOptions.{{#crossLink "TC.cfg.LayerOptions/stealth:property"}}{{/crossLink}} está establecida a <code>true</code>, este método devuelve <code>null</code>.</p>
+     * <p>Si la propiedad LayerOptions.{{#crossLink "LayerOptions/stealth:property"}}{{/crossLink}} está establecida a <code>true</code>, este método devuelve <code>null</code>.</p>
      * @method getTree
      * @return {TC.layer.LayerTree}
      */
@@ -551,7 +551,7 @@ class Layer {
         var capKey = self.#CAPABILITIES_STORE_KEY_PREFIX + self.type + "." + url.href;
         var setItem = function () {
             // GLS: antes de guardar, validamos que es un capabilities sin error
-            if (Object.prototype.hasOwnProperty.call(capabilities, "error")) {
+            if (Object.hasOwn(capabilities, "error")) {
                 return;
             } else {
 
@@ -589,15 +589,16 @@ class Layer {
 export default Layer;
 
 /**
- * Opciones de capa. Este objeto se utiliza al [configurar un mapa]{@linkplain SITNA.MapOptions}, el [control del catálogo de capas]{@linkplain LayerCatalogOptions}
+ * Opciones de capa. Este objeto se utiliza al [configurar un mapa]{@linkplain MapOptions}, el [control del catálogo de capas]{@linkplain LayerCatalogOptions}
  * o como parámetro al [añadir una capa]{@linkplain SITNA.Map#addLayer}.
- * @typedef LayerOptions
- * @memberof SITNA.layer
- * @see SITNA.MapOptions
- * @see SITNA.control.LayerCatalogOptions
+ * @interface LayerOptions
+ * @see MapOptions
+ * @see LayerCatalogOptions
  * @see SITNA.Map#addLayer
  * @see SITNA.Map#setBaseLayer
  * @property {string} id - Identificador único de capa. No puede haber en un mapa dos capas con el mismo valor de `id`.
+ * @property {string} [customLegend] - HTML que contiene una leyenda personalizada. Esta leyenda sustituirá a la que se obtendría 
+ * por medios estándar y se ofrecerá en los controles que muestran esta información.
  * @property {string} [format] - En las capas de tipo [WMS]{@link SITNA.Consts} y [WMTS]{@link SITNA.Consts},
  * es el tipo MIME del formato de archivo de imagen a obtener del servicio. En las capas de tipo [VECTOR]{@link SITNA.Consts}, es el tipo MIME
  * del formato de archivo de datos geográficos que queremos cargar (GeoJSON, KML, etc.).
@@ -608,13 +609,13 @@ export default Layer;
  * @property {boolean} [hideTree] - Aplicable a capas de tipo [WMS]{@link SITNA.Consts} y [KML]{@link SITNA.Consts}.
  * Si se establece a `true`, la capa no muestra la jerarquía de grupos de capas en la tabla de contenidos ni en la leyenda.
  * @property {boolean} [isBase] - Si se establece a `true`, la capa es un mapa de fondo.
- * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link SITNA.MapOptions}.*
+ * @property {boolean} [isDefault] - *__Obsoleta__: En lugar de esta propiedad es recomendable usar la propiedad `defaultBaseLayer`de {@link MapOptions}.*
  *
  * Si se establece a true, la capa se muestra por defecto si forma parte de los mapas de fondo.
- * @property {SITNA.layer.LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
+ * @property {LayerOptions|string} [overviewMapLayer] - Definición de la capa que se utilizará como fondo en el control de mapa de situación cuando esta capa está de fondo en el mapa principal.
  * Si el valor es de tipo `string`, tiene que ser un identificador de capas de la API SITNA (un miembro de [SITNA.Consts.layer]{@link SITNA.Consts}).
  *
- * La capa del mapa de situación debe ser compatible con el sistema de referencia de coordenadas del mapa principal (ver propiedad `crs` de {@link SITNA.MapOptions}).
+ * La capa del mapa de situación debe ser compatible con el sistema de referencia de coordenadas del mapa principal (ver propiedad `crs` de {@link MapOptions}).
  * @property {boolean} [stealth] - Si se establece a `true`, la capa no aparece en la tabla de contenidos ni en la leyenda.
  * De este modo se puede añadir una superposición de capas de trabajo que el usuario la perciba como parte del mapa de fondo.
  * @property {string} [thumbnail] - URL de una imagen en miniatura a mostrar en el selector de mapas de fondo.
@@ -705,6 +706,25 @@ export default Layer;
  *     ];
  *     var map = new SITNA.Map("mapa");
  * </script>
+ * @example <caption>Ejemplo de uso de la propiedad `customLegend`[Ver en vivo](../examples/cfg.LayerOptions.customLegend.html)</caption> {@lang html}
+    <div id="mapa"></div>
+    <script>
+        // Crear un mapa con una capa que tiene una leyenda personalizada.
+        var map = new SITNA.Map("mapa", {
+            workLayers: [
+                {
+                    id: "meteo",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "https://idena.navarra.es/ogc/wms",
+                    layerNames: ["estacMeteor"],
+                    customLegend: `<div>
+                                    <h4>Estaciones meteorológicas</h4>
+                                    <img src="data/piechart.png" style="width:16em">
+                                  </div>`
+                }
+            ]
+        });
+    </script> 
  */
 
 
