@@ -11,7 +11,7 @@ TC.filter = filter;
 
 /**
   * Opciones de maquetación de mapa (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
-  * @typedef SITNA.LayoutOptions
+  * @interface LayoutOptions
   * @property {string} [config] - URL de un archivo de configuración del mapa.
   * @property {string} [i18n] - URL de la carpeta donde se encuentran los archivos de textos para internacionalización (Ver 
   * la documentación de [soporte multiidioma](tutorial-layout_cfg.html#soporte-multiidioma) de las maquetaciones).
@@ -20,7 +20,7 @@ TC.filter = filter;
   * @property {string} [script] - URL de un documento JavaScript. Útil para añadir
   * lógica a los elementos de interfaz de usuario que se añaden con la maquetación.
   * @property {string} [style] - URL de una hoja de estilos para los elementos de interfaz de usuario que se añaden con la maquetación.
-  * @see SITNA.MapOptions
+  * @see MapOptions
   * @see layout_cfg
   * @example <caption>[Ver en vivo](../examples/cfg.LayoutOptions.html)</caption> {@lang html}
   * <div id="mapa"></div>
@@ -50,7 +50,7 @@ TC.filter = filter;
  * @class Map
  * @memberof SITNA
  * @param {HTMLElement|string} div Elemento del DOM en el que crear el mapa o valor de atributo id de dicho elemento.
- * @param {SITNA.MapOptions} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben las del objeto de configuración global {@link SITNA.Cfg}.
+ * @param {MapOptions} [options] Objeto de opciones de configuración del mapa. Sus propiedades sobreescriben las del objeto de configuración global {@link SITNA.Cfg}.
  * @see SITNA.Cfg
  * @see layout_cfg
  * @example <caption>[Ver en vivo](../examples/Map.1.html)</caption> {@lang html}
@@ -118,6 +118,7 @@ TC.filter = filter;
  * @type {SITNA.layer.LayerEvent}
  * @description Evento que se dispara cuando una capa del mapa se ha actualizado.
  * El evento se dispara una vez que la capa ha cargado todos sus datos y cada vez que se recarga.
+ * @property {SITNA.layer.Layer} layer - Capa que se ha actualizado.
  * @see SITNA.Map#sitna:layererror
  * @example <caption>[Ver en vivo](../examples/Event.layerupdate.html)</caption> {@lang html}
     <div id="mapa"/>
@@ -152,6 +153,7 @@ TC.filter = filter;
  * @event SITNA.Map#sitna:layererror
  * @type {SITNA.layer.LayerEvent}
  * @description Evento que se dispara cuando una capa del mapa sufre un error durante el proceso de carga.
+ * @property {SITNA.layer.Layer} layer - Capa que ha lanzado el error.
  * @see SITNA.Map#sitna:layerupdate
  */
 
@@ -159,6 +161,7 @@ TC.filter = filter;
  * @event SITNA.Map#sitna:layeradd
  * @type {SITNA.layer.LayerEvent}
  * @description Evento que se dispara cuando una capa se añade al mapa, antes de que se cargen sus datos.
+ * @property {SITNA.layer.Layer} layer - Capa que se ha añadido.
  * @see SITNA.Map#sitna:layerremove
  * @example <caption>[Ver en vivo](../examples/Event.layeradd.html)</caption> {@lang html}
     <div id="lista" class="instructions">
@@ -222,8 +225,103 @@ TC.filter = filter;
  * @event SITNA.Map#sitna:layerremove
  * @type {SITNA.layer.LayerEvent}
  * @description Evento que se dispara cuando se quita una capa del mapa.
+ * @property {SITNA.layer.Layer} layer - Capa que se ha eliminado.
  * @see SITNA.Map#sitna:layeradd
  */
+
+/**
+ * @event SITNA.Map#sitna:baselayerchange
+ * @type {SITNA.layer.LayerEvent}
+ * @description Evento que se dispara cuando la capa de fondo del mapa cambia.
+ * @property {SITNA.layer.Layer} layer - Capa que es la nueva capa de fondo.
+ */
+
+/**
+ * @event SITNA.Map#sitna:infodisplay
+ * @type {SITNA.control.ControlEvent}
+ * @description Evento que se dispara cuando un control de información de un elemento del mapa 
+ * se muestra en pantalla.
+ * @property {FeatureInfoControl} control - Control que provoca que se lance el evento.
+ * @see {@link FeatureInfoControl}
+ * @example <caption>[Ver en vivo](../examples/control.infodisplay.html)</caption> {@lang html}
+    <div id="map-container"></div>
+    <script>
+        // Creamos una clase que herede de la clase abstracta de control genérico
+        class CustomFeatureInfo extends SITNA.control.Control {
+
+            // Reescribimos métodos
+
+            async register(map) {
+                // Llamamos primero al método de la clase antecesora
+                await super.register(map);
+
+                // Añadimos lógica de interacción con el mapa
+                map.addEventListener("sitna:infodisplay", (e) => {
+                    const feature = e.control.currentFeature;
+                    if (feature) {
+                        e.control.hide();
+                        this.showInfo(feature);
+                    }
+                });
+
+                // Devolvemos el propio control para mantener la signatura del método
+                return this;
+            }
+
+            async loadTemplates() {
+                // Asignamos a la propiedad template la dirección de la plantilla a utilizar
+                this.template = "./data/CustomFeatureInfo.hbs";
+            }
+
+            // Añadimos métodos nuevos
+
+            showInfo(feature) {
+                this.#clear();
+                this.querySelector("h3").textContent = feature.id;
+                for (const [name, value] of Object.entries(feature.getData())) {
+                    this.querySelector("tbody").appendChild(this.#getPropertyRow(name, value));
+                }
+            }
+
+            #clear() {
+                this.querySelector("h3").textContent = "";
+                this.querySelector("tbody").replaceChildren(); // Elimina todo el contenido de tbody
+            }
+
+            #getPropertyRow(name, value) {
+                const row = document.createElement("tr");
+                const header = document.createElement("th");
+                const cell = document.createElement("td");
+                header.textContent = name;
+                cell.textContent = value;
+                row.appendChild(header);
+                row.appendChild(cell);
+                return row;
+            }
+        }
+
+        // Registramos la clase como elemento personalizado
+        customElements.define("custom-feature-info", CustomFeatureInfo);
+
+        // Creamos un mapa con un maquetado que tiene elementos contenedores vacíos disponibles
+        // y con una capa vectorial
+        var map = new SITNA.Map("map-container", {
+            layout: "layout/ctl-container",
+            workLayers: [
+                {
+                    id: "parques",
+                    type: SITNA.Consts.layerType.VECTOR,
+                    url: "./data/PARQUESNATURALES.json"
+                }
+            ]
+        });
+        map.loaded(() => {
+            // Colocamos el control que hemos creado en el elemento con identificador "slot1"
+            map.addControl(new CustomFeatureInfo("slot1"));
+        });
+    </script>
+ */
+
 
 const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     #searchControl;
@@ -311,7 +409,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Añade una capa al mapa. Si se le pasa un objeto del Tipo {@link SITNA.layer.LayerOptions} como parámetro `layer`
+     * Añade una capa al mapa. Si se le pasa un objeto que implementa la interfaz {@link LayerOptions} como parámetro `layer`
      * y tiene definida la propiedad `url`, establece por defecto
      * el tipo de capa a [SITNA.Consts.layerType.KML]{@link SITNA.Consts} si la URL acaba en _**.kml**_.
      * 
@@ -320,7 +418,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      * @memberof SITNA.Map
      * @instance
      * @async
-     * @param {string|SITNA.layer.LayerOptions|SITNA.layer.Layer} layer - Identificador de capa, objeto de opciones de capa o
+     * @param {string|LayerOptions|SITNA.layer.Layer} layer - Identificador de capa, objeto de opciones de capa o
      * instancia de la clase {@link SITNA.layer.Layer}.
      * @param {function} [callback] Función a la que se llama tras ser añadida la capa.     
      * @returns {Promise<SITNA.layer.Layer>} Objeto de capa añadido.
@@ -374,7 +472,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      * @method setBaseLayer
      * @memberof SITNA.Map
      * @instance
-     * @param {string|SITNA.layer.LayerOptions} layer - Identificador de capa u objeto de opciones de capa. 
+     * @param {string|LayerOptions} layer - Identificador de capa u objeto de opciones de capa. 
      * @param {function} [callback] Función al que se llama tras ser establecida la capa como mapa de fondo.
      * @example <caption>[Ver en vivo](../examples/Map.setBaseLayer.1.html)</caption> {@lang html}
      * <div id="mapa"></div>
@@ -404,6 +502,17 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      *         });
      *     });
      * </script>
+     */
+
+    /**
+     * Añade un control al mapa. Un control es un objeto que implementa la interfaz {@link MapControl}.
+     * @method addControl
+     * @memberof SITNA.Map
+     * @instance
+     * @async
+     * @param {string|MapControl|ControlOptions} control - Nombre de control, objeto que implementa la interfaz {@link MapControl} u objeto de opciones de control.
+     * @param {ControlOptions} [options] Opciones de configuración del control.     
+     * @returns {Promise<MapControl>} Objeto de control añadido.
      */
 
     /**
@@ -1107,7 +1216,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
 
                     for (var ip = 0, iip = queryable.dataIdProperty.length; ip < iip; ip++) {
                         const prop = queryable.dataIdProperty[ip];
-                        if (Object.prototype.hasOwnProperty.call(f.properties, prop)) {
+                        if (Object.hasOwn(f.properties, prop)) {
                             data.id.push(f.properties[prop]);
                         }
                     }
@@ -1121,7 +1230,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
 
                     for (var lbl = 0, lbll = queryable.outputProperties.length; lbl < lbll; lbl++) {
                         const prop = queryable.outputProperties[lbl];
-                        if (Object.prototype.hasOwnProperty.call(f.properties, prop)) {
+                        if (Object.hasOwn(f.properties, prop)) {
                             data.label.push(f.properties[prop]);
                         }
                     }
@@ -1708,7 +1817,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
             const transformFilter = function (properties) {
                 if (Array.isArray(properties)) {
                     const filters = properties.map(function (elm) {
-                        if (Object.prototype.hasOwnProperty.call(elm, "type")) {
+                        if (Object.hasOwn(elm, "type")) {
                             switch (true) {
                                 case elm.type === Consts.comparison.EQUAL_TO: {
                                     return new TC.filter.equalTo(elm.name, elm.value);
