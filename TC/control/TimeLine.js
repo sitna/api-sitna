@@ -1,10 +1,8 @@
 ﻿import Util from '../Util.js';
 import Consts from '../Consts.js';
 import Control from '../Control.js';
-import MapContents from './MapContents.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import WorkLayerManager from './WorkLayerManager';
-import Button from '../../SITNA/ui/Button';
 import WebComponentControl from './WebComponentControl.js';
 
 
@@ -327,6 +325,9 @@ class TimeControl extends WebComponentControl {
         self.model.sliderMax = self.lastTime;
         self.model.sliderStep = self.step || "";
 
+        if (Util.isFunction(callback)) {
+            callback();
+        }
         this.setControlsTime();
         self.updateModel();
     }
