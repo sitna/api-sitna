@@ -23,7 +23,7 @@ class AttributionView extends Observer {
         super(object);
     }
 
-    update(model) {
+    update(_model) {
         //this.heading.innerText = model.heading;
     }
 }
