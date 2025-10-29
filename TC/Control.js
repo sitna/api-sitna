@@ -11,9 +11,8 @@ TC._hbs = Handlebars;
 
 /**
   * Opciones básicas de control.
-  * @typedef ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface ControlOptions
+  * @see MapControlsOptions
   * @see 2-configuration
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   */
