@@ -766,7 +766,7 @@ class LayerLegend extends WebComponentControl {
 
         self.getLegend();
     }
-    async unregister(map) {
+    async unregister(_map) {
         this.controller.abort();
         this.controller = null;
         if (this?.#map?.magnifier && this?.#map.controls.filter((c) => c.tagName === this.tagName).length===1) this.#map.magnifier = null; 

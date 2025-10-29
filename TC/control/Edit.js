@@ -37,7 +37,7 @@ class EditModel {
         this.save = "";
         this.saveAs = "";
     }
-};
+}
 
 class Edit extends WebComponentControl {
     #classSelector;
