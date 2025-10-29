@@ -3,6 +3,7 @@ import Consts from '../../TC/Consts.js';
 import Util from '../../TC/Util.js';
 import Cfg from '../../TC/Cfg.js';
 import Control from '../../TC/Control.js';
+import ControlEvent from '../control/ControlEvent.js';
 //import Popup from '../../TC/control/Popup.js';
 //import ResultsPanel from '../../TC/control/ResultsPanel.js';
 import ControlContainer from '../../TC/control/ControlContainer.js';
@@ -19,7 +20,7 @@ import Handlebars from '../../lib/handlebars/helpers.js';
  * @class Feature
  * @memberof SITNA.feature
  * @param {Array} coordinates - Coordenadas de la geometría expresadas en las unidades del CRS del mapa.
- * @param {SITNA.feature.FeatureOptions} [options] Objeto de opciones de la entidad geográfica.
+ * @param {FeatureOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.layer.Vector#addFeature
  * @see SITNA.layer.Vector#addFeatures
  * @example <caption>[Ver en vivo](../examples/feature.methods.html)</caption> {@lang html}
@@ -206,6 +207,7 @@ class Feature {
 
     setStyle(style) {
         let newStyle;
+        delete this._legend;
         if (style === null) {
             newStyle = null;
         }
@@ -427,7 +429,7 @@ class Feature {
                             <displayName>Texto a mostrar como clave</displayName>
                         </Data>
                      */
-                    if (data[p1] instanceof Object && Object.prototype.hasOwnProperty.call(data[p1], "value")) {
+                    if (data[p1] instanceof Object && Object.hasOwn(data[p1], "value")) {
                         return data[p1]["value"];
                     }
                     return data[p1];
@@ -611,6 +613,7 @@ class Feature {
             popup.setDragged(false);
             this.wrap.showPopup(Object.assign({}, options, { control: popup }));
             map.trigger(Consts.event.POPUP, { control: popup });
+            map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: popup }));
             popup.fitToView(true);
             popup.contentDiv.querySelectorAll('img').forEach(img => img.addEventListener('load', () => popup.fitToView()));
             return popup;
@@ -728,6 +731,7 @@ class Feature {
             }
         }
         let control;
+        this.toggleSelectedStyle(true);
         if (options.control && TC.control) {
             const optionsControl = options.control;
             if (optionsControl.CLASS === 'tc-ctl-popup') {
@@ -746,7 +750,6 @@ class Feature {
             }
         }
         this.infoControl = control;
-        this.toggleSelectedStyle(true);
         Feature.addSpecialAttributeEventListeners(control.getContainerElement());
     }
 
@@ -857,8 +860,7 @@ export default Feature;
  * Opciones de entidad. Hay que tener en cuenta que el archivo `config.json` de una maquetación 
  * puede sobreescribir los valores por defecto de esta propiedad
  * (para ver instrucciones de uso de maquetaciones, consultar {@tutorial layout_cfg}).
- * @typedef FeatureOptions
- * @memberof SITNA.feature
+ * @interface FeatureOptions
  * @property {object|string} [data] - Diccionario de pares clave-valor que representa los atributos 
  * alfanuméricos de la entidad geográfica o bien cadena de caracteres con el código HTML asociado a la misma. 
  * Al pulsar sobre la entidad geográfica, bien una tabla con los atributos o bien el HTML especificado 
@@ -876,8 +878,7 @@ export default Feature;
  * Opciones para la obtención de una medida. Cuando queremos obtener la longitud o el área de la geometría 
  * de una entidad geográfica hay que tener en cuenta que el resultado depende de en qué unidades están definidas 
  * sus coordenadas y sobre qué CRS se proyecta la entidad.
- * @typedef MeasurementOptions
- * @memberof SITNA.feature
+ * @interface MeasurementOptions
  * @property {string} [crs=["EPSG:25830"]{@link https://epsg.io/25830}] - Cadena con el código identificador del CRS sobre la que se proyecta la geometría de la entidad geográfica.
  * Dado que al proyectar una entidad geográfica sobre un plano se puede alterar su forma o tamaño, la medida es 
  * dependiente del CRS utilizado.
