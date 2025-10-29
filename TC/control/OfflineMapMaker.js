@@ -13,10 +13,9 @@
   *    [*]: El estándar de caché de aplicaciones está obsoleto hoy en día y este control no hace realmente uso de él para ejercer su función, pero para funcionar necesita
   *    una lista de todos los recursos a cargar en la cache del navegador, y un manifiesto de caché de aplicaciones es precisamente una lista de ese tipo. 
   *    Se usa este formato por compatibilidad hacia atrás y por ser de un estándar bien documentado.
-  * @typedef OfflineMapMakerOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface OfflineMapMakerOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {number} [averageTileSize=31000] - Tamaño medio estimado en bytes para cada una de las teselas del mapa. Este valor se utiliza para estimar el tamaño total que tendrá en disco el mapa sin conexión.
   * @property {HTMLElement|string} [offlineMapHintDiv] - Elemento del DOM en el que crear el indicador de que se está en un mapa offline. Si no se especifica dicho indicador se mostrará superpuesto al área del mapa.
@@ -40,7 +39,7 @@
   * # Documento de manifiesto para el ejemplo de uso del control offlineMapMaker
   *
   * CACHE:
-  * cfg.MapControlOptions.offlineMapMaker.html
+  * cfg.MapControlsOptions.offlineMapMaker.html
   * examples.css
   * examples.js
   * ../
@@ -162,7 +161,7 @@ class OfflineMapModel {
         this.maxRes = "";
         this.mapNotVisibleAtFullExtent = "";
         this.ok = "";
-        this.cancel = "";        
+        this.cancel = "";
     }
 }
 
@@ -1383,10 +1382,10 @@ class OfflineMapMaker extends SWCacheClient {
         self.extent = null;
         self.#loadedCount = 0;
         if (self.boxDraw && self.map.activeControl === self.boxDraw) {
-                self
-                    .boxDraw
-                    .cancel()
-                    .deactivate();
+            self
+                .boxDraw
+                .cancel()
+                .deactivate();
         }
     }
 
@@ -1453,11 +1452,9 @@ class OfflineMapMaker extends SWCacheClient {
         return requestId;
     }
 
-    async #getCacheUrlList(options = {}) {
+    async #getCacheUrlList() {
         const urlList = new Set();
         if (this.map) {
-            const extent = options.extent || this.extent || this.map.getExtent();
-
             if (this.requestSchemas) {
 
                 let baseLayers = this.baseLayers.slice();
@@ -1608,7 +1605,7 @@ class OfflineMapMaker extends SWCacheClient {
 
                 // Guardado mediante service workers
                 if (self.serviceWorkerEnabled) {
-                    const urlList = [u].concat(await self.#getCacheUrlList(options));
+                    const urlList = [u].concat(await self.#getCacheUrlList());
                     self.cacheUrlList(urlList, { name: u });
                 }
             }
