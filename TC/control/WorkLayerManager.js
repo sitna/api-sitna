@@ -441,6 +441,7 @@ class WorkLayerManager extends TOC {
                 else {
                     layerData.hasExtent = true;
                     layerData.hasInfo = Object.prototype.hasOwnProperty.call(layer, 'styles');
+                    layerData.legend = layer.getTree().legend;
                     layerData.path = [layer.getPath()];
                 }
 
