@@ -209,7 +209,7 @@ Consts.event = {
     LAYERUPDATE: 'sitna:layerupdate',
     LAYERERROR: 'sitna:layererror',
     BEFOREBASELAYERCHANGE: 'beforebaselayerchange.tc',
-    BASELAYERCHANGE: 'baselayerchange.tc',
+    BASELAYERCHANGE: 'sitna:baselayerchange',
     BEFOREUPDATE: 'beforeupdate.tc',
     UPDATE: 'update.tc',
     BEFOREZOOM: 'beforezoom.tc',
@@ -235,7 +235,7 @@ Consts.event = {
     CONTROLACTIVATE: 'controlactivate.tc',
     CONTROLDEACTIVATE: 'controldeactivate.tc',
     BEFORECONTROLRENDER: 'beforecontrolrender.tc',
-    CONTROLRENDER: 'controlrender.tc',
+    CONTROLRENDER: 'sitna:controlrender',
     CONTROLHIGHLIGHT: 'controlhighlight.tc',
     CONTROLUNHIGHLIGHT: 'controlunhighlight.tc',
     BEFORELAYOUTLOAD: 'beforelayoutload.tc',
@@ -269,7 +269,8 @@ Consts.event = {
     RECENTFILEADD: 'recentfileadd.tc',
     CHANGELANGUAGE: 'changelanguage.tc',
     BEFORECHANGELANGUAGE: 'beforechangelanguage.tc',
-    TIMECHANGE: 'timechange.tc'
+    TIMECHANGE: 'timechange.tc',
+    INFODISPLAY: 'sitna:infodisplay',
 };
 
 Consts.layer = {
