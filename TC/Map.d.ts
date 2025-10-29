@@ -1,7 +1,7 @@
 import Feature from "../SITNA/feature/Feature";
 import Marker, { MarkerOptions } from "../SITNA/feature/Marker";
 import Layer, { LayerOptions } from "../SITNA/layer/Layer";
-import { StyleOptions } from "../SITNA/layer/Vector";
+import { VectorStyleOptions } from "../SITNA/layer/Vector";
 import EventTarget from "./EventTarget";
 import LayerEvent, { LayerEventCallback } from "../SITNA/layer/LayerEvent";
 
@@ -18,7 +18,7 @@ export interface ControlOptions {
     div?: HTMLElement | string;
 }
 
-export interface MapControlOptions {
+export interface MapControlsOptions {
     attribution?: ControlOptions | boolean;
     basemapSelector?: ControlOptions | boolean;
     click?: ControlOptions | boolean;
@@ -64,7 +64,7 @@ export interface MapOptions {
     baselayerExtent?: number[];
     baseLayers?: (LayerOptions | string)[];
     defaultBaseLayer?: string;
-    controls?: MapControlOptions;
+    controls?: MapControlsOptions;
     workLayers?: LayerOptions[];
     crossOrigin?: string;
     locale?: string;
@@ -72,7 +72,7 @@ export interface MapOptions {
     stateful?: boolean;
     pixelTolerance?: number;
     proxy?: string;
-    styles?: StyleOptions;
+    styles?: VectorStyleOptions;
     views?: MapViewOptions;
 }
 
