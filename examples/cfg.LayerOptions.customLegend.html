@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+    <title>SITNA - Ejemplo de uso de customLegend</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        .embedded {
+            width: 800px !important;
+            height: 600px !important;
+            border: 2px solid black !important;
+        }
+
+        #enlaces {
+            top: 135px;
+            left: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de la propiedad <a href="../doc/LayerOptions.html">customLegend</a>.</p>
+        <p>Capa con una leyenda personalizada.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="mapa"></div>
+    <script>
+        // Crear un mapa con una capa que tiene una leyenda personalizada.
+        var map = new SITNA.Map("mapa", {
+            workLayers: [
+                {
+                    id: "meteo",
+                    type: SITNA.Consts.layerType.WMS,
+                    url: "https://idena.navarra.es/ogc/wms",
+                    layerNames: ["estacMeteor"],
+                    customLegend: `<div>
+                                    <h4>Estaciones meteorológicas</h4>
+                                    <img src="data/piechart.png" style="width:16em">
+                                  </div>`
+                }
+            ]
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de creación de un control de usuario con un motor de plantillas personalizado</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de creación de un control de usuario con un motor de plantillas personalizado</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="map-container"></div>
+    <template id="basemap-randomizer-template">
+        <h2>Cambio aleatorio de mapa de fondo</h2>
+        <div style="margin:1em;">
+            <p>Capa actual: <span class="current-layer" data-key="title"></span></p>
+            <sitna-button>Cambiar</sitna-button>
+        </div>
+    </template>
+    <script>
+        // Creamos una clase que herede de la clase abstracta de control genérico
+        class BasemapRandomizer extends SITNA.control.Control {
+
+            // Reescribimos métodos
+
+            async register(map) {
+                // Llamamos primero al método de la clase antecesora
+                await super.register(map);
+
+                // Añadimos lógica de interacción con el mapa
+                map.addEventListener("sitna:baselayerchange", (e) => {
+                    this.querySelector("span.current-layer").textContent = e.layer.title;
+                });
+
+                // Devolvemos el propio control para mantener la signatura del método
+                return this;
+            }
+
+            // Reescribimos el método loadTemplates para utilizar plantillas HTML en vez de Handlebars
+            async loadTemplates() {
+                // Asignamos a la propiedad template un diccionario de pares clave/valor,
+                // siendo la clave un identificador de plantilla y el valor una función que acepta un objeto de
+                // datos como parámetro y devuelve el resultado de aplicar la plantilla en forma de cadena de texto.
+
+                // En este ejemplo solamente hay una plantilla para todo el control, por tanto el diccionario solamente
+                // tiene una entrada.
+                // También, por decisión de diseño de este ejemplo, se utiliza el atributo data-key para marcar
+                // los elementos a los que incrustar los datos pasados por parámetro. El desarrollador tiene libertad 
+                // para diseñar el método de incorporación de datos a la plantilla.
+                this.template = {
+                    [this.localName]: function (data) {
+                        const node = document.getElementById("basemap-randomizer-template").content.cloneNode(true);
+                        for (const [key, value] of Object.entries(data)) {
+                            const textContainer = node.querySelector(`[data-key="${key}"]`);
+                            if (textContainer) textContainer.textContent = value;
+                        }
+                        const tempElm = document.createElement("div");
+                        tempElm.appendChild(node);
+                        return tempElm.innerHTML;
+                    }
+                };
+            }
+
+            async render(callback) {
+                // Cualquier implementación del método render debe llevar a cabo los siguientes procesos:
+                // 1 - Si no está inicializada la propiedad template, llamar a loadTemplates para cargar la plantilla
+                // 2 - Procesar la plantilla e incrustar el HTML resultante en el control
+                // 3 - Lanzar el evento sitna:controlrender
+                // 4 - Ejecutar la función de callback pasada como parámetro
+                // 5 - Llamar a addUIEventListeners para añadir eventos de interfaz de usuario a los elementos HTML recién creados
+
+                // Una implementación típica es delegar los procesos 1-4 a renderData, pasándole 
+                // como parámetros los datos que sean relevantes para el control
+                await this.renderData({ title: this.map?.baseLayer.title }, callback);
+                this.addUIEventListeners();
+                return;
+            }
+
+            addUIEventListeners() {
+                this.querySelector("sitna-button").addEventListener("click", () => {
+                    this.randomize();
+                });
+            }
+
+            // Añadimos métodos nuevos
+
+            randomize() {
+                const n = this.map.baseLayers.length;
+                const currentIndex = this.map.baseLayers.findIndex((baseLayer) => baseLayer === this.map.baseLayer);
+                let nextIndex;
+                do {
+                    nextIndex = Math.floor(Math.random() * n);
+                }
+                while (nextIndex === currentIndex);
+                this.map.setBaseLayer(this.map.baseLayers[nextIndex]);
+            }
+        }
+
+        // Registramos la clase como elemento personalizado
+        customElements.define("basemap-randomizer", BasemapRandomizer);
+
+        // Creamos un mapa con un maquetado que tiene elementos contenedores vacíos disponibles
+        var map = new SITNA.Map("map-container", { layout: "layout/ctl-container" });
+        map.loaded(() => {
+            // Colocamos el control que hemos creado en el elemento con identificador "slot1"
+            map.addControl(new BasemapRandomizer("slot1"));
+        });
+    </script>
+
+</body>
+</html>

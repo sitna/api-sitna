@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de las propiedades checkedIconText y uncheckedIconText de un conmutador (SITNA.ui.Toggle)</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        p:not(:first-of-type) {
+            margin: 1em 0;
+        }
+    </style>
+</head>
+<body>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div class="instructions">
+        <p>A continuación se muestran tres conmutadores con la misma configuración definida de tres maneras distintas.</p>
+
+        <p>Usando <a href="../doc/SITNA.ui.Toggle.html#checkedIconText">las propiedades JavaScript</a>:</p>
+        <sitna-toggle id="toggle-1"></sitna-toggle>
+        <script>
+            const toggle = document.getElementById("toggle-1");
+            toggle.checkedIconText = "\ue910";
+            toggle.uncheckedIconText = "\ue911";
+        </script>
+
+        <p>Usando atributos HTML:</p>
+        <sitna-toggle id="toggle-2" checked-icon-text="&#xe910;" unchecked-icon-text="&#xe911;"></sitna-toggle>
+
+        <p>Usando <a href="../doc/tutorial-3-css_variables.html#variables-css-para-conmutadores-sitnauitoggle">variables CSS</a>:</p>
+        <sitna-toggle id="toggle-3" style="--sitna-checked-icon-text:'\e910';--sitna-unchecked-icon-text:'\e911';"></sitna-toggle>
+    </div>
+</body>
+</html>

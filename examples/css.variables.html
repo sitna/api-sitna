@@ -1,0 +1,336 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de variables CSS</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        .instructions.css-variables {
+            top: 10em;
+            max-height: none;
+            max-width: none;
+        }
+
+            .instructions.css-variables p {
+                margin: 1em;
+            }
+
+            .instructions.css-variables .tools {
+                padding: 1em;
+                border-top: solid lightgrey 2px;
+                display: flex;
+            }
+
+        .instructions.css-variables .tools button {
+            margin: 1em;
+            background-color: steelblue;
+            color: white;
+            border: none;
+            border-radius: 0.2em;
+            padding: 0.5em;
+        }
+
+        #variables-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
+            flex-wrap: wrap;
+            max-height: 50em;
+            padding-top: 1em;
+            border-top: solid lightgrey 2px;
+        }
+
+        #colorwheel-container {
+            padding: 1em;
+        }
+
+        [data-variable] {
+            font-family: monospace;
+            font-size: 10pt;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            height: 3em;
+        }
+
+        [data-variable] input {
+            margin-left: 1em;
+            max-height: 2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/tutorial-3-css_variables.html">variables CSS</a>.</p>
+    </div>
+    <div class="instructions css-variables">
+        <p>Modifica valores de variables CSS para ver en tiempo real los cambios en la interfaz de usuario.
+        Se pueden descargar los valores en una hoja CSS para aplicarla a tus proyectos</p>
+        <div id="variables-container"></div>
+        <div class="tools">
+            <div id="colorwheel-container" title="Desplazar el deslizador para rotar el tono de todos los colores a lo largo de la rueda de color">
+                Rueda de color <input id="colorwheel" type="range" value="0"></input>
+            </div>
+            <button id="negative" title="Cambia todos los colores dándoles el valor opuesto de tono y brillo">Negativo</button>
+            <button id="opposite" title="Cambia todos los colores dándoles el valor opuesto de tono pero manteniendo brillo">Opuesto</button>
+            <div>
+                <button id="download">Descargar tema</button>
+            </div>
+        </div>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    
+	<div id="map-container"></div>
+    <script>
+
+        // Instanciamos un mapa con el control workLayerManager y con una capa de trabajo cargada,
+        // para tener más variedad en loes elementos de interfaz de usuario que se muestran
+        var map = new SITNA.Map("map-container", {
+            controls: {
+                TOC: false,
+                workLayerManager: { div: "tc-slot-toc" },
+            },
+            workLayers: [
+                {
+                    id: "example",
+                    url: "https://idena.navarra.es/ogc/wms",
+                    "layerNames": ["catastro"]
+                }
+            ]
+        });
+
+        map.loaded(() => {
+            let bodyComputedStyle = getComputedStyle(document.body);
+            const varContainer = document.getElementById("variables-container");
+
+            const setVariable = function (name, value) {
+                let root = document.documentElement;
+                root.style.setProperty(name, value);
+                cssVariables[name] = value;
+                refreshColors();
+            };
+
+            const getMatchFromVar = function (value) {
+                if (value) {
+                    const match = value.match(/var\(([\-a-z]+)\)/);
+                    if (match) {
+                        return match[1];
+                    }
+                }
+                return null;
+            }
+
+            const getInitialVariable = function (variableName) {
+                let dependance = variableName;
+                let previous;
+                do {
+                    previous = dependance;
+                    dependance = getMatchFromVar(cssVariables[dependance]);
+                }
+                while (dependance);
+                return previous;
+            };
+
+            const setInputVariable = function () {
+                if (!this.parentElement.dataset.follows) {
+                    setVariable(this.parentElement.dataset.variable, this.value);
+                }
+            };
+
+            const onColorChange = function (e) {
+                this.dataset.original = this.value;
+            };
+
+            const onColorInput = function (e) {
+                delete this.parentElement.dataset.follows;
+                setInputVariable.call(this);
+                refreshColors();
+            };
+
+            const addVariableElement = (name) => {
+                const div = document.createElement("div");
+                div.dataset.variable = name;
+                div.textContent = name;
+                const computedValue = bodyComputedStyle.getPropertyValue(name);
+                const input = document.createElement("input");
+                if (name.endsWith("color")) {
+                    input.setAttribute("type", "color");
+                    input.dataset.original = computedValue;
+                    input.addEventListener("input", onColorInput);
+                    input.addEventListener("change", onColorChange);
+                }
+                else {
+                    input.setAttribute("type", "text");
+                    input.addEventListener("change", function (e) {
+                        setVariable(this.parentElement.dataset.variable, this.value);
+                    });
+                }
+                div.insertAdjacentElement("beforeend", input);
+                varContainer.insertAdjacentElement("beforeend", div);
+                input.value = computedValue;
+            };
+
+            const cssVariableNames = [
+                "--sitna-text-font-family",
+                "--sitna-text-color",
+                "--sitna-background-color",
+                "--sitna-main-accent-color",
+                "--sitna-main-accent-contrast-color",
+                "--sitna-secondary-accent-color",
+                "--sitna-secondary-accent-contrast-color",
+                "--sitna-highlighted-text-color",
+                "--sitna-icon-font-family",
+                "--sitna-icon-text-line-height",
+                "--sitna-border-radius",
+                "--sitna-link-color",
+                "--sitna-link-decoration",
+                "--sitna-textbox-text-color",
+                "--sitna-textbox-background-color",
+                "--sitna-button-text-color",
+                "--sitna-button-background-color",
+                "--sitna-button-border-color",
+                "--sitna-active-button-text-color",
+                "--sitna-active-button-background-color",
+                "--sitna-active-button-border-color",
+                "--sitna-disabled-button-text-color",
+                "--sitna-minimal-button-text-color",
+                "--sitna-active-minimal-button-text-color",
+                "--sitna-button-font-weight",
+                "--sitna-checkbox-icon-color",
+                "--sitna-checkbox-background-color",
+                "--sitna-checked-checkbox-icon-color",
+                "--sitna-checked-checkbox-background-color",
+                "--sitna-checked-checkbox-border-color",
+                "--sitna-indeterminate-checkbox-icon-color",
+                "--sitna-checked-icon-text",
+                "--sitna-unchecked-icon-text",
+                "--sitna-indeterminate-icon-text",
+                "--sitna-selected-tab-background-color",
+                "--sitna-selected-tab-font-weight",
+                "--sitna-tab-inner-border-radius",
+            ];
+
+            const cssVariables = {};
+            const sitnaStyleSheet = Array.from(document.styleSheets).find((ss) => ss.href?.endsWith("/sitna.css"));
+            if (sitnaStyleSheet) {
+                const rootRule = Array.from(sitnaStyleSheet.cssRules).find((rule) => rule.selectorText == ":root");
+                if (rootRule) {
+                    let css = rootRule.cssText.split('{');
+                    css = css[1].replace('}', '').split(';');
+                    for (const prop of css) {
+                        const [name, value] = prop.split(':').map((s) => s.trim());
+                        cssVariables[name] = value;
+                    }
+                }
+            }
+
+            const refreshColors = function () {
+                bodyComputedStyle = getComputedStyle(document.body);
+                varContainer
+                    .querySelectorAll('[data-variable$="color"]')
+                    .forEach((elm) => {
+                        const input = elm.querySelector("input");
+                        if (input) {
+                            const value = bodyComputedStyle.getPropertyValue(elm.dataset.variable);
+                            input.value = value;
+                        }
+                    });
+            };
+
+            for (const variableName of cssVariableNames) {
+                addVariableElement(variableName);
+                const input = document.querySelector(`[data-variable="${variableName}"]`);
+                if (input) {
+                    const initialVariable = getInitialVariable(variableName);
+                    if (initialVariable) input.dataset.follows = initialVariable;
+                }
+            }
+
+            const colorWheel = document.getElementById("colorwheel");
+
+            const changeColors = function (changeFunction) {
+                const doneVariables = new Set();
+                varContainer
+                    .querySelectorAll('[data-variable$="color"]')
+                    .forEach(elm => {
+                        if (elm.dataset.follows) {
+                            const initialVariable = getInitialVariable(elm.dataset.variable);
+                            if (!doneVariables.has(initialVariable)) {
+                                const color = bodyComputedStyle.getPropertyValue(initialVariable);
+                                setVariable(initialVariable, changeFunction(color));
+                                doneVariables.add(initialVariable);
+                            }
+                        }
+                        else {
+                            const input = elm.querySelector('[type="color"]');
+                            if (input) {
+                                const color = bodyComputedStyle.getPropertyValue(elm.dataset.variable);
+                                const newColor = changeFunction(color);
+                                setVariable(elm.dataset.variable, newColor);
+                                doneVariables.add(elm.dataset.variable)
+                            }
+                        }
+                    });
+            }
+
+            let prevValue = colorWheel.value;
+            colorWheel.addEventListener("input", function (e) {
+                const value = (this.value - prevValue) / 100;
+                prevValue = this.value;
+                changeColors((color) => {
+                    let [h, s, l] = TC.Util.color.rgbToHsl(TC.Util.color.rgb255ToRgb1(TC.Util.color.hexToRgb(color)));
+                    h += value;
+                    if (h > 1) {
+                        h += -1;
+                    }
+                    return TC.Util.color.rgbToHex(TC.Util.color.rgb1ToRgb255(TC.Util.color.hslToRgb([h, s, l])));
+                });
+            });
+
+            colorWheel.addEventListener("change", function (e) {
+                varContainer
+                    .querySelectorAll('[data-variable$="color"]')
+                    .forEach(elm => {
+                        const color = elm.querySelector('input[type="color"]');
+                        onColorChange.call(color);
+                    });
+                this.value = 0;
+                prevValue = 0;
+            });
+
+            document.getElementById("negative").addEventListener("click", function (e) {
+                changeColors((color) => TC.Util.color.rgbToHex(TC.Util.color.hexToRgb(color).map((v) => 255 - v)));
+            });
+
+            document.getElementById("opposite").addEventListener("click", function (e) {
+                changeColors((color) => {
+                    let [h, s, l] = TC.Util.color.rgbToHsl(TC.Util.color.rgb255ToRgb1(TC.Util.color.hexToRgb(color)));
+                    h = (h + 0.5) % 1;
+                    return TC.Util.color.rgbToHex(TC.Util.color.rgb1ToRgb255(TC.Util.color.hslToRgb([h, s, l])));
+                });
+            });
+
+            document.getElementById("download").addEventListener("click", function (e) {
+                const elms = Array.from(varContainer.querySelectorAll("[data-variable]"));
+                const vars = elms.map((elm) => {
+                    let value = elm.querySelector("input").value;
+                    if (value.length === 0) value = "''";
+                    return `    ${elm.dataset.variable}: ${value};`
+                });
+                const lines = [
+                    "/* Pegar el contenido de este archivo en el hoja de estilos de la aplicación */",
+                    "/* Esta lista no es exhaustiva, se pueden descubrir más variables CSS aquí:  */",
+                    "/* https://sitna.navarra.es/api/doc/tutorial-4-css_variables.html            */",
+                    "",
+                    ":root {"
+                ].concat(vars);
+                lines.push("}");
+                TC.Util.downloadFile("theme.css", "text/css", lines.join("\n"));
+            });
+        });
+    </script>
+	
+</body>
+</html>

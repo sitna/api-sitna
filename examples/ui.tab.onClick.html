@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de personalización del método onClick de SITNA.ui.Tab</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        .instructions p {
+            margin-bottom: 1em;
+        }
+        .container {
+            display: flex;
+            justify-items: stretch;
+            width: 30em;
+        }
+
+        section {
+            border: 1px solid var(--sitna-secondary-accent-color);
+            border-top: none;
+            padding: 1em;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+            section.tc-hidden {
+                display: none;
+            }
+    </style>
+</head>
+<body>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div class="instructions">
+        <p>Ejemplo de personalización del método <a href="../doc/SITNA.ui.Tab.html#onClick">onClick</a> de <a href="../doc/SITNA.ui.Tab.html">SITNA.ui.Tab</a>.</p>
+        <div class="container">
+            <sitna-tab group="tab-group" for="div-1">Primera pestaña</sitna-tab>
+            <sitna-tab group="tab-group" for="div-2">Segunda pestaña</sitna-tab>
+            <sitna-tab group="tab-group" for="div-3">Tercera pestaña</sitna-tab>
+        </div>
+        <div class="container">
+            <section id="div-1" class="tc-hidden">Primera sección, veces seleccionada: <span>0</span></section>
+            <section id="div-2" class="tc-hidden">Segunda sección, veces seleccionada: <span>0</span></section>
+            <section id="div-3" class="tc-hidden">Tercera sección, veces seleccionada: <span>0</span></section>
+        </div>
+        <script>
+            document.querySelectorAll("sitna-tab").forEach((tab) => {
+                tab.onClick = function () {
+                    SITNA.ui.Tab.prototype.onClick.call(this);
+                    const span = this.target.querySelector("span");
+                    const times = parseInt(span.textContent);
+                    span.textContent = times + 1;
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

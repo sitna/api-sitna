@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de la propiedad active de un botón (SITNA.ui.Button)</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        table {
+            margin: 1em;
+            border: 2px solid lightgrey;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        th {
+            padding: 0.5em;
+            background-color: lightgrey;
+        }
+    </style>
+</head>
+<body>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div class="instructions">
+        <p>Botones en distintas variables visuales con la propiedad active establecida o no.</p>
+        <table>
+            <tr>
+                <th>Variante</th>
+                <th>active == true</th>
+                <th>active == false</th>
+            </tr>
+            <tr>
+                <th>Por defecto</th>
+                <td><sitna-button active icon-text="&#xe932;">Botón</sitna-button></td>
+                <td><sitna-button icon-text="&#xe932;">Botón</sitna-button></td>
+            </tr>
+            <tr>
+                <th>Sin texto</th>
+                <td><sitna-button variant="textless" active icon-text="&#xe932;">Botón</sitna-button></td>
+                <td><sitna-button variant="textless" icon-text="&#xe932;">Botón</sitna-button></td>
+            </tr>
+            <tr>
+                <th>Enlace</th>
+                <td><sitna-button variant="link" active icon-text="&#xe932;">Botón</sitna-button></td>
+                <td><sitna-button variant="link" icon-text="&#xe932;">Botón</sitna-button></td>
+            </tr>
+            <tr>
+                <th>Mínima</th>
+                <td><sitna-button variant="minimal" active icon-text="&#xe932;">Botón</sitna-button></td>
+                <td><sitna-button variant="minimal" icon-text="&#xe932;">Botón</sitna-button></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

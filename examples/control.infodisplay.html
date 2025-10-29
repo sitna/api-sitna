@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de interfaz FeatureInfoControl y evento sitna:infodisplay para cambiar comportamiento por defecto</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        custom-feature-info {
+            padding: 0.2em;
+        }
+
+        custom-feature-info table th {
+            text-align: left;
+            padding: 0.4em;
+        }
+
+        custom-feature-info table td {
+            padding: 0.4em;
+        }
+            custom-feature-info table tr:nth-child(even) th,
+            custom-feature-info table tr:nth-child(even) td{
+                background-color: var(--sitna-even-row-background-color);
+            }
+
+            custom-feature-info table tr:nth-child(odd) th,
+            custom-feature-info table tr:nth-child(odd) td {
+                background-color: var(--sitna-odd-row-background-color);
+            }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de creación de uso de la interfaz <a href="../doc/FeatureInfoControl.html">FeatureInfoControl</a>
+        para modificar el comportamiento por defecto cuando se lanza el evento <a href="../doc/SITNA.Map.html#event:sitna:infodisplay">sitna:infodisplay</a></p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="map-container"></div>
+    <script>
+        // Creamos una clase que herede de la clase abstracta de control genérico
+        class CustomFeatureInfo extends SITNA.control.Control {
+
+            // Reescribimos métodos
+
+            async register(map) {
+                // Llamamos primero al método de la clase antecesora
+                await super.register(map);
+
+                // Añadimos lógica de interacción con el mapa
+                map.addEventListener("sitna:infodisplay", (e) => {
+                    const feature = e.control.currentFeature;
+                    if (feature) {
+                        const parksLayer = map.getLayer("parques");
+                        if (parksLayer.features.includes(feature)) {
+                            e.control.hide();
+                            this.showInfo(feature);
+                        }
+                        else {
+                            this.#clear();
+                        }
+                    }
+                });
+
+                // Devolvemos el propio control para mantener la signatura del método
+                return this;
+            }
+
+            async loadTemplates() {
+                // Asignamos a la propiedad template la dirección de la plantilla a utilizar
+                this.template = "./data/CustomFeatureInfo.hbs";
+            }
+
+            // Añadimos métodos nuevos
+
+            showInfo(feature) {
+                this.#clear();
+                this.querySelector("h3").textContent = feature.id;
+                for (const [name, value] of Object.entries(feature.getData())) {
+                    this.querySelector("tbody").appendChild(this.#getPropertyRow(name, value));
+                }
+            }
+
+            #clear() {
+                this.querySelector("h3").textContent = "";
+                this.querySelector("tbody").replaceChildren(); // Elimina todo el contenido de tbody
+            }
+
+            #getPropertyRow(name, value) {
+                const row = document.createElement("tr");
+                const header = document.createElement("th");
+                const cell = document.createElement("td");
+                header.textContent = name;
+                cell.textContent = value;
+                row.appendChild(header);
+                row.appendChild(cell);
+                return row;
+            }
+        }
+
+        // Registramos la clase como elemento personalizado
+        customElements.define("custom-feature-info", CustomFeatureInfo);
+
+        // Creamos un mapa con un maquetado que tiene elementos contenedores vacíos disponibles
+        // y con una capa vectorial
+        var map = new SITNA.Map("map-container", {
+            layout: "layout/ctl-container",
+            workLayers: [
+                {
+                    id: "parques",
+                    type: SITNA.Consts.layerType.VECTOR,
+                    url: "./data/PARQUESNATURALES.json"
+                }
+            ]
+        });
+        map.loaded(() => {
+            // Colocamos el control que hemos creado en el elemento con identificador "slot1"
+            map.addControl(new CustomFeatureInfo("slot1"));
+        });
+    </script>
+
+</body>
+</html>

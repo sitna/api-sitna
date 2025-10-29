@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de interfaz FeatureInfoControl y evento sitna:infodisplay para modificar los resultados</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        sitna-button:not([variant]) {
+            margin: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de creación de uso de la interfaz <a href="../doc/FeatureInfoControl.html">FeatureInfoControl</a>
+        para modificar el resultado cuando se lanza el evento <a href="../doc/SITNA.Map.html#event:sitna:infodisplay">sitna:infodisplay</a>.</p>
+        <p>Pulsa en una de las entidades destacadas del mapa para mostrar su tabla de atributos.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="map-container"></div>
+    <script>
+        // Creamos un mapa con una capa vectorial cargada
+        var map = new SITNA.Map("map-container", {
+            workLayers: [
+                {
+                    id: "parques",
+                    type: SITNA.Consts.layerType.VECTOR,
+                    url: "./data/PARQUESNATURALES.json"
+                }
+            ]
+        });
+        // Cuando se muestra el control de información de entidad geográfica,
+        // modificamos el resultado
+        map.addEventListener("sitna:infodisplay", function (e) {
+            if (e.control.currentFeature) {
+                const infoContainer = e.control.getInfoContainer();
+                const button = document.createElement("sitna-button");
+                button.textContent = "Seleccionar tabla";
+                button.addEventListener("click", function () {
+                    const table = infoContainer.querySelector("table");
+                    const range = document.createRange();
+                    range.selectNodeContents(table);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                });
+                infoContainer.insertAdjacentElement("beforeend", button);
+            }
+        });
+    </script>
+</body>
+</html>

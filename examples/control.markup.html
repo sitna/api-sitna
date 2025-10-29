@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de inclusión de un control de usuario mediante su elemento HTML asociado</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de inclusión de un control de usuario mediante su elemento HTML asociado</p>
+        <p>El elemento se encuentra en <a href="layout/custom-control/markup.html">el marcado de la maquetación</a></p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="map-container"></div>
+    <script>
+        // Creamos una clase que herede de HTMLElement para crear un elemento personalizado
+        class ZoomToExtent extends HTMLElement {
+            #button;
+
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.#button = document.createElement("sitna-button");
+                const slot = document.createElement("slot");
+                this.#button.appendChild(slot);
+                this.shadowRoot.appendChild(this.#button);
+                this.#button.addEventListener("click", (e) => {
+                    this.zoom();
+                });
+            }
+
+            zoom() {
+                const extentValue = this.getAttribute("extent");
+                if (extentValue) {
+                    const extent = extentValue.split(",").map((text) => parseFloat(text));
+                    this.closest("poi-navigator").map.setExtent(extent);
+                }
+            }
+        }
+
+        // Registramos la clase como elemento personalizado
+        customElements.define("zoom-extent", ZoomToExtent);
+
+        // Creamos una clase que herede de la clase abstracta de control genérico
+        class PoiNavigator extends SITNA.control.Control {
+
+            // Reescribimos métodos
+
+            // Reescribimos el método loadTemplates para utilizar plantillas HTML en vez de Handlebars
+            async loadTemplates() {
+                // Asignamos a la propiedad template la dirección de la plantilla a utilizar
+                this.template = "./data/PoiNavigator.hbs";
+            }
+
+            async render() {
+                const zoomButtons = Array.from(this.querySelectorAll('zoom-extent'));
+                await this.renderData();
+                const zoomButtonContainer = this.querySelector(".zoom-button-container");
+                zoomButtons.forEach((button) => {
+                    zoomButtonContainer.appendChild(button);
+                });
+
+                this.addUIEventListeners();
+            }
+        }
+
+        // Registramos la clase como elemento personalizado
+        customElements.define("poi-navigator", PoiNavigator);
+
+        // Creamos un mapa con un maquetado que tiene en su HTML el elemento personalizado recién registrado
+        var map = new SITNA.Map("map-container", {
+            baseLayers: [SITNA.Consts.layer.IDENA_ORTHOPHOTO],
+            layout: "layout/custom-control"
+        });
+    </script>
+
+</body>
+</html>

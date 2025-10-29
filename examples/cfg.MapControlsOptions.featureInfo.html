@@ -3,15 +3,13 @@
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SITNA - Ejemplo de FeatureInfoOptions.persistentHighlights</title>
+    <title>SITNA - Ejemplo de MapControlsOptions.featureInfo</title>
     <link rel="stylesheet" href="examples.css" />
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de <a href="../doc/FeatureInfoOptions.html">FeatureInfoOptions</a>.persistentHighlights.</p>
-        <p>Obtención de información de masas de agua.</p>
-        <p>Pulse en el mapa sobre varias masas de agua y compruebe la persistencia de los resaltes de las mismas. Cada resalte se puede eliminar pulsando en el botón de la papelera del bocadillo
-        que aparece al pulsar sobre aquel.</p>
+        <p>Ejemplo de uso de <a href="../doc/MapControlsOptions.html">MapControlsOptions</a>.featureInfo.</p>
+        <p>Obtención de información de los últimos terremotos.</p>
     </div>
     <script src="../"></script>
     <script type="text/javascript" src="examples.js"></script>
@@ -19,17 +17,15 @@
     <div id="mapa"></div>
     <script>
         // Añadimos el control featureInfo.
-        SITNA.Cfg.controls.featureInfo = {
-            persistentHighlights: true
-        };
+        SITNA.Cfg.controls.featureInfo = true;
         // Añadimos una capa WMS sobre la que hacer las consultas.
         SITNA.Cfg.workLayers = [
             {
-                id: "masas",
-                title: "Masas de agua",
+                id: "terremotos",
+                title: "Terremotos últimos 365 días",
                 type: SITNA.Consts.layerType.WMS,
-                url: "https://servicios.idee.es/wms-inspire/hidrografia",
-                layerNames: ["HY.PhysicalWaters.Waterbodies"]
+                url: "https://www.ign.es/wms-inspire/geofisica",
+                layerNames: ["Ultimos365dias"]
             }
         ];
         var map = new SITNA.Map("mapa");

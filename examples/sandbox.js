@@ -48,7 +48,7 @@ class Sandbox {
 			frame.src = "about:blank";
 			frame.remove();
 		}
-		this.frameDiv.insertAdjacentHTML('beforeend', '<iframe src="about:blank" width="100%" height="100%" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" allowfullscreen="" frameborder="0"></iframe>')
+		this.frameDiv.insertAdjacentHTML('beforeend', '<iframe src="about:blank" width="100%" height="100%" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-top-navigation allow-top-navigation-by-user-activation" allowfullscreen="" frameborder="0"></iframe>')
 		frame = this.frameDiv.querySelector("iframe");
 		if (!full)
 			code = renderDocument(code, 'examples.css', '../sitna.js');
@@ -57,9 +57,8 @@ class Sandbox {
 		frame.contentDocument.open();
 		frame.contentDocument.write(code)
 		frame.contentDocument.close();
-		
+		frame.contentDocument.querySelectorAll(".instructions a").forEach(a => a.target = "_parent");
 	}
-
 }
 
 document.addEventListener("DOMContentLoaded", function () {

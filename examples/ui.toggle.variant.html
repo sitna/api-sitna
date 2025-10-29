@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de la propiedad variant de un conmutador (SITNA.ui.Toggle)</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        table {
+            margin: 1em;
+            border: 2px solid lightgrey;
+            border-collapse: collapse;
+        }
+
+        tr:first-of-type {
+            border-bottom: 1px solid lightgrey;
+        }
+
+        tr:first-of-type td {
+            padding: 0.2em;
+        }
+
+        td {
+            padding: 1em;
+            text-align: center;
+        }
+
+        sitna-toggle {
+            --sitna-icon-font-family: sitna;
+        }
+    </style>
+</head>
+<body>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div class="instructions">
+        <p>Pulsa en el conmutador de la primera fila para cambiar La variante visual del interruptor de la segunda fila.</p>
+        <table>
+            <tr>
+                <td><sitna-toggle id="variant-setter" variant="switch">Casilla de verificación/Interruptor</sitna-toggle></td>
+            </tr>
+            <tr class="target-toggle-container">
+                <td colspan="4"><sitna-toggle id="target-toggle" checked-icon-text="&#xe910;" unchecked-icon-text="&#xe911;">Soy una casilla de verificación</sitna-toggle></td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        const variantSetter = document.getElementById("variant-setter");
+        const targetToggle = document.getElementById("target-toggle");
+
+        const onToggleChange = function (e) {
+            targetToggle.textContent = variantSetter.checked ?
+                "Soy un interruptor " + (targetToggle.checked ? "encendido" : "apagado") :
+                "Soy una casilla " + (targetToggle.checked ? "marcada" : "desmarcada");
+        };
+        onToggleChange();
+
+        variantSetter.addEventListener("change", function (e) {
+            targetToggle.variant = this.checked ? SITNA.ui.Toggle.variant.SWITCH : SITNA.ui.Toggle.variant.CHECKBOX;
+            onToggleChange();
+        });
+
+        targetToggle.addEventListener("change", onToggleChange);
+    </script>
+</body>
+</html>

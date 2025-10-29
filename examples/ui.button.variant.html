@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso de la propiedad variant de un botón (SITNA.ui.Button)</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        table {
+            margin: 1em;
+            border: 2px solid lightgrey;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 0.2em;
+            text-align: center;
+        }
+
+        sitna-button {
+            --sitna-icon-font-family: sitna;
+        }
+    </style>
+</head>
+<body>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div class="instructions">
+        <p>Pulsa en los botones de la primera fila para cambiar La variante visual del botón de la segunda fila.</p>
+        <table>
+            <tr>
+                <td><sitna-button id="default-variant">Por defecto</sitna-button></td>
+                <td><sitna-button id="textless-variant">Sin texto</sitna-button></td>
+                <td><sitna-button id="link-variant">Enlace</sitna-button></td>
+                <td><sitna-button id="minimal-variant">Mínimo</sitna-button></td>
+            </tr>
+            <tr class="target-button-container">
+                <td colspan="4"><sitna-button id="target-button" icon-text="&#xe932;">Botón</sitna-button></td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        const targetButton = document.getElementById("target-button");
+        document.getElementById("default-variant").addEventListener("click", () => {
+            targetButton.variant = SITNA.ui.Button.variant.DEFAULT;
+        });
+        document.getElementById("textless-variant").addEventListener("click", () => {
+            targetButton.variant = SITNA.ui.Button.variant.TEXTLESS;
+        });
+        document.getElementById("link-variant").addEventListener("click", () => {
+            targetButton.variant = SITNA.ui.Button.variant.LINK;
+        });
+        document.getElementById("minimal-variant").addEventListener("click", () => {
+            targetButton.variant = SITNA.ui.Button.variant.MINIMAL;
+        });
+    </script>
+</body>
+</html>

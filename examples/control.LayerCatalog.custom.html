@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de creación de un control de usuario a partir de un control existente</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        sitna-button.tc-ctl-lcat-node-open {
+            margin-left: -1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de creación de un control de usuario personalizado a partir del control LayerCatalog.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="map-container"></div>
+    <script>
+        // Creamos una clase que herede de la clase del control LayerCatalog
+        class CustomLayerCatalog extends SITNA.control.LayerCatalog {
+
+            // Reescribimos métodos
+
+            async loadTemplates() {
+                // Llamamos primero al método de la clase antecesora
+                await super.loadTemplates();
+
+                // Sobreescribimos una de las plantillas parciales del control original
+                this.template["tc-ctl-lcat-node"] = "./data/tc-ctl-lcat-node.custom.hbs";
+            }
+
+            addUIEventListeners() {
+                // Llamamos primero al método de la clase antecesora
+                super.addUIEventListeners();
+
+                // Añadimos gestores de eventos para los elementos que hemos introducido en la nueva plantilla
+                this.div.querySelectorAll("sitna-button.tc-ctl-lcat-node-open").forEach((btn) => {
+                    btn.addEventListener("click", (e) => {
+                        open("https://idena.navarra.es/navegar/?id=" + e.target.dataset.layerName);
+                    });
+                });
+            }
+        }
+
+        // Creamos un mapa con un maquetado que tiene elementos contenedores vacíos disponibles
+        var map = new SITNA.Map("map-container", { layout: "layout/ctl-container" });
+        map.loaded(() => {
+            // Colocamos el control que hemos creado en el elemento con identificador "slot1"
+            // y con la configuración del control LayerCatalog
+            map.addControl(new CustomLayerCatalog("slot1", {
+                layers: [
+                    {
+                        id: "idena",
+                        title: "IDENA",
+                        hideTitle: true,
+                        type: SITNA.Consts.layerType.WMS,
+                        url: "https://idena.navarra.es/ogc/wms",
+                        hideTree: false
+                    }
+                ]
+            }));
+        });
+    </script>
+
+</body>
+</html>
