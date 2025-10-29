@@ -2,9 +2,8 @@ import TC from '../../TC.js';
 import Util from '../Util.js'
 /**
   * Opciones de servicio de obtención de elevaciones de puntos.
-  * @typedef ElevationServiceOptions
-  * @memberof SITNA
-  * @see SITNA.ElevationOptions
+  * @interface ElevationServiceOptions
+  * @see ElevationOptions
   * @property {string[]} [allowedGeometryTypes] - Si se establece, indica para qué geometrías se van a hacer consultas 
   * de elevación al servicio. Esto es conveniente por ejemplo si el servicio solo permite obtener elevaciones de un punto simple,
   * invalidándolo para la consulta si la geometría es un polígono o una línea. Los elementos del array tienen que ser cadenas 

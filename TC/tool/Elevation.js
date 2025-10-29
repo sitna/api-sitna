@@ -12,7 +12,7 @@ import Geometry from '../Geometry.js';
  * @property {string} IDENA - Identificador del servicio de elevación de IDENA.
  * @property {string} IGN_ES - Identificador del servicio de elevación del Instituto Geográfico Nacional de España.
  * @property {string} IGN_FR - Identificador del servicio de elevación del Instituto Geográfico Nacional Francés.
- * @see SITNA.ElevationOptions
+ * @see ElevationOptions
  */
 Consts.elevationService = {
     GOOGLE: 'elevationServiceGoogle',
@@ -23,9 +23,8 @@ Consts.elevationService = {
 
 /**
  * Opciones de la herramienta de elevación.
- * @typedef ElevationOptions
- * @memberof SITNA
- * @see SITNA.control.DrawMeasureModifyOptions
+ * @interface ElevationOptions
+ * @see DrawMeasureModifyOptions
  * @property {number} [resolution] - Distancia máxima en metros entre puntos con elevaciones. 
  * Si la distancia entre vértices de la geometría de la que queremos obtener los valores de elevación es mayor 
  * que este valor, se añaden puntos intermedios hasta que esa distancia sea menor o igual a este valor.
@@ -37,7 +36,7 @@ Consts.elevationService = {
  * Si la geometría tiene menos puntos que este valor, se insertarán puntos de manera repartida a lo largo de la geometría.
  * 
  * Si esta propiedad entra en conflicto con la propiedad `resolution`, prevalece `resolution`.
- * @property {string[]|SITNA.ElevationServiceOptions[]} [services=[SITNA.Consts.elevationService.IDENA]{@link SITNA.Consts}, [SITNA.Consts.elevationService.IGN_FR]{@link SITNA.Consts}, [SITNA.Consts.elevationService.IGN_ES]{@link SITNA.Consts}] - Lista priorizada con identificadores de servicio de elevación
+ * @property {string[]|ElevationServiceOptions[]} [services=[SITNA.Consts.elevationService.IDENA]{@link SITNA.Consts}, [SITNA.Consts.elevationService.IGN_FR]{@link SITNA.Consts}, [SITNA.Consts.elevationService.IGN_ES]{@link SITNA.Consts}] - Lista priorizada con identificadores de servicio de elevación
  * (miembros de [SITNA.Consts.elevationService]{@link SITNA.Consts}) u objetos de configuración de servicio a los que se consulta para obtener el dato de elevación.
  * Si varios servicios devuelven un valor válido para un punto, se toma el valor del servicio que esté representado antes en esta lista.
  */
