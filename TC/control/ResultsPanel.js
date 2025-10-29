@@ -17,6 +17,7 @@ import itemToolContainer from './itemToolContainer.js';
 import Button from '../../SITNA/ui/Button.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
 
 TC.control = TC.control || {};
 
@@ -345,7 +346,7 @@ class ResultsPanel extends InfoDisplay {
         }
 
         if (!Util.detectMobile()) {
-            const doResizable = !(Object.prototype.hasOwnProperty.call(self.options, "resize") && !self.options.resize);
+            const doResizable = !(Object.hasOwn(self.options, "resize") && !self.options.resize);
             switch (true) {
                 case self.options.content === "chart" && doResizable: // si es un perfil de elevación
                 case self.options.resize: // si está configurado a true
@@ -602,6 +603,16 @@ class ResultsPanel extends InfoDisplay {
         return self;
     }
 
+    setCurrentFeature(feature) {
+        if (this.currentFeature) {
+            this.currentFeature.toggleSelectedStyle(false);
+        }
+        this.currentFeature = feature;
+        if (feature) {
+            feature.toggleSelectedStyle(true);
+        }
+    }
+
     openChart(data) {
         const self = this;
 
@@ -767,6 +778,7 @@ class ResultsPanel extends InfoDisplay {
                 chartOptions._onrendered.call(this);
             }
             self.map.trigger(Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this });
+            self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
         };
 
         if (!c3._isOverriden) {
@@ -940,6 +952,7 @@ class ResultsPanel extends InfoDisplay {
                         self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
 
                         self.map.trigger(Consts.event.DRAWTABLE, { control: self });
+                        self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
                         if (scrollPosition) {
                             table.scrollLeft = scrollPosition;
                         }
@@ -972,6 +985,7 @@ class ResultsPanel extends InfoDisplay {
                 self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
                 //self.#closeOpenedTableResultsPanel();
                 this.map.trigger(Consts.event.DRAWTABLE, { control: self });
+                self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
             }
         };
         //checkIsRendered.apply(self);
@@ -1537,7 +1551,7 @@ class ResultsPanel extends InfoDisplay {
         self.tableData.results.forEach(function (value) {
             var row = [];
             for (var k in value) {
-                if (Object.prototype.hasOwnProperty.call(value, k) && k !== "Id" && k !== "Geom") { //Las columnas ID y Geom no aparece en la exportaci\u00f3n
+                if (Object.hasOwn(value, k) && k !== "Id" && k !== "Geom") { //Las columnas ID y Geom no aparece en la exportaci\u00f3n
                     row.push(value[k]);
                 }
             }
