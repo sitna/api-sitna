@@ -22,7 +22,7 @@ export interface VectorOptions extends LayerOptions {
     outputFormat?: string;
     properties?: string | string[];
     stealth?: boolean;
-    styles?: StyleOptions;
+    styles?: VectorStyleOptions;
     thumbnail?: string;
     title?: string;
     type?: string;
@@ -46,7 +46,7 @@ export interface HeatmapStyleOptions {
     radius?: number;
 }
 
-export interface StyleOptions {
+export interface VectorStyleOptions {
     point?: object;
     line?: object;
     polygon?: object;
