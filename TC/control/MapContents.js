@@ -237,10 +237,10 @@ class MapContents extends Control {
                     img.src = i.src;
                 }).catch(function (err) {
                     if (err.status && (err.status === 404 || err.status === 401))
-                        TC.error(Util.getLocaleString(layer.map.getLocale(), 'simbologyImgNotFound',
+                        TC.error(Util.getLocaleString(layer.map.getLocale(), 'symbologyImgNotFound',
                             { url: imgSrc }));
                     else if (proxificationTool._image.ErrorType.UNEXPECTEDCONTENTTYPE === err.message) {
-                        TC.error(Util.getLocaleString(layer.map.getLocale(), 'simbologyNotCompatible'));
+                        TC.error(Util.getLocaleString(layer.map.getLocale(), 'symbologyNotCompatible'));
                         //URI:Añado este atributo data para que no se intente obtener la leyenda cade vez que se cambia el zoom del mapa
                         img.src = Consts.BLANK_IMAGE
                     }
