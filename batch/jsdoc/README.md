@@ -29,7 +29,7 @@ estas versiones funcionales para ver el ejemplo completo.
 La dirección [https://sitna.navarra.es/api/](https://sitna.navarra.es/api/) siempre tendrá la última versión disponible 
 de la API SITNA. Si se desea utilizar una versión anterior, esta deberá descargarse de [GitHub](https://github.com/sitna/api-sitna/releases). 
 
-La [lista de versiones de la API SITNA]{@tutorial 4-changes} de esta documentación contiene enlaces a todas las 
+La [lista de versiones de la API SITNA]{@tutorial 6-changes} de esta documentación contiene enlaces a todas las 
 versiones disponibles. En la página de la versión **x.y.z**, descargar el archivo `api-sitna-vx.y.z-build.zip` 
 correspondiente y descomprimir el contenido en una carpeta accesible para la aplicación que estemos desarrollando.
 
