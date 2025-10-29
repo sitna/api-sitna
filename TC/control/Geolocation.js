@@ -1,9 +1,8 @@
 ﻿/**
   * Opciones del control GPS y rutas.
-  * @typedef GeolocationOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * @interface GeolocationOptions
+  * @extends ControlOptions
+  * @see MapControlsOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [displayElevation=true] - Si se establece a `true`, se completará el gráfico del perfil de elevación de la ruta (si esta cuenta con datos de elevación) añadiendo el perfil de elevación resultante del MDT (Modelo Digital de Terreno)
   
@@ -46,12 +45,12 @@ Consts.event.TOOLSOPEN = Consts.event.TOOLSOPEN || 'toolsopen.tc';
 Consts.event.DIALOG = Consts.event.DIALOG || 'dialog.tc';
 Consts.classes.UNPLUGGED = "tc-unplugged";
 
-const isPolyline = feat => feat instanceof Polyline;
-const isMultiPolyline = feat => feat instanceof MultiPolyline;
-const isAnyLine = feat => isPolyline(feat) || isMultiPolyline(feat);
+const isPolyline = (feat) => feat instanceof Polyline;
+const isMultiPolyline = (feat) => feat instanceof MultiPolyline;
+const isAnyLine = (feat) => isPolyline(feat) || isMultiPolyline(feat);
 const isPoint = (feat) => feat instanceof Point;
-const getFirstPoint = feat => isMultiPolyline(feat) ? feat.geometry[0][0] : feat.geometry[0];
-const getLastPoint = feat => isMultiPolyline(feat) ? feat.geometry[0][feat.geometry[0].length - 1] : feat.geometry[feat.geometry.length - 1];
+const getFirstPoint = (feat) => (isMultiPolyline(feat) ? feat.geometry[0] : feat.geometry)[0];
+const getLastPoint = (feat) => (isMultiPolyline(feat) ? feat.geometry[0] : feat.geometry).at(-1);
 
 let lastMapCenter = null;
 let followingZoom = false;
@@ -223,7 +222,7 @@ class Geolocation extends Control {
             TRACKSNAPPING: 'tracksnapping.tc.geolocation',
             DRAWTRACK: 'drawtrack.tc.geolocation',
             CLEARTRACK: 'cleartrack.tc.geolocation',
-            IMPORTEDTRACK: 'importedtrack.tc.geolocation'
+            TRACKIMPORT: 'trackimport.tc.geolocation'
         },
         supportedFileExtensions: [
             '.gpx',
@@ -254,8 +253,6 @@ class Geolocation extends Control {
     currentTrackUid;
     #dialogDiv;
     #shareDialogDiv;
-    #interpolationPanel;
-    #elevationsCheckbox;
     #trackVisibility = true;
     #isFollowing = true;
     #windowEventsAbortController;
@@ -419,11 +416,11 @@ class Geolocation extends Control {
                                 if (li) {
                                     li.removeWait(self.map._fileDropLoadingIndicator);
                                 }
-                                self.off(self.const.event.IMPORTEDTRACK, importedGPX);
+                                self.off(self.const.event.TRACKIMPORT, importedGPX);
                             }
                         }, 0);
                     };
-                    self.on(self.const.event.IMPORTEDTRACK, importedGPX);
+                    self.on(self.const.event.TRACKIMPORT, importedGPX);
                     // Creamos la lista de entidades a importar. 
                     const lineFeatures = e.features.filter(isAnyLine);
                     const trackFeatures = lineFeatures.map((elm) => [elm]);
@@ -431,6 +428,10 @@ class Geolocation extends Control {
                     if (trackFeatures.length === 1) {
                         // Si solo hay un track, añadimos todos los puntos a ese track
                         trackFeatures[0] = trackFeatures[0].concat(pointFeatures);
+                    }
+                    else if (trackFeatures.length === 0) {
+                        // Si no hay track, creamos uno con todos los puntos
+                        trackFeatures.push(pointFeatures);
                     }
                     else {
                         // Si hay más de un track, añadimos los puntos al track más cercano
@@ -1001,11 +1002,15 @@ class Geolocation extends Control {
                     self.trackLayer.setFeatureTypeMetadata(options.metadata);
                     await Promise.all(addPromises);
                     const trackNames = await self.wrap.processImportedFeatures({
-                        fileName: options.fileName,
+                        fileName,
                         features: options.features,
                         notReproject: options.notReproject,
                         fileHandle: options.fileHandle
                     });
+                    if (trackNames.length === 0 && options.features.every((f) => f instanceof Point)) {
+                        // Si solo hay puntos y no se ha podido deducir ningún nombre, ponemos el del archivo
+                        trackNames.push(fileName);
+                    }
                     if (trackNames.length) {
                         var sameName = function (names, name) {
                             var indices = [];
@@ -1053,10 +1058,10 @@ class Geolocation extends Control {
                         self.trackLayer.clearFeatures();
 
                         const throwEvent = options.trackCount === undefined || options.trackCount === 1 || options.trackIndex === options.trackCount - 1;
-                        if (throwEvent) self.trigger(self.const.event.IMPORTEDTRACK, { selectedTrackUid, uid });
+                        if (throwEvent) self.trigger(self.const.event.TRACKIMPORT, { selectedTrackUid, uid });
                     }
                     else {
-                       TC.alert(self.getLocaleString("geo.trk.upload.error4"));
+                        TC.alert(self.getLocaleString("geo.trk.upload.error4"));
                     }
 
                     if (self.trackLayer) { // Si tenemos capa es que todo ha ido bien y gestionamos el despliegue del control
@@ -1283,7 +1288,7 @@ class Geolocation extends Control {
             }
         };
 
-        self.on(self.const.event.IMPORTEDTRACK, async function (e) {
+        self.on(self.const.event.TRACKIMPORT, async function (e) {
             if (!self.isDisabled) {
                 let uidToDraw = e.uid;
                 if (self.currentTrackUid) {
@@ -1292,6 +1297,7 @@ class Geolocation extends Control {
                     const importedTrack = availableTracks.find((track) => track.uid == e.uid);
                     if (await selectedTrack?.fileHandle?.isSameEntry(importedTrack?.fileHandle)) uidToDraw = self.currentTrackUid;
                 }
+                await self.#bindTracks();
                 const listElement = self.track.trackList.querySelector('li[data-uid="' + uidToDraw + '"]');
                 self.#drawTrack(listElement.querySelector(self.const.selector.ACTIVATOR)).then(function () {
                     if (self.loadingState) {
@@ -1559,6 +1565,11 @@ class Geolocation extends Control {
         if (!self.track.trackToolPanelOpened.checked) {
             self.map.trigger(Consts.event.TOOLSCLOSE);
         }
+    }
+
+    #updateSimToolsState(li) {
+        const disabledControls = !this.trackLayer.features.some(isAnyLine);
+        li.querySelectorAll(`.${this.CLASS}-tools-sim sitna-button`).forEach((btn) => btn.disabled = disabledControls);
     }
 
     setFollowing(value) {
@@ -2212,6 +2223,7 @@ class Geolocation extends Control {
         this.#updateGeotrackingToolsState();
         this.setSelectedTrack(li);
         await this.drawTrackData(li);
+        this.#updateSimToolsState(li);
         this.map.addControlState(this);
         await this.displayTrackProfile(li);
         this.activate();
@@ -2381,7 +2393,8 @@ class Geolocation extends Control {
                         };
                         elevCtl.displayElevationProfile(line, elevOptions);
                     } else {
-                        throw Error('No features have compatible geometry layout');
+                        self.map.toast(self.getLocaleString('geo.trk.upload.onlyPoints.warn'), { type: TC.Consts.msgType.WARNING });
+                        //throw Error('No features have compatible geometry layout');
                     }
                 } else {
                     throw Error('No features available');
