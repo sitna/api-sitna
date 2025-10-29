@@ -3,6 +3,13 @@ import Consts from '../Consts.js';
 import Util from '../Util.js';
 import MapContents from './MapContents.js';
 import './LayerLegend.js';
+import Vector from '../../SITNA/layer/Vector.js';
+import Point from '../../SITNA/feature/Point.js';
+import MultiPoint from '../../SITNA/feature/MultiPoint.js';
+import Polyline from '../../SITNA/feature/Polyline.js';
+import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import Polygon from '../../SITNA/feature/Polygon.js';
+import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
@@ -31,6 +38,10 @@ class Legend extends MapContents {
             } else if (view === Consts.view.DEFAULT) {
                 map.off(Consts.event.LAYERADD, onLayerAdd);
             }
+        });
+
+        map.on(Consts.event.ZOOM, function (_e) {
+            self.updateExtent();
         });
 
         self.model = new LegendModel();
@@ -77,14 +88,15 @@ class Legend extends MapContents {
         const inScale = self.CLASS + '-node-inscale';
         const outOfScale = self.CLASS + '-node-outofscale';
 
-        self.getLayerUIElements().forEach(function (li) {
+        for (const li of self.getLayerUIElements()) {
             const layer = self.map.getLayer(li.dataset.layerId);
 
             if (layer && !layer.customLegend) {
                 let layersInScale = false;
                 const lis = li.querySelectorAll('li.' + self.CLASS + '-leaf');
                 for (const l of lis) {
-                    if (l.classList.contains(self.CLASS + '-node-visible') && l.querySelectorAll("img").length) {
+                    if (l.classList.contains(self.CLASS + '-node-visible') &&
+                        l.querySelectorAll('.' + self.CLASS + '-watch').length) {
                         const uid = l.dataset.layerUid;
                         if (layer.isVisibleByScale(uid)) {
                             layersInScale = true;
@@ -109,22 +121,86 @@ class Legend extends MapContents {
                 li.classList.toggle(inScale, layersInScale);
                 li.classList.toggle(outOfScale, !layersInScale);
             }
-        });
+        }
         return self;
+    }
+
+    updateExtent() {
+        const visible = this.CLASS + '-node-visible';
+        const notVisible = this.CLASS + '-node-notvisible';
+
+        for (const li of this.getLayerUIElements()) {
+            const layer = this.map.getLayer(li.dataset.layerId);
+            if (layer instanceof Vector) {
+                const visibleFeatures = layer.getFeaturesInCurrentExtent();
+                const watches = Array.from(li.querySelectorAll('.' + this.CLASS + '-watch'));
+
+                for (const feature of visibleFeatures) {
+
+                    switch (true) {
+                        case feature instanceof Point:
+                        case feature instanceof MultiPoint: {
+                            const watch = watches.find((w) => w.dataset.geometryType === Consts.geom.POINT);
+                            if (watch) {
+                                watch.classList.remove(notVisible);
+                                watch.classList.add(visible);
+                                watches.splice(watches.indexOf(watch), 1);
+                            }
+                            break;
+                        }
+                        case feature instanceof Polyline:
+                        case feature instanceof MultiPolyline: {
+                            const watch = watches.find((w) => w.dataset.geometryType === Consts.geom.POLYLINE);
+                            if (watch) {
+                                watch.classList.remove(notVisible);
+                                watch.classList.add(visible);
+                                watches.splice(watches.indexOf(watch), 1);
+                            }
+                            break;
+                        }
+                        case feature instanceof Polygon:
+                        case feature instanceof MultiPolygon: {
+                            const watch = watches.find((w) => w.dataset.geometryType === Consts.geom.POLYGON);
+                            if (watch) {
+                                watch.classList.remove(notVisible);
+                                watch.classList.add(visible);
+                                watches.splice(watches.indexOf(watch), 1);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+
+                // Ocultamos los watches de las geometrías que no hemos encontrado en la extensión
+                for (const watch of watches) {
+                    if (watch.dataset.geometryType || visibleFeatures.length === 0) {
+                        watch.classList.remove(visible);
+                        watch.classList.add(notVisible);
+                    }
+                    else {
+                        watch.classList.remove(notVisible);
+                        watch.classList.add(visible);
+                    }
+                }
+            }
+        }
+        return this;
     }
 
     update() {
         const self = this;
+        const visible = self.CLASS + '-node-visible';
+        const notVisible = self.CLASS + '-node-notvisible';
+        const hasVisible = self.CLASS + '-node-hasvisible';
 
-        self.getLayerUIElements().forEach(function (li) {
+        for (const li of self.getLayerUIElements()) {
             const layer = self.map.getLayer(li.dataset.layerId);
             if (layer && (!layer.customLegend || !layer.getVisibility())) {
                 const tree = layer.getTree(false, true);
 
-                li.querySelectorAll('li').forEach(function (l) {
-                    const visible = self.CLASS + '-node-visible';
-                    const notVisible = self.CLASS + '-node-notvisible';
-                    const hasVisible = self.CLASS + '-node-hasvisible';
+                for (const l of li.querySelectorAll('li')) {
 
                     switch (layer.getNodeVisibility(l.dataset.layerUid, tree)) {
                         case Consts.visibility.VISIBLE:
@@ -150,12 +226,14 @@ class Legend extends MapContents {
                             l.classList.add(visible);
                             break;
                     }
-                });
+                }
 
                 self.updateLayerVisibility(layer);
             }
-        });
-        self.updateScale();
+        }
+        self
+            .updateScale()
+            .updateExtent();
 
         return self;
     }
@@ -263,11 +341,11 @@ class Legend extends MapContents {
 
     updateLayerVisibility(layer) {
         const self = this;
-        self.getLayerUIElements().forEach(function (li) {
+        for (const li of self.getLayerUIElements()) {
             if (li.dataset.layerId === layer.id) {
                 li.classList.toggle(self.CLASS + '-node-notvisible', !layer.getVisibility());
             }
-        });
+        }
         return self;
     }
 
@@ -277,7 +355,7 @@ class Legend extends MapContents {
     //}
     getLayerUIElements() {
         const self = this;
-        return self.div.querySelector('ul.' + self.CLASS + '-branch').querySelectorAll('sitna-layer-legend, li.' + self.CLASS + '-node');
+        return self.div.querySelector('ul.' + self.CLASS + '-branch')?.querySelectorAll('sitna-layer-legend, li.' + self.CLASS + '-node') ?? [];
     }
 
     isVisible() {
