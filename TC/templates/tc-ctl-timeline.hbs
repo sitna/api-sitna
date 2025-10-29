@@ -1,7 +1,7 @@
 
 <div class="controlsRow noBreak">
-    <sitna-button variant="icon" class="tc-btn-first" tc-vc-click="first" tc-vc-disabled="playMode | atTheBegin" title="[[time.first]]">[[time.first]]</sitna-button>
-    <sitna-button variant="icon" class="tc-btn-backward" title="[[time.backward]]" tc-vc-click="previous" tc-vc-disabled="playMode | atTheBegin">[[time.backward]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-first" tc-vc-click="first" tc-vc-disabled="playMode | atTheBegin" title="[[time.first]]">[[time.first]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-backward" title="[[time.backward]]" tc-vc-click="previous" tc-vc-disabled="playMode | atTheBegin">[[time.backward]]</sitna-button>
     <div{{#if interval}} class="tc-ctl-timeline-datetime" {{/if}}>
         {{#if dateTimeMode}}
         {{#if interval}}<label>[[time.from]]</label>{{/if}}
@@ -17,16 +17,16 @@
         {{/if}}
         {{/if}}
 </div>
-    <sitna-button variant="icon" class="tc-btn-forward" title="[[time.forward]]" tc-vc-click="next" tc-vc-disabled="playMode | atTheEnd">[[time.forward]]</sitna-button>
-    <sitna-button variant="icon" class="tc-btn-last" tc-vc-click="last" title="[[time.last]]" tc-vc-disabled="playMode  | atTheEnd">[[time.last]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-forward" title="[[time.forward]]" tc-vc-click="next" tc-vc-disabled="playMode | atTheEnd">[[time.forward]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-last" tc-vc-click="last" title="[[time.last]]" tc-vc-disabled="playMode  | atTheEnd">[[time.last]]</sitna-button>
 </div>
 <div class="controlsRow noBreak">
-    <sitna-button variant="icon" class="tc-btn-play" title="[[time.start]]" tc-vc-click="start" tc-vc-disabled="playMode">[[time.start]]</sitna-button>
-    <sitna-button variant="icon" class="tc-btn-speedDown" title="[[time.speedDown]]" tc-vc-click="speedChange" tc-vc-disabled="minSpeedValue">[[time.speedDown]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-play" title="[[time.start]]" tc-vc-click="start" tc-vc-disabled="playMode">[[time.start]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-speedDown" title="[[time.speedDown]]" tc-vc-click="speedChange" tc-vc-disabled="minSpeedValue">[[time.speedDown]]</sitna-button>
     <!--<input type="number" id="speed" min="1" max="8" value="[[speed]]" title="[[time.animationSpeed]]" tc-vc-change="speedChange">-->
     <span title="[[time.animationSpeed]]">[[speed]]</span>
-    <sitna-button variant="icon" class="tc-btn-speedUp" title="[[time.speedUp]]" tc-vc-click="speedChange" tc-vc-disabled="maxSpeedValue">[[time.speedUp]]</sitna-button>
-    <sitna-button variant="icon" class="tc-btn-pause" title="[[time.pause]]" tc-vc-click="stop" disabled tc-vc-disabled="!playMode">[[time.pause]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-speedUp" title="[[time.speedUp]]" tc-vc-click="speedChange" tc-vc-disabled="maxSpeedValue">[[time.speedUp]]</sitna-button>
+    <sitna-button variant="textless" class="tc-btn-pause" title="[[time.pause]]" tc-vc-click="stop" disabled tc-vc-disabled="!playMode">[[time.pause]]</sitna-button>
 </div>
 <div>
     <datalist id="sliderValues">
