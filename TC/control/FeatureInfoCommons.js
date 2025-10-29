@@ -386,8 +386,8 @@ class FeatureInfoCommons extends Click {
                 share: self.options.share
             });
             self.popup.caller = self;
-            self.map.on(Consts.event.POPUP, function (e) {
-                self.onShowPopup(e);
+            self.map.addEventListener(Consts.event.POPUP, function (e) {
+                self.onShowPopup(e.detail);
             });
         }
         return self.popup;
@@ -463,6 +463,8 @@ class FeatureInfoCommons extends Click {
 
     displayResults() {
         const self = this;
+        if (!self.filterFeature) return;
+
         const clone = self.div.cloneNode(true);
         clone.classList.remove(Consts.classes.HIDDEN);
         self.filterFeature.data = clone.outerHTML;
@@ -1407,7 +1409,7 @@ class FeatureInfoCommons extends Click {
     async updateModel() {
         const self = this;
         self.model.crs = self.getLocaleString("crs");
-        self.model.lat = self.getLocaleString("lat");;
+        self.model.lat = self.getLocaleString("lat");
         self.model.lon = self.getLocaleString("lon");
         self.model.feature = self.getLocaleString("feature");
         self.model.heightOverTerrain = self.getLocaleString("heightOverTerrain");
