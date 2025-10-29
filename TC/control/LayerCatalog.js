@@ -1,24 +1,23 @@
 ﻿
 /**
-  * Opciones de control de catálogo de capas disponibles. 
+  * Opciones de control de catálogo de capas disponibles.
   * 
   * Con este control se dispone de las siguientes funcionalidades:
   *
-  *    - Consultar las capas disponibles en uno o varios WMS.
-  *    - Buscar capas mediante texto libre. Se busca el texto en los títulos y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
-  *    - Añadir capas al mapa como capas de trabajo.
-  * @typedef LayerCatalogOptions
-  * @extends SITNA.control.ControlOptions
-  * @memberof SITNA.control
-  * @see SITNA.control.MapControlOptions
+  * - Consultar las capas disponibles en uno o varios WMS.
+  * - Buscar capas mediante texto libre. Se busca el texto en los títulos y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
+  * - Añadir capas al mapa como capas de trabajo.
+  * @interface LayerCatalogOptions
+  * @extends ControlOptions
   * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
   * @property {boolean} [enableSearch] - Propiedad que establece si se puede buscar capas por texto. La búsqueda del texto se realiza en los títulos 
   * y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
-  * @property {SITNA.layer.LayerOptions[]} layers - Lista de objetos de definición de las con capas de servicios WMS que queremos añadir al catálogo.
+  * @property {LayerOptions[]} layers - Lista de objetos de definición de las con capas de servicios WMS que queremos añadir al catálogo.
   * 
   * En estos objetos, si se asigna un valor a la propiedad `layerNames`, solo las capas especificadas y sus hijas estarán disponibles para ser añadidas al mapa. 
   * Sin embargo, si esta propiedad se deja sin asignar, todas las capas publicadas en el servicio WMS estarán disponibles para ser añadidas.
-  * @example <caption>[Ver en vivo](../examples/cfg.MapControlOptions.layerCatalog_workLayerManager.html)</caption> {@lang html}
+  * @see SITNA.control.LayerCatalog
+  * @example <caption>[Ver en vivo](../examples/cfg.MapControlsOptions.layerCatalog_workLayerManager.html)</caption> {@lang html}
   * <div id="mapa"></div>
   * <script>
   *     // Establecemos un layout simplificado apto para hacer demostraciones de controles.
@@ -74,7 +73,7 @@ TC.UI.autocomplete = autocomplete;
 const SEARCH_MIN_LENGTH = 3;
 const ctlCssClass = 'tc-ctl-lcat';
 
-var clickToAddText,expandText,collapseText;
+var clickToAddText, expandText, collapseText;
 
 if (!Consts.classes.SELECTABLE) {
     Consts.classes.SELECTABLE = 'tc-selectable';
@@ -151,7 +150,7 @@ class LayerCatalogResultModel {
         this.layerAlreadyAdded = "";
         this.clickToAddToMap = "";
         this.noMatches = "";
-        this.infoFromThisLayer = "";   
+        this.infoFromThisLayer = "";
         this["time.dimension"] = "";
     }
 }
@@ -166,6 +165,20 @@ class LayerCatalogInfoModel {
     }
 }
 
+/*
+ * Clase que implementa el control de catálogo de capas disponibles. 
+ * 
+ * Con este control se dispone de las siguientes funcionalidades:
+ *
+ *    - Consultar las capas disponibles en uno o varios WMS.
+ *    - Buscar capas mediante texto libre. Se busca el texto en los títulos y los resúmenes descriptivos de cada capa, que se publican en el [documento de capacidades](https://github.com/7o9/implementer-friendly-standards/blob/master/introduction.rst#getcapabilities) del servicio.
+ *    - Añadir capas al mapa como capas de trabajo.
+ * @class LayerCatalog
+ * @memberof SITNA.control
+ * @implements {MapControl}
+ * @param {HTMLElement|string} [container] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+ * @param {LayerCatalogOptions} [options] - Opciones de configuración del control de catálogo.
+ */
 class LayerCatalog extends ProjectionSelector {
     layers = [];
     searchInit = false;
@@ -198,41 +211,38 @@ class LayerCatalog extends ProjectionSelector {
     }
 
     async render(callback) {
-        const self = this;
+        this.sourceLayers = [];
+        this.model = new LayerCatalogModel();
+        this.infoModel = new LayerCatalogInfoModel();
 
-        self.sourceLayers = [];
-        self.model = new LayerCatalogModel();
-        self.infoModel = new LayerCatalogInfoModel(); 
-
-        if (self.layers.length === 0) {
-            await self.renderData({ layerTrees: [], enableSearch: false }, callback);
-            self._roots = [];
-            self.controller = new Controller(self.model, new Observer(self.div));
-            self.updateModel();
+        if (this.layers.length === 0) {
+            await this.renderData({ layerTrees: [], enableSearch: false }, callback);
+            this.controller = new Controller(this.model, new Observer(this.div));
+            this.updateModel();
         } else {
-            await self.renderData({ layers: self.layers, enableSearch: self.options.enableSearch });
-            self.controller = new Controller(self.model, new Observer(self.div));
-            self.updateModel();
-
-            self._roots = self.div.querySelectorAll(self.#selectors.LAYER_ROOT);
-            self.#createSearchAutocomplete();
-
-            for (const layer of self.layers) {
-                await self.renderBranch(layer);
-                //title en los botones del arbol expandir contraer
-                self.getLayerRootNode(layer).querySelectorAll(".tc-collapsed > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = expandText);
-                self.getLayerRootNode(layer).querySelectorAll(":not(.tc-collapsed) > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = collapseText);
-                self.controller.add(self.getLayerRootNode(layer));
-            }
-            if (Util.isFunction(callback)) {
-                callback();
-            }
+            await this.renderData({ layers: this.layers, enableSearch: this.options.enableSearch });
+            this.controller = new Controller(this.model, new Observer(this.div));
+            this.updateModel();
         }
-               
-        self.updateModel();        
 
-        self.searchInit = false;
-        
+        for (const layer of this.layers) {
+            await this.renderBranch(layer);
+            //title en los botones del arbol expandir contraer
+            const root = this.getLayerRootNode(layer);
+            root.querySelectorAll(".tc-collapsed > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = expandText);
+            root.querySelectorAll(":not(.tc-collapsed) > button.tc-ctl-lcat-collapse-btn").forEach((button) => button.title = collapseText);
+            this.controller.add(root);
+        }
+
+        this.addUIEventListeners();
+
+        this.updateModel();
+
+        this.searchInit = false;
+
+        if (Util.isFunction(callback)) {
+            callback();
+        }
     }
 
     async register(map) {
@@ -240,11 +250,10 @@ class LayerCatalog extends ProjectionSelector {
 
         await super.register.call(self, map);
 
-        
+
         const load = function (resolve, _reject) {
             if (Array.isArray(self.options.layers)) {
-                for (var i = 0; i < self.options.layers.length; i++) {
-                    var layer = self.options.layers[i];
+                for (let layer of self.options.layers) {
                     if (!layer.type || layer.type === Consts.layerType.WMS) {
                         if (!layer.id) {
                             layer.id = TC.getUID();
@@ -255,9 +264,7 @@ class LayerCatalog extends ProjectionSelector {
                         self.layers.push(layer);
                     }
                 }
-                self.render(function () {
-                    resolve();
-                });
+                self.render(resolve);
             }
             else {
                 resolve();
@@ -415,7 +422,7 @@ class LayerCatalog extends ProjectionSelector {
             })
             .on(Consts.event.PROJECTIONCHANGE, function (_e) {
                 self.update();
-            });            
+            });
 
         // Control de que las capas no tengan mismo id
         const nonRepeatedIds = new Set(self.layers.map(l => l.id));
@@ -426,6 +433,90 @@ class LayerCatalog extends ProjectionSelector {
         self.resultController = [];
 
         return self;
+    }
+
+    addUIEventListeners() {
+        const self = this;
+        self.#createSearchAutocomplete();
+
+        if (!self.searchInit) {
+            //botón de la lupa para alternar entre búsqueda y árbol
+            const viewToggle = self.div.querySelector('h2 sitna-toggle');
+            if (viewToggle) {
+                viewToggle.addEventListener('change', function (e) {
+
+                    const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
+                    const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
+                    const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
+
+                    const searchPaneMustShow = searchPane.classList.contains(Consts.classes.HIDDEN);
+                    searchPane.classList.toggle(Consts.classes.HIDDEN, !searchPaneMustShow);
+                    treePane.classList.toggle(Consts.classes.HIDDEN, searchPaneMustShow);
+                    if (searchPaneMustShow) {
+                        self.textInput.focus();
+                        e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
+                    }
+                    else {
+                        e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
+
+                        //Si hay resaltados en el árbol, mostramos el panel de info
+                        const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li [checked]').length;
+                        if (selectedCount > 0) {
+                            infoPane.classList.remove(Consts.classes.HIDDEN);
+                        }
+                    }
+                }, { passive: true });
+            }
+
+            //evento de expandir nodo de info
+            //self._$div.off("click", ".tc-ctl-lcat-search button");                        
+            self.div.addEventListener("change", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search ." + self.CLASS + "-search-btn-info", function (evt) {
+                evt.stopPropagation();
+                const target = evt.target;
+                if (target.checked) {
+                    const li = target.parentElement;
+                    var parent = li;
+                    do {
+                        parent = parent.parentElement;
+                    }
+                    while (parent && parent.tagName !== 'LI');
+                    self.showLayerInfo(self.layers.length > 1 ? self.layers.filter(l => l.id === parent.dataset.serviceId)[0] : self.layers[0], li.dataset.layerName);
+
+                } else {
+                    self.hideLayerInfo();
+                }
+            }));
+
+            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search ." + self.CLASS + "-search-btn-info", function (evt) {
+                evt.stopPropagation();
+            }));
+
+            //click en un resultado - añadir capa
+            const searchListElementSelector = '.' + self.CLASS + '-search li';
+            self.div.addEventListener('click', TC.EventTarget.listenerBySelector(searchListElementSelector, function (evt) {
+                evt.stopPropagation();
+                var li = evt.target;
+                while (li && !li.matches(searchListElementSelector)) {
+                    li = li.parentElement;
+                }
+                if (li.classList.contains(self.CLASS + '-no-results')) {
+                    return; //si clicko en el li de "no hay resultados" rompo el ciclo de ejecución
+                }
+                if (li.classList.contains(self.CLASS + '-search-group')) {
+                    li.classList.toggle(Consts.classes.COLLAPSED);
+                    return;
+                }
+                self.#onSpanClick(evt, function () {
+                    if (this.layers.length === 1) {
+                        return this.layers[0];
+                    }
+                    return this.getLayer(li.closest(".tc-ctl-lcat-search-group") && li.closest(".tc-ctl-lcat-search-group").dataset.serviceId);
+                });
+
+            }));
+
+            self.searchInit = true;
+        }
     }
 
     #showProjectionChangeDialog(layer) {
@@ -485,8 +576,9 @@ class LayerCatalog extends ProjectionSelector {
 
         self.textInput = self.div.querySelector("." + self.CLASS + "-input");
         self.list = self.div.querySelector("." + self.CLASS + "-search ul");
+
         // Clear results list when x button is pressed in the search input
-        self.textInput.addEventListener('mouseup', function (_e) {
+        self.textInput.addEventListener('mouseup', (_e) => {
             var oldValue = self.textInput.value;
 
             if (oldValue === '') {
@@ -495,7 +587,7 @@ class LayerCatalog extends ProjectionSelector {
 
             // When this event is fired after clicking on the clear button
             // the value is not cleared yet. We have to wait for it.
-            setTimeout(function () {
+            setTimeout(() => {
                 var newValue = self.textInput.value;
 
                 if (newValue === '') {
@@ -516,7 +608,7 @@ class LayerCatalog extends ProjectionSelector {
             source: function (text, callback) {
                 //lista de capas marcadas
                 layerCheckedList = [];
-                self._roots.forEach(function (root) {
+                self.#getRootNodes().forEach(function (root) {
                     root.querySelectorAll("li." + Consts.classes.CHECKED).forEach(function (item) {
                         layerCheckedList.push(item.dataset.layerName);
                     });
@@ -609,98 +701,18 @@ class LayerCatalog extends ProjectionSelector {
                     }
                     self.resultController = [];
                     const model = new LayerCatalogResultModel();
-                    const controller=new Controller(model, new Observer(container));
+                    const controller = new Controller(model, new Observer(container));
                     model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
                     model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
                     model.noMatches = self.getLocaleString("noMatches");
                     model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
                     model["time.dimension"] = self.getLocaleString("time.dimension");
                     self.resultController.push(controller);
-                    
+
                 });
                 return ret;
             }
         });
-
-
-        if (!self.searchInit) {
-            //botón de la lupa para alternar entre búsqueda y árbol
-            const viewToggle = self.div.querySelector('h2 sitna-toggle');
-            if (viewToggle) {
-                viewToggle.addEventListener('change', function (e) {
-
-                    const searchPane = self.div.querySelector('.' + self.CLASS + '-search');
-                    const treePane = self.div.querySelector('.' + self.CLASS + '-tree');
-                    const infoPane = self.div.querySelector('.' + self.CLASS + '-info');
-
-                    const searchPaneMustShow = searchPane.classList.contains(Consts.classes.HIDDEN);
-                    searchPane.classList.toggle(Consts.classes.HIDDEN, !searchPaneMustShow);
-                    treePane.classList.toggle(Consts.classes.HIDDEN, searchPaneMustShow);
-                    if (searchPaneMustShow) {
-                        self.textInput.focus();
-                        e.target.setAttribute('title', self.getLocaleString('viewAvailableLayersTree'));
-                    }
-                    else {
-                        e.target.setAttribute('title', self.getLocaleString('searchLayersByText'));
-
-                        //Si hay resaltados en el árbol, mostramos el panel de info
-                        const selectedCount = self.div.querySelectorAll('.tc-ctl-lcat-tree li [checked]').length;
-                        if (selectedCount > 0) {
-                            infoPane.classList.remove(Consts.classes.HIDDEN);
-                        }
-                    }
-                }, { passive: true });
-            }
-
-            //evento de expandir nodo de info
-            //self._$div.off("click", ".tc-ctl-lcat-search button");                        
-            self.div.addEventListener("change", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search ." + self.CLASS + "-search-btn-info", function (evt) {
-                evt.stopPropagation();
-                const target = evt.target;
-                if (target.checked) {
-                    const li = target.parentElement;
-                    var parent = li;
-                    do {
-                        parent = parent.parentElement;
-                    }
-                    while (parent && parent.tagName !== 'LI');
-                    self.showLayerInfo(self.layers.length > 1 ? self.layers.filter(l => l.id === parent.dataset.serviceId)[0] : self.layers[0], li.dataset.layerName);
-
-                } else {
-                    self.hideLayerInfo();
-                }
-            }));
-
-            self.div.addEventListener("click", TC.EventTarget.listenerBySelector("." + self.CLASS + "-search ." + self.CLASS + "-search-btn-info", function (evt) {
-                evt.stopPropagation();
-            }));
-
-            //click en un resultado - añadir capa
-            const searchListElementSelector = '.' + self.CLASS + '-search li';
-            self.div.addEventListener('click', TC.EventTarget.listenerBySelector(searchListElementSelector, function (evt) {
-                evt.stopPropagation();
-                var li = evt.target;
-                while (li && !li.matches(searchListElementSelector)) {
-                    li = li.parentElement;
-                }
-                if (li.classList.contains(self.CLASS + '-no-results')) {
-                    return; //si clicko en el li de "no hay resultados" rompo el ciclo de ejecución
-                }
-                if (li.classList.contains(self.CLASS + '-search-group')) {
-                    li.classList.toggle(Consts.classes.COLLAPSED);
-                    return;
-                }
-                self.#onSpanClick(evt, function () {
-                    if (this.layers.length === 1) {
-                        return this.layers[0];
-                    }
-                    return this.getLayer(li.closest(".tc-ctl-lcat-search-group") && li.closest(".tc-ctl-lcat-search-group").dataset.serviceId);
-                });
-
-            }));
-
-            self.searchInit = true;
-        }
     }
 
     #refreshResultList() {
@@ -766,8 +778,7 @@ class LayerCatalog extends ProjectionSelector {
         node.querySelectorAll('span').forEach(function (span) {
             span.addEventListener('click', function (e) {
                 self.#onSpanClick(e, function (li) {
-                    for (var i = 0, len = this._roots.length; i < len; i++) {
-                        const root = this._roots[i];
+                    for (const root of this.#getRootNodes()) {
                         if (root.contains(li)) {
                             return this.getLayer(root.dataset.layerId);
                         }
@@ -776,8 +787,6 @@ class LayerCatalog extends ProjectionSelector {
                 });
             });
         });
-
-        self._roots = self.div.querySelectorAll(self.#selectors.LAYER_ROOT);
 
         node.dataset.layerId = layer.id;
 
@@ -891,21 +900,21 @@ class LayerCatalog extends ProjectionSelector {
         }
     }
 
+    #getRootNodes() {
+        return this.div.querySelectorAll(this.#selectors.LAYER_ROOT);
+    }
+
     getLayerRootNode(layer) {
-        const self = this;
-        var result = null;
         if (!layer.isBase) {
-            var url = layer.options.url;
-            if (self._roots) {
-                self._roots.forEach(function (li) {
-                    const lyr = self.getLayer(li.dataset.layerId);
-                    if (lyr && lyr.type === layer.type && lyr.options.url.toLowerCase() === url.toLowerCase()) {
-                        result = li;
-                    }
-                });
+            const url = layer.options.url?.toLowerCase();
+            for (const li of this.#getRootNodes()) {
+                const lyr = this.getLayer(li.dataset.layerId);
+                if (lyr && lyr.type === layer.type && lyr.options.url.toLowerCase() === url) {
+                    return li;
+                }
             }
         }
-        return result;
+        return null;
     }
 
     getLayerNodes(layer) {
@@ -998,8 +1007,9 @@ class LayerCatalog extends ProjectionSelector {
             }
         };
 
-        for (var i = 0, ii = self._roots.length; i < ii; i++) {
-            const root = self._roots[i];
+        const roots = self.#getRootNodes();
+        for (var i = 0, ii = roots.length; i < ii; i++) {
+            const root = roots[i];
             if (root.dataset.layerId === layer.id) {
                 const infoToggles = root.querySelectorAll('.' + self.CLASS + '-btn-info');
                 for (var j = 0, jj = infoToggles.length; j < jj; j++) {
@@ -1187,14 +1197,14 @@ class LayerCatalog extends ProjectionSelector {
 
         this.model["time.dimension"] = self.getLocaleString("time.dimension");
 
-        self.resultController ?.forEach((controller) => {
+        self.resultController?.forEach((controller) => {
             controller.model.clickToAddToMap = self.getLocaleString("clickToAddToMap");
             controller.model.layerAlreadyAdded = self.getLocaleString("layerAlreadyAdded");
             controller.model.noMatches = self.getLocaleString("noMatches");
-            controller.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");            
+            controller.model.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
         });
         Object.keys(self.infoModel).filter(key => !key.startsWith("#")).forEach(key => this.infoModel[key] = self.getLocaleString(key));
-        
+
     }
     async updateLanguage() {
         const self = this;
@@ -1206,7 +1216,7 @@ class LayerCatalog extends ProjectionSelector {
         });
         self.updateModel();
     }
-    
+
 }
 
 LayerCatalog.prototype.CLASS = 'tc-ctl-lcat';
