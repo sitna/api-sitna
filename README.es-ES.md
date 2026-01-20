@@ -32,3 +32,7 @@ Puede acceder a una lista de sitios web que contienen visores desarrollados con 
 
 ## Hoja de ruta
 Consultar [aquí](./roadmap.es-ES.md).
+
+---
+
+[Public Money? Public Code!](https://publiccode.eu/es/)
