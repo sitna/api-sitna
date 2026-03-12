@@ -49,6 +49,174 @@
 @import url(control/LagerLegend.css);
 @import url(control/ImageMagnifier.css);
 
+:root {
+    /* custom variables */
+    --sitna-color-01: #ffffff;
+    --sitna-color-02: #000000;
+    --sitna-color-03: #555555;
+    --sitna-color-04: #cc0000;
+    --sitna-color-05: #333333;
+    --sitna-color-06: #c52737; /*rojo*/
+    --sitna-color-07: #3b3bc6; /*azul*/
+    --main-bg-color: var(--sitna-color-01); /* --- LEGACY --- */
+    --sitna-background-color: var(--main-bg-color);
+    --text-main-color: var(--sitna-color-05); /* --- LEGACY --- */
+    --sitna-text-color: var(--text-main-color);
+    --main-hl-color: var(--sitna-color-04); /* --- LEGACY --- */
+    --sitna-main-accent-color: var(--main-hl-color);
+    --sitna-main-accent-contrast-color: var(--sitna-color-01);
+    --sitna-secondary-accent-color: var(--sitna-color-03);
+    --sitna-secondary-accent-contrast-color: var(--sitna-color-01);
+    --sitna-highlighted-text-color: var(--sitna-color-02);
+    --sitna-bg1-txt3-color: color-mix(in srgb, var(--sitna-background-color) 25%, var(--sitna-text-color)); /* #666666 */
+    --sitna-bg1-txt1-color: color-mix(in srgb, var(--sitna-background-color) 50%, var(--sitna-text-color)); /* #999999 */
+    --sitna-bg3-txt1-color: color-mix(in srgb, var(--sitna-background-color) 75%, var(--sitna-text-color)); /* #cccccc */
+    --sitna-bg8-txt1-color: color-mix(in srgb, var(--sitna-background-color) 88.89%, var(--sitna-text-color)); /* #e8e8e8 */
+    --sitna-bg5-txt1-color: color-mix(in srgb, var(--sitna-background-color) 83.33%, var(--sitna-text-color)); /* #dddddd */    
+    --sitna-bg11-txt1-color: color-mix(in srgb, var(--sitna-background-color) 91.67%, var(--sitna-text-color)); /* #eeeeee */
+    --sitna-bg-a0-color: rgb(from var(--sitna-background-color) r g b / 0);
+    --sitna-bg-a7-color: rgb(from var(--sitna-background-color) r g b / 0.7);
+    --text-sec-color: var(--sitna-bg1-txt3-color);
+    --sitna-text-font-family: sans-serif;
+    --disabled-text-color: var(--sitna-bg3-txt1-color);
+    --main-inactive-color: hsl(from var(--main-hl-color) h s calc(l / 2)); /* #660000 */
+    --sitna-link-color: var(--main-hl-color); /* ¿#557FC3? */
+    --sitna-link-decoration: underline;
+    --title-color: var(--sitna-bg1-txt3-color);
+    --main-divider-color: var(--sitna-bg8-txt1-color);
+    --main-divider-width: 2px;
+    --sec-divider-color: var(--sitna-bg3-txt1-color);
+    --panel-bg-color: var(--sitna-bg-a7-color);
+    --panel-hl-bg-color: var(--sitna-background-color);
+    --border-radius: 0.3rem; /* --- LEGACY --- */
+    --sitna-border-radius: var(--border-radius);
+    --glyph-color: var(--sitna-highlighted-text-color); /* --- LEGACY --- */
+    --sitna-minimal-button-text-color: var(--glyph-color);
+    --glyph-sec-color: var(--sitna-bg1-txt1-color);
+    --glyph-hl-color: var(--sitna-main-accent-color); /* --- LEGACY --- */
+    --sitna-active-minimal-button-text-color: var(--glyph-hl-color);
+    --glyph-bg-color: var(--sitna-bg5-txt1-color); /* --- LEGACY --- */
+    --sitna-minimal-button-background-color: var(--glyph-bg-color);
+    --glyph-disabled-bg-color: var(--sitna-bg8-txt1-color);
+    --glyph-disabled-color: var(--sitna-bg3-txt1-color);
+    --win-btn-color: var(--sitna-highlighted-text-color);
+    --win-btn-bg-color: var(--sitna-bg-a0-color);
+    --ph-color: var(--sitna-bg1-txt1-color);
+    --btn-color: var(--sitna-secondary-accent-contrast-color); /* --- LEGACY --- */
+    --sitna-button-text-color: var(--btn-color);
+    --btn-bg-color: var(--sitna-secondary-accent-color); /* --- LEGACY --- */
+    --sitna-button-background-color: var(--btn-bg-color);
+    --btn-border-color: var(--sitna-secondary-accent-color); /* --- LEGACY --- */
+    --sitna-button-border-color: var(--btn-border-color);
+    --btn-disabled-color: var(--sitna-secondary-accent-contrast-color); /* --- LEGACY --- */
+    --sitna-disabled-button-text-color: var(--btn-disabled-color);
+    --btn-disabled-bg-color: var(--sitna-bg3-txt1-color); /* --- LEGACY --- */
+    --sitna-disabled-button-background-color: var(--btn-disabled-bg-color);
+    --btn-disabled-border-color: var(--sitna-bg3-txt1-color); /* --- LEGACY --- */
+    --sitna-disabled-button-border-color: var(--btn-disabled-border-color);
+    --btn-hl-color: var(--sitna-main-accent-contrast-color); /* --- LEGACY --- */
+    --sitna-active-button-text-color: var(--btn-hl-color);
+    --btn-hl-bg-color: var(--sitna-main-accent-color); /* --- LEGACY --- */
+    --sitna-active-button-background-color: var(--btn-hl-bg-color);
+    --btn-hl-border-color: var(--sitna-main-accent-color); /* --- LEGACY --- */
+    --sitna-active-button-border-color: var(--btn-hl-border-color);
+    --sec-btn-color: var(--sitna-highlighted-text-color);
+    --sec-btn-bg-color: var(--sitna-background-color);
+    --sec-btn-border-color: var(--sitna-background-color);
+    --sec-btn-disabled-color: var(--sitna-bg3-txt1-color);
+    --sec-btn-disabled-bg-color: var(--sitna-background-color);
+    --sec-btn-disabled-border-color: var(--sitna-background-color);
+    --sec-btn-hl-color: var(--sitna-main-accent-color);
+    --sec-btn-hl-bg-color: var(--sitna-background-color);
+    --sec-btn-hl-border-color: var(--sitna-background-color);
+    --sitna-textbox-text-color: var(--sitna-highlighted-text-color);
+    --sitna-textbox-background-color: var(--sitna-background-color);
+    --sitna-textbox-border-color: var(--sitna-bg3-txt1-color);
+    --input-disabled-bg-color: var(--sitna-bg11-txt1-color);
+    --input-select-color: var(--sitna-bg1-txt3-color);
+    --sitna-checkbox-icon-color: var(--sitna-highlighted-text-color);
+    --sitna-checkbox-background-color: var(--sitna-background-color);
+    --sitna-checkbox-border-color: var(--sitna-bg1-txt1-color);
+    --cb-checked-color: var(--sitna-main-accent-contrast-color); /* --- LEGACY --- */
+    --sitna-checked-checkbox-icon-color: var(--cb-checked-color);
+    --cb-checked-bg-color: var(--sitna-main-accent-color); /* --- LEGACY --- */
+    --sitna-checked-checkbox-background-color: var(--cb-checked-bg-color);
+    --cb-checked-border-color: var(--sitna-main-accent-color); /* --- LEGACY --- */
+    --sitna-checked-checkbox-border-color: var(--cb-checked-border-color);
+    --sitna-indeterminate-checkbox-icon-color: var(--sitna-highlighted-text-color);
+    --sitna-indeterminate-checkbox-background-color: var(--sitna-bg3-txt1-color);
+    --sitna-indeterminate-checkbox-border-color: var(--sitna-bg1-txt1-color);
+    --sitna-tab-text-color: var(--sitna-bg1-txt3-color);
+    --tab-hl-color: var(--sitna-bg1-txt3-color); /* --- LEGACY --- */
+    --sitna-selected-tab-text-color: var(--tab-hl-color);
+    --sitna-tab-border-color: var(--sitna-bg1-txt1-color);
+    --sitna-selected-tab-border-color: var(--sitna-bg1-txt3-color);
+    --sitna-disabled-tab-text-color: var(--sitna-bg3-txt1-color);
+    --sitna-disabled-tab-border-color: var(--sitna-bg8-txt1-color);
+    --sitna-tab-background-color: var(--sitna-bg8-txt1-color);
+    --sitna-selected-tab-background-color: var(--sitna-background-color);
+    --sitna-disabled-tab-background-color: transparent;
+    --sitna-tab-inner-border-radius: var(--sitna-border-radius);
+    --tab-selected-font-weight: bold; /* --- LEGACY --- */
+    --sitna-selected-tab-font-weight: var(--tab-selected-font-weight);
+    --map-btn-color: var(--sitna-secondary-accent-contrast-color);
+    --map-btn-bg-color: rgb(from var(--sitna-color-02) r g b / 0.66);
+    --map-slider-thumb-bg-color: var(--sitna-color-02);
+    --map-slider-bg-color: var(--sitna-bg3-txt1-color);
+    --thumb-border-width: 2px;
+    --thumb-border-color: var(--sitna-bg5-txt1-color);
+    --thumb-text-color: var(--sitna-highlighted-text-color);
+    --thumb-text-shadow-color: var(--sitna-background-color);
+    --overlay-color: var(--sitna-highlighted-text-color);
+    --overlay-bg-color: var(--sitna-bg-a7-color);
+    --overlay-border-color: var(--sitna-bg3-txt1-color);
+    --cell-odd-bg-color: var(--sitna-bg11-txt1-color);
+    --cell-even-bg-color: var(--sitna-background-color);
+    --list-color: var(--sitna-highlighted-text-color);
+    --list-bg-color: var(--sitna-background-color);
+    --list-hl-color: var(--sitna-highlighted-text-color);
+    --list-hl-bg-color: color-mix(in hsl, var(--main-bg-color) 80%, var(--main-hl-color));
+    --active-zone-bg-color: var(--sitna-bg11-txt1-color);
+    --track-profile-original-color: var(--sitna-color-06);
+    --track-profile-mdt-color: var(--sitna-color-07);
+    --sitna-even-row-background-color: var(--sitna-background-color);
+    --sitna-odd-row-background-color: var(--sitna-bg11-txt1-color);
+    --sitna-toast-duration: 5s;
+    --sitna-info-color: var(--sitna-color-07);
+    --sitna-warning-color: goldenrod;
+    --sitna-error-color: var(--sitna-color-04);
+    --sitna-icon-font-family: 'sitna';
+    --sitna-icon-font-grid-size: 24px;
+    --sitna-icon-font-weight: normal;
+    --sitna-icon-text-line-height: 1.5em;
+    --icon-close: '\e908';
+    --icon-clipboard: '\e902';
+    --icon-delete: '\e90d';
+    --icon-download: '\e902';
+    --icon-download-all: '\e903';
+    --icon-edit: '\e909';
+    --icon-elevation: '\e918';
+    --icon-erase: '\e928';
+    --icon-help: '\e92c';
+    --icon-info: '\e923';
+    --icon-invisible: '\e911';
+    --icon-language: '\e929';
+    --icon-profile: '\e920';
+    --icon-select: '\e927';
+    --icon-share: '\e924';
+    --icon-spinner: '\e90f';
+    --icon-visible: '\e910';
+    --icon-search: '\e90e';
+    --icon-query: '\e916';
+    --icon-extent: '\e917';
+    --icon-filter: '\e931';
+    --icon-print: '\e91b';
+    --icon-placemark: '\e932';
+    --sitna-indeterminate-icon-text: '?';
+    --sitna-checked-icon-text: '\2714\fe0e'; /* ✔ \fe0e es la marca para forzar carácter monocromo */
+    --sitna-unchecked-icon-text: '';
+}
+
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
 .tc-map article, .tc-ctl article, .tc-modal article,
 .tc-map aside, .tc-ctl aside, .tc-modal aside,
@@ -85,157 +253,7 @@
 .tc-map input, .tc-ctl input, .tc-modal input,
 .tc-map select, .tc-ctl select, .tc-modal select,
 .tc-map textarea, .tc-ctl textarea, .tc-modal textarea {
-    font-family: var(--text-font);
-}
-
-:root {
-    /* custom variables */
-    --sitna-color-01: #ffffff;
-    --sitna-color-02: #000000;
-    --sitna-color-03: #555555;
-    --sitna-color-04: #cc0000;
-    --sitna-color-05: #333333;
-    --sitna-color-06: #c52737; /*rojo*/
-    --sitna-color-07: #3b3bc6; /*azul*/
-    --sitna-background-color: var(--sitna-color-01);
-    --sitna-text-color: var(--sitna-color-05);
-    --sitna-main-accent-color: var(--sitna-color-04);
-    --sitna-main-accent-contrast-color: var(--sitna-color-01);
-    --sitna-secondary-accent-color: var(--sitna-color-03);
-    --sitna-secondary-accent-contrast-color: var(--sitna-color-01);
-    --sitna-highlighted-text-color: var(--sitna-color-02);
-    --sitna-bg1-txt3-color: color-mix(in srgb, var(--sitna-background-color) 25%, var(--sitna-text-color)); /* #666666 */
-    --sitna-bg1-txt1-color: color-mix(in srgb, var(--sitna-background-color) 50%, var(--sitna-text-color)); /* #999999 */
-    --sitna-bg3-txt1-color: color-mix(in srgb, var(--sitna-background-color) 75%, var(--sitna-text-color)); /* #cccccc */
-    --sitna-bg8-txt1-color: color-mix(in srgb, var(--sitna-background-color) 88.89%, var(--sitna-text-color)); /* #e8e8e8 */
-    --sitna-bg5-txt1-color: color-mix(in srgb, var(--sitna-background-color) 83.33%, var(--sitna-text-color)); /* #dddddd */    
-    --sitna-bg11-txt1-color: color-mix(in srgb, var(--sitna-background-color) 91.67%, var(--sitna-text-color)); /* #eeeeee */
-    --sitna-bg-a0-color: rgb(from var(--sitna-background-color) r g b / 0);
-    --sitna-bg-a7-color: rgb(from var(--sitna-background-color) r g b / 0.7);
-    --text-main-color: var(--sitna-text-color);
-    --text-sec-color: var(--sitna-bg1-txt3-color);
-    --text-font: sans-serif;
-    --disabled-text-color: var(--sitna-bg3-txt1-color);
-    --main-bg-color: var(--sitna-background-color);
-    --main-hl-color: var(--sitna-main-accent-color);
-    --main-inactive-color: hsl(from var(--main-hl-color) h s calc(l / 2)); /* #660000 */
-    --link-color: var(--main-hl-color); /* ¿#557FC3? */
-    --link-decoration: underline;
-    --title-color: var(--sitna-bg1-txt3-color);
-    --main-divider-color: var(--sitna-bg8-txt1-color);
-    --main-divider-width: 2px;
-    --sec-divider-color: var(--sitna-bg3-txt1-color);
-    --panel-bg-color: var(--sitna-bg-a7-color);
-    --panel-hl-bg-color: var(--sitna-background-color);
-    --border-radius: 0.3rem;
-    --glyph-color: var(--sitna-highlighted-text-color);
-    --glyph-sec-color: var(--sitna-bg1-txt1-color);
-    --glyph-hl-color: var(--main-hl-color);
-    --glyph-bg-color: var(--sitna-bg5-txt1-color);
-    --glyph-disabled-bg-color: var(--sitna-bg8-txt1-color);
-    --glyph-disabled-color: var(--sitna-bg3-txt1-color);
-    --win-btn-color: var(--sitna-highlighted-text-color);
-    --win-btn-bg-color: var(--sitna-bg-a0-color);
-    --ph-color: var(--sitna-bg1-txt1-color);
-    --btn-color: var(--sitna-secondary-accent-contrast-color);
-    --btn-bg-color: var(--sitna-secondary-accent-color);
-    --btn-border-color: var(--sitna-secondary-accent-color);
-    --btn-disabled-color: var(--sitna-secondary-accent-contrast-color);
-    --btn-disabled-bg-color: var(--sitna-bg3-txt1-color);
-    --btn-disabled-border-color: var(--sitna-bg3-txt1-color);
-    --btn-hl-color: var(--sitna-main-accent-contrast-color);
-    --btn-hl-bg-color: var(--main-hl-color);
-    --btn-hl-border-color: var(--main-hl-color);
-    --sec-btn-color: var(--sitna-highlighted-text-color);
-    --sec-btn-bg-color: var(--sitna-background-color);
-    --sec-btn-border-color: var(--sitna-background-color);
-    --sec-btn-disabled-color: var(--sitna-bg3-txt1-color);
-    --sec-btn-disabled-bg-color: var(--sitna-background-color);
-    --sec-btn-disabled-border-color: var(--sitna-background-color);
-    --sec-btn-hl-color: var(--main-hl-color);
-    --sec-btn-hl-bg-color: var(--sitna-background-color);
-    --sec-btn-hl-border-color: var(--sitna-background-color);
-    --input-color: var(--sitna-highlighted-text-color);
-    --input-bg-color: var(--sitna-background-color);
-    --input-border-color: var(--sitna-bg3-txt1-color);
-    --input-disabled-bg-color: var(--sitna-bg11-txt1-color);
-    --input-select-color: var(--sitna-bg1-txt3-color);
-    --cb-color: var(--sitna-highlighted-text-color);
-    --cb-bg-color: var(--main-bg-color);
-    --cb-border-color: var(--sitna-bg1-txt1-color);
-    --cb-checked-color: var(--main-bg-color);
-    --cb-checked-bg-color: var(--main-hl-color);
-    --cb-checked-border-color: var(--main-hl-color);
-    --cb-indeterminate-color: var(--sitna-highlighted-text-color);
-    --cb-indeterminate-bg-color: var(--sitna-bg3-txt1-color);
-    --cb-indeterminate-border-color: var(--sitna-bg1-txt1-color);
-    --tab-color: var(--sitna-bg1-txt3-color);
-    --tab-hl-color: var(--sitna-bg1-txt3-color);
-    --tab-border-color: var(--sitna-bg1-txt1-color);
-    --tab-hl-border-color: var(--sitna-bg1-txt3-color);
-    --tab-disabled-color: var(--sitna-bg3-txt1-color);
-    --tab-disabled-border-color: var(--sitna-bg8-txt1-color);
-    --tab-bg-color: var(--sitna-bg8-txt1-color);
-    --tab-bg-hl-color: var(--main-bg-color);
-    --tab-disabled-bg-color: transparent;
-    --tab-inner-border-radius: var(--border-radius);
-    --tab-selected-font-weight: bold;
-    --map-btn-color: var(--sitna-secondary-accent-contrast-color);
-    --map-btn-bg-color: rgb(from var(--sitna-color-02) r g b / 0.66);
-    --map-slider-thumb-bg-color: var(--sitna-color-02);
-    --map-slider-bg-color: var(--sitna-bg3-txt1-color);
-    --thumb-border-width: 2px;
-    --thumb-border-color: var(--sitna-bg5-txt1-color);
-    --thumb-text-color: var(--sitna-highlighted-text-color);
-    --thumb-text-shadow-color: var(--sitna-background-color);
-    --overlay-color: var(--sitna-highlighted-text-color);
-    --overlay-bg-color: var(--sitna-bg-a7-color);
-    --overlay-border-color: var(--sitna-bg3-txt1-color);
-    --cell-odd-bg-color: var(--sitna-bg11-txt1-color);
-    --cell-even-bg-color: var(--sitna-background-color);
-    --list-color: var(--sitna-highlighted-text-color);
-    --list-bg-color: var(--sitna-background-color);
-    --list-hl-color: var(--sitna-highlighted-text-color);
-    --list-hl-bg-color: color-mix(in hsl, var(--main-bg-color) 80%, var(--main-hl-color));
-    --active-zone-bg-color: var(--sitna-bg11-txt1-color);
-    --track-profile-original-color: var(--sitna-color-06);
-    --track-profile-mdt-color: var(--sitna-color-07);
-    --table-even-row-bg-color: var(--sitna-background-color);
-    --table-odd-row-bg-color: var(--sitna-bg11-txt1-color);
-    --sitna-toast-duration: 5s;
-    --sitna-info-color: var(--sitna-color-07);
-    --sitna-warning-color: goldenrod;
-    --sitna-error-color: var(--sitna-color-04);
-    --icon-font-family: 'sitna';
-    --icon-font-grid-size: 24px;
-    --icon-font-weight: normal;
-    --icon-font-line-height: 1.5em;
-    --icon-close: '\e908';
-    --icon-clipboard: '\e902';
-    --icon-delete: '\e90d';
-    --icon-download: '\e902';
-    --icon-download-all: '\e903';
-    --icon-edit: '\e909';
-    --icon-elevation: '\e918';
-    --icon-erase: '\e928';
-    --icon-help: '\e92c';
-    --icon-info: '\e923';
-    --icon-invisible: '\e911';
-    --icon-language: '\e929';
-    --icon-profile: '\e920';
-    --icon-select: '\e927';
-    --icon-share: '\e924';
-    --icon-spinner: '\e90f';
-    --icon-visible: '\e910';
-    --icon-search: '\e90e';
-    --icon-query: '\e916';
-    --icon-extent: '\e917';
-    --icon-filter: '\e931';
-    --icon-print: '\e91b';
-    --icon-placemark: '\e932';
-    --icon-indeterminate: '?';
-    --checked-icon-text: '\2714\fe0e'; /* \fe0e es la marca para forzar carácter monocromo */
-    --unchecked-icon-text: '';
+    font-family: var(--sitna-text-font-family);
 }
 
 .tc-map :-ms-input-placeholder, .tc-ctl :-ms-input-placeholder, .tc-modal :-ms-input-placeholder { /* Edge */
@@ -261,8 +279,8 @@
 }
 
 .tc-map a, .tc-ctl a, .tc-modal a {
-    color: var(--link-color);
-    text-decoration: var(--link-decoration);
+    color: var(--sitna-link-color);
+    text-decoration: var(--sitna-link-decoration);
 }
 
     .tc-map a:focus, .tc-ctl a:focus, .tc-modal a:focus {
@@ -303,8 +321,8 @@ a.tc-file-link {
         text-indent: 0;
         bottom: 0.8em;
         left: 0.7em;
-        border-radius: calc(0.6 * var(--border-radius));
-        background-color: var(--link-color);
+        border-radius: calc(0.6 * var(--sitna-border-radius));
+        background-color: var(--sitna-link-color);
         color: var(--main-bg-color);
         padding: 0 0.2em 0 0.2em;
         font-size: 0.6em;
@@ -662,7 +680,7 @@ sitna-tab {
     }
 }
 
-@keyframes newPulse {
+@keyframes new-pulse {
     0% {
         opacity: 1;
         transform: scale(1);
@@ -811,7 +829,7 @@ html.tc-fullscreen, body.tc-fullscreen {
         z-index: 10012;
         border-top: 0.2em solid #fff;
         border-left: 0.2em solid #fff;
-        border-top-left-radius: var(--border-radius);
+        border-top-left-radius: var(--sitna-border-radius);
     }
 
     .tc-map.tc-drop:after {
@@ -857,9 +875,9 @@ html.tc-fullscreen, body.tc-fullscreen {
     }
 
 .tc-ctl-btn {
-    background-color: var(--btn-bg-color);
-    color: var(--btn-color);
-    border: 1px solid var(--btn-border-color);
+    background-color: var(--sitna-button-background-color);
+    color: var(--sitna-button-text-color);
+    border: 1px solid var(--sitna-button-border-color);
 }
 
     .tc-ctl-btn:focus {
@@ -867,25 +885,25 @@ html.tc-fullscreen, body.tc-fullscreen {
     }
 
     .tc-ctl-btn.tc-disabled, .tc-ctl-btn:disabled {
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
+        color: var(--sitna-disabled-button-text-color);
+        background-color: var(--sitna-disabled-button-background-color);
+        border-color: var(--sitna-disabled-button-border-color);
         cursor: default;
     }
 
     .tc-ctl-btn.tc-active {
-        color: var(--btn-hl-color);
-        background-color: var(--btn-hl-bg-color);
-        border-color: var(--btn-hl-border-color);
+        color: var(--sitna-active-button-text-color);
+        background-color: var(--sitna-active-button-background-color);
+        border-color: var(--sitna-active-button-border-color);
     }
 
 .ol-control button {
     border: 0;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
     .ol-control button.tc-float-btn {
-        border-radius: calc(var(--border-radius) * 0.67);
+        border-radius: calc(var(--sitna-border-radius) * 0.67);
     }
 
 .tc-modal .tc-crs-list li.tc-hidden {
@@ -913,7 +931,7 @@ button.tc-msg-warning:after {
 }
 
 .tc-ctl h2 .tc-icon-btn {
-    color: var(--glyph-hl-color);
+    color: var(--sitna-minimal-button-text-color);
 }
 
 .tc-ctl input[type=color] {
@@ -921,7 +939,7 @@ button.tc-msg-warning:after {
     background-color: transparent;
     height: 1.5em;
     width: 1.5em;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     padding: 0;
     margin-left: 0.2em;
     margin-right: 0.5em;
@@ -937,8 +955,8 @@ button.tc-msg-warning:after {
     }
 
     .tc-ctl input[type=color]::-webkit-color-swatch {
-        border-radius: var(--border-radius);
-        border-color: var(--input-border-color);
+        border-radius: var(--sitna-border-radius);
+        border-color: var(--sitna-textbox-border-color);
     }
 
 table.tc-attr a[target=_blank]:after {
@@ -957,7 +975,7 @@ ol.tc-list, ul.tc-list {
     overflow-y: auto;
     overflow-x: hidden;
     height: auto;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     border: 1px solid var(--sec-divider-color);
     list-style: none;
     padding: 0;
@@ -1067,12 +1085,12 @@ ol.tc-list, ul.tc-list {
 
 .tc-textbox, .tc-combo {
     height: 2em;
-    border-radius: var(--border-radius);
-    border: 1px solid var(--input-border-color);
+    border-radius: var(--sitna-border-radius);
+    border: 1px solid var(--sitna-textbox-border-color);
     padding: 0;
     padding-left: 0.2em;
-    color: var(--input-color);
-    background-color: var(--input-bg-color);
+    color: var(--sitna-textbox-text-color);
+    background-color: var(--sitna-textbox-background-color);
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
 }
 
@@ -1084,10 +1102,10 @@ ol.tc-list, ul.tc-list {
 .tc-ctl .tc-button,
 .tc-modal .tc-button {
     border: 1px solid;
-    border-color: var(--btn-border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--btn-bg-color);
-    color: var(--btn-color);
+    border-color: var(--sitna-button-border-color);
+    border-radius: var(--sitna-border-radius);
+    background-color: var(--sitna-button-background-color);
+    color: var(--sitna-button-text-color);
     padding: 6px 10px;
     cursor: pointer;
     font-size: 12.8px;
@@ -1124,7 +1142,7 @@ ol.tc-list, ul.tc-list {
     .tc-ctl .tc-icon-btn:before,
     .tc-modal .tc-icon-btn:before {
         position: absolute;
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         text-indent: 0;
         width: 100%;
         height: 100%;
@@ -1132,7 +1150,7 @@ ol.tc-list, ul.tc-list {
         top: 0;
         left: 0;
         text-align: center;
-        color: var(--glyph-color);
+        color: var(--sitna-minimal-button-text-color);
     }
 
 
@@ -1159,10 +1177,10 @@ ol.tc-list, ul.tc-list {
     appearance: none;
     -webkit-appearance: none;
     border: 0;
-    border-radius: calc(var(--border-radius) / 2);
-    border: solid 2px var(--cb-border-color);
+    border-radius: calc(var(--sitna-border-radius) / 2);
+    border: solid 2px var(--sitna-checkbox-border-color);
     outline: none;
-    background-color: var(--cb-bg-color);
+    background-color: var(--sitna-checkbox-background-color);
     box-sizing: border-box;
     cursor: pointer;
     width: 1.2em;
@@ -1184,7 +1202,7 @@ ol.tc-list, ul.tc-list {
         line-height: 1.2em;
         text-indent: 0;
         text-align: center;
-        color: var(--cb-color);
+        color: var(--sitna-checkbox-icon-color);
         content: " ";
     }
 
@@ -1197,8 +1215,8 @@ ol.tc-list, ul.tc-list {
     .tc-map .tc-toggle:checked,
     .tc-ctl .tc-toggle:checked,
     .tc-modal .tc-toggle:checked {
-        background-color: var(--cb-checked-bg-color);
-        border-color: var(--cb-checked-border-color);
+        background-color: var(--sitna-checked-checkbox-background-color);
+        border-color: var(--sitna-checked-checkbox-border-color);
     }
 
         .tc-map .tc-toggle.tc-checked:before,
@@ -1210,7 +1228,7 @@ ol.tc-list, ul.tc-list {
         .tc-map .tc-toggle:checked:before,
         .tc-ctl .tc-toggle:checked:before,
         .tc-modal .tc-toggle:checked:before {
-            color: var(--cb-checked-color);
+            color: var(--sitna-checked-checkbox-icon-color);
             content: "\2714";
         }
 
@@ -1220,7 +1238,7 @@ ol.tc-list, ul.tc-list {
     height: 2em;
     z-index: 10002;
     color: var(--map-btn-color);
-    border-radius: calc(var(--border-radius) * 0.67);
+    border-radius: calc(var(--sitna-border-radius) * 0.67);
     border: 0;
     background-color: var(--map-btn-bg-color);
     padding: 0;
@@ -1242,7 +1260,7 @@ button.tc-new:before {
     border-radius: 0.2em;
     border: 3px solid rgba(0, 0, 0, 0.66);
     position: absolute;
-    animation: newPulse 2s ease 0s infinite;
+    animation: new-pulse 2s ease 0s infinite;
 }
 
 .tc-icon-button {
@@ -1336,7 +1354,7 @@ body .tc-modal .tc-modal-background {
     font-family: Arial,helvetica,sans-serif;
     background-color: var(--main-bg-color);
     border: 1px solid var(--sec-divider-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     box-shadow: 0 5px 15px rgba(0,0,0,.5);
     z-index: 100011;
     grid-row-start: 2;
@@ -1375,7 +1393,7 @@ body .tc-modal .tc-modal-background {
     }
 
         .tc-modal .tc-modal-header .tc-modal-close:before {
-            font-family: var(--icon-font-family);
+            font-family: var(--sitna-icon-font-family);
             content: var(--icon-close);
             display: block;
             font-size: 1.4em;
@@ -1445,7 +1463,7 @@ body .tc-modal .tc-modal-background {
     font-size: 0.9em;
     color: #fff;
     text-align: center;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     padding: 0.6em 0.5em;
     margin-left: -0.15em;
     margin-top: 0.3em;
@@ -1623,16 +1641,16 @@ div.ms-parent.tc-combo {
 .tc-map label:first-of-type input[type=radio] ~ span,
 .tc-ctl label:first-of-type input[type=radio] ~ span,
 .tc-modal label:first-of-type input[type=radio] ~ span {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-map label:last-of-type input[type=radio] ~ span,
 .tc-ctl label:last-of-type input[type=radio] ~ span,
 .tc-modal label:last-of-type input[type=radio] ~ span {
     width: 100%;
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
     /* para el salto de línea */
     white-space: pre-line;
 }
