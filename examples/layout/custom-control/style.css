@@ -1,0 +1,20 @@
+﻿.custom-control-container {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    left: 50%;
+    z-index: 1000;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    margin-bottom: 2vh;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 1vh;
+    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+}
+
+poi-navigator .zoom-button-container {
+    display: flex;
+    gap: 1vh;
+    margin: 1vh;
+}
