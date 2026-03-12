@@ -1,6 +1,6 @@
 {
   "name": "api-sitna",
-  "version": "4.8.0",
+  "version": "4.8.1",
   "description": "API de creación de mapas JavaScript",
   "homepage": "https://sitna.navarra.es/api/doc/",
   "main": "./index.js",
@@ -78,7 +78,7 @@
     "jszip": "^3.10.1",
     "localforage": "^1.10.0",
     "md5": "^2.3.0",
-    "ol": "^10.3.0",
+    "ol": "10.5.0",
     "pdfmake": "^0.2.7",
     "proj4": "^2.8.0",
     "qrcode": "^1.5.1",

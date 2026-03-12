@@ -1,3 +1,8 @@
+### [4.8.1](https://github.com/sitna/api-sitna/releases/tag/v4.8.1)
+- Reducción de la versión de OpenLayers a 10.5 debida a un error de incompatibilidad con la versión 10.8.
+- Exportados espacios de nombres `control` y `ui` en el paquete npm.
+- Corrección de declaración de tipos de TypeScript.
+
 ### [4.8.0](https://github.com/sitna/api-sitna/releases/tag/v4.8.0)
 - Se selecciona un color distinto para las entidades de cada capa nueva de tipo [vectorial]{@linkplain SITNA.Consts.layerType.VECTOR}.
 - Añadida documentación para la creación de controles de usuario personalizados.
