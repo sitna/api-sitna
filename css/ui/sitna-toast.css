@@ -8,7 +8,7 @@
     font-size: 0.9em;
     color: #fff;
     text-align: center;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     padding: 0.6em 0.5em;
     margin-left: -0.15em;
     margin-top: 0.3em;
@@ -39,7 +39,7 @@
     height: 1em;
     line-height: 1em;
     color: black;
-    border-radius: calc(var(--border-radius) / 2);
+    border-radius: calc(var(--sitna-border-radius) / 2);
 }
 
 :host([type="info"]) {
@@ -55,7 +55,7 @@
 }
 
 :host([type="info"]) .container:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-info);
     background-color: var(--sitna-info-color);
 }
@@ -87,9 +87,9 @@ sitna-button {
     position: absolute;
     display: none;
     height: 3px;
-    left: var(--border-radius);
+    left: var(--sitna-border-radius);
     bottom: 3px;
-    width: calc(100% - calc(var(--border-radius) * 2));
+    width: calc(100% - calc(var(--sitna-border-radius) * 2));
     background-color: var(--highlight-color);
     animation: roundtime var(--sitna-toast-duration) linear forwards;
     transform-origin: left center;

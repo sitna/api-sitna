@@ -5,12 +5,12 @@
     line-height: 2em;
     padding-left: 0.5em;
     padding-right: 0.5em;
-    font-family: var(--text-font);
-    color: var(--tab-color);
-    border: solid 1px var(--tab-border-color);
-    border-top-left-radius: var(--tab-inner-border-radius);
-    border-top-right-radius: var(--tab-inner-border-radius);
-    background-color: var(--tab-bg-color);
+    font-family: var(--sitna-text-font-family);
+    color: var(--sitna-tab-text-color);
+    border: solid 1px var(--sitna-tab-border-color);
+    border-top-left-radius: var(--sitna-tab-inner-border-radius);
+    border-top-right-radius: var(--sitna-tab-inner-border-radius);
+    background-color: var(--sitna-tab-background-color);
     z-index: 2;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -22,7 +22,7 @@
     :host::before {
         width: 100%;
         position: absolute;
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         font-weight: normal;
         margin-right: 0.5em;
         left: 0;
@@ -40,39 +40,39 @@
 }
 
 :host(:first-of-type) {
-    border-top-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
 }
 
 :host(:last-of-type) {
-    border-top-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
 }
 
 :host([no-selection]:first-of-type) {
-    border-bottom-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 :host([no-selection]:last-of-type) {
-    border-bottom-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 :host([no-selection][disabled]) {
-    border-bottom-color: var(--tab-disabled-border-color);
+    border-bottom-color: var(--sitna-disabled-tab-border-color);
 }
 
 :host([selected]) {
-    color: var(--tab-hl-color);
-    border-color: var(--tab-border-hl-color);
-    background-color: var(--tab-bg-hl-color);
+    color: var(--sitna-selected-tab-text-color);
+    border-color: var(--sitna-selected-tab-border-color);
+    background-color: var(--sitna-selected-tab-background-color);
     z-index: 3;
     border-bottom-color: transparent;
-    font-weight: var(--tab-selected-font-weight);
+    font-weight: var(--sitna-selected-tab-font-weight);
 }
 
 :host([disabled]) {
-    color: var(--tab-disabled-color);
-    border-color: var(--tab-disabled-border-color);
-    background-color: var(--tab-disabled-bg-color);
+    color: var(--sitna-disabled-tab-text-color);
+    border-color: var(--sitna-disabled-tab-border-color);
+    background-color: var(--sitna-disabled-tab-background-color);
     z-index: 1;
     cursor: default;
-    border-bottom-color: var(--tab-border-color);
+    border-bottom-color: var(--sitna-tab-border-color);
 }

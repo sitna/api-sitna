@@ -38,9 +38,9 @@ button {
     vertical-align: baseline;
     -webkit-appearance: button;
     cursor: pointer;
-    background-color: var(--btn-bg-color);
-    color: var(--btn-color);
-    border: 1px solid var(--btn-border-color);
+    background-color: var(--sitna-button-background-color);
+    color: var(--sitna-button-text-color);
+    border: 1px solid var(--sitna-button-border-color);
     border-top-left-radius: inherit;
     border-top-right-radius: inherit;
     border-bottom-left-radius: inherit;
@@ -55,13 +55,13 @@ button {
     }
 
 :host(:first-of-type) {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 :host(:last-of-type) {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 button:focus {
@@ -69,27 +69,27 @@ button:focus {
 }
 
 button:disabled, button.active:disabled {
-    color: var(--btn-disabled-color);
-    background-color: var(--btn-disabled-bg-color);
-    border-color: var(--btn-disabled-border-color);
+    color: var(--sitna-disabled-button-text-color);
+    background-color: var(--sitna-disabled-button-background-color);
+    border-color: var(--sitna-disabled-button-border-color);
     cursor: default;
 }
 
 button.active {
-    color: var(--btn-hl-color);
-    background-color: var(--btn-hl-bg-color);
-    border-color: var(--btn-hl-border-color);
+    color: var(--sitna-active-button-text-color);
+    background-color: var(--sitna-active-button-background-color);
+    border-color: var(--sitna-active-button-border-color);
 }
 
 button::before {
     padding-right: 0.5em;
-    font-family: var(--icon-font-family);
-    font-weight: var(--icon-font-weight);
-    content: var(--icon-text);
+    font-family: var(--sitna-icon-font-family);
+    font-weight: var(--sitna-icon-font-weight);
+    content: var(--sitna-icon-text);
 }
 
 button.minimal::before,
-button.icon::before {
+button.textless::before {
     padding-right: 0;
 }
 
@@ -129,12 +129,12 @@ button::before:empty {
     margin-right: 0;
 }
 
-button.icon {
+button.textless {
     text-indent: -1000vw;
     min-width: 2em;
 }
 
-    button.icon::before {
+    button.textless::before {
         position: absolute;
         font-size: 1em;
         height: 100%;
@@ -147,41 +147,49 @@ button.icon {
     }
 
 :host([variant="minimal"]) button {
-    background-color: var(--glyph-bg-color);
+    background-color: var(--sitna-minimal-button-background-color);
     text-indent: -1000vw;
     border: none;
-    border-radius: calc(var(--border-radius) / 2);
+    border-radius: calc(var(--sitna-border-radius) / 2);
     padding: 0;
 }
 
     :host([variant="minimal"]) button::before {
         position: absolute;
-        color: var(--glyph-color);
+        color: var(--sitna-minimal-button-text-color);
         font-size: 1em;
         height: 100%;
         width: 100%;
         text-align: center;
         text-indent: 0;
-        line-height: var(--icon-font-line-height);
+        line-height: var(--sitna-icon-text-line-height);
         left: 0;
         top: 0;
     }
 
+    :host([variant="minimal"]) button.active::before {
+        color: var(--sitna-minimal-button-text-color);
+    }
+
     :host([variant="minimal"]) button:disabled {        
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
+        color: var(--sitna-disabled-button-text-color);
+        background-color: var(--sitna-disabled-button-background-color);
+        border-color: var(--sitna-disabled-button-border-color);
     }
 
         :host([variant="minimal"]) button:disabled::before {            
-            color: var(--btn-disabled-color);
+            color: var(--sitna-disabled-button-text-color);
         }
 
 button.link {
     background-color: transparent;
     display: inline;
-    color: var(--link-color);
-    text-decoration: var(--link-decoration);
+    color: var(--sitna-link-color);
+    text-decoration: var(--sitna-link-decoration);
     border: 0;
     text-align: left;
+}
+
+button.link::before {
+    text-decoration: none;
 }
