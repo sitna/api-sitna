@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "id": "mapabase",
     "title": "Mapa base",
@@ -42,6 +42,21 @@
     "hideTree": true,
     "thumbnail": "css/img/thumb-orthophoto.jpg",
     "fallbackLayer": "ortofoto_dinamico",
+    "overviewMapLayer": "mapabase"
+  },
+  {
+    "id": "ortofoto2025",
+    "title": "Ortofoto 2025",
+    "type": "WMTS",
+    "url": "https://idena.navarra.es/ogc/wmts/",
+    "matrixSet": "epsg25830",
+    "layerNames": "ortofoto2025",
+    "encoding": "RESTful",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho2025.jpg",
+    "fallbackLayer": "ortofoto2025_dinamico",
     "overviewMapLayer": "mapabase"
   },
   {
@@ -196,7 +211,7 @@
   },
   {
     "id": "ortofoto_pamplona2020",
-    "title": "Ortofoto comarca de Pamplona 2020",
+    "title": "Ortofoto Comarca de Pamplona 2020",
     "type": "WMTS",
     "url": "https://idena.navarra.es/ogc/wmts/",
     "matrixSet": "epsg25830deep",
@@ -207,6 +222,66 @@
     "hideTree": true,
     "thumbnail": "css/img/thumb-ortho-pamplona2020.jpg",
     "fallbackLayer": "ortofoto_pamplona2020_dinamico",
+    "overviewMapLayer": "mapabase"
+  },
+  {
+    "id": "ortofoto_pamplona2025",
+    "title": "Ortofoto Comarca de Pamplona 2025",
+    "type": "WMTS",
+    "url": "https://idena.navarra.es/ogc/wmts/",
+    "matrixSet": "epsg25830deep2",
+    "layerNames": "ortofotoPamplona2025",
+    "encoding": "RESTful",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-pamplona2025.jpg",
+    "fallbackLayer": "ortofoto_pamplona2025_dinamico",
+    "overviewMapLayer": "mapabase"
+  },
+  {
+    "id": "ortofoto_tudela2025",
+    "title": "Ortofoto Ribera 2025",
+    "type": "WMTS",
+    "url": "https://idena.navarra.es/ogc/wmts/",
+    "matrixSet": "epsg25830deep2",
+    "layerNames": "ortofotoTudela2025",
+    "encoding": "RESTful",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-tudela2025.jpg",
+    "fallbackLayer": "ortofoto_tudela2025_dinamico",
+    "overviewMapLayer": "mapabase"
+  },
+  {
+    "id": "ortofoto_estella2025",
+    "title": "Ortofoto Tierra Estella 2025",
+    "type": "WMTS",
+    "url": "https://idena.navarra.es/ogc/wmts/",
+    "matrixSet": "epsg25830deep2",
+    "layerNames": "ortofotoEstella2025",
+    "encoding": "RESTful",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-estella2025.jpg",
+    "fallbackLayer": "ortofoto_estella2025_dinamico",
+    "overviewMapLayer": "mapabase"
+  },
+  {
+    "id": "ortofoto_tafalla2025",
+    "title": "Ortofoto Zona Media 2025",
+    "type": "WMTS",
+    "url": "https://idena.navarra.es/ogc/wmts/",
+    "matrixSet": "epsg25830deep2",
+    "layerNames": "ortofotoTafalla2025",
+    "encoding": "RESTful",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-tafalla2025.jpg",
+    "fallbackLayer": "ortofoto_tafalla2025_dinamico",
     "overviewMapLayer": "mapabase"
   },
   {
@@ -309,6 +384,18 @@
     "isDefault": false,
     "hideTree": true,
     "thumbnail": "css/img/thumb-orthophoto.jpg",
+    "overviewMapLayer": "mapabase_dinamico"
+  },
+  {
+    "id": "ortofoto2025_dinamico",
+    "title": "Ortofoto 2025",
+    "type": "WMS",
+    "url": "https://idena.navarra.es/ogc/wms",
+    "layerNames": "ortofoto_5000_2025",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho2025.jpg",
     "overviewMapLayer": "mapabase_dinamico"
   },
   {
@@ -444,8 +531,56 @@
     "overviewMapLayer": "mapabase_dinamico"
   },
   {
+    "id": "ortofoto_pamplona2025_dinamico",
+    "title": "Ortofoto Comarca de Pamplona 2025",
+    "type": "WMS",
+    "url": "https://idena.navarra.es/ogc/wms",
+    "layerNames": "ortofoto_500_Pamplona_2025",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-pamplona2025.jpg",
+    "overviewMapLayer": "mapabase_dinamico"
+  },
+  {
+    "id": "ortofoto_tudela2025_dinamico",
+    "title": "Ortofoto Rivera 2025",
+    "type": "WMS",
+    "url": "https://idena.navarra.es/ogc/wms",
+    "layerNames": "ortofoto_500_Tudela_2025",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-tudela2025.jpg",
+    "overviewMapLayer": "mapabase_dinamico"
+  },
+  {
+    "id": "ortofoto_estella2025_dinamico",
+    "title": "Ortofoto Tierra Estella 2025",
+    "type": "WMS",
+    "url": "https://idena.navarra.es/ogc/wms",
+    "layerNames": "ortofoto_500_Estella_2025",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-estella2025.jpg",
+    "overviewMapLayer": "mapabase_dinamico"
+  },
+  {
+    "id": "ortofoto_tafalla2025_dinamico",
+    "title": "Ortofoto Zona Media 2025",
+    "type": "WMS",
+    "url": "https://idena.navarra.es/ogc/wms",
+    "layerNames": "ortofoto_500_Tafalla_2025",
+    "format": "image/jpeg",
+    "isDefault": false,
+    "hideTree": true,
+    "thumbnail": "css/img/thumb-ortho-tafalla2025.jpg",
+    "overviewMapLayer": "mapabase_dinamico"
+  },
+  {
     "id": "cartografia_dinamico",
-    "title": "Cartografía topográfica 2017",
+    "title": "Cartografía topográfica",
     "type": "WMS",
     "url": "https://idena.navarra.es/ogc/wms",
     "layerNames": "MTNa5_BTA",
@@ -730,34 +865,6 @@
     "hideTree": true,
     "thumbnail": "css/img/thumb-carto-dark.png",
     "overviewMapLayer": "carto_voyager"
-  },
-  {
-    "id": "mapbox_streets",
-    "title": "Mapbox Streets",
-    "type": "WMTS",
-    "url": "wmts/mapbox/",
-    "matrixSet": "WorldWebMercatorQuad",
-    "layerNames": "streets",
-    "encoding": "RESTful",
-    "format": "image/png",
-    "isDefault": false,
-    "hideTree": true,
-    "thumbnail": "css/img/thumb-mapbox-streets.png",
-    "overviewMapLayer": "mapbox_streets"
-  },
-  {
-    "id": "mapbox_satellite",
-    "title": "Mapbox Satellite",
-    "type": "WMTS",
-    "url": "wmts/mapbox/",
-    "matrixSet": "WorldWebMercatorQuad",
-    "layerNames": "satellite",
-    "encoding": "RESTful",
-    "format": "image/jpeg",
-    "isDefault": false,
-    "hideTree": true,
-    "thumbnail": "css/img/thumb-mapbox-satellite.jpg",
-    "overviewMapLayer": "mapbox_streets"
   },
   {
     "id": "ninguno",
