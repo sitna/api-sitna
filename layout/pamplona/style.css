@@ -2,10 +2,10 @@
 
 :root {
     /* layout custom variables */
-    --tab-color: #666;
-    --tab-hl-color: #666;
-    --tab-border-color: #666;
-    --tab-hl-border-color: #666;
+    --sitna-tab-text-color: #666;
+    --sitna-selected-tab-text-color: #666;
+    --sitna-tab-border-color: #666;
+    --sitna-selected-tab-border-color: #666;
     --tab-selected-font-weight: bold;
 }
 
