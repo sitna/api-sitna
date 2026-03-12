@@ -46,7 +46,7 @@
     margin: 0;
     cursor: pointer;
     border: var(--thumb-border-width) solid var(--thumb-border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     height: 4.5rem;
     width: 4.5rem;
     box-sizing: border-box;
@@ -168,7 +168,7 @@
 
 .tc-ctl-bms-node input[type=radio] ~ span {
     border: var(--thumb-border-width) solid var(--thumb-border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-bms-node input[type=radio]:checked ~ span {
@@ -204,11 +204,11 @@
 }
 
 .tc-ctl-bms-more-node:after {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: '\e904';
     position: absolute;
     color: #666666;
-    font-size: calc(var(--icon-font-grid-size) * 1.5);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 1.5);
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
@@ -269,7 +269,7 @@ ul.tc-ctl-bms-branch input[type=radio] {
     background-color: var(--sec-divider-color);
     color: var(--text-sec-color);
     padding: 0.1em 0.2em;
-    border-radius: calc(var(--border-radius) / 2);
+    border-radius: calc(var(--sitna-border-radius) / 2);
 }
 
 .tc-ctl-bms-crs-desc {
@@ -281,7 +281,7 @@ ul.tc-ctl-bms-branch input[type=radio] {
         width: min(50%, 20em);
         height: 1em;
         background-color: var(--sec-divider-color);
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         animation: soft-pulsation 1.2s infinite;
     }
 

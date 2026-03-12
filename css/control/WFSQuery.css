@@ -243,7 +243,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     }
 
     .tc-ctl-wfsquery-where-list sitna-button.tc-ctl-wfsquery-del-cond {
-        --icon-text: var(--icon-delete);
+        --sitna-icon-text: var(--icon-delete);
     }
 
 .tc-modal .tc-ctl-wfsquery-modal-window {
@@ -387,7 +387,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 .tc-ctl-wfsquery-list.tc-ctl-search-list {
     background-color: var(--main-bg-color);
     border: 1px solid var(--sec-divider-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     list-style-type: none;
     padding: 0.2em;
     line-height: 1.8em;
@@ -425,10 +425,10 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-table tbody tr.tc-disabled {
     cursor: default;
     display: table-row;
-    background-color: var(--btn-disabled-bg-color);
-    color: var(--btn-disabled-color);
+    background-color: var(--sitna-disabled-button-background-color);
+    color: var(--sitna-disabled-button-text-color);
     text-decoration: line-through;
-    text-decoration-color: var(--btn-disabled-bg-color);
+    text-decoration-color: var(--sitna-disabled-button-background-color);
 }
 
 
@@ -791,7 +791,7 @@ div.tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
 }
 
 .tc-ctl-rpanel-table .tc-complex-attr table tr {
-    border-bottom: solid var(--tab-border-color) 1px;
+    border-bottom: solid var(--sitna-tab-border-color) 1px;
     box-sizing: border-box;
     display: block;
     width: 100%;
@@ -835,7 +835,7 @@ div.tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
 }
 
     .tc-ctl-rpanel-table .tc-complex-attr .tc-plus:before {
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         content: '\e905';
         font-size: 1em;
     }
@@ -845,7 +845,7 @@ div.tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
 }
 
 .tc-ctl-rpanel-table .tc-complex-attr input:not(checked) ~ div > table {
-    border: solid var(--tab-border-color) 1px;
+    border: solid var(--sitna-tab-border-color) 1px;
     border-radius: 3px;
 }
 
@@ -886,5 +886,5 @@ div.tc-ctl.tc-ctl-rpanel.tc-ctl-wfsquery-results .prcollapsed-slide-submenu {
 }
 
 .tc-ctl-wfsquery-where-cond-view {
-    --icon-text: var(--icon-visible);
+    --sitna-icon-text: var(--icon-visible);
 }

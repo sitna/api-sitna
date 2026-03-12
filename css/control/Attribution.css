@@ -26,8 +26,8 @@
     background-color: #fff;
     border: 1px solid #ccc;
     border-bottom: none;
-    border-top-left-radius: var(--border-radius);
-    border-top-right-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
     padding: 0.1em;
     font-style: italic;
 }
@@ -46,7 +46,7 @@
 }
 
 .tc-ctl-attrib .tc-github:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: "\e92e";
-    font-size: calc(var(--icon-font-grid-size) / 2);
+    font-size: calc(var(--sitna-icon-font-grid-size) / 2);
 }

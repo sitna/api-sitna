@@ -15,7 +15,7 @@
     margin: 0;
     cursor: pointer;
     border: var(--thumb-border-width) solid var(--thumb-border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-omm-bl-node label {
@@ -38,7 +38,7 @@
     right: 1em;
     color: var(--map-btn-color);
     background-color: var(--map-btn-bg-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     padding: 0.3em;
     font-size: 0.8em;
     max-width: 6em;
@@ -70,7 +70,7 @@
 
 .tc-ctl-omm-bl-node input[type=checkbox] ~ span {
     border: var(--thumb-border-width) solid var(--thumb-border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-omm-bl-node input[type=checkbox]:checked ~ span {
@@ -121,11 +121,11 @@
 }
 
 .tc-ctl-omm .tc-ctl-omm-list li sitna-toggle {
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
 }
 
 .tc-ctl-omm .tc-ctl-omm-list li sitna-button {
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 0.75);
 }
 
 .tc-ctl-omm .tc-ctl-omm-btn-new, .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl {
@@ -148,11 +148,11 @@
 }
 
     .tc-ctl-omm .tc-ctl-omm-btn-new {
-        --icon-text: '\e904';
+        --sitna-icon-text: '\e904';
     }
 
 .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw, .tc-ctl-omm .tc-ctl-omm-btn-cancel-dl {
-    --icon-text: var(--icon-close);
+    --sitna-icon-text: var(--icon-close);
 }
 
 .tc-ctl-omm .tc-alert {
@@ -164,8 +164,8 @@
     box-sizing: border-box;
     height: 2em;
     padding: 0 0 0 0.2em;
-    border: 1px solid var(--input-border-color);
-    border-radius: var(--border-radius);
+    border: 1px solid var(--sitna-textbox-border-color);
+    border-radius: var(--sitna-border-radius);
     margin: 0 0 0.6em 0;
 }
 
@@ -190,10 +190,10 @@
 .tc-ctl-omm .tc-ctl-omm-progress-bar {
     width: 100%;
     height: 0.8em;
-    border: 0.1em solid var(--tab-border-color);
+    border: 0.1em solid var(--sitna-tab-border-color);
     padding: 0.1em;
     margin-bottom: 0.5em;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     box-sizing: border-box;
 }
 
@@ -201,7 +201,7 @@
         height: 100%;
         background-color: var(--main-hl-color);
         border-color: var(--main-hl-color);
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
     }
 
 .tc-ctl-omm-3d-panel {
@@ -253,17 +253,17 @@
 
 .tc-ctl-omm-dialog input[type=range].tc-ctl-omm-rng-maxres:focus::-webkit-slider-runnable-track, 
 .tc-ctl-omm-dialog input[type=range].tc-ctl-omm-rng-maxres::-webkit-slider-runnable-track {
-    background: var(--glyph-bg-color)
+    background: var(--sitna-minimal-button-background-color)
 }
 
 .tc-ctl-omm-dialog input[type=range].tc-ctl-omm-rng-maxres::-moz-range-track,
 .tc-ctl-omm-dialog input[type=range].tc-ctl-omm-rng-maxres:focus::-moz-range-track {
-    background: var(--glyph-bg-color)
+    background: var(--sitna-minimal-button-background-color)
 }
 
 .tc-ctl-omm-dialog input[type=range].tc-ctl-omm-rng-maxres::-ms-track,
 .tc-ctl-omm-dialog input[type=range].tc-ctl-omm-rng-maxres:focus::-ms-track {
-    background: var(--glyph-bg-color)
+    background: var(--sitna-minimal-button-background-color)
 }
 
 
@@ -280,7 +280,7 @@
     overflow-x: hidden;
     max-height: 8em;
     height: auto;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     border: 1px solid var(--sec-divider-color);
     padding: 0;
     list-style: none;
@@ -313,7 +313,7 @@
     margin-top: 4px;
     right: 0.7em;
     line-height: 1em;
-    color: var(--glyph-color);
+    color: var(--sitna-minimal-button-text-color);
     font-style: normal;
     width: 1em;
     float: right;
@@ -321,7 +321,7 @@
 }
 
     .tc-ctl-omm-map-search-icon:before {
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         content: '\e90e';
     }
 
@@ -348,5 +348,5 @@
 }
 
 .tc-ctl-omm .tc-btn-save {
-    --icon-text: '\2714';
+    --sitna-icon-text: '\2714';
 }

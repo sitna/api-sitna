@@ -28,8 +28,8 @@
     border-left: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     border-right: 1px solid #ccc;
-    border-bottom-left-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
     overflow: hidden;
     background-color: #fff;
     opacity: 0.7;
@@ -49,8 +49,8 @@
     -moz-transform: translate(45%, -50%) rotate( -90deg );
     transform: translate(45%, -50%) rotate( -90deg );
     border-top: 1px solid #ccc;
-    border-top-left-radius: var(--border-radius);
-    border-top-right-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
 }
 
 /* en horizontal (en desktop siempre da true) pasamos arriba el control de coordenadas. Por defecto está en el lateral */
@@ -137,8 +137,8 @@ div.tc-ctl-coords-main {
 }
 
     .tc-ctl-coords button.tc-ctl-coords-crs:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) / 2);
+        font-family: var(--sitna-icon-font-family);
+        font-size: calc(var(--sitna-icon-font-grid-size) / 2);
         content: var(--icon-edit);
         transform: scaleX(-1);
         margin-right: 0.3em;
@@ -154,7 +154,7 @@ div.tc-ctl-coords-main {
     background-color: var(--sec-divider-color);
     color: var(--text-sec-color);
     padding: 0.1em 0.2em;
-    border-radius: calc(var(--border-radius) / 2);
+    border-radius: calc(var(--sitna-border-radius) / 2);
     pointer-events: none;
 }
 
@@ -168,7 +168,7 @@ div.tc-ctl-coords-main {
         width: min(50%, 20em);
         height: 1em;
         background-color: var(--sec-divider-color);
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         animation: soft-pulsation 1.2s infinite;
     }
 

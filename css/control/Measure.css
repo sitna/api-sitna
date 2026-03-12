@@ -15,7 +15,7 @@
     }
 
         .tc-ctl-meas-select sitna-tab:before {
-            font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+            font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
         }
 
         .tc-ctl-meas-select sitna-tab.tc-ctl-meas-select-mode-polyline:before {
@@ -50,7 +50,7 @@
 
     .tc-ctl-meas-prof-btn:before {
         position: absolute;
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         content: var(--icon-profile);
         text-indent: 0;
         left: 0;

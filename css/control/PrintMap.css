@@ -55,13 +55,13 @@ div.tc-ctl-prnmap-txt label {
     cursor: pointer;
     padding-top: 0.15em;
     background-color: var(--main-bg-color);
-    border-bottom-left-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
 }
 
 .tc-ctl-prnmap-printing .tc-ctl-prnmap-btn-close:after {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-close);
 }
 
@@ -133,13 +133,13 @@ div.tc-ctl-prnmap-txt label {
 }
 
 .tc-ctl-prnmap-btn-pdf:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-print);
     font-size: 0.9em;
 }
 
 .tc-ctl-prnmap-btn-share:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-share);
     font-size: 0.9em
 }

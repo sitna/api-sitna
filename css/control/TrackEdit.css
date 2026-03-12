@@ -47,7 +47,7 @@ sitna-track-edit ul.tc-ctl-file-recent {
 
 .tc-ctl-wlm input.tc-ctl-tedit-btn-edit:before,
 .tc-ctl-wlm input.tc-ctl-tedit-btn-edit:checked:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-edit);
 }
 
@@ -86,5 +86,5 @@ sitna-track-edit .tc-ctl-edit-btn-polygon {
 }
 
 sitna-track-edit .tc-ctl-edit-btn-line {
-    border-top-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
 }

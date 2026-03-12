@@ -22,23 +22,23 @@
         height: 2em;
         vertical-align: top;
         text-align: center;
-        color: var(--btn-color);
+        color: var(--sitna-button-text-color);
     }
 
     .tc-ctl-dmm .tc-ctl-dmm-tool button:disabled {
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
+        color: var(--sitna-disabled-button-text-color);
+        background-color: var(--sitna-disabled-button-background-color);
+        border-color: var(--sitna-disabled-button-border-color);
     }
 
         .tc-ctl-dmm .tc-ctl-dmm-tool button:first-of-type {
-            border-top-left-radius: var(--border-radius);
-            border-bottom-left-radius: var(--border-radius);
+            border-top-left-radius: var(--sitna-border-radius);
+            border-bottom-left-radius: var(--sitna-border-radius);
         }
 
     .tc-ctl-dmm .tc-ctl-dmm-tool button:last-of-type {
-        border-top-right-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
+        border-top-right-radius: var(--sitna-border-radius);
+        border-bottom-right-radius: var(--sitna-border-radius);
     }
 
 
@@ -53,12 +53,12 @@
 
 
 .tc-ctl-dmm .tc-ctl-mod-btn-delete {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
     .tc-ctl-dmm .tc-ctl-mod-btn-delete:disabled {
-        border-right-color: var(--btn-disabled-border-color);
+        border-right-color: var(--sitna-disabled-button-border-color);
     }
 
 .tc-ctl-dmm .tc-ctl-mod sitna-modify {
@@ -81,7 +81,7 @@
 }
 
     .tc-ctl-dmm-cmd sitna-button.tc-ctl-dmm-btn-hide {
-        --icon-text: '\e911';
+        --sitna-icon-text: '\e911';
     }
 
 .tc-ctl-dmm .tc-ctl-mod-style {

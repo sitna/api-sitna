@@ -26,7 +26,7 @@
     height: 100%;
     padding: 0;
     border: 0;
-    border-radius: calc(var(--border-radius) * 0.67);
+    border-radius: calc(var(--sitna-border-radius) * 0.67);
     cursor: move;
     z-index: 10002;
     background-color: var(--map-btn-bg-color);
@@ -85,8 +85,8 @@
         cursor: pointer;
         padding-top: 0.15em; /* Para tapar botón de pantalla completa */
         background-color: #fff;
-        border-bottom-left-radius: var(--border-radius);
-        border-bottom-right-radius: var(--border-radius);
+        border-bottom-left-radius: var(--sitna-border-radius);
+        border-bottom-right-radius: var(--sitna-border-radius);
         box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
     }
 

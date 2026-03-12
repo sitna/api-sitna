@@ -146,13 +146,13 @@
     }
 
 .tc-ctl-popup .tc-ctl-popup-share {
-    --icon-text: var(--icon-share);
+    --sitna-icon-text: var(--icon-share);
 }
 
 .tc-ctl-popup-close {
-    --icon-text: var(--icon-close);
-    --glyph-color: var(--win-btn-color);
-    --glyph-bg-color: transparent;
+    --sitna-icon-text: var(--icon-close);
+    --sitna-minimal-button-text-color: var(--win-btn-color);
+    --sitna-minimal-button-background-color: transparent;
 }
 
 .olPopup table th, .olPopup table td {
@@ -222,7 +222,7 @@
 }
 
 .tc-ctl-popup .tc-complex-attr table tr {
-    border-bottom: solid var(--tab-border-color) 1px;
+    border-bottom: solid var(--sitna-tab-border-color) 1px;
 }
 
     .tc-ctl-popup .tc-complex-attr table tr:last-of-type {
@@ -234,7 +234,7 @@
 }
 
 .tc-ctl-popup .tc-complex-attr .tc-plus:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: '\e905';
     font-size: 1em;
 }
@@ -244,47 +244,47 @@
 }
 
 .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table, .tc-ctl-popup table.tc-complex-attr table, .tc-ctl-popup div.tc-complex-attr table {
-    border: solid var(--tab-border-color) 1px;
-    border-radius: calc(var(--border-radius) / 2);
+    border: solid var(--sitna-tab-border-color) 1px;
+    border-radius: calc(var(--sitna-border-radius) / 2);
     box-sizing: border-box;
 }
 
     .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table tr:first-of-type,
     .tc-ctl-popup table.tc-complex-attr table tr:first-of-type,
     .tc-ctl-popup div.tc-complex-attr table tr:first-of-type {
-        border-top-left-radius: calc(var(--border-radius) / 2);
-        border-top-right-radius: calc(var(--border-radius) / 2);
+        border-top-left-radius: calc(var(--sitna-border-radius) / 2);
+        border-top-right-radius: calc(var(--sitna-border-radius) / 2);
     }
 
     .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table tr:last-of-type,
     .tc-ctl-popup table.tc-complex-attr table tr:last-of-type,
     .tc-ctl-popup div.tc-complex-attr table tr:last-of-type {
-        border-bottom-left-radius: calc(var(--border-radius) / 2);
-        border-bottom-right-radius: calc(var(--border-radius) / 2);
+        border-bottom-left-radius: calc(var(--sitna-border-radius) / 2);
+        border-bottom-right-radius: calc(var(--sitna-border-radius) / 2);
     }
 
     .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table tr:first-of-type th,
     .tc-ctl-popup table.tc-complex-attr table tr:first-of-type th,
     .tc-ctl-popup div.tc-complex-attr table tr:first-of-type th {
-        border-top-left-radius: calc(var(--border-radius) / 2);
+        border-top-left-radius: calc(var(--sitna-border-radius) / 2);
     }
 
     .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table tr:first-of-type td,
     .tc-ctl-popup table.tc-complex-attr table tr:first-of-type td,
     .tc-ctl-popup div.tc-complex-attr table tr:first-of-type td {
-        border-top-right-radius: calc(var(--border-radius) / 2);
+        border-top-right-radius: calc(var(--sitna-border-radius) / 2);
     }
 
     .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table tr:last-of-type th,
     .tc-ctl-popup table.tc-complex-attr table tr:last-of-type th,
     .tc-ctl-popup div.tc-complex-attr table tr:last-of-type th {
-        border-bottom-left-radius: calc(var(--border-radius) / 2);
+        border-bottom-left-radius: calc(var(--sitna-border-radius) / 2);
     }
 
     .tc-ctl-popup .tc-ctl-finfo ul.tc-ctl-finfo-features li .tc-complex-attr table tr:last-of-type td,
     .tc-ctl-popup table.tc-complex-attr table tr:last-of-type td,
     .tc-ctl-popup div.tc-complex-attr table tr:last-of-type td {
-        border-bottom-right-radius: calc(var(--border-radius) / 2);
+        border-bottom-right-radius: calc(var(--sitna-border-radius) / 2);
     }
 
 .tc-ctl-popup table.tc-complex-attr .tc-key {

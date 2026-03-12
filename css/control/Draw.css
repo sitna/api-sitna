@@ -1,17 +1,17 @@
 ﻿
 .tc-ctl-draw-btn-new {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-btn.tc-ctl-draw-btn-new.tc-active {
-    background-color: var(--btn-hl-bg-color);
-    border-color: var(--btn-hl-border-color);
+    background-color: var(--sitna-active-button-background-color);
+    border-color: var(--sitna-active-button-border-color);
 }
 
 .tc-ctl-draw-btn-cancel {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-draw-point .tc-ctl-draw-tools .tc-ctl-btn {
@@ -40,29 +40,29 @@
 }
 
     .tc-ctl-draw-tools > sitna-button {
-        --icon-font-family: 'sitna';
+        --sitna-icon-font-family: 'sitna';
         flex-grow: 1;
     }
 
         .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-new {
-            --icon-text: '\f040';
+            --sitna-icon-text: '\f040';
         }
 
         .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-undo {
-            --icon-text: '\2b8c';
+            --sitna-icon-text: '\2b8c';
         }
 
         .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-redo {
-            --icon-text: '\2b8c';
+            --sitna-icon-text: '\2b8c';
             scale: -1 1;
         }
 
         .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-end {
-            --icon-text: '\2714';
+            --sitna-icon-text: '\2714';
         }
 
         .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-cancel {
-            --icon-text: '\e908';
+            --sitna-icon-text: '\e908';
         }
 
 .tc-ctl-draw .tc-ctl-draw-tools > button {
@@ -73,7 +73,7 @@
     margin: 0 0.1em 0 0.1em;
     vertical-align: top;
     text-align: center;
-    color: var(--btn-color);
+    color: var(--sitna-button-text-color);
     cursor: pointer;
 }
 
@@ -83,15 +83,15 @@
 
     .tc-ctl-draw .tc-ctl-draw-tools > button:last-of-type {
         margin-right: 0;
-        border-right-color: var(--btn-border-color);
+        border-right-color: var(--sitna-button-border-color);
     }
 
     .tc-ctl-draw .tc-ctl-draw-tools > button:disabled {
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
+        color: var(--sitna-disabled-button-text-color);
+        background-color: var(--sitna-disabled-button-background-color);
+        border-color: var(--sitna-disabled-button-border-color);
     }
 
         .tc-ctl-draw .tc-ctl-draw-tools > button:disabled:last-child {
-            border-right-color: var(--btn-disabled-border-color);
+            border-right-color: var(--sitna-disabled-button-border-color);
         }

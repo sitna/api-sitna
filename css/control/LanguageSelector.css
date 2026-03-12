@@ -28,7 +28,7 @@
         font-size: 1em;
         border: 0;
         outline: 0;
-        border-radius: calc(var(--border-radius) * 0.67);
+        border-radius: calc(var(--sitna-border-radius) * 0.67);
         color: var(--map-btn-color);
         text-decoration: none;
         font-weight: bold;
@@ -47,7 +47,7 @@
     }
 
     sitna-language-select.tc-ctl a.tc-active {
-        color: var(--btn-hl-bg-color);
+        color: var(--sitna-active-button-background-color);
     }
 
     sitna-language-select .tc-ctl-lang-select-links {
@@ -86,6 +86,6 @@ sitna-language-select[static] .tc-ctl-lang-select-links {
                 text-indent: 0;
                 width: 100%;
                 height: 100%;
-                font-family: var(--icon-font-family);
+                font-family: var(--sitna-icon-font-family);
                 content: var(--icon-language);
             }

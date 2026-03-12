@@ -13,7 +13,7 @@
 
     .tc-ctl-share-select sitna-tab:before {
         padding-right: 0.5em;
-        font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+        font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
     }
 
 .tc-ctl-share-select sitna-tab.tc-ctl-share-select-url:before {
@@ -96,7 +96,7 @@ div.tc-ctl-share-url-box {
         .tc-ctl-share .tc-ctl-share-url-box .tc-button.tc-loading:after {
             position: absolute;
             font-size: 85%;
-            font-family: var(--icon-font-family);
+            font-family: var(--sitna-icon-font-family);
             content: var(--icon-spinner);
             left: auto;
             right: 2px;
@@ -115,7 +115,7 @@ div.tc-ctl-share-url-box {
     .tc-ctl-share .tc-ctl-share-alert.tc-loading:after {
         position: absolute;
         font-size: 85%;
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         content: var(--icon-spinner);
         left: 50%;
         top: 50%;
@@ -126,8 +126,8 @@ div.tc-ctl-share-url-box {
 
 
 .tc-ctl-share .tc-ctl-share-url-box.tc-iframe .tc-button:first-of-type {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
     margin-right: 0;
     float: none;
 }
@@ -138,7 +138,7 @@ div.tc-ctl-share-url-box {
     display: flex;
     justify-content: space-evenly;
     flex-basis: 100%;
-    --glyph-bg-color: transparent;
+    --sitna-minimal-button-background-color: transparent;
 }
 .tc-ctl-share .tc-image .tc-ctl-share-icons button {
     flex-grow:1
@@ -166,7 +166,7 @@ div.tc-ctl-share-url-box {
 
 .tc-ctl-share .tc-ctl-share-icons.tc-loading:before {
     position: absolute;
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-spinner);
     color: var(--title-color);
     font-size: 1.2em;

@@ -3,6 +3,10 @@
     padding: 0;
 }
 
+.tc-ctl-legend-title {
+    margin-bottom: 0.3em;
+}
+
 .tc-ctl-legend-nvr {
     font-size: 0.8em;
     color: #999;
@@ -71,7 +75,7 @@ div.tc-ctl-legend-tree li.tc-ctl-legend-empty {
     margin-top: 0.5em;
     padding: 0 10px;
     border: 1px solid #eee;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-legend li.tc-ctl-legend-node li.tc-ctl-legend-node {

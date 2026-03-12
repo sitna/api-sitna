@@ -232,15 +232,15 @@ audio.tc-audio-attr {
 
 .tc-ctl-finfo-elev:before {
     margin-right: 0.5em;
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) / 2);
+    font-family: var(--sitna-icon-font-family);
+    font-size: calc(var(--sitna-icon-font-grid-size) / 2);
     content: var(--icon-elevation);
 }
 
 .tc-ctl-finfo-height:before {
     margin-right: 0.5em;
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) / 2);
+    font-family: var(--sitna-icon-font-family);
+    font-size: calc(var(--sitna-icon-font-grid-size) / 2);
     content: '\e919';
 }
 
@@ -276,11 +276,11 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
     }
 
 .tc-ctl-finfo-btn-zoom-all {
-    --icon-text: var(--icon-extent);
+    --sitna-icon-text: var(--icon-extent);
 }
 
 .tc-ctl-finfo-btn-del-all {
-    --icon-text: var(--icon-delete);
+    --sitna-icon-text: var(--icon-delete);
 }
 
 .tc-modal.tc-ctl-finfo-img-dialog.tc-visible {
@@ -297,7 +297,7 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
     margin: auto;
     width: auto;
     height: auto;
-    /*border-radius: var(--border-radius);*/
+    /*border-radius: var(--sitna-border-radius);*/
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
@@ -305,6 +305,6 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
         object-fit: scale-down;
         max-width: 100vw;
         max-height: 100dvh;
-        /*border-radius: var(--border-radius);*/
+        /*border-radius: var(--sitna-border-radius);*/
         cursor: zoom-out;
     }

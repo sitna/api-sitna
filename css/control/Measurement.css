@@ -10,7 +10,7 @@ sitna-measurement .tc-ctl-msmt-box {
     min-height: 2em;
     margin: 0.5em 0 0.5em 0;
     border: 1px solid var(--sec-divider-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     background-color: var(--main-bg-color);
     text-align: left;
     padding: 0.3em;
@@ -34,7 +34,7 @@ sitna-measurement .tc-ctl-msmt-val-crs {
 }
 
 sitna-measurement .tc-ctl-msmt-box sitna-toggle {
-    font-size: calc(var(--icon-font-grid-size) / 2);
+    font-size: calc(var(--sitna-icon-font-grid-size) / 2);
     margin-right: 0;
 }
 
@@ -100,5 +100,5 @@ sitna-measurement .tc-ctl-msmt-box sitna-toggle {
 .tc-ctl-fedit sitna-measurement .tc-ctl-msmt-box {
     box-sizing: content-box;
     min-height: 1em;
-    width: calc(100% - 2 * var(--border-radius));
+    width: calc(100% - 2 * var(--sitna-border-radius));
 }

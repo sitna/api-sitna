@@ -47,8 +47,8 @@
 .tc-ctl-wlm li.tc-ctl-wlm-elm {
     position: relative;
     background-color: var(--main-bg-color);
-    border: 1px solid var(--tab-border-color);
-    border-radius: var(--border-radius);
+    border: 1px solid var(--sitna-tab-border-color);
+    border-radius: var(--sitna-border-radius);
     padding: 0.3em;
     margin-top: -1px;
     box-sizing: border-box;
@@ -76,16 +76,16 @@
 }
 
 .tc-ctl-wlm li.tc-ctl-wlm-elm .tc-ctl-wlm-cb-info {
-    --icon-font-family: initial;
-    --icon-font-weight: bold;
-    --icon-font-line-height: 1.8em;
-    --unchecked-icon-text: 'i';
-    --checked-icon-text: 'i';
+    --sitna-icon-font-family: initial;
+    --sitna-icon-font-weight: bold;
+    --sitna-icon-text-line-height: 1.8em;
+    --sitna-unchecked-icon-text: 'i';
+    --sitna-checked-icon-text: 'i';
 }
 
 .tc-ctl-wlm li.tc-ctl-wlm-elm .tc-ctl-wlm-cb-visibility {
-    --unchecked-icon-text: '\e911';
-    --checked-icon-text: '\e910';
+    --sitna-unchecked-icon-text: '\e911';
+    --sitna-checked-icon-text: '\e910';
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-lyr {
@@ -167,7 +167,7 @@
     right: 0;
     color: var(--sec-btn-color);
     background-color: var(--active-zone-bg-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     text-align: center;
@@ -195,7 +195,7 @@
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-input sitna-button.tc-ctl-wlm-btn-zoom {
-    --icon-text: '\e917';
+    --sitna-icon-text: '\e917';
 }
 
 .tc-ctl-wlm input[type=range] {
@@ -340,7 +340,7 @@
     font-size: 0.8em;
     background-color: var(--sitna-bg11-txt1-color);
     z-index: 20000;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     color: var(--text-sec-color);
     padding: 0.3em;
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
@@ -384,7 +384,7 @@ li.tc-ctl-wlm-elm:focus {
 .tc-ctl-wlm .tc-ctl-wlm-tools sitna-button.tc-ctl-wlm-btn-more {
     order: 1000;
     display: none;
-    --icon-text: '\2022\2022\2022';
+    --sitna-icon-text: '\2022\2022\2022';
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-tools * {

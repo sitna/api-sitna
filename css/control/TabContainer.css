@@ -51,13 +51,13 @@
     }
 
 .tc-ctl-tctr label:first-child input[type=radio] ~ span {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-tctr label:last-child input[type=radio] ~ span {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-tctr-select input[type=radio]:checked ~ span {

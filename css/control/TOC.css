@@ -1,7 +1,7 @@
 ﻿.tc-ctl-toc {
     overflow: hidden;
     z-index: 10004;
-    --icon-indeterminate: '\25cf';
+    --sitna-indeterminate-icon-text: '\25cf';
 }
 
 .tc-ctl-toc-tree {

@@ -33,7 +33,7 @@ div.tc-ctl-download-cnt label {
 }
 
 .tc-ctl-download-image label.tc-loading:after {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-spinner);
     display: inline-block;
     margin-left: 0.5em;
@@ -41,8 +41,8 @@ div.tc-ctl-download-cnt label {
 }
 
 .tc-ctl-download-help + .tc-ctl-download-btn {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-download-btn-row {
@@ -53,7 +53,7 @@ div.tc-ctl-download-cnt label {
 }
 
 sitna-button.tc-ctl-clipboard-btn {
-    --icon-text: '\29c9';
+    --sitna-icon-text: '\29c9';
 }
 
 

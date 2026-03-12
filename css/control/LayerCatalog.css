@@ -75,7 +75,7 @@ div.tc-ctl-lcat-loading {
                     position: absolute;
                     z-index: 10008;
                     background-color: #eee;
-                    border-radius: var(--border-radius);
+                    border-radius: var(--sitna-border-radius);
                     color: #666;
                     text-align: center;
                     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
@@ -108,19 +108,19 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     margin-right: 0.2em;
     z-index: 10000;
     font-size: 1rem;
-    --icon-font-family: initial;
-    --icon-font-weight: bold;
-    --icon-font-line-height: 1.8em;
-    --unchecked-icon-text: 'i';
-    --checked-icon-text: 'i';
+    --sitna-icon-font-family: initial;
+    --sitna-icon-font-weight: bold;
+    --sitna-icon-text-line-height: 1.8em;
+    --sitna-unchecked-icon-text: 'i';
+    --sitna-checked-icon-text: 'i';
 }
 
 .tc-ctl-lcat sitna-toggle.tc-ctl-lcat-search-btn-info {
-    --icon-font-family: initial;
-    --icon-font-weight: bold;
-    --icon-font-line-height: 1.8em;
-    --unchecked-icon-text: 'i';
-    --checked-icon-text: 'i';
+    --sitna-icon-font-family: initial;
+    --sitna-icon-font-weight: bold;
+    --sitna-icon-text-line-height: 1.8em;
+    --sitna-unchecked-icon-text: 'i';
+    --sitna-checked-icon-text: 'i';
 }
 
 .tc-ctl-lcat li.tc-ctl-lcat-search-group .tc-ctl-lcat-search-btn-info:focus,
@@ -168,7 +168,7 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
 }
 
 .tc-ctl-lcat .tc-ctl-lcat-info-close {
-    color: var(--glyph-color);
+    color: var(--sitna-minimal-button-text-color);
     display: block;
     float: right;
     width: 1em;
@@ -182,7 +182,7 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
         color: #000;
     }
 .tc-ctl-lcat .tc-ctl-lcat-info {
-    --glyph-bg-color: transparent;
+    --sitna-minimal-button-background-color: transparent;
 }
 
 .tc-ctl-lcat .tc-ctl-lcat-info h3 {
@@ -209,7 +209,7 @@ div.tc-ctl-lcat-search > ul > li.tc-ctl-lcat-no-results:hover:after {
     max-height: 16em;
     overflow: auto;
     border: 1px solid #999;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     padding: 0;
     transition: all .2s ease;
     padding-right: 0.13em;
@@ -453,7 +453,7 @@ div.tc-ctl-lcat-legend {
 /* LEGACY: controles de Pamplona */
 .tc-ctl-lcat-tree ul input[type="checkbox"].tc-ctl-lcat-btn-info:before, .tc-ctl-lcat-search ul input[type="checkbox"].tc-ctl-lcat-search-btn-info:before {
     font-size: 0.75em;
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-info);
 }
 
@@ -486,7 +486,7 @@ div.tc-ctl-lcat-search > ul > li, div.tc-ctl-lcat-search > ul > li > ul > li {
     height: 2em;
     padding: 0 0 0 0.2em;
     border: 1px solid #ccc;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
 div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked > p {
@@ -504,7 +504,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     .tc-ctl-lcat-loading-node:before {
         position: absolute;
         font-size: 85%;
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         color: var(--glyph-sec-color);
         content: var(--icon-spinner);
         margin-left: -15px;
@@ -529,7 +529,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
     background-color: var(--sec-divider-color);
     color: var(--text-sec-color);
     padding: 0.1em 0.2em;
-    border-radius: calc(var(--border-radius) / 2);
+    border-radius: calc(var(--sitna-border-radius) / 2);
     pointer-events: none;
 }
 
@@ -543,7 +543,7 @@ div.tc-ctl-lcat-search li.tc-checked > h5, div.tc-ctl-lcat-search li.tc-checked 
         width: min(50%, 20em);
         height: 1em;
         background-color: var(--sec-divider-color);
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         animation: soft-pulsation 1.2s infinite;
     }
 

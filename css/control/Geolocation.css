@@ -96,19 +96,19 @@
 }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-ui sitna-button {
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
     }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-ui sitna-button.tc-ctl-geolocation-track-ui-activate {
-            --icon-text: '\e926';
+            --sitna-icon-text: '\e926';
         }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-ui sitna-button.tc-ctl-geolocation-track-ui-deactivate {
-            --icon-text: '\e925';
+            --sitna-icon-text: '\e925';
         }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-save {
-        --icon-font-family: mapskin;
+        --sitna-icon-font-family: mapskin;
         --icont-text: "\e038";
     }
 
@@ -125,13 +125,13 @@
     }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-mng input[type="file"] + label {
-            color: var(--btn-color);
+            color: var(--sitna-button-text-color);
             display: inline-block;
             cursor: pointer;
             border: 1px solid;
-            border-color: var(--btn-border-color);
-            border-radius: var(--border-radius);
-            background-color: var(--btn-border-color);
+            border-color: var(--sitna-button-border-color);
+            border-radius: var(--sitna-border-radius);
+            background-color: var(--sitna-button-border-color);
             height: 2em;
             padding: 0 8px;
             box-sizing: border-box;
@@ -145,7 +145,7 @@
             }
 
     .tc-ctl-geolocation .tc-btn-delete-all {
-        --icon-text: var(--icon-delete);
+        --sitna-icon-text: var(--icon-delete);
     }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst .tc-ctl-geolocation-tools-always {
@@ -191,31 +191,31 @@
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button[variant="minimal"] {
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
 }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button.tc-btn-delete {
-        --icon-text: var(--icon-delete);
+        --sitna-icon-text: var(--icon-delete);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button.tc-btn-edit {
-        --icon-text: '\e92a';
+        --sitna-icon-text: '\e92a';
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button.tc-btn-save {
-        --icon-text: '\2714';
+        --sitna-icon-text: '\2714';
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button.tc-btn-cancel {
-        --icon-text: var(--icon-close);
+        --sitna-icon-text: var(--icon-close);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button.tc-btn-export {
-        --icon-text: var(--icon-download);
+        --sitna-icon-text: var(--icon-download);
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li sitna-button.tc-btn-share {
-        --icon-text: var(--icon-share);
+        --sitna-icon-text: var(--icon-share);
     }
 
 input#tc-ctl-geolocation-track-available-srch {
@@ -227,7 +227,7 @@ input#tc-ctl-geolocation-track-available-srch {
     position: relative;
     margin-top: 4px;
     right: 0.7em;
-    color: var(--glyph-color);
+    color: var(--sitna-minimal-button-text-color);
     font-style: normal;
     width: 1em;
     height: 1em;
@@ -236,8 +236,8 @@ input#tc-ctl-geolocation-track-available-srch {
 }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-search-icon:before {
-        font-family: var(--icon-font-family);
-        font-size: calc(var(--icon-font-grid-size) / 2);
+        font-family: var(--sitna-icon-font-family);
+        font-size: calc(var(--sitna-icon-font-grid-size) / 2);
         content: var(--icon-search);
     }
 
@@ -255,7 +255,7 @@ input#tc-ctl-geolocation-track-available-srch {
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-add-wpt {
-    --icon-text: var(--icon-placemark);
+    --sitna-icon-text: var(--icon-placemark);
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-import > input[type="file"] {
@@ -336,7 +336,7 @@ div.tc-ctl-geolocation-track-snap-info {
     color: var(--overlay-color);
     padding: 0.3em;
     border: 0.1em solid var(--overlay-border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     font-size: 11px;
 }
 
@@ -384,9 +384,11 @@ div.tc-ctl-geolocation-track-snap-info {
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li.tc-checked sitna-button[variant="minimal"] {
-        --glyph-bg-color: color-mix(in hsl, var(--list-hl-bg-color) 85%, var(--text-main-color));
+        --sitna-minimal-button-background-color: color-mix(in hsl, var(--list-hl-bg-color) 85%, var(--text-main-color));
+        --sitna-disabled-button-text-color: color-mix(in hsl, var(--list-hl-bg-color) 80%, var(--text-main-color));
+        --sitna-disabled-button-background-color: color-mix(in hsl, var(--list-hl-bg-color) 90%, var(--text-main-color));
+        --sitna-disabled-button-border-color: color-mix(in hsl, var(--list-hl-bg-color) 90%, var(--text-main-color));
     }
-
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim {
         flex-grow: 2;
@@ -397,29 +399,29 @@ div.tc-ctl-geolocation-track-snap-info {
     }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-btn-stop {
-            --icon-font-family: FontAwesome;
-            --icon-text: "\f04d";
+            --sitna-icon-font-family: FontAwesome;
+            --sitna-icon-text: "\f04d";
         }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-btn-pause {
-            --icon-font-family: FontAwesome;
-            --icon-text: "\f04c";
+            --sitna-icon-font-family: FontAwesome;
+            --sitna-icon-text: "\f04c";
         }
 
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-btn-pause.tc-play {
-            --icon-font-family: FontAwesome;
-            --icon-text: "\f04b";
+            --sitna-icon-font-family: FontAwesome;
+            --sitna-icon-text: "\f04b";
         }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-btn-forward {
-            --icon-font-family: FontAwesome;
-            --icon-text: "\f04e";
+            --sitna-icon-font-family: FontAwesome;
+            --sitna-icon-text: "\f04e";
         }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-btn-backward {
-            --icon-font-family: FontAwesome;
-            --icon-text: "\f04a";
+            --sitna-icon-font-family: FontAwesome;
+            --sitna-icon-text: "\f04a";
         }
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-spn-speed {

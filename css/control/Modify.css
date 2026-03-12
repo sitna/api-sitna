@@ -32,7 +32,7 @@
     flex-grow: 1;
     text-align: center;
     width: 25%;
-    font-size: calc(var(--icon-font-grid-size) / 2);
+    font-size: calc(var(--sitna-icon-font-grid-size) / 2);
 }
 
 .tc-ctl-mod .tc-ctl-mod-btn > button.tc-ctl-btn[disabled] {
@@ -40,19 +40,19 @@
 }
 
 .tc-ctl-mod-btn-select {
-    --icon-text: var(--icon-select);
+    --sitna-icon-text: var(--icon-select);
 }
 
 .tc-ctl-mod-btn-del-vertex {
-    --icon-text: '\e92b';
+    --sitna-icon-text: '\e92b';
 }
 
 .tc-ctl-mod-btn-delete {
-    --icon-text: var(--icon-erase);
+    --sitna-icon-text: var(--icon-erase);
 }
 
 .tc-ctl-mod-btn-text {
-    --icon-text: 'A';
+    --sitna-icon-text: 'A';
 }
 
 .tc-ctl-dmm-mod sitna-button.tc-ctl-mod-btn-join,

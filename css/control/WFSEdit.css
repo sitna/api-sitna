@@ -77,8 +77,8 @@
     position: absolute;
     top: 0;
     right: 0;
-    --icon-font-family: 'mapskin';
-    --icon-text: '\e0a6';
+    --sitna-icon-font-family: 'mapskin';
+    --sitna-icon-text: '\e0a6';
 }
 
 .tc-ctl-wfsedit-view input[type=color] {

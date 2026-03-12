@@ -4,7 +4,7 @@
 }
 
 .tc-ctl-m-finfo-btn-zoom {
-    --icon-text: '\e917';
+    --sitna-icon-text: '\e917';
 }
 
 .tc-ctl-m-finfo-select {
@@ -69,16 +69,16 @@
     }
 
     .tc-ctl-m-finfo-select input[type=radio]:checked ~ span {
-        color: var(--btn-hl-color);
-        background-color: var(--btn-hl-bg-color);
-        border-color: var(--btn-hl-border-color);
+        color: var(--sitna-active-button-text-color);
+        background-color: var(--sitna-active-button-background-color);
+        border-color: var(--sitna-active-button-border-color);
         z-index: 10007;
     }
 
     .tc-ctl-m-finfo-select input[type=radio]:disabled ~ span {
-        color: var(--btn-disabled-color);
-        background-color: var(--btn-disabled-bg-color);
-        border-color: var(--btn-disabled-border-color);
+        color: var(--sitna-disabled-button-text-color);
+        background-color: var(--sitna-disabled-button-background-color);
+        border-color: var(--sitna-disabled-button-border-color);
         cursor: default;
     }
     

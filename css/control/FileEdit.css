@@ -47,7 +47,7 @@ sitna-file-edit ul.tc-ctl-file-recent {
 
 .tc-ctl-wlm input.tc-ctl-fedit-btn-edit:before,
 .tc-ctl-wlm input.tc-ctl-fedit-btn-edit:checked:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-edit);
 }
 

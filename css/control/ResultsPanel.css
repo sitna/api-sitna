@@ -765,7 +765,7 @@ div.tc-ctl-rpanel-heading-samehw {
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-tools {
-    --glyph-bg-color: transparent;
+    --sitna-minimal-button-background-color: transparent;
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
@@ -800,7 +800,7 @@ div.tc-ctl-rpanel-heading-samehw {
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-heading {
-    --glyph-color: var(--color-1);
+    --sitna-minimal-button-text-color: var(--color-1);
 }
 
 .tc-ctl-rpanel-main .tc-ctl-rpanel-body {
@@ -921,11 +921,11 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
 }
 
 .tc-ctl-rpanel-info table tr:nth-child(odd) {
-    background: var(--table-odd-row-bg-color);
+    background: var(--sitna-odd-row-background-color);
 }
 
 .tc-ctl-rpanel-info table tr:nth-child(even) {
-    background: var(--table-even-row-bg-color);
+    background: var(--sitna-even-row-background-color);
 }
 
 .tc-ctl-rpanel-table th, .tc-ctl-rpanel-table td, .tc-ctl-rpanel-info table th, .tc-ctl-rpanel-info table td {
@@ -1167,7 +1167,7 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
 }
 
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-share {
-    --icon-text: var(--icon-share);
+    --sitna-icon-text: var(--icon-share);
 }
 
 /* --- LEGACY --- */
@@ -1197,17 +1197,17 @@ button.tc-icon-btn.tc-ctl-p-results-csv-btn:after,
 
 
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-csv {
-    --icon-text: "\1f5cb";
+    --sitna-icon-text: "\1f5cb";
 }
 
 /* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-dwn-btn:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-download);
 }
 
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-dwn {
-    --icon-text: var(--icon-download);
+    --sitna-icon-text: var(--icon-download);
 }
 
 /* --- LEGACY --- */
@@ -1216,19 +1216,19 @@ button.tc-icon-btn.tc-ctl-p-results-min-btn:before {
 }
 
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-min {
-    --icon-text: "\2bc7"
+    --sitna-icon-text: "\2bc7"
 }
 
 /* --- LEGACY --- */
 button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: var(--icon-close);
     font-size: 1rem;
     line-height: 1.95em;
 }
 
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-close {
-    --icon-text: var(--icon-close);
+    --sitna-icon-text: var(--icon-close);
 }
 
 .tc-ctl-rpanel-overlay {
@@ -1278,7 +1278,7 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
     }
 
     .tc-ctl-rpanel-minimized-max-chart:before {
-        font-family: var(--icon-font-family);
+        font-family: var(--sitna-icon-font-family);
         content: var(--icon-profile);
     }
 

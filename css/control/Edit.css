@@ -4,29 +4,29 @@
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-modify:before {
-    font-family: var(--icon-font-family);
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+    font-family: var(--sitna-icon-font-family);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
     content: var(--icon-select);
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-point:before {
     letter-spacing: 0.2em;
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
-    font-family: var(--icon-font-family);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
+    font-family: var(--sitna-icon-font-family);
     content: '\e90a';
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-line:before {
     letter-spacing: 0.2em;
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
-    font-family: var(--icon-font-family);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
+    font-family: var(--sitna-icon-font-family);
     content: '\e90b';
 }
 
 .tc-ctl-edit .tc-ctl-edit-mode sitna-tab.tc-ctl-edit-btn-polygon:before {
     letter-spacing: 0.2em;
-    font-size: calc(var(--icon-font-grid-size) * 2 / 3);
-    font-family: var(--icon-font-family);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
+    font-family: var(--sitna-icon-font-family);
     content: '\e90c';
 }
 
@@ -35,18 +35,18 @@
 }
 
 .tc-ctl-edit-btn-new {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-edit-btn-cancel {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-edit-btn-delete {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-edit {
@@ -106,8 +106,8 @@
 }
 
 .tc-ctl-edit-modify sitna-modify .tc-ctl-mod-btn > sitna-button.tc-ctl-mod-btn-del-vertex {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-mod-attr-body select.tc-combo {
@@ -134,15 +134,15 @@
 
     .tc-ctl-edit-other sitna-button {
         height: 2em;
-        font-size: calc(var(--icon-font-grid-size) / 2);
+        font-size: calc(var(--sitna-icon-font-grid-size) / 2);
     }
 
 .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-import {
-    --icon-text: '\e901';
+    --sitna-icon-text: '\e901';
 }
 
 .tc-ctl-edit .tc-ctl-edit-other .tc-ctl-edit-btn-dl {
-    --icon-text: var(--icon-download);
+    --sitna-icon-text: var(--icon-download);
 }
 
 .tc-ctl-edit-import {
@@ -162,7 +162,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         height: auto;
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         border: 1px solid var(--sec-divider-color);
         padding: 0;
         list-style: none;
@@ -196,7 +196,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         height: auto;
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         border: 1px solid var(--sec-divider-color);
         padding: 0;
         list-style: none;
@@ -228,8 +228,8 @@
     }
 
         .tc-ctl-edit-import-list ul.tc-layers li input[type=checkbox] + label:before {
-            font-family: var(--icon-font-family);
-            font-size: calc(var(--icon-font-grid-size) / 2);
+            font-family: var(--sitna-icon-font-family);
+            font-size: calc(var(--sitna-icon-font-grid-size) / 2);
             margin-left: 0.5em;
             display: inline-block;
             font-weight: normal;

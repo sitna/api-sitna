@@ -7,10 +7,10 @@
     padding: 10px;
     max-width: 100%;
     max-height: 100%;
-    border: 2px solid var(--tab-border-color);
+    border: 2px solid var(--sitna-tab-border-color);
     opacity: 100%;
     box-sizing: border-box;
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl.tc-ctl-img-magnifier .tc-ctl-img-magnifier-bg {
@@ -40,13 +40,13 @@
     }
     .tc-ctl.tc-ctl-img-magnifier.tc-ctl-img-magnifier-top:before {
         top: calc(100% - 5px);
-        border-bottom: 2px solid var(--tab-border-color);
-        border-right: 2px solid var(--tab-border-color);
+        border-bottom: 2px solid var(--sitna-tab-border-color);
+        border-right: 2px solid var(--sitna-tab-border-color);
     }
     .tc-ctl.tc-ctl-img-magnifier.tc-ctl-img-magnifier-bottom:before {
         top: -7px;
-        border-left: 2px solid var(--tab-border-color);
-        border-top: 2px solid var(--tab-border-color);
+        border-left: 2px solid var(--sitna-tab-border-color);
+        border-top: 2px solid var(--sitna-tab-border-color);
     }
     .tc-ctl.tc-ctl-img-magnifier.tc-ctl-img-magnifier-right:before {
         left: 12px;

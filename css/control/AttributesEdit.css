@@ -29,11 +29,11 @@
 }
 
 .tc-ctl-attr-edit-add {
-    --icon-text: '\e904';
+    --sitna-icon-text: '\e904';
 }
 
 .tc-ctl-attr-edit-remove {
-    --icon-text: var(--icon-delete);
+    --sitna-icon-text: var(--icon-delete);
 }
 
 .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex {
@@ -41,39 +41,39 @@
 }
 
     .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table {
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         border-collapse: separate;
         border: solid var(--sec-divider-color) 2px;
     }
 
         .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:first-child {
-            border-top-left-radius: var(--border-radius);
-            border-top-right-radius: var(--border-radius);
+            border-top-left-radius: var(--sitna-border-radius);
+            border-top-right-radius: var(--sitna-border-radius);
         }
 
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:first-child > th:first-child,
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:first-child > td:first-child {
-                border-top-left-radius: var(--border-radius);
+                border-top-left-radius: var(--sitna-border-radius);
             }
 
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:first-child > th:last-child,
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:first-child > td:last-child {
-                border-top-right-radius: var(--border-radius);
+                border-top-right-radius: var(--sitna-border-radius);
             }
 
         .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:last-child {
-            border-bottom-left-radius: var(--border-radius);
-            border-bottom-right-radius: var(--border-radius);
+            border-bottom-left-radius: var(--sitna-border-radius);
+            border-bottom-right-radius: var(--sitna-border-radius);
         }
 
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:last-child > th:first-child,
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:last-child > td:first-child {
-                border-bottom-left-radius: var(--border-radius);
+                border-bottom-left-radius: var(--sitna-border-radius);
             }
 
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:last-child > th:last-child,
             .tc-ctl-attr-edit-body table td.tc-ctl-attr-edit-complex table > tbody > tr:last-child > td:last-child {
-                border-bottom-right-radius: var(--border-radius);
+                border-bottom-right-radius: var(--sitna-border-radius);
             }
 
 .tc-ctl-edit select.tc-ctl-attr-edit-type.tc-hidden {
