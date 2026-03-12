@@ -21,7 +21,7 @@
         transform: translateX(100%);
     }
 
-    ul.tc-ctl-toc-branch li.tc-ctl-toc-node:last-child, ul.tc-ctl-lcat-branch li.tc-ctl-lcat-node:last-child 100% {
+    100% {
         transform: translateX(0);
     }
 }
@@ -99,11 +99,11 @@
 
 :root {
     /* layout custom variables */
-    --btn-disabled-bg-color: #eaeae3;
-    --btn-disabled-border-color: #eaeae3;
+    --sitna-disabled-button-background-color: #eaeae3;
+    --sitna-disabled-button-border-color: #eaeae3;
     --panel-tab-color: #ffffff;
     --panel-tab-bg-color: var(--sitna-color-05);
-    --tab-inner-border-radius: 0;
+    --sitna-tab-inner-border-radius: 0;
 }
 
 a.tc-file-link:before {
@@ -152,7 +152,7 @@ a.tc-file-link[type='text/plain']:before {
 
     .tc-ctl input[type=range]:disabled::-webkit-slider-runnable-track,
     .tc-modal input[type=range]:disabled::-webkit-slider-runnable-track {
-        background: var(--btn-disabled-bg-color);
+        background: var(--sitna-disabled-button-background-color);
         cursor: default;
     }
 
@@ -162,7 +162,7 @@ a.tc-file-link[type='text/plain']:before {
         height: 20px;
         width: 20px;
         max-width: 50%;
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         background: #666;
         cursor: pointer;
         -webkit-appearance: none;
@@ -193,7 +193,7 @@ a.tc-file-link[type='text/plain']:before {
 
     .tc-ctl input[type=range]:disabled::-moz-range-track,
     .tc-modal input[type=range]:disabled::-moz-range-track {
-        background: var(--btn-disabled-bg-color);
+        background: var(--sitna-disabled-button-background-color);
         cursor: default;
     }
 
@@ -203,7 +203,7 @@ a.tc-file-link[type='text/plain']:before {
         height: 20px;
         width: 20px;
         max-width: 50%;
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         background: #666;
         cursor: pointer;
     }
@@ -309,7 +309,7 @@ html:-ms-fullscreen {
         z-index: 10012;
         border-top: 0.2em solid #fff;
         border-left: 0.2em solid #fff;
-        border-top-left-radius: var(--border-radius);
+        border-top-left-radius: var(--sitna-border-radius);
     }
 
     .tc-map-3d.tc-loading {
@@ -479,11 +479,11 @@ html:-ms-fullscreen {
 
 
 .tc-ctl-wlm .tc-ctl-wlm-input sitna-button, .tc-ctl-wlm .tc-ctl-wlm-addonsContainer sitna-button {
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 0.75);
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-input sitna-toggle {
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 0.75);
 }
 
 table.tc-attr a[target=_blank]:after, .tc-ctl-finfo-val a[target=_blank]:after {
@@ -524,13 +524,13 @@ table.tc-attr a[target=_blank]:after, .tc-ctl-finfo-val a[target=_blank]:after {
 }
 
 .tc-ctl-dldlog-dl sitna-button:nth-child(even) {
-    border-top-right-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
+    border-bottom-right-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-dldlog-dl sitna-button:nth-child(2n+3) {
-    border-top-left-radius: var(--border-radius);
-    border-bottom-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ctl-wlm .tc-ctl-wlm-type.tc-ctl-wlm-type-grp:after {
@@ -691,10 +691,10 @@ ul.tc-ctl-toc-branch ul.tc-ctl-toc-branch.tc-collapsed, ul.tc-ctl-toc-branch li.
 
 button.tc-ctl-btn.tc-ctl-search-btn {
     width: 2.5em;
-    background-color: var(--btn-hl-bg-color);
-    border-color: var(--btn-hl-border-color);
+    background-color: var(--sitna-active-button-background-color);
+    border-color: var(--sitna-active-button-border-color);
     border-left-width: 1px;
-    color: var(--btn-hl-color);
+    color: var(--sitna-active-button-text-color);
     overflow: hidden;
 }
 
@@ -733,14 +733,15 @@ button.tc-ctl-btn.tc-ctl-search-btn {
 
 .tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
     /* la regla position:fixed no tiene efecto, ya que el div padre se ocuta mediante la regla transform: translateX */
-    transform: translateX(-100%);
+    translate: -100% 0;
     position: fixed;
     background-color: var(--main-bg-color);
     padding: 0.5em;
-    bottom: 0;
+    top: 0;
     left: 0;
+    bottom: auto;
     width: calc(100% - 1em);
-    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     box-shadow: 2px 2px 5px 0 rgba(0,0,0,0.2);
 }
 
@@ -765,7 +766,7 @@ button.tc-ctl-btn.tc-ctl-search-btn {
     width: 100%;
     margin: 0.5em 0 0.5em 0;
     border: 1px solid var(--sec-divider-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--sitna-border-radius);
     text-align: left;
     padding: 0.3em;
     box-sizing: border-box;
@@ -863,9 +864,9 @@ ul.tc-ctl-finfo-layers > li.tc-checked h4 {
 .tc-ctl-finfo-counter-pages {
     line-height: 2em;
     text-align: center;
-    background-color: var(--btn-bg-color);
-    color: var(--btn-color);
-    border: 1px solid var(--btn-border-color);
+    background-color: var(--sitna-button-background-color);
+    color: var(--sitna-button-text-color);
+    border: 1px solid var(--sitna-button-border-color);
     box-sizing: border-box;
     opacity: 0.5;
     float: left;
@@ -901,7 +902,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked h4 {
     }
 
 .tc-ctl-finfo-btn-prev {
-    border-top-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
 }
 
     .tc-ctl-finfo-btn-prev:before {
@@ -909,7 +910,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked h4 {
     }
 
 .tc-ctl-finfo-btn-next {
-    border-top-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
 }
 
     .tc-ctl-finfo-btn-next:before {
@@ -1055,13 +1056,13 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-ctl-geolocation-track-center button:after {
-    font-family: var(--icon-font-family);
+    font-family: var(--sitna-icon-font-family);
     content: '\e925';
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-save {
-    --icon-font-family: FontAwesome;
-    --icon-text: "\f0c7";
+    --sitna-icon-font-family: FontAwesome;
+    --sitna-icon-text: "\f0c7";
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-mng input[type="file"] + label:before {
@@ -1070,8 +1071,8 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li > sitna-button.tc-btn-edit {
-    --icon-font-family: FontAwesome;
-    --icon-text: "\f040";
+    --sitna-icon-font-family: FontAwesome;
+    --sitna-icon-text: "\f040";
 }
 
 .tc-ctl-popup-content.tc-printable + .tc-ctl-popup-menu .tc-ctl-ftools {
@@ -1079,7 +1080,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-ctl-ftools sitna-button {
-    font-size: calc(var(--icon-font-grid-size) * 0.75);
+    font-size: calc(var(--sitna-icon-font-grid-size) * 0.75);
 }
 
 .tc-ctl-popup-content.tc-printable + .tc-ctl-popup-menu .tc-ctl-ftools.tc-active {
@@ -1300,7 +1301,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-legend-panel .tc-panel-tab {
-    border-top-right-radius: var(--border-radius);
+    border-top-right-radius: var(--sitna-border-radius);
 }
 
 .tc-legend-panel .tc-panel-tab, .tc-ovmap-panel .tc-panel-tab {
@@ -1321,7 +1322,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-tools-panel .tc-panel-tab {
-    border-bottom-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--sitna-border-radius);
 }
 
 .tc-tools-panel.tc-collapsed-right .tc-panel-tab:after {
@@ -1333,7 +1334,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-ovmap-panel .tc-panel-tab {
-    border-top-left-radius: var(--border-radius);
+    border-top-left-radius: var(--sitna-border-radius);
 }
 
 .tc-ovmap-panel.tc-collapsed-right .tc-panel-tab:after {
@@ -1484,7 +1485,7 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
 }
 
 .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-min {
-    --icon-text: "\25bc"
+    --sitna-icon-text: "\25bc"
 }
 
 .tc-ctl-rpanel-heading {
@@ -1886,7 +1887,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     }
 
     .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-min {
-        --icon-text: "\25c4"
+        --sitna-icon-text: "\25c4"
     }
 
     .tc-show-in {
@@ -1934,17 +1935,17 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     .tc-tools-panel {
         border-left: 1px solid #ccc;
         border-bottom: 1px solid #ccc;
-        border-bottom-left-radius: var(--border-radius);
+        border-bottom-left-radius: var(--sitna-border-radius);
         height: auto;
     }
 
     .tc-legend-panel {
         border-right: 1px solid #ccc;
-        border-top-right-radius: var(--border-radius);
+        border-top-right-radius: var(--sitna-border-radius);
     }
 
         .tc-legend-panel:not(.tc-collapsed-left).tc-slide-panel > h1.tc-panel-tab {
-            border-top-right-radius: var(--border-radius);
+            border-top-right-radius: var(--sitna-border-radius);
         }
 }
 
@@ -1981,7 +1982,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
             max-width: 60%;
             max-height: 100%;
             height: auto;
-            border-radius: var(--border-radius);
+            border-radius: var(--sitna-border-radius);
             border-width: 1px;
             width: fit-content;
             margin: 0 auto;
@@ -2055,7 +2056,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
 @media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height: 40em) {
 
     .tc-ctl-ftools sitna-button {
-        font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+        font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
     }
 
 
@@ -2063,7 +2064,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         font-size: 0.8em;
         text-transform: lowercase;
         text-indent: 0;
-        border-radius: var(--border-radius);
+        border-radius: var(--sitna-border-radius);
         font-weight: normal;
         margin: 0.5em;
         width: 10em;
@@ -2210,7 +2211,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
 
     .tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
         border-left: 1px solid #ccc;
-        border-top-left-radius: var(--border-radius);
+        border-top-left-radius: var(--sitna-border-radius);
     }
 
     .tc-tools-panel .tc-panel-tab {
@@ -2242,7 +2243,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
 
     .tc-tools-panel:not(.tc-collapsed-right).tc-slide-panel > h1.tc-panel-tab {
         top: 4em;
-        border-bottom-left-radius: var(--border-radius);
+        border-bottom-left-radius: var(--sitna-border-radius);
         margin-left: -6em;
         left: 0.2em;
         bottom: 0.5em;
@@ -2267,7 +2268,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     }
 
     .tc-legend-panel:not(.tc-collapsed-left).tc-slide-panel > h1.tc-panel-tab {
-        border-top-right-radius: var(--border-radius);
+        border-top-right-radius: var(--sitna-border-radius);
         margin-right: -6em;
         width: 10em;
         position: absolute;
@@ -2345,7 +2346,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     }
 
     .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-min {
-        --icon-text: "\25c4"
+        --sitna-icon-text: "\25c4"
     }
 
     .tc-show-in {
@@ -2420,7 +2421,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
 @media screen and (min-width: 24em) {
     .tc-ctl-meas-pt, .tc-ctl-meas-len, .tc-ctl-meas-area {
         /* la regla position:fixed no tiene efecto, ya que el div padre se ocuta mediante la regla transform: translateX */
-        transform: none;
+        translate: none;
         border: none;
         box-shadow: none;
         width: 100%;
@@ -2665,11 +2666,11 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     }
 
     .tc-ctl-wlm .tc-ctl-wlm-input sitna-button, .tc-ctl-wlm .tc-ctl-wlm-addonsContainer sitna-button {
-        font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+        font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
     }
 
     .tc-ctl-wlm .tc-ctl-wlm-input sitna-toggle {
-        font-size: calc(var(--icon-font-grid-size) * 2 / 3);
+        font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
     }
 
     .tc-ctl input[type=range]::-webkit-slider-runnable-track,
@@ -2865,44 +2866,44 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
 }
 
 .tc-ctl-draw-tools > sitna-button {
-    --icon-font-family: 'FontAwesome';
+    --sitna-icon-font-family: 'FontAwesome';
 }
 
     .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-new {
-        --icon-text: '\f040';
+        --sitna-icon-text: '\f040';
     }
 
     .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-undo {
-        --icon-text: '\f0e2';
+        --sitna-icon-text: '\f0e2';
     }
 
     .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-redo {
-        --icon-text: '\f01e';
+        --sitna-icon-text: '\f01e';
         scale: none;
     }
 
     .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-end {
-        --icon-text: '\f00c';
+        --sitna-icon-text: '\f00c';
     }
 
     .tc-ctl-draw-tools > sitna-button.tc-ctl-draw-btn-cancel {
-        --icon-text: '\f00d';
+        --sitna-icon-text: '\f00d';
     }
 
 .tc-ctl-mod-btn-join {
-    --icon-text: '\f247';
+    --sitna-icon-text: '\f247';
 }
 
 .tc-ctl-mod-btn-split {
-    --icon-text: '\f248';
+    --sitna-icon-text: '\f248';
 }
 
 .tc-ctl-mod-btn-text {
-    --icon-text: 'A';
+    --sitna-icon-text: 'A';
 }
 
 .tc-ctl-mod-btn-cancel {
-    --icon-text: '\f00d';
+    --sitna-icon-text: '\f00d';
 }
 
 .tc-ctl-draw {
@@ -2911,14 +2912,14 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
 
 .tc-ctl button[disabled], button.tc-active[disabled],
 .tc-ctl input[disabled], input.tc-active[disabled] {
-    background-color: var(--btn-disabled-bg-color);
-    border-color: var(--btn-disabled-bg-color);
+    background-color: var(--sitna-disabled-button-background-color);
+    border-color: var(--sitna-disabled-button-background-color);
     cursor: default;
 }
 
 .tc-ctl sitna-tab[disabled] {
-    background-color: var(--tab-disabled-bg-color);
-    border-color: var(--tab-disabled-border-color);
+    background-color: var(--sitna-disabled-tab-background-color);
+    border-color: var(--sitna-disabled-tab-border-color);
 }
 
 .tc-ctl input[type=range][disabled],
@@ -3058,7 +3059,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     }
 
     .tc-tools-panel.tc-slide-panel.tc-collapsed-right > h1.tc-panel-tab {
-        border-bottom-left-radius: var(--border-radius);
+        border-bottom-left-radius: var(--sitna-border-radius);
     }
 
         .tc-tools-panel.tc-slide-panel.tc-collapsed-right > h1.tc-panel-tab::after {
