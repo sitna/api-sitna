@@ -39,6 +39,7 @@
     * [Oferta formativa del Servicio Navarro de Empleo](https://administracionelectronica.navarra.es/EmpleoFormate.Internet/)
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire)
     * [Censo de instalaciones deportivas de Navarra](https://www.navarra.es/CensoInstalacionesDeportivas)
+    * [Visor de incidencias de tráfico](https://visorcontroltrafico.navarra.es/)
   * Acceso autenticado:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
