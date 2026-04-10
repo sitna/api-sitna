@@ -1,0 +1,40 @@
+<li class="tc-ctl-route-feature">
+    <div class="tc-ctl-route-summary">
+        <div class="tc-ctl-route-distance">{{properties.summary.distanceText}}</div>
+        <h3>[[total]]</h3>
+        <div class="tc-ctl-route-duration">{{properties.summary.durationText}}</div>
+    </div>
+{{#if displayElevation}}
+    <div class="tc-ctl-route-result-tabs">
+        <sitna-tab for="{{controlId}}-segments" group="{{controlId}}-results" selected>[[directions]]</sitna-tab>
+        <sitna-tab for="{{controlId}}-profile" group="{{controlId}}-results">[[elevationProfile]]</sitna-tab>
+    </div>
+{{/if}}
+    <ul class="tc-ctl-route-segments" id="{{controlId}}-segments">
+{{#each properties.segments}}
+        <li class="tc-ctl-route-segment">
+            <div class="tc-ctl-route-summary">
+                <div class="tc-ctl-route-distance">{{distanceText}}</div>
+                <h3>[[stage]] {{id}}</h3>
+                <div class="tc-ctl-route-duration">{{durationText}}</div>
+            </div>
+            <ul class="tc-ctl-route-steps tc-list">
+                {{#each steps}}
+                <li class="tc-ctl-route-step">
+                    <div class="tc-ctl-route-summary">
+                        <div class="tc-ctl-route-distance">{{distanceText}}</div>
+                        <div class="tc-ctl-route-duration">{{durationText}}</div>
+                    </div>
+                    <div class="tc-ctl-route-step-instruction" data-type="{{type}}">{{instruction}}</div>
+                </li>
+                {{/each}}
+            </ul>
+        </li>
+{{/each}}
+    </ul>
+{{#if displayElevation}}
+    <div class="tc-ctl-route-profile tc-hidden" id="{{controlId}}-profile">
+        <sitna-elevation-profile></sitna-elevation-profile>
+    </div>
+{{/if}}
+</li>

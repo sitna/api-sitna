@@ -1,0 +1,26 @@
+<h2>[[scenesTitle]]</h2>
+<div class="tc-ctl-scenes"> 
+    <!--<input type="file" />-->
+    <ul class="tc-ctl-scenes-list">
+        {{#each scenes}}
+        <li class="tc-ctl-scenes-list-item" data-index="{{@index}}">
+            <sitna-toggle class="tc-ctl-scenes-list-show" title="[[showHide]]" tc-vc-change="visibilityChange"></sitna-toggle>
+            <sitna-button class="tc-ctl-scenes-list-zoom" disabled variant="minimal" tc-vc-click="zoomToScene" title="[[zoomToSceneToolTip]]"></sitna-button>
+            <span>
+                {{#if  (isPlainObject title)}}
+                {{localeValue title}}
+                {{else}}
+                {{title}}
+                {{/if}}
+                <input type="range" tc-vc-change="sliderChange" disabled min="0" max="100" value="100" title="[[transparencyTitle]]">
+            </span>
+            <input type="number" class="tc-ctl-scenes-list-pointSize tc-hidden" tc-vc-change="pointSizeChange" min="1" max="20" step="1" value="1" title="[[pointSizeTitle]]">
+            <select tc-vc-change="attributeChange" class="tc-ctl-scenes-list-attribute tc-hidden">
+                <option value="1">RGB</option>
+                <option value="2">Clasificación</option>
+                <option value="3">Altura</option>
+            </select>
+        </li>
+        {{/each}}
+    </ul>
+</div>

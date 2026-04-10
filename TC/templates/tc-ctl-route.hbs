@@ -1,0 +1,28 @@
+<h2>[[directions]]</h2>
+<div class="tc-ctl-route-header">
+{{#each profiles}}
+    <sitna-button variant="textless" title="[[{{.}}]]" data-profile="{{this}}"{{#if @first}} active{{/if}}>[[{{.}}]]</sitna-button>
+{{/each}}
+    <sitna-button variant="minimal" title="[[close]]" class="tc-ctl-route-close">[[close]]</sitna-button>
+</div>
+<div class="tc-ctl-route-content">
+    <ul class="tc-ctl-route-destinations tc-list">
+
+    </ul>
+    <div class="tc-ctl-route-destination-actions">
+        <sitna-button class="tc-ctl-route-destination-add">[[addDestination]]</sitna-button>
+        <sitna-button class="tc-ctl-route-destination-switch">[[switchOrder]]</sitna-button>
+    </div>
+    {{#unless preference}}
+    <div class="tc-ctl-route-preference">
+        <h3>[[routePreference]]</h3>
+        <select class="tc-combo" name="route-preference">
+            <option value="recommended">[[recommended]]</option>
+            <option value="shortest">[[shortest]]</option>
+            <option value="fastest">[[fastest]]</option>
+        </select>
+    </div>
+    {{/unless}}
+    <ul class="tc-ctl-route-features">
+    </ul>
+</div>
