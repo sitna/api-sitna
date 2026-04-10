@@ -250,6 +250,10 @@ class Popup extends InfoDisplay {
         return self;
     }
 
+    close() {
+        return this.hide();
+    }
+
     getContainerElement() {
         return this.contentDiv || null;
     }
@@ -300,10 +304,7 @@ class Popup extends InfoDisplay {
         self.contentModel.linkInNewWindow = self.getLocaleString("linkInNewWindow");
         self.contentModel.openInNewTab = self.getLocaleString("openInNewTab");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Popup.prototype.CLASS = 'tc-ctl-popup';
