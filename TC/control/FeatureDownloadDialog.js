@@ -76,7 +76,7 @@ class FeatureDownloadDialog extends WebComponentControl {
             const modalBody = self.modalBody;
 
             modalBody.querySelectorAll('sitna-button[data-format]').forEach((btn) => btn.addEventListener(Consts.event.CLICK, function (e) {
-                self.persist({ format: e.target.dataset.format });
+                self.persist({ format: e.target.dataset.format }).catch((e) => TC.error(e));
             }, { passive: true }));
 
             if (self.options?.elevation) {
@@ -294,6 +294,33 @@ class FeatureDownloadDialog extends WebComponentControl {
             }
         }
 
+        // Comprobar si el formato soporta estilos
+        if (format !== Consts.format.KMZ) {
+            const layerChangedStyle = features.some((f) => {
+                if (f.layer) {
+                    const layer = f.layer;
+                    for (const geom in layer.styles) {
+                        const layerStyle = layer.styles[geom];
+                        if (!Util.stylesEqual(layerStyle, layer.options.styles?.[geom])) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            })
+            const featuresHaveStyle = features.some((f) => Object.keys(f.getStyle() ?? {}).length > 0);
+            if (layerChangedStyle || featuresHaveStyle) {
+                if (!options.acceptedStyleLoss) {
+                    if (TC.confirm(Util.formatIndexedTemplate(self.getLocaleString("dl.export.styleLoss"), format))) {
+                        options.acceptedStyleLoss = true;
+                    }
+                    else {
+                        return;
+                    }
+                }
+            }
+        }
+
         return await self.map.wait(async () => {
             let result = null;
             Util.closeModal();
@@ -391,6 +418,9 @@ class FeatureDownloadDialog extends WebComponentControl {
                             self.persist(newOpts);
                         }
                     }
+                }
+                else {
+                    throw e;
                 }
                 return;
             }
