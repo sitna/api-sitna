@@ -199,6 +199,7 @@ import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import Popup from './Popup.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import WebComponentControl from './WebComponentControl.js';
 
 TC.control = TC.control || {};
 
@@ -257,26 +258,26 @@ class DrawMeasureModify extends Measure {
         modify.containerControl = self;
         modify.id = modifyId;
         modify.snapping = self.snapping;
+        modify.addEventListener(Consts.event.FEATURESSELECT, function (e) {
+            const feature = e.features[e.features.length - 1];
+            self.displayFeatureMode(feature);
+            self.getElevationControl().then(function (ctl) {
+                if (ctl.resultsPanel && !e.features.some(function (feature) {
+                    return ctl.resultsPanel.currentFeature === feature;
+                })) {
+                    ctl.resultsPanel.setCurrentFeature(null);
+                }
+            });
+        });
+        modify.addEventListener(Consts.event.FEATURESUNSELECT, function (_e) {
+            self.getElevationControl().then(function (ctl) {
+                ctl.resetElevationProfile();
+                if (ctl.resultsPanel) {
+                    ctl.resultsPanel.close();
+                }
+            });
+        });
         modify
-            .on(Consts.event.FEATURESSELECT, function (e) {
-                const feature = e.features[e.features.length - 1];
-                self.displayFeatureMode(feature);
-                self.getElevationControl().then(function (ctl) {
-                    if (ctl.resultsPanel && !e.features.some(function (feature) {
-                        return ctl.resultsPanel.currentFeature === feature;
-                    })) {
-                        ctl.resultsPanel.setCurrentFeature(null);
-                    }
-                });
-            })
-            .on(Consts.event.FEATURESUNSELECT, function (_e) {
-                self.getElevationControl().then(function (ctl) {
-                    ctl.resetElevationProfile();
-                    if (ctl.resultsPanel) {
-                        ctl.resultsPanel.close();
-                    }
-                });
-            })
             .on(Consts.event.FEATUREMODIFY, function (e) {
                 if (e.layer === self.layer) {
                     const setMeasures = function (feature) {
@@ -346,15 +347,11 @@ class DrawMeasureModify extends Measure {
                                 }
                             }
                             ctl.displayElevationProfile(feature).then(() => {
+                                feature.infoControl = ctl.resultsPanel;
                                 ctl.resultsPanel.getInfoContainer().innerHTML = html;
                             });
                         });
                     }
-                }
-            })
-            .on(Consts.event.PROJECTIONCHANGE, function (e) {
-                if (self.elevationChartData) {
-                    self.elevationChartData.coords = Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
                 }
             });
 
@@ -412,6 +409,9 @@ class DrawMeasureModify extends Measure {
                     if (self.elevationProfileActive) {
                         if (navigator.onLine) {
                             ctl.displayElevationProfile(coords);
+                            self.map.getControlsByClass(TC.control.ResultsPanel)
+                                .filter(p => p.currentFeature && p.caller instanceof TC.control.FeatureInfo)
+                                .forEach(p => p.close());
                         }
                         else {
                             ctl.closeElevationProfile();
@@ -421,15 +421,17 @@ class DrawMeasureModify extends Measure {
                 if (e.target.historyIndex === 1)
                     self.#beginDraw();
             })
-            .on(Consts.event.STYLECHANGE, function (e) {
-                self.onStyleChange(e);
-            }).on(Consts.event.DRAWCANCEL, function () {
+            .on(Consts.event.DRAWCANCEL, function () {
                 self.getModifyControl().then((ctl) => {
                     ctl.setLabelableState(self.layer.features.length > 0);
                     ctl.displayLabelText();
                 });
                 self.#cancelDraw();
             });
+
+        lineDrawControl.addEventListener(Consts.event.STYLECHANGE, function (e) {
+            self.onStyleChange(e);
+        });
 
         const polygonDrawControl = await self.getPolygonDrawControl();
         polygonDrawControl
@@ -459,9 +461,6 @@ class DrawMeasureModify extends Measure {
                 //    }
                 //}
             })
-            .on(Consts.event.STYLECHANGE, function (e) {
-                self.onStyleChange(e);
-            })
             .on(Consts.event.DRAWCANCEL + ' ' + Consts.event.DRAWUNDO, function () {
                 self.getModifyControl().then((ctl) => {
                     ctl.setLabelableState(self.layer.features.length > 0);
@@ -469,6 +468,10 @@ class DrawMeasureModify extends Measure {
                 });
                 self.#cancelDraw();
             });
+
+        polygonDrawControl.addEventListener(Consts.event.STYLECHANGE, function (e) {
+            self.onStyleChange(e);
+        });
 
         const pointDrawControl = await self.getPointDrawControl();
 
@@ -483,15 +486,16 @@ class DrawMeasureModify extends Measure {
         pointDrawControl
             .on(Consts.event.DRAWEND, function (e) {
                 const updateChanges = function (feat) {
-                    self.displayMeasurements({ coordinates: feat.geometry, units: map.wrap.isGeo() || map.on3DView ? 'degrees' : 'm' });
+                    self.displayMeasurements({ coordinates: feat.getCoordinates(e.transform), units: map.wrap.isGeo() || map.on3DView ? 'degrees' : 'm' });
                     self.setFeatureMeasurementData(feat);
                 };
-                updateChanges(e.feature);
+                const feature = e.feature.clone();
+                updateChanges(feature);
                 self.getElevationTool().then(function (tool) {
                     if (tool) {
                         tool.setGeometry({
                             features: [e.feature],
-                            crs: self.map.getCRS()
+                            crs: self.map.crs
                         }).then(function (features) {
                             updateChanges(features[0]);
                         }, function (e) {
@@ -514,14 +518,25 @@ class DrawMeasureModify extends Measure {
                     self.cancel();
                 }, 100);
                 self.#cancelDraw();
-            })
-            .on(Consts.event.STYLECHANGE, function (e) {
-                self.onStyleChange(e);
             });
+
+        pointDrawControl.addEventListener(Consts.event.STYLECHANGE, function (e) {
+            self.onStyleChange(e);
+        });
+
         // Desactivamos el método exportState que ya se encarga el control padre de ello
         pointDrawControl.exportsState = false;
 
-        self.#elevationControlPromise = map.addControl('elevation', self.options.displayElevation);
+        self.#elevationControlPromise = map.addControl('elevation', {
+            ...self.options.displayElevation, displayMode: WebComponentControl.displayMode.PANEL
+        });
+
+        self.drawControls.forEach((dc) => {
+            dc.on(Consts.event.DRAWSTART, function () {
+                //cerrar popup y paneles asociados a features
+                self.#closePopupsProfiles();
+            });
+        });
 
         await self.setLayer(self.layer);
         self.setMode(self.options.mode);
@@ -534,7 +549,7 @@ class DrawMeasureModify extends Measure {
                     self.setFeatureMeasurementData(feature);
 
                     self.getModifyControl().then(function (modify) {
-                        modify.displayLabelText(feature.getStyle().label);
+                        modify.displayLabelText(feature.getStyle()?.label);
                     });
                     self.#clearBtn.disabled = false;
                     self.#downloadBtn.disabled = false;
@@ -690,14 +705,14 @@ class DrawMeasureModify extends Measure {
 
     setFeatureMeasurementData(feature) {
         const self = this;
-        switch (self.mode) {
-            case Consts.geom.POINT:
+        switch (true) {
+            case feature instanceof Point || feature instanceof MultiPoint:
                 self.pointMeasurementControl.setFeatureMeasurementData(feature);
                 break;
-            case Consts.geom.POLYLINE:
+            case feature instanceof Polyline || feature instanceof MultiPolyline:
                 self.lineMeasurementControl.setFeatureMeasurementData(feature);
                 break;
-            case Consts.geom.POLYGON:
+            case feature instanceof Polygon || feature instanceof MultiPolygon:
                 self.polygonMeasurementControl.setFeatureMeasurementData(feature);
                 break;
             default:
@@ -724,14 +739,14 @@ class DrawMeasureModify extends Measure {
             case feature instanceof Polyline:
             case feature instanceof MultiPolyline:
                 result.length = feature.getLength(measureOptions);
-                self.getElevationControl().then(ctl => {
+                self.getElevationControl().then(() => {
                     if (self.elevationProfileActive) {
-                        ctl.displayElevationProfile(feature);
+                        feature.showInfo();
                     }
                 });
                 break;
             case feature instanceof Point:
-                result.coordinates = feature.geometry;
+                result.coordinates = feature.getCoordinates({ geometryCrs: self.map.crs, crs: self.map.getCRS() });                
                 break;
             default:
                 break;
@@ -821,26 +836,7 @@ class DrawMeasureModify extends Measure {
         if (featureCtor) {
             self.modify.getSelectedFeatures().forEach(function (feature) {
                 if (feature instanceof featureCtor) {
-                    const styleOptions = {};
-                    if (e.strokeWidth)
-                        styleOptions["strokeWidth"] = e.strokeWidth;
-                    if (e.strokeColor)
-                        styleOptions["strokeColor"] = e.strokeColor;
-                    if (e.fillColor)
-                        styleOptions["fillColor"] = e.fillColor;
-                    if (e.fillOpacity)
-                        styleOptions["fillOpacity"] = e.fillOpacity;
-                    if (e.fontColor)
-                        styleOptions["fontColor"] = e.fontColor;
-                    if (e.fontSize)
-                        styleOptions["fontSize"] = e.fontSize;
-                    if (e.labelOutlineColor)
-                        styleOptions["labelOutlineColor"] = e.labelOutlineColor;
-                    if (e.labelOutlineWidth)
-                        styleOptions["labelOutlineWidth"] = e.labelOutlineWidth;
-                    if (e.radius)
-                        styleOptions["radius"] = e.radius;
-
+                    const styleOptions = { ...e.control.getStyle() };
                     //feature._originalStyle[e.property] = e.value;
                     feature.setStyle(styleOptions);
                     //clearTimeout(feature._selectionStyleTimeout);
@@ -889,18 +885,9 @@ class DrawMeasureModify extends Measure {
         }
     }
 
-    resetElevationProfile() {
-        const self = this;
-        if (self.options.displayElevation && self.resultsPanelChart) {
-            self.elevationChartData = {
-                x: [0],
-                ele: [0],
-                coords: [0, 0, 0],
-                upHill: 0,
-                downHill: 0
-            };
-            self.resultsPanelChart.openChart(self.elevationChartData);
-        }
+    async resetElevationProfile() {
+        const elevationControl = await self.getElevationControl();
+        elevationControl.resetElevationProfile();
     }
 
     getElevationControl() {
@@ -940,6 +927,22 @@ class DrawMeasureModify extends Measure {
         }
     }
 
+    #closePopupsProfiles() {
+        const self = this;
+        self.getElevationControl().then(function (ctl) {
+            if (ctl.resultsPanel && ctl.resultsPanel.currentFeature) {
+                ctl.resultsPanel.setCurrentFeature(null);
+                ctl.resultsPanel.hide();
+            }
+            self.resetValues();
+        });
+        self.map.getControlsByClass(TC.control.Popup).filter((p) => p.isVisible() && p.currentFeature).forEach((p) => p.hide());
+        self.map.getControlsByClass(TC.control.ResultsPanel).filter((p) => p.isVisible() && p.currentFeature).forEach((p) => {
+            p.hide();
+            p.setCurrentFeature(null);
+        });
+    }
+
     updateModel() {
         const self = this;
         self.model.drawAndMeasure = self.getLocaleString("drawAndMeasure");
@@ -949,10 +952,6 @@ class DrawMeasureModify extends Measure {
         self.model.hideSketch = self.getLocaleString("hideSketch");
         self.model.download = self.getLocaleString("download");
         self.model.deleteAll = self.getLocaleString("deleteAll");
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
     }
     
 }
