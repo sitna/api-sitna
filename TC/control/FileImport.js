@@ -163,6 +163,7 @@ class FileImport extends WebComponentControl {
                 const groupCount = e.groupCount;
                 const groupName = e.groupName;
                 const fileSystemFile = e.fileSystemFile?.name;
+                const visibility = e.visibility ?? true;
 
                 const projectGeom = function (feature) {
                     const geogCrs = 'EPSG:4326';
@@ -204,7 +205,7 @@ class FileImport extends WebComponentControl {
                     return;
                 }
 
-                const newLayer = id => {
+                const newLayer = (id) => {
                     if (!id) {
                         do {
                             id = self.getUID(fileHandle || timeStamp);
@@ -225,14 +226,22 @@ class FileImport extends WebComponentControl {
 
                 let targetLayers = e.targetLayers || [];
                 if (!targetLayers.length) {
-                    targetLayers.push(await newLayer());
+                    targetLayers.push(newLayer());
                 }
                 for (var i = 0; i < targetLayers.length; i++) {
                     const targetLayer = targetLayers[i];
-                    const mapLayer = self.map.getLayer(targetLayer) || newLayer(targetLayer.id);
+                    const mapLayer = self.map.getLayer(targetLayer) ?? ((targetLayer instanceof Vector) ? targetLayer : newLayer(targetLayer.id));
                     // Guarda metadatos de la capa extraídos de archivo (por ejemplo, info de tabla de GeoPackage)
                     mapLayer.setFeatureTypeMetadata(e.metadata);
-                    const fileMetadata = await self.loadLayerMetadata(mapLayer);
+                    let fileMetadata = await self.loadLayerMetadata(mapLayer);
+                    if (fileMetadata) {
+                        const isSameEntry = await fileMetadata.fileHandle.isSameEntry(fileHandle);
+                        if (!isSameEntry) {
+                            // Los metadatos almacenados no son de este archivo
+                            self.#layerMetadataCache.delete(mapLayer.id, fileMetadata);
+                            fileMetadata = null;
+                        }
+                    }
                     if (!fileMetadata || fileMetadata.groupIndex === groupIndex || (!groupIndex && !fileMetadata.groupIndex)) {
                         mapLayer.groupIndex = groupIndex;
                         mapLayer.groupCount = groupCount;
@@ -251,6 +260,7 @@ class FileImport extends WebComponentControl {
                     if (!self.map.getLayer(layer)) {
                         await self.map.addLayer(layer);
                     }
+                    layer.setVisibility(visibility);
                 }
 
                 if (targetLayers.length) {
@@ -338,16 +348,17 @@ class FileImport extends WebComponentControl {
                     ownLayers.splice(idx, 1);
                 }
             })
-            .on(Consts.event.FILESAVE, function (e) {
-                self.map.workLayers.forEach(l => {
-                    l._fileHandle?.isSameEntry(e.fileHandle).then((isSameEntry) => {
-                        isSameEntry && self.saveLayerMetadata(l);
-                        if (l.owner === self) {
-                            l._title = l.title = e.fileHandle.name;
-                            self.map.trigger(Consts.event.VECTORUPDATE, { layer: l });
+            .on(Consts.event.FILESAVE, async function (e) {
+                for (const layer of self.map.workLayers) {
+                    const isSameEntry = await layer._fileHandle?.isSameEntry(e.fileHandle);
+                    if (isSameEntry) {
+                        self.saveLayerMetadata(layer);
+                        if (layer.owner === self) {
+                            layer._title = layer.title = e.fileHandle.name;
                         }
-                    });
-                });
+                    }
+                    if (layer.owner === self) self.map.trigger(Consts.event.VECTORUPDATE, { layer });
+                }
             });
 
         map.loaded(() => {
@@ -723,7 +734,7 @@ class FileImport extends WebComponentControl {
     getUID(fileHandleOrTimestamp) {
         const self = this;
         if (fileHandleOrTimestamp) {
-            const propertyname = Object.prototype.hasOwnProperty.call(window, "FileSystemFileHandle") ? "_fileHandle" : "_timeStamp";
+            const propertyname = "FileSystemFileHandle" in window ? "_fileHandle" : "_timeStamp";
             const grouped = self.getLayers().reduce((vi, va) => {
                 return vi.findByProperty(propertyname, va[propertyname]) &&
                     vi.some(l => /^[\w]*-\d-\d/gi.exec(va.id)[0] === /^[\w]*-\d-\d/gi.exec(l.id)[0]) ? vi : vi.concat(va);
@@ -745,10 +756,7 @@ class FileImport extends WebComponentControl {
         self.model.close = self.getLocaleString("close");
         self.model.ok = self.getLocaleString("ok");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 TC.mix(FileImport, layerOwner);
