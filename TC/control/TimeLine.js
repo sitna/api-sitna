@@ -107,8 +107,7 @@ class TimeLine extends Control {
             if (timeControl) {
                 timeControl.stopAnimation();
             }
-        });
-        TC.Consts.event.LAYERREMOVE
+        });        
         return Control.prototype.register.call(self, map);
     }
 
@@ -285,10 +284,17 @@ class TimeControl extends WebComponentControl {
         const self = this;
 
         const sliderOptions = [];
-        if (self.step) { 
+
+        //URI: Logica para capas con intervalo inadecuado, para no crear sliders de mas de 1000 elementos
+        if (self.step) {
+
+            if ((self.lastTime - self.firstTime) / self.step > 1000) {
+                self.step = (self.lastTime - self.firstTime) / self.step;
+            }
+
             for (let markTime = self.firstTime; markTime <= self.lastTime; markTime += self.step) {
                 sliderOptions.push({ value: markTime });
-            }            
+            }
         }
         if (self.range) {
             self.range.forEach((date) => { sliderOptions.push({ "value": date }); });
@@ -464,10 +470,7 @@ class TimeControl extends WebComponentControl {
         this.model["time.from"] = this.getLocaleString("time.from");
         this.model["time.to"] = this.getLocaleString("time.to");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 customElements.get(elementName) || customElements.define(elementName, TimeControl);
 TimeControl.prototype.CLASS = 'tc-ctl-timecontrol';
