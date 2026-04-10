@@ -611,10 +611,7 @@ class Share extends MapInfo {
         this.MOBILEFAV = this.getLocaleString('mobileBookmarks.instructions');
         this.NAVALERT = this.getLocaleString('bookmarks.instructions');
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Share.prototype.CLASS = 'tc-ctl-share';

@@ -78,10 +78,6 @@ class ScaleSelector extends Scale {
     updateModel() {
         this.model.estimatedMapSize = this.getLocaleString("estimatedMapSize");
     }
-    updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
 
 }
 

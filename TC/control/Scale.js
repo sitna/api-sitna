@@ -141,10 +141,7 @@ class Scale extends Control {
     updateModel() {
         this.model.estimatedMapSize = this.getLocaleString("estimatedMapSize");
     }
-    updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Scale.prototype.CLASS = 'tc-ctl-scl';

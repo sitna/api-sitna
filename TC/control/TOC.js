@@ -384,10 +384,7 @@ class TOC extends MapContents {
         this.model.worklayers = this.getLocaleString("worklayers");
         this.model.noData = this.getLocaleString("noData");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 TOC.prototype.CLASS = 'tc-ctl-toc';

@@ -653,10 +653,6 @@ class FileEdit extends WebComponentControl {
                 main: self.getLocaleString('editFeatures')
             });
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
 }
 
 FileEdit.prototype.CLASS = 'tc-ctl-fedit';

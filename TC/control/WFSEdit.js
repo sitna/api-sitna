@@ -1603,10 +1603,7 @@ class WFSEdit extends SWCacheClient {
         self.model.discardChanges = self.getLocaleString("discardChanges");
         self.model.clickToChangeColor = self.getLocaleString("clickToChangeColor");
     }
-    updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 WFSEdit.prototype.CLASS = 'tc-ctl-wfsedit';

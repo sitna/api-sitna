@@ -128,10 +128,7 @@ class Print extends Control {
         self.model.printThisContent = self.getLocaleString("printThisContent");
         self.model.print = self.getLocaleString("print");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Print.prototype.CLASS = 'tc-ctl-print';

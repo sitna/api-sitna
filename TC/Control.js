@@ -409,8 +409,9 @@ TC.inherit(TC.Control, EventTarget);
         }
         return self.elevation;
     };
+
     ctlProto.updateLanguage = async function () {
-        return true;
+        return this.updateModel?.();
     }    
 
 })();

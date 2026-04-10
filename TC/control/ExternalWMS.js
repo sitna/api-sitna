@@ -243,10 +243,6 @@ class ExternalWMS extends Control {
         self.model.addService = self.getLocaleString("addService");
         self.model.addWMS = self.getLocaleString("addWMS");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
 }
 
 ExternalWMS.prototype.CLASS = 'tc-ctl-xwms';

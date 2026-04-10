@@ -1749,10 +1749,6 @@ class OfflineMapMaker extends SWCacheClient {
             this.offlineModel.returnToOnlineMaps = this.getLocaleString("returnToOnlineMaps");
         }
     }
-
-    async updateLanguage() {
-        this.updateModel();
-    }
 }
 
 OfflineMapMaker.prototype.CLASS = 'tc-ctl-omm';

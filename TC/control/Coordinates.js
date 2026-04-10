@@ -518,7 +518,8 @@ class Coordinates extends ProjectionSelector {
         }
         return self.layer;
     }
-    updateModel(){
+
+    updateModel() {
         this.model.crs=this.getLocaleString("crs");
         this.model.changeCRS = this.getLocaleString("changeCRS");
         this.model.lat = this.getLocaleString("lat");
@@ -532,10 +533,6 @@ class Coordinates extends ProjectionSelector {
         this.modelDialog.coordsInstructionsWarning = this.getLocaleString("coords.instructions.warning");
         this.modelDialog.cancel = this.getLocaleString("cancel");
         this.modelDialog.close = this.getLocaleString("close");
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
     }
 }
 

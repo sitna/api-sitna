@@ -407,10 +407,6 @@ ${toFixed(yOrigin)}`);
         self.dialogModel["dl.instructions.6"] = self.getLocaleString("dl.instructions.6");
         self.dialogModel.close = self.getLocaleString("close");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
 }
 
 Download.prototype.CLASS = 'tc-ctl-download';
