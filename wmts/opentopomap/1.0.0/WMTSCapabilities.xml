@@ -60,7 +60,7 @@
 				<ows:UpperCorner>180 85</ows:UpperCorner>
 			</ows:WGS84BoundingBox>
 			<ows:Identifier>opentopomap</ows:Identifier>
-			<ows:BoundingBox>
+			<ows:BoundingBox crs="urn:ogc:def:crs:EPSG::3857">
 				<ows:LowerCorner>-20037508.3427892 -20037508.3427892</ows:LowerCorner>
 				<ows:UpperCorner>-20037508.3427892 20037508.3427892</ows:UpperCorner>
 			</ows:BoundingBox>
