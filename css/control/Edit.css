@@ -64,12 +64,16 @@
 .tc-ctl-edit-modify sitna-modify, .tc-ctl-edit .tc-ctl-edit-point sitna-draw, .tc-ctl-edit .tc-ctl-edit-line sitna-draw, .tc-ctl-edit .tc-ctl-edit-polygon sitna-draw, .tc-ctl-edit .tc-ctl.tc-ctl-edit-other {
     /*position: fixed;*/
     box-sizing: border-box;
-    padding-top: 0.5em;
+    padding: 0.5em 0 0 0;
     top: 0;
     left: 0;
     width: 100%;
     overflow: hidden;
     transition: all .2s ease;
+}
+
+.tc-ctl-rpanel-info .tc-ctl-edit sitna-measurement {
+    margin: 0;
 }
 
 .tc-ctl-edit sitna-draw .tc-ctl-draw-tools {

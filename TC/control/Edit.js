@@ -49,6 +49,8 @@ class Edit extends WebComponentControl {
     #originalFeatures = new WeakMap();
     #modes = new Set();
 
+    history;
+
     static mode = {
         MODIFY: 'modify',
         ADDPOINT: 'addpoint',
@@ -62,6 +64,12 @@ class Edit extends WebComponentControl {
         MODECHANGE: 'modechange'
     }
 
+    static action = {
+        ATTRIBUTESCHANGE: 'attributesChange',
+        GEOMETRYCHANGE: 'geometryChange',
+        ADD: 'add',
+        REMOVE: 'remove',
+    };
     constructor() {
         super(...arguments);
         const self = this;
@@ -426,10 +434,12 @@ class Edit extends WebComponentControl {
         //self.cutDrawControl = controls[3];
         self.modifyControl = controls[3];
         self.modifyControl.id = self.getUID();
+        self.history = self.modifyControl.history;
 
         self.modifyControlAttributesEditor = await self.getModifyControlAttributeEditor();
         self.modifyControlAttributesEditor.clientControl = self.modifyControl;
         self.modifyControlAttributesEditor.autofill = self.options.autofill;
+        self.modifyControlAttributesEditor.history = self.history;
         self.pointDrawControlAttributesEditor = await self.getPointDrawControlAttributeEditor();
         self.pointDrawControlAttributesEditor.clientControl = self.pointDrawControl;
         self.pointDrawControlAttributesEditor.autofill = self.options.autofill;
@@ -447,13 +457,7 @@ class Edit extends WebComponentControl {
                 featureUpdateTimestamps.set(feature, timestamp);
                 let changed = false;
                 let elevationTool;
-                const cloneTree = function (tree) {
-                    if (Array.isArray(tree)) {
-                        return tree.map((elm) => cloneTree(elm));
-                    }
-                    return tree;
-                }
-                const geometry = cloneTree(feature.geometry);
+                const geometry = structuredClone(feature.geometry);
                 for (const point of Geometry.iterateCoordinates(geometry)) {
                     const z = point[2];
                     if (z === undefined || z === null) {
@@ -472,7 +476,7 @@ class Edit extends WebComponentControl {
                     const currentTimestamp = featureUpdateTimestamps.get(feature);
                     // Nos aseguramos de que se actualiza solamente a la última versión de la geometría
                     if (timestamp === currentTimestamp) {
-                        feature.setCoordinates(geometry);
+                        self.setFeatureCoordinates(feature, geometry);
                     }
                 }
             }
@@ -521,31 +525,38 @@ class Edit extends WebComponentControl {
         //        //self.layer.features.filter(f => f)
         //    })
         //    .on(Consts.event.DRAWCANCEL, drawcancelHandler);
+
         self.modifyControl
             .on(Consts.event.FEATUREMODIFY, async function onFeatureModify(e) {
                 if (e.layer === self.layer) {
                     self.#measurementControl.displayMeasurement(e.feature);
                 }
                 await addElevation(e.feature);
-                self.trigger(Consts.event.FEATUREMODIFY, { feature: e.feature, layer: e.layer, geometryChanged: true });
             })
             .on(Consts.event.FEATUREADD, function (e) {
                 self.trigger(Consts.event.FEATUREADD, { feature: e.feature, layer: e.layer });
             })
             .on(Consts.event.FEATUREREMOVE, function (e) {
                 self.trigger(Consts.event.FEATUREREMOVE, { feature: e.feature, layer: e.layer });
-            })
-            .on(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, function (_e) {
-                const features = self.modifyControl.getSelectedFeatures();
-                if (features.length) {
-                    self.#measurementControl.displayMeasurement(features[features.length - 1]);
-                }
-                else {
-                    self.#measurementControl.clearMeasurement();
-                }
+            });
+        const onFeaturesSelectionChange = function (_e) {
+            const features = self.modifyControl.getSelectedFeatures();
+            if (features.length) {
+                self.#measurementControl.displayMeasurement(features.at(-1));
+            }
+            else {
+                self.#measurementControl.clearMeasurement();
+            }
+        };
+        self.modifyControl.addEventListener(Consts.event.FEATURESSELECT, onFeaturesSelectionChange);
+        self.modifyControl.addEventListener(Consts.event.FEATURESUNSELECT, onFeaturesSelectionChange);
+
+        self.modifyControlAttributesEditor
+            .on(Consts.event.FEATUREMODIFY, async function onFeatureModify(e) {
+                self.trigger(Consts.event.FEATUREMODIFY, { ...e });
             });
 
-        //control de renderizado enfunción del modo de edicion
+        //control de renderizado en función del modo de edicion
         if (Array.isArray(self.options.modes) && self.options.modes.length > 0) {
             for (var m in Edit.mode) {
                 if (typeof m === 'string' && self.options.modes.indexOf(Edit.mode[m]) < 0) {
@@ -1193,6 +1204,21 @@ class Edit extends WebComponentControl {
         const self = this;
         self.#originalFeatures.set(feature, feature.clone());
     }
+
+    setFeatureCoordinates(feature, coordinates) {
+        const oldData = structuredClone(feature.getCoordinates());
+        const newData = structuredClone(coordinates);
+        this.history.setCoordinates(feature, coordinates);
+        this.trigger(Consts.event.FEATUREMODIFY, {
+            feature,
+            layer: feature.layer,
+            geometryChanged: true,
+            oldData,
+            newData,
+        });
+        return this;
+    }
+
     async updateModel() {
         const self = this;
         
@@ -1211,10 +1237,7 @@ class Edit extends WebComponentControl {
         if (self.featureImportPanel)
             self.featureImportPanel.setTitles({ main: self.getLocaleString('importFromOtherLayer') });
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Edit.prototype.CLASS = 'tc-ctl-edit';
