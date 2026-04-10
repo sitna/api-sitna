@@ -600,6 +600,9 @@ console.log("MILLISECONDS",end2-start2);
                     upperCorner[1]
                 ];
             }
+            if (layer.BoundingBox) {
+                if (!Array.isArray(layer.BoundingBox)) layer.BoundingBox = [layer.BoundingBox];
+            }
         }
     };
 
@@ -723,6 +726,7 @@ console.log("MILLISECONDS",end2-start2);
                 n = t(capabilites, r), u = a(capabilites, r), p = i(capabilites, r);
                 var o = s(capabilites, r),
                     l = {
+                        version: r,
                         Operations: n,
                         FeatureTypes: u,
                         Filters: p
@@ -773,6 +777,7 @@ console.log("MILLISECONDS",end2-start2);
                         r.FeatureTypeList.FeatureType = (r.FeatureTypeList.FeatureType instanceof Array) ? r.FeatureTypeList.FeatureType : [r.FeatureTypeList.FeatureType];
                         for (var a = {}, i = 0; i < r.FeatureTypeList.FeatureType.length; i++) {
                             var s = r.FeatureTypeList.FeatureType[i].Name;
+                            s = s.textContent || s;
                             a[s.substring(s.indexOf(":") + 1)] = r.FeatureTypeList.FeatureType[i]
                         }
                         return a;
@@ -782,6 +787,7 @@ console.log("MILLISECONDS",end2-start2);
                         r.FeatureTypeList.FeatureType = (r.FeatureTypeList.FeatureType instanceof Array) ? r.FeatureTypeList.FeatureType : [r.FeatureTypeList.FeatureType];
                         for (var a = {}, i = 0; i < r.FeatureTypeList.FeatureType.length; i++) {
                             var s = r.FeatureTypeList.FeatureType[i].Name;
+                            s = s.textContent || s;
                             a[s.substring(s.indexOf(":") + 1)] = r.FeatureTypeList.FeatureType[i]
                         }
                         return a
