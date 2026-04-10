@@ -43,6 +43,10 @@
             --sitna-icon-text: var(--icon-profile);
         }
 
+        .tc-ctl-ftools sitna-button.tc-ctl-ftools-style-btn {
+            --sitna-icon-text: var(--icon-style);
+        }
+
         .tc-ctl-ftools sitna-button.tc-ctl-ftools-del-btn {
             --sitna-icon-text: var(--icon-delete);
         }
@@ -61,3 +65,37 @@ table.tc-ctl-ftools-zoom {
     table.tc-ctl-ftools-zoom audio {
         cursor: default;
     }
+
+.tc-ctl-ftools-style-edit {
+    position: absolute;
+    top: 0.3em;
+    left: 0.3em;
+    font-size: calc(0.8rem / 0.95);
+    background-color: var(--sitna-background-color);
+    border: 1px solid var(--sitna-tab-border-color);
+    border-radius: var(--sitna-border-radius);
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+    padding: 0.5em;
+}
+
+    .tc-ctl-ftools-style-edit .tc-ctl-fstyler-stroke,
+    .tc-ctl-ftools-style-edit .tc-ctl-fstyler-fill,
+    .tc-ctl-ftools-style-edit .tc-ctl-fstyler-radius {
+        text-wrap: nowrap;
+    }
+
+.tc-ctl-ftools-style-edit:not(.tc-hidden) {
+    animation: fade-grow 0.25s;
+}
+
+.tc-ctl-ftools-style-edit-head {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.tc-ctl-ftools sitna-button.tc-ctl-ftools-style-edit-close {
+    --sitna-icon-text: var(--icon-close);
+    --sitna-minimal-button-text-color: var(--sitna-highlighted-text-color);
+    --sitna-minimal-button-background-color: transparent;
+}

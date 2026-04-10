@@ -9,6 +9,7 @@ import Polyline from '../../SITNA/feature/Polyline.js';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import WebComponentControl from './WebComponentControl.js';
 
 TC.control = TC.control || {};
 TC.control.infoShare = infoShare;
@@ -52,6 +53,8 @@ class FeatureToolsModel {
         this.viewElevation = "";
         this.viewElevationProfile = "";
         this.deleteFeature = "";
+        this.editStyle = "";
+        this.close = "";
     }
 }
 class FeatureToolShareModel {
@@ -74,7 +77,7 @@ class FeatureTools extends Control {
     TITLE_SEPARATOR = ' › ';
     FILE_TITLE_SEPARATOR = '__';
     _dialogDiv;
-    _parentCtl;
+    #parentControl;
 
     constructor() {
         super(...arguments);
@@ -98,8 +101,10 @@ class FeatureTools extends Control {
             .on(Consts.event.POPUP + ' ' + Consts.event.DRAWTABLE + ' ' + Consts.event.DRAWCHART, function (e) {
                 const control = e.control;
                 if (control.caller || control.currentFeature) {
-                    self.addUI(control);
-                    self.dataController = new Controller(self.dataModel, new Observer(control.getInfoContainer() || control.getTableContainer()));
+                    if (control.getInfoContainer || control.getTableContainer) {
+                        self.addUI(control);
+                        self.dataController = new Controller(self.dataModel, new Observer(control.getInfoContainer() || control.getTableContainer()));
+                    }
                 }
                 // TODO: ¿Y si miramos si la feature del control ya está asociada a otro control abierto para decir si decoramos o no?
             })
@@ -140,7 +145,8 @@ class FeatureTools extends Control {
 
     addUI(ctl) {
         const self = this;
-        self._parentCtl = ctl;
+        if (!ctl.getMenuElement) return; // El control no tiene menú donde añadir la UI
+        self.#parentControl = ctl;
         const menuContainer = ctl.getMenuElement();
         // Nos aseguramos de que el se decora el control una sola vez
         const menuIsMissing = function () {
@@ -225,6 +231,8 @@ class FeatureTools extends Control {
         const self = this;
         const uiDiv = ctl.getMenuElement().querySelector('.' + self.CLASS);
         const currentFeature = self.getCurrentFeature(ctl);
+        uiDiv?.querySelector('.' + self.CLASS + '-style-edit').classList.add(Consts.classes.HIDDEN);
+
         // Primer caso para que isActive == true: que esté resaltada una feature.
         // Segundo caso: que la feature no sea de GFI.
         // Se puede haber llamado a updateUI después de haber eliminado la feature(FEATUREDOWNPLAY)
@@ -255,8 +263,18 @@ class FeatureTools extends Control {
                         elevBtn.classList.toggle(Consts.classes.HIDDEN, !tool ||
                             !(currentFeature instanceof Point) ||
                             isCluster);
+                        // Comprobamos si el contenido del control es modificable por esta herramienta
+                        if (!ctl.getContainerElement().querySelector('tbody')) {
+                            elevBtn.classList.add(Consts.classes.HIDDEN);
+                        }
                     }
                 });
+
+                const selectedStyle = currentFeature.getStyle();
+                //currentFeature.toggleSelectedStyle(false);
+                uiDiv.querySelector(`.${self.CLASS}-style-btn`).classList.toggle(Consts.classes.HIDDEN, isCluster || !selectedStyle || !selectedStyle.strokeColor);
+                currentFeature.toggleSelectedStyle(ctl.isVisible() && currentFeature === self.getCurrentFeature(ctl));
+
             }
             else {
                 delete uiDiv.dataset.layerId;
@@ -343,6 +361,14 @@ class FeatureTools extends Control {
             }));
     }
 
+    onStyleEditButtonClick(e) {
+        const feature = this.getCurrentFeature(this.#parentControl);
+        const container = e.target.closest('.' + this.CLASS);
+        const featureStyler = container.querySelector("sitna-feature-styler");
+        featureStyler.setFeature(feature);
+        container.querySelector('.' + this.CLASS + '-style-edit').classList.remove(Consts.classes.HIDDEN);
+    }
+
     #setToolButtonHandlers(ctl) {
         const self = this;
 
@@ -379,6 +405,29 @@ class FeatureTools extends Control {
             }, { passive: true });
         }
 
+        // Evento para editar estilo
+        const styleBtn = container.querySelector(`.${self.CLASS}-style-btn`);
+        if (styleBtn) {
+            styleBtn.addEventListener(Consts.event.CLICK, function (e) {
+                self.onStyleEditButtonClick(e);
+            }, { passive: true });
+        }
+
+        // Evento al cambiar estilo
+        const featureStyler = container.querySelector("sitna-feature-styler");
+        featureStyler.addEventListener(Consts.event.STYLECHANGE, function (_e) {
+            const feature = self.getCurrentFeature(self.#parentControl);
+            feature.toggleSelectedStyle(false); // Quitamos el estilo de selección para no interferir con el nuevo estilo
+            const newStyle = Object.assign({}, feature.getStyle(), featureStyler.getStyle());
+            feature.setStyle(newStyle);
+            feature.toggleSelectedStyle(true);
+        });
+
+        // Evento para cerrar editor de estilo
+        container.querySelector('.' + self.CLASS + '-style-edit-close').addEventListener(Consts.event.CLICK, function (_e) {
+            container.querySelector('.' + self.CLASS + '-style-edit').classList.add(Consts.classes.HIDDEN);
+        });
+
         // Evento para borrar la feature
         container.querySelector('.' + self.CLASS + '-del-btn').addEventListener(Consts.event.CLICK, function (e) {
             self.onDeleteButtonClick(e);
@@ -391,7 +440,9 @@ class FeatureTools extends Control {
             return null;
         }
         if (!self.elevationControl) {
-            self.elevationControl = await self.map.addControl('elevation', self.options.displayElevation);
+            self.elevationControl = await self.map.addControl('elevation', {
+                ...self.options.displayElevation, displayMode: WebComponentControl.displayMode.PANEL
+            });
         }
         return self.elevationControl;
     }
@@ -450,13 +501,15 @@ class FeatureTools extends Control {
         if (feature && feature.layer && feature.layer.owner && feature.layer === feature.layer.owner.resultsLayer) {
             removeFeature();
             //closeDisplay();
-            self._parentCtl?.caller?.removeFeature?.(feature);
+            if (feature !== self.#parentControl.currentFeature)
+                self.#parentControl?.caller?.removeFeature?.(feature);
         }
         else {
             TC.confirm(self.getLocaleString('deleteFeature.confirm'), function () {
                 removeFeature();
                 //closeDisplay();
-                self._parentCtl?.caller?.removeFeature?.(feature);
+                if (feature !== self.#parentControl.currentFeature)
+                    self.#parentControl?.caller?.removeFeature?.(feature);
             });
         }
     }
@@ -575,14 +628,9 @@ class FeatureTools extends Control {
     }
     async updateModel() {
         const self = this;
-        self.model.downloadFeature = self.getLocaleString("downloadFeature");
-        self.model.download = self.getLocaleString("download");
-        self.model.shareFeature = self.getLocaleString("shareFeature");
-        self.model.share = self.getLocaleString("share");
-        self.model.zoomToFeature = self.getLocaleString("zoomToFeature");
-        self.model.viewElevation = self.getLocaleString("viewElevation");
-        self.model.viewElevationProfile = self.getLocaleString("viewElevationProfile");
-        self.model.deleteFeature = self.getLocaleString("deleteFeature");
+        for (const key in self.model) {
+            self.model[key] = self.getLocaleString(key);
+        }
 
         self.dialogModel.feature = self.getLocaleString("feature");
         self.dialogModel.share = self.getLocaleString("share");
@@ -598,10 +646,6 @@ class FeatureTools extends Control {
         self.dataModel.viewEnlargedImage = self.getLocaleString("featureInfo.complexData.array");
         
         
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
     }
 }
 

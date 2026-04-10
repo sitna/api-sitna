@@ -4,5 +4,13 @@
     <sitna-button variant="minimal" class="tc-ctl-ftools-zoom-btn" title="[[zoomToFeature]]">[[zoomToFeature]]</sitna-button>
     <sitna-button variant="minimal" class="tc-ctl-ftools-elev-btn tc-hidden" title="[[viewElevation]]">[[viewElevation]]</sitna-button>
     <sitna-button variant="minimal" class="tc-ctl-ftools-prof-btn tc-hidden" title="[[viewElevationProfile]]">[[viewElevationProfile]]</sitna-button>
+    <sitna-button variant="minimal" class="tc-ctl-ftools-style-btn tc-hidden">[[editStyle]]</sitna-button>
     <sitna-button variant="minimal" class="tc-ctl-ftools-del-btn" title="[[deleteFeature]]">[[deleteFeature]]</sitna-button>
+    <div class="tc-ctl-ftools-style-edit tc-hidden">
+        <div class="tc-ctl-ftools-style-edit-head">
+            <span>[[editStyle]]</span>
+            <sitna-button variant="minimal" class="tc-ctl-ftools-style-edit-close">[[close]]</sitna-button>
+        </div>
+        <sitna-feature-styler mode="{{geometryType}}"></sitna-feature-styler>
+    </div>
 </div>
