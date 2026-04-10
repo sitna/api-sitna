@@ -62,12 +62,13 @@
 import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 import ThreeDView from '../view/ThreeD.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-TC.control = TC.control || {};
+const elementName = 'sitna-3d';
+
 TC.view = TC.view || {};
 TC.view.ThreeD = ThreeDView;
 
@@ -77,7 +78,7 @@ class ThreeDModel {
     }
 }
 
-class ThreeD extends Control {
+class ThreeD extends WebComponentControl {
 
     register(map) {
         const self = this;
@@ -101,14 +102,14 @@ class ThreeD extends Control {
         const self = this;
         self.model = new ThreeDModel();
         return super.renderData.call(self, data, function () {
-            self.button = self.div.querySelector('.' + self.CLASS + '-btn');
+            self.button = self.querySelector('.' + self.CLASS + '-btn');
 
             self.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controller = new Controller(self.model, new Observer(self));
             self.updateModel();
         });
     }
@@ -129,8 +130,9 @@ class ThreeD extends Control {
         }, { passive: true });
     }
 
-    set3D() {
+    set3D(instant = false) {
         const self = this;
+        const deferred = Promise.withResolvers();
 
         if (!self.map.on3DView) {
             self.button.disabled = true;
@@ -146,29 +148,36 @@ class ThreeD extends Control {
 
         const removeDisabled = function () {
             self.button.disabled = false;
+            deferred.resolve();
         };
 
         if (!self.map.view3D || !self.map.on3DView) {
-            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled });
+            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled, instant });
         }
 
         manageButton();
+        return deferred.promise;
     }
 
-    unset3D() {
+    unset3D(bbox) {
         const self = this;
+        const deferred = Promise.withResolvers();
 
         self.button.disabled = true;
 
         TC.view.ThreeD.unapply({
+            extent: bbox,
+            instant: !!bbox,
             callback: function () {
                 self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
                 self.button.classList.remove(Consts.classes.CHECKED);
 
                 self.button.disabled = false;
+                return deferred.resolve();
             }
         });
+        return deferred.promise;
     }
 
     browserSupportWebGL() {
@@ -232,12 +241,9 @@ class ThreeD extends Control {
     updateModel() {
         this.model["threed.tip"] = this.getLocaleString("threed.tip");
     }
-    updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 ThreeD.prototype.CLASS = 'tc-ctl-3d';
-TC.control.ThreeD = ThreeD;
+customElements.get(elementName) || customElements.define(elementName, ThreeD);
 export default ThreeD;
