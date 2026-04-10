@@ -226,29 +226,34 @@ let inputMaskNumber = null;
 const _getValue = function (input) {
     if (inputMaskNumber) {
         return inputMaskNumber.unmaskedValue;
-
-    } else if (dateInputMask) {
+    }
+    if (dateInputMask) {
         //si es texto con mascara de fecha convertierto la fecha de dd/mm/yyyy a yyyy-mm-dd
         return dateInputMask.unmaskedValue.substring(4) + "-" + dateInputMask.unmaskedValue.substring(2, 4) + "-" + dateInputMask.unmaskedValue.substring(0, 2);
     }
+    if (input.type === "checkbox") {
+        return input.checked;
+    }
     return input.value;//en el resto de los casos la devuelvo tal cual
-
 };
 
 const _getValueToShow = function (input) {
     if (inputMaskNumber) {
         return inputMaskNumber.value;
     }
-    else if (dateInputMask) {
+    if (dateInputMask) {
         //si es de tipo date devolvemos la fecha en formato dd/mm/yyyy
         return dateInputMask.value;
     }
-    else if (input.type === "date") {
+    if (input.type === "date") {
         return new Date(input.value).toLocaleDateString(locale, { timeZone: "UTC" });
     }
-    else if (input.type === "number") {
+    if (input.type === "number") {
         var dotOrComma = 1.1.toLocaleString(locale).substring(1, 2);
         return input.value.replace(".", dotOrComma);
+    }
+    if (input.type === "checkbox") {
+        return this.getLocaleString(input.checked ? "true" : "false");
     }
     return input.value;//en el resto de los casos la devuelvo tal cual
 };
@@ -320,13 +325,19 @@ const _createDateMask = function (txtBox) {
     }
 };
 
+const resetInputMask = function (input) {
+    input.type = "search";
+    input.classList.add('tc-textbox');
+    input.value = "";
+    delete input.title;
+};
+
 const _destroyDateMask = function () {
     if (dateInputMask) {
         var input = dateInputMask.el.input;
         dateInputMask.destroy();
         dateInputMask = null;
-        input.value = "";
-        input.type = "search";
+        resetInputMask(input);
     }
 };
 
@@ -335,10 +346,14 @@ const destroyNumberMask = function () {
         var input = inputMaskNumber.el.input;
         inputMaskNumber.destroy();
         inputMaskNumber = null;
-        input.value = "";
-        input.type = "search";
+        resetInputMask(input);
     }
 };
+
+const createBooleanInput = function (input) {
+    input.type = "checkbox";
+    input.classList.remove('tc-textbox');
+}
 
 let _internalGetDataTypes;
 var _getDataTypes = function () {
@@ -539,7 +554,8 @@ class WFSQueryModel {
 
         this["query.returnToQueryBuilder"];
 
-
+        this.true = "";
+        this.false = "";
     }
 }
 
@@ -927,7 +943,8 @@ class WFSQuery extends Control {
             }
             return false;
         }
-        if (form.querySelector('input.tc-textbox').value.trim() === "" && (option.value !== "empty" && option.value !== "null")) {
+        const valueInput = self.#getValueInput(form);
+        if (valueInput.type !== "checkbox" && valueInput.value.trim() === "" && (option.value !== "empty" && option.value !== "null")) {
             self.showMessage(getLocaleString("query.msgNoValueCondition"));
             return false;
         }
@@ -1493,10 +1510,11 @@ class WFSQuery extends Control {
         const numericSection = form.querySelector(`.${ctlCssClass}-numeric`);
         const textSection = form.querySelector(`.${ctlCssClass}-text`);
         const dateSection = form.querySelector(`.${ctlCssClass}-date`);
+        const booleanSection = form.querySelector(`.${ctlCssClass}-boolean`);
         const geomSection = form.querySelector(`.${ctlCssClass}-geom`);
         const whereSection = form.querySelector(`.${ctlCssClass}-where`);
         const opSection = form.querySelector(`.${ctlCssClass}-op`);
-        var valueField = whereSection.querySelector(".tc-textbox");
+        var valueField = whereSection.querySelector("input");
         valueField.disabled = false;
         if (valueField.dataset.autocomplete) {
             TC.UI.autocomplete.call(valueField, "clear");
@@ -1504,6 +1522,7 @@ class WFSQuery extends Control {
         numericSection.classList.add(hiddenCssClass);
         dateSection.classList.add(hiddenCssClass);
         textSection.classList.add(hiddenCssClass);
+        booleanSection.classList.add(hiddenCssClass);
         geomSection.classList.add(hiddenCssClass);
         whereSection.classList.add(hiddenCssClass);
         if (!data[combo.selectedOptions[0].value]) {
@@ -1549,6 +1568,7 @@ class WFSQuery extends Control {
                 if (numericSection.querySelectorAll("input:checked").length === 0) {
                     numericSection.firstElementChild.checked = true;
                 }
+                resetInputMask(valueField);
                 _destroyDateMask();
 
                 if (checkInputType("number")) {
@@ -1579,6 +1599,17 @@ class WFSQuery extends Control {
                     }
                 }
                 break;
+            case type.indexOf("boolean") >= 0:
+                booleanSection.classList.remove(hiddenCssClass);
+                whereSection.classList.remove(hiddenCssClass, spatialCssClass);
+
+                if (booleanSection.querySelectorAll("input:checked").length === 0) {
+                    booleanSection.firstElementChild.checked = true;
+                }
+
+                _destroyDateMask();
+                createBooleanInput(valueField);
+                break;
             case type.indexOf("dateTime") >= 0:
             case type.indexOf("date") >= 0:
 
@@ -1588,10 +1619,12 @@ class WFSQuery extends Control {
                 if (dateSection.querySelectorAll("input:checked").length === 0) {
                     dateSection.firstElementChild.checked = true;
                 }
+                resetInputMask(valueField);
                 _createDateMask(valueField);
                 break;
             case type.indexOf("string") >= 0:
             case type === 'gml:ID': {
+                resetInputMask(valueField);
                 textSection.classList.remove(hiddenCssClass);
                 whereSection.classList.remove(hiddenCssClass, spatialCssClass);
 
@@ -1793,7 +1826,7 @@ class WFSQuery extends Control {
 
     #createFilterCondition(fieldValue, field, operation, type) {
         let value = _getValue(fieldValue);
-        let valueToShow = _getValueToShow(fieldValue);
+        let valueToShow = _getValueToShow.call(this, fieldValue);
         switch (true) {
             case type.indexOf("int") >= 0:
                 valueToShow = parseInt(value, 10);
@@ -1806,6 +1839,9 @@ class WFSQuery extends Control {
                 break;
             case type.indexOf("string") >= 0 && operation !== "empty":
                 valueToShow = '"' + valueToShow + '"';
+                break;
+            case type.indexOf("bool") >= 0:
+                if (operation === "null") valueToShow = '';
                 break;
             case type.indexOf("date") >= 0 && operation === "null":
                 valueToShow = '';
@@ -1896,7 +1932,7 @@ class WFSQuery extends Control {
                             form.querySelectorAll(`input[name="${self.id}-condition"]`).forEach(ipt => {
                                 ipt.addEventListener('change', async function (e) {
                                     form.querySelector(`.${self.CLASS}-geomtype-line-btn`).disabled = e.target.value === 'within';
-                                    const valueField = modalBody.querySelector(".tc-ctl-wfsquery-value input");
+                                    const valueField = self.#getValueInput(modalBody);
                                     valueField.disabled = false;
                                     if (this.parentElement.classList.contains("tc-ctl-wfsquery-text") && this.value === "empty") {
                                         valueField.value = "";
@@ -1905,6 +1941,9 @@ class WFSQuery extends Control {
                                     }
                                     if (this.parentElement.classList.contains("tc-ctl-wfsquery-date") && this.value === "null") {
                                         valueField.value = "";
+                                        valueField.disabled = true;
+                                    }
+                                    if (this.parentElement.classList.contains("tc-ctl-wfsquery-boolean") && this.value === "null") {
                                         valueField.disabled = true;
                                     }
                                     if (valueField.value.trim() !== "") {
@@ -1918,8 +1957,8 @@ class WFSQuery extends Control {
                             });
 
                             form.querySelector(`.${self.CLASS}-value sitna-button`).addEventListener(Consts.event.CLICK, function () {
-                                var valueField = form.querySelector('input.tc-textbox');
-                                TC.UI.autocomplete.call(valueField, "clear");
+                                var valueField = self.#getValueInput(form);
+                                if(valueField.type !== "checkbox") TC.UI.autocomplete.call(valueField, "clear");
                                 inputMaskNumber?.masked.remove();
                                 if (!self.#validate(form)) {
                                     return;
@@ -2197,6 +2236,10 @@ class WFSQuery extends Control {
         return self.modalDialog && self.modalDialog.querySelector('.tc-modal-form');
     }
 
+    #getValueInput(parentElement) {
+        return (parentElement ?? this.getForm()).querySelector(`.${this.CLASS}-value > input`);
+    }
+
     async #makeInputField(f, operation, data, geomName) {
         const self = this;
         const valueField = document.createElementNS("http://www.w3.org/1999/xhtml", "input");
@@ -2296,6 +2339,9 @@ class WFSQuery extends Control {
         self.model["query.searchFieldPhd"] = self.getLocaleString('query.searchFieldPhd');
         self.model["query.tooltipAddCondBtn"] = self.getLocaleString('query.tooltipAddCondBtn');
         self.model["query.textAddCondBtn"] = self.getLocaleString('query.textAddCondBtn');
+
+        self.model.true = self.getLocaleString('true');
+        self.model.false = self.getLocaleString('false');
 
         self.model["query.returnToQueryBuilder"] = self.getLocaleString('query.returnToQueryBuilder');
         if (self.geometryPanel) self.geometryPanel.setTitles({ main: self.getLocaleString("query.spatialFilter") });

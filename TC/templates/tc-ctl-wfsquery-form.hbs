@@ -41,13 +41,18 @@
         <input type="radio" id="{{controlId}}-cond-21" name="{{controlId}}-condition" value="null" /><label for="{{controlId}}-cond-21" class="tc-ctl-btn tc-ctl-wfsquery-cond">[[operators.empty.key]]</label>
         <!--<input type="radio" id="cond_7" name="condition" value="like" /><label for="cond_7" class="tc-ctl-wfsquery-cond">es como</label>-->
     </div>
+    <div class="tc-ctl-wfsquery tc-ctl-wfsquery-boolean tc-hidden">
+        <input type="radio" id="{{controlId}}-cond-22" name="{{controlId}}-condition" value="eq" /><label for="{{controlId}}-cond-22" class="tc-ctl-btn tc-ctl-wfsquery-cond">[[operators.eq.key]]</label>
+        <input type="radio" id="{{controlId}}-cond-23" name="{{controlId}}-condition" value="neq" /><label for="{{controlId}}-cond-23" class="tc-ctl-btn tc-ctl-wfsquery-cond">[[operators.neq.key]]</label>
+        <input type="radio" id="{{controlId}}-cond-24" name="{{controlId}}-condition" value="null" /><label for="{{controlId}}-cond-24" class="tc-ctl-btn tc-ctl-wfsquery-cond">[[operators.empty.key]]</label>
+    </div>
     <div class="tc-ctl-wfsquery tc-ctl-wfsquery-geom tc-hidden">
         <input type="radio" id="{{controlId}}-cond-18" name="{{controlId}}-condition" value="intersects" /><label for="{{controlId}}-cond-18" class="tc-ctl-btn tc-ctl-wfsquery-cond">[[operators.intersects.key]]</label>
         <input type="radio" id="{{controlId}}-cond-19" name="{{controlId}}-condition" value="within" /><label for="{{controlId}}-cond-19" class="tc-ctl-btn tc-ctl-wfsquery-cond">[[operators.within.key]]</label>
     </div>
     <div class="tc-ctl-wfsquery-where tc-hidden">
         <div class="tc-ctl-wfsquery-value">
-            <input type="search" placeholder="[[query.searchFieldPhd]]" class="tc-textbox" />
+            <input type="search" placeholder="[[query.searchFieldPhd]]" class="tc-textbox" data-true-text="[[true]]" data-false-text="[[false]]" />
             <sitna-button title="[[query.tooltipAddCondBtn]]">[[query.textAddCondBtn]]</sitna-button>
             <ul class="tc-ctl-wfsquery-list tc-ctl-search-list tc-hidden"></ul>
         </div>

@@ -109,6 +109,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 
 .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-text,
 .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-numeric,
+.tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-boolean,
 .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-date,
 .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-geom {
     display: -moz-flex;
@@ -119,6 +120,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 
     .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-text.tc-hidden,
     .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-numeric.tc-hidden,
+    .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-boolean.tc-hidden,
     .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-date.tc-hidden,
     .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form .tc-ctl-wfsquery-geom.tc-hidden {
         display: none;
@@ -171,6 +173,37 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         box-sizing: border-box;
         /* height: 29px; */
     }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input[type=checkbox] {
+            position: relative;
+            visibility: hidden;
+        }
+
+            .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input[type=checkbox]::before {
+                content: attr(data-false-text);
+                width: 100%;
+                height: 100%;
+                line-height: 1em;
+                border: 1px solid var(--sitna-textbox-border-color);
+                border-radius: var(--sitna-border-radius);
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+                cursor: pointer;
+                visibility: visible;
+                position: absolute;
+                height: 2em;
+                line-height: 2em;
+                box-sizing: border-box;
+                text-align: center;
+            }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input[type=checkbox]:checked::before {
+            content: attr(data-true-text);
+        }
+
+        .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input[type=checkbox][disabled]::before {
+            content: '';
+        }
 
         .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where input[type=text]::-ms-clear {
             display: none;
@@ -259,7 +292,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading:before {
         content: " ";
         border-radius: 50%;
-        box-shadow: var(--main-bg-color) 6vmin 0 0 0, var(--main-bg-color) 4.243vmin 4.243vmin 0 0, var(--main-bg-color) 0 6vmin 0 0, var(--main-bg-color) -4.243vmin 4.243vmin 0 0, var(--main-bg-color) -6vmin 0 0 0, var(--main-bg-color) -4.243vmin -4.243vmin 0 0, var(--main-bg-color) 0 -6vmin 0 0, var(--main-bg-color) 4.243vmin -4.243vmin 0 0;
+        box-shadow: var(--sitna-background-color) 6vmin 0 0 0, var(--sitna-background-color) 4.243vmin 4.243vmin 0 0, var(--main-bg-color) 0 6vmin 0 0, var(--sitna-background-color) -4.243vmin 4.243vmin 0 0, var(--sitna-background-color) -6vmin 0 0 0, var(--sitna-background-color) -4.243vmin -4.243vmin 0 0, var(--sitna-background-color) 0 -6vmin 0 0, var(--sitna-background-color) 4.243vmin -4.243vmin 0 0;
         position: absolute;
         width: 3vmin;
         height: 3vmin;
@@ -270,6 +303,11 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         margin-top: -1.5vmin;
         font-size: 2vmin;
         animation: spin 2s infinite linear;
+    }
+
+    /* Regla para evitar el efecto extraño de un botón haciéndose pequeño y despareciendo al salir el indicador de carga */
+    .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading .tc-ctl-wfsquery-value {
+        display: none;
     }
 
     .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading * {
@@ -445,7 +483,8 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
         overflow-y: auto
     }
 
-    .tc-modal-form .tc-ctl-wfsquery-text, .tc-modal-form .tc-ctl-wfsquery-numeric, .tc-modal-form .tc-ctl-wfsquery-date {
+    .tc-modal-form .tc-ctl-wfsquery-text, .tc-modal-form .tc-ctl-wfsquery-numeric,
+    .tc-modal-form .tc-ctl-wfsquery-boolean, .tc-modal-form .tc-ctl-wfsquery-date {
         flex-wrap: wrap
     }
 
