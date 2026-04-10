@@ -16,6 +16,7 @@ import Observer from '../Observer.js';
 TC.control = TC.control || {};
 
 const elementName = 'sitna-measurement';
+
 class MeasurementModel {
     constructor() {
         this["2dLength"]= "";
@@ -245,6 +246,7 @@ class Measurement extends WebComponentControl {
 
     setFeatureMeasurementData(feature) {
         const data = {};
+        const locale = this.map.getLocale() || Cfg.locale;
         switch (true) {
             case feature instanceof Point: {
                 //const elevationText = this.#measurementData.elevationText;
@@ -262,15 +264,15 @@ class Measurement extends WebComponentControl {
             }
             case feature instanceof Polyline:
                 if (Object.prototype.hasOwnProperty.call(this.#measurementData, "length")) {                    
-                    data[this.#getLengthPropertyName()] = this.#measurementData.length;
+                    data[this.#getLengthPropertyName()] = Util.formatNumber(this.#measurementData.length.toFixed(Consts.METER_PRECISION), locale);
                     feature.setData(data);
                 }
                 break;
             case feature instanceof Polygon:
                 if (Object.prototype.hasOwnProperty.call(this.#measurementData, "area") &&
                     Object.prototype.hasOwnProperty.call(this.#measurementData, "perimeter")) {
-                    data[this.#getAreaPropertyName()] = this.#measurementData.area;
-                    data[this.#getPerimeterPropertyName()] = this.#measurementData.perimeter;                    
+                    data[this.#getAreaPropertyName()] = Util.formatNumber(this.#measurementData.area.toFixed(Consts.METER_PRECISION), locale);
+                    data[this.#getPerimeterPropertyName()] = Util.formatNumber(this.#measurementData.perimeter.toFixed(Consts.METER_PRECISION), locale);
                     feature.setData(data);
                 }
                 break;
@@ -281,25 +283,25 @@ class Measurement extends WebComponentControl {
     }
 
     #getFirstCoordinatePropertyName() {
-        const coord1Text = this.#getPointMeasurementDataObject().coord1Text;
+        const coord1Text = this.#getPointMeasurementDataObject(this.map.on3DView ? { units: "degree" }:undefined).coord1Text;
         return coord1Text.substring(0, coord1Text.indexOf(':'));
     }
 
     #getSecondCoordinatePropertyName() {
-        const coord2Text = this.#getPointMeasurementDataObject().coord2Text;
+        const coord2Text = this.#getPointMeasurementDataObject(this.map.on3DView ? { units: "degree" } : undefined).coord2Text;
         return coord2Text.substring(0, coord2Text.indexOf(':'));
     }
 
     #getLengthPropertyName() {
-        return this.getLocaleString('2dLength');
+        return this.getLocaleString('2dLength') + this.getLocaleString('lengthUnit');
     }
 
     #getPerimeterPropertyName() {
-        return this.getLocaleString('2dPerimeter');
+        return this.getLocaleString('2dPerimeter') + this.getLocaleString('lengthUnit');
     }
 
     #getAreaPropertyName() {
-        return this.getLocaleString('area');
+        return this.getLocaleString('area') + this.getLocaleString('areaUnit');
     }
 
     getFeatureMeasurementMetadata() {
@@ -486,14 +488,14 @@ class Measurement extends WebComponentControl {
         if (self.#elevationValue) {
             self.#elevationValue.innerHTML = '';
         }
-        if (self.#lengthValue) {
-            self.#lengthValue.innerHTML = self.NOMEASURE;
+        if (self.model.lengthValue) {
+            self.model.lengthValue = self.NOMEASURE;
         }
-        if (self.#perimeterValue) {
-            self.#perimeterValue.innerHTML = self.NOMEASURE;
+        if (self.model.perimeterValue) {
+            self.model.perimeterValue = self.NOMEASURE;
         }
-        if (self.#areaValue) {
-            self.#areaValue.innerHTML = self.NOMEASURE;
+        if (self.model.areaValue) {
+            self.model.areaValue = self.NOMEASURE;
         }
 
     }
