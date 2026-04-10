@@ -308,7 +308,9 @@ class BasemapSelector extends MapContents {
                 const ul = self.div.querySelector('.' + self.CLASS + '-branch');
                 const currentLi = ul.querySelector('li[data-layer-uid="' + uid + '"]');
                 if (currentLi) {
+                    const isCheched=currentLi.querySelector("input").checked;
                     currentLi.innerHTML = newLi.innerHTML;
+                    currentLi.querySelector("input").checked=isCheched;
                     self.#fromFormatToModel(currentLi);
                     self.controller.add(currentLi);
                 }
@@ -327,7 +329,7 @@ class BasemapSelector extends MapContents {
                         const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
                         if (curLi) {
                             curLi.insertAdjacentElement('afterend', newLi);
-                            self.controller.add(curLi);
+                            self.controller.add(newLi);
                             inserted = true;
                             break;
                         }
@@ -337,7 +339,7 @@ class BasemapSelector extends MapContents {
                             const curLi = ul.querySelector(`li[data-layer-id="${setLayerIds[i]}"]`);
                             if (curLi) {
                                 curLi.insertAdjacentElement('beforebegin', newLi);
-                                self.controller.add(curLi);
+                                self.controller.add(newLi);
                                 inserted = true;
                                 break;
                             }
@@ -792,10 +794,6 @@ class BasemapSelector extends MapContents {
                 self.getLocaleString('viewMetadata');
         });
         this.model.fileDefault = this.modelDialog.fileDefault = this.getLocaleString('viewMetadata');
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
     }
 }
 
