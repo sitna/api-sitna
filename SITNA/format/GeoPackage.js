@@ -280,7 +280,7 @@ const exportFeatures = async function (features, options = {}) {
                 //dataColumns.push(c);
             }
             //si alguna feature tiene simbología de tipo texto se añade como una columna más a la tabla llamada "name"
-            if (featureList.some(f => f.getStyle().label && !f.data.name)) {
+            if (featureList.some(f => f.getStyle()?.label && !f.data.name)) {
                 const c = FeatureColumn.createColumn(i++, "name", DataTypes.TEXT);
                 columns.push(c);
             }
@@ -331,7 +331,7 @@ const exportFeatures = async function (features, options = {}) {
                     }
                 }
                 if (featureDao.columns.indexOf("name") >= 0 && !feature.data.name) {
-                    featureRow.setValueWithColumnName("name", feature.getStyle().label);
+                    featureRow.setValueWithColumnName("name", feature.getStyle()?.label);
                 }
 
                 featureDao.create(featureRow);

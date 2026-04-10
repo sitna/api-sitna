@@ -292,8 +292,8 @@ const exportFeatures = async function (features, options = {}) {
                                 val.replace(/•/g, "&bull;").replace(/›/g, "&rsaquo;") :
                                 val;
                         }
-                        if (feat.getStyle().label && !feat.data.name) {
-                            data.name = feat.getStyle().label;
+                        if (feat.getStyle()?.label && !feat.data.name) {
+                            data.name = feat.getStyle()?.label;
                         }
                         return data;
                     });
