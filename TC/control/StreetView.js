@@ -35,11 +35,11 @@ import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Cfg from '../Cfg.js';
 import Util from '../Util.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
-TC.control = TC.control || {};
+const elementName = 'sitna-streetview';
 
 Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
 let gMapsUrl = Consts.url.GOOGLEMAPS;
@@ -54,7 +54,7 @@ class StreetViewModel {
     }
 }
 
-class StreetView extends Control {
+class StreetView extends WebComponentControl {
     viewDiv = null;
     #sv = null;
     #startLonLat = null;
@@ -82,7 +82,7 @@ class StreetView extends Control {
         self.mapDiv = self.map.div;
 
         self.getCoordinateFromPixel = self.map.wrap.getCoordinateFromPixel;
-        //ahora google pide en la url de google maps una función función global que se llamará una vez que la API de Maps JavaScript se cargue por completo.
+        // Ahora Google pide en la url de google maps una función global que se llamará una vez que la API de Maps JavaScript se cargue por completo.
         let fnCallBackSV = "SV_" + (Math.random() + 1).toString(36).substring(7);
 
         window[fnCallBackSV] = function () {
@@ -163,7 +163,7 @@ class StreetView extends Control {
 
     #preset() {
         const self = this;
-        self.div.querySelector('.' + self.CLASS + '-btn').classList.add(Consts.classes.CHECKED);
+        self.querySelector('.' + self.CLASS + '-btn').classList.add(Consts.classes.CHECKED);
         self.mapDiv.classList.add(self.CLASS + '-active');
     }
 
@@ -189,8 +189,8 @@ class StreetView extends Control {
         else {
             self.layer.clearFeatures();
         }
-        self.div.querySelector('.' + self.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
-        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
+        self.querySelector('.' + self.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
+        self.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
         self.mapDiv.classList.remove(self.CLASS + '-active');
         self.#startLonLat = null;
     }
@@ -198,8 +198,8 @@ class StreetView extends Control {
     #resolve() {
         const self = this;
         var result = false;
-        const btn = self.div.querySelector('.' + self.CLASS + '-btn');
-        const drag = self.div.querySelector('.' + self.CLASS + '-drag');
+        const btn = self.querySelector('.' + self.CLASS + '-btn');
+        const drag = self.querySelector('.' + self.CLASS + '-drag');
 
         var btnRect = btn.getBoundingClientRect();
         var dragRect = drag.getBoundingClientRect();
@@ -251,13 +251,13 @@ class StreetView extends Control {
         self.viewDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-view', null);
         await self.renderData(null);
 
-        self.controller = new Controller(self.model, new Observer(self.div));
+        self.controller = new Controller(self.model, new Observer(self));
         self.controller.add(self.viewDiv);
         self.updateModel();
 
         import("draggabilly").then(function (module) {
             const Draggabilly = module.default;
-            const drag = new Draggabilly(self.div.querySelector('.' + self.CLASS + '-drag'), {
+            const drag = new Draggabilly(self.querySelector('.' + self.CLASS + '-drag'), {
                 containment: (self.getMapDiv && self.mapDiv) || self.map.div
             });
             drag.on('dragStart', function (_e) {
@@ -268,7 +268,7 @@ class StreetView extends Control {
                 drag.setPosition(0, 0);
             });
             // Añadimos aviso de que este botón no se pulsa, se arrastra
-            self.div.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
+            self.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
                 const btnRect = e.target.getBoundingClientRect();
                 if (e.clientX >= btnRect.left &&
                     e.clientX <= btnRect.right &&
@@ -322,10 +322,7 @@ class StreetView extends Control {
                 heading = 0;
             }
             if (self.map.on3DView) {
-                self.ThreeDMarker = self.map.view3D.setMarker(xy,
-                    Util.getFeatureStyleFromCss('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16)?.url,
-                    self.ThreeDMarker);
-
+                self.ThreeDMarker = self.map.view3D.setPegman(xy, heading);
             }
             else {
                 self.map.addMarker(xy, {
@@ -359,8 +356,9 @@ class StreetView extends Control {
                 }
             }
         };
-        var changeMarker = function (cssClass) {
+        var changeMarker = function (heading) {
             if (!self.map.on3DView) {
+                const cssClass = 'tc-marker-sv-' + ((Math.round(16.0 * heading / 360) + 16) % 16);
                 if (self.layer.features && self.layer.features.length > 0) {
                     var pegmanMarker = self.layer.features[0];
                     delete pegmanMarker.options.url;
@@ -370,7 +368,7 @@ class StreetView extends Control {
                 }
             }
             else {
-                self.ThreeDMarker?.setImage(Math.random() * 1000, Util.getFeatureStyleFromCss(cssClass)?.url);
+                self.map.view3D.setPegman(self.ThreeDMarker.position.getValue(), heading);
             }
 
         }
@@ -445,13 +443,8 @@ class StreetView extends Control {
                                             setMarker(self.#sv, view.classList.contains(Consts.classes.VISIBLE));
                                         });
                                         self.managePOVChange = function () {
-                                            var heading
-                                            if (self.map.on3DView)
-                                                heading = (self.#sv.getPov().heading || 360) - self.map.view3D.getCameraData().heading
-                                            else {
-                                                heading = self.#sv.getPov().heading;
-                                            }
-                                            changeMarker('tc-marker-sv-' + (Math.round(16.0 * heading / 360) + 16) % 16);
+                                            if (self.#sv.visible)
+                                                changeMarker(self.#sv.pov.heading);
                                         }
                                         self.map.on(Consts.event.CAMERACHANGE, self.managePOVChange);
                                         google.maps.event.addListener(self.#sv, 'pov_changed', self.managePOVChange);
@@ -575,7 +568,7 @@ class StreetView extends Control {
         view.classList.add(Consts.classes.HIDDEN);
         view.classList.remove(Consts.classes.VISIBLE);
         view.style.height = view.style.width = "";
-        self.div.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
+        self.querySelector('.' + self.CLASS + '-drag').classList.remove(Consts.classes.HIDDEN);
         self.layer.wrap.setDraggable(false);
         self.#reset();
         self.#sv.setVisible(false);
@@ -592,12 +585,9 @@ class StreetView extends Control {
         this.model["sv.tip"] = this.getLocaleString("sv.tip");
         this.model["closeStreetView"] = this.getLocaleString("closeStreetView");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();        
-    }
+
 }
 
 StreetView.prototype.CLASS = 'tc-ctl-sv';
-TC.control.StreetView = StreetView;
+customElements.get(elementName) || customElements.define(elementName, StreetView);
 export default StreetView;

@@ -1,11 +1,10 @@
-﻿import TC from '../../TC.js';
-import Consts from '../Consts.js';
-import Control from '../Control.js';
+﻿import Consts from '../Consts.js';
+import WebComponentControl from './WebComponentControl.js';
 import Util from '../Util.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
-TC.control = TC.control || {};
+const elementName = 'sitna-fullscreen';
 
 const document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
 class FullScreenModel {
@@ -14,7 +13,7 @@ class FullScreenModel {
     }
 }
 
-class FullScreen extends Control {
+class FullScreen extends WebComponentControl {
     #byBtn = false;
 
     async register(map) {
@@ -23,7 +22,7 @@ class FullScreen extends Control {
 
         self.model = new FullScreenModel();
 
-        const btn = self.div.querySelector('.' + self.CLASS + '-btn');
+        const btn = self.querySelector('.' + self.CLASS + '-btn');
 
         if (document.fullscreenEnabled) {
 
@@ -98,7 +97,7 @@ class FullScreen extends Control {
         }
 
         self.renderPromise().then(function () {
-            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controller = new Controller(self.model, new Observer(self));
             self.updateModel();
         });
 
@@ -129,12 +128,9 @@ class FullScreen extends Control {
     updateModel(){
         this.model["fscreen.tip"] = this.getLocaleString("fscreen.tip");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 FullScreen.prototype.CLASS = 'tc-ctl-fscreen';
-TC.control.FullScreen = FullScreen;
+customElements.get(elementName) || customElements.define(elementName, FullScreen);
 export default FullScreen;

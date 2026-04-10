@@ -1,13 +1,10 @@
-﻿import TC from '../../TC.js';
-import Consts from '../Consts.js';
-import Control from '../Control.js';
+﻿import Consts from '../Consts.js';
+import WebComponentControl from './WebComponentControl.js';
 import Layer from '../../SITNA/layer/Layer.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-TC.control = TC.control || {};
-TC.Control = Control;
-
+const elementName = 'sitna-attribution';
 
 class AttributionModel {
     constructor() {
@@ -28,7 +25,7 @@ class AttributionView extends Observer {
     }
 }
 
-class Attribution extends Control {
+class Attribution extends WebComponentControl {
     constructor() {
         super(...arguments);
         const self = this;
@@ -239,11 +236,11 @@ class Attribution extends Control {
             api: typeof self.apiAttribution === 'function' ? self.apiAttribution.apply(self) : self.getLocaleString(self.apiAttribution),
             mainData: self.mainDataAttribution,
             otherData: self.dataAttributions,
-            isCollapsed: self.div.querySelector('.' + self.CLASS + '-other') ? self.div.querySelector('.' + self.CLASS + '-other').classList.contains(Consts.classes.COLLAPSED) : true,
+            isCollapsed: self.querySelector('.' + self.CLASS + '-other') ? self.querySelector('.' + self.CLASS + '-other').classList.contains(Consts.classes.COLLAPSED) : true,
             lang: self.map?.getLocale(),
         }, function () {
             //if(!self.controller)
-            self.controller = new Controller(self.model, new AttributionView(self.div));
+            self.controller = new Controller(self.model, new AttributionView(self));
 
             self.addUIEventListeners();
 
@@ -255,7 +252,7 @@ class Attribution extends Control {
 
     addUIEventListeners() {
         const self = this;
-        const cmd = self.div.querySelector('.' + self.CLASS + '-cmd');
+        const cmd = self.querySelector('.' + self.CLASS + '-cmd');
         cmd && cmd.addEventListener(Consts.event.CLICK, function () {
             self.toggleOtherAttributions();
         }, { passive: true });
@@ -263,7 +260,7 @@ class Attribution extends Control {
 
     toggleOtherAttributions() {
         const self = this;
-        const other = self.div.querySelector('.' + self.CLASS + '-other');
+        const other = self.querySelector('.' + self.CLASS + '-other');
         other.classList.toggle(Consts.classes.COLLAPSED);
     }
 
@@ -273,12 +270,9 @@ class Attribution extends Control {
         self.model.attributionGithubTooltip = self.getLocaleString("attributionGithubTooltip");
         self.model.others = self.getLocaleString("others");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Attribution.prototype.CLASS = 'tc-ctl-attrib';
-TC.control.Attribution = Attribution;
+customElements.get(elementName) || customElements.define(elementName, Attribution);
 export default Attribution;

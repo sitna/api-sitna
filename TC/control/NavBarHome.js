@@ -1,10 +1,11 @@
 ﻿import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
+const elementName = 'sitna-home';
 
 TC.control = TC.control || {};
 class NavBarHomeModel{
@@ -12,13 +13,14 @@ class NavBarHomeModel{
         this.zoomToInitialExtent = "";
     }
 }
-class NavBarHome extends Control {
+class NavBarHome extends WebComponentControl {
 
     render() {
         const self = this;
         if (!self.wrap) {
             self.wrap = new TC.wrap.control.NavBarHome(self);
         }
+        self.classList.add(WebComponentControl.prototype.CLASS, self.CLASS);
         const renderPromise = Promise.resolve();
         self._firstRender ??= renderPromise;
         return renderPromise;
@@ -51,5 +53,5 @@ class NavBarHome extends Control {
 }
 
 NavBarHome.prototype.CLASS = 'tc-ctl-nav-home';
-TC.control.NavBarHome = NavBarHome;
+customElements.get(elementName) || customElements.define(elementName, NavBarHome);
 export default NavBarHome;

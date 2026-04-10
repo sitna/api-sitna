@@ -5,6 +5,8 @@
     left: 0.7em;
     padding: 0;
     margin-bottom: 0.5em;
+    display: block;
+    width: 2em;
 }
 
 .tc-ctl-nav-home .tc-ctl-nav-home-btn {

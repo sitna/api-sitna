@@ -6,6 +6,7 @@
     left: 0.7em;
     padding: 0;
     margin-bottom: 0.5em;
+    display: block;
 }
 
 .tc-ctl-nav .tc-ctl-nav-bar {

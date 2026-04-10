@@ -1,26 +1,25 @@
 ﻿import TC from '../../TC.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 
-TC.control = TC.control || {};
+const elementName = 'sitna-scale-bar';
 
-class ScaleBar extends Control {
+class ScaleBar extends WebComponentControl {
 
     render() {
-        const self = this;
-        if (!self.wrap) {
-            self.wrap = new TC.wrap.control.ScaleBar(self);
+        this.classList.add(WebComponentControl.prototype.CLASS, this.CLASS);
+        if (!this.wrap) {
+            this.wrap = new TC.wrap.control.ScaleBar(this);
         }
-        self.wrap.render();
+        this.wrap.render();
         const renderPromise = Promise.resolve();
-        self._firstRender ??= renderPromise;
+        this._firstRender ??= renderPromise;
         return renderPromise;
     }
 
     async register(map) {
-        const self = this;
-        const objects = await Promise.all([super.register.call(self, map), map.wrap.getMap()]);
-        objects[1].addControl(self.wrap.ctl);
-        return self;
+        const [, olMap] = await Promise.all([super.register.call(this, map), map.wrap.getMap()]);
+        olMap.addControl(this.wrap.ctl);
+        return this;
     }
 
     getText() {
@@ -28,8 +27,18 @@ class ScaleBar extends Control {
 
         return self.wrap.getText();
     }
+
+    enable() {
+        this.wrap.enable();
+        super.enable();
+    }
+
+    disable() {
+        super.disable();
+        this.wrap.disable();
+    }
 }
 
 ScaleBar.prototype.CLASS = 'tc-ctl-sb';
-TC.control.ScaleBar = ScaleBar;
+customElements.get(elementName) || customElements.define(elementName, ScaleBar);
 export default ScaleBar;
