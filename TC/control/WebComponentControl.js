@@ -17,8 +17,8 @@ const elementName = 'sitna-control';
  * los métodos y propiedades que necesite. Además, como el control es elemento personalizado 
  * ([custom element](https://developer.mozilla.org/es/docs/Web/API/Web_components/Using_custom_elements)) 
  * para usarlo en una página web hay que registrarlo mediante <code>window.customElements.define()</code> 
- * dándole un nombre de etiqueta HTML. Este nombre debe seguir la notación "Kebab" y contener un guión 
- * para que los navegadores lo reconozcan como un elemento personalizado.
+ * dándole un nombre de etiqueta HTML. Este nombre debe seguir [una serie de reglas](https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name), 
+ * como por ejemplo contener un guión, para que los navegadores lo reconozcan como un elemento personalizado.
  * @class Control
  * @memberof SITNA.control
  * @extends HTMLElement
@@ -186,6 +186,12 @@ class WebComponentControl extends HTMLElement {
     #listeners = {};
     #firstRender;
 
+    static displayMode = {
+        DOCUMENT: 'document',
+        PANEL: 'panel',
+        MODAL: 'modal',
+    };
+
     constructor() {
         super();
         const self = this;
@@ -305,6 +311,9 @@ class WebComponentControl extends HTMLElement {
      */
     show() {
         this.style.display = '';
+        if (this.options.displayMode === WebComponentControl.displayMode.PANEL) {
+            this.getContainerPanel().then(panel => panel.open());
+        }
         return this;
     }
 
@@ -631,8 +640,15 @@ class WebComponentControl extends HTMLElement {
         if (!this.parentElement) {
             if (this.div && this.div instanceof HTMLElement) this.div.appendChild(this);
             else {
-                map.div.appendChild(this);
-                this.div = map.div;
+                if (this.options.displayMode === WebComponentControl.displayMode.PANEL) {
+                    const panel = await this.getContainerPanel();
+                    this.div = panel.getInfoContainer();
+                    this.div.appendChild(this);
+                }
+                else {
+                    map.div.appendChild(this);
+                    this.div = map.div;
+                }
             }
         }
         if (this.options.active) {
@@ -902,6 +918,31 @@ class WebComponentControl extends HTMLElement {
         return self.elevation;
     }
 
+    async getContainerPanel() {
+        if (!this.containerPanel) {
+            const title = this.querySelector('h2')?.textContent || this.getLocaleString("threed.rs.panel.gfi");
+            const resultsPanelOptions = {
+                content: "table",
+                titles: {
+                    main: title,
+                    max: title,
+                }
+            };
+            const [container] = this.map.getControlsByClass('ControlContainer');
+            if (container) {
+                resultsPanelOptions.position = container.POSITION.RIGHT;
+                this.containerPanel = await container.addControl('resultsPanel', resultsPanelOptions);
+            }
+            else {
+                resultsPanelOptions.div = document.createElement('div');
+                this.map.div.appendChild(resultsPanelOptions.div);
+                this.containerPanel = await this.map.addControl('resultsPanel', resultsPanelOptions);
+            }
+            this.containerPanel.caller = this;
+        }
+        return this.containerPanel;
+    }
+
     #getNativeListener(evt, callback) {
         const self = this;
         const result = function (evt) {
@@ -1021,6 +1062,10 @@ class WebComponentControl extends HTMLElement {
                 }
             }
         }
+    }
+    
+    async updateLanguage() {
+        return this.updateModel?.();
     }
 
     static async create(type, options) {
