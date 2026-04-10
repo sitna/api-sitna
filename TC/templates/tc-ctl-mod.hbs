@@ -1,10 +1,18 @@
 <div class="tc-ctl-mod-btn">
     <sitna-button variant="textless" class="tc-ctl-mod-btn-select" disabled title="[[select]]">[[select]]</sitna-button>
     <sitna-button variant="textless" class="tc-ctl-mod-btn-delete" disabled title="[[deleteSelectedFeatures]]">[[deleteSelectedFeatures]]</sitna-button>
+    <sitna-button variant="textless" class="tc-ctl-mod-btn-deleted-show tc-hidden" disabled title="[[showDeletedFeatures]]">[[showDeletedFeatures]]</sitna-button>
+    <sitna-button variant="textless" class="tc-ctl-mod-btn-undo" disabled title="[[undoChanges]]">[[undoChanges]]</sitna-button>
+    <sitna-button variant="textless" class="tc-ctl-mod-btn-redo" disabled title="[[redoChanges]]">[[redoChanges]]</sitna-button>
+    <sitna-button variant="textless" class="tc-ctl-mod-btn-undo-all" disabled title="[[undoAllChanges]]">[[undoAllChanges]]</sitna-button>
     <sitna-button variant="textless" class="tc-ctl-mod-btn-del-vertex" disabled title="[[deleteVertices]]">[[deleteVertices]]</sitna-button>
     <sitna-button variant="textless" class="tc-ctl-mod-btn-join" disabled title="[[joinGeometries.tooltip]]">[[joinGeometries]]</sitna-button>
     <sitna-button variant="textless" class="tc-ctl-mod-btn-split" disabled title="[[splitGeometry]]">[[splitGeometry]]</sitna-button>
     <sitna-button variant="textless" class="tc-ctl-mod-btn-text" contenteditable="true" disabled title="[[addText]]">[[addText]]</sitna-button>
+</div>
+<div class="tc-ctl-mod-deleted-features tc-hidden">
+    <h3>[[deletedFeatures]]</h3>
+    <ul class="tc-ctl-mod-deleted-feature-list tc-list"></ul>
 </div>
 <div class="tc-ctl-mod-style{{#unless stylable}} tc-hidden{{/unless}}">
     <sitna-feature-styler></sitna-feature-styler>

@@ -12,6 +12,7 @@ import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import './FeatureStyler.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import FeatureHistory from '../tool/FeatureHistory.js';
 
 TC.control = TC.control || {};
 
@@ -105,23 +106,40 @@ class ModifyModel {
         this.writeTextForFeature = "";
         this.textColor = "";
         this.fontSize = "";
+        this.undoChanges = "";
+        this.redoChanges = "";
+        this.undoAllChanges = "";
+        this.showDeletedFeatures = "";
+        this.showDeletedFeature = "";
+        this.deletedFeatures = "";
+        this.recoverFeature = "";
     }
 }
 
 class Modify extends WebComponentControl {
     #classSelector = '.' + className;
     #deleteBtn;
+    #showDeletedBtn;
+    #undoBtn;
+    #redoBtn;
+    #undoAllBtn;
     #selectBtn;
     #deleteVertexBtn;
     #joinBtn;
     #splitBtn;
     #textBtn;
+    #deletedFeatureList;
     #textInput;
     #fontColorPicker;
     #labelSection;
     #styler;
     #fontSizeSelector;
     #layerPromise;
+    #deletedFeatures = new Map();
+    #deletedFeaturesLayer;
+    history;
+
+    LAYER_FEATURE_SEPARATOR = ' \u203A '
 
     static mode = {
         SELECT: 'select',
@@ -130,14 +148,15 @@ class Modify extends WebComponentControl {
 
     constructor() {
         super(...arguments);
-        const self = this;
 
-        self.wrap = new TC.wrap.control.Modify(self);
-        self
+        this.history = new FeatureHistory();
+
+        this.wrap = new TC.wrap.control.Modify(this);
+        this
             .initProperty('mode')
             .initProperty('snapping')
             .initProperty('stylable');
-        self.model = new ModifyModel();
+        this.model = new ModifyModel();
     }
 
     static get observedAttributes() {
@@ -203,14 +222,26 @@ class Modify extends WebComponentControl {
     }
 
     #setFeatureSelectedState(features) {
-        const self = this;
-        self.#deleteBtn.disabled = features.length === 0;
-        self.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
-        self.#joinBtn.disabled = features.length < 2;
-        self.#splitBtn.disabled = !features.some(complexGeometryFilter);
-        self.displayLabelText();
-        self.#onStylableChange();
-        self.getStyler().then(styler => styler.setFeature(features[0]));
+        this.renderPromise().then(() => {
+            this.#deleteBtn.disabled = features.length === 0;
+            this.#showDeletedBtn.disabled = this.#deletedFeatures.size === 0;
+            if (this.#showDeletedBtn.disabled) this.#showDeletedBtn.active = false;
+            this.#showDeletedBtn.classList.toggle(Consts.classes.HIDDEN, this.#deletedFeatures.size === 0);
+            if (!this.#showDeletedBtn.active) {
+                this.#deletedFeatureList.parentElement.classList.add(Consts.classes.HIDDEN);
+                this.getDeletedFeaturesLayer().then((layer) => layer.clearFeatures());
+                this.#deletedFeatureList.querySelectorAll('li').forEach((li) => li.classList.remove(Consts.classes.CHECKED));
+            }
+            this.#deleteVertexBtn.disabled = !features.some(vertexGeometryFilter);
+            this.#undoBtn.disabled = !features.some((feature) => this.history.canUndo(feature));
+            this.#redoBtn.disabled = !features.some((feature) => this.history.canRedo(feature));
+            this.#undoAllBtn.disabled = this.#undoBtn.disabled;
+            this.#joinBtn.disabled = features.length < 2;
+            this.#splitBtn.disabled = !features.some(complexGeometryFilter);
+            this.displayLabelText();
+            this.#onStylableChange();
+            this.getStyler().then((styler) => styler.setFeature(features[0]));
+        });
     }
 
     #setVertexDeleteModeState(features) {
@@ -266,6 +297,11 @@ class Modify extends WebComponentControl {
                     }
                 });
             })
+            .on(Consts.event.FEATURESCLEAR + ' ' + Consts.event.LAYERREMOVE, function (e) {
+                if (e.layer === self.layer) {
+                    self.#flushDeletedFeatures();
+                }
+            })
             .on(Consts.event.LAYERUPDATE, function (e) {
                 const layer = e.layer;
                 Promise.all([self.getLayer(), self.renderPromise()]).then(function (objects) {
@@ -275,18 +311,46 @@ class Modify extends WebComponentControl {
                 });
             });
 
-        self.on(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, function () {
+        const onFeaturesSelectionChange = function (e) {
             const selectedFeatures = self.getSelectedFeatures();
             self.#setFeatureSelectedState(selectedFeatures);
-            const unselectedFeatures = self.layer.features.filter(function (feature) {
-                return selectedFeatures.indexOf(feature) < 0;
-            });
-            unselectedFeatures.forEach(function (feature) {
-                feature.toggleSelectedStyle(false);
-            });
-            selectedFeatures.forEach(function (feature) {
-                feature.toggleSelectedStyle(true);
-            });
+            e.features?.forEach((feature) => feature.toggleSelectedStyle(e.type === Consts.event.FEATURESSELECT));
+        };
+        self.addEventListener(Consts.event.FEATURESSELECT, onFeaturesSelectionChange);
+        self.addEventListener(Consts.event.FEATURESUNSELECT, onFeaturesSelectionChange);
+
+        self.on(Consts.event.FEATUREMODIFY, function (_e) {
+            self.#setFeatureSelectedState(self.getSelectedFeatures());
+        });
+
+        const onHistoryChange = function (e) {
+            const selectedFeatures = self.getSelectedFeatures();
+            if (selectedFeatures.includes(e.feature)) {
+                self.#setFeatureSelectedState(selectedFeatures);
+            }
+        };
+        self.history.addEventListener('push', onHistoryChange);
+        self.history.addEventListener('undo', function (e) {
+            if (e.action.type === FeatureHistory.action.REMOVE) {
+                if (Array.from(self.#deletedFeatures.values()).includes(e.feature)) {
+                    const selectedFeatures = self.getSelectedFeatures();
+                    if (!selectedFeatures.includes(e.feature)) {
+                        self.setSelectedFeatures(selectedFeatures.concat([e.feature]));
+                    }
+                    self.#removeDeletedItemFromList(e.feature);
+                }
+            }
+            onHistoryChange(e);
+        });
+        self.history.addEventListener('redo', function (e) {
+            if (e.action.type === FeatureHistory.action.REMOVE) {
+                self.#addDeletedItemToList(e.feature, e.action.oldData).then(() => {
+                    onHistoryChange(e);
+                });
+            }
+            else {
+                onHistoryChange(e);
+            }
         });
 
         return result;
@@ -295,9 +359,11 @@ class Modify extends WebComponentControl {
     async loadTemplates() {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-mod.mjs');
+        const deletedItemTemplatePromise = import('../templates/tc-ctl-mod-deleted.mjs');
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
+        template[self.CLASS + '-deleted'] = (await deletedItemTemplatePromise).default;
         self.template = template;
     }
 
@@ -311,14 +377,19 @@ class Modify extends WebComponentControl {
             fontSize: styles.text?.fontSize,
             fontColor: styles.text?.fontColor,
             labelOutlineColor: styles.text?.labelOutlineColor,
-            labelOutlineWidth: styles.text?.labelOutlineWidth
+            labelOutlineWidth: styles.text?.labelOutlineWidth,
         }, function () {
             self.#selectBtn = self.querySelector('.' + self.CLASS + '-btn-select');
             self.#deleteBtn = self.querySelector('.' + self.CLASS + '-btn-delete');
+            self.#showDeletedBtn = self.querySelector('.' + self.CLASS + '-btn-deleted-show');
+            self.#undoBtn = self.querySelector('.' + self.CLASS + '-btn-undo');
+            self.#redoBtn = self.querySelector('.' + self.CLASS + '-btn-redo');
+            self.#undoAllBtn = self.querySelector('.' + self.CLASS + '-btn-undo-all');
             self.#deleteVertexBtn = self.querySelector('.' + self.CLASS + '-btn-del-vertex');
             self.#textBtn = self.querySelector('.' + self.CLASS + '-btn-text');
             self.#joinBtn = self.querySelector('.' + self.CLASS + '-btn-join');
             self.#splitBtn = self.querySelector('.' + self.CLASS + '-btn-split');
+            self.#deletedFeatureList = self.querySelector('.' + self.CLASS + '-deleted-feature-list');
             self.#textInput = self.querySelector('input.' + self.CLASS + '-txt');
             self.#labelSection = self.querySelector('.' + self.CLASS + '-style-label');
             self.#fontColorPicker = self.querySelector(self.#classSelector + '-fnt-c');
@@ -335,83 +406,128 @@ class Modify extends WebComponentControl {
     }
 
     addUIEventListeners() {
-        const self = this;
-        self.#selectBtn.addEventListener(Consts.event.CLICK, function (e) {
+        this.#selectBtn.addEventListener(Consts.event.CLICK, (e) => {
             if (!e.target.disabled) {
-                if (self.isActive) {
-                    if (self.mode !== Modify.mode.VERTEX_DELETE) {
-                        self.deactivate();
+                if (this.isActive) {
+                    if (this.mode !== Modify.mode.VERTEX_DELETE) {
+                        this.deactivate();
                     }
                     else {
-                        self.setMode(Modify.mode.SELECT, true);
+                        this.setMode(Modify.mode.SELECT, true);
                     }
                 }
                 else {
-                    self.activate();
+                    this.activate();
                 }
             }
         }, { passive: true });
-        self.#deleteBtn.addEventListener(Consts.event.CLICK, function () {
-            self.deleteSelectedFeatures();
+
+        this.#deleteBtn.addEventListener(Consts.event.CLICK, () => {
+            this.onDeleteButtonClick();
         }, { passive: true });
-        self.#deleteVertexBtn.addEventListener(Consts.event.CLICK, function () {
-            const newMode = self.mode === Modify.mode.VERTEX_DELETE ?
+
+        this.#showDeletedBtn.addEventListener(Consts.event.CLICK, () => {
+            this.onShowDeletedButtonClick();
+        }, { passive: true });
+
+        this.#undoBtn.addEventListener(Consts.event.CLICK, () => {
+            let selectedFeatures = this.getSelectedFeatures();
+            if (selectedFeatures.length > 0) {
+                selectedFeatures.forEach((feature) => this.history.undo(feature));
+            }
+            else {
+                selectedFeatures = Array.from(this.#deletedFeatures.values());
+                selectedFeatures.forEach((feature) => this.#recoverDeletedFeature(feature));
+            }
+            this.setSelectedFeatures(selectedFeatures);
+            this.#setFeatureSelectedState(selectedFeatures);
+        }, { passive: true });
+
+        this.#redoBtn.addEventListener(Consts.event.CLICK, () => {
+            const selectedFeatures = this.getSelectedFeatures();
+            selectedFeatures.forEach((feature) => this.history.redo(feature));
+            //const selectedFeaturesAfterRedo = this.getSelectedFeatures();
+            //if (selectedFeaturesAfterRedo.length !== selectedFeatures.length) {
+            //    selectedFeatures.forEach((feature) => this.#deletedFeatures.push(feature));
+            //}
+            //this.#setFeatureSelectedState(selectedFeaturesAfterRedo);
+        }, { passive: true });
+
+        this.#undoAllBtn.addEventListener(Consts.event.CLICK, () => {
+            let selectedFeatures = this.getSelectedFeatures();
+            if (selectedFeatures.length > 0) {
+                selectedFeatures.forEach((feature) => this.history.undoAll(feature));
+            }
+            else {
+                selectedFeatures = Array.from(this.#deletedFeatures.values());
+                selectedFeatures.slice().forEach((feature) => this.history.undoAll(feature));
+            }
+            this.setSelectedFeatures(selectedFeatures);
+            this.#setFeatureSelectedState(selectedFeatures);
+        }, { passive: true });
+
+        this.#deleteVertexBtn.addEventListener(Consts.event.CLICK, () => {
+            const newMode = this.mode === Modify.mode.VERTEX_DELETE ?
                 Modify.mode.SELECT : Modify.mode.VERTEX_DELETE;
-            self.setMode(newMode, true);
+            this.setMode(newMode, true);
         }, { passive: true });
-        self.#textBtn.addEventListener(Consts.event.CLICK, function () {
-            self.setTextMode(!self.textActive);
+
+        this.#textBtn.addEventListener(Consts.event.CLICK, () => {
+            this.setTextMode(!this.textActive);
         }, { passive: true });
-        self.#textInput.addEventListener('input', function (e) {
-            self.labelFeatures(e.target.value);
-        });
-        self.#fontColorPicker.addEventListener(Consts.event.CHANGE, function (e) {
-            self.setFontColor(e.target.value);
-        });
-        self.#fontSizeSelector.addEventListener(Consts.event.CHANGE, function (e) {
-            self.setFontSize(e.target.value);
+        this.#textInput.addEventListener('input', (e) => {
+            this.labelFeatures(e.target.value);
         });
 
-        self.getStyler().then(styler => styler.addEventListener(Consts.event.STYLECHANGE, e => {
-            self.getSelectedFeatures().forEach(f => {
-                const newData = {};
-                newData[e.detail.property] = e.detail.value;
-                const newStyle = Object.assign({}, f.getStyle(), newData);
-                f.setStyle(newStyle);
+        this.#fontColorPicker.addEventListener(Consts.event.CHANGE, (e) => {
+            this.setFontColor(e.target.value);
+        });
+
+        this.#fontSizeSelector.addEventListener(Consts.event.CHANGE, (e) => {
+            this.setFontSize(e.target.value);
+        });
+
+        this.getStyler().then((styler) => styler.addEventListener(Consts.event.STYLECHANGE, (_e) => {
+            this.getSelectedFeatures().forEach((f) => {
+                const newStyle = Object.assign({}, f.getStyle(), styler.getStyle());
+                this.history.setStyle(f, newStyle);
             });
         }));
     }
 
     activate() {
-        const self = this;
-        self.#selectBtn.active = true;
-        super.activate.call(self);
-        self.wrap.activate(self.mode);
-        self.#setVertexDeleteModeState(self.getSelectedFeatures());
+        this.#selectBtn.active = true;
+        super.activate.call(this);
+        this.wrap.activate(this.mode);
+        // Cerramos los popups de las features de la capa
+        this.getLayer().then((layer) => {
+            layer?.features.forEach((feature) => feature.closeInfoControls());
+        });
+        this.#setVertexDeleteModeState(this.getSelectedFeatures());
     }
 
     deactivate() {
-        const self = this;
-        super.deactivate.call(self);
-        if (self.#selectBtn) {
-            self.#setFeatureSelectedState([]);
-        }
-        if (self.#selectBtn) {
-            self.#selectBtn.active = false;
-            if (self.layer) {
-                self.unselectFeatures(self.getSelectedFeatures());
+        if (this.#selectBtn) {
+            this.#setFeatureSelectedState([]);
+            this.#selectBtn.active = false;
+            if (this.layer) {
+                this.unselectFeatures(this.getSelectedFeatures());
             }
         }
-        if (self.wrap) {
-            self.wrap.deactivate();
+
+        super.deactivate.call(this);
+
+        if (this.wrap) {
+            this.wrap.deactivate();
         }
-        self.mode = Modify.mode.SELECT;
+        
+        this.mode = Modify.mode.SELECT;
     }
 
     clear() {
         const self = this;
         if (self.layer) {
-            self.layer.clearFatures();
+            self.layer.clearFeatures();
         }
         return self;
     }
@@ -497,9 +613,13 @@ class Modify extends WebComponentControl {
     }
 
     setSelectedFeatures(features) {
-        const self = this;
-        const result = self.wrap.setSelectedFeatures(features);
-        self.displayLabelText();
+        this.getSelectedFeatures()
+            .filter(((f) => !features.includes(f)))
+            .forEach((f) => f.toggleSelectedStyle(false));
+        features.forEach((f) => f.toggleSelectedStyle(true));
+        const result = this.wrap.setSelectedFeatures(features);
+        this.#setFeatureSelectedState(features);
+        this.displayLabelText();
         return result;
     }
 
@@ -527,15 +647,121 @@ class Modify extends WebComponentControl {
         return this;
     }
 
-    deleteSelectedFeatures() {
+    setFeatureCoordinates(feature, coordinates, oldCoordinates) {
+        this.history.setCoordinates(feature, coordinates, oldCoordinates);
+        return this;
+    }
+
+    onDeleteButtonClick() {
         const self = this;
         const features = self.getSelectedFeatures();
         self.wrap.unselectFeatures(features);
-        features.forEach(function (feature) {
-            self.layer.removeFeature(feature);
+        features.forEach(async function (feature) {
+            await self.#addDeletedItemToList(feature, feature.layer);
+            self.history.removeFeature(feature);
             self.trigger(Consts.event.FEATUREREMOVE, { feature: feature });
         });
         return self;
+    }
+
+    onShowDeletedButtonClick() {
+        this.#showDeletedBtn.active = !this.#showDeletedBtn.active;
+        this.#deletedFeatureList.parentElement.classList.toggle(Consts.classes.HIDDEN, !this.#showDeletedBtn.active);
+        if (!this.#showDeletedBtn.active) {
+            this.#deletedFeatureList.querySelectorAll('li').forEach((li) => li.classList.remove(Consts.classes.CHECKED));
+            this.getDeletedFeaturesLayer().then((layer) => layer.clearFeatures());
+        }
+        return this;
+    }
+
+    onViewDeletedButtonClick(e) {
+        this.getDeletedFeaturesLayer().then((layer) => {
+            const li = e.target.closest('li');
+            const deletedFeatureId = li.dataset.deletedFeatureId;
+            const isChecked = li.classList.toggle(Consts.classes.CHECKED);
+            if (isChecked) {
+                layer.addFeature(this.#deletedFeatures.get(deletedFeatureId).clone()).then((feature) => {
+                    li.dataset.featureId = feature.getId();
+                });
+            }
+            else {
+                const featureId = li.dataset.featureId;
+                const feature = layer.features.find((f) => f.getId() === featureId);
+                if (feature) layer.removeFeature(feature);
+            }
+        });
+    }
+
+    onRecoverButtonClick(e) {
+        const li = e.target.closest('li');
+        const deletedFeatureId = li.dataset.deletedFeatureId;
+        if (deletedFeatureId) {
+            this.setSelectedFeatures([]);
+            this.#recoverDeletedFeature(this.#deletedFeatures.get(deletedFeatureId));
+        }
+        return self;
+    }
+
+    async #addDeletedItemToList(feature, layer) {
+        let deletedFeatureId;
+        if (!Array.from(this.#deletedFeatures.values()).includes(feature)) {
+            deletedFeatureId = this.getUID();
+            this.#deletedFeatures.set(deletedFeatureId, feature);
+        }
+        const html = await this.getRenderedHtml(this.CLASS + '-deleted', {
+            path: layer.title + this.LAYER_FEATURE_SEPARATOR + feature.id,
+        });
+        this.#deletedFeatureList.insertAdjacentHTML('afterbegin', html);
+        const listItem = this.#deletedFeatureList.querySelector('.' + this.CLASS + '-deleted-item');
+        listItem.dataset.deletedFeatureId = deletedFeatureId;
+        listItem.querySelector('.' + this.CLASS + '-deleted-btn-view')
+            .addEventListener(Consts.event.CLICK, (e) => this.onViewDeletedButtonClick(e), { passive: true });
+        listItem.querySelector('.' + this.CLASS + '-deleted-btn-recover')
+            .addEventListener(Consts.event.CLICK, (e) => this.onRecoverButtonClick(e), { passive: true });
+        this.controller.add(listItem);
+        this.updateModel();
+    }
+
+    #removeDeletedItemFromList(feature) {
+        this.getDeletedFeaturesLayer().then((layer) => {
+            const entry = Array.from(this.#deletedFeatures.entries()).find(([, value]) => value === feature);
+            if (entry) {
+                const deletedFeatureId = entry[0];
+                const li = this.#deletedFeatureList.querySelector(`li[data-deleted-feature-id="${deletedFeatureId}"]`);
+                if (li) {
+                    const clone = layer.features.find((f) => f.id === li.dataset.featureId);
+                    if (clone) layer.removeFeature(clone);
+                    this.#deletedFeatures.delete(deletedFeatureId);
+                    li.remove();
+                }
+            }
+        });
+    }
+
+    #recoverDeletedFeature(feature) {
+        if (Array.from(this.#deletedFeatures.values()).includes(feature)) {
+            this.history.undo(feature);
+        }
+        return self;
+    }
+
+    #flushDeletedFeatures() {
+        this.#deletedFeatures.clear();
+        this.getDeletedFeaturesLayer().then((layer) => layer.clearFeatures());
+        this.#deletedFeatureList.querySelectorAll('li').forEach((li) => li.remove());
+    }
+
+    async getDeletedFeaturesLayer() {
+        const self = this;
+        if (!this.#deletedFeaturesLayer) {
+            this.#deletedFeaturesLayer = await this.map.addLayer({
+                id: this.getUID(),
+                type: Consts.layerType.VECTOR,
+                title: this.getLocaleString('deletedFeatures'),
+                stealth: true,
+            });
+        }
+        return self.#deletedFeaturesLayer;
     }
 
     styleFunction(feature, _resolution) {
@@ -555,7 +781,7 @@ class Modify extends WebComponentControl {
                 result = Util.extend({}, mapStyles.line);
                 break;
         }
-        const style = feature.getStyle();
+        const style = feature.getStyle() ?? {};
         if (style.label) {
             result.label = style.label;
             result.fontSize = style.fontSize;
@@ -607,7 +833,7 @@ class Modify extends WebComponentControl {
         self.setFontColorWatch(color, self.styles.text.labelOutlineColor);
         const features = self.getActiveFeatures();
         features.forEach(function (feature) {
-            const style = feature.getStyle();
+            const style = feature.getStyle() ?? {};
             style.fontColor = color;
             style.labelOutlineColor = self.styles.text.labelOutlineColor;
             feature.setStyle(style);
@@ -638,7 +864,7 @@ class Modify extends WebComponentControl {
             self.setFontSizeWatch(sizeValue);
             const features = self.getActiveFeatures();
             features.forEach(function (feature) {
-                const style = feature.getStyle();
+                const style = feature.getStyle() ?? {};
                 style.fontSize = sizeValue;
                 if (style.font)
                     style.font = style.font.replace(/^\d+/, sizeValue);
@@ -674,7 +900,7 @@ class Modify extends WebComponentControl {
         var color;
         if (features.length) {
             const feature = features[features.length - 1];
-            const style = feature.getStyle();
+            const style = feature.getStyle() ?? {};
             text = style.label;
             color = style.fontColor;
             size = style.fontSize;
@@ -697,7 +923,7 @@ class Modify extends WebComponentControl {
         const self = this;
         const features = self.getActiveFeatures();
         if (features.length) {
-            const style = features[0].getStyle();
+            const style = features[0].getStyle() ?? {};
             features.forEach(function (feature) {
                 const textStyle = Util.extend({}, self.styles.text, style);
                 style.label = text;
@@ -749,22 +975,15 @@ class Modify extends WebComponentControl {
             self.#setFeatureSelectedState([newFeature]);
         }
     }
-    updateModel() {        
-        this.model.select = this.getLocaleString('select');
-        this.model.deleteSelectedFeatures = this.getLocaleString('deleteSelectedFeatures');
-        this.model.deleteVertices = this.getLocaleString('deleteVertices');
-        this.model["joinGeometries.tooltip"] = this.getLocaleString('joinGeometries.tooltip');
-        this.model.joinGeometries = this.getLocaleString('joinGeometries');
-        this.model.splitGeometry = this.getLocaleString('splitGeometry');
-        this.model.addText = this.getLocaleString('addText');
-        this.model.writeTextForFeature = this.getLocaleString('writeTextForFeature');
-        this.model.textColor = this.getLocaleString('textColor');
-        this.model.fontSize = this.getLocaleString('fontSize');
+
+    updateModel() {      
+        for (const key of Object.keys(this.model)) {
+            if (!key.startsWith("#")) {
+                this.model[key] = this.getLocaleString(key);
+            }
+        }
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Modify.prototype.CLASS = 'tc-ctl-mod';
