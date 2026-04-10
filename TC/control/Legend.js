@@ -286,6 +286,7 @@ class Legend extends MapContents {
                     if (li.innerHTML !== layerLegend.innerHTML) {//URI: Si el html nuevo y el viejo son iguales no copio para no hacer un parpadeo en el navegador.
                         li.innerHTML = layerLegend.innerHTML;
                     }
+                    self.map?.magnifier?.addNode(layerLegend.querySelectorAll(".tc-ctl-legend-watch img"));
                     self.update();
 
                     }
@@ -302,12 +303,14 @@ class Legend extends MapContents {
                     };
                     ul.insertBefore(layerLegend, getReferenceElement(loadOrder.indexOf(layer.id)));
                     if (layer instanceof TC.layer.Raster)
-                        layerLegend.addEventListener('update', (e) => {                        
+                        layerLegend.addEventListener('update', (e) => {
                             self.map?.magnifier?.addNode(e.srcElement.querySelectorAll(".tc-ctl-legend-watch img"), 4);
                             self.update();
                         });
-                    else
+                    else { 
+                        self.map?.magnifier?.addNode(layerLegend.querySelectorAll(".tc-ctl-legend-watch img"));
                         self.update();
+                    }   
 
                     self.inBoxChange = (callback) => { 
                         const observer = new IntersectionObserver((entries) => {
