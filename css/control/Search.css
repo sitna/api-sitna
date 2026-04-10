@@ -8,19 +8,19 @@
         background-color: var(--sitna-textbox-background-color);
     }
 
-.tc-ctl-search-list-container ul {
-    width: calc(100% - 0.5em);
+div.tc-ctl-search-list-container ul {
+    font-size: 0.8em;
 }
 
-.tc-ctl-search-list-container > ul > li {
+div.tc-ctl-search-list-container > ul > li {
     border-bottom: 0.15em solid rgba(90, 117, 134, 0.3);
 }
 
-    .tc-ctl-search-list-container > ul > li:last-child {
+    div.tc-ctl-search-list-container > ul > li:last-child {
         border: none;
     }
 
-.tc-ctl-search-list-container li {
+div.tc-ctl-search-list-container li {
     line-height: 1em;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
@@ -29,20 +29,20 @@
     overflow: hidden;*/
 }
 
-    .tc-ctl-search-list-container li a {
+    div.tc-ctl-search-list-container li a {
         display: block;
         width: 100%;
     }
 
-.tc-ctl-search-list-container a {
+div.tc-ctl-search-list-container a {
     font-size: 95%;
 }
 
-    .tc-ctl-search-list-container a.tc-ctl-search-li-empty {
+    div.tc-ctl-search-list-container a.tc-ctl-search-li-empty {
         cursor: pointer;
     }
 
-    .tc-ctl-search-list-container a:focus {
+    div.tc-ctl-search-list-container a:focus {
         font-weight: bold;
         outline-style: none;
         font-size: 100%;
@@ -136,15 +136,17 @@
         display: none;
     }
 
-.tc-ctl-search .tc-ctl-search-list-container {
+div.tc-ctl-search-list-container {
     max-height: 20em;
     overflow: auto;
     z-index: 10011;
     flex: 1 1 100%;
     width: calc(100% - 1.4em);
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    border-radius: var(--sitna-border-radius);
 }
 
-    .tc-ctl-search .tc-ctl-search-list-container ul {
+    div.tc-ctl-search-list-container ul {
         background-color: var(--main-bg-color);
         border: 1px solid #ccc;
         border-radius: var(--sitna-border-radius);
@@ -153,26 +155,26 @@
         margin: 0;
         padding: 0.2em;
         line-height: 1.8em;
-        box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
         transition: all 0.2s ease;
         transition-behavior: allow-discrete;
         opacity: 1;
+        list-style: none;
     }
 
-.tc-ctl-search-list-container ul.tc-hidden {
+div.tc-ctl-search-list-container ul.tc-hidden {
     display: none;
     opacity: 0;
 }
 
-.tc-ctl-search .tc-ctl-search-list-container li.tc-ctl-search-examples {
+div.tc-ctl-search-list-container li.tc-ctl-search-examples {
     line-height: 2em;
 }
 
-    .tc-ctl-search .tc-ctl-search-list-container li:hover {
+    div.tc-ctl-search-list-container li:hover {
         background-color: var(--main-hl-bg-color);
     }
 
-.tc-ctl-search .tc-ctl-search-examples sitna-button.tc-ctl-search-example {
+.tc-ctl-search-examples sitna-button.tc-ctl-search-example {
     --sitna-button-text-color: var(--text-main-color);
     --sitna-button-background-color: var(--sitna-bg8-txt1-color);
     --sitna-button-border-color: var(--sitna-bg8-txt1-color);
@@ -182,28 +184,28 @@
     margin-left: 0.5em;
 }
 
-.tc-ctl-search .tc-ctl-search-list-container a:link, .tc-ctl-search-list-container a:visited {
+div.tc-ctl-search-list-container a:link, div.tc-ctl-search-list-container a:visited {
     color: var(--sitna-text-color);
     text-decoration: none;
 }
 
-    .tc-ctl-search .tc-ctl-search-list-container a b {
+    div.tc-ctl-search-list-container a b {
         color: #971414;
     }
 
-    .tc-ctl-search .tc-ctl-search-list-container > ul > li > span.tc-header {
+    div.tc-ctl-search-list-container > ul > li > span.tc-header {
         font-weight: bold;
         font-size: 90%;
     }
 
-.tc-ctl-search .tc-ctl-search-list-container > ul > li > span.tc-header-color {
+div.tc-ctl-search-list-container > ul > li > span.tc-header-color {
     float: right;
     margin: 0em 1em;
     border-radius: calc(var(--sitna-border-radius) / 2);
     padding: 0;
 }
 
-        .tc-ctl-search .tc-ctl-search-list-container > ul > li > span.tc-header-color:after {
+        div.tc-ctl-search-list-container > ul > li > span.tc-header-color:after {
             display: block;
             width: 1em;
             height: 1em;

@@ -1182,7 +1182,7 @@ class SearchType {
         Util.extend(self, options);
 
         self.version = self.version || '1.1.0';
-        
+
         if (!self.searchFunction && self.parser) {
             // Creamos searchFunction por defecto.
             // En esta función this es el control Search.
@@ -1190,6 +1190,7 @@ class SearchType {
             const fetchSearch = self.#fetchSearch;
             self.searchFunction = async function (pattern) {
                 const self = this;
+
                 const params = type.parser(pattern);
 
                 if (!params) {
@@ -1465,7 +1466,7 @@ class SearchType {
                             r.f = _f.getText();
                             break;
                         // GLS: consulta de 2 niveles (carretera con pk / topónimo con municipio)
-                        case Object.prototype.hasOwnProperty.call(self.queryProperties, 'secondQueryWord'):
+                        case Object.hasOwn(self.queryProperties, 'secondQueryWord'):
                             _f = new filter.And(
                                 self.filter.getFilterNode(self.queryProperties.firstQueryWord, data[0]),
                                 self.filter.getFilterNode(self.queryProperties.secondQueryWord, data[1])
@@ -1564,9 +1565,9 @@ class SearchType {
                             let src = source;
 
                             dataLayer.forEach(dLayer => {
-                                if (!Object.prototype.hasOwnProperty.call(props, dLayer)) {
+                                if (!Object.hasOwn(props, dLayer)) {
 
-                                    if (src instanceof Object && Object.prototype.hasOwnProperty.call(source, dLayer)) {
+                                    if (src instanceof Object && Object.hasOwn(source, dLayer)) {
                                         src = source[dLayer];
                                     }
 
@@ -1579,7 +1580,7 @@ class SearchType {
                             });
                         }
                         else {
-                            if (source instanceof Object && Object.prototype.hasOwnProperty.call(source, dataLayer)) {
+                            if (source instanceof Object && Object.hasOwn(source, dataLayer)) {
                                 source = source[dataLayer];
                             }
 
@@ -1595,7 +1596,7 @@ class SearchType {
 
                     if (properties && properties instanceof Array) {
                         var filters = properties.map(function (elm) {
-                            if (Object.prototype.hasOwnProperty.call(elm, "type")) {
+                            if (Object.hasOwn(elm, "type")) {
                                 switch (true) {
                                     case elm.type === Consts.comparison.EQUAL_TO: {
                                         return new TC.filter.equalTo(elm.name, elm.value);
@@ -1677,12 +1678,12 @@ class SearchType {
 
         var getValue = function (style, geomType, css) {
             if (geomType) {
-                if (Object.prototype.hasOwnProperty.call(style, geomType) && Object.prototype.hasOwnProperty.call(style[geomType], css)) {
+                if (Object.hasOwn(style, geomType) && Object.hasOwn(style[geomType], css)) {
                     return style[geomType][css];
                 }
             } else {
                 for (var gType in style) {
-                    if (Object.prototype.hasOwnProperty.call(style[gType], css)) {
+                    if (Object.hasOwn(style[gType], css)) {
                         return style[gType][css];
                     }
                 }
@@ -1708,7 +1709,7 @@ class SearchType {
 
         var headerData, label, color;
 
-        const isLegacy = Object.prototype.hasOwnProperty.call(self, 'suggestionListHead');
+        const isLegacy = Object.hasOwn(self, 'suggestionListHead');
 
         if (isLegacy) {
             // Configuración antigua
@@ -2017,10 +2018,10 @@ class SearchType {
                     id: self.dataIdProperty.map(function (elem) {
                         return feature.data[elem];
                     }).join('#'),
-                    label: label,
+                    label,
                     properties: propertiesObj,
                     dataLayer: feature.id.split('.')[0],
-                    dataRole: self.typeName
+                    dataRole: self.typeName,
                 });
             }
         });
@@ -2436,24 +2437,65 @@ class Search extends Control {
         this.model = new SearchModel();
 
     }
+
     async reloadLocaleString() {
         const self = this;
         self.EMPTY_RESULTS_LABEL = self.getLocaleString('noResults');
         self.EMPTY_RESULTS_TITLE = self.getLocaleString('checkCriterion');
         self.OUTBBX_LABEL = self.getLocaleString('outsideOfLimits');
     }
+
     updateModel() {
         this.model.search1 = this.getLocaleString("search.1");
         this.model.searchPlaceholder = this.getLocaleString("search.placeholder");
         this.model.searchInstructions = this.getLocaleString("search.instructions");
         this.model.share = this.getLocaleString("share");
         this.model.search2 = this.getLocaleString("search.2");
-        this.model.dialogHeader = this.getLocaleString("search.1") + " - " + this.getLocaleString("share"); 
+        this.model.dialogHeader = this.getLocaleString("search.1") + " - " + this.getLocaleString("share");
+
+        let currentLabel = this.textInput.value;
+
+        const doneSearchTypes = new WeakSet();
+        const changeSearchTypeLocale = (searchType, typeName) => {
+            typeName ??= searchType.typeName;
+            if (!doneSearchTypes.has(searchType)) {
+                doneSearchTypes.add(searchType);
+                if (searchType.suggestionTemplateFunction) {
+                    searchType.suggestionTemplate = searchType.suggestionTemplateFunction();
+                    this.searchRequestsResults
+                        ?.filter((result) => typeName === result.dataRole)
+                        .forEach((result) => {
+                            let found = false;
+                            if (result.label === this.textInput.value) found = true;
+                            result.label = Util.formatIndexedTemplate(searchType.suggestionTemplate, ...searchType.outputProperties.map((outputProperty) => result.properties[outputProperty]));
+                            if (found) currentLabel = result.label;
+                        });
+                }
+                if (searchType.regExFunction) {
+                    searchType.regEx = searchType.regExFunction();
+                }
+            }
+        };
+        if (this.availableSearchTypes) {
+            for (const [typeName, searchType] of Object.entries(this.availableSearchTypes)) {
+                changeSearchTypeLocale(searchType, typeName);
+            }
+        }
+        for (const allowedSearchType of this.allowedSearchTypes) {
+            changeSearchTypeLocale(allowedSearchType);
+        }
+        if (!this.resultsList.classList.contains(Consts.classes.HIDDEN)) {
+            this.doSearch(() => this.button.click());
+        }
+        else {
+            this.textInput.value = currentLabel;
+        }
+
+        if (!this.examplesList.classList.contains(Consts.classes.HIDDEN)) {
+            this.showExamples();
+        }
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
     //updateLanguage() {
     //    this.controller.abort();
     //    this.controller = null;
@@ -2620,10 +2662,12 @@ class Search extends Control {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-search.mjs');
         const dialogTemplatePromise = import('../templates/tc-ctl-search-dialog.mjs');
+        const listTemplatePromise = import('../templates/tc-ctl-search-list.mjs');
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
+        template[self.CLASS + '-list'] = (await listTemplatePromise).default;
         self.template = template;
     }
 
@@ -2647,7 +2691,7 @@ class Search extends Control {
                 var type = self.getSearchTypeByFeature(id);
                 if (type) {
                     var style = type.getStyleByFeatureType(getFeatureType(id));
-                    if (style && Object.prototype.hasOwnProperty.call(style, geomType)) {
+                    if (style && Object.hasOwn(style, geomType)) {
                         return style[geomType][property];
                     }
                 }
@@ -2663,7 +2707,7 @@ class Search extends Control {
                     if (prop instanceof Array) {
                         var values = prop.map(function (p) {
                             const data = f.getData();
-                            return Object.prototype.hasOwnProperty.call(data, p) ? data[p] : '';
+                            return Object.hasOwn(data, p) ? data[p] : '';
                         });
                         var searchType = this.getSearchTypeByFeature(getFeatureType(f.id));
                         if (searchType) {
@@ -2673,7 +2717,7 @@ class Search extends Control {
                         }
                     } else {
                         const data = f.getData();
-                        return Object.prototype.hasOwnProperty.call(data, prop) ? data[prop] : '';
+                        return Object.hasOwn(data, prop) ? data[prop] : '';
                     }
                 }
                 else {
@@ -2688,8 +2732,14 @@ class Search extends Control {
             self.textInput.setAttribute('placeHolder', self.options.placeHolder.trim());
         }
 
-        self.examplesList = self.div.querySelector('.' + self.CLASS + '-examples');
-        self.resultsList = self.div.querySelector('.' + self.CLASS + '-results');
+        const listContainerParent = self.div.closest('.' + Consts.classes.MAP) ?? document.body; 
+        const listHtml = await self.getRenderedHtml(self.CLASS + '-list');
+        listContainerParent.insertAdjacentHTML('beforeend', listHtml);
+        self.listContainer = listContainerParent.querySelector('.' + self.CLASS + '-list-container');
+        self.#positionListContainer();
+
+        self.examplesList = self.listContainer.querySelector('.' + self.CLASS + '-examples');
+        self.resultsList = self.listContainer.querySelector('.' + self.CLASS + '-results');
         self.button = self.div.querySelector('.' + self.CLASS + '-btn');
         if (self.options.instructions) {
             self.textInput.setAttribute('title', self.options.instructions.trim());
@@ -2878,7 +2928,7 @@ class Search extends Control {
         }, { signal: self.controller.signal });
         self.textInput.addEventListener("input", function () {
             if (self.textInput.value.length === 0) {
-                self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
+                self.shareButton?.classList.add(Consts.classes.HIDDEN);
                 self.showExamples();
                 search();
             }
@@ -2890,7 +2940,9 @@ class Search extends Control {
             if (self.textInput.value.length === 0) self.showExamples();
         };
         const onblur = (e) => {
-            if (!self.div.contains(e.relatedTarget) && e.relatedTarget !== self.textInput) {
+            if (!self.div.contains(e.relatedTarget) &&
+                !self.listContainer.contains(e.relatedTarget) &&
+                e.relatedTarget !== self.textInput) {
                 self.hideExamples();
             }
         };
@@ -2974,9 +3026,19 @@ class Search extends Control {
 
         self.textInput.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
         self.resultsList.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
+
+    }
+
+    #positionListContainer() {
+        const boxRect = this.div.querySelector(`.${this.CLASS}-box`).getBoundingClientRect();
+        this.listContainer.style.position = "absolute";
+        this.listContainer.style.top = (boxRect.bottom + window.scrollY) + "px";
+        this.listContainer.style.left = (boxRect.left + window.scrollX) + "px";
+        this.listContainer.style.width = boxRect.width + "px";
     }
 
     showExamples() {
+        this.#positionListContainer();
         this.examplesList.replaceChildren();
         const searchTypesWithExamples = this
             .allowedSearchTypes
@@ -3482,6 +3544,8 @@ class Search extends Control {
             ]
         };
 
+        const roadSuggestionTemplateFunction = () => self.getLocaleString('search.list.road.shorter') + ': {0}';
+        const roadRegExFunction = () => new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i");
         self.availableSearchTypes[Consts.searchType.ROAD] = {
             root: null,
             limit: false,
@@ -3500,7 +3564,8 @@ class Search extends Control {
                 colorSource: "strokeColor"
             },
             outputProperties: ['DCARRETERA'],
-            suggestionTemplate: self.getLocaleString('search.list.road.shorter') + ': ' + '{0}',
+            suggestionTemplateFunction: roadSuggestionTemplateFunction,
+            suggestionTemplate: roadSuggestionTemplateFunction(),
             searchWeight: 10,
             styles: [
                 {
@@ -3519,7 +3584,8 @@ class Search extends Control {
                 }
             ],
             queryFactory: self.getRoadQuery,
-            regEx: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))$", "i"),
+            regEx: roadRegExFunction(),
+            regExFunction: roadRegExFunction,
             parser: function (pattern) {
                 const self = this;
                 pattern = pattern.trim();
@@ -3545,6 +3611,8 @@ class Search extends Control {
             ],
         };
 
+        const roadMilestoneSuggestionTemplateFunction = () => self.getLocaleString('search.list.road.shorter') + ': {0} ' + self.getLocaleString('search.list.milestone') + ': {1}';
+        const roadMilestoneRegExFunction = () => new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))\\s*\\,*\\s*(?:(?:" + self.getLocaleString("search.list.milestone") + "\\:?)|(?:P\\:?)|(?:K\\:?)|(?:KM\\:?)|(?:\\s+|\\,+))\\s*(\\d{1,4})$", "i");
         self.availableSearchTypes[Consts.searchType.ROADMILESTONE] = {
             root: null,
             limit: false,
@@ -3564,7 +3632,8 @@ class Search extends Control {
                 colorSource: "fontColor"
             },
             outputProperties: ['DCARRETERA', 'PK'],
-            suggestionTemplate: self.getLocaleString('search.list.road.shorter') + ': {0} ' + self.getLocaleString('search.list.milestone') + ': {1}',
+            suggestionTemplate: roadMilestoneSuggestionTemplateFunction(),
+            suggestionTemplateFunction: roadMilestoneSuggestionTemplateFunction,
             searchWeight: 11,
             styles: [
                 {
@@ -3578,7 +3647,8 @@ class Search extends Control {
                 }
             ],
             queryFactory: self.getMilestoneQuery,
-            regEx: new RegExp("^(?:(?:" + self.getLocaleString("search.list.road") + "|" + self.getLocaleString("search.list.road.shorter") + ")\\:?)?\\s*((A?|AP?|N?|R?|E?|[A-Z]{2}?|[A-Z]{1}?)\\s*\\-?\\s*(\\d{1,4})\\s*\\-?\\s*(A?|B?|C?|R?))\\s*\\,*\\s*(?:(?:" + self.getLocaleString("search.list.milestone") + "\\:?)|(?:P\\:?)|(?:K\\:?)|(?:KM\\:?)|(?:\\s+|\\,+))\\s*(\\d{1,4})$", "i"),
+            regEx: roadMilestoneRegExFunction(),
+            regExFunction: roadMilestoneRegExFunction,
             parser: function (pattern) {
                 const self = this;
                 pattern = pattern.trim();
@@ -3626,8 +3696,8 @@ class Search extends Control {
 
         // Cambiamos alias por el nombre correcto (p.e. cadastral por cadastralAddress)
         const changeProperty = function (oldName, newName) {
-            if (Object.prototype.hasOwnProperty.call(allowedSearchTypesOptions, oldName)) {
-                if (!Object.prototype.hasOwnProperty.call(allowedSearchTypesOptions, newName)) {
+            if (Object.hasOwn(allowedSearchTypesOptions, oldName)) {
+                if (!Object.hasOwn(allowedSearchTypesOptions, newName)) {
                     allowedSearchTypesOptions[newName] = allowedSearchTypesOptions[oldName];
                 }
                 else {
@@ -3793,7 +3863,7 @@ class Search extends Control {
             }
 
             for (var i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
-                if (Object.prototype.hasOwnProperty.call(l, self.WFS_TYPE_ATTRS[i])) {
+                if (Object.hasOwn(l, self.WFS_TYPE_ATTRS[i])) {
                     delete l[self.WFS_TYPE_ATTRS[i]];
                 }
             }
@@ -4381,7 +4451,7 @@ class Search extends Control {
             //const allowed = self.allowedSearchTypes.findByProperty("typeName", dr);
             const allowed = self.getSearchTypeByRole(dr);
 
-            const customSearchType = !Object.prototype.hasOwnProperty.call(self.availableSearchTypes, dr)
+            const customSearchType = !Object.hasOwn(self.availableSearchTypes, dr)
 
             if (!allowed.queryFactory) {
                 console.log('Falta implementación del método queryFactory');
@@ -4397,7 +4467,7 @@ class Search extends Control {
                     switch (true) {
                         case goToObject.params.type === Consts.layerType.VECTOR:
                             for (i = 0; i < self.WFS_TYPE_ATTRS.length; i++) {
-                                if (Object.prototype.hasOwnProperty.call(layer, self.WFS_TYPE_ATTRS[i])) {
+                                if (Object.hasOwn(layer, self.WFS_TYPE_ATTRS[i])) {
                                     delete layer[self.WFS_TYPE_ATTRS[i]];
                                 }
                             }
