@@ -1,0 +1,80 @@
+﻿.tc-ctl-scenes h2 {
+    display: flex;
+    justify-content: space-between;
+}
+    .tc-ctl-scenes h2 sitna-toggle {
+        --sitna-unchecked-icon-text: '\e936';
+        --sitna-checked-icon-text: '\e937';
+        font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
+        --icon-font-line-height: 1.7em;
+    }
+.tc-ctl-scenes ul.tc-ctl-scenes-list {
+    padding-left: 0px
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-item {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 10% 10% auto;
+    column-gap: 5px;
+    align-items: center;
+    min-height: 3em;
+    background-color: var(--sitna-background-color);
+    border: 1px solid var(--sitna-tab-border-color);
+    border-radius: var(--border-radius);
+    padding: 0 3px 3px 3px;
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-item:not(:last-child){
+    border-bottom:none;
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-dd {
+    color: var(--sec-btn-color);
+    background-color: var(--active-zone-bg-color);
+    height: 100%;
+    cursor: move;
+    border-radius: var(--border-radius);
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-dd:after {
+    height: 100%;
+    line-height: 3em;        
+    top: calc(50% - 1em);
+    font-family: 'FontAwesome';
+    content: '\f0c9\f07d';
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+.tc-ctl-scenes .tc-ctl-scenes-list-item > * {
+    grid-row-start: 1;
+    grid-row-end: 2;
+}
+
+.tc-ctl-scenes .tc-ctl-scenes-list-show {
+    --sitna-unchecked-icon-text: '\e911';
+    --sitna-checked-icon-text: '\e910';
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3 - 1px);
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-zoom {
+    --sitna-icon-text: '\e917';
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3 - 1px);
+}
+.tc-ctl-scenes  .tc-ctl-scenes-datetime {
+    display: flex;
+    justify-content: space-between;
+    line-height: 1.5em;
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-pointSize {
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-pointSize.tc-hidden, .tc-ctl-scenes .tc-ctl-scenes-list-attribute.tc-hidden {
+    display: none;
+}
+.tc-ctl-scenes .tc-ctl-scenes-list-attribute {
+    grid-column-start: 1;
+    grid-column-end: 5;
+    grid-row-start: 2;
+    margin-left: 4px;
+}
+.tc-ctl-scenes h2{
+    text-transform:none;
+}
+    

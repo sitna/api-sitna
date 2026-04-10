@@ -1,0 +1,329 @@
+﻿
+.tc-ctl-search sitna-button.tc-ctl-route-directions-btn {
+    margin-top: 0.25em;
+    --sitna-icon-text: '\e935';
+}
+
+sitna-route .tc-ctl-route-header {
+    padding: 0 1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2em;
+}
+
+sitna-route sitna-button.tc-ctl-route-close {
+    float: right;
+    --sitna-icon-text: var(--icon-close);
+}
+
+sitna-route li {
+    list-style: none;
+}
+
+sitna-route ul.tc-ctl-route-destinations > li.tc-ctl-route-destination {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    padding: 0 0.5em 0 0;
+    box-sizing: border-box;
+}
+
+sitna-route .tc-ctl-route-destination.tc-sortable-dragging {
+    opacity: 0.5;
+    z-index: 2;
+}
+
+sitna-route .tc-ctl-route-destination-drag {
+    display: inline-block;
+    height: 3em;
+    min-width: 2em;
+    position: relative;
+    color: var(--sitna-text-color);
+    background-color: var(--active-zone-bg-color);
+    padding: 0 0.4em;
+    cursor: grab;
+}
+
+sitna-route .tc-ctl-route-destination.tc-sortable-dragging .tc-ctl-route-destination-drag {
+    cursor: grabbing;
+}
+
+sitna-route .tc-ctl-route-destination-drag::after {
+    position: absolute;
+    width: 100%;
+    height: 2em;
+    font-size: 1.5em;
+    line-height: 2em;
+    right: 0;
+    top: 0;
+    display: block;
+    text-align: center;
+    content: '\2b7f';
+}
+
+sitna-route .tc-ctl-route-destination-search {
+    flex-grow: 1;
+}
+
+sitna-route .tc-ctl-route-destination-remove-btn {
+    margin-left: 0.2em;
+    --sitna-icon-text: var(--icon-delete);
+}
+
+sitna-route .tc-ctl-route-destination-remove-btn.tc-hidden {
+    display: none;
+}
+
+sitna-route .tc-ctl-route-summary {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0.2em 0.5em 0.2em;
+}
+
+    sitna-route .tc-ctl-route-summary h3 {
+        display: inline-block;
+        font-size: 1em;
+        font-weight: bold;
+    }
+
+sitna-route .tc-ctl-route-feature > .tc-ctl-route-summary {
+    font-weight: bold;
+}
+
+sitna-route .tc-ctl-route-feature > .tc-ctl-route-summary > h3 {
+    font-size: 1.2em;
+}
+
+sitna-route li.tc-ctl-route-segment:only-of-type > .tc-ctl-route-summary {
+    display: none;
+}
+
+sitna-route .tc-ctl-route-duration::before {
+    content: var(--icon-time);
+    margin-right: 0.2em;
+}
+
+sitna-route ul.tc-ctl-route-steps {
+    margin-top: 0;
+}
+
+sitna-route .tc-ctl-route-step {
+    cursor: pointer;
+}
+
+sitna-route ul.tc-list > li.tc-ctl-route-step-highlighted {
+    background-color: var(--list-hl-bg-color);
+}
+
+sitna-route sitna-button[data-profile] {
+    font-size: 1.2em;
+    --sitna-button-background-color: var(--sitna-highlighted-text-color);
+    mask-size: cover;
+}
+
+sitna-route sitna-button[data-profile="driving-car"] {
+    mask-image: url(../img/directions-car.svg);
+}
+
+sitna-route sitna-button[data-profile="driving-hgv"] {
+    mask-image: url(../img/directions-hgv.svg);
+}
+
+sitna-route sitna-button[data-profile|="cycling"] {
+    mask-image: url(../img/directions-bike.svg);
+}
+
+sitna-route sitna-button[data-profile="cycling-road"] {
+    mask-image: url(../img/directions-road-bike.svg);
+}
+
+sitna-route sitna-button[data-profile="cycling-mountain"] {
+    mask-image: url(../img/directions-mtb.svg);
+}
+
+sitna-route sitna-button[data-profile="foot-walking"] {
+    mask-image: url(../img/directions-walk.svg);
+}
+
+sitna-route sitna-button[data-profile="foot-hiking"] {
+    mask-image: url(../img/directions-hiking.svg);
+}
+
+sitna-route sitna-button[data-profile="wheelchair"] {
+    mask-image: url(../img/directions-wheelchair.svg);
+}
+
+sitna-route div.tc-ctl-route-destination-actions {
+    display: flex;
+    justify-content: center;
+}
+
+sitna-route sitna-button.tc-ctl-route-destination-switch {
+    --sitna-icon-text: '\1f5d8';
+    border-radius: var(--sitna-border-radius);
+    margin: 0 1em;
+}
+
+sitna-route sitna-button.tc-ctl-route-destination-add {
+    --sitna-icon-text: '\e904';
+    border-radius: var(--sitna-border-radius);
+    margin: 0 1em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type] {
+        padding-left: 0.5em;
+}
+
+    sitna-route .tc-ctl-route-step-instruction[data-type]::before {
+        display: inline-block;
+        width: 2em;
+        height: 2em;
+        mask-image: url(../img/directions-sprites.svg);
+        background-color: var(--sitna-highlighted-text-color);
+        mask-size: 2em 28em;
+        mask-repeat: no-repeat;
+        content: ' ';
+        margin-right: 0.5em;
+    }
+
+sitna-route .tc-ctl-route-step-instruction[data-type="0"]::before {
+    mask-position: 0 0;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="1"]::before {
+    mask-position: 0 -2em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="2"]::before {
+    mask-position: 0 -4em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="3"]::before {
+    mask-position: 0 -6em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="4"]::before {
+    mask-position: 0 -8em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="5"]::before {
+    mask-position: 0 -10em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="6"]::before {
+    mask-position: 0 -12em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="7"]::before {
+    mask-position: 0 -14em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="8"]::before {
+    mask-position: 0 -16em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="9"]::before {
+    mask-position: 0 -18em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="10"]::before {
+    mask-position: 0 -20em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="11"]::before {
+    mask-position: 0 -22em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="12"]::before {
+    mask-position: 0 -24em;
+}
+
+sitna-route .tc-ctl-route-step-instruction[data-type="13"]::before {
+    mask-position: 0 -26em;
+}
+
+sitna-route ul.tc-ctl-route-features {
+    margin-top: 1em;
+    padding: 0;
+}
+
+sitna-route ul.tc-ctl-route-features:empty {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+sitna-route .tc-ctl-search-box.tc-active {
+    outline: 2px solid var(--sitna-main-accent-color);
+}
+
+sitna-route li.tc-ctl-route-destination div.tc-ctl.tc-ctl-search {
+    margin-bottom: 0;
+}
+
+sitna-route .tc-ctl-route-preference {
+    width: 100%;
+    margin: 1em 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+sitna-route .tc-ctl-route-result-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--sitna-border-color);
+}
+
+    sitna-route .tc-ctl-route-result-tabs sitna-tab:first-of-type::before {
+        content: '\e914';
+        display: inline-block;
+        width: 3em;
+    }
+
+    sitna-route .tc-ctl-route-result-tabs sitna-tab:last-of-type::before {
+        content: '\e920';
+        display: inline-block;
+        width: 3em;
+    }
+
+sitna-route ul.tc-ctl-route-segments {
+    margin: 0.5em 0 0 0;
+    padding: 0;
+}
+
+    sitna-route ul.tc-ctl-route-segments.tc-hidden {
+        display: none;
+    }
+
+sitna-route div.tc-ctl-route-profile.tc-hidden {
+    display: none;
+}
+
+.tc-ctl-rpanel-body sitna-route {
+    padding: 0;
+}
+
+    .tc-ctl-rpanel-body sitna-route h2 {
+        display: none;
+    }
+
+.tc-ctl-rpanel .tc-ctl-rpanel-info sitna-route h3 {
+    margin: 0 0.5em;
+}
+
+    .tc-ctl-rpanel-body sitna-route sitna-button.tc-ctl-route-close {
+        display: none;
+    }
+
+.tc-ctl-route-instructions {
+    padding: 0.5em;
+}
+
+    .tc-ctl-route-instructions sitna-button.tc-ctl-route-geolocation {
+        --sitna-icon-text: '\e925';
+    }
+
+sitna-route .tc-track-chart {
+    position: relative;
+    left: 0;
+}

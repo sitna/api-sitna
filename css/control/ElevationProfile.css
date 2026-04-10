@@ -1,0 +1,47 @@
+﻿sitna-elevation-profile {
+    box-sizing: border-box;
+    margin-top: 1em;
+    position: relative;
+}
+
+.tc-ctl-elev-profile-overlay {
+    background-position: center;
+    background-size: 70%;
+    background-repeat: no-repeat;
+    height: 2em;
+    width: 2em;
+    visibility: visible;
+}
+
+    .tc-ctl-elev-profile-overlay.tc-elevation {
+        background-color: rgba(255, 0, 0, 0.5);
+        border: 2px solid white;
+        height: 12px;
+        border-radius: 50%;
+        -moz-border-radius: 50%;
+        -webkit-border-radius: 50%;
+        width: 12px;
+    }
+
+.tc-ctl-rpanel-main sitna-elevation-profile {
+    font-size: 0.8rem;
+}
+
+.tc-ctl-rpanel-main.tc-resizable sitna-elevation-profile {
+    height: 100%;
+}
+
+.tc-track-chart-warning {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    background-color: var(--sitna-bg1-txt3-color);
+    color: var(--sitna-background-color);
+    padding: 0.2em 0.5em;
+    border-radius: calc(var(--sitna-border-radius) / 2);
+}
+
+    .tc-track-chart-warning.tc-hidden {
+        display: none;
+    }
