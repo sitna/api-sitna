@@ -143,7 +143,7 @@ class MapContents extends Control {
                             previousElm.insertAdjacentElement('afterend', currentElm);
                         }
                         else {
-                            currentElm.parentElement.firstChild.insertAdjacentElement('beforebegin', currentElm);
+                            currentElm.parentElement.firstElementChild.insertAdjacentElement('beforebegin', currentElm);
                         }
                     }
                     break;

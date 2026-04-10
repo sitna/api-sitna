@@ -50,6 +50,8 @@ class WorkLayerManagerNodeModel {
         this.content = "";
         this.metadata = "";
         this.dragToReorder = "";        
+        this.editStyle = "";
+        this.close = "";
     }
 }
 class WorkLayerManagerGroupModel {
@@ -125,6 +127,8 @@ class WorkLayerManager extends TOC {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-wlm.mjs');
         const elementTemplatePromise = import('../templates/tc-ctl-wlm-elm.mjs');
+        const elementInfoTemplatePromise = import('../templates/tc-ctl-wlm-elm-info.mjs');
+        const elementInfoLegendTemplatePromise = import('../templates/tc-ctl-wlm-elm-info-legend.mjs');
         const singleTemplatePromise = import('../templates/tc-ctl-wlm-type-sgl.mjs');
         const groupTemplatePromise = import('../templates/tc-ctl-wlm-type-grp.mjs');
         const groupNodeTemplatePromise = import('../templates/tc-ctl-wlm-type-grp-node.mjs');
@@ -132,6 +136,8 @@ class WorkLayerManager extends TOC {
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-elm'] = (await elementTemplatePromise).default;
+        template[self.CLASS + '-elm-info'] = (await elementInfoTemplatePromise).default;
+        template[self.CLASS + '-elm-info-legend'] = (await elementInfoLegendTemplatePromise).default;
         template[self.CLASS + '-type-sgl'] = (await singleTemplatePromise).default;
         template[self.CLASS + '-type-grp'] = (await groupTemplatePromise).default;
         template[self.CLASS + '-type-grp-node'] = (await groupNodeTemplatePromise).default;
@@ -228,6 +234,14 @@ class WorkLayerManager extends TOC {
         const self = this;
         await super.register(map);
 
+        if (!map.magnifier) {
+            map.magnifier = new ImageMagnifier(3, {
+                textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
+                textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
+            });
+            map.div.appendChild(map.magnifier);
+        }
+
         if (self.options.fileEditing) {
             self.fileEdit = await map.addControl('fileEdit', { caller: self, snapping: true });
         }
@@ -264,14 +278,14 @@ class WorkLayerManager extends TOC {
                         }
                     });
                 }
+            })
+            .on(Consts.event.LAYERVISIBILITY, function (e) { 
+                const li = self.#findLayerElement(e.layer);
+                if (li) {
+                    li.querySelector('input[type=range]').disabled = !e.layer.getVisibility();
+                }
             });
-        if (!map.magnifier) {
-            map.magnifier = new ImageMagnifier(3, {
-                textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
-                textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
-            });            
-            document.body.appendChild(map.magnifier);
-        }
+        
             
         return self;
     }
@@ -373,7 +387,7 @@ class WorkLayerManager extends TOC {
         }
     }
     
-    updateLayerTree(layer, refreshing) {
+    async updateLayerTree(layer, refreshing) {
         const self = this;
 
         var getLegendImgByPost = async function (layer) {
@@ -391,9 +405,11 @@ class WorkLayerManager extends TOC {
         if (!layer.isBase && !layer.options.stealth) {
             MapContents.prototype.updateLayerTree.call(self, layer);
 
+            const getTitle = (layer) => layer.title || layer.wrap.getServiceTitle && layer.wrap.getServiceTitle();
+
             var alreadyExists = false;
-            for (var i = 0, len = self.layers.length; i < len; i++) {
-                if (layer === self.layers[i]) {
+            for (const layerElm of self.layers) {
+                if (layer === layerElm) {
                     alreadyExists = true;
                     break;
                 }
@@ -420,180 +436,166 @@ class WorkLayerManager extends TOC {
                     layerData.layerNames = layer.layerNames;
                     const path = layer.names.map(n => layer.getPath(n));
                     path.forEach(p => p.shift());
-                    if(!self.hidePath)
+                    if (!self.hidePath)
                         layerData.path = path;
                     layerData.legend = [];
                     layerData.abstract = [];
                     layerData.metadata = [];
                     layer.names.forEach(function (name) {
                         var info = layer.getInfo(name);
-                        info.legend && layerData.legend.push(info.legend);
+                        if (info.legend) layerData.legend = layerData.legend.concat(info.legend);
                         info.abstract && layerData.abstract.push(info.abstract);
                         info.metadata && layerData.metadata.push(info.metadata);
                     });
 
                     const info = layer.getInfo();
-                    layerData.hasInfo = Object.prototype.hasOwnProperty.call(info, 'abstract') ||
-                        Object.prototype.hasOwnProperty.call(info, 'legend') ||
-                        Object.prototype.hasOwnProperty.call(info, 'metadata');
-                    
+                    layerData.hasInfo = Object.hasOwn(info, 'abstract') ||
+                        Object.hasOwn(info, 'legend') ||
+                        Object.hasOwn(info, 'metadata');
+
                 }
                 else {
                     layerData.hasExtent = true;
-                    layerData.hasInfo = Object.prototype.hasOwnProperty.call(layer, 'styles');
-                    layerData.legend = layer.getTree().legend;
+                    layerData.hasInfo = 'styles' in layer;
+                    const tree = layer.getTree();
+                    layerData.legend = tree.legend;
+                    layerData.children = tree.children;
                     layerData.path = [layer.getPath()];
                 }
 
-                getLegendImgByPost(layer).then(async function (_src) {
+                await getLegendImgByPost(layer);
 
-                    try {
-                        if (!layer.customLegend && layer.availableNames?.some((name) => layer.getInfo(name).legend?.length)) {
-                            const legendObject = layer.getLegend ? await layer.getLegend(true) : null;
-                            if (legendObject) {
+                try {
+                    if (!layer.customLegend && layer.availableNames?.some((name) => layer.getInfo(name).legend?.length)) {
+                        const legendObject = layer.getLegend ? await layer.getLegend(true) : null;
+                        if (legendObject) {
 
-                                const legendObjects = legendObject//await layer.getLegend(true);
-                                for (var j = 0; j < (legendObjects?.length || 0); j++) {
-                                    for (var i = 0; i < (legendObjects[j]?.length || 0); i++) {
-                                        let index = i + j;
-                                        if (!layerData.legend[0][index]) layerData.legend[0][index] = {};
-                                        if (legendObjects[j][i].rules) {
-                                            layerData.legend[0][index].symbols = (await CreateSymbolizer(legendObjects[j][i].rules, layer)).map((obj) => { return { src: obj.src, title: obj.value } });
-                                        }                                    
-                                        else if (legendObjects[j][i].src) {
-                                            layerData.legend[0][index] = {
-                                                src: legendObjects[j][i].src,
-                                                title: legendObjects[j][i].title || legendObjects[j][i].name
-                                            }
+                            const legendObjects = legendObject//await layer.getLegend(true);
+                            for (let j = 0; j < (legendObjects?.length || 0); j++) {
+                                for (let i = 0; i < (legendObjects[j]?.length || 0); i++) {
+                                    let index = i + j;
+                                    if (!layerData.legend[index]) layerData.legend[index] = {};
+                                    if (legendObjects[j][i].rules) {
+                                        layerData.legend[index].symbols = (await CreateSymbolizer(legendObjects[j][i].rules, layer)).map((obj) => { return { src: obj.src, title: obj.value } });
+                                    }
+                                    else if (legendObjects[j][i].src) {
+                                        layerData.legend[index] = {
+                                            src: legendObjects[j][i].src,
+                                            title: legendObjects[j][i].title || legendObjects[j][i].name
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                    catch (ex) {
-                        console.info(ex);
-                    }
-                    layerData.customLegend = layer.customLegend;
-                    self.getRenderedHtml(self.CLASS + '-elm', layerData).then(function (out) {
-                        const parser = new DOMParser();
-                        const li = parser.parseFromString(out, 'text/html').body.firstChild;
-                        var layerNode;
-                        var isGroup = false;
-                        var i;
-                        if (isRaster) {
-                            isGroup = layer.names.length > 1;
-                            if (!isGroup) {
-                                const name = layer.names[0];
-                                const layerNodes = layer.wrap.getAllLayerNodes();
-                                for (i = 0; i < layerNodes.length; i++) {
-                                    var node = layerNodes[i];
-                                    if (layer.wrap.getName(node) === name) {
-                                        layerNode = node;
-                                        if (layer.wrap.getLayerNodes(node).length > 0) {
-                                            isGroup = true;
-                                        }
-                                        break;
-                                    }
+                }
+                catch (ex) {
+                    console.info(ex);
+                }
+                layerData.customLegend = layer.customLegend;
+                const html = await self.getRenderedHtml(self.CLASS + '-elm', layerData);
+                const parser = new DOMParser();
+                const li = parser.parseFromString(html, 'text/html').body.firstChild;
+                var layerNode;
+                var isGroup = false;
+                var i;
+                if (isRaster) {
+                    isGroup = layer.names.length > 1;
+                    if (!isGroup) {
+                        const name = layer.names[0];
+                        const layerNodes = layer.wrap.getAllLayerNodes();
+                        for (i = 0; i < layerNodes.length; i++) {
+                            var node = layerNodes[i];
+                            if (layer.wrap.getName(node) === name) {
+                                layerNode = node;
+                                if (layer.wrap.getLayerNodes(node).length > 0) {
+                                    isGroup = true;
                                 }
-                            }
-                        }
-
-                        const typeElm = li.querySelector('.' + self.CLASS + '-type');
-                        const className = isGroup ? self.CLASS + '-type-grp' : self.CLASS + '-type-sgl';
-                        typeElm.classList.add(className);
-
-                        const zoomBtn = li.querySelector(`.${self.CLASS}-btn-zoom`);
-                        if (zoomBtn) {
-                            zoomBtn.addEventListener(Consts.event.CLICK, function (_e) {
-                                self.map.zoomToLayer(li.dataset.layerId, { animate: true });
-                            }, { passive: true });
-                        }
-
-                        if (layerNode) {
-                            layer.wrap.normalizeLayerNode(layerNode);
-
-                            self.getRenderedHtml(className, layerNode).then(function (out) {
-                                var tip;
-                                tip = document.createElement('div');
-                                tip.classList.add(self.CLASS + '-tip');
-                                tip.innerHTML = out;
-                                self.map.div.appendChild(tip);
-
-                                if (!self.groupController)
-                                    self.groupController = new Controller(self.groupModel, new Observer(tip));
-                                else
-                                    self.groupController.add(tip);
-
-                                typeElm.addEventListener('mouseover', function (_e) {
-                                    const mapDiv = self.map.div;
-                                    const typeElmRect = typeElm.getBoundingClientRect();                                    
-                                    tip.classList.remove(Consts.classes.HIDDEN)
-                                    tip.style.top = typeElmRect.top - mapDiv.offsetTop + 'px';
-                                    tip.style.right = mapDiv.offsetWidth - (typeElmRect.left - mapDiv.offsetLeft) + 'px';
-                                    
-                                });
-                                typeElm.addEventListener('mouseout', function (_e) {
-                                    tip.classList.add(Consts.classes.HIDDEN)
-                                });
-
-                            });
-                        }
-                        const ul = self.div.querySelector('ul');
-                        li.dataset.layerId = layer.id;
-
-                        const lis = self.getLayerUIElements();
-                        const layerList = self.map.workLayers
-                            .filter(function (l) {
-                                return !l.stealth;
-                            });
-                        const layerIdx = layerList.indexOf(layer);
-
-                        self.getItemTools().forEach(tool => self.addItemToolUI(li, tool));
-                        self.getAddons().forEach(tool => self.addAddonUI(li, tool));
-
-
-                        var inserted = false;
-                        for (i = 0; i < lis.length; i++) {
-                            const referenceLi = lis[i];
-                            const referenceLayerIdx = layerList.indexOf(self.map.getLayer(referenceLi.dataset.layerId));
-                            if (referenceLayerIdx < layerIdx) {
-                                referenceLi.insertAdjacentElement('beforebegin', li);
-                                inserted = true;
                                 break;
                             }
                         }
-                        if (!inserted) {
-                            ul.appendChild(li);
-                        }
+                    }
+                }
 
-                        if (domReadyPromise) domReadyPromise(li);
-                        self.updateScale();
-                        self.map.magnifier ?.addNode(".tc-ctl-wlm-legend img", 4);
+                const typeElm = li.querySelector('.' + self.CLASS + '-type');
+                const className = isGroup ? self.CLASS + '-type-grp' : self.CLASS + '-type-sgl';
+                typeElm.classList.add(className);
 
+                const zoomBtn = li.querySelector(`.${self.CLASS}-btn-zoom`);
+                if (zoomBtn) {
+                    zoomBtn.addEventListener(Consts.event.CLICK, function (_e) {
+                        self.map.zoomToLayer(li.dataset.layerId, { animate: true });
+                    }, { passive: true });
+                }
 
-                        if (!self.nodeController) {
-                            self.nodeController = new Controller(self.nodeModel, new Observer(li));
-                        }
-                        else
-                            self.nodeController.add(li);
+                if (layerNode) {
+                    layer.wrap.normalizeLayerNode(layerNode);
 
-                        self.nodeModel.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");                            
-                        self.nodeModel.visibilityOfThisLayer = self.getLocaleString("visibilityOfThisLayer");
-                        self.nodeModel.zoomToLayerExtent = self.getLocaleString("zoomToLayerExtent");
-                        self.nodeModel.removeLayerFromMap = self.getLocaleString("removeLayerFromMap");
-                        self.nodeModel.otherTools = self.getLocaleString("otherTools");
-                        self.nodeModel.transparencyOfThisLayer = self.getLocaleString("transparencyOfThisLayer");
-                        self.nodeModel.abstract = self.getLocaleString("abstract");
-                        self.nodeModel.content = self.getLocaleString("content");
-                        self.nodeModel.metadata = self.getLocaleString("metadata");
-                        self.nodeModel.dragToReorder = self.getLocaleString("dragToReorder");
-                        
-                        self.groupModel.singleLayer = self.getLocaleString("singleLayer");
-                        self.groupModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
+                    const html = await self.getRenderedHtml(className, layerNode);
+                    var tip;
+                    tip = document.createElement('div');
+                    tip.classList.add(self.CLASS + '-tip');
+                    tip.innerHTML = html;
+                    self.map.div.appendChild(tip);
+
+                    if (!self.groupController)
+                        self.groupController = new Controller(self.groupModel, new Observer(tip));
+                    else
+                        self.groupController.add(tip);
+
+                    typeElm.addEventListener('mouseover', function (_e) {
+                        const mapDiv = self.map.div;
+                        const typeElmRect = typeElm.getBoundingClientRect();
+                        tip.classList.remove(Consts.classes.HIDDEN)
+                        tip.style.top = typeElmRect.top - mapDiv.offsetTop + 'px';
+                        tip.style.right = mapDiv.offsetWidth - (typeElmRect.left - mapDiv.offsetLeft) + 'px';
 
                     });
-                });
+                    typeElm.addEventListener('mouseout', function (_e) {
+                        tip.classList.add(Consts.classes.HIDDEN)
+                    });
+                }
+                const ul = self.div.querySelector('ul');
+                li.dataset.layerId = layer.id;
+
+                const lis = self.getLayerUIElements();
+                const layerList = self.map.workLayers
+                    .filter(function (l) {
+                        return !l.stealth;
+                    });
+                const layerIdx = layerList.indexOf(layer);
+
+                self.getItemTools().forEach(tool => self.addItemToolUI(li, tool));
+                self.getAddons().forEach(tool => self.addAddonUI(li, tool));
+
+
+                var inserted = false;
+                for (i = 0; i < lis.length; i++) {
+                    const referenceLi = lis[i];
+                    const referenceLayerIdx = layerList.indexOf(self.map.getLayer(referenceLi.dataset.layerId));
+                    if (referenceLayerIdx < layerIdx) {
+                        referenceLi.insertAdjacentElement('beforebegin', li);
+                        inserted = true;
+                        break;
+                    }
+                }
+                if (!inserted) {
+                    ul.appendChild(li);
+                }
+
+                if (domReadyPromise) domReadyPromise(li);
+                self.updateScale();
+                
+                if (!self.nodeController) {
+                    self.nodeController = new Controller(self.nodeModel, new Observer(li));
+                }
+                else {
+                    self.nodeController.add(li);
+                }
+
+                self.map.magnifier?.addNode(li.querySelectorAll(".tc-ctl-wlm-legend img"), 4);
+
+                self.#updateSubmodels();
 
                 var elligibleLayersNum = self.#getElligibleLayersNumber();
                 const numElm = self.div.querySelector('.' + self.CLASS + '-n');
@@ -615,30 +617,27 @@ class WorkLayerManager extends TOC {
                 deleteAllElm.classList.toggle(Consts.classes.HIDDEN, !self.#shouldBeDelAllVisible());
             }
             else {
-                const getFullTitle = function (layer) {
-                    let layerTitle = layer.title || layer.wrap.getServiceTitle && layer.wrap.getServiceTitle();
-                    const layerPath = layer.getPath();
-                    if (layerPath.length) {
-                        layerTitle = layerPath.join(' &rsaquo; ');
-                    }
-                    return layerTitle;
-                };
-                let layerTitle = getFullTitle(layer);
+                let layerTitle = getTitle(layer);
                 //comprobar si hay capas con títulos repetidos
-                const regExpConstr = function () {
-                    return new RegExp(layer.id.replace(/([\w]*-\d)(-\d)*/gi, "$1-\\d"), "gi");
-                };
+                const siblingFindRegExp = new RegExp(layer.id.replace(/([\w]*-\d)(-\d)*/gi, "$1-\\d"), "gi");
                 //filtramos las capas por aquellas que sean hermanas es decir file-1-[numero_fichero]-[numero capa] y busco la posición de la capa actual
                 //en el array filtrado
-                const index = (self.layers.filter((l) => getFullTitle(l) === layerTitle).reduce((vi, va) => {
-                    const layerIdRoot = regExpConstr().exec(va.id) ? regExpConstr().exec(va.id)[0] : va.id;
-                    return vi.indexOf(layerIdRoot) >= 0 ? vi : vi.concat(layerIdRoot);
-                }, []).findIndex((l) => { const _match = /^[\w]*-\d-\d/gi.exec(layer.id); return l === (_match ? _match[0] : layer.id) }));
+                const index = self.layers
+                    .filter((l) => getTitle(l) === layerTitle)
+                    .reduce((vi, va) => {
+                        const match = siblingFindRegExp.exec(va.id);
+                        const layerIdRoot = match ? match[0] : va.id;
+                        return vi.indexOf(layerIdRoot) >= 0 ? vi : vi.concat(layerIdRoot);
+                    }, [])
+                    .findIndex((l) => {
+                        const match = /^[\w]*-\d-\d/gi.exec(layer.id);
+                        return l === (match ? match[0] : layer.id)
+                    });
                 //Si la posición es mayor que 0, añado el ordinal al titulo de capa
                 if (index > 0) {
                     layer._title = layerTitle = layerTitle + " (" + (index + 1) + ")";
                 }
-                const prevLi = self.div.querySelector("ul li[data-layer-id='" + layer.id + "']");
+                const prevLi = this.#findLayerElement(layer);
                 if (prevLi) {
                     const mainTitleElm = prevLi.querySelector(`.${self.CLASS}-lyr`);
                     mainTitleElm.textContent = layer._title;
@@ -651,15 +650,80 @@ class WorkLayerManager extends TOC {
                             //mainTitleElm.title = mainTitleElm.textContent;
                             // Obtenemos las rutas de todas las entidades y eliminamos los duplicados
                             const uniquePaths = [...new Set(layer.features.map(f => f.getPath().join(' &rsaquo; ')))];
-                            secTitleElm.innerHTML = uniquePaths.join(' &bull; ');
+                            if (uniquePaths.length > 1) secTitleElm.innerHTML = uniquePaths.join(' &bull; ');
                         }
                         else {
-                            secTitleElm.innerHTML = layerTitle;
+                            let fullTitle = layerTitle;
+                            const layerPath = layer.getPath();
+                            if (layerPath.length) {
+                                fullTitle = layerPath.join(' &rsaquo; ');
+                            }
+                            secTitleElm.innerHTML = fullTitle;
                             secTitleElm.title = secTitleElm.textContent;
                         }
                     }
+
+                    const tree = layer.getTree();
+                    const html = await self.getRenderedHtml(self.CLASS + '-elm-info', {
+                        hasExtent: true,
+                        hasInfo: 'styles' in layer,
+                        legend: tree.legend,
+                        children: tree.children,
+                        path: layer.getPath(),
+                    });
+                    const info = prevLi.querySelector(`.${self.CLASS}-info`);
+                    info.innerHTML = html;
+                    self.nodeController.add(info);
+                    self.map.magnifier?.addNode(info.querySelectorAll(".tc-ctl-wlm-legend img"), 4);
+                    self.#updateSubmodels();
                 }
-                                
+            }
+
+            const li = self.#findLayerElement(layer);
+            if (li) {
+                const imgs = li.querySelectorAll(`.${self.CLASS}-legend-elm[data-geometry-type] img[data-img]`);
+                imgs.forEach((img) => img.setAttribute('src', img.dataset.img));
+
+                li.querySelectorAll('sitna-feature-styler').forEach((styler) => {
+                    styler.containerControl = self;
+                    styler.setLayer(layer);
+                    styler.addEventListener(Consts.event.STYLECHANGE, function (_e) {
+                        const styles = { ...layer.styles };
+                        const style = styles[styler.getStyleName(styler.getAttribute('mode'))];
+                        Object.assign(style, styler.getStyle());
+                        layer.setStyles(styles);
+                        const img = li.querySelector(`.${self.CLASS}-legend-elm[data-geometry-type="${styler.mode}"] img[data-img]`);
+                        if (img) {
+                            img.dataset.src = Util.getLegendImageFromStyle(style, { geometryType: styler.mode });
+                            img.setAttribute('src', img.dataset.src);
+                        }
+                    });
+                });
+
+                const onEditClick = function (e) {
+                    const tools = e.target.parentElement.querySelector(`.${self.CLASS}-legend-elm-edit-tools`);
+                    if (tools) {
+                        tools.classList.remove(Consts.classes.HIDDEN);
+                        e.target.classList.add(Consts.classes.HIDDEN);
+                    }
+                };
+                li.querySelectorAll(`sitna-button.${self.CLASS}-legend-elm-edit`).forEach((btn) => {
+                    btn.addEventListener(Consts.event.CLICK, onEditClick, { passive: true });
+                });
+
+                const onCloseClick = function (e) {
+                    const tools = e.target.closest(`.${self.CLASS}-legend-elm-edit-tools`);
+                    if (tools) {
+                        tools.classList.add(Consts.classes.HIDDEN);
+                        tools
+                            .parentElement
+                            .querySelector(`sitna-button.${self.CLASS}-legend-elm-edit`)
+                            .classList.remove(Consts.classes.HIDDEN);
+                    }
+                };
+                li.querySelectorAll(`sitna-button.${self.CLASS}-legend-elm-edit-tools-close`).forEach((btn) => {
+                    btn.addEventListener(Consts.event.CLICK, onCloseClick, { passive: true });
+                });
             }
         }
     }
@@ -696,17 +760,17 @@ class WorkLayerManager extends TOC {
     }
 
     updateLayerOrder(_layer, _oldIdx, _newIdx) {
-        const self = this;
-        self.map.workLayers
+        const layerElements = this.map.workLayers
             .filter(function (layer) {
                 return !layer.stealth;
             })
-            .forEach(function (layer) {
-                const li = self.#findLayerElement(layer);
-                if (li) {
-                    li.parentElement.firstChild.insertAdjacentElement('beforebegin', li);
-                }
-            });
+            .map((layer) => this.#findLayerElement(layer))
+            .filter((element) => element != null);
+        const listElement = this.div.querySelector('ul');
+        listElement.replaceChildren();
+        layerElements.forEach((element) => {
+            listElement.appendChild(element);
+        });
     }
 
     removeLayer(layer) {
@@ -746,7 +810,7 @@ class WorkLayerManager extends TOC {
     }
 
     #findLayerElement(layer) {
-        this.getLayerUIElements().find(li => li.dataset.layerId === layer.id);
+        return this.getLayerUIElements().find(li => li.dataset.layerId === layer.id);
     }
 
     #shouldBeDelAllVisible = function () {
@@ -783,22 +847,29 @@ class WorkLayerManager extends TOC {
         self.model.removeAllLayersFromMap = self.getLocaleString("removeAllLayersFromMap");
         self.model.noData = self.getLocaleString("noData");
 
-        self.nodeModel.infoFromThisLayer = self.getLocaleString("infoFromThisLayer");
-        self.nodeModel.visibilityOfThisLayer = self.getLocaleString("visibilityOfThisLayer");
-        self.nodeModel.zoomToLayerExtent = self.getLocaleString("zoomToLayerExtent");
-        self.nodeModel.removeLayerFromMap = self.getLocaleString("removeLayerFromMap");
-        self.nodeModel.otherTools = self.getLocaleString("otherTools");
-        self.nodeModel.transparencyOfThisLayer = self.getLocaleString("transparencyOfThisLayer");
-        self.nodeModel.abstract = self.getLocaleString("abstract");
-        self.nodeModel.content = self.getLocaleString("content");
-        self.nodeModel.metadata = self.getLocaleString("metadata");
-        self.nodeModel.dragToReorder = self.getLocaleString("dragToReorder");
-        //currentModel.singleLayer = self.getLocaleString("singleLayer");
-        //currentModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
-
-        self.groupModel.singleLayer = self.getLocaleString("singleLayer");
-        self.groupModel.groupLayerThatContains = self.getLocaleString("groupLayerThatContains");
+        self.#updateSubmodels();
     }
+
+    #updateSubmodels() {
+        this.nodeModel.infoFromThisLayer = this.getLocaleString("infoFromThisLayer");
+        this.nodeModel.visibilityOfThisLayer = this.getLocaleString("visibilityOfThisLayer");
+        this.nodeModel.zoomToLayerExtent = this.getLocaleString("zoomToLayerExtent");
+        this.nodeModel.removeLayerFromMap = this.getLocaleString("removeLayerFromMap");
+        this.nodeModel.otherTools = this.getLocaleString("otherTools");
+        this.nodeModel.transparencyOfThisLayer = this.getLocaleString("transparencyOfThisLayer");
+        this.nodeModel.abstract = this.getLocaleString("abstract");
+        this.nodeModel.content = this.getLocaleString("content");
+        this.nodeModel.metadata = this.getLocaleString("metadata");
+        this.nodeModel.dragToReorder = this.getLocaleString("dragToReorder");
+        //currentModel.singleLayer = this.getLocaleString("singleLayer");
+        //currentModel.groupLayerThatContains = this.getLocaleString("groupLayerThatContains");
+
+        this.groupModel.singleLayer = this.getLocaleString("singleLayer");
+        this.groupModel.groupLayerThatContains = this.getLocaleString("groupLayerThatContains");
+        this.nodeModel.editStyle = this.getLocaleString("editStyle");
+        this.nodeModel.close = this.getLocaleString("close");
+    }
+
     async updateLanguage() {
         const self = this;
         self.updateModel();

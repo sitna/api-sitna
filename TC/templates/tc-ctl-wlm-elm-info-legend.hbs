@@ -1,0 +1,38 @@
+{{#each path}}
+    {{#unless @first}} &rsaquo; {{/unless}}{{this}}
+{{/each}}
+{{#if legend.length}}
+    {{#each legend}}
+<div class="tc-ctl-wlm-legend-elm"{{#if geometryType}} data-geometry-type="{{geometryType}}"{{/if}}>
+    {{#if title}}<p>{{{title}}}</p>{{/if}}
+                    
+        {{#if symbols}}
+            {{#each symbols}}
+    <p>
+        <img data-img="{{this.src}}" />
+        <span>{{{this.title}}}</span>
+    </p>
+            {{/each}}
+        {{else}}
+    <img data-img="{{src}}"{{#if geometryType}} src="{{src}}"{{/if}} style="{{#if width}}width:{{width}}px;height:{{height}}px;{{/if}}{{#if scale}}zoom:{{scale}};{{/if}}" />
+        {{/if}}
+        {{#if geometryType}}
+    <div class="tc-ctl-wlm-legend-elm-edit">
+        <sitna-button variant="minimal" class="tc-ctl-wlm-legend-elm-edit" title="[[editStyle]]"></sitna-button>
+        <div class="tc-ctl-wlm-legend-elm-edit-tools tc-hidden">
+            <div class="tc-ctl-wlm-legend-elm-edit-tools-head">
+                <span>[[editStyle]]</span>
+                <sitna-button variant="minimal" class="tc-ctl-wlm-legend-elm-edit-tools-close">[[close]]</sitna-button>
+            </div>
+            <sitna-feature-styler mode="{{geometryType}}"></sitna-feature-styler>
+        </div>
+    </div>
+        {{/if}}
+</div>
+    {{/each}}
+{{else}}
+    {{#if src}}<img data-img="{{src}}" style="{{#if width}}width:{{width}}px;height:{{height}}px;{{/if}}{{#if scale}}zoom:{{scale}};{{/if}}" />{{/if}}
+{{/if}}
+{{#each children}}
+    {{> tc-ctl-wlm-elm-info-legend}}
+{{/each}}

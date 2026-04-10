@@ -1,0 +1,43 @@
+{{#if abstract.length}}
+<div class="tc-ctl-wlm-abstract">
+    <h4>[[abstract]]</h4>
+    {{#each abstract}}
+    <div><pre>{{{this}}}</pre></div>
+    {{/each}}
+</div>
+{{/if}}
+{{#if customLegend}}
+<ul class="tc-ctl-wlm-custom-legend">
+    {{{customLegend}}}
+</ul>
+{{else}}
+    {{#if legend.length}}
+    <div class="tc-ctl-wlm-legend" data-layer-name="{{layerNames}}">
+        <h4>[[content]]</h4>
+        {{> tc-ctl-wlm-elm-info-legend}}
+    </div>
+    {{else}}
+        {{#if children.length}}
+    <div class="tc-ctl-wlm-legend" data-layer-name="{{layerNames}}">
+        <h4>[[content]]</h4>
+        {{> tc-ctl-wlm-elm-info-legend}}
+    </div>
+        {{/if}}
+    {{/if}}
+{{/if}}
+{{#if metadata.length}}
+<div class="tc-ctl-wlm-metadata">
+    <h4>[[metadata]]:</h4>
+    <ul>
+        {{#each metadata}}
+        <li>
+            <ul>
+                {{#each this}}
+                <li><a href="{{{url}}}" class="tc-file-link" type="{{format}}" title="{{formatDescription}}" target="_blank">{{formatDescription}}</a></li>
+                {{/each}}
+            </ul>
+        </li>
+        {{/each}}
+    </ul>
+</div>
+{{/if}}
