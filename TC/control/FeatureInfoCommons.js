@@ -12,6 +12,7 @@ import Feature from '../../SITNA/feature/Feature.js';
 import Point from '../../SITNA/feature/Point.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import Vector from '../../SITNA/layer/Vector.js';
 
 TC.control = TC.control || {};
 
@@ -107,6 +108,7 @@ class FeatureInfoCommons extends Click {
         height: 15,
         noPrint: true
     };
+    lastTimestamp = 0;
 
     #selectors = {
         LIST_ITEM: `ul.${cssClassName}-features li`,
@@ -117,6 +119,7 @@ class FeatureInfoCommons extends Click {
     #layersPromise = null;
     #infoHistory = {};
     #zooming;
+    #layerStyles = new Map();
 
     static #staticMethodMock = { CLASS: cssClassName };
 
@@ -203,7 +206,7 @@ class FeatureInfoCommons extends Click {
                     let featuresDeleted = false;
                     for (let url in self.#infoHistory) {
                         const historyService = self.#infoHistory[url];
-                        if (Object.prototype.hasOwnProperty.call(services, url)) {
+                        if (Object.hasOwn(services, url)) {
                             const service = services[url];
                             for (let name in historyService) {
                                 const historyLayer = historyService[name];
@@ -314,44 +317,46 @@ class FeatureInfoCommons extends Click {
         }
     }
 
-    responseCallback(options) {
-        const self = this;
-        self.querying = false;
+    setFeatureCountUI() {
+        const multipleFeatures = this.info?.featureCount > 1;
+        this.div.querySelector('.' + this.CLASS + '-result').classList.toggle('.' + this.CLASS + '-multilayer', multipleFeatures);
+        this.div.querySelector('.' + this.CLASS + '-counter')?.classList.toggle(Consts.classes.HIDDEN, !multipleFeatures);
+    }
 
-        if (self.filterFeature) {
-            self.info = { services: options.services };
-            if (self.options.persistentHighlights) {
-                // Eliminamos de la respuesta las entidades que ya están resaltadas
-                for (let url in self.#infoHistory) {
-                    const infoService = (self.info.services || []).find(s => s.url === url);
-                    if (infoService) {
-                        const historyService = self.#infoHistory[url];
-                        for (let name in historyService) {
-                            const infoLayer = infoService.layers.find(l => l.name === name);
-                            if (infoLayer) {
-                                const historyLayer = historyService[name];
-                                historyLayer.forEach(function (feature) {
-                                    const id = feature.wrap.getId();
-                                    const idx = infoLayer.features.findIndex(f => f.wrap.getId() === id);
-                                    if (idx !== -1) {
-                                        infoLayer.features.splice(idx, 1);
-                                    }
-                                });
-                            }
-                        }
+    responseCallback(options = {}) {
+        if (this.lastTimestamp > options.timestamp) return;
+
+        if (this.filterFeature) {
+            if (this.lastTimestamp < options.timestamp) {
+                this.info = {
+                    services: options.services ? options.services.map((s) => Util.extend(true, {}, s, {
+                        layers: s.pending ? [] : s.layers.map((l) => Util.extend(true, {}, l))
+                    })) : []
+                };
+                this.lastTimestamp = options.timestamp;
+            }
+            else {
+                if (this.info) {
+                    for (let i = 0; i < this.info.services.length; i++) {
+                        const service = this.info.services[i];
+                        service.layers = options.services?.[i].layers.map((l) => Util.extend(true, {}, l)) ?? [];
+                        service.pending = options.services?.[i].pending ?? false;
                     }
                 }
             }
         }
 
-        if (!options.featureCount) {
-            self.lastFeatureCount = 0;
-            self.map.trigger(Consts.event.NOFEATUREINFO, { control: self });
-        }
-        else {
-            self.#addSourceAttributes();
-            self.lastFeatureCount = options.featureCount;
-            self.map.trigger(Consts.event.FEATUREINFO, Util.extend({ control: self }, options));
+        if (options.lastResponse ?? true) {
+            this.querying = false;
+            if (!options.featureCount) {
+                this.lastFeatureCount = 0;
+                this.map.trigger(Consts.event.NOFEATUREINFO, { control: this });
+            }
+            else {
+                this.#addSourceAttributes();
+                this.lastFeatureCount = options.featureCount;
+                this.map.trigger(Consts.event.FEATUREINFO, Util.extend({ control: this }, options));
+            }
         }
     }
 
@@ -360,7 +365,7 @@ class FeatureInfoCommons extends Click {
         if (options.status === 404) {
             self.map.toast(self.getLocaleString("featureInfo.tooManyLayers"), { type: Consts.msgType.ERROR });
         }
-        self.responseCallback({});
+        self.responseCallback();
     }
 
     async setDisplayMode(mode) {
@@ -387,7 +392,7 @@ class FeatureInfoCommons extends Click {
             });
             self.popup.caller = self;
             self.map.addEventListener(Consts.event.POPUP, function (e) {
-                self.onShowPopup(e.detail);
+                self.onShowPopup(e.detail ?? e);
             });
         }
         return self.popup;
@@ -479,11 +484,13 @@ class FeatureInfoCommons extends Click {
                             }
                         });
                     }
+                    
+                    const oldFeature = self.resultsPanel.currentFeature;
 
                     // cerramos los paneles con feature asociada
                     const panels = self.map.getControlsByClass(ResultsPanel);
                     panels.forEach(function (p) {
-                        if (p !== self.resultsPanel && p.currentFeature && !p.chart) {
+                        if (p !== self.resultsPanel && p.currentFeature && p.currentFeature === oldFeature) {
                             p.close();
                         }
                     });
@@ -532,7 +539,8 @@ class FeatureInfoCommons extends Click {
         const currentFeatureLi = li;
         const currentLayerLi = getParentElement(li, 'LI');
         const currentServiceLi = getParentElement(currentLayerLi, 'LI');
-        return self.getFeature(getElementIndex(currentServiceLi), getElementIndex(currentLayerLi), getElementIndex(currentFeatureLi));
+        const currentService = self.info?.services.find((srv) => srv.url === currentServiceLi.dataset.url);
+        return self.getFeature(currentService, getElementIndex(currentLayerLi), getElementIndex(currentFeatureLi));
     }
 
     getFeatureElement(feature) {
@@ -842,17 +850,15 @@ class FeatureInfoCommons extends Click {
             }
             const layerLi = getParentElement(featureLi, 'LI');
             const serviceLi = getParentElement(layerLi, 'LI');
-
-            const serviceIdx = getElementIndex(serviceLi);
+            const service = self.info.services.find((service) => service.url === serviceLi.dataset.url);
             const layerIdx = getElementIndex(layerLi);
             const featureIdx = getElementIndex(featureLi);
-            feature = feature || self.getFeature(serviceIdx, layerIdx, featureIdx);
+            feature = feature || self.getFeature(service, layerIdx, featureIdx);
 
             self.downplayFeatures({ exception: feature });
 
             // Añadimos feature al historial de features resaltadas
-            const service = self.info.services[serviceIdx];
-            if (!Object.prototype.hasOwnProperty.call(self.#infoHistory, service.url)) {
+            if (!Object.hasOwn(self.#infoHistory, service.url)) {
                 self.#infoHistory[service.url] = {};
             }
             const historyService = self.#infoHistory[service.url];
@@ -896,7 +902,7 @@ class FeatureInfoCommons extends Click {
 
             const counter = displayTarget.querySelector('.' + self.CLASS + '-counter-current');
             if (counter) {
-                counter.innerHTML = self.getFeatureIndex(serviceIdx, layerIdx, featureIdx) + 1;
+                counter.innerHTML = self.getFeatureIndex(service, layerIdx, featureIdx) + 1;
             }
 
 
@@ -908,6 +914,8 @@ class FeatureInfoCommons extends Click {
                 });
             }
             if (feature) {
+                const style = self.getResultStyles(service.url, layer.name)?.[feature.STYLETYPE];
+                if (style) feature.setStyle(style);
                 const triggerEvent = f => self.map.trigger(Consts.event.FEATUREHIGHLIGHT, { feature: f, control: self });
                 if (feature.geometry) {
                     feature.showsPopup = self.options.persistentHighlights;
@@ -1023,6 +1031,8 @@ class FeatureInfoCommons extends Click {
                         historyService[currentLayer.name] = historyLayer = historyLayer.concat(currentFeature);
                     }
                     if (!self.resultsLayer.features.includes(currentFeature)) {
+                        const style = self.getResultStyles(currentService.url, currentLayer.name)?.[currentFeature.STYLETYPE];
+                        if (style) currentFeature.setStyle(style);
                         self.resultsLayer.addFeature(currentFeature);
                     }
                 }
@@ -1042,12 +1052,12 @@ class FeatureInfoCommons extends Click {
         //self.#setNotShowAllUI();
     }
 
-    getFeature(serviceIdx, layerIdx, featureIdx) {
+    getFeature(service, layerIdx, featureIdx) {
         const self = this;
         var result;
         const info = self.info;
         if (info && info.services) {
-            result = info.services[serviceIdx];
+            result = info.services.find((srv) => srv.url === service.url);
             if (result) {
                 result = result.layers[layerIdx];
                 if (result) {
@@ -1072,21 +1082,23 @@ class FeatureInfoCommons extends Click {
         return result;
     }
 
-    getFeatureIndex(serviceIdx, layerIdx, featureIdx) {
+    getFeatureIndex(service, layerIdx, featureIdx) {
         const self = this;
         var result = -1;
         const info = self.info;
         if (info) {
-            for (var i = 0; i <= serviceIdx; i++) {
-                var service = info.services[i];
-                var maxj = i === serviceIdx ? layerIdx : service.layers.length - 1;
+            for (var i = 0; i <= info.services.length; i++) {
+                let srv = info.services[i];
+                const found = srv.url === service.url;
+                var maxj = found ? layerIdx : service.layers.length - 1;
                 for (var j = 0; j <= maxj; j++) {
                     var layer = service.layers[j];
-                    var maxk = j === layerIdx && i === serviceIdx ? featureIdx : layer.features.length - 1;
+                    var maxk = j === layerIdx && found ? featureIdx : layer.features.length - 1;
                     for (var k = 0; k <= maxk; k++) {
                         result = result + 1;
                     }
                 }
+                if (found) break;
             }
         }
         return result;
@@ -1118,6 +1130,20 @@ class FeatureInfoCommons extends Click {
             }
         }
         return false;
+    }
+
+    getResultStyles(serviceUrl, layerName) {
+        let serviceStyles = this.#layerStyles.get(serviceUrl);
+        if (!serviceStyles) {
+            serviceStyles = new Map(); 
+            this.#layerStyles.set(serviceUrl, serviceStyles);
+        }
+        let styles = serviceStyles.get(layerName);
+        if (!styles) {
+            styles = Vector.getNextStyles();
+            serviceStyles.set(layerName, styles);
+        }
+        return styles;
     }
 
     beforeRequest(options) {
@@ -1170,15 +1196,13 @@ class FeatureInfoCommons extends Click {
         return null;
     }
 
-    importState(state) {
+    async importState(state) {
         const self = this;
-        self.#layersPromise.then(function () {
-            if (state.layer)
-                self.resultsLayer.importState(state.layer);
-            if (state.query) {
-                self.importQuery(state.query);
-            }
-        });
+        await self.#layersPromise;
+        if (state.layer) await self.resultsLayer.importState(state.layer);
+        if (state.query) {
+            self.importQuery(state.query);
+        }
     }
 
     #createLayers() {
@@ -1359,7 +1383,7 @@ class FeatureInfoCommons extends Click {
                                 self.highlightFeature(feature);
                             }
                             else {
-                                if (!Object.prototype.hasOwnProperty.call(query, "hlf")) {
+                                if (!Object.hasOwn(query, "hlf")) {
                                     // timeout porque se está generando asíncronamente el botón de mostrar todas
                                     setTimeout(() => self.showAllFeatures(), 100);
                                 }

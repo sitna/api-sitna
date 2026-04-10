@@ -137,31 +137,30 @@ class FeatureInfo extends FeatureInfoCommons {
         return self.callback(filter.getCoordinates());
     }
 
-    responseCallback(options) {
+    responseCallback(options = {}) {
         const self = this;
+        if (self.lastTimestamp > options.timestamp) return;
 
         super.responseCallback.call(self, options);
+
         if (self.filterFeature) {
-            var services = options.services;
+            const services = self.info?.services;
 
             // Eliminamos capas sin resultados
             if (services) {
-                for (var i = 0; i < services.length; i++) {
-                    var service = services[i];
+                for (const service of services) {
+                    if (service.pending) continue;
                     for (var j = 0; j < service.layers.length; j++) {
                         if (!service.layers[j].features.length) {
                             service.layers.splice(j, 1);
                             j = j - 1;
                         }
                     }
-                    if (!service.layers.length) {
-                        services.splice(i, 1);
-                        i = i - 1;
-                    }
                 }
+                self.info.defaultFeature = options.defaultFeature;
             }
 
-            self.info.defaultFeature = options.defaultFeature;
+
 
             if (self.elevationRequest) {
                 options.displayElevation = true;
@@ -175,30 +174,29 @@ class FeatureInfo extends FeatureInfoCommons {
                     });
                     var sharedFeature;
                     var featureObj = self.sharedFeatureInfo;
-                    for (var i = 0, ii = self.info.services.length; i < ii; i++) {
-                        var service = self.info.services[i];
-                        if (service.mapLayers.some(ml => ml.url === featureObj.s)) {
-                            for (var j = 0, jj = service.layers.length; j < jj; j++) {
-                                var layer = service.layers[j];
-                                if (layer.name === featureObj.l) {
-                                    for (var k = 0, kk = layer.features.length; k < kk; k++) {
-                                        var feature = layer.features[k];
-                                        if (feature.id === featureObj.f) {
-                                            sharedFeature = feature;
-                                            var hash = md5(JSON.stringify({
-                                                data: feature.getData(),
-                                                geometry: roundCoordinates(feature.geometry, Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
-                                            }));
-                                            if (featureObj.h !== hash) {
-                                                TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
+                    if (self.info) {
+                        for (const service of self.info.services) {
+                            if (service.mapLayers.some(ml => ml.url === featureObj.s)) {
+                                for (const layer of service.layers) {
+                                    if (layer.name === featureObj.l) {
+                                        for (const feature of layer.features) {
+                                            if (feature.id === featureObj.f) {
+                                                sharedFeature = feature;
+                                                var hash = md5(JSON.stringify({
+                                                    data: feature.getData(),
+                                                    geometry: roundCoordinates(feature.geometry, Consts.DEGREE_PRECISION) // Redondeamos a la precisión más fina (grado)
+                                                }));
+                                                if (featureObj.h !== hash) {
+                                                    TC.alert(self.getLocaleString('finfo.featureChanged.warning'));
+                                                }
+                                                break;
                                             }
-                                            break;
                                         }
+                                        break;
                                     }
-                                    break;
                                 }
+                                break;
                             }
-                            break;
                         }
                     }
                     if (sharedFeature) {
@@ -273,7 +271,7 @@ class FeatureInfo extends FeatureInfoCommons {
         //}
     }
 
-    renderResults(options, callback) {
+    async renderResults(options, callback) {
         const self = this;
         if (self.filterFeature) {
             const currentCoords = self.filterFeature.geometry;
@@ -286,7 +284,37 @@ class FeatureInfo extends FeatureInfoCommons {
                         return Util.formatCoord(value, precision);
                     });
                 }
-                self.renderData(options, callback);
+                const renderOptions = { ...options };
+                renderOptions.services = options.services?.toReversed();
+                await self.renderData(renderOptions);
+                const serviceList = self.div.querySelector(`ul.${self.CLASS}-services`);
+                if (self.info) {
+                    for (const service of self.info.services) {
+                        let serviceElement = serviceList.querySelector(`li[data-url="${service.url}"]`);
+                        if (!service.layers.some((layer) => layer.features.length > 0)) {
+                            serviceElement?.remove();
+                        }
+                        else {
+                            const html = await self.getRenderedHtml(`${self.CLASS}-service`, service);
+                            if (serviceElement) {
+                                serviceElement.insertAdjacentHTML('afterend', html);
+                                serviceElement.remove();
+                            }
+                            else {
+                                serviceList.insertAdjacentHTML('beforeend', html);
+                            }
+                        }
+                    }
+                    // Quitamos los servicios que no devuelven datos
+                    Array.from(serviceList)
+                        .filter((li) => !self.info.services.find((service) => service.url === li.dataset.url))
+                        .forEach((li) => li.remove());
+                }
+                self.setFeatureCountUI();
+
+                if (Util.isFunction(callback)) {
+                    callback();
+                }
             }
         }
     }

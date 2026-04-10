@@ -40,6 +40,19 @@
         width: 100%;
     }
 
+        .tc-ctl-finfo ul.tc-ctl-finfo-services > li.tc-loading * {
+            cursor: wait;
+            animation: soft-pulsation 1.2s infinite;
+        }
+
+        .tc-ctl-finfo ul.tc-ctl-finfo-services > li.tc-loading .tc-ctl-finfo-service-content {
+            display: none;
+        }
+
+            .tc-ctl-finfo ul.tc-ctl-finfo-services > li.tc-loading .tc-ctl-finfo-layer-n {
+                display: none;
+            }
+
     .tc-ctl-finfo ul.tc-ctl-finfo-services > li, .tc-ctl-finfo ul.tc-ctl-finfo-layers > li, .tc-ctl-finfo ul.tc-ctl-finfo-features > li {
         list-style-type: none;
         display: inline-block;
@@ -52,6 +65,11 @@
     cursor: text;
     user-select: text;
 }
+
+    .tc-ctl-finfo .tc-ctl-finfo-result h3.tc-loading {
+        cursor: wait;
+        animation: soft-pulsation 1.2s infinite;
+    }
 
 .tc-ctl-finfo .tc-ctl-finfo-result h4 {
     width: fit-content;

@@ -43,6 +43,10 @@ class GeometryFeatureInfo extends FeatureInfoCommons {
                 self.filterFeature = null;
             }
         });
+        map.on(Consts.event.VIEWCHANGE, function (_e) {
+            if (_e.view === Consts.view.DEFAULT && self.isActive)
+                self.activate();
+        });
 
         return await result;
     }
@@ -91,17 +95,18 @@ class GeometryFeatureInfo extends FeatureInfoCommons {
         return this.wrap.getFeaturesByGeometry(filter);
     }
 
-    responseCallback(options) {
+    responseCallback(options = {}) {
         const self = this;
+        if (self.lastTimestamp > options.timestamp) return;
 
         super.responseCallback.call(self, options);
 
         if (self.filterFeature) {
-            var services = options.services;
+            const services = self.info.services;
 
             // Eliminamos capas sin resultados a no ser que tenga un error
-            for (var i = 0; i < services.length; i++) {
-                var service = services[i];
+            for (const service of services) {
+                if (service.pending) continue;
                 if (service.hasLimits) {
                     delete service.layers;
                     //service.hasLimits = service.hasLimits;
@@ -113,29 +118,47 @@ class GeometryFeatureInfo extends FeatureInfoCommons {
                             j = j - 1;
                         }
                     }
-                    if (!service.layers.length) {
-                        services.splice(i, 1);
-                        i = i - 1;
-                    }
                 }
-
             }
             if (options.coords && options.featureCount === 0) {
                 //esto significa que se ha borrado la ultima feature
                 self.popup.hide();
             }
-            else
-            self.renderData(options, function () {
-                if (services.length) {
+            else {
+                const renderOptions = { ...self.info };
+                renderOptions.services = options.services?.toReversed();
+                self.renderData(renderOptions, async function () {
+                    const serviceList = self.div.querySelector(`ul.${self.CLASS}-services`);
+                    if (self.info) {
+                        for (const service of self.info.services) {
+                            let serviceElement = serviceList.querySelector(`li[data-url="${service.url}"]`);
+                            if (!service.layers?.some((layer) => layer.features.length > 0)) {
+                                serviceElement?.remove();
+                            }
+                            else {
+                                const html = await self.getRenderedHtml(`${self.CLASS}-service`, service);
+                                if (serviceElement) {
+                                    serviceElement.insertAdjacentHTML('afterend', html);
+                                    serviceElement.remove();
+                                }
+                                else {
+                                    serviceList.insertAdjacentHTML('beforeend', html);
+                                }
+                            }
+                        }
+                    }
+                    self.setFeatureCountUI();
                     self.insertLinks();
-                }
-                self.div.querySelector(`.${self.CLASS}-coords`).classList.add(Consts.classes.HIDDEN);
-                if (!self.info || !self.info.services.length) {
-                    self.map.toast(self.getLocaleString('query.msgNoResults'), { type: Consts.msgType.INFO });
-                    return;
-                }
-                self.displayResults();
-            });
+                    self.div.querySelector(`.${self.CLASS}-coords`).classList.add(Consts.classes.HIDDEN);
+                    if (!self.info || !self.info.services.length || self.info.services.every((service) => service.layers.length === 0)) {
+                        if (options.lastResponse) {
+                            self.map.toast(self.getLocaleString('query.msgNoResults'), { type: Consts.msgType.INFO });
+                        }
+                        return;
+                    }
+                    self.displayResults();
+                });
+            }
         }
     }
 }
