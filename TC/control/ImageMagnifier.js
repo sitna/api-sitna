@@ -4,8 +4,6 @@ import WebComponentControl from './WebComponentControl.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
-TC.control = TC.control || {};
-
 const topClassName = 'tc-ctl-img-magnifier-top';
 const bottomClassName = 'tc-ctl-img-magnifier-bottom';
 const leftClassName = 'tc-ctl-img-magnifier-left';
@@ -13,7 +11,8 @@ const rightClassName = 'tc-ctl-img-magnifier-right';
 const className = 'tc-ctl-img-magnifier';
 const classNameAvailable = 'tc-ctl-img-magnified';
 const noAnchorClassName = 'tc-ctl-img-magnifier-no-anchor';
-const bgClassName = 'tc-ctl-img-magnifier-bg';
+const bgClassName = '.tc-ctl-img-magnifier-bg';
+
 const elementName = 'sitna-image-magnifier';
 
 class ImageMagnifierMode {
@@ -24,8 +23,7 @@ class ImageMagnifierMode {
 }
 
 class ImageMagnifier extends WebComponentControl {
-    CLASS = className;
-    #classSelector = '.' + className;    
+    #classSelector = '.' + className;     
     #parent;
     #zoom;
     #texts;
@@ -35,24 +33,16 @@ class ImageMagnifier extends WebComponentControl {
         super(...arguments);
         const self = this;
         self.#zoom = zoom;
-        self.classList.add(Consts.classes.HIDDEN);
+        
         self.addEventListener("click", function (_event) {
             self.hideMagnifier();
         });
         self.#texts = texts;
         self.title = "[[textToClose]]";//texts.textToClose;
-        self.#bgContent = document.createElementNS("http://www.w3.org/1999/xhtml","div");
-        self.#bgContent.classList.add(bgClassName)
-        self.appendChild(self.#bgContent);
-        self.#bgContent.addEventListener("pointerup", function (event) {
-            event.preventDefault();
-            self.hideMagnifier();
-        });
-        self.#bgContent.addEventListener("mouseleave", function (_event) {
-            self.hideMagnifier();
-        });
-        self.model = new ImageMagnifierMode();
         
+        
+        self.model = new ImageMagnifierMode();
+        //self.controller = new Controller(self.model, new Observer(self));
     }
 
     #mouseEnterEvent(event,img, zoom) {
@@ -121,6 +111,28 @@ class ImageMagnifier extends WebComponentControl {
         self.classList.add(Consts.classes.HIDDEN);
     }
 
+    async register(map) {
+        this.map = map;
+        await this.render();
+    }
+
+    async render() {
+        await this.renderData(null);
+        this.#bgContent = this.querySelector(bgClassName);
+        this.classList.add(Consts.classes.HIDDEN);        
+        this.addUIEventListeners();
+    }
+    addUIEventListeners() {
+        const self = this; 
+        this.#bgContent.addEventListener("pointerup", function (event) {
+            event.preventDefault();
+            self.hideMagnifier();
+        });
+        this.#bgContent.addEventListener("mouseleave", function (_event) {
+            self.hideMagnifier();
+        });
+    }
+        
     addNode(nodes,zoom) {
         const self = this;
         let _nodes = [];        
@@ -134,7 +146,7 @@ class ImageMagnifier extends WebComponentControl {
             case nodes instanceof NodeList:
                 _nodes = _nodes.concat(Array.from(nodes));
                 break;
-        }        
+        }
         _nodes.forEach((node) => {
             node.classList.add(classNameAvailable)
             node.oncontextmenu = (e) => e.preventDefault();
@@ -157,27 +169,33 @@ class ImageMagnifier extends WebComponentControl {
         if (TC.browserFeatures.touch())
             node.addEventListener("touchmove", function (_event) {
                 self.hideMagnifier();
-            });
-            
+            });            
             
         });
         self.#bgContent.addEventListener("pointerup", function (event) {
             event.preventDefault();
             self.hideMagnifier();
         });
-        if(!self.controller) {
+
+        if (!self.controller) {
             if (_nodes.length)
                 self.controller = new Controller(self.model, new Observer(_nodes));
         }
-        else{
-            self.controller.view.add(_nodes)
+        else {
+            self.controller.add(_nodes);
         }
+
         self.model.textToOpen = self.#texts.textToOpen;
         self.model.textToClose = self.#texts.textToClose;
     }
-}
 
+    async loadTemplates() {
+        const self = this;        
+        self.template = TC._hbs.compile("<div class=\"tc-ctl-img-magnifier-bg\"></div>");
+    }
+}
+TC.control = TC.control || {};
 ImageMagnifier.prototype.CLASS = 'tc-ctl-img-magnifier';
-customElements.get(elementName) || customElements.define(elementName, ImageMagnifier);
 TC.control.ImageMagnifier = ImageMagnifier;
+customElements.get(elementName) || customElements.define(elementName, ImageMagnifier);
 export default ImageMagnifier;
