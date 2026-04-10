@@ -66,26 +66,30 @@ class Elevation {
             Consts.elevationService.GOOGLE
         ];
 
-        serviceOptions.forEach((srv, idx) => {
-            this.#servicePromises[idx] = new Promise(function (resolve, _reject) {
-                const serviceName = typeof srv === 'string' ? srv : srv.name;
-                const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
+        serviceOptions.forEach((srv) => this.addService(srv));
+    }
 
-                const srvOptions = typeof srv === 'string' ? {} : srv;
-                import('./' + ctorName).then(function (elevationModule) {
-                    const ElevationService = elevationModule.default;
-                    TC.tool[ctorName] = ElevationService;
-                    try {
-                        resolve(new ElevationService(srvOptions));
+    addService(options) {
+        const result = new Promise(function (resolve, _reject) {
+            const serviceName = typeof options === 'string' ? options : options.name;
+            const ctorName = serviceName.substr(0, 1).toUpperCase() + serviceName.substr(1);
+
+            const srvOptions = typeof options === 'string' ? {} : options;
+            import('./' + ctorName).then(function (elevationModule) {
+                const ElevationService = elevationModule.default;
+                TC.tool[ctorName] = ElevationService;
+                try {
+                    resolve(new ElevationService(srvOptions));
+                }
+                catch (e) {
+                    if (e instanceof TypeError) {
+                        resolve(null); // Si el constructor no es válido, devolvemos null para que no se use este servicio
                     }
-                    catch (e) {
-                        if (e instanceof TypeError) {
-                            resolve(null); // Si el constructor no es válido, devolvemos null para que no se use este servicio
-                        }
-                    }
-                });
+                }
             });
         });
+        this.#servicePromises.push(result);
+        return result;
     }
 
     getService(idx) {
@@ -144,7 +148,8 @@ class Elevation {
                 }
             }
             return null;
-        }
+        };
+
         const requestPromises = services.map((srv) => request(srv));
 
         for (var i = 0, ii = requestPromises.length; i < ii; i++) {
@@ -168,7 +173,7 @@ class Elevation {
                         done = true;
                     }
                     if (partialCallback) {
-                        partialCallback(partialResult);
+                        await partialCallback(partialResult);
                     }
                 }
                 if (done) {
@@ -269,7 +274,7 @@ class Elevation {
                             );
                             break;
                         case SITNA.feature && SITNA.feature.Point && feature instanceof SITNA.feature.Point:
-                            self.getElevation(getElevOptions([feature.getCoords()])).then(
+                            self.getElevation(getElevOptions([feature.getCoords({ crs: options.crs })])).then(
                                 function (coords) {
                                     res(coords[0]);
                                 },

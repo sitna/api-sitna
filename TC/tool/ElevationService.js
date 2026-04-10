@@ -84,7 +84,7 @@ class ElevationService {
                 }
             });
         }
-        return response.coordinates || [];
+        return response.coordinates || false;
     }
 
     cancelRequest(_id) {

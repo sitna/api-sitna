@@ -43,7 +43,7 @@ class ElevationServiceIGNEs extends OgcApiProcessesElevationService {
     }
 
     parseResponse(response, options) {
-        let coordinates = [];
+        let coordinates = false;
         if (response.values) {
             if (options.crs !== this.nativeCRS) {
                 coordinates = Util.reproject(response.values, this.nativeCRS, options.crs);
