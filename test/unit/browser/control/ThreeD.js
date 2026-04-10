@@ -7,10 +7,10 @@
     }
 
     describe('render', function () {
-        it("debe establecer la propiedad _firstRender", async function () {
+        it("debe resolver renderPromise", async function () {
             var ctl = await TC.Control.create('ThreeD', { div: addControlDiv() });
             await ctl.render();
-            expect(ctl._firstRender).to.be.an.instanceof(Promise);
+            expect(ctl.renderPromise()).to.resolve;
         });
     });
 });
