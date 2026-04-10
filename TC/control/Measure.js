@@ -343,7 +343,11 @@ class Measure extends Control {
     importState(state) {
         const self = this;
         self.layerPromise.then(function (layer) {
-            layer.importState(state.layer);
+            layer.importState(state.layer).then(() => {
+                if (self.map.on3DView) {
+                    self.map.view3D.UI.ImportState(layer.features);                    
+                }
+            });
         });
     }
     updateModel() {
@@ -351,10 +355,7 @@ class Measure extends Control {
         this.model.areaAndPerimeter = this.getLocaleString("areaAndPerimeter");
         this.model.measure = this.getLocaleString("measure");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Measure.prototype.CLASS = 'tc-ctl-meas';
