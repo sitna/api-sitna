@@ -741,8 +741,7 @@ class LayerLegend extends WebComponentControl {
                 textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
                 textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
             });
-            //map.magnifier.register(map);
-            document.body.appendChild(map.magnifier);            
+            map.div.appendChild(map.magnifier);
         }
 
         map.on(TC.Consts.event.VIEWCHANGE, function (_e) {
