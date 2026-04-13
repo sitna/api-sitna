@@ -82,6 +82,13 @@
 
             const toolsPanel = map.div.querySelector(`.${TC.Consts.classes.TOOLS_PANEL}`);
 
+            const collapseExceptions = map
+                .getControlsByClass(TC.control.Search)
+                .concat(map.getControlsByClass(TC.control.LanguageSelector))
+                .concat(map.controls.filter(c => c.containerControl))
+                .map(c => c.id)
+                .filter(id => toolsPanel.querySelector('#' + id));
+
             const toggleCollapsed = function (value) {
                 const self = this;
                 let element;
@@ -91,7 +98,9 @@
                 else {
                     element = self.div;
                 }
-                element.classList.toggle(SITNA.Consts.classes.COLLAPSED, value);
+                if (!collapseExceptions.includes(self.id)) {
+                    element.classList.toggle(SITNA.Consts.classes.COLLAPSED, value);
+                }
 
             };
 
