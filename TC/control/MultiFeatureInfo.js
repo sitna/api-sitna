@@ -214,6 +214,16 @@ class MultiFeatureInfo extends FeatureInfoCommons {
         if (self.featureInfoControl) {
             self.featureInfoControl.activate();
             self.lastCtrlActive = self.featureInfoControl;
+
+            const newGetResultStyles = function (serviceUrl, layerName) {
+                return self.featureInfoControl.getResultStyles(serviceUrl, layerName);
+            };
+            if (self.lineFeatureInfoControl) {
+                self.lineFeatureInfoControl.getResultStyles = newGetResultStyles;
+            }
+            if (self.polygonFeatureInfoControl) {
+                self.polygonFeatureInfoControl.getResultStyles = newGetResultStyles;
+            }
         }
         self.updateUI();
         return self;
@@ -351,6 +361,22 @@ class MultiFeatureInfo extends FeatureInfoCommons {
                 }
             }
 
+            const queryableLayers = self.map.workLayers.filter(l => l.type === Consts.layerType.WMS && l.getVisibility());
+            if (queryableLayers.length > 0) {
+                Promise.allSettled(queryableLayers.map((l) => l.getWFSCapabilities())).then((outcomes) => {
+                    // Si al menos una capa tiene WFS asociado, habilitamos los modos de selección por línea y polígono
+                    if (outcomes.some((outcome) => outcome.status === 'fulfilled' && outcome.value)) {
+                        return;
+                    }
+                    // Si ninguna capa tiene WFS asociado, deshabilitamos los modos de selección por línea y polígono
+                    if (self.lineFeatureInfoControl?.isActive || self.polygonFeatureInfoControl?.isActive) {
+                        self.featureInfoControl.activate();
+                    }
+                    self.div.querySelector(`input[value=${Consts.geom.POLYLINE}]`).disabled = true;
+                    self.div.querySelector(`input[value=${Consts.geom.POLYGON}]`).disabled = true;
+                });
+            }
+
             const persistentHighlights = self.featureInfoControls.some(c => c.options.persistentHighlights);
             const featuresUnavailable = self.featureInfoControls.every(ctl => (!ctl.resultsLayer || ctl.resultsLayer.features.length === 0) &&
                 (!ctl.filterLayer || ctl.filterLayer.features.length === 0));
@@ -388,9 +414,7 @@ class MultiFeatureInfo extends FeatureInfoCommons {
         this.model.byLine = this.getLocaleString("byLine");
         this.model.byPrecinct = this.getLocaleString("byPrecinct");
     }
-    updateLanguage() {
-        this.updateModel();
-    }
+
 }
 
 MultiFeatureInfo.prototype.CLASS = 'tc-ctl-m-finfo';
