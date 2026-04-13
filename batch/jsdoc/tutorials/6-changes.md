@@ -1,6 +1,20 @@
+### [4.9.0](https://github.com/sitna/api-sitna/releases/tag/v4.9.0)
+- Incrementada versión de Cesium a 1.130.
+- Añadido control de escenas para cargar modelos con 3D Tiles.
+- Añadido control de cálculo de rutas basado en [Openrouteservice](https://openrouteservice.org/).
+- Añadida herramienta para cambiar el estilo de capas vectoriales y de entidades geográficas individuales.
+- Añadida capacidad de hacer y deshacer cambios en los editores de entidades geográficas.
+- Añadida carga asíncrona de datos de distintos servicios en los controles `featureInfo` y `geometryFeatureInfo`.
+- En el control de mapas sin conexión, es posible añadir capas que no han sido añadidas previamente al mapa principal.
+- Mejorada la compatibilidad del control `geometryFeatureInfo` con WFS 1.0.
+- Eliminadas las capas de Mapbox de la lista de capas disponibles.
+- Corrección de errores.
+
 ### [4.8.1](https://github.com/sitna/api-sitna/releases/tag/v4.8.1)
 - Reducción de la versión de OpenLayers a 10.5 debida a un error de incompatibilidad con la versión 10.8.
 - Exportados espacios de nombres `control` y `ui` en el paquete npm.
+- Actualizada lista de capas predefinidas.
+- Normalizados los nombres de variables CSS.
 - Corrección de declaración de tipos de TypeScript.
 
 ### [4.8.0](https://github.com/sitna/api-sitna/releases/tag/v4.8.0)
