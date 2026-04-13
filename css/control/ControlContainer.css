@@ -76,7 +76,7 @@
     max-width: -webkit-fit-content;
     max-width: fit-content;
     display: block;
-    overflow: hidden;
+    /*overflow: hidden;*/
     pointer-events: none;
     /*para edge*/
     max-width: none;
@@ -87,7 +87,7 @@
         pointer-events: all;
     }
 
-    .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-chart * {
+    .tc-map div.tc-ctl-cctr li > div.tc-ctl.tc-ctl-rpanel .tc-track-chart * {
         pointer-events: unset;
     }
 
