@@ -163,8 +163,8 @@
 			<TileMatrixSetLink>
 				<TileMatrixSet>WorldWebMercatorQuad</TileMatrixSet>
 			</TileMatrixSetLink>
-			<!--<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://b.tiles.mapbox.com/v4/mapbox.satellite/{TileMatrix}/{TileCol}/{TileRow}.jpg?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>-->
-			<!--<ResourceURL format="image/jpeg" resourceType="tile" template="https://b.tiles.mapbox.com/v4/mapbox.satellite/{TileMatrix}/{TileCol}/{TileRow}.jpg?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>-->
+			<!--<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://b.tiles.mapbox.com/v4/mapbox.satellite/{TileMatrix}/{TileCol}/{TileRow}.jpg"/>-->
+			<!--<ResourceURL format="image/jpeg" resourceType="tile" template="https://b.tiles.mapbox.com/v4/mapbox.satellite/{TileMatrix}/{TileCol}/{TileRow}.jpg"/>-->
 			<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{TileMatrix}/{TileCol}/{TileRow}"/>
 			<ResourceURL format="image/jpeg" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
