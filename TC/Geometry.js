@@ -63,6 +63,33 @@ const Geometry = {
         }
         return 0;
     },
+    getCentroid: function (geom) {
+        const coords = this.getFlatCoordinates(geom);
+        if (coords.length === 1) return coords[0];
+
+        // Primera aproximación: media de las coordenadas
+        const centroid = coords
+            .reduce(([accx, accy], [curx, cury]) => [accx + curx, accy + cury])
+            .map((coord) => coord / coords.length);
+        let sx = 0;
+        let sy = 0;
+        let area = 0;
+        const centeredCoords = coords.map(([x, y]) => [x - centroid[0], y - centroid[1]]);
+        for (let i = 0; i < centeredCoords.length - 1; i++) {
+            const [x1, y1] = centeredCoords[i];
+            const [x2, y2] = centeredCoords[i + 1];
+            const cross = x1 * y2 - x2 * y1;
+            area += cross;
+            sx += (x1 + x2) * cross;
+            sy += (y1 + y2) * cross;
+        }
+        if (area !== 0) {
+            area *= 0.5;
+            centroid[0] += sx / (6 * area);
+            centroid[1] += sy / (6 * area);
+        }
+        return centroid;
+    },
     isInside: function isInside(point, ring) {
         var result = false;
         if (Geometry.isPoint(point)) {
@@ -302,7 +329,7 @@ const Geometry = {
                     let accumulatedDistance = 0;
                     coordinateList.forEach(function (point, idx, arr) {
                         if (idx) {
-                            accumulatedDistance += TC.Geometry.getDistance(arr[idx - 1], point);
+                            accumulatedDistance += Geometry.getDistance(arr[idx - 1], point);
                         }
                         milestones.push({
                             index: idx,
@@ -360,7 +387,7 @@ const Geometry = {
                     const distances = coordinateList.map(function (point, idx, arr) {
                         let distance = 0;
                         if (idx) {
-                            distance = TC.Geometry.getDistance(arr[idx - 1], point);
+                            distance = Geometry.getDistance(arr[idx - 1], point);
                             totalDistance += distance;
                         }
                         return {
@@ -386,7 +413,184 @@ const Geometry = {
             }
         }
         return coordinateList;
+    },
+    getPointAlongLine: function (coords, distance) {
+        if (coords.length === 0) {
+            return null;
+        }
+        if (coords.length === 1) {
+            return coords[0];
+        }
+        let accumulatedDistance = 0;
+        for (let i = 1; i < coords.length; i++) {
+            const segStart = coords[i - 1];
+            const segEnd = coords[i];
+            const segLength = Geometry.getDistance(segStart, segEnd);
+            if (accumulatedDistance + segLength >= distance) {
+                const remainingDistance = distance - accumulatedDistance;
+                const ratio = remainingDistance / segLength;
+                const x = segStart[0] + ratio * (segEnd[0] - segStart[0]);
+                const y = segStart[1] + ratio * (segEnd[1] - segStart[1]);
+                return [x, y];
+            }
+            accumulatedDistance += segLength;
+        }
+        // Si la distancia es mayor que la longitud total, devolvemos el último punto
+        return coords[coords.length - 1];
+    },
+    getPoleOfInaccessibility: function (ring, precision = 1.0) {
+        // Polylabel algorithm: finds the pole of inaccessibility for a polygon
+        // (the most distant internal point from the polygon outline)
+        // Based on https://github.com/mapbox/polylabel
+
+        if (!Geometry.isRing(ring) || ring.length < 3) {
+            return null;
+        }
+
+        // Calculate polygon bounding box
+        let [minX, minY] = ring[0];
+        let [maxX, maxY] = ring[0];
+        for (let i = 1; i < ring.length; i++) {
+            const [px, py] = ring[i];
+            if (px < minX) minX = px;
+            if (py < minY) minY = py;
+            if (px > maxX) maxX = px;
+            if (py > maxY) maxY = py;
+        }
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+        const cellSize = Math.min(width, height);
+        let h = cellSize / 2;
+
+        if (cellSize === 0) {
+            return [minX, minY];
+        }
+
+        // Priority queue of cells in order of their "potential" (max distance to polygon edge)
+        const cellQueue = [];
+
+        // Cover polygon with initial cells
+        for (let x = minX; x < maxX; x += cellSize) {
+            for (let y = minY; y < maxY; y += cellSize) {
+                cellQueue.push(new Cell(x + h, y + h, h, ring));
+            }
+        }
+
+        // Take centroid as initial best guess
+        let bestCell = getCentroidCell(ring);
+
+        // Special case for rectangular-ish polygons
+        const bboxCell = new Cell(minX + width / 2, minY + height / 2, 0, ring);
+        if (bboxCell.distance > bestCell.distance) {
+            bestCell = bboxCell;
+        }
+
+        while (cellQueue.length) {
+            // Pick the most promising cell
+            const cell = cellQueue.pop();
+
+            // Update the best cell if we found a better one
+            if (cell.distance > bestCell.distance) {
+                bestCell = cell;
+            }
+
+            // Do not drill down further if there's no chance of a better solution
+            if (cell.max - bestCell.distance <= precision) continue;
+
+            // Split the cell into four cells
+            h = cell.h / 2;
+            if (h === 0) continue;
+
+            cellQueue.push(new Cell(cell.x - h, cell.y - h, h, ring));
+            cellQueue.push(new Cell(cell.x + h, cell.y - h, h, ring));
+            cellQueue.push(new Cell(cell.x - h, cell.y + h, h, ring));
+            cellQueue.push(new Cell(cell.x + h, cell.y + h, h, ring));
+
+            // Sort queue by potential distance (max) in descending order
+            cellQueue.sort((a, b) => b.max - a.max);
+        }
+
+        return [bestCell.x, bestCell.y];
     }
+};
+
+// Helper class for pole of inaccessibility algorithm
+class Cell {
+    constructor(x, y, h, ring) {
+        this.x = x;
+        this.y = y;
+        this.h = h;
+        this.distance = pointToPolygonDistance(x, y, ring);
+        this.max = this.distance + this.h * Math.SQRT2;
+    }
+}
+
+// Get polygon centroid
+const getCentroidCell = function (ring) {
+    let area = 0;
+    let x = 0;
+    let y = 0;
+
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const a = ring[i];
+        const b = ring[j];
+        const f = a[0] * b[1] - b[0] * a[1];
+        x += (a[0] + b[0]) * f;
+        y += (a[1] + b[1]) * f;
+        area += f * 3;
+    }
+
+    if (area === 0) {
+        return new Cell(ring[0][0], ring[0][1], 0, ring);
+    }
+
+    return new Cell(x / area, y / area, 0, ring);
+};
+
+// Signed distance from point to polygon outline (negative if point is outside)
+const pointToPolygonDistance = function (x, y, ring) {
+    let inside = false;
+    let minDistSq = Infinity;
+
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const a = ring[i];
+        const b = ring[j];
+
+        if ((a[1] > y !== b[1] > y) &&
+            (x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0])) {
+            inside = !inside;
+        }
+
+        minDistSq = Math.min(minDistSq, getSegDistSq(x, y, a, b));
+    }
+
+    return (inside ? 1 : -1) * Math.sqrt(minDistSq);
+};
+
+// Get squared distance from a point to a segment
+const getSegDistSq = function (px, py, a, b) {
+    let x = a[0];
+    let y = a[1];
+    let dx = b[0] - x;
+    let dy = b[1] - y;
+
+    if (dx !== 0 || dy !== 0) {
+        const t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy);
+
+        if (t > 1) {
+            x = b[0];
+            y = b[1];
+        } else if (t > 0) {
+            x += dx * t;
+            y += dy * t;
+        }
+    }
+
+    dx = px - x;
+    dy = py - y;
+
+    return dx * dx + dy * dy;
 };
 
 export default Geometry;
