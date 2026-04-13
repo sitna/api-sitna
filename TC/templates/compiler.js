@@ -43,6 +43,7 @@ files
                     inputDate: true,
                     inputTime: true,
                     inputDatetime: true,
+                    localeValue:true
                 },
                 knownHelpersOnly: true
             });
