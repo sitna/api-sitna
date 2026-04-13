@@ -18,6 +18,8 @@ var gulp = require('gulp'),
     { exec, spawn } = require('child_process'),
     path = require('path'),
     cheerio = require("cheerio"),
+    through2 = require('through2'),
+    terser = require('gulp-terser'),
     lunr=require('lunr');
 
 ////////// Gestión de errores ////////
@@ -247,8 +249,13 @@ function onlineScripts() {
         'TC/cesium/**/*.js'
     ])
         .pipe(filter(sitnaBuild.projectFiles))
-        .pipe(gulp.dest(target))
-        .pipe(minify(minifyConfig))
+        .pipe(gulp.dest(target))        
+        .pipe(through2.obj(function (file, _, cb) {
+            console.log('Procesando archivo:', file.path);
+            cb(null, file);
+        }))
+        .pipe(terser())
+        //.pipe(minify(minifyConfig))
         .pipe(gulp.dest(target));
 
     target = sitnaBuild.targetPath + 'lib/';
