@@ -100,6 +100,7 @@ class Draw extends WebComponentControl {
                 self.#setFeatureAddReadyState();
 
                 e.feature.setId(self.layer.getNextFeatureId());
+                self.getStyler().then((styler) => e.feature.setStyle(styler.getStyle()));
 
                 if (self.callback) {
                     self.callback(e.feature);
@@ -273,13 +274,8 @@ class Draw extends WebComponentControl {
 
     addUIEventListeners() {
         const self = this;
-        self.getStyler().then(styler => {
-            styler.addEventListener(Consts.event.STYLECHANGE, e => {
-                self.wrap.setStyle();
-                const eventData = {};
-                eventData[e.detail.property] = e.detail.value;
-                self.trigger(Consts.event.STYLECHANGE, eventData);
-            });
+        self.getStyler().then((styler) => {
+            styler.addEventListener(Consts.event.STYLECHANGE, (_e) => self.wrap.setStyle());
         });
 
         self.#newBtn.addEventListener(Consts.event.CLICK, function () {
@@ -414,7 +410,10 @@ class Draw extends WebComponentControl {
         super.activate.call(self);
         self.wrap.activate(self.mode);
         self.classList.remove(self.#pointClass, self.#lineClass, self.#polygonClass, self.#rectangleClass);
-        self.getStyler().then(styler => styler.mode = self.mode);
+        self.getStyler().then((styler) => {
+            styler.mode = self.mode;
+            styler.setLayer(self.layer);
+        });
         switch (self.mode) {
             case Consts.geom.POINT:
                 self.classList.add(self.#pointClass);
@@ -702,10 +701,7 @@ class Draw extends WebComponentControl {
                 break;
         }
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 Draw.prototype.CLASS = 'tc-ctl-draw';
