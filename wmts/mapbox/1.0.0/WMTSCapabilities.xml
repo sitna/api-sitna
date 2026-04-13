@@ -72,10 +72,10 @@
 			<TileMatrixSetLink>
 				<TileMatrixSet>WorldWebMercatorQuad</TileMatrixSet>
 			</TileMatrixSetLink>
-			<!--<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://b.tiles.mapbox.com/v4/mapbox.streets/{TileMatrix}/{TileCol}/{TileRow}.png?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>-->
-			<!--<ResourceURL format="image/png" resourceType="tile" template="https://b.tiles.mapbox.com/v4/mapbox.streets/{TileMatrix}/{TileCol}/{TileRow}.png?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>-->
-			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
-			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
+			<!--<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://b.tiles.mapbox.com/v4/mapbox.streets/{TileMatrix}/{TileCol}/{TileRow}.png"/>-->
+			<!--<ResourceURL format="image/png" resourceType="tile" template="https://b.tiles.mapbox.com/v4/mapbox.streets/{TileMatrix}/{TileCol}/{TileRow}.png"/>-->
+			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
+			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
 		<Layer>
 			<ows:Title>Mapbox Outdoors</ows:Title>
@@ -96,8 +96,8 @@
 			<TileMatrixSetLink>
 				<TileMatrixSet>WorldWebMercatorQuad</TileMatrixSet>
 			</TileMatrixSetLink>
-			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
-			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
+			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
+			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
 		<Layer>
 			<ows:Title>Mapbox Light</ows:Title>
@@ -118,8 +118,8 @@
 			<TileMatrixSetLink>
 				<TileMatrixSet>WorldWebMercatorQuad</TileMatrixSet>
 			</TileMatrixSetLink>
-			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
-			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
+			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
+			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
 		<Layer>
 			<ows:Title>Mapbox Dark</ows:Title>
@@ -140,8 +140,8 @@
 			<TileMatrixSetLink>
 				<TileMatrixSet>WorldWebMercatorQuad</TileMatrixSet>
 			</TileMatrixSetLink>
-			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
-			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
+			<ResourceURL format="image/png" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
+			<ResourceURL format="image/png" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/dark-v10/tiles/256/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
 		<Layer>
 			<ows:Title>Mapbox Satellite</ows:Title>
@@ -165,8 +165,8 @@
 			</TileMatrixSetLink>
 			<!--<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://b.tiles.mapbox.com/v4/mapbox.satellite/{TileMatrix}/{TileCol}/{TileRow}.jpg?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>-->
 			<!--<ResourceURL format="image/jpeg" resourceType="tile" template="https://b.tiles.mapbox.com/v4/mapbox.satellite/{TileMatrix}/{TileCol}/{TileRow}.jpg?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>-->
-			<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
-			<ResourceURL format="image/jpeg" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
+			<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{TileMatrix}/{TileCol}/{TileRow}"/>
+			<ResourceURL format="image/jpeg" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
 		<Layer>
 			<ows:Title>Mapbox Satellite and Streets</ows:Title>
@@ -187,8 +187,8 @@
 			<TileMatrixSetLink>
 				<TileMatrixSet>WorldWebMercatorQuad</TileMatrixSet>
 			</TileMatrixSetLink>
-			<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
-			<ResourceURL format="image/jpeg" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{TileMatrix}/{TileCol}/{TileRow}?access_token=pk.eyJ1IjoiYXBpc2l0bmEiLCJhIjoiY2pjOHl1OHhlMjRhODJxbXhtdzJjbHcwdCJ9.DGEXbiTW7msRsZqpXOo-5w"/>
+			<ResourceURL format="image/jpeg" resourceType="simpleProfileTile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{TileMatrix}/{TileCol}/{TileRow}"/>
+			<ResourceURL format="image/jpeg" resourceType="tile" template="https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{TileMatrix}/{TileCol}/{TileRow}"/>
 		</Layer>
 		<TileMatrixSet>
 			<ows:Title>Google Maps Compatible for the World</ows:Title>
