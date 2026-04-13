@@ -8,6 +8,7 @@ import Toggle from '../../SITNA/ui/Toggle.js';
 import Feature from '../../SITNA/feature/Feature.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import FeatureHistory from '../tool/FeatureHistory.js';
 
 TC.control = TC.control || {};
 
@@ -25,7 +26,7 @@ const getDataTypeFromValue = (value) => {
         // Revisamos casos especiales
         if (Date.parse(value) && !/EPSG/.test(value)) {
             if (/:/.test(value)) return Consts.dataType.DATETIME;
-            return Consts.dataType.DATE;
+            if (/\//.test(value)) return Consts.dataType.DATE;
         }
         if (/^[0-2]\d:[0-5]\d$/.test(value)) {
             return Consts.dataType.TIME;
@@ -81,6 +82,8 @@ class AttributesEdit extends WebComponentControl {
     #attributeProposals = new WeakMap();
     #newAttributes = new WeakMap();
 
+    history;
+
     static PROPOSAL = 'proposal';
 
     constructor() {
@@ -102,6 +105,9 @@ class AttributesEdit extends WebComponentControl {
             TEXT_INPUT: `.${AttributesEdit.prototype.CLASS}-new-value input[type="text"]`,
             TOGGLE: `.${AttributesEdit.prototype.CLASS}-body > table sitna-toggle`
         }
+
+        this.history = new FeatureHistory();
+
         this.autofill = this.options.autofill !== false;
         this.model = new AttributesEditModel();
     }
@@ -623,8 +629,7 @@ class AttributesEdit extends WebComponentControl {
                 let newData = {};
                 newData[this.name] = this.value;
                 newData = { ...self.#feature.getData(), ...newData };
-                self.#feature.setData(newData);
-                self.#triggerFeatureModify();
+                self.setFeatureData(self.#feature, newData);
                 const rowObject = { name: this.name, value: this.value };
                 if (this.tagName === 'SITNA-TOGGLE') {
                     rowObject.type = 'boolean';
@@ -654,10 +659,12 @@ class AttributesEdit extends WebComponentControl {
 
         await super.register.call(self, map);
 
-        self.containerControl?.on(Consts.event.FEATURESSELECT + ' ' + Consts.event.FEATURESUNSELECT, function (_e) {
+        const onFeaturesSelectionChange = function (_e) {
             const features = self.containerControl.getSelectedFeatures();
             self.feature = features[0];
-        });
+        };
+        self.containerControl?.addEventListener(Consts.event.FEATURESSELECT, onFeaturesSelectionChange);
+        self.containerControl?.addEventListener(Consts.event.FEATURESUNSELECT, onFeaturesSelectionChange);
 
         map
             .on(Consts.event.FEATUREREMOVE, function (e) {
@@ -670,6 +677,21 @@ class AttributesEdit extends WebComponentControl {
                     self.feature = null;
                 }
             });
+
+        self.history.addEventListener('undo', function (e) {
+            if (e.action.type === FeatureHistory.action.ATTRIBUTESCHANGE && e.feature === self.feature) {
+                self.render();
+            }
+            if (e.action.type === FeatureHistory.action.REMOVE) {
+                self.feature = e.feature;
+            }
+        });
+        self.history.addEventListener('redo', function (e) {
+            if (e.action.type === FeatureHistory.action.ATTRIBUTESCHANGE && e.feature === self.feature) {
+                self.render();
+            }
+        });
+
         return self;
     }
 
@@ -789,8 +811,7 @@ class AttributesEdit extends WebComponentControl {
                 }
             }
 
-            this.#feature.setData(newData);
-            this.#triggerFeatureModify();
+            this.setFeatureData(this.#feature, newData);
         }
     }
 
@@ -850,6 +871,8 @@ class AttributesEdit extends WebComponentControl {
                             }
                             featuresToChange.forEach((f) => {
                                 let featureData = f.getData();
+                                const eventData = {};
+                                eventData.oldData = JSON.parse(JSON.stringify(featureData));
                                 const name = path[path.length - 1];
                                 if (path.length === 1) {
                                     f.unsetData(name);
@@ -860,12 +883,13 @@ class AttributesEdit extends WebComponentControl {
                                     }
                                 }
                                 delete featureData[name];
+                                eventData.newData = JSON.parse(JSON.stringify(f.getData()));
+                                this.#triggerFeatureModify(eventData);
                             });
                             const newAttributes = this.#newAttributes.get(this.#feature);
                             const attributeIndex = newAttributes?.findIndex((attr) => attr.name === path[path.length - 1]);
                             if (attributeIndex >= 0) newAttributes.splice(attributeIndex, 1);
                             this.removeAttributeElement(path);
-                            this.#triggerFeatureModify();
                         });
 
                     });
@@ -894,6 +918,8 @@ class AttributesEdit extends WebComponentControl {
                 const featureTypeMetadata = await this.#getFeatureTypeMetadata(layer);
                 const name = path[path.length - 1];
                 let featureData = this.#feature.getData();
+                const eventData = {};
+                eventData.oldData = JSON.parse(JSON.stringify(featureData));
                 for (let i = 0, ii = path.length - 1; i < ii; i++) {
                     featureData = featureData[path[i]];
                 }
@@ -927,7 +953,8 @@ class AttributesEdit extends WebComponentControl {
                     clearValues(newItem);
                 }
                 value.push(newItem);
-                this.#triggerFeatureModify();
+                eventData.newData = JSON.parse(JSON.stringify(this.#feature.getData()));
+                this.#triggerFeatureModify(eventData);
                 await this.render();
                 return newItem;
             }
@@ -935,11 +962,19 @@ class AttributesEdit extends WebComponentControl {
         return null;
     }
 
-    #triggerFeatureModify() {
-        this.containerControl?.trigger(Consts.event.FEATUREMODIFY, {
+    setFeatureData(feature, data) {
+        const actionData = this.history.setData(feature, data);
+        this.#triggerFeatureModify(actionData);
+        return this;
+    }
+
+    #triggerFeatureModify(eventData) {
+        this.trigger(Consts.event.FEATUREMODIFY, {
             feature: this.#feature,
             layer: this.#feature.layer,
-            geometryChanged: false
+            geometryChanged: false,
+            oldData: eventData.oldData,
+            newData: eventData.newData,
         });
     }
 
@@ -1034,10 +1069,7 @@ class AttributesEdit extends WebComponentControl {
         self.model.datetime = self.getLocaleString("datetime");
         self.model.addNewAttribute = self.getLocaleString("addNewAttribute");
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 AttributesEdit.prototype.CLASS = 'tc-ctl-attr-edit';
