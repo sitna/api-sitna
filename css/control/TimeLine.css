@@ -1,10 +1,9 @@
 ﻿.tc-ctl-wlm-addonsContainer sitna-button {
     --glyph-bg-color: var(--btn-bg-color);
     --glyph-color: #fff;
-    --icon-font-grid-size: 18px;
-    margin-left: 0;
+    --sitna-icon-font-grid-size: 18px;    
     margin-right: 0;
-    flex-grow:1;
+    flex-grow: 1;
 }
 
 .tc-ctl-wlm-addonsContainer .controlsRow span {
@@ -13,43 +12,43 @@
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-backward {
-    --icon-text: '\f048';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f048';
+    --sitna-icon-font-family: FontAwesome;    
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-forward {
-    --icon-text: '\f051';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f051';
+    --sitna-icon-font-family: FontAwesome
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-last {
-    --icon-text: '\f050';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f050';
+    --sitna-icon-font-family: FontAwesome
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-first {
-    --icon-text: '\f049';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f049';
+    --sitna-icon-font-family: FontAwesome
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-play {
-    --icon-text: '\f04b';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f04b';
+    --sitna-icon-font-family: FontAwesome
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-pause {
-    --icon-text: '\f04c';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f04c';
+    --sitna-icon-font-family: FontAwesome
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-speedUp {
-    --icon-text: '\f04e';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f04e';
+    --sitna-icon-font-family: FontAwesome
 }
 
 .tc-ctl-wlm-addonsContainer .tc-btn-speedDown {
-    --icon-text: '\f04a';
-    --icon-font-family: FontAwesome
+    --sitna-icon-text: '\f04a';
+    --sitna-icon-font-family: FontAwesome
 }
 
 
@@ -100,6 +99,9 @@ sitna-time-control.tc-ctl .tc-ctl-timeline-datetime label {
     FONT-SIZE: 85%;
     LINE-HEIGHT: 1.75EM;
 }
+sitna-time-control.tc-ctl input[type=date], sitna-time-control.tc-ctl input[type=datetime] {
+    height:22px;
+}
 
 sitna-time-control.tc-ctl .tc-ctl-timeline-datetime input[type="datetime-local"] {
     font-size: 85%;
@@ -144,7 +146,7 @@ sitna-time-control.tc-ctl .tc-ctl-timeline-datetime input[type="datetime-local"]
     padding: 0 0.2em;
 }
 .tc-time-dimension .tc-ctl-lcat-leaf-time:before {
-    content: '\23F1\FE0E';
+    content: var(--icon-time);
     font-weight: bolder;
     font-variant-emoji: unicode;
 }
