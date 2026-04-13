@@ -56,6 +56,8 @@ import TOC from '../TC/control/TOC.js';
 import WFSEdit from '../TC/control/WFSEdit.js';
 import WFSQuery from '../TC/control/WFSQuery.js';
 import WorkLayerManager from '../TC/control/WorkLayerManager.js';
+import Route from '../TC/control/Route.js';
+import ElevationProfile from '../TC/control/ElevationProfile.js';
 
 
 /**
@@ -122,4 +124,6 @@ export default {
     WFSEdit,
     WFSQuery,
     WorkLayerManager,
+    Route,
+    ElevationProfile,
 };
