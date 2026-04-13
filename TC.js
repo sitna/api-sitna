@@ -73,7 +73,7 @@ TC.confirm = function (text, accept, cancel) {
 TC.error = function (err) {
     const text = err.message ?? err;
     if (window.console) {
-        if (err instanceof Error) {
+        if (Error.isError(err)) {
             console.error(err);
         }
         else {
