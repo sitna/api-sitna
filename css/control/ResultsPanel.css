@@ -57,14 +57,19 @@ body {
 }
 
 /* remarcamos la línea de los perfiles porque con el gradiente no se aprecian las diferencias */
-.c3-line-ele {
+.c3-line-gps {
     stroke-width: 1.5px !important;
     stroke: var(--track-profile-original-color) !important;
 }
 
-.c3-line-ele2 {
+.c3-line-mdt {
     stroke-width: 1.5px !important;
     stroke: var(--track-profile-mdt-color) !important;
+}
+
+.c3-line-mds {
+    stroke-width: 1.5px !important;
+    stroke: var(--track-profile-mds-color) !important;
 }
 
 
@@ -109,12 +114,16 @@ span.tc-track-chart-elev-gain {
     flex-flow: column;
 }
 
-    .tc-track-chart .tc-track-chart-elev-gain div span:nth-child(1), .tc-track-chart-minmax div span:nth-child(1) {
+    .tc-track-chart .tc-track-chart-elev-gain div span.tc-gps, .tc-track-chart-minmax div span.tc-gps {
         color: var(--track-profile-original-color);
     }
 
-    .tc-track-chart .tc-track-chart-elev-gain div span:nth-child(2), .tc-track-chart-minmax div span:nth-child(2) {
+    .tc-track-chart .tc-track-chart-elev-gain div span.tc-mdt, .tc-track-chart-minmax div span.tc-mdt {
         color: var(--track-profile-mdt-color);
+    }
+
+    .tc-track-chart .tc-track-chart-elev-gain div span.tc-mds, .tc-track-chart-minmax div span.tc-mds {
+        color: var(--track-profile-mds-color);
     }
 
 .tc-track-chart p {
@@ -141,9 +150,12 @@ span.tc-track-chart-elev-gain {
             color: var(--track-profile-mdt-color);
         }
 
-            .c3-tooltip-container > div span[data-isnumber].tc-mdt:before {
+            .c3-tooltip-container > div span[data-isnumber].tc-mdt:not(:first-child):before, .c3-tooltip-container > div span[data-isnumber].tc-mds:not(:first-child):before {
                 content: " - "
             }
+        .c3-tooltip-container > div span[data-isnumber].tc-mds {
+            color: var(--track-profile-mds-color);
+        }
 
     .c3-tooltip-container > div.tc-pos-bottom span {
         display: block;
@@ -382,15 +394,21 @@ span.tc-track-chart-elev-gain {
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
-    font-size: 12px;
     display: flex;
     flex-direction: column;
     flex: 1;
+    background-color: var(--panel-bg-color);    
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
 }
 
-    .tc-ctl-rpanel .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-body.tc-ctl-rpanel-info {
-        flex-basis: 100%;
-    }
+.tc-ctl-rpanel .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-body {
+    font-size: calc(0.95em * 0.8);
+}
+
+.tc-ctl-rpanel .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-body.tc-ctl-rpanel-info {
+    flex-basis: 100%;
+}
 
 .tc-ctl-rpanel .tc-ctl-rpanel-main {
     /* por interactjs*/
@@ -595,13 +613,6 @@ div.tc-map div.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-hea
     flex-grow: 1;
 }
 
-.tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible {
-    height: calc(100% - 35px); /*el alto de la cabecera*/
-}
-
-.tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible {
-    height: calc(100% - 35px); /*el alto de la cabecera*/
-}
 
     .tc-ctl.tc-ctl-rpanel .tc-ctl-rpanel-main.tc-resizable .tc-ctl-rpanel-collapsible .tc-ctl-rpanel-chart {
         height: calc(100% - 50px /*del DIV de featureTools*/ ); /*si no, no coge el alto del padre*/
@@ -742,14 +753,9 @@ div.tc-ctl-rpanel-heading-samehw {
     content: '\f022';
 }
 
-.tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
-    font-size: 12px;
-    background-color: var(--panel-bg-color);
+.tc-ctl-rpanel .tc-ctl-rpanel-collapsible:hover {
+    background-color: var(--panel-hl-bg-color);
 }
-
-    .tc-ctl-rpanel .tc-ctl-rpanel-collapsible:hover {
-        background-color: var(--panel-hl-bg-color);
-    }
 
 .tc-ctl-rpanel-grp .panel {
     border: 0;
@@ -768,16 +774,7 @@ div.tc-ctl-rpanel-heading-samehw {
     --sitna-minimal-button-background-color: transparent;
 }
 
-.tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
-    font-size: 12px;
-}
-
 .tc-ctl-rpanel .tc-ctl-rpanel-grp .tc-ctl-rpanel-main {
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-}
-
-.tc-ctl-rpanel .tc-ctl-rpanel-collapsible {
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
 }
@@ -814,11 +811,13 @@ div.tc-ctl-rpanel-heading-samehw {
     align-items: center;
     /*border-top: 1px solid var(--main-divider-color);*/
     padding: 0.3em;
+    min-height: 1em;
 }
 
     .tc-ctl-rpanel-menu:empty {
         padding: 0;
         border-top: none;
+        min-height: 0em;
     }
 
     .tc-ctl-rpanel-menu .tc-ctl-ftools {
@@ -870,8 +869,8 @@ div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom > h3 {
 }
 
 .tc-ctl-rpanel .tc-ctl-rpanel-info table.tc-attr {
-    width: calc(100% - 1.6em);
-    margin: 0.8em;
+    /*width: calc(100% - 1.6em);
+    margin: 0.8em;*/
 }
 
 div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
@@ -967,14 +966,14 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
 .tc-ctl-rpanel .tc-ctl-ftools {
     width: auto;
     flex: auto;
+    max-width: 80%;
+    margin: 0 0 0 auto;
 }
 
-    .tc-ctl-rpanel .tc-ctl-ftools button.tc-icon-btn {
-        margin-left: 0.5em;
-        margin-top: 0;
-    }
-
-
+.tc-ctl-rpanel .tc-ctl-ftools button.tc-icon-btn {
+    margin-left: 0.5em;
+    margin-top: 0;
+}
 
 .tc-ctl-rpanel a.tc-ctl-print-btn {
     font-size: 1.2em;
@@ -982,7 +981,6 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
     margin-right: 0.25em;
     z-index: 10012;
 }
-
 
 .tc-ctl-rpanel-table table, .tc-ctl-rpanel-info table {
     font-size: 1em;
@@ -1092,7 +1090,7 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table table.tc-attr th {
     transform-origin: bottom right;
 }
 
-.tc-ctl-rpanel .tc-ctl-finfo-coords {
+.tc-ctl-rpanel .tc-ctl-finfo-coords:not(.tc-hidden) {
     display: flex;
 }
 
@@ -1281,6 +1279,10 @@ button.tc-icon-btn.tc-ctl-p-results-close-btn:before {
         font-family: var(--sitna-icon-font-family);
         content: var(--icon-profile);
     }
+
+.tc-ctl-rpanel-menu sitna-feature-styler, .tc-ctl-rpanel-menu .tc-ctl-ftools-style-edit span {
+    font-size: 0.8rem;
+}
 
 @media screen and (pointer:coarse), (max-device-width: 768px), (max-device-height: 768px) {
     .tc-ctl-rpanel-table tbody .tc-icon.small {

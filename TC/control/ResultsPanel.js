@@ -12,7 +12,6 @@ import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
 import InfoDisplay from './InfoDisplay.js';
-import Point from '../../SITNA/feature/Point.js';
 import itemToolContainer from './itemToolContainer.js';
 import Button from '../../SITNA/ui/Button.js';
 import Controller from '../Controller.js';
@@ -39,29 +38,33 @@ const hideResizeHandlers = function (ctl) {
     });
 };
 
-const formatYAxis = function (d, locale) {
-    let y = parseInt(d.toFixed(0)) || 0;
-    return y.toLocaleString(locale) + ' m';
-};
-
 const collidingManagement = {
     add: function (currentPanel) {
         const pbody = currentPanel.div.querySelector(".tc-ctl-rpanel-sidebar-body");
         pbody.style.bottom = "";
-        const bottom = currentPanel.map.getControlsByClass(ResultsPanel)
-            .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
-            .filter(panel => pbody.colliding(panel.div.querySelector(".tc-ctl-rpanel-sidebar-body"))).reduce((prevVal, currVal) => {
-                return prevVal + currVal.div.querySelector(".tc-ctl-rpanel-sidebar-body").clientHeight
-            }, 0);
-        if (bottom) pbody.style.bottom = bottom + "px";
+        let bottomSum = 0;
+        //Lista de paneles visibles ordenados de mas abajo a mas arribade la pantalla
+        currentPanel.map.getControlsByClass(ResultsPanel)
+            .filter(panel => panel !== currentPanel && !panel.div.classList.contains("tc-hidden"))
+            .map(panel => panel.div.querySelector(".tc-ctl-rpanel-sidebar-body"))
+            .sort((panel1, panel2) => panel2.getBoundingClientRect().bottom - panel1.getBoundingClientRect().bottom)
+            .forEach(panel => {
+                if (pbody.colliding(panel)) {
+                    pbody.style.bottom = (bottomSum + panel.clientHeight) + "px";
+                    bottomSum = panel.clientHeight
+                }
+
+            });
     },
     remove: function (currentPanel) {
         currentPanel.map.getControlsByClass(ResultsPanel)
-            .filter(panel => panel.content === panel.contentType.TABLE && panel !== currentPanel)
-            .forEach((panel) => {
-                panel.div.querySelector(".tc-ctl-rpanel-sidebar-body").style.bottom = "";
+            .filter(panel => panel !== currentPanel && !panel.div.classList.contains("tc-hidden"))
+            .forEach((panel, i, panels) => {
+                if (i === 0)
+                    panel.div.querySelector(".tc-ctl-rpanel-sidebar-body").style.bottom = "";
+                else
+                    panel.div.querySelector(".tc-ctl-rpanel-sidebar-body").style.bottom = (window.innerHeight - panels[0].div.querySelector(".tc-ctl-rpanel-sidebar-body").getBoundingClientRect().bottom + panels[0].div.querySelector(".tc-ctl-rpanel-sidebar-body").clientHeight) + "px";
             });
-
     }
 };
 
@@ -95,11 +98,6 @@ class ResultsPanelModel {
         this.expand = "";
         this.download = "";
         this.shareQuery = "";        
-    }
-}
-class ChartModel {
-    constructor() {
-        this["geo.trk.chart.elevationGain"] = "";
     }
 }
 
@@ -185,7 +183,6 @@ class ResultsPanel extends InfoDisplay {
         const maximizeElm = this.div.querySelector('.tc-ctl-rpanel-minimized-max');
         return isElementVisible(maximizeElm) && !isElementVisible(bodyElm);
     }
-
     #manageClassList(classElement, toAdd, toRemove) {
         const elm = this.div.querySelector('.' + classElement);
         if (elm) {
@@ -193,6 +190,26 @@ class ResultsPanel extends InfoDisplay {
             elm.classList.remove(toRemove);
         }
     }
+    //#manageClassList(classElement, toAdd, toRemove) {
+    //    const elm = this.div.querySelector('.' + classElement);
+    //    if (elm) {
+    //        return new Promise(resolve => {
+    //            const onEnd = () => {
+    //                elm.removeEventListener('animationend', onEnd);
+    //                resolve();
+    //            };
+    //            if (elm.classList.contains(toAdd)) {
+    //                onEnd();
+    //                return;
+    //            }
+    //            elm.addEventListener('animationend', onEnd, { once: true });
+    //            elm.classList.add(toAdd);
+    //            elm.classList.remove(toRemove);
+    //            if (!getComputedStyle(elm).animationName) onEnd();
+    //        });            
+    //    }
+    //    return true;
+    //}
 
     show(classElement) {
         const elm = this.div.querySelector('.' + classElement);
@@ -204,13 +221,13 @@ class ResultsPanel extends InfoDisplay {
     }
 
     hide(classElement) {
-        classElement = classElement ?? 'tc-ctl-rpanel-sidebar-body';
-        this.#manageClassList(classElement, this.classes.SHOW_OUT, this.classes.SHOW_IN);
+        classElement = classElement ?? 'tc-ctl-rpanel-sidebar-body';        
 
         const elm = this.div.querySelector('.' + classElement);
         if (elm) {
             elm.style.display = 'none';
-        }
+        }        
+        this.#manageClassList(classElement, this.classes.SHOW_OUT, this.classes.SHOW_IN);
     }
 
     doVisible() {
@@ -222,12 +239,12 @@ class ResultsPanel extends InfoDisplay {
         const self = this;
         const mainTemplatePromise = import('../templates/tc-ctl-rpanel.mjs');
         const tableTemplatePromise = import('../templates/tc-ctl-rpanel-table.mjs');
-        const chartTemplatePromise = import('../templates/tc-ctl-rpanel-chart.mjs');
+        //const chartTemplatePromise = import('../templates/tc-ctl-rpanel-chart.mjs');
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-table'] = (await tableTemplatePromise).default;
-        template[self.CLASS + '-chart'] = (await chartTemplatePromise).default;
+        //template[self.CLASS + '-chart'] = (await chartTemplatePromise).default;
         self.template = template;
     }
 
@@ -478,17 +495,6 @@ class ResultsPanel extends InfoDisplay {
         });
     }
 
-    getResizableChartSize(target) {
-        if (target) {
-            let chartWrapperBounding = target.querySelector('.tc-chart.c3').getBoundingClientRect();
-            const newSize = {
-                width: chartWrapperBounding.width,
-                height: chartWrapperBounding.height
-            };
-            return newSize;
-        }
-    }
-
     getResultsPanelFromElement(element) {
         let resultsPanels = this.map.getControlsByClass(ResultsPanel);
         for (var i = 0; i < resultsPanels.length; i++) {
@@ -503,17 +509,15 @@ class ResultsPanel extends InfoDisplay {
     onResize(e) {
         const self = this;
         const target = e.target;
-        if (target.querySelector('.tc-chart.c3')) {
+        const profile = self.div.querySelector('sitna-elevation-profile');
+        if (profile) {
             target.classList.remove(Consts.classes.LOADING);
-            const newSize = self.getResizableChartSize(target);
+            const newSize = profile.getChartSize();
             if (newSize) {
-                let resultsPanel = self.getResultsPanelFromElement(target);
-                if (resultsPanel) {
-                    resultsPanel.chart.chart.resize(newSize);
-                    const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
-                    resizedTarget.dataset.chartSizeWidth = newSize.width;
-                    resizedTarget.dataset.chartSizeHeight = newSize.height;
-                }
+                profile.chart.chart.resize(profile.getBoundingClientRect());
+                const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+                resizedTarget.dataset.chartSizeWidth = newSize.width;
+                resizedTarget.dataset.chartSizeHeight = newSize.height;
             }
         }
         self.map.trigger(Consts.event.RESULTSPANELRESIZE, {
@@ -631,6 +635,8 @@ class ResultsPanel extends InfoDisplay {
                 ctl.close();
             });
 
+        const profileControl = this.getElevationProfileControl();
+
         if (data) {
 
             if (data.msg) {
@@ -640,215 +646,10 @@ class ResultsPanel extends InfoDisplay {
                 }
             }
             else {
-                self.elevationProfileChartData = data;
-                self.renderElevationProfileChart({
-                    data: data,
-                    div: self.div.querySelector('.' + self.CLASS + '-chart')
-                });
+                profileControl.renderChart({ data });
             }
         }
         return self;
-    }
-
-    async renderElevationProfileChart(options = {}) {
-        const self = this;
-        const c3 = (await import(/* webpackMode: "lazy-once" */ 'c3')).default;
-        const data = options.data;
-        data.ele = data.ele.map(val => val === null ? 0 : val);
-        const div = options.div;
-        let locale = Util.getMapLocale(self.map);
-
-        const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
-        self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
-
-        var templateData = {
-            upHill: data.upHill ? data.upHill.toLocaleString(locale) : '0',
-            downHill: data.downHill ? data.downHill.toLocaleString(locale) : '0'
-        };
-
-        const hasSecondaryElevationProfileChartData = data.secondaryElevationProfileChartData &&
-            Array.isArray(data.secondaryElevationProfileChartData) &&
-            data.secondaryElevationProfileChartData.length > 0 && data.secondaryElevationProfileChartData[0];
-
-        if (hasSecondaryElevationProfileChartData) {
-            templateData.min = formatYAxis(data.min, locale);
-            templateData.max = formatYAxis(data.max, locale);
-
-            templateData.secondChart = {
-                upHill: data.secondaryElevationProfileChartData[0].upHill ? data.secondaryElevationProfileChartData[0].upHill.toLocaleString(locale) : '0',
-                downHill: data.secondaryElevationProfileChartData[0].downHill ? data.secondaryElevationProfileChartData[0].downHill.toLocaleString(locale) : '0',
-                min: formatYAxis(data.secondaryElevationProfileChartData[0].min, locale),
-                max: formatYAxis(data.secondaryElevationProfileChartData[0].max, locale)
-            };
-        }
-        const out = await self.getRenderedHtml(self.CLASS + '-chart', templateData);
-
-        div.innerHTML = out;
-        div.style.display = '';
-
-        self.chartController = new Controller(new ChartModel(), new Observer(div));
-        self.chartController.model["geo.trk.chart.elevationGain"] = self.getLocaleString("geo.trk.chart.elevationGain");
-
-        //if (self.#titles) {
-
-        //    if (self.#titles.main) {
-        //        const titleElm = self.div.querySelector('.tc-ctl-rpanel-title-text');
-        //        titleElm.setAttribute('title', self.#titles.main);
-        //        titleElm.innerHTML = self.#titles.main;
-        //    }
-
-        //    if (self.#titles.max) {
-        //        self.div.querySelector('.tc-ctl-rpanel-minimized-max').setAttribute('title', self.#titles.max);
-        //    }
-        //}
-
-        var legendOptions = { show: false };
-        if (hasSecondaryElevationProfileChartData) {
-            legendOptions = {
-                position: 'inset',
-                inset: {
-                    anchor: "bottom-left",
-                    x: -55,
-                    y: -30,
-                    step: 1
-                }
-            };
-        }
-        let chartOptions = Util.extend({
-            bindto: div.querySelector('.tc-chart'),
-            padding: {
-                top: 13, // por el nuevo diseño del tooltip añado 13  //data.secondaryElevationProfileChartData[0] ? 10 : 0,
-                right: 15,
-                bottom: 0,
-                left: 45
-            },
-            legend: legendOptions
-        }, self.createChartOptions(data));
-
-        // preservamos el tamaño redimensionado por el usuario
-        const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
-        if (resizedTarget &&
-            resizedTarget.dataset.chartSizeWidth && parseInt(resizedTarget.dataset.chartSizeWidth) > 0 &&
-            resizedTarget.dataset.chartSizeHeight && parseInt(resizedTarget.dataset.chartSizeHeight) > 0) {
-            Util.extend(chartOptions.size, { width: resizedTarget.dataset.chartSizeWidth, height: resizedTarget.dataset.chartSizeHeight });
-
-            if (resizedTarget.dataset.panelSizeWidth && parseInt(resizedTarget.dataset.panelSizeWidth) > 0 &&
-                resizedTarget.dataset.panelSizeHeight && parseInt(resizedTarget.dataset.panelSizeHeight) > 0) {
-                resizedTarget.style.width = resizedTarget.dataset.panelSizeWidth;
-                resizedTarget.style.height = resizedTarget.dataset.panelSizeHeight;
-            }
-        }
-        if (self.chart.tooltip) {
-            chartOptions.tooltip = {
-                position: function (_data, _width, _height, element) {
-                    let container = document.querySelector('.c3-tooltip-container');
-                    let chartOffsetX = document.querySelector(".c3").getBoundingClientRect().left;
-                    let graphOffsetX = document.querySelector(".c3 g.c3-axis-y").getBoundingClientRect().right;
-                    let tooltipWidth = container.clientWidth;
-                    let x = parseInt(d3.mouse(element)[0]) + graphOffsetX - chartOffsetX - Math.floor(tooltipWidth / 2);
-
-                    // alto del tooltipOnBottom
-                    let xAxisHeight = document.querySelector(".c3 g.c3-axis-x").getBoundingClientRect().height + 2;
-                    let onBottom = container.querySelector(`.${self.classes.POSITION_BOTTOM}`);
-                    if (onBottom && xAxisHeight) {
-                        onBottom.style.height = xAxisHeight + 'px';
-                    }
-                    return { top: 0, left: x };
-                },
-                contents: function (d) {
-                    var fn = self.chart.tooltip;
-                    if (typeof fn !== "function")
-                        fn = Util.getFnFromString(self.chart.tooltip);
-                    return fn.call(eval(self.chart.ctx), d);
-                }
-            };
-        }
-
-        if (self.chart && self.chart.onmouseout) {
-            chartOptions.onmouseout = function () {
-                var fn = self.chart.onmouseout;
-                if (typeof fn !== "function")
-                    fn = Util.getFnFromString(self.chart.onmouseout);
-                fn.call(eval(self.chart.ctx));
-            };
-        }
-
-        chartOptions.onrendered = function () {
-            if (Util.isFunction(chartOptions._onrendered)) {
-                chartOptions._onrendered.call(this);
-            }
-            self.map.trigger(Consts.event.DRAWCHART, { control: self, svg: this.svg[0][0], chart: this });
-            self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
-        };
-
-        if (!c3._isOverriden) {
-            // GLS: Override de la función generateDrawLine y generateDrawArea para establecer otro tipo de interpolación en la línea
-            c3.chart.internal.fn.generateDrawLine = function (lineIndices, isSub) {
-                var $$ = this, config = $$.config,
-                    line = $$.d3.svg.line(),
-                    getPoints = $$.generateGetLinePoints(lineIndices, isSub),
-                    yScaleGetter = isSub ? $$.getSubYScale : $$.getYScale,
-                    xValue = function (d) { return (isSub ? $$.subxx : $$.xx).call($$, d); },
-                    yValue = function (d, i) {
-                        return config.data_groups.length > 0 ? getPoints(d, i)[0][1] : yScaleGetter.call($$, d.id)(d.value);
-                    };
-                line = config.axis_rotated ? line.x(yValue).y(xValue) : line.x(xValue).y(yValue);
-                if (!config.line_connectNull) { line = line.defined(function (d) { return d.value != null; }); }
-                return function (d) {
-                    var values = config.line_connectNull ? $$.filterRemoveNull(d.values) : d.values,
-                        x = isSub ? $$.x : $$.subX, y = yScaleGetter.call($$, d.id), x0 = 0, y0 = 0, path;
-                    if ($$.isLineType(d)) {
-                        if (config.data_regions[d.id]) {
-                            path = $$.lineWithRegions(values, x, y, config.data_regions[d.id]);
-                        } else {
-                            if ($$.isStepType(d)) { values = $$.convertValuesToStep(values); }
-                            path = line.interpolate('linear')(values);
-                        }
-                    } else {
-                        if (values[0]) {
-                            x0 = x(values[0].x);
-                            y0 = y(values[0].value);
-                        }
-                        path = config.axis_rotated ? "M " + y0 + " " + x0 : "M " + x0 + " " + y0;
-                    }
-                    return path ? path : "M 0 0";
-                };
-            };
-            c3.chart.internal.fn.generateDrawArea = function (areaIndices, isSub) {
-                var $$ = this, config = $$.config, area = $$.d3.svg.area(),
-                    getPoints = $$.generateGetAreaPoints(areaIndices, isSub),
-                    yScaleGetter = isSub ? $$.getSubYScale : $$.getYScale,
-                    xValue = function (d) { return (isSub ? $$.subxx : $$.xx).call($$, d); },
-                    value0 = function (d, i) {
-                        return config.data_groups.length > 0 ? getPoints(d, i)[0][1] : yScaleGetter.call($$, d.id)(0);
-                    },
-                    value1 = function (d, i) {
-                        return config.data_groups.length > 0 ? getPoints(d, i)[1][1] : yScaleGetter.call($$, d.id)(d.value);
-                    };
-                area = config.axis_rotated ? area.x0(value0).x1(value1).y(xValue) : area.x(xValue).y0(value0).y1(value1);
-                if (!config.line_connectNull) {
-                    area = area.defined(function (d) { return d.value !== null; });
-                }
-                return function (d) {
-                    var values = config.line_connectNull ? $$.filterRemoveNull(d.values) : d.values,
-                        x0 = 0, y0 = 0, path;
-                    if ($$.isAreaType(d)) {
-                        if ($$.isStepType(d)) { values = $$.convertValuesToStep(values); }
-                        path = area.interpolate('linear')(values);
-                    } else {
-                        if (values[0]) {
-                            x0 = $$.x(values[0].x);
-                            y0 = $$.getYScale(d.id)(values[0].value);
-                        }
-                        path = config.axis_rotated ? "M " + y0 + " " + x0 : "M " + x0 + " " + y0;
-                    }
-                    return path ? path : "M 0 0";
-                };
-            };
-            c3._isOverriden = true;
-        }
-
-        self.chart.chart = c3.generate(chartOptions);
     }
 
     #closeOpenedTableResultsPanel() {
@@ -856,6 +657,17 @@ class ResultsPanel extends InfoDisplay {
             .filter((ctl) => ctl !== this && ctl.isVisible())
             .filter((ctl) => ctl.options.content !== 'chart')
             .forEach((ctl) => ctl.close());
+    }
+
+    getElevationProfileControl() {
+        let control = this.div.querySelector('sitna-elevation-profile');
+        if (!control) {
+            control = document.createElement('sitna-elevation-profile');
+            const container = this.div.querySelector('.' + this.CLASS + '-chart');
+            container.appendChild(control);
+            control.caller = this.caller;
+        }
+        return control;
     }
 
     openTable() {
@@ -965,11 +777,12 @@ class ResultsPanel extends InfoDisplay {
                 self.div.querySelector('.tc-ctl-rpanel-info').style.display = 'none';
 
                 self.show('tc-ctl-rpanel-sidebar-body');
+                collidingManagement.add(self);
             }
         }
     }
 
-    open(html, container, options = {}) {
+    async open(html, container, options = {}) {
         const self = this;
 
         self.onOpen();
@@ -987,6 +800,7 @@ class ResultsPanel extends InfoDisplay {
                 this.map.trigger(Consts.event.DRAWTABLE, { control: self });
                 self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
             }
+
         };
         //checkIsRendered.apply(self);
         self.requestIsRendered = window.requestAnimationFrame(checkIsRendered.bind(self));
@@ -1057,7 +871,7 @@ class ResultsPanel extends InfoDisplay {
         self.show('tc-ctl-rpanel-sidebar-body');
         self.hide('tc-ctl-rpanel-minimized-max');
         //URI: Evitar solapamentos entre paneles en modo móvil
-        collidingManagement.add(self);
+        collidingManagement.add(self);        
         return self;
     }
 
@@ -1074,11 +888,13 @@ class ResultsPanel extends InfoDisplay {
     loadDataOnChart(data) {
         const self = this;
         const endFn = function () {
-            self.elevationProfileChartData = data;
-            self.renderElevationProfileChart({
-                data: data,
-                div: self.div.querySelector('.' + self.CLASS + '-chart')
-            });
+            const container = self.div.querySelector('.' + self.CLASS + '-chart');
+            let chart = container.querySelector('sitna-elevation-profile');
+            if (!chart) {
+                chart = document.createElement('sitna-elevation-profile');
+                container.appendChild(chart);
+            }
+            chart.renderChart({ data, isSecondary: true });
         };
         // puede llegar aquí después de borrar un track.
         if (self.chart && self.chart.chart) {
@@ -1091,356 +907,11 @@ class ResultsPanel extends InfoDisplay {
         }
     }
 
-    createChartOptions(options = {}) {
-        const self = this;
-        var result = {};
-        const locale = options.locale || Util.getMapLocale(self.map);
-        switch (options.chartType) {
-            default:
-                if (options.ele != null) {
-                    const getChartSize = function () {
-                        const panelStyle = getComputedStyle(self.getContainerElement());
-                        const docWidth = document.documentElement.clientWidth / 100 * 40; // css panel contendor
-                        return {
-                            height: docWidth > 445 ? options.maxHeight || self.CHART_SIZE.MAX_HEIGHT : options.minHeight || self.CHART_SIZE.MIN_HEIGHT,
-                            width: parseFloat(panelStyle.width) * 0.95,
-                        };
-                    };
-                    const gradIds = ['grad' + TC.getUID()];
-
-                    let maxy = Number.NEGATIVE_INFINITY;
-                    let miny = Number.POSITIVE_INFINITY;
-                    options.ele.forEach(function (y) {
-                        if (typeof y === 'number') {
-                            maxy = Math.max(y, maxy);
-                            miny = Math.min(y, miny);
-                        }
-                    });
-
-                    let xColumn = [...options.x];
-                    let eleColumn = [...options.ele];
-
-                    result = {
-                        data: {
-                            x: 'x',
-                            columns: [
-                                ['x'].concat(xColumn),
-                                ['ele'].concat(eleColumn)
-                            ],
-                            types: {
-                                'ele': 'area-spline'
-                            },
-                            colors: {
-                                "ele": 'url(#' + gradIds[0] + ')'
-                            }
-                        },
-                        size: getChartSize(),
-                        point: {
-                            show: false
-                        },
-                        axis: {
-                            x: {
-                                tick: {
-                                    outer: false,
-                                    count: 5, format: function (d) {
-                                        d = d / 1000;
-                                        var dist;
-                                        var measure;
-                                        if (d < 1) {
-                                            dist = Math.round(d * 1000);
-                                            measure = ' m';
-                                        } else {
-                                            dist = Math.round(d * 100) / 100;
-                                            measure = ' km';
-                                        }
-
-                                        dist = dist.toLocaleString(locale);
-                                        return dist + measure;
-                                    }
-                                }
-                            },
-                            y: {
-                                padding: {
-                                    top: 0, bottom: 0
-                                },
-                                max: maxy,
-                                min: miny,
-                                tick: {
-                                    count: 2,
-                                    format: function (d) {
-                                        return formatYAxis(d, locale);
-                                    }
-                                }
-                            }
-                        },
-                        onresize: function () {
-                            let size;
-                            let targetNode = this.config.bindto.closest(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
-                            if (targetNode) {
-                                size = self.getResizableChartSize(targetNode);
-                            } else {
-                                size = getChartSize();
-                            }
-                            if (size) {
-                                this.api.resize(size);
-                            }
-                        }
-                    };
-
-                    const hasSecondaryElevationProfileChartData = options.secondaryElevationProfileChartData &&
-                        Array.isArray(options.secondaryElevationProfileChartData) &&
-                        options.secondaryElevationProfileChartData.length > 0 && options.secondaryElevationProfileChartData[0];
-
-                    if (hasSecondaryElevationProfileChartData) {
-                        result.data.names = {
-                            ele: self.getLocaleString("geo.profile.fromTrack"),
-                            ele2: self.getLocaleString("mdt")
-                        };
-                        result.data.columns.push(['ele2'].concat(options.secondaryElevationProfileChartData[0].ele));
-
-                        result.data.types.ele2 = result.data.types.ele;
-                        gradIds.push('grad' + TC.getUID());
-                        result.data.colors.ele2 = 'url(#' + gradIds[gradIds.length - 1] + ')';
-                        result.data.axes = {
-                            ele: 'y'
-                        };
-
-                        if (eleColumn.every((val) => val === 0)) {
-                            result.axis.y.min = options.secondaryElevationProfileChartData[0].min;
-                            result.axis.y.max = options.secondaryElevationProfileChartData[0].max;
-                        } else if (options.secondaryElevationProfileChartData[0].ele.every((val) => val === 0)) {
-                            result.axis.y.min = Math.min(...eleColumn);
-                            result.axis.y.max = Math.max(...eleColumn);
-                        } else {
-                            result.axis.y.min = Math.min(...eleColumn.concat(options.secondaryElevationProfileChartData[0].min));
-                            result.axis.y.max = Math.max(...eleColumn.concat(options.secondaryElevationProfileChartData[0].max));
-                        }
-                    }
-
-                    if (options.time) result.time = ("00000" + options.time.h).slice(-2) + ':' + ("00000" + options.time.m).slice(-2) + ':' + ("00000" + options.time.s).slice(-2);
-
-                    var rendered = false;
-                    result._onrendered = function () {
-                        if (!rendered) {
-                            rendered = true;
-
-                            if (hasSecondaryElevationProfileChartData) {
-                                // redondeamos los cuadritos de la leyenda.
-                                document.querySelectorAll('.c3-legend-item-tile').forEach((item) => {
-                                    item.setAttribute('rx', 5);
-                                    item.setAttribute('ry', 1);
-                                });
-                                // añdimos title a los elementos de la leyenda
-                                document.querySelectorAll('.c3-legend-item').forEach((item) => {
-                                    var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-                                    title.textContent = self.getLocaleString("hide");
-                                    item.appendChild(title);
-
-                                    item.addEventListener(Consts.event.CLICK, function () {
-                                        if (item.classList.contains(Consts.classes.HIDDEN)) {
-                                            item.querySelector('title').textContent = self.getLocaleString("hide");
-                                        } else {
-                                            item.querySelector('title').textContent = self.getLocaleString("show");
-                                        }
-
-                                        item.classList.toggle(Consts.classes.HIDDEN);
-                                    }, { passive: true });
-                                });
-                            }
-                        }
-
-                        if (!this.svg) {
-                            return; // es posible que lleguemos aquí y el usuario justo haya deseleccionado el track de la lista.
-                        }
-
-                        const svg = this.svg[0][0];
-                        var svgDefsElement = svg.getElementsByTagName('defs')[0];
-                        var xmlns = "http://www.w3.org/2000/svg";
-
-                        const createLinearGradient = function (id, colors) {
-                            var grad = document.createElementNS(xmlns, "linearGradient");
-                            grad.setAttributeNS(null, "id", id);
-                            grad.setAttributeNS(null, "x1", "0%");
-                            grad.setAttributeNS(null, "x2", "0%");
-                            grad.setAttributeNS(null, "y1", "0%");
-                            grad.setAttributeNS(null, "y2", "100%");
-                            grad.setAttributeNS(null, "gradientUnits", "userSpaceOnUse");
-
-                            const stop0 = document.createElementNS(xmlns, "stop");
-                            stop0.setAttributeNS(null, "offset", "0%");
-                            stop0.setAttributeNS(null, "stop-color", colors[0]);
-                            stop0.setAttributeNS(null, "stop-opacity", "0.7");
-                            grad.appendChild(stop0);
-
-                            const stop50 = document.createElementNS(xmlns, "stop");
-                            stop50.setAttributeNS(null, "offset", "50%");
-                            stop50.setAttributeNS(null, "stop-color", colors[1]);
-                            stop50.setAttributeNS(null, "stop-opacity", "0.9");
-                            grad.appendChild(stop50);
-
-                            const stop100 = document.createElementNS(xmlns, "stop");
-                            stop100.setAttributeNS(null, "offset", "100%");
-                            stop100.setAttributeNS(null, "stop-color", colors[2]);
-                            stop100.setAttributeNS(null, "stop-opacity", "1");
-                            grad.appendChild(stop100);
-
-                            svgDefsElement.appendChild(grad);
-                        };
-
-                        createLinearGradient(gradIds[0], ["red", "orange", "green"]);
-                        if (options.secondaryElevationProfileChartData) {
-                            createLinearGradient(gradIds[gradIds.length - 1], ["blue", "cian", "green"]);
-                        }
-
-                        const d3Node = d3.select(".c3-brush").node();
-                        if (d3Node) {
-                            d3Node.parentNode.removeChild(d3Node);
-                        }
-
-                        d3.select(".c3-event-rects,.c3-event-rects-single")
-                            .selectAll("rect")
-                            .style("cursor", "pointer")
-                            .on("click", function (e) {
-                                d3.event.stopPropagation();
-                                let point = self.elevationProfileChartData.coords[e.index];
-                                if (point) {
-                                    point = point.slice(0, 2);
-                                    if (self.map.crs !== self.map.options.utmCrs) {
-                                        point = Util.reproject(point, self.map.options.utmCrs, self.map.crs);
-                                    }
-                                    self.map.zoomToFeatures([new Point(point, {})]);
-                                }
-                            });
-
-                        const path = d3.select('.c3-axis.c3-axis-x').select('path');
-                        if (!path.empty()) {
-                            let pattern = path.attr('d');
-                            let match = /^M\d\,(\d)V\dH\d{3}V(\d)$/i.exec(pattern);
-                            if (match) { // quitamos las barritas de los extremos del axis-x
-                                pattern = pattern.replace(/(M\d\,)\d/i, "$10").replace(/(H\d{3}V)(\d)/i, "$10");
-                                path.attr('d', pattern);
-                            } else {
-                                let match = /^M\s\d\s(\d)\sV\s\d\sH\s\d{3}\sV\s(\d)$/i.exec(pattern);
-                                if (match) { // quitamos las barritas de los extremos del axis-x
-                                    pattern = pattern.replace(/(M\s\d\s)\d/i, "$10").replace(/(H\s\d{3}\sV\s)(\d)/i, "$10");
-                                    path.attr('d', pattern);
-                                }
-                            }
-                        }
-
-
-                        const svgRect = svg.getBoundingClientRect();
-                        const chartSize = {
-                            width: svgRect.width,
-                            height: svgRect.height
-                        };
-
-                        // revisar
-                        //svg.removeAttribute('height');
-                        //svg.removeAttribute('width');
-
-                        //svg.setAttribute('viewbox', '0 0 ' + chartSize.width + ' ' + chartSize.height);
-
-                        // ¿es necesario pasar los labels a multiline?
-                        var setMultilineLabels = function () {
-                            var x = d3.scale.ordinal().rangeRoundBands([0, chartSize.width], .1, .3);
-                            d3.select('.c3-axis-x').selectAll('text:not(.c3-axis-x-label)')
-                                .call(function (textNode, _width) {
-                                    textNode.each(function () {
-                                        textNode.each(function (d, i) {
-                                            if (i === 0) {
-                                                return;
-                                            }
-
-                                            const d3text = d3.select(this);
-
-                                            if (d3text.node().childNodes.length === 1) {
-                                                var clone = d3text.select('tspan').node().cloneNode();
-                                                var words = d3text.text().split(' ');
-
-                                                d3text.select('tspan').text(words[0]);
-                                                clone.textContent = words[1];
-                                                var dy = clone.getAttribute('dy');
-                                                dy = dy ? parseFloat(clone.getAttribute('dy')) : .71;
-                                                dy = dy + 0.18 + 'em';
-                                                clone.setAttribute('dy', dy);
-                                                d3text.node().appendChild(clone);
-                                            }
-                                        });
-                                    });
-                                }, x.rangeBand());
-                        };
-
-                        const xAxisNodeRect = d3.select('.c3-axis-x').node().getBoundingClientRect();
-                        if (!xAxisNodeRect.width) {
-
-                            if (self.elevationChartLabelsRAF) {
-                                window.cancelAnimationFrame(self.elevationChartLabelsRAF);
-                                self.elevationChartLabelsRAF = undefined;
-                            }
-
-                            const hasSize = function () {
-                                const xAxis = d3.select('.c3-axis-x');
-                                const xAxisNode = xAxis.node();
-                                if (xAxis.length && !xAxisNode) {
-                                    self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
-                                }
-                                else if (xAxis.length && xAxisNode &&
-                                    !xAxisNode.getBoundingClientRect().width) {
-                                    self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
-                                } else {
-                                    window.cancelAnimationFrame(self.elevationChartLabelsRAF);
-                                    self.elevationChartLabelsRAF = undefined;
-
-                                    const _xAxisNodeRect = xAxisNode.getBoundingClientRect();
-                                    const _yAxisNodeRect = d3.select('.c3-axis-y').node().getBoundingClientRect();
-                                    if (_xAxisNodeRect.width >= chartSize.width - _yAxisNodeRect.width ||
-                                        _xAxisNodeRect.width * 100 / (chartSize.width - _yAxisNodeRect.width) > 90) {
-                                        setMultilineLabels();
-                                    }
-                                }
-                            };
-
-                            self.elevationChartLabelsRAF = requestAnimationFrame(hasSize);
-                        }
-                        else {
-                            const yAxisNodeRect = d3.select('.c3-axis-y').node().getBoundingClientRect();
-                            if (xAxisNodeRect.width >= chartSize.width - yAxisNodeRect.width ||
-                                xAxisNodeRect.width * 100 / (chartSize.width - yAxisNodeRect.width) > 90) {
-                                setMultilineLabels();
-                            }
-                        }
-
-                        // pasamos el perfil original adelante si no no se aprecian bien las diferencias por el color y si lo gestionamos antes afecta a la leyenda
-                        d3.select('svg').select(".c3-chart-lines").selectAll(".c3-target-ele").each(function () {
-                            this.parentNode.appendChild(this);
-                        });
-
-                        if (!self.isMinimized()) {
-                            self.show('tc-ctl-rpanel-sidebar-body');
-                            self.hide('tc-ctl-rpanel-minimized-max');
-                        }
-
-
-                        self.div.querySelector('.tc-ctl-rpanel-table').style.display = '';
-                        self.div.querySelector('.tc-ctl-rpanel-info').style.display = '';
-                    };
-                }
-                else {
-                    result = {
-                        msg: self.getLocaleString("geo.trk.chart.chpe.empty")
-                    };
-                }
-                break;
-        }
-        return result;
-    }
-
     getElevationChartTooltip(data) {
         const self = this;
 
         const locale = self.map.getLocale() || undefined;
-        const coords = self.elevationProfileChartData.coords;
+        const coords = self.getElevationProfileChartData().coords;
         const getElevationByDataElem = function (dataElem) {
             return dataElem.value ? parseInt(dataElem.value.toFixed(0)).toLocaleString(locale) : "0";
         };
@@ -1456,8 +927,21 @@ class ResultsPanel extends InfoDisplay {
             '<span>' +
             data.map((elem, index) => {
                 if (elem) {
-                    return index === 0 ? '<span data-isNumber class="' + (elem.id === "ele" ? "tc-original" : "tc-mdt") + '">' + getElevationByDataElem(elem) + ' m' + '</span>' :
-                        '<span data-isNumber class="' + (elem.id === "ele" ? "tc-original" : "tc-mdt") + '">' + getElevationByDataElem(elem) + ' m ' + '</span>';
+                    let classCss;
+                    switch (elem.id) { 
+                        case "mdt":
+                            classCss = "tc-mdt";
+                            break;
+                        case "mds":
+                            classCss = "tc-mds";
+                            break;
+                        case "gps":
+                        default:
+                            classCss = "tc-original";
+                            break;
+                    }
+                    return index === 0 ? '<span data-isNumber class="' + classCss + '">' + getElevationByDataElem(elem) + ' m' + '</span>' :
+                        '<span data-isNumber class="' + classCss + '">' + getElevationByDataElem(elem) + ' m ' + '</span>';
                 } else {
                     return "";
                 }
@@ -1529,6 +1013,11 @@ class ResultsPanel extends InfoDisplay {
                 if (self.currentFeature && self.currentFeature.layer === e.layer && self.isVisible()) {
                     self.close();
                 }
+            })
+            .on(Consts.event.DRAWCHART, function (e) {
+                if (e.control === self.div.querySelector("sitna-elevation-profile")) {
+                    self.map.trigger(Consts.event.DRAWCHART, { control: self, svg: e.svg, chart: e.chart });
+                }
             });
 
         //map.on(Consts.event.VIEWCHANGE, function () {
@@ -1576,16 +1065,8 @@ class ResultsPanel extends InfoDisplay {
         this.model.download = this.getLocaleString("download");
         if (this.options.share)
             this.model.shareQuery = this.getLocaleString("shareQuery");
+    }
 
-        if (this.chartController) {
-            this.chartController.model["geo.trk.chart.elevationGain"] = this.getLocaleString("geo.trk.chart.elevationGain");
-        }
-        
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();        
-    }
 }
 
 ResultsPanel.prototype.CLASS = 'tc-ctl-rpanel';

@@ -9,12 +9,14 @@
                 Min,Max:&nbsp;
             </span>
             <div>
-                <span>
+                <span class="{{colorClass}}">
                     {{min}}, {{max}}
                 </span>
-                <span>
-                    {{secondChart.min}}, {{secondChart.max}}&nbsp;
+                {{#each secondChart}}
+                <span class="{{colorClass}}">
+                    {{min}}, {{max}}&nbsp;
                 </span>
+                {{/each}}
             </div>
         </div>
         <div class="tc-track-chart-elev-gain">
@@ -22,20 +24,23 @@
                 [[geo.trk.chart.elevationGain]]:&nbsp;
             </span>
             <div>
-                <span>
-                    +{{upHill}} m, -{{downHill}} m
+                <span class="{{colorClass}}">
+                    +{{uphill}} m, -{{downhill}} m
                 </span>
-                <span>
-                    +{{secondChart.upHill}} m, -{{secondChart.downHill}} m
+                {{#each secondChart}}
+                <span class="{{colorClass}}">
+                    +{{uphill}} m, -{{downhill}} m
                 </span>
+                {{/each}}                
             </div>
         </div>
     </div>
         {{else}}
         <span class="tc-track-chart-elev-gain">
-            [[geo.trk.chart.elevationGain]]: +{{upHill}} m, -{{downHill}} m
+            [[geo.trk.chart.elevationGain]]: +{{uphill}} m, -{{downhill}} m
         </span>
         {{/if}}
         <div class="tc-chart"></div>
-        {{/if}}
-    </div>
+    {{/if}}
+    <div class="tc-track-chart-warning tc-hidden">[[noElevationData]]</div>
+</div>
