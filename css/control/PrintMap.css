@@ -111,8 +111,8 @@ div.tc-ctl-prnmap-txt label {
         z-index: 100000;
     }
 
-    .tc-map.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)),
-    .tc-map-3d.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)) {
+    .tc-map.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *)),    
+    .tc-map-3d.tc-ctl-prnmap-printing :not(:where(.ol-viewport, .ol-viewport *, .tc-ctl-prnmap-qrcode, .tc-ctl-prnmap-qrcode *, .tc-toast, .tc-toast *, .tc-ctl-prnmap-tools, .tc-ctl-prnmap-tools *,.cesium-viewer,.cesium-viewer *)) {
         visibility: hidden;
     }
 
@@ -124,7 +124,7 @@ div.tc-ctl-prnmap-txt label {
     .tc-map.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode, .tc-map-3d.tc-ctl-prnmap-printing .tc-ctl-prnmap-qrcode {
         position: absolute;
         right: 0px;
-        bottom: 0px;
+        bottom: -4px;
         z-index: 100000;
     }
 
