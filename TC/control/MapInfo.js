@@ -11,7 +11,7 @@ class MapInfo extends Control {
     async register(map) {
         await super.register.call(this, map);
 
-        this.QR_MAX_URL_LENGTH = 150;
+        this.QR_MAX_URL_LENGTH = 150;        
         this.SHORTEN_URL_LENGTH = 16000;
 
         this.exportsState = false;
@@ -156,8 +156,8 @@ class MapInfo extends Control {
             });
         };
 
-        const onError = () => {
-            this.map.toast(this.getLocaleString("urlTooLongForShortener"), { type: Consts.msgType.ERROR });
+        const onError = (textKey) => {
+            this.map.toast(this.getLocaleString(textKey ?? "urlTooLongForShortener"), { type: Consts.msgType.ERROR });
             return "";
         };
 
@@ -168,7 +168,7 @@ class MapInfo extends Control {
                 if (response && response.responseText) {
                     return response.responseText.replace('http://', 'https://');
                 } else {
-                    return onError();
+                    return onError('shortenerError');
                 }
             } else {
                 if (url.length >= this.SHORTEN_URL_LENGTH) {
@@ -341,7 +341,7 @@ class MapInfo extends Control {
 
                 newCanvas = await Util.addToCanvas(newCanvas, qrCodeBase64, { x: newCanvas.width - 88, y: newCanvas.height - 88 });
             } else {
-                throw "Error generando QR";
+                self.map.toast(self.getLocaleString('print.qr.error'), { type: Consts.msgType.WARNING });
             }
         }
         if (asBlob)
