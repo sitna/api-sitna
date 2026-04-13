@@ -2,35 +2,36 @@ import TC from '../TC.js';
 import Consts from './Consts.js';
 import Util from './Util.js';
 
-let availableBaseLayers;
 // Carga síncrona de las capas de fondo predefinidas
 let apiLocation = TC.apiLocation;
 //chequear si es relativa
 if (!/^http?:/.test(apiLocation)) apiLocation = new URL(TC.apiLocation, globalThis.location?.href ?? '').href
-else
-    if (!/^https?:/.test(apiLocation)) apiLocation = (globalThis.location?.protocol ?? '') + TC.apiLocation;
-const req = new XMLHttpRequest();
-req.open("GET", TC.apiLocation + 'config/predefined-layers.json', false); // 'false': synchronous.
-let result = '[]';
-req.onreadystatechange = function (_e) {
-    if (req.readyState === 4) {
-        if (req.status === 200) {
-            result = req.responseText;
+else if (!/^https?:/.test(apiLocation)) apiLocation = (globalThis.location?.protocol ?? '') + TC.apiLocation;
+
+const availableBaseLayerPromise = fetch(apiLocation + 'config/predefined-layers.json')
+    .then(function (response) {
+        if (response.ok) {
+            return response.json();
         }
+        return [];
+    })
+    .catch(function (e) {
+        console.error('Could not fetch predefined layer configuration');
+        console.error(e);
+        return [];
+    });
+
+const getAvailableBaseLayers = async function () {
+    if (this.availableBaseLayers.length > 0) return this.availableBaseLayers;
+
+    const availableBaseLayers = await availableBaseLayerPromise;
+    for (const abl of availableBaseLayers) {
+        if (Object.hasOwn(abl, 'url')) abl.url = new URL(abl.url, apiLocation).href;
+        if (Object.hasOwn(abl, 'thumbnail')) abl.thumbnail = new URL(abl.thumbnail, apiLocation).href;
     }
+    this.availableBaseLayers = availableBaseLayers;
+    return availableBaseLayers;
 };
-try {
-    req.send(null);
-}
-catch (e) {
-    console.error('Could not fetch predefined layer configuration');
-    console.error(e);
-}
-availableBaseLayers = JSON.parse(result);
-for (const abl of availableBaseLayers) {
-    if (Object.prototype.hasOwnProperty.call(abl, 'url')) abl.url = new URL(abl.url, apiLocation).href;
-    if (Object.prototype.hasOwnProperty.call(abl, 'thumbnail')) abl.thumbnail = new URL(abl.thumbnail, apiLocation).href;
-}
 
 /**
  * Opciones de configuración del mapa. Para más información de como usar objetos que implementan esta interfaz, 
@@ -104,7 +105,6 @@ const Defaults = (function () {
     return {
         imageRatio: 1.05,
         proxy: '',
-        acceptedBrowserVersions: [],
 
         crs: 'EPSG:25830',
         utmCrs: 'EPSG:25830',
@@ -134,7 +134,8 @@ const Defaults = (function () {
 
         averageTileSize: 31000,
 
-        availableBaseLayers,
+        availableBaseLayers: [],
+        getAvailableBaseLayers,
 
         baseLayers: [
             Consts.layer.IDENA_BASEMAP,
