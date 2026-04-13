@@ -675,7 +675,7 @@ class PrintMap extends MapInfo {
 
                 updateCanvas();
 
-                self.map.setView(Consts.view.DEFAULT);
+                self.map.setView(self.map.on3DView ? Consts.view.THREED : Consts.view.DEFAULT);
 
                 self._viewDiv.classList.add(Consts.classes.HIDDEN);
             };
@@ -1210,7 +1210,7 @@ class PrintMap extends MapInfo {
         var hasWait = loadingCtrl.addWait();
         await import("pdfmake/build/pdfmake");
         let pdfFonts = await import("pdfmake/build/vfs_fonts");
-        pdfMake.vfs = pdfFonts.pdfMake.vfs;        
+        pdfMake.vfs = pdfFonts.pdfMake?.vfs || pdfFonts.default;
         var canvases = self.map.wrap.getCanvas();
         self.canvas = Util.mergeCanvases(canvases);
         //self.canvas = Util.mergeCanvases(self.map.wrap.getCanvas());
@@ -1337,9 +1337,7 @@ class PrintMap extends MapInfo {
         this.toolModel.sharePDF = this.getLocaleString("sharePDF");
         this.toolModel.close = this.getLocaleString("close");
     }
-    async updateLanguage() {
-        this.updateModel();
-    }
+
 }
 
 PrintMap.prototype.CLASS = 'tc-ctl-prnmap';
