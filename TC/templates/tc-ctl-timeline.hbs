@@ -5,15 +5,15 @@
     <div{{#if interval}} class="tc-ctl-timeline-datetime" {{/if}}>
         {{#if dateTimeMode}}
         {{#if interval}}<label>[[time.from]]</label>{{/if}}
-        <input type="datetime-local" id="timeCalendar" min="[[dateTimeMin]]" max="[[dateTimeMax]]" step="[[dateTimeStep]]" tc-vc-value="dateTimeValue" tc-vc-disabled="playMode" tc-vc-change="dateTimeChange" title="[[time.dateTime]]">
+        <input type="datetime-local" class="tc-textbox" min="[[dateTimeMin]]" max="[[dateTimeMax]]" step="[[dateTimeStep]]" tc-vc-value="dateTimeValue" tc-vc-disabled="playMode" tc-vc-change="dateTimeChange" title="[[time.dateTime]]">
         {{#if interval}}
-        <label>[[time.to]]</label><input type="datetime-local" id="timeCalendar2" tc-vc-value="dateTimeValue2" min="[[dateTimeMin2]]" max="[[dateTimeMax2]]" step="[[dateTimeStep]]" tc-vc-change="dateTimeChange2" title="[[time.dateTime2]]" tc-vc-disabled="playMode">
+        <label>[[time.to]]</label><input type="datetime-local" tc-vc-value="dateTimeValue2" min="[[dateTimeMin2]]" max="[[dateTimeMax2]]" step="[[dateTimeStep]]" tc-vc-change="dateTimeChange2" title="[[time.dateTime2]]" tc-vc-disabled="playMode">
         {{/if}}
         {{else}}
         {{#if interval}}<label>[[time.from]]</label>{{/if}}
-        <input type="date" id="dayCalendar" min="[[dateMin]]" max="[[dateMax]]" step="[[dateStep]]" title="[[time.date]]" tc-vc-value="dateValue" tc-vc-change="dateChange" tc-vc-disabled="playMode" >
+        <input type="date" min="[[dateMin]]" class="tc-textbox" max="[[dateMax]]" step="[[dateStep]]" title="[[time.date]]" tc-vc-value="dateValue" tc-vc-change="dateChange" tc-vc-disabled="playMode" >
         {{#if interval}}
-        <label>[[time.to]]</label><input type="date" id="dayCalendar2" title="[[time.date2]]" min="[[dateMin2]]" max="[[dateMax2]]" step="[[dateStep]]" tc-vc-change="dateChange2" tc-vc-value="dateValue2" tc-vc-disabled="playMode">
+        <label>[[time.to]]</label><input type="date" title="[[time.date2]]" min="[[dateMin2]]" max="[[dateMax2]]" step="[[dateStep]]" tc-vc-change="dateChange2" tc-vc-value="dateValue2" tc-vc-disabled="playMode">
         {{/if}}
         {{/if}}
 </div>
