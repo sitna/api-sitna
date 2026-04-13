@@ -13,10 +13,19 @@ import Raster from '../../SITNA/layer/Raster.js';
 import Vector from '../../SITNA/layer/Vector.js';
 import Draw from '../control/Draw.js';
 import Modify from '../control/Modify.js';
-import ThreeDDraw from './ThreeDDraw.js';
 import mainTemplate from '../templates/tc-ctl-3d.mjs';
 import overlayTemplate from '../templates/tc-view-3d-overlay.mjs';
 import camControlsTemplate from '../templates/tc-view-3d-cm-ctls.mjs';
+import MergeTerrainProvider from '../cesium/MergeTerrainProvider.js';
+import TileSetManager from '../cesium/TileSetManager.js';
+import ThreeDDraw from './ThreeDDraw.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
+/*import { ThreeDSelect, ThreeDModify } from './ThreeDDraw.js';*/
+import FeatureInfo from './ThreeDGFI.js';
+import { tcFeatureConstructor, cartesianToArray } from './ThreeDUtils.js';
+import CustomEntity from './CustomEntity.js';
+
+/*import { TileSetMeasure } from '../cesium/TileSetManager.js';*/
 
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
@@ -26,6 +35,19 @@ TC.control = TC.control || {};
 TC.control.MapContents = MapContents;
 
 Consts.CESIUMNS = 'cesium';
+//cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5YTllZmUxYy1iNTliLTQ0OTktOTM0Zi05ZWJjNmM3Mzg2NGIiLCJpZCI6MTQ1Nzc3LCJpYXQiOjE2ODYzMDc0OTN9.yJXgEQCrQ1N2_y0U2loBzzabTygNuQUcsB0Ahs6IlqA";
+const tcFeatureFromEntity = function (entity) {
+                                        if (entity.polygon)
+                                            return new Polygon(entity.polygon.hierarchy.getValue().positions.map(function (point) {
+                                                return cartesianToArray(point);
+                                            }), { id: entity.id })
+                                        else if (entity.polyline)
+                                            return new Polyline(entity.polyline.positions.getValue().map(function (point) {
+                                                return cartesianToArray(point);
+                                            }), { id: entity.id })
+                                        else
+                                            return new Point(cartesianToArray(entity.position.getValue(cesium.JulianDate.now)), { id: entity.id });
+                                    }
 
 class ThreeDCameraModel {
     constructor() {
@@ -39,7 +61,7 @@ class ThreeDCameraModel {
         this["threed.rotate.left"] = "";
     }
 }
- 
+
 const ThreeD = (function (namespace, signature, factory) {
     return namespace[signature] = factory();
 })(TC.view, "ThreeD", function () {
@@ -86,6 +108,8 @@ const ThreeD = (function (namespace, signature, factory) {
     Consts.event.TERRAIN404 = Consts.event.TERRAIN404 || "terrain404.tc.threed";
     Consts.event.THREED_DRAG = Consts.event.THREED_DRAG || "drag.tc.threed";
 
+    Consts.event.THREED_TILES_CHANGE = Consts.event.THREED_TILES_CHANGE || "change.tc.threed.tiles";    
+
     viewProto.template[viewProto.CLASS] = mainTemplate;
     viewProto.template[viewProto.CLASS + '-overlay'] = overlayTemplate;
     viewProto.template[viewProto.CLASS + '-cm-ctls'] = camControlsTemplate;
@@ -102,6 +126,23 @@ const ThreeD = (function (namespace, signature, factory) {
         self.metersPerUnit = map.getMetersPerUnit();
 
         self.maxResolution = null;
+
+        //controles propios de la vista 3D
+        for (let name in self.parent.controls3D) {
+            var ctlOptions = self.parent.controls3D[name]
+            if (ctlOptions) {
+                ctlOptions = typeof ctlOptions === 'boolean' ? {} : Util.extend(true, {}, ctlOptions);
+                if (typeof ctlOptions.div === 'string') {
+                    ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
+                }
+                map.addControl(name, ctlOptions).then((ctl) => {
+                    ctl.div.parentElement.removeChild(ctl.div);
+                    document.querySelector(".tc-panel-content").appendChild(ctl.div);
+                    ctl.div.classList.add(Consts.classes.COLLAPSED)
+                });
+                //ctlPromises.push(self.addControl(name, ctlOptions));
+            }
+        }
 
         //flacunza: modificamos TC.Map.setCenter para que se haga desde la vista 3D cuando está activa
         //así evitamos parpadeos en el mapa de situación
@@ -270,16 +311,15 @@ const ThreeD = (function (namespace, signature, factory) {
     };
 
     const rotateAroundAxis = function (camera, angle, axis, transform, opt_options) {
-        var clamp = cesium.Math.clamp;
-        var defaultValue = cesium.defaultValue;
+        var clamp = cesium.Math.clamp;        
 
         var options = opt_options || {};
-        var duration = defaultValue(options.duration, 500); // ms
+        var duration = options.duration ?? 500; // ms
 
         var linear = function (a) {
             return a
         };
-        var easing = defaultValue(options.easing, linear);
+        var easing = options.easing ?? linear;
         var callback = options.callback;
 
         var start;
@@ -450,8 +490,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 }
                 return cesium.Cartographic.fromDegrees(reprojected[0], reprojected[1]);
             });
-
-            cesium.when(self.viewer.terrainProvider.sampleTerrainMostDetailed(positions), function (updatedPositions) {
+            //cesium.sampleTerrainMostDetailed(self.viewer.terrainProvider, positions).then(function (updatedPositions) {
+            const updatedPositions = positions;
                 var startTime, stopTime, totalDistance = 0;
 
                 if (layout === 'XYZM') {
@@ -511,6 +551,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 }, {
                     "id": "path",
                     "name": name,
+                    "heightReference": "CLAMP_TO_GROUND",
                     "availability": startTime + "/" + stopTime,
                     "position": {
                         "epoch": startTime,
@@ -521,22 +562,22 @@ const ThreeD = (function (namespace, signature, factory) {
                         }).reduce(function (prev, curr) {
                             return prev.concat(curr);
                         })
-                    },
+                    },                    
                     "point": {
                         "heightReference": "CLAMP_TO_GROUND",
-                        "pixelSize": pointStyle.radius,
+                        "pixelSize": pointStyle.radius,                        
                         "color": {
                             "rgba": pointStyle.fillColor
                         },
                         "outlineColor": {
                             "rgba": pointStyle.strokeColor
                         },
-                        "outlineWidth": pointStyle.strokeWidth
+                        "outlineWidth": pointStyle.strokeWidth,
                     }
                 }];
 
                 resolve({ czml: czml, totalDistance: totalDistance, coordinates2D: coordinates });
-            });
+            //});
         });
     };
 
@@ -566,15 +607,35 @@ const ThreeD = (function (namespace, signature, factory) {
                 self.rotateIndicatorOuterShellCircle.classList.remove(self.parent.classes.OUTFOCUS);
             }
         };
+        self.parent.view3D.timeoutDelay = 0;
+        var cameraChanged = () => {
+            if (self.parent.view3D.timeoutDelay) clearTimeout(self.parent.view3D.timeoutDelay);
+            self.parent.view3D.timeoutDelay = setTimeout(() => {
+                var self = this;
+                var view = self.parent;
+                if (!view.viewer) return;
+                self.parent.map.trigger(Consts.event.CAMERACHANGE, { position: self.parent.view3D.getCameraData() });
+
+                var camera = self.getCamera();
+                var position = camera.positionCartographic;
+                if (view.view3D.crs !== view.view3D.view2DCRS) {
+                    self._coordsXY = Util.reproject([cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)], view.view3D.crs, view.view3D.view2DCRS);
+                } else {
+                    self._coordsXY = [cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)];
+                }
+                view.mapView.setCenter(self._coordsXY);
+                view.mapView.setResolution(calcResolutionForDistance.call(view, position.height, position.latitude));
+            }, 500);
+        };
 
         var moveStartHandler = function () {
             var self = this;
-            self.moving = true;
+            self.moving = true; 
+            
         };
         var moveEndHandler = function () {
-            var self = this;
+            var self = this;            
             self.moving = false;
-            self.parent.map.trigger(Consts.event.CAMERACHANGE, { position: self.parent.view3D.getCameraData() });
         };
         var postRenderHandler = function () {
             var self = this;
@@ -583,8 +644,7 @@ const ThreeD = (function (namespace, signature, factory) {
             if (self.parent.view3D.isLoadingTiles.call(self.parent))
                 self.customCollisionDetection();
 
-            var camera = self.getCamera();
-            var position = camera.positionCartographic;
+            var camera = self.getCamera();            
 
             if (self.moving) {
 
@@ -592,18 +652,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 cssRotate(self.rotateIndicator, -camera.heading);
 
                 self.disableRotate();
-                self.disableTilt(5);
-
-                if (view.view3D.crs !== view.view3D.view2DCRS) {
-                    self._coordsXY = Util.reproject([cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)], view.view3D.crs, view.view3D.view2DCRS);
-                } else {
-                    self._coordsXY = [cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)];
-                }
-
-                view.mapView.setCenter(self._coordsXY);
-                view.mapView.setResolution(calcResolutionForDistance.call(view, position.height, position.latitude));
-
-                //view.mapView.setRotation(-camera.heading);
+                self.disableTilt(5);                
             }
 
             // flacunza: calculamos el polígono de FOV para dibujar en el mapa de situación
@@ -633,7 +682,9 @@ const ThreeD = (function (namespace, signature, factory) {
 
         self.moveStart = moveStartHandler.bind(self);
         self.moveEnd = moveEndHandler.bind(self);
+        self.cameraChanged = cameraChanged.bind(self);
         self.postRender = postRenderHandler.bind(self);
+
 
         self.selectors = {
             tilt: '-cm-tilt',
@@ -656,6 +707,7 @@ const ThreeD = (function (namespace, signature, factory) {
         // conexión de los controles con el visor de cesium
         self.getCamera().moveStart.addEventListener(self.moveStart);
         self.getCamera().moveEnd.addEventListener(self.moveEnd);
+        self.getCamera().changed.addEventListener(self.cameraChanged);
         self.parent.viewer.scene.postRender.addEventListener(self.postRender);
 
         // gestionamos la opacidad de los controles pasados 5 segundos
@@ -693,6 +745,8 @@ const ThreeD = (function (namespace, signature, factory) {
         // conexión de los controles con el visor de cesium
         self.getCamera().moveStart.removeEventListener(self.moveStart);
         self.getCamera().moveEnd.removeEventListener(self.moveEnd);
+        self.getCamera().changed.removeEventListener(self.cameraChanged);
+        clearTimeout(self.timeoutDelay);
         self.parent.viewer.scene.postRender.removeEventListener(self.postRender);
 
         // gestionamos la opacidad de los controles pasados 5 segundos
@@ -720,8 +774,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
             var bottomCenter = pickBottomPoint(self.parent.viewer.scene);
             if (bottomCenter) {
-                var distance = cesium.Cartesian3.distance(camera.position, bottomCenter);
-
+                var distance = cesium.Cartesian3.distance(camera.position, bottomCenter);                
                 return {
                     cp: [cameraPosition.longitude, cameraPosition.latitude, cameraPosition.height],
                     chpr: [camera.heading, camera.pitch, camera.roll],
@@ -730,6 +783,7 @@ const ThreeD = (function (namespace, signature, factory) {
             }
         }
     };
+
     CameraControls.prototype.render = function () {
         var self = this;
 
@@ -746,7 +800,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 self.parent.map.div.appendChild(self.div);
 
                 self.controller = new Controller(self.model, new Observer(self.div));
-                self.updateModel();                
+                self.updateModel();
 
                 // tilt
                 var tiltSelector = '.' + self.parent.CLASS + self.selectors.tilt;
@@ -1387,202 +1441,6 @@ const ThreeD = (function (namespace, signature, factory) {
         self.model["threed.rotate.left"] = Util.getLocaleString(locale, "threed.rotate.left");
     }
 
-    const TwoDLinkedFeatureInfo = function (map) {
-        var pending = false;
-        var marker = null;
-        var ctlResultsPanel = null;
-        var ctlFeatureInfo = null;
-
-        var savedMode;
-        var map2DgetResolutionFN = map.map.getResolution;
-
-        var getResultsPanelCtl = function (ctlFeatureInfo) {
-
-            if (ctlResultsPanel) {
-                return Promise.resolve();
-            } else {
-
-                const resultsPanelOptions = {
-                    "content": "table",
-                    "titles": {
-                        "main": Util.getLocaleString(map.map.getLocale(), "threed.rs.panel.gfi"),
-                        "max": Util.getLocaleString(map.map.getLocale(), "threed.rs.panel.gfi")
-                    }
-                };
-
-                var addControlPromise;
-                var controlContainer = map.map.getControlsByClass('TC.control.ControlContainer')[0];
-                if (controlContainer) {
-                    resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
-                    addControlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
-                } else {
-                    resultsPanelOptions.div = document.createElement('div');
-                    map.map.div.appendChild(resultsPanelOptions.div);
-                    addControlPromise = map.map.addControl('resultsPanel', resultsPanelOptions);
-                }
-
-                return addControlPromise.then(function (control) {
-                    control.caller = ctlFeatureInfo;
-                    ctlResultsPanel = control;
-                    ctlFeatureInfo.resultsPanel = ctlResultsPanel;
-                });
-            }
-        };
-
-        ctlFeatureInfo = map.map.getControlsByClass(TC.control.FeatureInfo)[0];
-        if (ctlFeatureInfo) {
-
-            savedMode = ctlFeatureInfo.displayMode;
-
-            getResultsPanelCtl(ctlFeatureInfo).then(function () {
-                ctlFeatureInfo.setDisplayMode(Consts.infoContainer.RESULTS_PANEL);
-
-                map.map.on(Consts.event.RESULTSPANELCLOSE, function (e) {
-                    if (e.control === ctlFeatureInfo.getDisplayControl()) {
-                        if (!ctlFeatureInfo.querying) {
-                            removeMarker();
-                        }
-                    }
-                });
-            });
-        }
-        this.clear = function () {
-            ctlFeatureInfo.closeResults();
-            removeMarker();
-        };
-        this.reset = function () {
-            this.clear();
-            ctlFeatureInfo.setDisplayMode(savedMode);
-            map.map.getResolution = map2DgetResolutionFN;
-        };
-        var setMarker = function (pickedPosition) {
-            if (!marker) {
-                var billboard = {
-                    position: pickedPosition,
-                    billboard: { /* revisar: no está bien la URL de la imagen - también revisar el GFI que salta en móvil sólo con navegar */
-                        image: Util.getFeatureStyleFromCss(map.CLASS + '-marker')?.url,
-                        eyeOffset: new cesium.Cartesian3(0, 0, -100),
-                        verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                        heightReference: cesium.HeightReference.CLAMP_TO_GROUND
-                    }
-                };
-                marker = map.view3D.addNativeFeature.call(map, billboard);
-
-            } else {
-                marker.position = pickedPosition;
-            }
-
-            map.viewer.scene.requestRender();
-        };
-        var removeMarker = function () {
-            map.view3D.removeFeature.call(map, marker);
-            marker = null;
-        };
-        this.send = function (pickedPosition) {
-            return new Promise(function (resolve, _reject) {
-                pending = true;
-
-                if (ctlFeatureInfo.displayMode !== Consts.infoContainer.RESULTS_PANEL) {
-                    ctlFeatureInfo.setDisplayMode(Consts.infoContainer.RESULTS_PANEL);
-                }
-
-                if (ctlFeatureInfo.resultsPanel) {
-                    ctlFeatureInfo.resultsPanel.close();
-                }
-
-                if (!map.waiting)
-                    map.waiting = map.map.getLoadingIndicator().addWait();
-
-                setMarker(pickedPosition);
-
-                getResultsPanelCtl(ctlFeatureInfo).then(function () {
-                    var pickedLocation = cesium.Ellipsoid.WGS84.cartesianToCartographic(pickedPosition);
-
-                    var reprojected;
-                    if (map.view3D.crs !== map.view3D.view2DCRS) {
-                        reprojected = Util.reproject([cesium.Math.toDegrees(pickedLocation.longitude), cesium.Math.toDegrees(pickedLocation.latitude)], map.view3D.crs, map.view3D.view2DCRS);
-                    } else {
-                        reprojected = [cesium.Math.toDegrees(pickedLocation.longitude), cesium.Math.toDegrees(pickedLocation.latitude)];
-                    }
-
-
-                    var tilesRendered = map.viewer.scene.globe._surface._tilesToRender;
-                    var pickedTile;
-
-                    for (var textureIndex = 0; !pickedTile && textureIndex < tilesRendered.length; ++textureIndex) {
-                        var tile = tilesRendered[textureIndex];
-                        if (cesium.Rectangle.contains(tile.rectangle, pickedLocation)) {
-                            pickedTile = tile;
-                        }
-                    }
-
-                    if (!pickedTile) {
-                        resolve();
-                        return;
-                    }
-
-                    var imageryTiles = pickedTile.data.imagery;
-                    for (var i = imageryTiles.length - 1; i >= 0; --i) {
-                        var terrainImagery = imageryTiles[i];
-                        var imagery = terrainImagery.readyImagery;
-                        if (!imagery) {
-                            resolve();
-                            return;
-                        }
-                    }
-
-                    var nativeRectangle = pickedTile.tilingScheme.tileXYToNativeRectangle(pickedTile.x, pickedTile.y, pickedTile.level);
-
-                    var readyImageryToGetNativeRectangle = (imageryTiles.find(function (imagery) {
-                        return imagery.readyImagery.imageryLayer.isBaseLayer();
-                    }) || {}).readyImagery;
-
-                    map.map.getResolution = function () {
-
-                        var west_south = map.view3D.crs !== map.view3D.view2DCRS ? Util.reproject([nativeRectangle.west, nativeRectangle.south], map.view3D.crs, map.view3D.view2DCRS) : [nativeRectangle.west, nativeRectangle.south];
-                        var east_north = map.view3D.crs !== map.view3D.view2DCRS ? Util.reproject([nativeRectangle.east, nativeRectangle.north], map.view3D.crs, map.view3D.view2DCRS) : [nativeRectangle.east, nativeRectangle.north];
-
-                        var xResolution = (east_north[0] - west_south[0]) / (readyImageryToGetNativeRectangle && readyImageryToGetNativeRectangle.imageryLayer.imageryProvider.tileWidth || 256);
-                        var yResolution = (east_north[1] - west_south[1]) / (readyImageryToGetNativeRectangle && readyImageryToGetNativeRectangle.imageryLayer.imageryProvider.tileHeight || 256);
-
-                        return Math.max(xResolution, yResolution);
-
-                    }.bind(map, readyImageryToGetNativeRectangle, nativeRectangle);
-
-                    map.map.one(Consts.event.NOFEATUREINFO, function (e) {
-                        pending = false;
-
-                        resolve(e);
-                    }.bind(ctlFeatureInfo));
-
-                    map.map.one(Consts.event.FEATUREINFO, function (e) {
-                        pending = false;
-
-                        resolve(e);
-                    });
-
-                    map.map.on(Consts.event.FEATURECLICK, function (e) {
-                        removeMarker();
-
-                        resolve(e);
-                    });
-
-                    ctlFeatureInfo.isActive = true;
-                    ctlFeatureInfo.beforeRequest({
-                        xy: [0, 0]
-                    }); // Es irrelevante dónde va a poner el marcador, no se va a ver                
-
-                    ctlFeatureInfo.callback(reprojected);
-                });
-            });
-        };
-        this.get2DMarker = function () {
-            return ctlFeatureInfo.filterFeature;
-        };
-        this.isPending = function () {
-            return pending;
-        };
-    };
 
     const RasterConverter = function (_crsPattern) {
         this.layerCrs = null;
@@ -1686,7 +1544,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     if (tileMatrixSetLabels && tileMatrixSetLabels.labels) {
                         const maxTileMatrixSetLabel = tileMatrixSetLabels.labels[tileMatrixSetLabels.labels.length - 1];
-                        options.maximumLevel = parseInt(maxTileMatrixSetLabel.substring(maxTileMatrixSetLabel.indexOf(":")+1));
+                        options.maximumLevel = parseInt(maxTileMatrixSetLabel.substring(maxTileMatrixSetLabel.indexOf(":") + 1));
                     }
 
                     // cuando un WMTS no tenga el matrixset de 0 a 21 requeriremos de la siguiente instrucción
@@ -1698,7 +1556,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     resolve(new cesium.WebMapTileServiceImageryProvider(options));
 
                 } else {
-                    if (layer.fallbackLayer) {
+                    if (layer.fallbackLayer) {                        
                         wmsLayer(layer.getFallbackLayer()).then((layer) => {
                             resolve(layer);
                         }, () => {
@@ -1719,6 +1577,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     })
                 });
                 resource.tcLayer = layer;
+
                 let options = {
                     url: resource,
                     layers: layer.layerNames,
@@ -1729,9 +1588,42 @@ const ThreeD = (function (namespace, signature, factory) {
                     }
                 };
                 if (layer.time) {
-                    options.parameters.TIME = layer.wrap.getParams().TIME;
-                }
+                    //URI:asi para que funcione
+                    options.parameters.time = layer.wrap.getParams().TIME;
 
+                    //URI:asi debería ser
+                    //const dataCallback = function (interval, index) {
+                    //    let time;
+                    //    if (index === 0) {
+                    //        // leading
+                    //        time = cesium.JulianDate.toIso8601(interval.stop);
+                    //    } else {
+                    //        time = cesium.JulianDate.toIso8601(interval.start);
+                    //    }
+                    //    return {
+                    //        Time: time,
+                    //    };
+                    //}
+                    //const times = cesium.TimeIntervalCollection.fromIso8601({
+                    //    iso8601: "2020-03-24T23:00:00.000Z/2022-03-26T23:00:00.000Z/P1D",
+                    //    leadingInterval: true,
+                    //    trailingInterval: true,
+                    //    isStopIncluded: false, // We want stop time to be part of the trailing interval
+                    //    dataCallback: dataCallback,
+                    //});
+                                                     
+                    //options.times = times;
+                    
+                    //options.clock = new cesium.Clock({
+                    //    startTime: cesium.JulianDate.fromIso8601(new Date(layer.time.firstTime).toISOString()),
+                    //    currentTime: cesium.JulianDate.fromIso8601(new Date(layer.wrap.getParams().TIME.split("/")[0]).toISOString()),
+                    //    stopTime: cesium.JulianDate.fromIso8601(new Date(layer.time.lastTime).toISOString()),
+                    //});                    
+                    ////options.clock = idena.map.view3D.viewer.clock;
+                    ////options.clock.startTime = cesium.JulianDate.fromIso8601(new Date(layer.time.firstTime).toISOString());
+                    ////options.clock.currentTime = cesium.JulianDate.fromIso8601(new Date(layer.wrap.getParams().TIME.split("/")[0]).toISOString());
+                    ////options.clock.stopTime = cesium.JulianDate.fromIso8601(new Date(layer.time.lastTime).toISOString());
+                }
                 var bindEXBBox = function () {
                     var bbox = [];
                     if (layer.capabilities && layer.capabilities.Capability && layer.capabilities.Capability.Layer) {
@@ -1766,7 +1658,6 @@ const ThreeD = (function (namespace, signature, factory) {
                 if (exBoundingBox) {
                     layer.geoBBox = exBoundingBox;
                 }
-
                 resolve(new cesium.WebMapServiceImageryProvider(options));
             });
         };
@@ -1894,8 +1785,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 cesium.deprecationWarning('Resource.fetchImage.allowCrossOrigin', 'The allowCrossOrigin parameter has been deprecated and will be removed in cesium 1.44. It no longer needs to be specified.');
             }
 
-            preferBlob = cesium.defaultValue(preferBlob, false);
-            allowCrossOrigin = cesium.defaultValue(allowCrossOrigin, true);
+            preferBlob = preferBlob ?? false;
+            allowCrossOrigin = allowCrossOrigin ??  true;
 
             checkAndResetRequest(this.request);
 
@@ -1952,8 +1843,7 @@ const ThreeD = (function (namespace, signature, factory) {
         this.convert = function (layer, map3DCRS) {
             this.layerCrs = map3DCRS;
 
-            if (!CustomResource) { defineCustomResource(); }
-
+            if (!CustomResource) { defineCustomResource(); }            
             switch (true) {
                 case Consts.layerType.WMTS == layer.type:
                     return wmtsLayer.call(this, layer);
@@ -2024,21 +1914,31 @@ const ThreeD = (function (namespace, signature, factory) {
         }
 
         function createPolygon(id, coords, options, callback) {
+            const isMultiPolygon = !!coords[0][0];
+            const outlineCoords = isMultiPolygon ? coords[0] : coords;
+
+            const polygonHierarchy = {
+                positions: (outlineCoords[0].equals(outlineCoords.at(-1)) ? outlineCoords.slice(0, -1) : outlineCoords)
+            }            
+            if (coords.slice(1).length && isMultiPolygon)
+                polygonHierarchy.holes = coords.slice(1).map((hole) => { return { "positions": hole } });            
+                        
             const entityOps = {
-                name: id,
+                name: id,                
+                polygon: {
+                    hierarchy: polygonHierarchy,
+                    material: options.color,
+                    heightReference: cesium.HeightReference.CLAMP_TO_TERRAIN,                    
+                },
                 polyline: {
-                    positions: coords,
+                    positions: outlineCoords,
                     width: options.width,
                     material: options.outlineColor,
-                    clampToGround: true
-                },
-                polygon: {
-                    hierarchy: new cesium.PolygonHierarchy(coords),
-                    material: options.color,
                     clampToGround: true,
-                }
+                },
             }
-            createLabel(entityOps, options, coords);
+           
+            createLabel(entityOps, options, outlineCoords);
             var entity = new cesium.Entity(entityOps);
 
             callback(entity);
@@ -2110,7 +2010,14 @@ const ThreeD = (function (namespace, signature, factory) {
                 opt.outlineColor = color;
 
                 if (hasOwnProperty.call(properties.width, 'val')) {
-                    opt.width = properties.width.val;
+                    //opt.width = properties.width.val;
+                    opt.width = new cesium.CallbackProperty(() => {
+                        if (feature.wrap.feature3D?.highLighted)
+                            return properties.width.val + (4);
+                        else
+                            return properties.width.val;
+
+                    }, false);
                 }
 
                 if (hasOwnProperty.call(properties.label, 'val')) {
@@ -2132,53 +2039,38 @@ const ThreeD = (function (namespace, signature, factory) {
                     return new Promise(function (resolve, reject) {
                         var getting = [];
 
-                        var geomPolys = [];
-                        var geomOutlines = [];
+                        var geomPolygons = [];                                               
 
-                        var getPolyGeom = function (polygonHierarchy) {
-                            return new cesium.GeometryInstance({
-                                id: feature.id,
-                                geometry: new cesium.PolygonGeometry({
-                                    polygonHierarchy: polygonHierarchy
-                                }),
-                                attributes: {
-                                    color: cesium.ColorGeometryInstanceAttribute.fromColor(options.color)
-                                }
-                            });
-                        };
-
-                        var getOutlineGeom = function (outlineCoords) {
-                            return new Promise(function (res, _rej) {
-                                createLine(feature.id, outlineCoords, { material: options.outlineColor, width: options.width }, function (entity) {
-                                    geomOutlines.push(entity);
+                        var getGeom = function (outlineCoords, index) {
+                            const arrProm = [new Promise(function (res, _rej) {
+                                createPolygon(feature.id + "_" + index, outlineCoords, options, function (entity) {
+                                    geomPolygons.push(entity);
                                     res();
                                 });
-                            });
-                        };
-
-                        for (var i = 0; i < coords.length; i++) {
-                            let hierarchy;
-                            for (var j = 0; j < coords[i].length; j++) {
-                                if (j == 0) {
-                                    getting.push(getOutlineGeom.call(this, coords[i][0]));
-                                    hierarchy = new cesium.PolygonHierarchy(coords[i][0]);
-                                } else {
-                                    getting.push(getOutlineGeom.call(this, coords[i][j]));
-                                    hierarchy.holes.push(new cesium.PolygonHierarchy(coords[i][j]));
-                                }
+                            })];
+                            if (outlineCoords.length > 1) {
+                                options.material = options.outlineColor;
+                                //si tiene agujeros 
+                                outlineCoords.slice(1).forEach((holes, i) => {
+                                    arrProm.push(new Promise(function (res, _rej) {
+                                        createLine(feature.id + "_" + index + "_" + i, holes, options, function (entity) {
+                                            geomPolygons.push(entity);
+                                            res();
+                                        });
+                                    }));
+                                })
                             }
-
-                            geomPolys.push(getPolyGeom(hierarchy));
+                            
+                            return Promise.all(arrProm);
+                        }
+                        for (var i = 0; i < coords.length; i++) {                            
+                            getting.push(getGeom(coords[i],i));                            
                         }
 
                         Promise.all(getting).then(function () {
                             getting = [];
                             //resolve([geomOutlines]);
-                            resolve(
-                                [new cesium.GroundPrimitive({
-                                    releaseGeometryInstances: false,
-                                    geometryInstances: geomPolys
-                                }), geomOutlines]);
+                            resolve(geomPolygons);
                         }).catch(reject);
                     });
                 };
@@ -2218,7 +2110,14 @@ const ThreeD = (function (namespace, signature, factory) {
                 setStyleProperties(styles, properties, feature);
 
                 if (hasOwnProperty.call(properties.width, 'val')) {
-                    opt.width = properties.width.val;
+                    //opt.width = properties.width.val;                    
+                    opt.width = new cesium.CallbackProperty(() => {
+                        if (feature.wrap.feature3D?.highLighted)
+                            return properties.width.val + (4);
+                        else
+                            return properties.width.val;
+
+                    }, false);
                 }
 
                 var color;
@@ -2230,11 +2129,10 @@ const ThreeD = (function (namespace, signature, factory) {
                     }
                 }
 
-                opt.material = color;
-
-                if (hasOwnProperty.call(properties.width, 'val')) {
-                    opt.width = properties.width.val;
-                }
+                opt.material = new cesium.ColorMaterialProperty(color)
+                //opt.material = new cesium.ColorMaterialProperty(new cesium.CallbackProperty(() => {
+                //    return toCesiumColor(styles.strokeColor);
+                //}, false));                
 
                 if (hasOwnProperty.call(properties.label, 'val')) {
                     opt.label = properties.label.val;
@@ -2423,9 +2321,10 @@ const ThreeD = (function (namespace, signature, factory) {
                             image: options.url,
                             width: options.width,
                             height: options.height,
-                            eyeOffset: new cesium.Cartesian3(0, 0, 10),
+                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
                             verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND
+                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                            disableDepthTestDistance: 0
                         }
                     };
 
@@ -2465,34 +2364,39 @@ const ThreeD = (function (namespace, signature, factory) {
                         position: coords[0],
                     }
                     if (text && (/^([A-Z])\w+$/gi.test(text) || !(/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)))) {
+                        let property = /^\$\{(?<property>\w+)\}$/gi.exec(text)?.groups["property"];
+                        if (property && feature.data[property])
+                            options.label = feature.data[property];
                         createLabel(entityOps, options, coords[0]);
                     }
 
                     if (text && /^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)) {
                         entityOps["billboard"] = {
                             image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
-                            eyeOffset: new cesium.Cartesian3(0, 0, 10),
+                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
                             verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND
+                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                            disableDepthTestDistance: 0
                         }
                     }
                     else if (options.radius && options.radius > 0) {
                         entityOps["point"] = {
                             color: options.color,
-                            pixelSize: (options.radius * 2) - options.outlineWidth,
+                            pixelSize: (options.radius - options.outlineWidth) * 2,
                             outlineWidth: options.outlineWidth,
                             outlineColor: options.outlineColor,
-                            eyeOffset: new cesium.Cartesian3(0, 0, 10),
+                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
                             heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                         }
                     }
                     else {
                         entityOps["billboard"] = {
                             image: pinBuilder.fromColor(cesium.Color.fromCssColorString(feature.options.fillColor ? feature.options.fillColor : TC.Cfg.styles.point.fillColor), 32).toDataURL(),
-                            eyeOffset: new cesium.Cartesian3(0, 0, 10),
+                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
                             verticalOrigin: cesium.VerticalOrigin.BOTTOM,
                             horizontalOrigin: cesium.HorizontalOrigin.CENTER,
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND
+                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                            disableDepthTestDistance: 0
                         }
                     }
 
@@ -2508,7 +2412,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
             var byPromise = false;
             var cartesians = [];
-            var toCartesian = function (coord, arr) {
+            var toCartesian = async function (coord, arr) {
                 if (!Array.isArray(coord)) {
                     return;
                 }
@@ -2516,7 +2420,14 @@ const ThreeD = (function (namespace, signature, factory) {
                 if (sourceCrs !== targetCrs) {
                     coord = Util.reproject(coord, sourceCrs, targetCrs);
                 }
-
+                //if (coord.length > 2) {
+                //    arr.push(cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]));
+                //}
+                //else {
+                //    let aaa = await _scn.sampleHeightMostDetailed([new cesium.Cartographic.fromDegrees(coord[0], coord[1])]);
+                //    arr.push(cesium.Cartesian3.fromRadians(aaa[0].longitude, aaa[0].latitude, aaa[0].height))
+                //}
+                
                 arr.push(coord.length > 2 ?
                     cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
                     cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
@@ -2689,7 +2600,6 @@ const ThreeD = (function (namespace, signature, factory) {
 
     viewProto.init = function (options) {
         const self = this;
-
         self.events = self.map.$events;
 
         self.selectors = {
@@ -2728,6 +2638,11 @@ const ThreeD = (function (namespace, signature, factory) {
                         format: tfb.format,
                         noDataValue: tfb.noDataValue,
                         type: tfb.type,
+                        minLevel: tfb.minLevel,
+                        maxLevel: tfb.maxLevel,
+                        lowest: tfb.lowest,
+                        highest: tfb.highest,
+                        offset: tfb.offset,
                         constraints: tfb.constraints
                     }
                 }
@@ -2737,6 +2652,10 @@ const ThreeD = (function (namespace, signature, factory) {
 
         if (options.controls) {
             self.allowedControls = options.controls;
+        }
+
+        if (options.controls3D) {
+            self.controls3D = options.controls3D;
         }
 
         self.mapView = new MapView(self.map, self);
@@ -2751,11 +2670,14 @@ const ThreeD = (function (namespace, signature, factory) {
 
         self.map.view3D = self.view3D;
 
+        self.view3D.dataSources = new WeakMap();
+
         /* provisional: no dispongo de getRenderedHtml porque ya no es un control */
         self.getRenderedHtml(self.CLASS + '-overlay', {}, function (html) {
             const parser = new DOMParser();
             self.overlay = parser.parseFromString(html, 'text/html').body.firstChild;
         });
+        
     };
 
     viewProto.apply = function (options = {}) {
@@ -2829,17 +2751,16 @@ const ThreeD = (function (namespace, signature, factory) {
         self.view3D.container = self.divThreedMap;
 
         const applyEnd = async function () {
-            console.log('Llega a applyEnd');
-
+            console.log('Llega a applyEnd');            
             self.map.getLoadingIndicator().removeWait(self.waiting);
 
-            delete self.waiting;
-
+            delete self.waiting;            
             if (options.callback) {
-                options.callback();
+                //checkear si cámara se está moviendo
+                setTimeout(() => {
+                    options.callback();
+                }, 1000);    
             }
-            
-            
         };
 
         try {
@@ -2871,7 +2792,22 @@ const ThreeD = (function (namespace, signature, factory) {
                                 self.view3D.addLayer.call(self, layer);
                             });
 
-                            self.viewer.readyPromise.then(function () {
+                            // capas vectoriales
+                            self.map.workLayers.filter(function (elem) {
+                                return elem.type === Consts.layerType.VECTOR
+                            }).forEach(async function (layer) {
+                                if (layer instanceof Promise)
+                                    await layer
+                                if (!self.view3D.dataSources.has(layer)) {
+                                    const dataSource = new cesium.CustomDataSource(layer.id);
+                                    self.viewer.dataSources.add(dataSource);
+                                    self.view3D.dataSources.set(layer, dataSource);
+                                } else if (!self.viewer.dataSources.contains(self.view3D.dataSources.get(layer))) {
+                                    self.viewer.dataSources.add(self.view3D.dataSources.get(layer));
+                                }
+                            });
+
+                            self.viewer.readyPromise.then(async function () {
 
                                 if (!self.view3D.cameraControls) self.view3D.cameraControls = new CameraControls(self);
                                 else self.view3D.cameraControls.render.call(self.view3D.cameraControls);
@@ -2880,20 +2816,33 @@ const ThreeD = (function (namespace, signature, factory) {
                                     options.animateRendering = true;
                                 }
 
+                                //const drawControl = self.map.getControlsByClass(TC.control.DrawMeasureModify)[0];
+                                //if (drawControl) {
+                                //    drawControl.wrap.interation3D = new self.view3D.UI.DrawControl(null, (feature) => {
+                                //        return drawControl.layer.addFeature(feature);
+                                //    }, {
+                                //        dataSource: self.view3D.dataSources.get(drawControl.layer)
+                                //    });
+                                //    drawControl.drawControls.forEach((dc) => dc.addEventListener(Consts.event.STYLECHANGE, (evt) => {
+                                //        self.view3D.threeDDraw.setStyle({
+                                //            strokeColor: evt.strokeColor || undefined,
+                                //            strokeWidth: evt.strokeWidth || undefined,
+                                //            fillColor: evt.fillColor || undefined,
+                                //            fillOpacity: evt.fillOpacity || undefined,
+                                //            radius: evt.radius || undefined
+                                //        });
+                                //    }))
+                                //}
+
                                 if (options.state) {
 
                                     self.divThreedMap.classList.remove(self.classes.LOADING);
+                                    
+                                    await self.view3D.importState(options.state, applyEnd);
 
-                                    var camera = self.view3D.cameraControls.getCamera();
-                                    camera.flyTo({
-                                        destination: cesium.Cartesian3.fromRadians(options.state.cp[0], options.state.cp[1], options.state.cp[2]),
-                                        orientation: {
-                                            heading: options.state.chpr[0],
-                                            pitch: options.state.chpr[1],
-                                            roll: options.state.chpr[2]
-                                        },
-                                        complete: applyEnd
-                                    });
+                                    applyEnd();
+                                                                           
+                                    //self.map.getControlsByClass(TC.control.Scenes)[0].importState(options.state.ts);
 
                                 } else if (options.animateRendering) {
                                     let angle = cesium.Math.toRadians(50);
@@ -2904,7 +2853,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
                                         self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle,
                                             self.viewer.scene.camera.right, matrixPickBP, {
-                                            duration: 2000,
+                                                duration: options.instant ? 1:2000,
                                             callback: animationCallback
                                         });
                                     };
@@ -2921,31 +2870,31 @@ const ThreeD = (function (namespace, signature, factory) {
                                     } else { /* revisado: si llegamos aquí, es que el terreno está listo pero del canvas al terreno da null, esperamos un poco más */
                                         // parece que es cosa de tiempos. Añado un setInterval
 
-                                       const extent = self.mapView.map.getExtent();
-                                            const GeoCRSExtent = TC.Util.reprojectExtent(extent, self.map.crs, self.view3D.crs);
+                                        const extent = self.mapView.map.getExtent();
+                                        const GeoCRSExtent = TC.Util.reprojectExtent(extent, self.map.crs, self.view3D.crs);
 
-                                            const animationCallback = function () {
-                                                cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
-                                                cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+                                        const animationCallback = function () {
+                                            cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
+                                            cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
 
-                                                applyEnd();
-                                            };
+                                            applyEnd();
+                                        };
 
-                                            const rectangle = cesium.Rectangle.fromDegrees(GeoCRSExtent[0], GeoCRSExtent[1], GeoCRSExtent[2], GeoCRSExtent[3]);
-                                            self.viewer.scene.camera.flyTo({
-                                                destination: rectangle,
-                                                complete: () => {
-                                                    let angle = cesium.Math.toRadians(50);
-                                                    let pickBP = pickCenterPoint(self.viewer.scene);
-                                                    let matrixPickBP = cesium.Matrix4.fromTranslation(pickBP);
+                                        const rectangle = cesium.Rectangle.fromDegrees(GeoCRSExtent[0], GeoCRSExtent[1], GeoCRSExtent[2], GeoCRSExtent[3]);
+                                        self.viewer.scene.camera.flyTo({
+                                            destination: rectangle,
+                                            complete: () => {
+                                                let angle = cesium.Math.toRadians(50);
+                                                let pickBP = pickCenterPoint(self.viewer.scene);
+                                                let matrixPickBP = cesium.Matrix4.fromTranslation(pickBP);
 
-                                                    self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle,
-                                                        self.viewer.scene.camera.right, matrixPickBP, {
-                                                        duration: 2000,
-                                                        callback: animationCallback
-                                                    });
-                                                }
-                                            });
+                                                self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle,
+                                                    self.viewer.scene.camera.right, matrixPickBP, {
+                                                    duration: 2000,
+                                                    callback: animationCallback
+                                                });
+                                            }
+                                        });
                                     }
 
                                 } else {
@@ -2984,12 +2933,11 @@ const ThreeD = (function (namespace, signature, factory) {
                                             self.viewer.billboardCollection.get(i).position = addHeight(self.viewer.billboardCollection.get(i).position);
                                         }
 
-                                        self.viewer.scene.requestRender();
+                                        self.viewer.refresh();
                                     }
 
                                 });
-                            }.bind(self))
-                                .catch((err) => { console.log('3051'); applyEnd(); });
+                            }).catch((err) => { console.log('3051'); applyEnd(); });
                         })
                         .catch((err) => {
                             console.log('3053'); applyEnd();
@@ -3011,26 +2959,36 @@ const ThreeD = (function (namespace, signature, factory) {
         }
 
         if (self.map.getDefaultControl() !== self.map.activeControl)
-            self.map.activeControl?.deactivate();
+            self.map.activeControl?.deactivate();        
+            
 
+        //deseleccionar features
+        self.map.view3D.highlightFeature.unset.apply(self.map.view3D, [self.map.view3D.highlightFeature.current]);
         //reproyectar features
         if (self.map.view3D.crs !== self.map.view3D.view2DCRS) {
-            let dataSource = self.view3D.viewer.dataSources.getByName("drawn")[0];
+            //let dataSource = self.view3D.viewer.dataSources.getByName("drawn")[0];
             for (let layerId in self.map.view3D.vector2DFeatures)
                 for (let featureId in self.map.view3D.vector2DFeatures[layerId])
                     self.map.view3D.vector2DFeatures[layerId][featureId].filter((entity) => entity instanceof cesium.Entity).forEach((entity) => {
-                        if (!dataSource?.entities.contains(entity)) return;
+                        //if (!dataSource?.entities.contains(entity)) return;
                         const feature2D = entity._wrap.parent;
-                        feature2D.setCoordinates(feature2D.getCoordinates({ geometryCrs: self.map.view3D.crs, crs: self.map.view3D.view2DCRS }));
+                        //feature2D.setCoordinates(feature2D.getCoordinates({ geometryCrs: self.map.view3D.crs, crs: self.map.view3D.view2DCRS }));
                         delete feature2D.wrap.feature3D;
                     });
         }
+        for (let i = 0; i < self.view3D.viewer.dataSources.length; i++) {
+            const dataSource = self.view3D.viewer.dataSources.get(i);
+            if (dataSource?.entities.values.length) {
+                dataSource?.entities.values.forEach((entity) => {
+                    entity._wrap.parent.wrap.feature3D = null;
+                    delete entity._wrap.parent.wrap.feature3D;
 
-        let dataSource = self.view3D.viewer.dataSources.getByName("drawn")[0];
-        if (dataSource?.entities.length) {
-            dataSource?.entities.removeAll();
+                })
+                dataSource?.entities.removeAll();
+            }
         }
-
+        
+        self.view3D.threeDDraw = null;
 
         self.map.on3DView = false;
 
@@ -3054,24 +3012,25 @@ const ThreeD = (function (namespace, signature, factory) {
                             self.map.trigger(Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: provider });
                         });
                     }
+                    const setExtent = options.extent ? self.map.setExtent(options.extent) : self.view3D.setViewFromCameraView.call(self);
 
-                    self.view3D.setViewFromCameraView.call(self).then(function () {
+                    setExtent.then(function () {
                         self.divThreedMap.classList.remove(self.classes.MAP3D, self.CLASS + '-div-fadeIn');
                         self.divThreedMap.classList.add(self.CLASS + '-div-fadeOut');
                         self.mapView.viewHTML.classList.remove(self.CLASS + '-div-fadeOut');
                         self.mapView.viewHTML.classList.add(self.CLASS + '-div-fadeIn');
 
+                        self.view3D.destroy.call(self).then(() => { 
+                            self.map.getLoadingIndicator().removeWait(self.waiting);
+                            delete self.waiting;
+
+                            if (options?.callback) {
+                                options.callback();
+                            }
+                        });
 
 
-                        self.view3D.destroy.call(self);
-
-
-                        self.map.getLoadingIndicator().removeWait(self.waiting);
-                        delete self.waiting;
-
-                        if (options?.callback) {
-                            options.callback();
-                        }
+                        
                     });
 
                     self.mapView.setRotation(0);
@@ -3084,8 +3043,9 @@ const ThreeD = (function (namespace, signature, factory) {
                 var transform = cesium.Matrix4.fromTranslation(bottom);
                 var angle = computeAngleToZenith(self.viewer.scene, bottom);
 
+                transform = cesium.Matrix4.fromTranslation(bottom);
                 self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
-                    duration: 1500,
+                    duration: options.instant?1:1500,
                     callback: animationCallback
                 });
             })
@@ -3093,6 +3053,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 throw (e);
             });
     };
+    
 
     viewProto.view3D = (function () {
 
@@ -3105,7 +3066,7 @@ const ThreeD = (function (namespace, signature, factory) {
             var addedFeature = csFeature;
             switch (true) {
                 case csFeature instanceof cesium.GroundPrimitive: {
-                    (dataSource || this.viewer.scene).groundPrimitives.add(csFeature);
+                    ((dataSource && dataSource.groundPrimitives) || this.viewer.scene).groundPrimitives?.add(csFeature);
                     break;
                 }
                 case csFeature instanceof Object && hasOwnProperty.call(csFeature, 'billboard'): {
@@ -3115,19 +3076,16 @@ const ThreeD = (function (namespace, signature, factory) {
                         }));
                     }
 
-                    var billboardAtCollection = (dataSource || this.viewer).billboardCollection.add({
+                    var billboardAtCollection = (dataSource || this.viewer).entities.add({
                         position: csFeature.position,
-                        image: csFeature.billboard.image,
-                        verticalOrigin: csFeature.billboard.verticalOrigin,
-                        heightReference: csFeature.billboard.heightReference,
-                        id: csFeature.billboard.id
+                        billboard: csFeature.billboard,                        
                     });
 
                     addedFeature = billboardAtCollection;
                     break;
                 }
                 case csFeature instanceof Object: {
-                    addedFeature = this.viewer.entities.getById(csFeature.id);
+                    addedFeature = (dataSource || this.viewer).entities.getById(csFeature.id);
                     if (!addedFeature) {
                         addedFeature = (dataSource || this.viewer).entities.add(csFeature);
                     }
@@ -3135,43 +3093,46 @@ const ThreeD = (function (namespace, signature, factory) {
                 }
             }
 
-            this.viewer.scene.requestRender();
+            this.viewer.refresh();
 
             return addedFeature;
         };
         const linkFeature = function (map, feature2D, feature3D) {
-            if (!hasOwnProperty.call(map.vector2DFeatures, feature2D.layer.id)) {
-                map.vector2DFeatures[feature2D.layer.id] = {};
-                map.vector2DFeatures[feature2D.layer.id][feature2D.id] = [feature3D];
-            } else {
-                if (!hasOwnProperty.call(map.vector2DFeatures[feature2D.layer.id], feature2D.id)) {
+            if (feature2D.layer) { 
+                if (!hasOwnProperty.call(map.vector2DFeatures, feature2D.layer.id)) {
+                    map.vector2DFeatures[feature2D.layer.id] = {};
                     map.vector2DFeatures[feature2D.layer.id][feature2D.id] = [feature3D];
                 } else {
-                    map.vector2DFeatures[feature2D.layer.id][feature2D.id].push(feature3D);
+                    if (!hasOwnProperty.call(map.vector2DFeatures[feature2D.layer.id], feature2D.id)) {
+                        map.vector2DFeatures[feature2D.layer.id][feature2D.id] = [feature3D];
+                    } else {
+                        map.vector2DFeatures[feature2D.layer.id][feature2D.id].push(feature3D);
+                    }
                 }
-            }
+            }            
             if (feature3D instanceof cesium.Entity) {
                 feature2D.wrap.feature3D = feature3D;
+                feature3D.highlight = () => {
+                    map.highlightFeature.set.apply(map, [feature3D]);
+                };
+                feature3D.unhighlight = () => {
+                    map.highlightFeature.unset.apply(map, [feature3D]);
+                };
                 feature3D._wrap = { parent: feature2D };
-                //if (map.view2DCRS !== map.crs)
-                //    feature2D.setCoordinates(feature2D.getCoordinates({ geometryCrs: map.view2DCRS, crs: map.crs }));
+                if (feature2D.hasSelectedStyle()) feature3D.highlight();
             }
         };
 
         const listenTo = [
             Consts.event.BEFOREBASELAYERCHANGE, Consts.event.BASELAYERCHANGE,
             Consts.event.LAYERADD, Consts.event.LAYERREMOVE, Consts.event.LAYERVISIBILITY, Consts.event.LAYEROPACITY, Consts.event.LAYERORDER,
-            Consts.event.FEATUREADD, Consts.event.FEATUREREMOVE, Consts.event.FEATURESCLEAR
+            Consts.event.FEATUREADD, Consts.event.FEATURESADD, Consts.event.FEATUREREMOVE, Consts.event.FEATURESCLEAR, Consts.event.TIMECHANGE,
+            Consts.event.FEATURESIMPORT
             /*, Consts.event.ZOOM no encuentro en qué casos debemos escuchar el evento ZOOM de 2D, solo trae problemas */, Consts.event.ZOOMTO];
 
-        const event2DHandler = function (e) {
-            var self = this;
-
-            switch (true) {
-                //case e.type == Consts.event.BEFOREBASELAYERCHANGE:
-                //    if (!self.waiting)
-                //        self.waiting = self.map.getLoadingIndicator().addWait();
-                //    break;
+        const event2DHandler = async function (e) {
+            var self = this;            
+            switch (true) {                
                 case e.type == Consts.event.BASELAYERCHANGE: {
                     self.view3D.setBaseLayer.call(self, e.layer);
                     break;
@@ -3190,7 +3151,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 }
                 case e.type == Consts.event.LAYEROPACITY: {
                     self.view3D.setRenderOptionsLayer.call(self, e.layer, { opacity: e.layer.getOpacity() });
-                    self.viewer.scene.requestRender();
+                    self.viewer.refresh();
                     break;
                 }
                 case e.type == Consts.event.LAYERORDER: {
@@ -3220,20 +3181,62 @@ const ThreeD = (function (namespace, signature, factory) {
                     break;
                 }
                 case e.type == Consts.event.FEATUREADD: {
-                    if (!(e.layer?.owner && (e.layer.owner instanceof TC.control.DrawMeasureModify)))
-                        self.view3D.addFeature.call(self.view3D, e.feature);
+                    let dataSource;
+                    const feature = e.feature;
+                    if (e.layer) {
+                        if (!self.view3D.dataSources.has(e.layer)) {
+                            dataSource = new cesium.CustomDataSource(e.layer.id);                            
+                            self.view3D.dataSources.set(e.layer, dataSource);
+                        }                        
+                        dataSource = self.view3D.dataSources.get(e.layer)                        
+                        if (dataSource instanceof Promise) {
+                            dataSource = await dataSource;
+                            self.view3D.dataSources.set(e.layer, dataSource);
+                        }
+                        if (!self.view3D.viewer.dataSources.contains(dataSource))
+                            self.view3D.viewer.dataSources.add(dataSource);
+                        dataSource.show = true;
+
+                        if (e.layer.features.includes(e.feature)) {
+                            self.view3D.addFeature.call(self.view3D, feature, dataSource);
+                            if (feature.hasSelectedStyle() || feature.wrap.feature3D?.editing) {
+                                self.map.activeControl.wrap.selectInteraction.setSelected(feature.wrap.feature3D);
+                                feature.wrap.feature3D.unhighlight();
+                            }
+                        }
+                        self.view3D.viewer.refresh();
+                    }
+                    break;
+                }
+                case e.type == Consts.event.FEATURESIMPORT: {                    
+                    self.map.one(Consts.event.VECTORUPDATE, (e) => {
+                        const layer = e.layer;
+                        let importedFeaturesDatasource = self.view3D.viewer.dataSources.getByName(layer.id);
+                        if (importedFeaturesDatasource.length === 0) {
+                            importedFeaturesDatasource = new cesium.CustomDataSource(layer.id);
+                            self.view3D.viewer.dataSources.add(importedFeaturesDatasource);
+                        }
+                        else
+                            importedFeaturesDatasource = importedFeaturesDatasource[0];
+                        setTimeout(() => {
+                            layer.features.forEach((feature) => {
+                                self.view3D.addFeature.call(self.view3D, feature, importedFeaturesDatasource);
+                            });
+                            setTimeout(() => {
+                                self.view3D.refresh();
+                            }, 50);
+                        }, 500);                        
+                    });
                     break;
                 }
                 case e.type == Consts.event.FEATUREREMOVE: {
-
-                    if (self.view3D.vector2DFeatures && hasOwnProperty.call(self.view3D.vector2DFeatures, e.layer.id)) {
-
+                    const dataSource = self.view3D.dataSources.get(e.layer);
+                    if (dataSource && dataSource.entities.values.length) {
                         const remove = function (feature) {
-                            if (hasOwnProperty.call(self.view3D.vector2DFeatures[e.layer.id], feature.id)) {
-                                var threedFeature = self.view3D.vector2DFeatures[e.layer.id][feature.id];
-                                threedFeature.forEach(tdf => self.view3D.removeFeature.call(self, tdf));
-
-                                delete self.view3D.vector2DFeatures[e.layer.id][feature.id];
+                            if (feature.wrap?.feature3D) {
+                                self.view3D.removeFeature.call(self, feature.wrap.feature3D, dataSource);
+                                //threedFeature.forEach(tdf => self.view3D.removeFeature.call(self, tdf));
+                                //delete self.view3D.vector2DFeatures[e.layer.id][feature.id];
                             }
                         };
 
@@ -3246,23 +3249,19 @@ const ThreeD = (function (namespace, signature, factory) {
                     break;
                 }
                 case e.type == Consts.event.FEATURESCLEAR: {
-
-                    if (self.view3D.vector2DFeatures && hasOwnProperty.call(self.view3D.vector2DFeatures, e.layer.id)) {
-                        self.view3D.viewer.dataSources.getByName("drawing").forEach((ds) => {
-                            ds.entities.removeAll();
+                    const dataSource = self.view3D.dataSources.get(e.layer);
+                    if (dataSource) { 
+                        //Borrar vinculo entre feature 2D y 3D
+                        dataSource.entities.values.forEach(tdf => {
+                            if (tdf.marker) { 
+                                tdf.marker.entityCollection.remove(tdf.marker);
+                                delete tdf.marker;
+                            }
+                            delete tdf._wrap?.parent.wrap.feature3D;
                         });
-                        self.view3D.viewer.dataSources.getByName("drawn").forEach((ds) => {
-                            ds.entities.removeAll();
-                        });
-
-                        for (var featureId in self.view3D.vector2DFeatures[e.layer.id]) {
-                            var threedFeature = self.view3D.vector2DFeatures[e.layer.id][featureId];
-                            threedFeature.forEach(tdf => self.view3D.removeFeature.call(self, tdf));
-
-                            delete self.view3D.vector2DFeatures[e.layer.id][featureId];
-                        }
+                        dataSource.entities.removeAll();
+                        self.view3D.viewer.refresh();
                     }
-
                     break;
                 }
                 case e.type == Consts.event.ZOOM: {
@@ -3305,10 +3304,22 @@ const ThreeD = (function (namespace, signature, factory) {
                     }
                     self.lastZoom = performance.now();
 
-                    let rectangle = cesium.Rectangle.fromDegrees(...e.extent);                    
-                    self.view3D.flyToRectangle.call(self, rectangle);
+                    let rectangle = cesium.Rectangle.fromDegrees(...e.extent);
+                    self.flyPromise = self.view3D.flyToRectangle.call(self, rectangle)
                     break;
                 }
+                case e.type == Consts.event.TIMECHANGE:
+                    //var wl = self.view3D.workLayers.find(wl => wl.imageryProvider.tcLayer === e.layer);
+                    //var index = self.view3D.viewer.imageryLayers.indexOf(wl);
+                    //self.view3D.addLayer.call(self, e.layer, index); 
+                    
+                    //self.view3D.workLayers.splice(self.view3D.workLayers.indexOf(wl), 1)
+                    //self.viewer.scene.imageryLayers.remove(wl);
+                    
+                    self.view3D.workLayers.find(wl => wl.imageryProvider.tcLayer === e.layer).imageryProvider._reload();
+                    self.view3D.viewer.scene.forceRender();
+                    break;               
+                
             }
         };
 
@@ -3364,7 +3375,7 @@ const ThreeD = (function (namespace, signature, factory) {
                             width: 3,
                             material: new cesium.PolylineDashMaterialProperty({
                                 color: new cesium.CallbackProperty(function (_time, _result) {
-                                    self.viewer.scene.requestRender();
+                                    self.viewer.refresh();
                                     return cesium.Color.fromAlpha(new cesium.Color(0, 255, 209), geolocation2D.track.renderTrack.checked ? 1 : 0);
                                 }.bind(this), false),
                                 gapColor: cesium.Color.TRANSPARENT
@@ -3373,33 +3384,37 @@ const ThreeD = (function (namespace, signature, factory) {
                     });
 
                     self.view3D.geotrackingEntity = self.viewer.entities.add(entityGeotracking);
-                    self.viewer.scene.requestRender();
+                    self.viewer.refresh();
                 }
             }
         };
         const geolocation_videoControls = function (event) {
             var self = this;
 
-            var geolocation2D = self.view3D.linked2DControls.geolocation;
+            var geolocation2D = self.view3D.linked2DControls.geolocation;            
             switch (true) {
                 case geolocation2D.const.event.TRACKIMPORT.indexOf(event.type) > -1:
                 case event.target.className.indexOf('draw') > -1 && event.target.parentElement.classList.contains(geolocation2D.const.className.SELECTEDTRACK):
-                case !(event.target.parentElement && event.target.parentElement.classList.contains(geolocation2D.const.className.SELECTEDTRACK)):
-                case event.target.className.indexOf('stop') > -1:
+                case event.target.className.includes('stop'):
+                    /*case !(event.target.parentElement && event.target.parentElement.classList.contains(geolocation2D.const.className.SELECTEDTRACK)):*/
 
                     if (self.map.on3DView) {
                         self.viewer.clock.shouldAnimate = false;
-                        self.viewer.clock.currentTime = cesium.JulianDate.fromDate(new Date());
+                        //const currentTime = cesium.JulianDate.fromDate(new Date());
+                        //currentTime.secondsOfDay = isNaN(currentTime.secondsOfDay) ? 0 : currentTime.secondsOfDay;
+                        //self.viewer.clock.currentTime = currentTime;
                     }
 
-                    if (self.view3D.trackDataSource) {
+                    if (self.view3D.trackDataSource) {                        
                         if (self.view3D.trackDataSource.length > 0) {
-                            var entity = self.view3D.trackDataSource.get(0).entities.values[0];
-                            self.viewer.entities.removeById(entity.id);
+                            self.view3D.trackDataSource.get(0).entities.removeAll();
+                            //self.viewer.entities.removeById(entity.id);
                         }
-
+                        self.view3D.trackDataSource.show = false;
                         self.view3D.trackDataSource.destroy();
                         delete self.view3D.trackDataSource;
+                        self.view3D.viewer.entities.remove(self.view3D.viewer.trackedEntity);
+                        delete self.view3D.viewer.trackedEntity;
                     }
 
                     geolocation2D.clearChartProgress();
@@ -3411,27 +3426,29 @@ const ThreeD = (function (namespace, signature, factory) {
                         }
                     }
                     break;
-                case event.target.classList.contains(geolocation2D.const.className.PLAY):
-                    self.viewer.clock.shouldAnimate = false;
-                    break;
-                case event.target.classList.contains(geolocation2D.const.className.PAUSE):
-                    self.viewer.clock.shouldAnimate = true;
+                case event.target.matches(geolocation2D.const.selector.BACKWARD):
+                case event.target.matches(geolocation2D.const.selector.FORWARD):
+                    self.view3D.viewer.clock.multiplier = geolocation2D.simulationSpeed
+                    break;                
+                case event.target.matches(geolocation2D.const.selector.PLAY):
+                case event.target.matches(geolocation2D.const.selector.PAUSE):
+                    self.viewer.clock.shouldAnimate = !self.viewer.clock.shouldAnimate;
                     break;
             }
         };
         /* fin geolocation */
         const checkAvailabilityControl = function (mapCtrl, ctrlsToMngCLASS) {
-            if (!mapCtrl.containerControl)
+            if (!mapCtrl.containerControl && !mapCtrl.caller)
                 return ctrlsToMngCLASS.indexOf(mapCtrl.CLASS) < 0
             else
-                return checkAvailabilityControl(mapCtrl.containerControl, ctrlsToMngCLASS)
+                return checkAvailabilityControl(mapCtrl.containerControl || mapCtrl.caller, ctrlsToMngCLASS)
         }
         const alterAllowedControls = function (view) {
             var self = this;
             const ctrlsToMngCLASS = self.ctrlsToMng.map(function (ctrl) { return ctrl.CLASS });
 
             self.map.controls.forEach(function (mapCtrl) {
-                if (checkAvailabilityControl(mapCtrl, ctrlsToMngCLASS)) {
+                if (checkAvailabilityControl(mapCtrl, ctrlsToMngCLASS)) {                    
                     switch (true) {
                         case (Consts.view.DEFAULT == view):
                             mapCtrl.enable();
@@ -3449,7 +3466,7 @@ const ThreeD = (function (namespace, signature, factory) {
                         elm.classList.remove(Consts.classes.THREED_HIDDEN);
                     });
                     self.ctrlsToMng.forEach(function (ctl) {
-                        if (ctl.div)ctl.div.classList.remove(Consts.classes.THREED);
+                        if (ctl.div) ctl.div.classList.remove(Consts.classes.THREED);
                     });
                     break;
                 case (Consts.view.THREED == view):
@@ -3464,125 +3481,116 @@ const ThreeD = (function (namespace, signature, factory) {
             var isDragging = false;
             var draggingFeature = null;
             const arrayDePuntos = [];//temporalmente aqui
-            const onLeftClickOnCanvas = (movement) => {
+            //const onLeftClickOnCanvas = (movement) => {
 
-                // Si estamos anclados a una entidad ignoro los click en el terreno
-                if (self.viewer.trackedEntity) {
-                    return;
-                }
+            //    // Si estamos anclados a una entidad ignoro los click en el terreno
+            //    if (self.viewer.trackedEntity) {
+            //        return;
+            //    }
+                
 
-                const getFeatureInfo = function () {
-                    var ray = self.viewer.camera.getPickRay(movement.position);
-                    var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
-                    if (position) {
-                        self.view3D.getInfoOnPickedPosition.call(self, position);
-                    }
-                };
+            //    if (self.map.activeControl instanceof Draw || self.map.activeControl instanceof Modify) {
+            //        let position = self.viewer.scene.pickPosition(movement.position);
+            //        arrayDePuntos[arrayDePuntos.length] = position;
+            //    }
+            //    else {
+            //        const getFeature = (id) => {
+            //            for (var layerId in self.view3D.vector2DFeatures) {
+            //                if (hasOwnProperty.call(self.view3D.vector2DFeatures[layerId], id)) {
+            //                    const feature2D = self
+            //                        .map
+            //                        .workLayers
+            //                        .find(workLayer => workLayer.id === layerId)
+            //                        .features
+            //                        .filter(feature => id.indexOf(feature.id) > -1 && feature.showsPopup);
 
-                if (self.map.activeControl instanceof Draw || self.map.activeControl instanceof Modify) {
-                    let position = self.viewer.scene.pickPosition(movement.position);
-                    arrayDePuntos[arrayDePuntos.length] = position;
-                }
-                else {
-                    var pickedFeature = self.viewer.scene.pick(movement.position);
-                    if (pickedFeature && pickedFeature.id) {
-                        var id = pickedFeature.id instanceof cesium.Entity ? pickedFeature.id.name : pickedFeature.id;
-
-                        var founded = false;
-                        for (var layerId in self.view3D.vector2DFeatures) {
-                            if (hasOwnProperty.call(self.view3D.vector2DFeatures[layerId], id)) {
-                                const feature2D = self
-                                    .map
-                                    .workLayers
-                                    .find(workLayer => workLayer.id === layerId)
-                                    .features
-                                    .filter(feature => id.indexOf(feature.id) > -1 && feature.showsPopup);
-
-                                if (feature2D && feature2D.length > 0) {
-                                    founded = true;
-
-                                    if (!(feature2D instanceof Point) && !(feature2D instanceof Marker)) {
-
-                                        var ray = self.viewer.camera.getPickRay(movement.position);
-                                        let position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
-
-                                        var marker = self.map.view3D.addNativeFeature.call(self.map, {
-                                            position: position,
-                                            billboard: {
-                                                image: Util.getFeatureStyleFromCss(self.CLASS + '-marker')?.url,
-                                                eyeOffset: new cesium.Cartesian3(0, 0, -100),
-                                                verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                                                heightReference: cesium.HeightReference.CLAMP_TO_GROUND
-                                            }
-                                        });
-
-                                        const onDrawTable = function (e) {
-                                            if (e.control) {
-                                                const control = e.control;
-                                                const onTableClose = function (e) {
-                                                    if (e.control === control) {
-                                                        self.map.off(Consts.event.RESULTSPANELCLOSE, onTableClose);
-                                                        self.map.view3D.removeFeature.call(self, marker);
-                                                    }
-                                                };
-                                                self.map.on(Consts.event.RESULTSPANELCLOSE, onTableClose);
-                                                self.map.off(Consts.event.DRAWTABLE, onDrawTable);
-                                            }
-                                        }
-                                        self.map.on(Consts.event.DRAWTABLE, onDrawTable);
-                                    }
-                                    //self.map.getControlsByClass(TC.control.ResultsPanel).find((rp) => rp?.currentFeature === feature2D[0])?.close()
-                                    self.map.getControlsByClass(TC.control.ResultsPanel).find((rp) => rp.isVisible())?.close();
-                                    self.map.trigger(Consts.event.FEATURECLICK, { feature: feature2D[0] });
-
-                                    break;
-                                }
-
-                            }
-                        }
-
-                        if (!founded) {
-                            getFeatureInfo();
-                        }
-                    } else {
-                        getFeatureInfo();
-                    }
-                }
+            //                    if (feature2D && feature2D.length > 0) {
+            //                        return feature2D[0].wrap.feature3D
+            //                    }
+            //                }
+            //            }
+            //            return null;
+            //        };  
+            //        const pickedFeature = self.viewer.pick(movement.position);
+                    
+            //        if (pickedFeature) {                        
+            //            if (pickedFeature.id && !(pickedFeature.id._wrap && pickedFeature.id._wrap.parent.layer.owner instanceof TC.control.Geolocation)) {
+            //                const feature = pickedFeature.id instanceof cesium.Entity ? pickedFeature.id : getFeature(pickedFeature.id);
+            //                if (feature?.id === "pegman") {
+            //                    return;
+            //                }
+            //                //resalte 3D  
+            //                if (!feature._wrap) {
+            //                    //esto es cuando pinchamoos en un punto que es resalte de un entidad de tipo punto
+            //                    const originalPoint = pickedFeature.id.entityCollection._entities._array.find((f) => f.position === pickedFeature.id.position && f._wrap);
+            //                    if (originalPoint?._wrap)
+            //                        self.map.trigger(Consts.event.FEATURECLICK, { feature: originalPoint._wrap.parent });
+            //                }
+            //                else
+            //                    self.map.trigger(Consts.event.FEATURECLICK, { feature: feature._wrap.parent });
+            //            }
+            //            else if (pickedFeature.primitive && pickedFeature.primitive instanceof cesium.Cesium3DTileset && pickedFeature.primitive.show) {
+            //                var ray = self.viewer.camera.getPickRay(movement.position);
+            //                var position = pickedFeature.primitive.pick(ray, self.viewer.scene);
+            //                //const positionGround = self.viewer.scene.globe.pick(new cesium.Ray(position, cesium.Cartesian3.negate(position, new cesium.Cartesian3())), self.viewer.scene)
+            //                self.view3D.getInfoOnPickedPosition.call(self, position, true);                            
+            //            }
+            //            else {
+            //                getFeatureInfo();
+            //            }
+            //        }                    
+            //        else
+            //        {
+            //            if (self.map.activeControl instanceof TC.control.Click) {
+            //                if (self.map.activeControl.callback) {
+            //                    const ray = self.viewer.camera.getPickRay(movement.position);
+            //                    const position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
+            //                    const geoPosition = cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
+            //                    self.map.activeControl.callback(Util.reproject([cesium.Math.toDegrees(geoPosition.longitude), cesium.Math.toDegrees(geoPosition.latitude)], self.view3D.crs, self.view3D.view2DCRS));
+            //                }
+            //            }
+            //            else
+            //                getFeatureInfo();
+            //        }
+            //    }
 
 
-            };
+            //};
             let _blockDragging = false;
+            
             const onMouseMoveOnCanvas = (movement) => {
                 // Si estamos anclados a una entidad ignoro los click en el terreno                
                 if (self.viewer.trackedEntity) {
                     return;
                 }
                 var pickedFeature = self.viewer.scene.pick(movement.endPosition);
-                //if (pickedFeature && pickedFeature.id && (!self.view3D.threeDDraw.IsSketchEntity(pickedFeature) && self.view3D.threeDDraw.CanIUseEntity(pickedFeature))) {
-                if (pickedFeature && pickedFeature.id && !(self.map.activeControl instanceof Draw)) {
+                if (pickedFeature && pickedFeature.id &&
+                    (!(self.map.activeControl instanceof TC.control.Draw) ||
+                    (pickedFeature.id._wrap && pickedFeature.id._wrap.parent.layer?.owner instanceof TC.control.Geolocation && pickedFeature.id._wrap.parent instanceof Point)
+                )) {
                     self.viewer.canvas.style.cursor = 'pointer';
                 } else {
                     self.viewer.canvas.style.cursor = 'default';
                 }
                 if (isDragging && draggingFeature && !_blockDragging) {
                     const newPosition = self.viewer.scene.globe.pick(self.viewer.camera.getPickRay(movement.endPosition), self.viewer.scene);
-                    draggingFeature.primitive.position = newPosition;
+                    draggingFeature.id.position = newPosition;                    
                     //bloqueamos el drag de entidades a cada 200 milisegundos
                     _blockDragging = true;
-                    self.viewer.scene.requestRender();
+                    self.viewer.refresh();
                     setTimeout(function () {
                         _blockDragging = false;
-
                     }, 200);
-
                 }
+                ///////* a borrar */
+                
 
             };
             const onLeftDownOnCanvas = (movement) => {
                 var pickedFeature = self.viewer.scene.pick(movement.position);
-                if (pickedFeature && pickedFeature.id) {
+                if (pickedFeature && pickedFeature.id && pickedFeature.id === self.viewer.entities.getById("pegman")) {
                     isDragging = true;
-                    _startDragPos = self.viewer.scene.globe.pick(self.viewer.camera.getPickRay(movement.position), self.viewer.scene);
+                    _startDragPos = pickedFeature.id.position.getValue();
                     draggingFeature = pickedFeature;
                     self.viewer.scene.screenSpaceCameraController.enableInputs = false;
                 }
@@ -3591,11 +3599,12 @@ const ThreeD = (function (namespace, signature, factory) {
                 isDragging = false;
                 if (draggingFeature) {
                     const newPosition = self.viewer.scene.globe.pick(self.viewer.camera.getPickRay(movement.position), self.viewer.scene);
+                    //draggingFeature.id.position = newPosition;
                     draggingFeature.primitive.position = newPosition;
                     var positionCartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(newPosition);
                     var positionCartographicOld = cesium.Ellipsoid.WGS84.cartesianToCartographic(_startDragPos);
                     //const newPosition = cesium.Cartographic.fromCartesian(movement.position);
-                    self.map.trigger(Consts.event.THREED_DRAG, { pickedFeature: draggingFeature.primitive, newCoords: [cesium.Math.toDegrees(positionCartographic.longitude), cesium.Math.toDegrees(positionCartographic.latitude)], oldCoords: [cesium.Math.toDegrees(positionCartographicOld.longitude), cesium.Math.toDegrees(positionCartographicOld.latitude)] });
+                    self.map.trigger(Consts.event.THREED_DRAG, { pickedFeature: draggingFeature.id, newCoords: [cesium.Math.toDegrees(positionCartographic.longitude), cesium.Math.toDegrees(positionCartographic.latitude)], oldCoords: [cesium.Math.toDegrees(positionCartographicOld.longitude), cesium.Math.toDegrees(positionCartographicOld.latitude)] });                    
                     draggingFeature = null;
                     self.viewer.scene.screenSpaceCameraController.enableInputs = true;
 
@@ -3603,19 +3612,45 @@ const ThreeD = (function (namespace, signature, factory) {
             };
 
             if (Consts.view.THREED === view) {
-
-                if (!self.view3D.linked2DControls.featureInfo &&
-                    Object.keys(self.map.options.controls).indexOf("featureInfo") > -1 &&
-                    self.allowedControls.indexOf("featureInfo") > -1) {
-                    self.view3D.linked2DControls.featureInfo = new TwoDLinkedFeatureInfo(self);
+                let gfiClassName;
+                let gfiControl;
+                switch (true) {
+                    case self.allowedControls.includes("multiFeatureInfo") && self.map.getControlsByClass(TC.control.MultiFeatureInfo).length > 0:
+                        gfiClassName = TC.control.MultiFeatureInfo.name;
+                        gfiControl = self.map.getControlsByClass(TC.control.MultiFeatureInfo)[0];
+                        break;
+                    case self.allowedControls.includes("featureInfo") && self.map.getControlsByClass(TC.control.FeatureInfo).length > 0:
+                        gfiClassName = TC.control.FeatureInfo.name;
+                        gfiControl = self.map.getControlsByClass(TC.control.FeatureInfo)[0];
+                        break;
                 }
-
+                if (gfiControl) {
+                    if (!gfiControl.featureInfoControls) {
+                        self.view3D.linked2DControls[gfiClassName] = new FeatureInfo({ map: self, parent: gfiControl });
+                        gfiControl.highlightedFeature?.toggleSelectedStyle(false);
+                        self.view3D.linked2DControls[gfiClassName].activate(gfiControl);
+                    }
+                    else
+                        gfiControl.featureInfoControls.forEach((ctl, index) => {
+                            self.view3D.linked2DControls[ctl.constructor.name] = new FeatureInfo({ map: self, parent: ctl });
+                            ctl.highlightedFeature?.toggleSelectedStyle(false);
+                            if (ctl === self.map.activeControl)
+                                self.view3D.linked2DControls[ctl.constructor.name].activate(ctl);
+                        });
+                    self.view3D.linked2DControls[self.map.activeControl.constructor.name]?.AddClickException((entity) => {
+                        if (entity._wrap?.parent && entity._wrap?.parent?.layer === self.view3D.linked2DControls.geolocation.trackLayer)
+                            return self.view3D.linked2DControls.geolocation.trackLayer.features.filter((feature) => feature instanceof TC.feature.Point).includes(entity._wrap.parent)
+                        else
+                            return true;
+                    });
+                }
+                
                 if (!self.eventHandlers) {
                     self.eventHandlers = {};
                 }
 
                 self.eventHandlers.handlerOfFeatures = new cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);
-                self.eventHandlers.handlerOfFeatures.setInputAction(onLeftClickOnCanvas, cesium.ScreenSpaceEventType.LEFT_CLICK);
+                //self.eventHandlers.handlerOfFeatures.setInputAction(onLeftClickOnCanvas, cesium.ScreenSpaceEventType.LEFT_CLICK);
                 self.eventHandlers.handlerOfFeatures.setInputAction(onMouseMoveOnCanvas, cesium.ScreenSpaceEventType.MOUSE_MOVE);
                 self.eventHandlers.handlerOfFeatures.setInputAction(onLeftDownOnCanvas, cesium.ScreenSpaceEventType.LEFT_DOWN);
                 self.eventHandlers.handlerOfFeatures.setInputAction(onLeftUpOnCanvas, cesium.ScreenSpaceEventType.LEFT_UP);
@@ -3632,8 +3667,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 self.view3D.linked2DControls.geolocation = self.ctrlsToMng.find(function (ctrl) {
                     return ctrl instanceof TC.control.Geolocation;
                 });
-            }
 
+            }            
             if (self.view3D.linked2DControls.geolocation) {
 
                 var geolocation2D = self.view3D.linked2DControls.geolocation;
@@ -3649,7 +3684,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     var lstEventListener = function (e) {
                         if (commands.some(function (cls) {
-                            return e.target.classList.contains(cls.replace('.', ''))
+                            return geolocation2D.div.contains(e.target) && e.target.matches(cls);
                         })) {
                             geolocation_videoControls_(e);
                         }
@@ -3711,8 +3746,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     var simulationOnPreUpdate; // listener de la simulación.
                     geolocation2D._simulateTrack = geolocation2D.simulateTrack;
                     geolocation2D.simulateTrack = function (li) {
-                        var self = this.view3D.linked2DControls.geolocation;
-
+                        var self = this.view3D.linked2DControls.geolocation;                        
                         self.map.toast(self.getLocaleString('threed.interactionSimulation'), { type: Consts.msgType.INFO });
 
                         // tenemos una simulación activa
@@ -3721,19 +3755,19 @@ const ThreeD = (function (namespace, signature, factory) {
                             geolocation_videoControls.call(this, { target: { className: 'stop' }, custom: true });
                         }
 
-                        self.simulationSpeed = 1;
-                        self.drawTrack(li, false).then(function () {
+                        self.simulationSpeed = 1;                                                
+                       
+                        //self.drawTrack(li, false).then(function () {
                             self.wrap.simulateTrack();
 
                             if (self.trackLayer && self.trackLayer.features) {
                                 var track = self.trackLayer.features.find(function (feature) {
-                                    return feature instanceof Polyline;
+                                    return feature instanceof Polyline || feature instanceof MultiPolyline;
                                 });
 
                                 if (track) {
-                                    toCZML.call(this, track.geometry, track.wrap.feature.getGeometry().layout, "track", self.markerStyle, self.lineStyle, self.walkingSpeed).then(function (result) {
+                                    toCZML.call(this, track instanceof Polyline ? track.geometry : track.geometry[0], track.wrap.feature.getGeometry().layout, "track", self.markerStyle, self.lineStyle, self.walkingSpeed).then(function (result) {
                                         var czml = result.czml, totalDistance = result.totalDistance, coordinates2D = result.coordinates2D;
-
                                         this.view3D.trackDataSource = new cesium.DataSourceCollection();
                                         var dataSourceDisplay = new cesium.DataSourceDisplay({
                                             scene: this.viewer.scene,
@@ -3774,12 +3808,13 @@ const ThreeD = (function (namespace, signature, factory) {
                                                 this.viewer.entities.removeById(this.viewer.trackedEntity.id);
                                                 this.viewer.trackedEntity = null;
                                             }
-
+                                            //this.viewer.entities.removeById(this.viewer.trackedEntity?.id);                                            
                                             this.viewer.entities.add(trackEntity);
 
-                                            this.viewer.flyTo(trackEntity).then(function () {
+                                            this.viewer.zoomTo(trackEntity).then(function () {
 
                                                 this.viewer.trackedEntity = trackEntity;
+                                                //this.viewer.trackedEntity.viewFrom = new cesium.Cartesian3(0, 0, 3000);
 
                                                 function get2DHeightAtProgress(coordinates2D, distanceCurrent) {
                                                     var coordinate;
@@ -3849,7 +3884,7 @@ const ThreeD = (function (namespace, signature, factory) {
                                                         distanceCurrent += new cesium.EllipsoidGeodesic(previousPosition, currentPosition).surfaceDistance;
                                                         previousPosition = currentPosition;
 
-                                                        this.viewer.scene.requestRender();
+                                                        this.viewer.refresh();
                                                     }
                                                 }.bind(this));
 
@@ -3858,13 +3893,13 @@ const ThreeD = (function (namespace, signature, factory) {
                                             }.bind(this));
 
                                             //self.view3D.customRender.restart();
-                                            this.viewer.scene.requestRender();
+                                            this.viewer.refresh();
 
                                         }.bind(this, track.wrap.feature.getGeometry().layout, coordinates2D));
                                     }.bind(this));
                                 }
                             }
-                        }.bind(this));
+                        //}.bind(this));
 
                     }.bind(self);
 
@@ -3887,22 +3922,13 @@ const ThreeD = (function (namespace, signature, factory) {
             var self = this;
             self.map.workLayers.filter(function (layer) {
                 return layer instanceof Vector && layer.features?.length;
-            }).forEach(function (vectorLayer) {
-                if (vectorLayer.owner && (vectorLayer.owner instanceof TC.control.DrawMeasureModify || vectorLayer.owner instanceof TC.control.Draw)) {
-                    vectorLayer.owner.wrap.interation3D = new self.map.view3D.UI.DrawControl();
-                }
+            }).forEach(function (vectorLayer) {                
                 vectorLayer.features.forEach(function (feature) {
-                    if (vectorLayer.owner instanceof TC.control.DrawMeasureModify || vectorLayer.owner instanceof TC.control.Draw) {
-                        const dataSource = self.view3D.viewer.dataSources.getByName("drawn")[0]
-                        if (dataSource) {
-                            self.view3D.addFeature.call(self.view3D, feature, dataSource);
-                            if (self.view3D.view2DCRS !== self.view3D.crs)
-                                feature.setCoordinates(feature.getCoordinates({ geometryCrs: self.view3D.view2DCRS, crs: self.view3D.crs }));
-
-                        }
-                    }
+                    const dataSource = self.view3D.dataSources.get(feature.layer);
+                    if (dataSource) 
+                        self.view3D.addFeature.call(self.view3D, feature, dataSource);
                     else
-                        self.view3D.addFeature.call(self.view3D, feature);
+                        self.view3D.addFeature.call(self.view3D, feature);                    
                 });
             });
         };
@@ -4003,9 +4029,12 @@ const ThreeD = (function (namespace, signature, factory) {
             return eventTC;
         };
 
+
         return {
 
             container: null,
+
+            map: self.map,
 
             crs: 'EPSG:4326',
             crsPattern: /(EPSG\:?4326)/i,
@@ -4039,469 +4068,423 @@ const ThreeD = (function (namespace, signature, factory) {
                     if (!self.viewer) {
                         import('../cesium/cesium.js').then(async function (module) {
                             const cesium = module.default;
+                            //cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1YjFkNDRhNy0wOTg5LTQxZmMtYTgyZS04ZWU2MDAzZmI2NTUiLCJpZCI6Mjk0NDAyLCJhc3NldElkIjozNDU1OTk5LCJhc3NldHMiOnsiMzQ1NTk5OSI6eyJ0eXBlIjoiM0RUSUxFUyJ9fSwic3JjIjoiYjAxYTgzZjQtNWY3ZS00NWYxLWEyY2UtZTIxOTUwNjA0YzQ1IiwiaWF0IjoxNzY0MjUyOTE3LCJleHAiOjE3NjQyNTY1MTd9.MtuxpesXE99K3Ft4dcAoGiGOnoAJJ3kbiIlWH7u8xgo";
+                                                        
+                            var terrainProvider;
+                            if (self.terrainFallback) {
+                                terrainProvider = await new MergeTerrainProvider([self.terrain, ...self.terrainFallback], self);
+                                //terrainProvider = await new DynamicMergedTerrainProvider([self.terrain, ...self.terrainFallback], self);
 
-                            var boundariesNavarra = null, boundariesEspana = null;
-                            try {
-                                boundariesNavarra = await cesium.Resource.fetchJson({ url: TC.apiLocation + "resources/data/contornoNavarra.json" }).then(function (bounds) {
-                                    if (bounds && bounds.features && bounds.features.length > 0) {
-                                        return bounds.features[0].geometry.coordinates;
-                                    } else {
-                                        return [];
-                                    }
-                                });
-                            }
-                            catch (ex) {
-                                console.warn("No se ha encontrado contorno de Navarra")
-                            }
-                            try {
-                                boundariesEspana = await cesium.Resource.fetchJson({ url: TC.apiLocation + "resources/data/contornoEspana.json" }).then(function (bounds) {
-                                    if (bounds && bounds.features && bounds.features.length > 0) {
-                                        return bounds.features[0].geometry.coordinates;
-                                    } else {
-                                        return [];
-                                    }
-                                });
-                            }
-                            catch (ex) {
-                                console.warn("No se ha encontrado contorno de España")
-                            }
-                            cesium.ApproximateTerrainHeights.initialize().then(function () {
-
-                                const boundaries = [boundariesNavarra, boundariesEspana].filter(x => x !== undefined && x !== null);
-                                var terrainProvider;
-                                if (self.terrainFallback && boundaries.length) {
-
-                                    terrainProvider = new cesium.MergeTerrainProvider(self.terrain, self, {
-                                        boundaries: boundaries,
-                                        //boundaries: boundaries,
-                                        fallback: self.terrainFallback
-                                    });
-                                } else {
-                                    if (self.terrainFallback && !boundaries.length) {
-                                        console.warn("Se ha definido fallckback de terreno pero no se ha especificado contorno");
-                                    }
-                                    terrainProvider = new cesium.CesiumTerrainProvider({
-                                        url: self.terrain.url.trim()
-                                    });
-
-                                    terrainProvider.sampleTerrainMostDetailed = function (positions) {
-                                        return cesium.sampleTerrainMostDetailed(terrainProvider, positions);
-                                    };
-
-                                    terrainProvider.attributions = {
-                                    };
-
-                                    if (self.terrain.attributions) {
-
-                                        terrainProvider.getAttribution = function () {
-                                            return terrainProvider.attributions;
-                                        };
-
-                                        terrainProvider.attributions = self.terrain.attributions;
-                                        self.map.trigger(Consts.event.TERRAINPROVIDERADD, { terrainProvider: terrainProvider });
-                                    }
+                            } else {
+                                if (self.terrainFallback) {
+                                    console.warn("Se ha definido fallckback de terreno pero no se ha especificado contorno");
                                 }
-
-                                var globe = new cesium.Globe();
-                                globe.baseColor = cesium.Color.WHITE;
-                                globe.enableLighting = false;
-
-                                /* carga más rápido pero consume RAM a cascoporro */
-                                globe.tileCacheSize = 1000;
-
-                                /* por defecto 2, a mayor número mayor rendimiento y peor calidad visual */
-                                globe.maximumScreenSpaceError = 5;
-
-                                self.viewer = self.view3D.viewer = new cesium.Viewer(self.selectors.divThreedMap, {
-                                    terrainProvider: terrainProvider,
-                                    terrainExaggeration: 1.0,
-
-                                    animation: false,
-                                    timeline: false,
-                                    fullscreenButton: false,
-                                    baseLayerPicker: false,
-                                    imageryProvider: false,
-                                    navigationInstructionsInitiallyVisible: false,
-                                    navigationHelpButton: false,
-                                    geocoder: false,
-                                    homeButton: false,
-                                    infoBox: false,
-                                    sceneModePicker: false,
-                                    selectionIndicator: false,
-                                    globe: globe,
-
-                                    //skyBox: false,
-                                    //skyAtmosphere: false,
-
-                                    requestRenderMode: true,
-                                    maximumRenderTimeChange: Infinity
+                                terrainProvider = new cesium.CesiumTerrainProvider({
+                                    url: self.terrain.url.trim()
                                 });
 
-                                // personalización de la escena                                    
-                                self.viewer.scene.backgroundColor = cesium.Color.WHITE;
-                                self.viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
-                                self.viewer.scene.screenSpaceCameraController.maximumZoomDistance = 1000000;
-
-                                //// con false las líneas se manetienen sobre el terreno
-                                //self.viewer.scene.globe.depthTestAgainstTerrain = false;
-
-                                // borramos cualquier capa que haya
-                                self.viewer.scene.imageryLayers.removeAll();
-
-                                // registramos listeners para capturar errores del terreno y del render
-                                self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
-                                    if (e.error) {
-                                        switch (e.error.statusCode) {
-                                            case 403:
-                                            case 404:
-                                                console.log('es un 404 de terreno');
-                                                break;
-                                        }
-                                    }
-                                }, self);
-                                self.viewer.scene.renderError.addEventListener(function (target, error) {
-                                    var self = this;
-
-                                    if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR                              
-
-                                    } else {
-                                        self.divThreedMap.classList.remove(self.classes.LOADING);
-                                        self.map.toast(self.getLocaleString("fi.error"), { type: Consts.msgType.ERROR });
-
-                                        self.map.getControlsByClass('TC.control.ThreeD').forEach(ctl => ctl.unset3D());
-                                    }
-                                }, self);
-
-                                self.viewer.readyPromise = new Promise(function (resolve, _reject) {
-
-                                    // controlamos la carga de tiles para mostrar loading cuando pida tiles
-                                    self.view3D.tileLoadingHandler = new cesium.EventHelper();
-                                    self.view3D.tileLoadingHandler.add(self.viewer.scene.globe.tileLoadProgressEvent, function (data) {
-                                        if (!self.waiting)
-                                            self.waiting = self.map.getLoadingIndicator().addWait();
-                                        if ((self.viewer.scene.terrainProvider.allReady ||
-                                            (!self.viewer.scene.terrainProvider.allReady && self.viewer.scene.terrainProvider.ready))
-                                            && data === 0) {                                        
-                                            self.map.getLoadingIndicator().removeWait(self.waiting);
-                                            delete self.waiting;
-
-                                            resolve();
-
-                                            self.events.trigger(Consts.event.TERRAINLOADED, {});
-                                        } else {
-                                            self.events.trigger(Consts.event.TERRAINRECEIVING, {});
-                                        }
-                                    }.bind(self));
-                                });
-
-                                // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
-                                //overrideDesktopZoom.call(self);
-                                // sobrescribimos el comportamiento de lo botones + /- y la casita
-                                override2DZoom.call(self, true);
-
-                                // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
-                                document.querySelectorAll('.cesium-viewer-bottom').forEach(function (elm) {
-                                    elm.parentElement.removeChild(elm);
-                                });
-
-                                // enlazamos con los eventos del mapa 2D
-                                self.view3D._event2DHandler = event2DHandler.bind(self);
-                                self.map.on(listenTo.join(' '), self.view3D._event2DHandler);
-
-                                // modificamos los controles disponibles
-                                alterAllowedControls.call(self, Consts.view.THREED);
-
-                                self.viewer.readyPromise.then(function () {
-                                    // pintamos las features que están en el mapa 2D
-                                    draw2DDrawedFeatures.call(self);
-                                });
-                                self.view3D.getScene = function () {
-                                    return self.viewer.scene;
-                                }
-                                self.view3D.getFovCoords = function (crs) {
-                                    var scene = self.viewer.scene;
-                                    var canvas = scene.canvas;
-                                    var bottomLeft = new cesium.Cartesian2(0, canvas.clientHeight - 1);
-                                    var bottomRight = new cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
-                                    var fovCoords = [
-                                        bottomLeft,
-                                        bottomRight,
-                                        new cesium.Cartesian2(canvas.clientWidth - 1, 0),
-                                        new cesium.Cartesian2(0, 0)
-                                    ].map(function (elm) {
-                                        return pickMapCoords.call(self, elm, crs);
-                                    }).filter(function (elm) {
-                                        return elm !== null;
-                                    });
-                                    if (fovCoords.length && fovCoords.length < 4) { // Vemos horizonte
-                                        // flacunza: Si vemos horizonte no tenemos puntos de terreno para las esquinas superiores, 
-                                        // por eso intentamos calcular unos puntos "en el infinito".
-                                        var farCoordsLeft = getFarMapCoords.call(self, {
-                                            nearMapCoords: fovCoords[0],
-                                            bottomPixel: bottomLeft,
-                                            cameraPosition: self.view3D.cameraControls._coordsXY
-                                        });
-                                        var farCoordsRight = getFarMapCoords.call(self, {
-                                            nearMapCoords: fovCoords[1],
-                                            bottomPixel: bottomRight,
-                                            cameraPosition: self.view3D.cameraControls._coordsXY
-                                        });
-                                        if (farCoordsLeft && farCoordsRight) {
-                                            fovCoords[2] = farCoordsRight;
-                                            fovCoords[3] = farCoordsLeft;
-                                        }
-
-                                    }
-                                    return fovCoords;
-                                }
-                                self.view3D.getExtent = function () {                                    
-                                    const fov = this.getFovCoords(this.crs);
-                                    const rectangle = cesium.Rectangle.fromCartographicArray(fov.map((coords) => { return new cesium.Cartographic(coords[0], coords[1]) }))
-                                    return [rectangle.west, rectangle.south, rectangle.east, rectangle.north];
-                                }
-                                self.view3D.getCameraData = function () {
-                                    const camera = self.viewer.scene.camera
-                                    const cameraPosition = camera.position;
-                                    const cameraPositionCarto = cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPosition);
-                                    return {
-                                        "latitude": cesium.Math.toDegrees(cameraPositionCarto.latitude),
-                                        "longitude": cesium.Math.toDegrees(cameraPositionCarto.longitude),
-                                        "height": cameraPositionCarto.height,
-                                        "heading": camera.heading * (180 / Math.PI),
-                                        "pitch": camera.pitch * (180 / Math.PI)
-                                    }
-                                }
-                                self.view3D.Coordinates2DTo3D = function (coords) {
-                                    const _coords = coords instanceof cesium.Cartesian2 ? coords : new cesium.Cartesian2(coords[0], coords[1]);
-
-                                    var ray = self.viewer.camera.getPickRay(_coords);
-                                    var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
-                                    if (position) {
-                                        var positionCartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
-
-                                        var lat, lon, ele;
-                                        lat = cesium.Math.toDegrees(positionCartographic.latitude);
-                                        lon = cesium.Math.toDegrees(positionCartographic.longitude);
-                                        ele = Math.round(positionCartographic.height);
-
-                                        return { lon: lon, lat: lat, ele: ele };
-                                    }
-                                }
-                                self.view3D.setMarker = function (position, image, marker = null, id) {
-                                    if (!(position instanceof cesium.Cartesian3 || position instanceof cesium.Cartesian2)) {
-                                        position = cesium.Cartesian3.fromDegrees(position[0], position[1]);
-                                    }
-                                    if (!marker) {
-                                        marker = self.map.view3D.addNativeFeature.call(self.map, {
-                                            position: position,
-                                            billboard: {
-                                                image: image,
-                                                eyeOffset: new cesium.Cartesian3(0, 0, -100),
-                                                verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                                                heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                                                pixelOffset: new cesium.Cartesian2(0, 20.0),
-                                                id: id || TC.getUID()
-                                            }
-                                        });
-                                    }
-                                    else {
-                                        marker.position = position;
-                                        marker.setImage(Math.random() * 1000, image);
-                                        marker.pixelOffset = new cesium.Cartesian2(0, 20.0);
-                                        marker.show = true;
-                                    }
-                                    self.viewer.scene.requestRender();
-                                    return marker;
-
-                                }
-
-                                self.view3D.setCenter = function (xy) {
-
-                                    /*if (block) return;*/
-                                    const scene = self.map.view3D.getScene();
-                                    var destination = cesium.Cartesian3.fromDegrees(xy[0], xy[1], self.view3D.getHeightFromMDT(xy));
-
-                                    const center = scene.globe.pick(scene.camera.getPickRay(new cesium.Cartesian2(self.view3D.container.clientWidth / 2, self.view3D.container.clientHeight / 2)), scene);
-                                    const distance = cesium.Cartesian3.distance(center, scene.camera.positionWC);
-                                    var oldTransform = new cesium.Matrix4();
-                                    scene.camera.transform.clone(oldTransform);
-                                    //const _flyEnd = function () {
-                                    //    console.log("fly end");
-                                    //    self.map.off(Consts.event.CAMERACHANGE, _flyEnd);
-                                    //    scene.camera.lookAtTransform(oldTransform);
-                                    //    block = false;
-                                    //}
-
-                                    //self.map.on(Consts.event.CAMERACHANGE, _flyEnd);                                                                  
-
-                                    scene.camera.lookAt(destination,
-                                        new cesium.HeadingPitchRange(scene.camera.heading, scene.camera.pitch, distance));
-                                    scene.camera.lookAtTransform(oldTransform);
-                                    /*block = true;*/
-
-
-                                }
-                                self.view3D.setLabel = function (entity, style) {
-                                    self.view3D.threeDDraw.setLabel(entity, style);
-                                }
-                                self.view3D.setStyle = function (entity, style) {
-                                    self.view3D.threeDDraw.setStyle(style, entity);
-                                }
-                                self.view3D.getLength = function (entity) {
-                                    const coordinates = entity.polyline.positions.getValue();
-                                    return coordinates.reduce(function (vi, va, index, arr) {
-                                        if (index === 0) return 0;
-                                        return vi + new cesium.EllipsoidGeodesic(cesium.Cartographic.fromCartesian(arr[index - 1]), cesium.Cartographic.fromCartesian(arr[index]), cesium.Ellipsoid.WGS84).surfaceDistance;
-                                    }, 0);
-                                }
-                                self.view3D.getArea = function (entity) {
-                                    const coordinates = entity.polygon.hierarchy.getValue();
-                                    return Math.sqrt(Math.pow(cesium.PolygonPipeline.computeArea2D(coordinates.positions), 2));
-                                }
-                                //sacar a una clase externa
-                                const cartesianToArray = function (cartesian) {
-                                    const geoCoords = cesium.Cartographic.fromCartesian(cartesian);
-                                    //return Util.reproject([cesium.Math.toDegrees(geoCoords.longitude), cesium.Math.toDegrees(geoCoords.latitude)], self.map.view3D.crs, self.map.view3D.view2DCRS);
-                                    return [cesium.Math.toDegrees(geoCoords.longitude), cesium.Math.toDegrees(geoCoords.latitude)];
-                                }
-                                const tcFeatureConstructor = function (activeShapePoints, type) {
-                                    let geometry;
-                                    switch (type) {
-                                        case 'polyline':
-                                            geometry = new Polyline(activeShapePoints.map(function (point) {
-                                                return cartesianToArray(point);
-                                            }));
-                                            break;
-                                        case 'polygon':
-                                            geometry = new Polygon(activeShapePoints.map(function (point) {
-                                                return cartesianToArray(point);
-                                            }));
-                                            break;
-                                        case 'point':
-                                            geometry = new Point(cartesianToArray(activeShapePoints instanceof Array ? activeShapePoints[0] : activeShapePoints));
-                                            break;
-                                    }
-                                    return geometry;
+                                terrainProvider.sampleTerrainMostDetailed = function (positions) {
+                                    return cesium.sampleTerrainMostDetailed(terrainProvider, positions);
                                 };
-                                //let threeDDraw;                                    
-                                self.view3D.UI = {
-                                    DrawControl: function (mode, callback) {
-                                        self.view3D.threeDDraw = new ThreeDDraw(self.viewer, mode);
-                                        self.view3D.threeDDraw.addEventListener('drawend', (evt) => {
-                                            self.map.activeControl.trigger(Consts.event.MEASURE, evt.detail.measurements);
-                                            const apiFeature = tcFeatureConstructor(evt.detail.positions, evt.detail.type);
-                                            self.map.activeControl.trigger(Consts.event.DRAWEND, {
-                                                feature: apiFeature
-                                            });
-                                            callback(apiFeature).then(function (feature2D) {
-                                                linkFeature(self.view3D, feature2D, evt.detail.entity);
-                                                evt.detail.entity.name = feature2D.id;
-                                                feature2D.setStyle(evt.detail.entity.getStyle());
-                                                //self.map.activeControl.trigger(Consts.event.DRAWEND, {
-                                                //    feature: feature2D
-                                                //});
-                                            });
-                                        });
-                                        self.view3D.threeDDraw.addEventListener('drawstart', (_evt) => {
-                                            self.map.activeControl.trigger(Consts.event.DRAWSTART, {});
-                                        });
-                                        self.view3D.threeDDraw.addEventListener('drawupdate', (evt) => {
-                                            self.map.activeControl.trigger(Consts.event.MEASUREPARTIAL, evt.detail.measurements);
-                                        });
-                                        self.view3D.threeDDraw.addEventListener('point', (evt) => {
-                                            const geoCoords = cesium.Cartographic.fromCartesian(evt.detail.position);
-                                            self.map.activeControl.trigger(Consts.event.POINT, {
-                                                point: [cesium.Math.toDegrees(geoCoords.longitude), cesium.Math.toDegrees(geoCoords.latitude)]
-                                            });
-                                        });
-                                        self.view3D.threeDDraw.addEventListener('drawmodify', (evt) => {
-                                            const newFeature = tcFeatureConstructor(evt.detail.positions, evt.detail.type)
-                                            const originalFeat = evt.detail.entity._wrap.parent;
-                                            originalFeat.setCoordinates(newFeature.getCoordinates());
-                                            //originalFeat.setCoordinates(newFeature.getCoordinates({ geometryCrs: self.map.view3D.view2DCRS, crs: self.map.view3D.crs }));
-                                            self.map.activeControl.trigger(Consts.event.FEATUREMODIFY, {
-                                                feature: originalFeat,
-                                                layer: originalFeat.layer,
-                                                geometryChanged: true
-                                            });
-                                        });
 
-                                        return self.view3D.threeDDraw;
-                                    }
-                                    , SelectControl: function () {
-                                        var _pickedFeature = null;
-                                        var selectCallback = null;
-                                        const tcFeatureFromEntity = function (entity) {
-                                            if (entity.polygon)
-                                                return new Polygon(entity.polygon.hierarchy.getValue().positions.map(function (point) {
-                                                    return cartesianToArray(point);
-                                                }), { id: entity.id })
-                                            else if (entity.polyline)
-                                                return new Polyline(entity.polyline.positions.getValue().map(function (point) {
-                                                    return cartesianToArray(point);
-                                                }), { id: entity.id })
-                                            else
-                                                return new Point(cartesianToArray(entity.position.getValue(cesium.JulianDate.now)), { id: entity.id });
-                                        }
-                                        const unselectFeature = function (evt) {
-                                            if (evt.control instanceof Modify)
-                                                _pickedFeature = null;
-                                        };
-                                        const _activate = function (deleteMode) {
+                                terrainProvider.attributions = {
+                                };
 
-                                            self.map.on(Consts.event.FEATUREREMOVE, _remove);
-                                            self.map.on(Consts.event.CONTROLDEACTIVATE, unselectFeature);
-                                            self.view3D.threeDDraw.vertexRemove(deleteMode);
-                                            if (self.view3D.threeDDraw.entityForEdit && !deleteMode) self.view3D.threeDDraw.activate();
-                                            if (!deleteMode)
-                                                self.view3D.threeDDraw.activeSelectMode(function (selectedEntity) {
-                                                    if (cesium.defined(selectedEntity)) {
-                                                        _pickedFeature = selectedEntity;
-                                                        selectCallback({
-                                                            selected: [(selectedEntity._wrap?.parent || tcFeatureFromEntity(selectedEntity)).wrap.feature], deselected: []
-                                                        });
-                                                    }
-                                                });
-                                            else
-                                                self.view3D.threeDDraw.deactivateSelectMode();
-                                        };
-                                        const _remove = function (event) {
-                                            if (event.feature.wrap?.feature3D) {
-                                                self.view3D.threeDDraw.remove(event.feature.wrap.feature3D);
-                                                _pickedFeature = null;
-                                            }
-                                        }
-                                        const _deactivate = function () {
-                                            //_pickedFeature = null;
-                                            //unselectFeature();
-                                            self.view3D.threeDDraw.deactivateSelectMode();
-                                            self.view3D.threeDDraw.deactivateEditing();
-                                            self.map.off(Consts.event.FEATUREREMOVE, _remove);
-                                            self.map.off(Consts.event.CONTROLDEACTIVATE, unselectFeature);
-                                            self.view3D.threeDDraw.editMode = false;
-                                            //self.map.activeControl?.deactivate();
-                                        };
-                                        return {
-                                            activate: _activate,
-                                            setActive: function (active) {
-                                                active ? _activate() : _deactivate();
-                                            },
-                                            deactivate: _deactivate,
-                                            on: function (event, callback) {
-                                                selectCallback = callback;
-                                            },
-                                            getFeatures: function () {
-                                                if (!cesium.defined(_pickedFeature)) {
-                                                    return new ol.Collection();
-                                                }
-                                                return new ol.Collection([(_pickedFeature._wrap?.parent || tcFeatureFromEntity(_pickedFeature)).wrap.feature]);
-                                            }
-                                        }
+                                if (self.terrain.attributions) {
+
+                                    terrainProvider.getAttribution = function () {
+                                        return terrainProvider.attributions;
+                                    };
+
+                                    terrainProvider.attributions = self.terrain.attributions;
+                                    self.map.trigger(Consts.event.TERRAINPROVIDERADD, { terrainProvider: terrainProvider });
+                                }
+                            }
+
+                            var globe = new cesium.Globe();
+                            globe.baseColor = cesium.Color.WHITE;
+                            globe.enableLighting = false;
+
+                            /* carga más rápido pero consume RAM a cascoporro */
+                            globe.tileCacheSize = 1000;
+
+                            /* por defecto 2, a mayor número mayor rendimiento y peor calidad visual */
+                            globe.maximumScreenSpaceError = 5;
+                            self.view3D.heightReference = cesium.HeightReference.CLAMP_TO_GROUND;
+
+                            const extent = TC.Util.reprojectExtent(self.map.getExtent(), self.map.view3D.view2DCRS, self.map.view3D.crs);
+                                                        
+                            const rectangle = cesium.Rectangle.fromDegrees.apply(null, extent);
+                                                        
+                            cesium.Camera.DEFAULT_VIEW_RECTANGLE = rectangle;
+                            cesium.Camera.DEFAULT_VIEW_FACTOR = 0.0;
+                            
+                            self.viewer = self.view3D.viewer = new cesium.Viewer(self.selectors.divThreedMap, {
+                                terrainProvider: terrainProvider,
+                                terrainExaggeration: 1.0,
+
+                                animation: false,
+                                timeline: false,
+                                fullscreenButton: false,
+                                baseLayerPicker: false,
+                                imageryProvider: false,
+                                navigationInstructionsInitiallyVisible: false,
+                                navigationHelpButton: false,
+                                geocoder: false,
+                                homeButton: false,
+                                infoBox: false,
+                                sceneModePicker: false,
+                                selectionIndicator: false,
+                                globe: globe,
+                                scene3DOnly: true,
+                                //skyBox: false,
+                                //skyAtmosphere: false,
+
+                                requestRenderMode: true,
+                                maximumRenderTimeChange: Infinity
+                            });
+
+                            // personalización de la escena                                    
+                            self.viewer.scene.backgroundColor = cesium.Color.WHITE;
+                            const ssc = self.viewer.scene.screenSpaceCameraController;
+                            ssc.enableCollisionDetection = true;
+                            ssc.maximumZoomDistance = 1000000;
+                            ssc.inertiaSpin = 0.0;
+                            ssc.inertiaTranslate = 0.0;
+                            ssc.inertiaZoom = 0.0;
+
+                            self.viewer.camera.percentageChanged = 0.05; // 5% (ajusta a tu caso)
+
+                            //Optimizar el renderizado
+                            self.viewer.scene.requestRenderMode = true;
+                            self.viewer.scene.maximumRenderTimeChange = Infinity;
+
+                            //Desactivar efectos visuales pesados
+                            self.viewer.scene.fog.enabled = false;
+                            //self.viewer.scene.skyAtmosphere.show = false;
+                            self.viewer.scene.globe.depthTestAgainstTerrain = false;
+
+
+                            self.viewer.camera.frustum.near = 0.01;
+                            self.viewer.camera.frustum.far = 5000000;
+
+                            self.viewer.camera.preloadTerrain = true;
+                            self.viewer.scene.globe.preloadSiblings = true;
+                            self.viewer.scene.globe.preloadAncestors = true;
+                            self.viewer.scene.preloadTileLimit = 20;
+
+                            //desactivar render loop continuo
+                            //self.viewer.useDefaultRenderLoop = false;
+                            //self.viewer.scene.requestRender();
+
+                            // borramos cualquier capa que haya
+                            self.viewer.scene.imageryLayers.removeAll();
+
+                            // registramos listeners para capturar errores del terreno y del render
+                            self.viewer.terrainProvider.errorEvent.addEventListener(function (e) {
+                                if (e.error) {
+                                    switch (e.error.statusCode) {
+                                        case 403:
+                                        case 404:
+                                            console.log('es un 404 de terreno');
+                                            break;
                                     }
                                 }
-                                resolve(self.viewer);
+                            }, self);
+                            self.viewer.scene.renderError.addEventListener(function (target, error) {
+                                var self = this;
 
+                                if (error && error.code === 18) { // GLS: 18 - SECURITY_ERR                              
+
+                                } else {
+                                    self.divThreedMap.classList.remove(self.classes.LOADING);
+                                    self.map.toast(self.getLocaleString("fi.error"), { type: Consts.msgType.ERROR });
+
+                                    self.map.getControlsByClass('TC.control.ThreeD').forEach(ctl => ctl.unset3D());
+                                }
+                            }, self);
+
+                            self.viewer.readyPromise = new Promise(function (resolve, _reject) {
+
+                                // controlamos la carga de tiles para mostrar loading cuando pida tiles                                
+                                self.view3D.tileLoadingHandlerOff = self.viewer.scene.globe.tileLoadProgressEvent.addEventListener((queued) => {
+                                    if (!self.waiting)
+                                        self.waiting = self.map.getLoadingIndicator().addWait();
+                                    if (queued === 0 && self.viewer.scene.globe.tilesLoaded) {
+                                        self.map.getLoadingIndicator().removeWait(self.waiting);
+                                        delete self.waiting;
+                                        resolve();
+
+                                        self.events.trigger(Consts.event.TERRAINLOADED, {});                                    
+                                    } else {
+                                        self.events.trigger(Consts.event.TERRAINRECEIVING, {});
+                                    }
+                                });                                
                             });
+                            if (self.view3D.tileSetManager)
+                                self.view3D.tileSetManager.refresh(self.viewer)
+                            else
+                                self.view3D.tileSetManager = new TileSetManager(self.viewer);
+                            // deshabilitamos el zoom por defecto y manejamos nosotros zoom con rueda
+                            //overrideDesktopZoom.call(self);
+                            // sobrescribimos el comportamiento de lo botones + /- y la casita
+                            override2DZoom.call(self, true);
+
+                            // eliminamos los creditos de cesium (no encuentro la manera de que no los ponga)
+                            document.querySelectorAll('.cesium-viewer-bottom').forEach(function (elm) {
+                                elm.parentElement.removeChild(elm);
+                            });
+
+                            // enlazamos con los eventos del mapa 2D
+                            self.view3D._event2DHandler = event2DHandler.bind(self);
+                            self.map.on(listenTo.join(' '), self.view3D._event2DHandler);
+
+                            // modificamos los controles disponibles
+                            alterAllowedControls.call(self, Consts.view.THREED);
+
+                            //desactivar controles 3D propios
+                            for (let name in self.controls3D) {
+                                const ctrName = name.substring(0, 1).toUpperCase() + name.substring(1)
+                                const ctl = self.map.getControlsByClass(TC.control[ctrName])[0];
+                                ctl.enable();
+                            }
+
+                            self.view3D.importState = function (state) {
+                                const defer = Promise.withResolvers();
+                                var camera = this.cameraControls.getCamera();
+                                camera.flyTo({
+                                    destination: cesium.Cartesian3.fromRadians(state.cp[0], state.cp[1], state.cp[2]),
+                                    duration:0,
+                                    orientation: {
+                                        heading: state.chpr[0],
+                                        pitch: state.chpr[1],
+                                        roll: state.chpr[2]
+                                    },
+                                    complete: async () => {
+                                        setTimeout(() => {
+                                            defer.resolve();                                            
+                                        }, 1000);
+                                    }
+                                });
+                                const arrPromises = [defer.promise]
+                                for (let name in self.controls3D) {
+                                    const ctrName = name.substring(0, 1).toUpperCase() + name.substring(1)
+                                    const ctl = self.map.getControlsByClass(TC.control[ctrName])[0];
+                                    arrPromises.push(ctl.importState(state.ts));
+                                }                                
+                                return Promise.all(arrPromises);
+                            };
+
+                            const readyProm = Promise.withResolvers();
+                            self.map.ready(() => { readyProm.resolve() });
+                            Promise.all([self.viewer.readyPromise/*, readyProm.promise*/]).then(function () {
+                                // pintamos las features que están en el mapa 2D
+                                draw2DDrawedFeatures.call(self);
+                            });
+                            self.view3D.getScene = function () {
+                                return self.viewer.scene;
+                            }
+                            self.view3D.getFovCoords = function (crs) {
+                                var scene = self.viewer.scene;
+                                var canvas = scene.canvas;
+                                var bottomLeft = new cesium.Cartesian2(0, canvas.clientHeight - 1);
+                                var bottomRight = new cesium.Cartesian2(canvas.clientWidth - 1, canvas.clientHeight - 1);
+                                var fovCoords = [
+                                    bottomLeft,
+                                    bottomRight,
+                                    new cesium.Cartesian2(canvas.clientWidth - 1, 0),
+                                    new cesium.Cartesian2(0, 0)
+                                ].map(function (elm) {
+                                    return pickMapCoords.call(self, elm, crs);
+                                }).filter(function (elm) {
+                                    return elm !== null;
+                                });
+                                if (fovCoords.length && fovCoords.length < 4) { // Vemos horizonte
+                                    // flacunza: Si vemos horizonte no tenemos puntos de terreno para las esquinas superiores, 
+                                    // por eso intentamos calcular unos puntos "en el infinito".
+                                    var farCoordsLeft = getFarMapCoords.call(self, {
+                                        nearMapCoords: fovCoords[0],
+                                        bottomPixel: bottomLeft,
+                                        cameraPosition: self.view3D.cameraControls._coordsXY
+                                    });
+                                    var farCoordsRight = getFarMapCoords.call(self, {
+                                        nearMapCoords: fovCoords[1],
+                                        bottomPixel: bottomRight,
+                                        cameraPosition: self.view3D.cameraControls._coordsXY
+                                    });
+                                    if (farCoordsLeft && farCoordsRight) {
+                                        fovCoords[2] = farCoordsRight;
+                                        fovCoords[3] = farCoordsLeft;
+                                    }
+
+                                }
+                                return fovCoords;
+                            }
+                            self.view3D.getExtent = function () {
+                                const fov = this.getFovCoords(this.crs);
+                                const rectangle = cesium.Rectangle.fromCartographicArray(fov.map((coords) => { return new cesium.Cartographic(coords[0], coords[1]) }))
+                                return [rectangle.west, rectangle.south, rectangle.east, rectangle.north];
+                            }
+                            self.view3D.getCameraData = function () {
+                                const camera = self.viewer.scene.camera
+                                const cameraPosition = camera.position;
+                                const cameraPositionCarto = cesium.Ellipsoid.WGS84.cartesianToCartographic(cameraPosition);
+                                return {
+                                    "latitude": cesium.Math.toDegrees(cameraPositionCarto.latitude),
+                                    "longitude": cesium.Math.toDegrees(cameraPositionCarto.longitude),
+                                    "height": cameraPositionCarto.height,
+                                    "heading": camera.heading * (180 / Math.PI),
+                                    "pitch": camera.pitch * (180 / Math.PI)
+                                }
+                            }
+                            self.view3D.Coordinates2DTo3D = function (coords) {
+                                const _coords = coords instanceof cesium.Cartesian2 ? coords : new cesium.Cartesian2(coords[0], coords[1]);
+
+                                var ray = self.viewer.camera.getPickRay(_coords);
+                                var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
+                                if (position) {
+                                    var positionCartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
+
+                                    var lat, lon, ele;
+                                    lat = cesium.Math.toDegrees(positionCartographic.latitude);
+                                    lon = cesium.Math.toDegrees(positionCartographic.longitude);
+                                    ele = Math.round(positionCartographic.height);
+
+                                    return { lon: lon, lat: lat, ele: ele };
+                                }
+                            }
+                            self.view3D.setMarker = function (position, image, marker = null, id) {
+                                if (!(position instanceof cesium.Cartesian3 || position instanceof cesium.Cartesian2)) {
+                                    position = cesium.Cartesian3.fromDegrees(position[0], position[1]);
+                                }
+                                if (!marker) {
+                                    marker = self.map.view3D.addNativeFeature.call(self.map, {
+                                        position: position,
+                                        billboard: {
+                                            image: image,
+                                            //eyeOffset: new cesium.Cartesian3(0, 0, -100),
+                                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
+                                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                                            //pixelOffset: new cesium.Cartesian2(0, 20.0),
+                                            id: id || TC.getUID(),
+                                            disableDepthTestDistance: 0
+                                        }
+                                    });
+                                }
+                                else {
+                                    marker.position = position;
+                                    if (marker.billboard.image.getValue() !== image)
+                                        marker.billboard.image.setValue(image);
+                                    marker.show = true;
+                                }
+                                self.map.view3D.getScene().forceRender(cesium.JulianDate.now());
+                                return marker;
+
+                            }
+                            self.view3D.setPegman = function (position, angle) {
+                                if (!(position instanceof cesium.Cartesian3 || position instanceof cesium.Cartesian2)) {
+                                    position = cesium.Cartesian3.fromDegrees(position[0], position[1]);
+                                }
+                                const heading = cesium.Math.toRadians(angle - 90);
+                                const pitch = 0;
+                                const roll = 0;
+                                const hpr = new cesium.HeadingPitchRoll(heading, pitch, roll);
+                                const orientation = cesium.Transforms.headingPitchRollQuaternion(
+                                    position,
+                                    hpr
+                                );
+                                let pegman = self.viewer.entities.getById("pegman");
+                                if (!pegman)
+                                    pegman = self.viewer.entities.add({
+                                        id: "pegman",
+                                        position: position,
+                                        orientation: orientation,
+                                        model: {
+                                            uri: TC.apiLocation + "resources/data/pegman.glb",
+                                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                                            minimumPixelSize:50,
+                                        }
+                                    });
+                                else {
+                                    pegman.position = position;
+                                    pegman.orientation = orientation;
+                                    pegman.show = true;
+                                }
+                                self.viewer.refresh();
+                                return pegman;
+                            }
+
+                            self.view3D.setCenter = function (xy) {
+
+                                /*if (block) return;*/
+                                const scene = self.map.view3D.getScene();
+                                var destination = cesium.Cartesian3.fromDegrees(xy[0], xy[1], self.view3D.getHeightFromMDT(xy));
+
+                                const center = scene.globe.pick(scene.camera.getPickRay(new cesium.Cartesian2(self.view3D.container.clientWidth / 2, self.view3D.container.clientHeight / 2)), scene);
+                                const distance = cesium.Cartesian3.distance(center, scene.camera.positionWC);
+                                var oldTransform = new cesium.Matrix4();
+                                scene.camera.transform.clone(oldTransform);
+                                
+                                scene.camera.lookAt(destination,
+                                    new cesium.HeadingPitchRange(scene.camera.heading, scene.camera.pitch, distance));
+                                scene.camera.lookAtTransform(oldTransform);
+                                /*block = true;*/
+                            }
+                            self.view3D.setLabel = function (entity, style) {                                
+                                entity.position = entity.point ? entity.position.getValue() : cesium.BoundingSphere.fromPoints(entity.polyline.positions.getValue()).center;
+                                
+                                entity.label = style ? {
+                                    outlineColor: cesium.Color.fromCssColorString(style.outlineColor),
+                                    fillColor: cesium.Color.fromCssColorString(style.fontColor),
+                                    outlineWidth: style.outlineWidth,
+                                    font: style.font,
+                                    text: style.text,
+                                    style: cesium.LabelStyle.FILL_AND_OUTLINE,
+                                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
+                                    pixelOffset: entity.polyline ? new cesium.Cartesian2(0, 0) : new cesium.Cartesian2(0, -25)
+                                } : null;
+
+                                //self.view3D.threeDDraw.setLabel(entity, style);
+                            }                            
+                            self.view3D.refreshStyle = function (feature) {
+                                const _2DStyle = feature.wrap.getStyle(true);
+                                feature.wrap.feature3D.setStyle(_2DStyle);
+                            }
+                            
+                            self.view3D.getLength = function (entity) {
+                                const coordinates = entity.polyline.positions.getValue();
+                                return coordinates.reduce(function (vi, va, index, arr) {
+                                    if (index === 0) return 0;
+                                    return vi + new cesium.EllipsoidGeodesic(cesium.Cartographic.fromCartesian(arr[index - 1]), cesium.Cartographic.fromCartesian(arr[index]), cesium.Ellipsoid.WGS84).surfaceDistance;
+                                }, 0);
+                            }
+                            self.view3D.getArea = function (entity) {
+                                const coordinates = entity.polygon.hierarchy.getValue();
+                                return self.map.view3D.viewer.areaPlanarFromEntityPolygon(coordinates.positions);                                
+                                //return Math.sqrt(Math.pow(cesium.PolygonPipeline.computeArea2D(coordinates.positions), 2));
+                            }                            
+                            
+                            
+                            //let threeDDraw;                                    
+                            self.view3D.UI = {
+                                eventBinded: false,                                
+                                ImportState: function (features) {
+                                    const drawControl = self.map.getControlsByClass(TC.control.DrawMeasureModify)[0];
+                                    
+                                    self.view3D.threeDDraw = new ThreeDDraw(self.viewer, null, drawControl ? {
+                                        dataSource: self.view3D.dataSources.get(drawControl.layer)
+                                    }:null);
+
+                                    self.view3D.viewer.scene.requestRenderMode = false;
+                                    features.forEach((feature) => {
+                                        self.view3D.addFeature.call(self.view3D, feature, self.view3D.threeDDraw.drawnDataSource, self.map.crs);                                            
+                                    });
+                                    self.view3D.viewer.scene.requestRenderMode = true;
+                                    //feature2D.setStyle(evt.detail.entity.getStyle());
+                                }
+                            }
+
+                            resolve(self.viewer);
 
                             cesium.Entity.prototype.getStyle = function () {
                                 const returnValue = {}
@@ -4510,13 +4493,13 @@ const ThreeD = (function (namespace, signature, factory) {
                                         fillColor: this.polygon.material.getValue().color.toCssHexString().substring(0, 7),
                                         fillOpacity: this.polygon.material.getValue().color.alpha,
                                         strokeColor: this.polyline.material.getValue().color.toCssHexString().substring(0, 7),
-                                        strokeWidth: this.polyline.width.getValue()
+                                        strokeWidth: this.highLighted ? this.polyline.width.getValue() - (2 * 2) : this.polyline.width.getValue()
                                     });
                                 }
                                 else if (this.polyline) {
                                     Object.assign(returnValue, /*TC.Cfg.styles.line,*/ {
                                         strokeColor: this.polyline.material.getValue().color.toCssHexString().substring(0, 7),
-                                        strokeWidth: this.polyline.width.getValue()
+                                        strokeWidth: this.highLighted ? this.polyline.width.getValue() - (2 * 2) :this.polyline.width.getValue()
                                     });
                                 }
                                 else if (this.point) {
@@ -4526,7 +4509,7 @@ const ThreeD = (function (namespace, signature, factory) {
                                         //fontSize
                                         strokeColor: this.point.outlineColor.getValue().toCssHexString().substring(0, 7),
                                         strokeWidth: this.point.outlineWidth.getValue(),
-                                        radius: (this.point.pixelSize.getValue() + (this.point.outlineWidth.getValue() * 2)) / 2
+                                        radius: (this.point.pixelSize.getValue() / 2)  + this.point.outlineWidth.getValue()
                                         //radius: this.point.pixelSize.getValue() / 2
                                     });
                                 }
@@ -4537,7 +4520,131 @@ const ThreeD = (function (namespace, signature, factory) {
 
                                 return returnValue;
                             }
+                                                   
+                            self.view3D.debugTool = ((viewer) => {                                
+                                const self = viewer;
+                                
+                                function ensureTileOutlineEntity(viewer) {
+                                    let current = null;
 
+                                    function update(rectangle, color, labelText) {
+                                        const coords = [
+                                            cesium.Cartesian3.fromRadians(rectangle.west, rectangle.south),
+                                            cesium.Cartesian3.fromRadians(rectangle.east, rectangle.south),
+                                            cesium.Cartesian3.fromRadians(rectangle.east, rectangle.north),
+                                            cesium.Cartesian3.fromRadians(rectangle.west, rectangle.north),
+                                            cesium.Cartesian3.fromRadians(rectangle.west, rectangle.south)
+                                        ];
+
+                                        if (!current) {
+                                            current = viewer.entities.add({
+                                                name: 'Tile outline',
+                                                polyline: {
+                                                    positions: coords,
+                                                    width: 5,
+                                                    material: new cesium.PolylineOutlineMaterialProperty({
+                                                        color: color
+                                                    }),
+                                                    clampToGround: true
+                                                },
+                                                // Etiqueta opcional (en el centro del rectángulo)
+                                                position: cesium.Cartesian3.fromRadians(
+                                                    (rectangle.west + rectangle.east) / 2,
+                                                    (rectangle.south + rectangle.north) / 2
+                                                ),
+                                                label: {
+                                                    text: labelText,
+                                                    font: 'bold 12px "Segoe UI", Roboto, Arial, sans-serif',
+                                                    fillColor: cesium.Color.WHITE,
+                                                    outlineColor: cesium.Color.BLACK,
+                                                    outlineWidth: 2,
+                                                    showBackground: true,
+                                                    backgroundColor: color.withAlpha(0.55),
+                                                    pixelOffset: new cesium.Cartesian2(0, -12),
+                                                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                                                }
+                                            });
+                                        } else {
+                                            current.polyline.positions = coords;
+                                            current.polyline.material.color = color.withAlpha(0.95);
+                                            current.position = cesium.Cartesian3.fromRadians(
+                                                (rectangle.west + rectangle.east) / 2,
+                                                (rectangle.south + rectangle.north) / 2
+                                            );
+                                            current.label.text = labelText;
+                                            current.label.backgroundColor = color.withAlpha(0.55);
+                                        }
+                                    }
+
+                                    function clear() {
+                                        if (current) {
+                                            viewer.entities.remove(current);
+                                            current = null;
+                                        }
+                                    }
+
+                                    return { update, clear };
+                                };
+                                //const outline = ensureTileOutlineEntity(self.viewer);
+                                const onMouseMoveOnCanvas = (movement) => {
+                                    const cartesian = self.camera.pickEllipsoid(movement.endPosition, cesium.Ellipsoid.WGS84);
+                                    const carto = cesium.Ellipsoid.WGS84.cartesianToCartographic(cartesian);
+                                    const surface = self.scene.globe._surface;
+                                    const tiles = surface && surface._tilesToRender;
+                                    if (!tiles || tiles.length === 0) return null;
+
+                                    let tile = null;
+                                    for (const t of tiles) {
+                                        if (cesium.Rectangle.contains(t.rectangle, carto)) {
+                                            if (!tile || t.level > tile.level) tile = t;
+                                        }
+                                    }
+                                    const key = `${tile.level}/${tile.x}/${tile.y}`;
+                                    // Si aún no está en el mapa (raro si ya está renderizado), predecimos vía routeFn
+                                    let provider = self.terrainProvider.log(key);
+
+                                    if (provider >= 0) {
+                                        let color;
+                                        let providerName = '';
+                                        switch (provider) {
+                                            case 0:
+                                                providerName = "Proveedor 1"
+                                                color = cesium.Color.RED;
+                                                break;
+                                            case 1:
+                                                providerName = "Proveedor 2"
+                                                color = cesium.Color.GREEN;
+                                                break;
+                                            case 2:
+                                                providerName = "Proveedor 3"
+                                                color = cesium.Color.BLUE;
+                                                break;
+
+                                        }
+                                        current.outline.update(tile.rectangle, color, `${providerName}  (L:${tile.level} X:${tile.x} Y:${tile.y})`);
+                                    }
+                                }
+                                const current = {
+                                    eventHandler: null,
+                                    outline: null,
+                                    set: (value) => {
+                                        if (value) {
+                                            if (!current.eventHandler) {
+                                                current.eventHandler = new cesium.ScreenSpaceEventHandler(self.scene.canvas);
+                                                current.outline = ensureTileOutlineEntity(self);
+                                            }
+                                            self.terrainProvider.logging = true;
+                                            current.eventHandler.setInputAction(onMouseMoveOnCanvas, cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                                        }
+                                        else {
+                                            self.terrainProvider.logging = false;
+                                            current.outline?.clear();
+                                            current.eventHandler.removeInputAction(cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                                        }
+                                    }
+                                }
+                                return current;
+                            })(self.view3D.viewer);                               
                         });
 
                     } else {
@@ -4548,7 +4655,6 @@ const ThreeD = (function (namespace, signature, factory) {
 
             setBaseLayer: function (layer) {
                 var self = this;
-
                 var get3DLayer = function (layer) {
                     if (!isCompatible(layer, self.view3D.crs)) {
                         if (layer.getFallbackLayer() !== null && isCompatible(layer.getFallbackLayer(), self.view3D.crs)) {
@@ -4612,12 +4718,21 @@ const ThreeD = (function (namespace, signature, factory) {
                 currentMapCfg.baseMap = self.map.baseLayer;
             },
 
-            addLayer: function (layer) {
+            addLayer: function (layer,index) {
                 var self = this;
 
                 switch (true) {
                     case Consts.layerType.VECTOR == layer.type: {
                         self.view3D.vector2DLayers.push(layer);
+
+                        if (!self.view3D.dataSources.has(layer)) {
+                            const dataSource = new cesium.CustomDataSource(layer.id);
+                            self.viewer.dataSources.add(dataSource);
+                            self.view3D.dataSources.set(layer, dataSource);
+                        }
+                        else if (!self.viewer.dataSources.contains(self.view3D.dataSources.get(layer))) {
+                            self.viewer.dataSources.add(self.view3D.dataSources.get(layer));
+                        }
                         break;
                     }
                     case Consts.layerType.WMTS == layer.type:
@@ -4627,7 +4742,7 @@ const ThreeD = (function (namespace, signature, factory) {
                         } else {
                             //var convertedLayer = rasterConverter.convert(layer, self.view3D.crs);
                             rasterConverter.convert(layer, self.view3D.crs).then(function (convertedLayer) {
-                                if (convertedLayer) {                         
+                                if (convertedLayer) {                                    
                                     if (convertedLayer.enablePickFeatures !== undefined) {
                                         convertedLayer.enablePickFeatures = false;
                                         convertedLayer.tcLayer = layer;
@@ -4639,12 +4754,10 @@ const ThreeD = (function (namespace, signature, factory) {
                                             self.viewer.scene.imageryLayers.remove(self.view3D.baseLayer, true);
                                         }
                                     }
-                                    cesium.TrustedServers.add(new URL("http://" + convertedLayer.url).host, "80");
-                                    cesium.TrustedServers.add(new URL("https://" + convertedLayer.url).host, "443");
-                                    cesium.TrustedServers.add("http://localhost", "8080");
-
-                                    var newImageryLayer = self.viewer.scene.imageryLayers.addImageryProvider(convertedLayer);
-
+                                    //cesium.TrustedServers.add(new URL("http://" + convertedLayer.url).host, "80");
+                                    //cesium.TrustedServers.add(new URL("https://" + convertedLayer.url).host, "443");
+                                    //cesium.TrustedServers.add("http://localhost", "8080");
+                                    var newImageryLayer = self.viewer.scene.imageryLayers.addImageryProvider(convertedLayer,index);
                                     if (layer.isBase) { // si la capa es el mapa de fondo lo envío al fondo de las capas en 3D
                                         self.view3D.baseLayer = newImageryLayer;
                                         self.viewer.scene.imageryLayers.lowerToBottom(newImageryLayer);
@@ -4712,7 +4825,7 @@ const ThreeD = (function (namespace, signature, factory) {
                                 features.forEach(f => self.view3D.setRenderOptionsFeature(f, { show: layer.getVisibility() }));
                             }
 
-                            self.viewer.scene.requestRender();
+                            self.viewer.refresh();
                         }
                         break;
                     }
@@ -4734,7 +4847,7 @@ const ThreeD = (function (namespace, signature, factory) {
                             }
                         }
 
-                        self.viewer.scene.requestRender();
+                        self.viewer.refresh();
                     }
                 }
             },
@@ -4788,45 +4901,33 @@ const ThreeD = (function (namespace, signature, factory) {
                     var destinationCartesian = camera.getRectangleCameraCoordinates(rectangle);
                     var destination = cesium.Ellipsoid.WGS84.cartesianToCartographic(destinationCartesian);
                     cesium.sampleTerrainMostDetailed(scene.terrainProvider, [cesium.Rectangle.center(rectangle)]).then(function (updatedPositions) {
-                    //cesium.when(cesium.sampleTerrainMostDetailed(scene.globe.terrainProvider, [cesium.Rectangle.center(rectangle)]), function (updatedPositions) {
+                        //cesium.when(cesium.sampleTerrainMostDetailed(scene.globe.terrainProvider, [cesium.Rectangle.center(rectangle)]), function (updatedPositions) {
 
                         var finalDestinationCartographic = {
                             longitude: destination.longitude,
                             latitude: destination.latitude,
                             //URI:Partimos de una base de una altura de al menos 200, para evitar quedar muy cerca del suelo si el rectangulo es el extent de un punto
-                            height: Math.max(destination.height,200) + updatedPositions[0].height || 0
+                            height: Math.max(destination.height, 200) + updatedPositions[0].height || 0
                         };
                         const geodesic = new cesium.EllipsoidGeodesic(destination, new cesium.Cartographic(destination.longitude, 0, destination.height));
                         const pos = geodesic.interpolateUsingSurfaceDistance(Math.max(destination.height, 200));
                         pos.height = finalDestinationCartographic.height;
-                        //camera.setView({
-                        //    destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
-                        //    orientation: {
-                        //        heading: 0,
-                        //        pitch: -1 * (Math.PI / 4)
-                        //    }
-                        //});
-                        //resolve();
-
+                        /*camera.setView({
+                            destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
+                            orientation: {
+                                heading: 0,
+                                pitch: -1 * (Math.PI / 4)
+                            }
+                        });*/
                         camera.flyTo({
                             duration: options.duration || 1,
-                            destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),    
+                            destination: cesium.Ellipsoid.WGS84.cartographicToCartesian(pos),
                             orientation: {
                                 heading: 0,
                                 pitch: -1 * (Math.PI / 4)
                             },
                             complete: function () {
-                                resolve();
-                                //var angle = cesium.Math.toRadians(50);
-                                //var pickBP = pickBottomPoint(this.viewer.scene);
-                                //pickBP = cesium.Matrix4.fromTranslation(pickBP);
-
-                                //this.view3D.rotateAroundAxis(this.viewer.scene.camera, -angle, this.viewer.scene.camera.right, pickBP, {
-                                //    duration: 250,
-                                //    callback: function () {
-                                //        resolve();
-                                //    }
-                                //});
+                                resolve();                                
                             }.bind(self)
                         });
                     });
@@ -4939,29 +5040,42 @@ const ThreeD = (function (namespace, signature, factory) {
                 return rotateAroundAxis(camera, angle, axis, transform, opt_options);
             },
 
-            addFeature: function (feature, datasource) {
+            addFeature: function (feature, datasource, featureCRS) {
                 var self = this;
 
                 var add = function () {
                     // TODO: el convert debería ser uno o varios webworker, si son muchas features se colapsa.
-                    var csfeature = featureConverter.convert(self.viewer.scene, feature, self.view2DCRS, self.crs);
-                    if (csfeature) {
+                    if (feature.wrap.feature3D) { 
+                        if (datasource && !datasource.entities.contains(feature.wrap.feature3D)) {
+                            datasource.entities.add(feature.wrap.feature3D);
+                            linkFeature(self, feature, feature.wrap.feature3D);
+                        }
+                        return;
+                    }                        
+                    var csfeature = featureConverter.convert(self.viewer.scene, feature, featureCRS || self.view2DCRS, self.crs);
+                    if (csfeature ) {
                         if (typeof csfeature.geometry === 'function') {
                             // estoy aquí // tengo que validar qué proveedor escoger, afecta, hay mucha diferencia de alturas, podría ir por capa?? búsquedas fijo por el de por defecto y track validar??
                             csfeature.geometry(self.viewer.terrainProvider).then(function (newGeometry) {
                                 // es igual a cuando no es una función... a ver cómo lo gestiono
                                 if (newGeometry instanceof Array) {
-                                    newGeometry.forEach(function (geom) {
-                                        if (geom instanceof Array) {
-                                            geom.forEach(function (geo) {
-                                                geo = addFeature.call(self, geo, datasource);
-                                                linkFeature(self, feature, geo);
-                                            });
-                                        } else {
-                                            geom = addFeature.call(self, geom, datasource);
-                                            linkFeature(self, feature, geom);
-                                        }
-                                    });
+                                    new CustomEntity({
+                                        map: self,
+                                        geometries: newGeometry,
+                                        dataSource: datasource,
+                                        feature2D: feature
+                                    })
+                                    //newGeometry.forEach(function (geom) {
+                                    //    if (geom instanceof Array) {
+                                    //        geom.forEach(function (geo) {
+                                    //            geo = addFeature.call(self, geo, datasource);
+                                    //            linkFeature(self, feature, geo);
+                                    //        });
+                                    //    } else {
+                                    //        geom = addFeature.call(self, geom, datasource);
+                                    //        linkFeature(self, feature, geom);
+                                    //    }
+                                    //});
                                 }
                                 else {
                                     var geom = addFeature.call(self, newGeometry, datasource);
@@ -4984,11 +5098,12 @@ const ThreeD = (function (namespace, signature, factory) {
                 };
 
                 // GLS: para no pintar la cruz-marker del FeatureInfo
-                if ((self.linked2DControls.featureInfo && self.linked2DControls.featureInfo.get2DMarker() === feature) ||
-                    (self.linked2DControls.featureInfo && self.linked2DControls.featureInfo.isPending())) {
+                const activeControl = TC.Map.get(self.map).activeControl.constructor.name;
+                if ((self.linked2DControls[activeControl]?.get2DMarker() === feature) ||
+                    (self.linked2DControls[activeControl]?.isPending())) {
                     // GLS: llega antes aquí que al callback de la instrucción que crea la feature, por eso necesito el timeout
                     setTimeout(function () {
-                        if (self.linked2DControls.featureInfo.get2DMarker() === feature) {
+                        if (self.linked2DControls[activeControl].get2DMarker() === feature) {
                             return;
                         } else {
                             add();
@@ -5000,24 +5115,43 @@ const ThreeD = (function (namespace, signature, factory) {
                     add();
                 }
             },
-            removeFeature: function (feature) {
+            removeFeature: function (feature,dataSource) {
                 var self = this;
                 if (self.viewer) {
                     if (feature) {
                         switch (true) {
+                            case feature instanceof Array:
+                                feature.forEach((feat) => {
+                                    self.view3D.removeFeature.call(self, feat, dataSource);
+                                });
+                                
+                                break;
                             case feature instanceof cesium.GroundPrimitive:
                                 self.viewer.scene.groundPrimitives.remove(feature);
                                 break;
                             case feature instanceof cesium.Billboard:
                                 self.viewer.billboardCollection.remove(feature);
                                 break;
+                            case feature instanceof CustomEntity:
+                                feature.remove();
+                                break;
+
                             case feature instanceof cesium.Entity:
                             case feature instanceof Object:
-                                self.viewer.entities.removeById(feature.id);
+                                if (dataSource)
+                                    dataSource.entities.remove(feature);
+                                else { 
+                                    for (let i = 0; i < self.viewer.dataSources.length; i++) {
+                                        const ds = self.viewer.dataSources.get(i);
+                                        if (ds.entities.contains(feature))
+                                            ds.entities.removeById(feature.id);
+                                    }
+                                    self.viewer.entities.removeById(feature.id);
+                                }                                
                                 break;
                         }
 
-                        self.viewer.scene.requestRender();
+                        self.viewer.refresh();
                     }
                 }
             },
@@ -5148,8 +5282,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 //}
 
                 return Promise.resolve();
-            },
-
+            },            
+                        
             lookAt: function (coords) {
                 const self = this;
 
@@ -5168,43 +5302,13 @@ const ThreeD = (function (namespace, signature, factory) {
                 });
             },
 
-            getInfoOnPickedPosition: function (pickedPosition) {
-                var self = this;
-
-                if (!pickedPosition) {
-                    return;
-                } else {
-
-                    self.map.one(Consts.event.DRAWTABLE, function (_e) {
-                        self.map.getLoadingIndicator().removeWait(self.waiting);
-                        delete self.waiting;
-                    });
-
-                    self.view3D.linked2DControls.featureInfo.send.call(self, pickedPosition).then(function (_e) {
-                        self.map.getLoadingIndicator().removeWait(self.waiting);
-                        delete self.waiting;
-                    });
-                }
-            },
-
             on: function (event, callback) {
                 const self = this;
 
                 const movement3DtoPosition2D = function (movement) {
                     if (self.viewer && self.viewer.cesiumWidget) {
                         return self.Coordinates2DTo3D(movement.endPosition || movement.position)
-                        //var ray = self.viewer.camera.getPickRay(movement.endPosition || movement.position);
-                        //var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
-                        //if (position) {
-                        //    var positionCartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(position);
-
-                        //    var lat, lon, ele;
-                        //    lat = cesium.Math.toDegrees(positionCartographic.latitude);
-                        //    lon = cesium.Math.toDegrees(positionCartographic.longitude);
-                        //    ele = Math.round(positionCartographic.height);
-
-                        //    return { lon: lon, lat: lat, ele: ele };
-                        //}
+                        
                     }
 
                     return null;
@@ -5236,30 +5340,38 @@ const ThreeD = (function (namespace, signature, factory) {
                 var cartesian = new cesium.Cartographic(cesium.Math.toRadians(geoCoords[0]), cesium.Math.toRadians(geoCoords[1]));
                 return self.viewer.scene.globe.getHeight(cartesian) || 0;
             },
-
+            getHeightFromTileset: async function (geoCoords,url) {
+                const self = this;
+                return await self.tileSetManager.getTileSetHeight(geoCoords, url ? self.tileSetManager.tilesets[url] :undefined);
+            },
             // darle una vuelta cuando esté mejor. no se me ocurre nada mejor
             addElevationMarker: function (coords, context) {
                 const self = this;
                 if (self.viewer && !self.viewer.view3DElevationMarkerPromise) {
                     self.viewer.view3DElevationMarkerPromise = true;
-                    self.viewer.readyPromise.then(function () {
-                        delete self.viewer.view3DElevationMarkerPromise;
-                        let entity = new cesium.Entity({
-                            position: cesium.Cartesian3.fromDegrees(coords[0], coords[1], self.getHeightFromMDT(coords)),
-                            name: 'elevationMarker',
-                            point: {
-                                show: true,
-                                color: cesium.Color.RED.withAlpha(0.5),
-                                pixelSize: 10,
-                                outlineColor: cesium.Color.WHITE,
-                                outlineWidth: 2,
-                                heightReference: cesium.HeightReference.CLAMP_TO_GROUND
-                            }
+                    if (!context.view3DElevationMarker) {
+                        self.viewer.readyPromise.then(function () {
+                            delete self.viewer.view3DElevationMarkerPromise;
+                            let entity = new cesium.Entity({
+                                position: cesium.Cartesian3.fromDegrees(coords[0], coords[1]),
+                                name: 'elevationMarker',
+                                point: {
+                                    show: true,
+                                    color: cesium.Color.RED.withAlpha(0.5),
+                                    pixelSize: 10,
+                                    outlineColor: cesium.Color.WHITE,
+                                    outlineWidth: 2,
+                                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND
+                                }
+                            });
+                            context.view3DElevationMarker = addFeature.call(self, entity);
                         });
-
-                        context.view3DElevationMarker = addFeature.call(self, entity);
-                    });
-                }
+                    }
+                    else {
+                        context.view3DElevationMarker.show = true;
+                    }
+                    self.viewer.refresh();
+                }                
             },
             setElevationMarker: function (coords, context) {
                 const self = this;
@@ -5268,30 +5380,84 @@ const ThreeD = (function (namespace, signature, factory) {
                         if (context.view3DElevationMarker) {
                             const position = coords;
                             //const position = self.view2DCRS !== self.crs ? Util.reproject(coords, self.view2DCRS, self.crs) : coords;
-                            context.view3DElevationMarker.position = cesium.Cartesian3.fromDegrees(position[0], position[1], self.viewer.camera.positionCartographic.height);
+                            context.view3DElevationMarker.position = cesium.Cartesian3.fromDegrees(position[0], position[1]);
                             if (!context.view3DElevationMarker.show) {
                                 context.view3DElevationMarker.show = true;
                             }
-                            self.viewer.scene.requestRender();
+                            self.viewer.refresh();
                         } else {
                             self.addElevationMarker(coords, context);
                         }
                     });
                 }
-            },
+            },            
             hideElevationMarker: function (context) {
                 const self = this;
                 if (self.viewer && context.view3DElevationMarker) {
-                    self.viewer.readyPromise.then(function () {
-                        self.removeFeature.call(self, context.view3DElevationMarker);
-                        delete context.view3DElevationMarker;
-                    });
+                    context.view3DElevationMarker.show = false;
+                    self.viewer.refresh();
+                    //self.viewer.readyPromise.then(function () {
+                    //    self.removeFeature.call(self, context.view3DElevationMarker);
+                    //    delete context.view3DElevationMarker;
+                    //});
+                }
+            },
+
+            highlightFeature: {
+                current: null,
+                innerPoint: null,
+                outerPoint: null,
+                marker:null,
+                set: function (feature) {                    
+                    if (!feature) return;                    
+                    this.highlightFeature.current = feature;                    
+                    if (feature.polyline) {                        
+                        const style = feature._wrap.parent.getStyle();                    
+                        feature.highLighted = true;
+                        const strokeColor = cesium.Color.fromCssColorString(style.strokeColor);
+                        //feature.polyline.width = new cesium.CallbackProperty(() => { return style.strokeWidth + (2* 2) }, false);                        
+                        feature.polyline.material = new cesium.PolylineDashMaterialProperty({
+                            color: new cesium.CallbackProperty(() => { return strokeColor }, false),
+                            gapColor: new cesium.CallbackProperty(() => { return new cesium.Color(Math.abs(strokeColor.red - 1), Math.abs(strokeColor.green - 1), Math.abs(strokeColor.blue - 1), strokeColor.alpha) }, false),
+                            dashLength: 30
+                        });                        
+                    }
+                    else {
+                        feature.marker = this.setMarker(feature.position.getValue(), Util.getFeatureStyleFromCss(viewProto.CLASS + '-marker')?.url, feature.marker);
+                    }
+                    this.viewer.refresh();
+                },
+                unset: function (feature) {
+                    if (!feature) return;   
+                    
+                    feature = feature || this.highlightFeature.current;
+                    if (feature) {
+                        const style = feature._wrap.parent.getStyle();
+                        if (feature.polyline) {
+                            delete feature.highLighted;
+                            //feature.polyline.width = new cesium.CallbackProperty(() => { return style.strokeWidth - (2 * 2) }, true);
+                            feature.polyline.material = new cesium.PolylineDashMaterialProperty({
+                                color: cesium.Color.fromCssColorString(style.strokeColor),
+                                gapColor: cesium.Color.fromCssColorString(style.strokeColor),
+                                dashLength: 30
+                            });                        
+                        }
+                        else {
+                            if (feature.marker) {
+                                feature.marker.entityCollection.remove(feature.marker)
+                                feature.marker = null;
+                                delete feature.marker;
+                            }                            
+                        }    
+                        this.highlightFeature.current = null;
+                        this.viewer.refresh();                        
+                    }
                 }
             },
 
             destroy: function () {
                 var self = this;
-
+                var defer = Promise.withResolvers();
                 self.map.on3DView = false;
                 //self.map.view3D = null;
 
@@ -5305,6 +5471,13 @@ const ThreeD = (function (namespace, signature, factory) {
                 // modificamos los controles disponibles
                 alterAllowedControls.call(self, Consts.view.DEFAULT);
 
+                //desactivar controles 3D propios
+                for (let name in self.controls3D) {
+                    const ctrName = name.substring(0, 1).toUpperCase() + name.substring(1)
+                    const ctl = self.map.getControlsByClass(TC.control[ctrName])[0];
+                    ctl.disable();
+                }
+
                 // sobrescribimos el comportamiento de lo botones + /- y la casita
                 override2DZoom.call(self, false);
 
@@ -5314,6 +5487,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     return Promise.resolve(!isCompatible(baseLayer, self.view3D.view2DCRS));
                 })).then(function (results) {
                     let triggerEvent;
+                    const defer2 = Promise.withResolvers();
                     if (results.length > 0) {
                         var defaultBaseLayer;
                         for (var i = 0; i < self.map.baseLayers.length; i++) {
@@ -5361,17 +5535,18 @@ const ThreeD = (function (namespace, signature, factory) {
                                         function () {
                                             showReprojectDialog(false, baseLayer, baseLayer.fallbackLayer);
                                         }, function () {
-                                            self.map.setBaseLayer(baseLayer.fallbackLayer);
+                                            self.map.setBaseLayer(baseLayer.fallbackLayer, defer2.resolve);
                                         });
                                 } else {
                                     showReprojectDialog(true, baseLayer);
                                 }
                             }
                         } else {
-                            self.map.setBaseLayer(baseLayer);
+                            self.map.setBaseLayer(baseLayer, defer2.resolve);
                         }
                     }
-
+                    else
+                        defer2.resolve();
                     currentMapCfg.baseMap = '';
 
                     self.view3D.baseLayer = null;
@@ -5388,20 +5563,16 @@ const ThreeD = (function (namespace, signature, factory) {
                     //});
 
                     self.view3D.cameraControls.unbind();
-
-                    if (self.view3D.linked2DControls.featureInfo) {
-                        self.view3D.linked2DControls.featureInfo.reset();
-                    }
-
+                    Object.keys(self.view3D.linked2DControls).forEach((key) => {
+                        self.view3D.linked2DControls[key]?.reset()
+                    });
                     if (self.view3D.linked2DControls.geolocation) {
                         self.view3D.linked2DControls.geolocation.isGeo = false;
-                        self.view3D.linked2DControls.geolocation.reset();
+                        //self.view3D.linked2DControls.geolocation.reset();
                     }
 
-
-
-                    self.view3D.tileLoadingHandler.removeAll();
-                    delete self.view3D.tileLoadingHandler;
+                    self.view3D.tileLoadingHandlerOff()
+                    delete self.view3D.tileLoadingHandlerOff;
 
                     self.viewer.destroy();
                     self.viewer = null;
@@ -5409,10 +5580,19 @@ const ThreeD = (function (namespace, signature, factory) {
                     if (triggerEvent) { // si lanzamos sin más, el control de coordenadas se renderizada en el cambio de vista y borra el modal de cambio de CRS
                         self.map.trigger(Consts.event.VIEWCHANGE, { view: Consts.view.DEFAULT });
                     }
+                    defer2.promise.then(() => {
+                        setTimeout(defer.resolve, 1000); 
+                    });
+                    
                 });
+                return defer.promise;
+            },
+            refresh: function () {
+                this?.viewer?.refresh();
             }
         }
     })();
+    
 
     return {
         init: viewProto.init.bind(viewProto),
@@ -5423,3 +5603,196 @@ const ThreeD = (function (namespace, signature, factory) {
 });
 
 export default ThreeD;
+//envoltorio de los controles de dibujo modificion y selección
+export class Draw3D {
+    #mode;
+    #layer;
+    #view;
+    #control;
+    #control2dAbortController;
+    constructor(mode, layer, view, callback) {
+        const self = this;
+        this.#mode = mode;
+        this.#layer = layer;
+        this.#view = view;
+        this.#control = new ThreeDDraw(this.#view.viewer, this.#mode, {
+            dataSource: this.#view.dataSources.get(this.#layer)
+        });
+        this.#control.addEventListener('drawend', (evt) => {
+            const map = TC.Map.get(self.#view.map); 
+            map.activeControl?.trigger(Consts.event.MEASURE, evt.detail.measurements);
+            const apiFeature = tcFeatureConstructor(evt.detail.positions, evt.detail.type);
+            if (self.#view.view2DCRS !== self.#view.crs)
+                apiFeature.setCoordinates(apiFeature.getCoordinates({ geometryCrs: self.#view.crs, crs: self.#view.view2DCRS }));
+            apiFeature.setStyle(evt.detail.entity.getStyle());
+            map.activeControl?.trigger(Consts.event.DRAWEND, {
+                feature: apiFeature,
+                transform: { geometryCrs: self.#view.view2DCRS, crs: self.#view.crs }
+            });
+            if (callback)
+                callback(apiFeature)//.then(function (feature2D) {
+        });
+        this.#control.addEventListener('drawstart', (_evt) => {
+            const map = TC.Map.get(self.#view.map);
+            map.activeControl?.trigger(Consts.event.DRAWSTART, {});
+        });
+        this.#control.addEventListener('drawupdate', (evt) => {
+            const map = TC.Map.get(self.#view.map);
+            map.activeControl?.trigger(Consts.event.MEASUREPARTIAL, evt.detail.measurements);
+        });
+        this.#control.addEventListener('point', (evt) => {
+            const map = TC.Map.get(self.#view.map);
+            const geoCoords = cesium.Cartographic.fromCartesian(evt.detail.position);
+            map.activeControl?.trigger(Consts.event.POINT, {
+                point: [cesium.Math.toDegrees(geoCoords.longitude), cesium.Math.toDegrees(geoCoords.latitude)]
+            });
+        });
+        
+    }
+    #setStyle(style) {
+        this.#control.setStyle(style);
+    }
+    activate() {        
+        this.#control.activate();
+        const control2D = TC.Map.get(this.#view.map).activeControl;
+        this.#control.setStyle(control2D.getStyle());
+        this.#control2dAbortController?.abort();
+        this.#control2dAbortController = new AbortController();
+        const { signal } = this.#control2dAbortController;
+        control2D.addEventListener(Consts.event.STYLECHANGE, (_e) => {
+            this.#setStyle(control2D.getStyle());
+        }, { signal });
+    }
+    deactivate() { 
+        this.#control.deactivate();
+        this.#control2dAbortController?.abort();
+    }
+    destroy() {
+        this.deactivate();
+    }
+
+    popCoordinate() {
+        return this.#control.popCoordinate();
+    }
+    pushCoordinate(coordinate) {
+        this.#control.pushCoordinate(coordinate);
+    }
+    end() {
+        this.#control.end();
+    }
+    visibility(visible) {
+        this.#control.visibility(visible);
+    }
+}
+export class Modify3D {
+    constructor() {
+
+    }
+}
+export class Select3D {
+    #control;
+    #layer;
+    #view;
+    #map
+    #selectCallback;
+    #pickedEntity;
+    constructor(layer, view) {
+        const self = this;
+        this.#layer = layer;
+        this.#view = view;
+        this.#control = new ThreeDDraw(this.#view.viewer, null, {
+            dataSource: this.#view.dataSources.get(this.#layer)
+        });
+        this.#map = TC.Map.get(this.#view.map);
+        this.features_ = {
+            clear: function () {                                                
+            },
+            extend: function () {                                                
+            }
+        }
+        this.#control.addEventListener('drawmodify', (evt) => {
+            const map = TC.Map.get(self.#view.map);
+            const oldCoordinates = evt.detail.entity._wrap.parent.getCoordinates();
+            const newFeature = tcFeatureConstructor(evt.detail.positions, evt.detail.type)
+            const originalFeat = evt.detail.entity._wrap.parent;
+            originalFeat.setCoordinates(newFeature.getCoordinates({ geometryCrs: this.#view.crs, crs: this.#view.view2DCRS }));
+            const newCoordinates = originalFeat.getCoordinates();
+            //originalFeat.setCoordinates(newFeature.getCoordinates());
+            map.activeControl?.history.setCoordinates(originalFeat, newCoordinates, oldCoordinates);
+            map.activeControl?.trigger(Consts.event.FEATUREMODIFY, {
+                feature: originalFeat,
+                layer: originalFeat.layer,
+                geometryChanged: true
+            });
+            this.#view.getScene().forceRender();
+        });
+        this.#control.addEventListener('unselect', (e) => {
+            const map = TC.Map.get(self.#view.map);
+            const controlEvent = new ControlEvent(Consts.event.FEATURESUNSELECT, { control: self });
+            controlEvent.features = e.detail.features;
+            map.activeControl?.dispatchEvent(controlEvent);
+        });
+    }
+    #remove(event){ 
+        if (event.feature.wrap?.feature3D && this.#layer === event.layer) {
+            this.#control.remove(event.feature.wrap.feature3D);
+            this.#pickedEntity = null;
+        }
+    }
+    #unselectFeature(evt) {
+        if (evt.control instanceof Modify && this.#pickedEntity) {
+            const unseletedFeature = (this.#pickedEntity._wrap?.parent || tcFeatureFromEntity(this.#pickedEntity));
+            unseletedFeature.setCoordinates(tcFeatureFromEntity(this.#pickedEntity).getCoordinates({ geometryCrs: this.#view.crs, crs: this.#view.view2DCRS }));
+            unseletedFeature.toggleSelectedStyle(false)
+            this.#selectCallback({ selected: [], deselected: [unseletedFeature.wrap.feature] });
+            this.#pickedEntity = null;
+        } 
+    }
+    activate(deleteMode) {
+        const self = this;
+        this.#map.on(Consts.event.FEATUREREMOVE, this.#remove.bind(self));
+        this.#map.on(Consts.event.CONTROLDEACTIVATE, this.#unselectFeature.bind(self));
+        this.#control.vertexRemove(deleteMode);
+        if (this.#control.entityForEdit && !deleteMode) this.#control.activate();
+        if (!deleteMode)
+            this.#control.activeSelectMode(function (selectedEntity) {
+                if (cesium.defined(selectedEntity)) {                    
+                    self.#pickedEntity = selectedEntity;
+                    self.#selectCallback({
+                        selected: [(selectedEntity._wrap?.parent || tcFeatureFromEntity(selectedEntity)).wrap.feature], deselected: []
+                    });
+                }
+            });
+        else
+            this.#control.deactivateSelectMode();
+    }
+    deactivate() {
+        this.#control.deactivateSelectMode();
+        this.#control.vertexRemove(false);
+        this.#control.deactivateEditing();
+        this.#map.off(Consts.event.FEATUREREMOVE, this.#remove);
+        this.#map.off(Consts.event.CONTROLDEACTIVATE, this.#unselectFeature);
+        this.#control.editMode = false;
+    }
+    setActive (active) {
+        active ? this.activate() : this.deactivate();
+    }
+    on(event, callback) {
+        this.#selectCallback = callback;
+    }
+    getFeatures () {                                            
+        if (!this.#control.getSelectedEntity()) {
+            return new ol.Collection();
+        }
+        return new ol.Collection([(this.#control.getSelectedEntity()._wrap?.parent || tcFeatureFromEntity(this.#control.getSelectedEntity())).wrap.feature]);
+    }
+    setSelected(entity){
+        this.#control.setSelectedEntity(entity);
+    }
+    /*features_ {
+        clear: function () {                                                
+        },
+        extend: function () {                                                
+        }
+    }*/
+}

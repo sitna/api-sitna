@@ -2,19 +2,6 @@
 import '../../SITNA/feature/Polyline.js';
 import '../../SITNA/feature/Polygon.js';
 
-//var DrawOptions = {
-//    fillColor: null,
-//    strokeColor: null,
-//    strokeWidth: null,
-//    minPointsStop: 0
-//}
-//export interface DrawOptions {
-//  fillColor: string | Color;
-//  strokeColor?: string | Color;
-//  strokeWidth?: number;
-//  minPointsStop?: boolean;
-//}
-
 export default class ThreeDDraw extends EventTarget {
     #viewer_;//: Viewer;
     #strokeColor_;//: Color;
@@ -33,7 +20,7 @@ export default class ThreeDDraw extends EventTarget {
     #type = "";
     julianDate = new cesium.JulianDate();
     drawingDataSource = new cesium.CustomDataSource('drawing');
-    drawnDataSource = new cesium.CustomDataSource('drawn');
+    drawnDataSource; 
     minPointsStop = 0;
     moveEntity = false;
     vertexRemoveMode = false;
@@ -42,13 +29,19 @@ export default class ThreeDDraw extends EventTarget {
     editMode = false;
     onSelectEntity = null;
     draggingVertex = false;
+    isActive = false;
 
     constructor(viewer, type, options) {
-        super();
+        super();        
         this.#viewer_ = viewer;
         this.#type = type;
-        this.#viewer_.dataSources.getByName('drawing').length > 0 ? this.drawingDataSource = this.#viewer_.dataSources.getByName('drawing')[0] : this.#viewer_.dataSources.add(this.drawingDataSource);
-        this.#viewer_.dataSources.getByName('drawn').length > 0 ? this.drawnDataSource = this.#viewer_.dataSources.getByName('drawn')[0] : this.#viewer_.dataSources.add(this.drawnDataSource);
+        if (options?.dataSource)
+            this.drawnDataSource = options.dataSource;
+        else {
+            this.drawnDataSource = new cesium.CustomDataSource('drawn');
+            this.#viewer_.dataSources.add(this.drawnDataSource);
+        }
+        this.#viewer_.dataSources.getByName('drawing').length > 0 ? this.drawingDataSource = this.#viewer_.dataSources.getByName('drawing')[0] : this.#viewer_.dataSources.add(this.drawingDataSource);        
         this.#strokeColor_ = options?.strokeColor && options.strokeColor instanceof cesium.Color ?
             options.strokeColor : cesium.Color.fromCssColorString(options?.strokeColor || 'rgba(255, 0, 0, 1)');
         this.#strokeWidth_ = options?.strokeWidth !== undefined ? options.strokeWidth : 2;
@@ -56,8 +49,16 @@ export default class ThreeDDraw extends EventTarget {
             options.fillColor : cesium.Color.fromCssColorString(options?.fillColor || 'rgba(0, 0, 0, 0.3)');
         this.#radius_ = options?.radius !== undefined ? options.radius : 10
         this.minPointsStop = !!options?.minPointsStop;
+        
     }
 
+    get dataSource() {
+        return this.drawnDataSource;
+    }
+
+    get isDrawing() {
+        return this.#activePoints_.length > 0;
+    }
 
     renderSceneIfTranslucent() {
         // because calling render decreases performance, only call it when needed.
@@ -76,7 +77,9 @@ export default class ThreeDDraw extends EventTarget {
             this.removeSketches();
         }
     }
-
+    setType(type) {
+        this.#type = type;
+    }
     popCoordinate() {
         this.#activeDistances_.pop();
         return this.#activePoints_.pop();
@@ -86,45 +89,32 @@ export default class ThreeDDraw extends EventTarget {
         //this.onLeftClick_.call(this, { position: coordinate });
     }
     end() {
-        this.finishDrawing();
+        if (this.#activePoints_.length)
+            this.finishDrawing();        
     }
     visibility(visible) {
         this.drawingDataSource.entities.show = visible;
         this.drawnDataSource.entities.show = visible;
-        this.#viewer_.scene.requestRender();
+        /*this.#viewer_.scene.requestRender();*/
     }
     remove(entity) {
         if (this.drawnDataSource.entities.contains(entity)) {
             this.drawnDataSource.entities.remove(entity)
             this.removeSketches();
-            this.#viewer_.scene.requestRender();
+            /*this.#viewer_.scene.requestRender();*/
+        }
+        this.deactivateEditing();
+        if (this.vertexRemoveMode) {
+            this.sketchPoints_.forEach((p) => {
+                p.show = false;
+            });
         }
     }
-
-    setLabel(entity = null, style) {
-        entity = entity || this.drawnDataSource.entities.values[this.drawnDataSource.entities.values.length - 1] || this.drawingDataSource.entities.values[this.drawingDataSource.entities.values.length - 1]
-        if (entity) {
-            if (!entity.position) {
-                entity.position = cesium.BoundingSphere.fromPoints(entity.polyline.positions.getValue()).center;
-            }
-            entity.label = style?{
-                outlineColor: cesium.Color.fromCssColorString(style.outlineColor),
-                fillColor: cesium.Color.fromCssColorString(style.fontColor),
-                outlineWidth: style.outlineWidth,
-                font: style.font,
-                text: style.text,
-                style: cesium.LabelStyle.FILL_AND_OUTLINE,
-                heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                pixelOffset: entity.polyline ? new cesium.Cartesian2(0, 0) : new cesium.Cartesian2(0, -25)
-            } : null;
-            if (this?.#viewer_?.cesiumWidget)
-                this.#viewer_.scene.requestRender();
-        }
-    }
+    
     moveLabel(entity) {
         if (entity.label?.text) {
-            //entity.position = this.#activePoints_ instanceof Array ? cesium.BoundingSphere.fromPoints(this.#activePoints_).center : this.#activePoints_;
-            this.#activePoints_ = this.#activePoints_ instanceof Array ? cesium.BoundingSphere.fromPoints(this.#activePoints_).center : this.#activePoints_;
+            entity.position = this.#activePoints_ instanceof Array ? cesium.BoundingSphere.fromPoints(this.#activePoints_).center : this.#activePoints_;
+            //this.#activePoints_ = this.#activePoints_ instanceof Array ? cesium.BoundingSphere.fromPoints(this.#activePoints_).center : this.#activePoints_;
         }
     }
     getEntities() {
@@ -135,17 +125,20 @@ export default class ThreeDDraw extends EventTarget {
      */
     active(value) {
         if (value) {
+            this.isActive = true;
+            this.#viewer_.scene.requestRenderMode = false;
             if (!this.eventHandler_) {
                 this.eventHandler_ = new cesium.ScreenSpaceEventHandler(this.#viewer_.canvas);
-                this.eventHandler_.setInputAction(this.onLeftClick_.bind(this), cesium.ScreenSpaceEventType.LEFT_CLICK);
-                this.eventHandler_.setInputAction(this.onDoubleClick_.bind(this), cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-                if (this.#type === "point") this.tempPoint_ = this.createProvisionalPoint_()                
-                this.eventHandler_.setInputAction(this.onMouseMove_.bind(this), cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                if(!this.eventHandler_.getInputAction(cesium.ScreenSpaceEventType.LEFT_CLICK))
+                    this.eventHandler_.setInputAction(this.onLeftClick_.bind(this), cesium.ScreenSpaceEventType.LEFT_CLICK);
+                if(!this.eventHandler_.getInputAction(cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK))
+                    this.eventHandler_.setInputAction(this.onDoubleClick_.bind(this), cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+                if (this.#type === "point") this.tempPoint_ = this.createProvisionalPoint_()     
+                if(!this.eventHandler_.getInputAction(cesium.ScreenSpaceEventType.MOUSE_MOVE))
+                    this.eventHandler_.setInputAction(this.onMouseMove_.bind(this), cesium.ScreenSpaceEventType.MOUSE_MOVE);
             }
         } else {
-            if (this.entityForEdit) {
-                this.deactivateEditing();
-            }
+            this.isActive = false;
             if (this.eventHandler_) {
                 this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_CLICK);
                 this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
@@ -153,12 +146,18 @@ export default class ThreeDDraw extends EventTarget {
                 this.eventHandler_.destroy();
                 this.eventHandler_ = undefined;
             }
+            if (this.entityForEdit) {
+                this.deactivateEditing();
+            }
             //this.eventHandler_ = undefined;
             if (this.tempPoint_) {
                 this.drawingDataSource.entities.remove(this.tempPoint_);
                 this.tempPoint_ = null;
-                this.#viewer_.scene.requestRender();
+                /*this.#viewer_.scene.requestRender();*/
             }
+            this.#viewer_.scene.requestRenderMode = true;
+            this.#viewer_.scene.requestRender();
+            
         }
         console.log("=================" + (value?"Active":"Deactivate")+"================");
         this.dispatchEvent(new CustomEvent('statechanged', { detail: { active: value } }));
@@ -166,71 +165,52 @@ export default class ThreeDDraw extends EventTarget {
     activeSelectMode(callback) {
         this.editMode = true;
         //if (this.entityForEdit) return;
-        this.onSelectEntity = callback;
-        //if (this.eventHandler_) {
-        //    this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_CLICK);
-        //    this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-        //    this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.MOUSE_MOVE);
-        //    this.eventHandler_.destroy();
-        //}
+        this.onSelectEntity = callback;        
         if(!this.eventHandler_)
             this.eventHandler_ = new cesium.ScreenSpaceEventHandler(this.#viewer_.canvas);
         this.eventHandler_.setInputAction(this.onLeftClick_.bind(this), cesium.ScreenSpaceEventType.LEFT_CLICK);
         this.eventHandler_.setInputAction(this.onMouseMove_.bind(this), cesium.ScreenSpaceEventType.MOUSE_MOVE);
     }
     deactivateSelectMode() {
+        if (this.vertexRemoveMode) return;
         this.editMode = false;
         this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_CLICK);         
         this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        this.deactivateEditing();
+        this.eventHandler_.destroy();
+        this.eventHandler_ = undefined;        
     }
-    setStyle(style, entity) {
-        if (!entity) {
-            if (!this.entityForEdit) {
-                this.#strokeColor_ = cesium.Color.fromCssColorString(style.strokeColor);
-                this.#strokeWidth_ = style.strokeWidth;
-                if (style.fillColor) {
-                    this.#fillColor_ = cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity);
-                }
-                if (style.radius) {
-                    this.#radius_ = style.radius;
-                }
-            }
+    setStyle(style) {
+        if (style.strokeColor)
+            this.#strokeColor_ = cesium.Color.fromCssColorString(style.strokeColor);
+        if (style.strokeWidth)
+            this.#strokeWidth_ = style.strokeWidth;
+        if (style.fillColor || style.fillOpacity) {
+            this.#fillColor_ = cesium.Color.fromCssColorString(style.fillColor || this.#fillColor_.toCssHexString()).withAlpha(style.fillOpacity || 1);
         }
-        else {
-            if (entity.point) {
-                entity.point.color = cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity);//cesium.Color.fromBytes.apply(this, [...style.fillColor.slice(0, 3), 255 * style.fillColor[3]]);
-                entity.point.pixelSize = (style.radius - style.strokeWidth) * 2;//(style.radius * 2) - style.strokeWidth / 2;
-                entity.point.outlineWidth = style.strokeWidth;
-                entity.point.outlineColor = cesium.Color.fromCssColorString(style.strokeColor);
-            }
-            if (entity.polyline) {
-                entity.polyline.width = style.strokeWidth;
-                entity.polyline.material = cesium.Color.fromCssColorString(style.strokeColor);
-            }
-            if (entity.polygon) {
-                entity.polygon.material = cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity);                
-            }
-            if (this?.#viewer_?.cesiumWidget)
-                this.#viewer_.scene.requestRender();
-            //this.#viewer_.scene.requestRender();
+        if (style.radius) {
+            this.#radius_ = style.radius;
         }
+        
     }
-    vertexRemove(active) {
+    vertexRemove(active) {        
+        const entityCollection = this.drawingDataSource.entities;
+        this.sketchPoints_.forEach(function (sp) {
+            entityCollection.remove(sp);
+        });
+        this.createSketchPoints_(this.#activePoints_, !active)
         if (active) {
-            this.vertexRemoveMode = true;
-            this.sketchPoints_.filter((p, i) => i % 2).forEach((p) => {
-                p.show = false;
-            });
+            this.vertexRemoveMode = true;            
         }
         else {
-            this.vertexRemoveMode = false;
-            this.sketchPoints_.forEach((p) => {
-                p.show = true;
-            });
+            this.vertexRemoveMode = false;   
         }
+        this.#viewer_.refresh();
+        
     }    
-    activateEditing() {
+    activateEditing() {        
         if (!this.eventHandler_ || !this.entityForEdit) return;
+        this.#viewer_.scene.requestRenderMode = false;
         this.#type = (this.entityForEdit.polygon ? "polygon" : (this.entityForEdit.polyline ? "polyline" : "point"));
         this.eventHandler_.setInputAction(event => this.onLeftDown_(event), cesium.ScreenSpaceEventType.LEFT_DOWN);
         this.eventHandler_.setInputAction(event => this.onLeftUp_(event), cesium.ScreenSpaceEventType.LEFT_UP);
@@ -252,10 +232,14 @@ export default class ThreeDDraw extends EventTarget {
                     this.#activePoints_, false);
                 createVirtualSPs = true;
                 break;
-            case 'polygon':
-                positions = this.#activePoints_ = this.entityForEdit.polygon?.hierarchy?.getValue(this.julianDate).positions;
-                this.entityForEdit.polygon.hierarchy = new cesium.CallbackProperty(() => new cesium.PolygonHierarchy(this.#activePoints_), false);
-                this.entityForEdit.polyline.positions = new cesium.CallbackProperty(() => [...this.#activePoints_, this.#activePoints_[0]], false);
+            case 'polygon':                 
+                positions = this.#activePoints_ = this.entityForEdit.polygon?.hierarchy?.getValue(this.julianDate).positions
+                this.entityForEdit.polygon.hierarchy = new cesium.CallbackProperty(() => {
+                    return new cesium.PolygonHierarchy(this.#activePoints_);
+                }, false);
+                this.entityForEdit.polyline.positions = new cesium.CallbackProperty(() => {
+                    return [...this.#activePoints_, this.#activePoints_[0]];
+                }, false);
                 createVirtualSPs = true;
                 break;
             case 'rectangle':
@@ -284,6 +268,7 @@ export default class ThreeDDraw extends EventTarget {
 
     }
     createSketchPoints_(positions, createVirtualSPs) {
+        this.sketchPoints_ =[];
         positions.forEach((p, idx) => {
             const sketchPoint = this.createSketchPoint_(p, { edit: true, positionIndex: idx });
             sketchPoint.properties.index = idx;
@@ -295,7 +280,7 @@ export default class ThreeDDraw extends EventTarget {
                 this.sketchPoints_.push(virtualSketchPoint);
             }
         });
-        if (this.#type === 'polygon' && positions.length > 2) {
+        if (createVirtualSPs && this.#type === 'polygon' && positions.length > 2) {
             // We need one more virtual sketchpoint for polygons
             const lastIdx = positions.length - 1;
             const p2 = this.halfwayPosition_(positions[lastIdx], positions[0]);
@@ -303,7 +288,7 @@ export default class ThreeDDraw extends EventTarget {
             virtualSketchPoint.properties.index = lastIdx;
             this.sketchPoints_.push(virtualSketchPoint);
         }
-        this.#viewer_.scene.requestRender();
+        //this.#viewer_.scene.requestRender();
     }
 
     HighlightSketchPoint(sketchPoint) {
@@ -316,7 +301,8 @@ export default class ThreeDDraw extends EventTarget {
                 }, false),
                 outlineWidth: 2,
                 outlineColor: cesium.Color.BLACK,
-                color: cesium.Color.TRANSPARENT
+                color: cesium.Color.TRANSPARENT,
+                heightReference : cesium.HeightReference.CLAMP_TO_TERRAIN
             }
         }
         let innerPoint = {
@@ -328,7 +314,8 @@ export default class ThreeDDraw extends EventTarget {
                 }, false),
                 outlineWidth: 2,
                 outlineColor: cesium.Color.WHITE,
-                color: cesium.Color.TRANSPARENT
+                color: cesium.Color.TRANSPARENT,
+                heightReference: cesium.HeightReference.CLAMP_TO_TERRAIN
             }
         }
 
@@ -337,15 +324,20 @@ export default class ThreeDDraw extends EventTarget {
     }
 
     UnhighlightSketchPoint(sketchPoint) {
+        sketchPoint.innerPoint.show = false;
+        sketchPoint.outerPoint.show = false;
+
         this.drawnDataSource.entities.remove(sketchPoint.innerPoint);
         this.drawnDataSource.entities.remove(sketchPoint.outerPoint);
 
         delete sketchPoint.innerPoint;
         delete sketchPoint.outerPoint;
+
+        this.#viewer_.scene.requestRender();
     }
 
-    deactivateEditing() {
-        if (!this.eventHandler_ || !this.entityForEdit) return;
+    deactivateEditing() {        
+        if (!this.eventHandler_ || !this.entityForEdit || this.vertexRemoveMode) return;        
         if (this.#activePoints_ instanceof Array ? this.#activePoints_.length : this.#activePoints_  ) {
             switch (this.#type) {
                 case 'polyline':
@@ -360,10 +352,9 @@ export default class ThreeDDraw extends EventTarget {
                     this.entityForEdit.polygon.hierarchy = new cesium.PolygonHierarchy([...this.#activePoints_]);
                     break;
             }
-            if (this?.#viewer_?.cesiumWidget)
-                this.#viewer_.scene.requestRender();
-        }
-                
+            //if (this?.#viewer_?.cesiumWidget)
+            //    this.#viewer_.scene.requestRender();
+        }        
         this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_DOWN);
         this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.LEFT_UP);
         //this.eventHandler_.removeInputAction(cesium.ScreenSpaceEventType.MOUSE_MOVE);
@@ -373,6 +364,18 @@ export default class ThreeDDraw extends EventTarget {
         });
         this.sketchPoints_ = [];
         this.#activePoints_ = [];
+        this.#viewer_.scene.requestRenderMode = true;
+        this.#viewer_.scene.forceRender();
+        const modifiedFeature = this.entityForEdit._wrap.parent;
+        delete this.entityForEdit.editing;
+        delete this.entityForEdit.setCoordinates;
+        this.entityForEdit = undefined;
+        this.dispatchEvent(new CustomEvent('unselect', {
+            detail: {
+                features: [modifiedFeature]
+            }
+        }));
+        
         console.log("=================DeactivateEditing================");
     }
 
@@ -398,7 +401,7 @@ export default class ThreeDDraw extends EventTarget {
             }
             entity = this.drawShape_(this.#activePoints_);
         }
-        this.#viewer_.scene.requestRender();
+        /*this.#viewer_.scene.requestRender();*/
 
         const measurements = this.getMeasurements(positions, this.#type);
         this.dispatchEvent(new CustomEvent('drawend', {
@@ -421,6 +424,7 @@ export default class ThreeDDraw extends EventTarget {
                 (this.entityForEdit && this.drawnDataSource.entities.contains(entity.id) && this.entityForEdit != entity.id) ||
                 (this.entityForEdit && this.sketchPoints_.some((p)=>p===entity.id))));
     }
+    
     removeSketches(full) {
         this.drawingDataSource.entities.removeAll();
         if (this.tempPoint_) this.drawingDataSource.entities.add(this.tempPoint_);
@@ -474,7 +478,8 @@ export default class ThreeDDraw extends EventTarget {
                 color: new cesium.CallbackProperty(() => { return this.#fillColor_ }, false),
                 outlineWidth: new cesium.CallbackProperty(() => { return this.#strokeWidth_ }, false),
                 outlineColor: new cesium.CallbackProperty(() => { return this.#strokeColor_ }, false),
-                pixelSize: new cesium.CallbackProperty(() => { return (this.#radius_ - this.#strokeWidth_) * 2  }, false)
+                pixelSize: new cesium.CallbackProperty(() => { return (this.#radius_ + this.#strokeWidth_) }, false),
+                heightReference: cesium.HeightReference.CLAMP_TO_GROUND
             }
         })
 
@@ -493,18 +498,21 @@ export default class ThreeDDraw extends EventTarget {
 
     drawShape_(positions) {
         if (this.#type === 'point') {
-            return this.drawnDataSource.entities.add({
+            //return this.drawnDataSource.entities.add({
+            return new cesium.Entity({
                 position: positions[0],
                 point: {
                     color: this.#fillColor_,
-                    pixelSize: (this.#radius_ - this.#strokeWidth_ ) *2 ,
+                    pixelSize: (this.#radius_ - this.#strokeWidth_) * 2 ,
                     outlineWidth: this.#strokeWidth_,
                     outlineColor: this.#strokeColor_,
+                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND
                 }
             });
 
         } else if (this.#type === 'polyline') {
-            return this.drawnDataSource.entities.add({
+            //return this.drawnDataSource.entities.add({
+            return new cesium.Entity({
                 polyline: {
                     positions: positions,
                     clampToGround: true,
@@ -514,7 +522,8 @@ export default class ThreeDDraw extends EventTarget {
                 //label: getDimensionLabel(this.type, this.activeDistances_)
             });
         } else if (this.#type === 'polygon' || this.#type === 'rectangle') {
-            return this.drawnDataSource.entities.add({
+            //return this.drawnDataSource.entities.add({
+            return new cesium.Entity({
                 polygon: {
                     hierarchy: {
                         positions: positions
@@ -581,7 +590,42 @@ export default class ThreeDDraw extends EventTarget {
         }
 
     }
+    addPoint(coordinate) {
+        let position = this.getPosition(coordinate);
+        //const position = this.#viewer_.scene.globe.pick(this.#viewer_.camera.getPickRay(event.position), this.#viewer_.scene)
 
+        if (position) {
+
+            if (!this.sketchPoint_) {
+                this.dispatchEvent(new CustomEvent('drawstart', { detail: { position } }));
+                this.sketchPoint_ = this.createSketchPoint_(position);
+                this.activePoint_ = position;
+
+                this.createSketchLine_(this.dynamicSketLinePositions());
+                /*this.#viewer_.scene.requestRender();*/
+                if (this.#type === 'point') {
+                    this.#activePoints_.push(position);
+                    this.finishDrawing();
+                    return;
+                }
+            } else {
+                this.sketchPoint_.position.setValue(position);
+                if (!this.#activeDistances_.includes(this.#activeDistance_)) {
+                    this.#activeDistances_.push(this.#activeDistance_);
+                }
+            }
+            this.#activePoints_.push(this.activePoint_);
+            const forceFinish = this.minPointsStop && (
+                (this.#type === 'polygon' && this.#activePoints_.length === 3) ||
+                (this.#type === 'polyline' && this.#activePoints_.length === 2)
+            );
+            if ((this.#type === 'rectangle' && this.#activePoints_.length === 3) || forceFinish) {
+                this.finishDrawing();
+            }
+            this.dispatchEvent(new CustomEvent('point', { detail: { position } }));
+        }
+
+    }
     onLeftClick_(event) {
         if (this.editMode) {
             this.onEntityClick_(event)
@@ -590,63 +634,75 @@ export default class ThreeDDraw extends EventTarget {
             this.#viewer_.scene.pick(event.position);
         }
         else {
-            const position = this.#viewer_.scene.globe.pick(this.#viewer_.camera.getPickRay(event.position), this.#viewer_.scene)
-            if (position) {
-
-                if (!this.sketchPoint_) {
-                    this.dispatchEvent(new CustomEvent('drawstart'));
-                    this.sketchPoint_ = this.createSketchPoint_(position);
-                    this.activePoint_ = position;
-
-                    this.createSketchLine_(this.dynamicSketLinePositions());
-                    this.#viewer_.scene.requestRender();
-                    if (this.#type === 'point') {
-                        this.#activePoints_.push(position);
-                        this.finishDrawing();
-                        return;
-                    }
-                } else {
-                    this.sketchPoint_.position.setValue(position);
-                    if (!this.#activeDistances_.includes(this.#activeDistance_)) {
-                        this.#activeDistances_.push(this.#activeDistance_);
-                    }
-                }
-                this.#activePoints_.push(this.activePoint_);
-                const forceFinish = this.minPointsStop && (
-                    (this.#type === 'polygon' && this.#activePoints_.length === 3) ||
-                    (this.#type === 'polyline' && this.#activePoints_.length === 2)
-                );
-                if ((this.#type === 'rectangle' && this.#activePoints_.length === 3) || forceFinish) {
-                    this.finishDrawing();
-                }
-                this.dispatchEvent(new CustomEvent('point', { detail: { position } }));
-            }
+            this.addPoint(event.position)
         }               
         //this.renderSceneIfTranslucent();
         
     }
+    #setSelectedEntity(pickedFeature){
+        const self =this;
+         this.entityForEdit = pickedFeature;
+        this.entityForEdit.editing = true;
+        this.entityForEdit.setCoordinates = (coordinates) => {
+            switch (this.#type) {
+                case "point":
+                    self.#activePoints_ = cesium.Cartesian3.fromDegrees(coordinates[0], coordinates[1], coordinates[2] || null, cesium.Ellipsoid.WGS84);
+                    break;
+                case "polyline":
+                    self.#activePoints_ = coordinates.map((coordinate) => {
+                        return cesium.Cartesian3.fromDegrees(coordinate[0], coordinate[1], coordinate[2] || null, cesium.Ellipsoid.WGS84);
+                    });
+                    break;
+                case "polygon": 
+                    self.#activePoints_ = coordinates[0].slice(0, coordinates[0].length - 1).map((coordinate) => {
+                        return cesium.Cartesian3.fromDegrees(coordinate[0], coordinate[1], coordinate[2] || null, cesium.Ellipsoid.WGS84);
+                    });                        
+                    break;
+
+            }
+            if (self.sketchPoints_.length) { 
+                self.sketchPoints_.forEach(sp => self.drawingDataSource.entities.remove(sp));
+                self.createSketchPoints_(self.#activePoints_, !self.vertexRemoveMode);
+            }            
+        }
+    }
 
     onEntityClick_(event) {
+        const self = this;
         console.log("entity click");
         if (!this.onSelectEntity) return
-        const pickedFeature = this.#viewer_.scene.pick(event.position);
+        const pickedFeature = this.#viewer_.pick(event.position);
+        
         if (cesium.defined(pickedFeature) && cesium.defined(pickedFeature.id) && this.drawnDataSource.entities.contains(pickedFeature.id)) {
             if (this.entityForEdit) {
                 this.deactivateEditing()
             }
-            this.entityForEdit = pickedFeature.id;
+            this.#setSelectedEntity(pickedFeature.id);
             this.activateEditing();
             //this.activate();
             this.onSelectEntity(pickedFeature.id);
         }
-        else if (cesium.defined(pickedFeature) && cesium.defined(pickedFeature.id)  && this.sketchPoints_?.indexOf(pickedFeature.id)>=0) {
+        else if (cesium.defined(pickedFeature) && cesium.defined(pickedFeature.id) && this.sketchPoints_?.indexOf(pickedFeature.id) >= 0) {
             return;
         }
         else {
             this.deactivateEditing();
             this.onSelectEntity(null);
         }
-            
+    }
+    setSelectedEntity(pickedFeature) {
+        if (this.entityForEdit) {
+            this.deactivateEditing()
+        }
+        this.#setSelectedEntity(pickedFeature);
+        if (this.vertexRemoveMode)
+            this.sketchPoints_.forEach((p) => {
+                p.show = true;
+            });
+        else
+            this.activateEditing();
+        //this.activate();
+        this.onSelectEntity(pickedFeature);
     }
 
     updateRectCorner(corner, oppositePoint, midPoint, midPointPrev, midScale, negate) {
@@ -693,7 +749,7 @@ export default class ThreeDDraw extends EventTarget {
             sp.position = positions[key];
             this.#activePoints_[key] = positions[key];
         });
-        this.#viewer_.scene.requestRender();
+        /*this.#viewer_.scene.requestRender();*/
     }
 
     onMouseMove_(event) {
@@ -702,7 +758,7 @@ export default class ThreeDDraw extends EventTarget {
         }
         else {
             this.renderSceneIfTranslucent();
-            const position = this.#viewer_.scene.globe.pick(this.#viewer_.camera.getPickRay(event.endPosition), this.#viewer_.scene);
+            const position = this.getPosition(event.endPosition);
             if (!position)
                 return;
             if (this.sketchPoint_) {
@@ -714,17 +770,18 @@ export default class ThreeDDraw extends EventTarget {
                 this.tempPoint_.position.setValue(position);
             }
             //
-            this.#viewer_.scene.requestRender();
+            /*this.#viewer_.scene.requestRender();*/
         }
         
     }
     onDragPoint_(event) {
         this.renderSceneIfTranslucent();
-        const position = this.#viewer_.scene.globe.pick(this.#viewer_.camera.getPickRay(event.endPosition), this.#viewer_.scene);
+        const position = this.getPosition(event.endPosition);
         if (!position)
             return;
         if (this.entityForEdit) {
             if (this.moveEntity) {
+                this.#viewer_.scene.requestRenderMode = false;
                 if (this.#type === 'point') {
                     //this.entityForEdit.position = position;
                     this.#activePoints_ = position;
@@ -812,7 +869,7 @@ export default class ThreeDDraw extends EventTarget {
             this.#activeDistances_.push(this.#activeDistance_);
         }
         this.#activePoints_.pop();
-        this.finishDrawing();
+        this.finishDrawing();        
     }
 
     /*
@@ -836,10 +893,11 @@ export default class ThreeDDraw extends EventTarget {
                         }));
                         return;
                     }
-                    const indexFromEntity = this.sketchPoints_.filter((p, i) => !(i % 2)).indexOf(objects[0].id);
+                    const indexFromEntity = this.sketchPoints_.indexOf(objects[0].id);
+                    //const indexFromEntity = this.sketchPoints_.filter((p, i) => !(i % 2)).indexOf(objects[0].id);
                     const indexFromSketch = this.sketchPoints_.indexOf(objects[0].id);
 
-                    const VPToMove = this.#type === "polygon"?this.sketchPoints_[indexFromSketch - 1] || this.sketchPoints_[this.sketchPoints_.length - 1] : null;
+                    const VPToMove = this.#type === "polygon" ? this.sketchPoints_[indexFromSketch - 1] || this.sketchPoints_[this.sketchPoints_.length - 1] : this.sketchPoints_[indexFromSketch - 1] || null;
                     const VPToRemove = this.sketchPoints_[indexFromSketch + 1] || this.sketchPoints_[indexFromSketch - 1];
                     if (VPToMove && VPToMove !== VPToRemove) {
                         VPToMove.position = this.halfwayPosition_(this.#activePoints_[(indexFromEntity === 0 ? this.#activePoints_.length : indexFromEntity) - 1]
@@ -850,12 +908,7 @@ export default class ThreeDDraw extends EventTarget {
                     this.drawingDataSource.entities.remove(VPToRemove);
                     this.drawingDataSource.entities.remove(objects[0].id);
                     this.removeVertexToPolylineOrPolygon_(indexFromEntity);
-                    //if (this.#type === "polyline")
-                    //this.entityForEdit.polyline.positions = this.#activePoints_;
-                    //else {
-                    //    this.entityForEdit.polyline.positions = [...this.#activePoints_, this.#activePoints_[0]];
-                    //    this.entityForEdit.polygon.hierarchy = new cesium.PolygonHierarchy(this.#activePoints_);
-                    //}
+                    
                     this.sketchPoints_.filter((p) => !p.properties.virtual).forEach((p, index) => {
                         p.properties.index = index;
                     });
@@ -871,7 +924,8 @@ export default class ThreeDDraw extends EventTarget {
                         }
                     }));
                     this.moveLabel(this.entityForEdit);
-
+                                        
+                    //this.drawnDataSource.refresh();
                 }
                 else {
                     const selectedPoint = objects.find(obj => !!obj.id.point || !!obj.id.billboard);
@@ -881,6 +935,8 @@ export default class ThreeDDraw extends EventTarget {
                     const properties = selectedEntity.properties;
                     // checks if picked entity is point geometry or one of the sketch points for other geometries
                     this.moveEntity = selectedEntity.id === this.entityForEdit.id ||
+                        selectedEntity.id === this.entityForEdit.innerPoint?.id ||
+                        selectedEntity.id === this.entityForEdit.outerPoint?.id ||
                         this.sketchPoints_.some(sp => sp.id === selectedEntity.id) ||
                         (properties && properties.type && properties.type.getValue() === 'rotate');
                     if (this.moveEntity && this.sketchPoint_?.properties?.virtual) {
@@ -934,7 +990,7 @@ export default class ThreeDDraw extends EventTarget {
         this.sketchPoints_.splice((pressedIdx + 1) * 2, 0, realSP1, virtualSP1);
         this.sketchPoints_.forEach((sp, idx) => sp.properties.index = Math.floor(idx / 2));
         this.sketchPoint_ = realSP1;
-        this.#viewer_.scene.requestRender();
+        /*this.#viewer_.scene.requestRender();*/
     }
 
     insertVertexToPolylineOrPolygon_(idx, coordinates) {
@@ -951,6 +1007,7 @@ export default class ThreeDDraw extends EventTarget {
         this.#viewer_.scene.screenSpaceCameraController.enableInputs = true;
         
         if (this.moveEntity) {
+            this.#viewer_.scene.requestRenderMode = true;
             this.dispatchEvent(new CustomEvent('drawmodify', {
                 detail: {
                     positions: this.#activePoints_,
@@ -1009,30 +1066,63 @@ export default class ThreeDDraw extends EventTarget {
             )
         };
     }
+    
     getMeasurements(positions, type) {
         const value = {
-            units: 'm'
+            units: TC.Consts.units.METERS
         };
         const distances = [];
-        positions.forEach((p, key) => {
-            if (key > 0) {
-                distances.push(new cesium.EllipsoidGeodesic(cesium.Cartographic.fromCartesian(positions[key - 1]), cesium.Cartographic.fromCartesian(p), cesium.Ellipsoid.WGS84).surfaceDistance);
-            }
-        });
+        
 
         if (type === 'polyline') {
+            positions.forEach((p, key) => {
+                if (key === 0) return;
+                distances.push(new cesium.EllipsoidGeodesic(cesium.Cartographic.fromCartesian(positions[key - 1]), cesium.Cartographic.fromCartesian(p), cesium.Ellipsoid.WGS84).surfaceDistance);
+            });
             value["length"] = distances.reduce((a, b) => a + b, 0);
         }
         else if (type === 'polygon') {
+            positions.forEach((p, key) => {
+                distances.push(new cesium.EllipsoidGeodesic(cesium.Cartographic.fromCartesian(key > 0 ? positions[key - 1] : positions.at(-1)), cesium.Cartographic.fromCartesian(p), cesium.Ellipsoid.WGS84).surfaceDistance);
+            });
             value["perimeter"] = distances.reduce((a, b) => a + b, 0);
-
-            value["area"] = positions.length > 2 ? Math.sqrt(Math.pow(cesium.PolygonPipeline.computeArea2D(positions), 2)) : 0;
+            value["area"] = this.#viewer_.areaPlanarFromEntityPolygon(positions);
         }
         else if (type === "point") {
-            return {};
+            return {
+                units: TC.Consts.units.DEGREES,
+                coordinates:[
+                    cesium.Math.toDegrees(cesium.Cartographic.fromCartesian(positions[0], cesium.Ellipsoid.WGS84).longitude),
+                    cesium.Math.toDegrees(cesium.Cartographic.fromCartesian(positions[0], cesium.Ellipsoid.WGS84).latitude),
+                    cesium.Cartographic.fromCartesian(positions[0], cesium.Ellipsoid.WGS84).height
+                ]
+            };
         }
 
         return value;
+    }
+
+    getPosition(position) {
+        const ray = this.#viewer_.camera.getPickRay(position);
+        for(var i=0;i<this.#viewer_.scene.primitives.length;i++){
+            if (this.#viewer_.scene.primitives.get(i).pick && this.#viewer_.scene.primitives.get(i).show){
+                const newPos=this.#viewer_.scene.primitives.get(i).pick(ray,this.#viewer_.scene);
+                if(newPos) return newPos;
+            }
+        }
+        const pickInfo = this.#viewer_.scene.pick(position);
+        if (pickInfo && pickInfo.primitive && pickInfo.primitive instanceof cesium.Cesium3DTileset) {            
+            return pickInfo.primitive.pick(ray, this.#viewer_.scene)
+        }
+        else {            
+            return this.#viewer_.scene.globe.pick(ray, this.#viewer_.scene);
+        }
+    }
+    addEntity(entity) {
+        this.drawnDataSource.entities.add(entity);
+    }
+    getSelectedEntity() {
+        return this.entityForEdit;
     }
 }
 
