@@ -55,6 +55,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll</HintPath>
       <Private>False</Private>
@@ -106,16 +109,36 @@
     <Content Include="batch\ol-webpack\webpack.config.js" />
     <Content Include="css\compiler.js" />
     <Content Include="css\control\AttributesEdit.css" />
+    <Content Include="css\control\ElevationProfile.css" />
     <Content Include="css\control\FeatureStyler.css" />
     <Content Include="css\control\ImageMagnifier.css" />
+    <Content Include="css\control\Route.css" />
+    <Content Include="css\control\TimeLine.css" />
+    <Content Include="css\control\scenes.css" />
     <Content Include="css\control\TrackEdit.css" />
     <Content Include="css\control\LayerLegend.css" />
+    <Content Include="css\img\directions-bike.svg" />
+    <Content Include="css\img\directions-hgv.svg" />
+    <Content Include="css\img\directions-hiking.svg" />
+    <Content Include="css\img\directions-mtb.svg" />
+    <Content Include="css\img\directions-road-bike.svg" />
+    <Content Include="css\img\directions-sprites.svg" />
+    <Content Include="css\img\directions-walk.svg" />
+    <Content Include="css\img\directions-wheelchair.svg" />
+    <Content Include="css\img\directions-car.svg" />
     <Content Include="css\img\icon-copy.svg" />
     <Content Include="css\img\icon-share.svg" />
+    <Content Include="css\img\marker-route-end.png" />
+    <Content Include="css\img\marker-route-start.png" />
+    <Content Include="css\img\marker-route-stop.png" />
     <Content Include="css\img\tcCtlLayerLegendLoading.svg" />
     <Content Include="css\img\thumb-basemap-grey.png" />
-	<Content Include="css\img\thumb-ortho2023.jpg" />
+    <Content Include="css\img\thumb-ortho-estella2025.jpg" />
+    <Content Include="css\img\thumb-ortho-pamplona2025.jpg" />
+    <Content Include="css\img\thumb-ortho-tafalla2025.jpg" />
+    <Content Include="css\img\thumb-ortho-tudela2025.jpg" />
     <Content Include="css\img\thumb-ortho2024.jpg" />
+    <Content Include="css\img\thumb-ortho2025.jpg" />
     <Content Include="css\img\thumb-orthophoto.jpg" />
     <Content Include="css\img\thumb-topo-pamplona.jpg" />
     <Content Include="css\ui\sitna-tab.css" />
@@ -174,6 +197,7 @@
     <Content Include="SITNA\control.js" />
     <Content Include="SITNA\control\Control.js" />
     <Content Include="SITNA\control\ControlEvent.js" />
+    <Content Include="SITNA\feature\FeatureEvent.js" />
     <Content Include="SITNA\filter.js" />
     <Content Include="SITNA\format\BinaryFormat.js" />
     <Content Include="SITNA\format\GeoPackage.js" />
@@ -185,7 +209,11 @@
     <Content Include="SITNA\ui\Toggle.js" />
     <Content Include="SITNA\ui\Button.js" />
     <Content Include="SITNA\ui\Component.js" />
+    <Content Include="TC\cesium\MergeTerrainProvider.js" />
+    <Content Include="TC\cesium\OGCTerrainProvider.js" />
+    <Content Include="TC\cesium\TileSetManager.js" />
     <Content Include="TC\Controller.js" />
+    <Content Include="TC\control\ElevationProfile.js" />
     <Content Include="TC\control\FeatureStyler.js" />
     <Content Include="TC\control\FileEdit.js" />
     <Content Include="TC\control\InfoDisplay.js" />
@@ -209,6 +237,8 @@
     <Content Include="css\img\thumb-bta.png" />
     <Content Include="css\img\thumb-opentopomap.png" />
     <Content Include="css\img\thumb-ortho2022.jpg" />
+    <Content Include="TC\control\Route.js" />
+    <Content Include="TC\control\Scenes.js" />
     <Content Include="TC\control\TimeLine.js" />
     <Content Include="TC\control\TrackDownloadDialog.js" />
     <Content Include="TC\control\TrackEdit.js" />
@@ -219,12 +249,22 @@
     <Content Include="SITNA\layer\Vector.js" />
     <Content Include="TC\Observer.js" />
     <Content Include="TC\templates\compiler.js" />
+    <Content Include="TC\templates\tc-ctl-finfo-service.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm-elm-info-legend.hbs" />
+    <Content Include="TC\templates\tc-ctl-wlm-elm-info.hbs" />
+    <Content Include="TC\tool\FeatureHistory.js" />
+    <Content Include="TC\tool\FeatureHistoryEvent.js" />
     <Content Include="TC\tool\FeatureTypeParser.js" />
     <Content Include="batch\xsd-prefetch-module-creator.js" />
     <Content Include="TC\tool\OgcApiProcessesElevationService.js" />
+    <Content Include="TC\tool\OpenRouteService.js" />
     <Content Include="TC\tool\WellKnowNameFactory.js" />
     <Content Include="TC\tool\WellKnowNameTemplates.js" />
+    <Content Include="TC\view\Click.js" />
+    <Content Include="TC\view\CustomEntity.js" />
     <Content Include="TC\view\ThreeDDraw.js" />
+    <Content Include="TC\view\ThreeDGFI.js" />
+    <Content Include="TC\view\ThreeDUtils.js" />
     <Content Include="test\unit\browser\control\FileEdit.js" />
     <Content Include="test\unit\browser\control\LanguageSelector.js" />
     <Content Include="test\unit\browser\feature\Point.js" />
@@ -322,7 +362,6 @@
     <Content Include="SITNA\Map.js" />
     <Content Include="TC.js" />
     <Content Include="TC\cesium\cesium.js" />
-    <Content Include="TC\cesium\mergeTerrainProvider\MergeTerrainProvider.js" />
     <Content Include="examples\cfg.ClickOptions.html" />
     <Content Include="examples\cfg.StreetViewOptions.html" />
     <Content Include="examples\cfg.CoordinatesOptions.html" />
@@ -505,6 +544,9 @@
     <Content Include="TC\tool\Elevation.js" />
     <Content Include="TC\format\WPS.js" />
     <Content Include="TC\tool\ExcelExport.js" />
+    <Content Include="lib\jsnlog\jsnlog.js" />
+    <Content Include="lib\jsnlog\jsnlog.min.js" />
+    <Content Include="lib\jsnlog\LICENSE.txt" />
     <Content Include="lib\ol\css\ol.css" />
     <Content Include="sitna.js" />
     <Content Include="TC\control\GeometryFeatureInfo.js" />
@@ -622,7 +664,6 @@
     <Content Include="examples\data\ESTACIONESTREN.gml" />
     <Content Include="examples\data\PARQUESNATURALES.json" />
     <Content Include="examples\data\UNANUBERIAIN.gpx" />
-    <Content Include="resources\data\contornoNavarra.json" />
     <Content Include="examples\layout\css-guide\config.json" />
     <Content Include="batch\ol-webpack\package.json" />
     <Content Include="batch\ol-webpack\readme.md" />
@@ -713,7 +754,7 @@
     <Content Include="layout\printHTML\resources\es-ES.json" />
     <Content Include="layout\printHTML\resources\eu-ES.json" />
     <Content Include=".eslintrc" />
-    <Content Include="resources\data\contornoEspana.json" />
+    <Content Include="batch\jsdoc\tutorials\5-examples.md" />
     <Content Include="config\predefined-layers.json" />
     <Content Include="batch\icons\SITNA.json" />
     <Content Include="examples\data\BasemapRandomizer.hbs" />
@@ -723,6 +764,7 @@
     <Content Include="batch\jsdoc\tutorials\7-examples.md" />
     <Content Include="batch\jsdoc\tutorials\2-controls.md" />
     <Content Include="examples\data\CustomFeatureInfo.hbs" />
+    <Content Include="examples\Map.importDocument.html" />
     <None Include="Properties\PublishProfiles\local.pubxml" />
     <Content Include="layout\pamplona\config.json" />
     <Content Include="layout\pamplona\resources\es-ES.json" />
@@ -1865,6 +1907,14 @@
     <Content Include="resources\data\crs\998.json" />
     <Content Include="resources\data\crs\999.json" />
     <Content Include="TC\templates\tc-ctl-timeline.hbs" />
+    <Content Include="TC\templates\tc-ctl-route.hbs" />
+    <Content Include="TC\templates\tc-ctl-route-destination.hbs" />
+    <Content Include="TC\templates\tc-ctl-route-feature.hbs" />
+    <Content Include="TC\templates\tc-ctl-scenes.hbs" />
+    <Content Include="TC\templates\tc-ctl-search-list.hbs" />
+    <Content Include="TC\templates\tc-ctl-route-instructions.hbs" />
+    <Content Include="TC\templates\tc-ctl-mod-deleted.hbs" />
+    <Content Include="resources\data\Pegman.glb" />
     <None Include="test\endToEnd\config\env\pro.json" />
     <None Include="test\endToEnd\config\env\vinet18.json" />
     <None Include="test\endToEnd\config\env\local.json" />
@@ -1904,9 +1954,6 @@
     <Content Include="kml\proxy.ashx" />
     <Content Include="layout\responsive\fonts\fontawesome-webfont.woff2" />
     <Content Include="package.json" />
-    <Content Include="packages.config">
-      <SubType>Designer</SubType>
-    </Content>
     <Content Include="layout\responsive\resources\en-US.json" />
     <Content Include="layout\responsive\resources\es-ES.json" />
     <Content Include="layout\responsive\resources\eu-ES.json" />
@@ -1942,6 +1989,7 @@
     <TypeScriptCompile Include="sitna.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Circle.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Feature.d.ts" />
+    <TypeScriptCompile Include="SITNA\feature\FeatureEvent.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Marker.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\MultiMarker.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\MultiPoint.d.ts" />
@@ -1960,6 +2008,7 @@
     <TypeScriptCompile Include="TC\EventTarget.d.ts" />
     <TypeScriptCompile Include="TC\filter.d.ts" />
     <TypeScriptCompile Include="TC\Map.d.ts" />
+    <TypeScriptCompile Include="TC\tool\FeatureHistoryEvent.d.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

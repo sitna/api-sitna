@@ -1,105 +1,15 @@
 ﻿import {
     ApproximateTerrainHeights
     , Billboard
-    , BillboardCollection 
-    , BoundingSphere
-    , CallbackProperty
-    , Camera
-    , Cartesian2
-    , Cartesian3
-    , Cartographic
-    , CesiumTerrainProvider
-    , CustomHeightmapTerrainProvider
-    , CircleGeometry
-    , ClockRange
-    , ClockStep
-    , Color
-    , ColorGeometryInstanceAttribute
-    , ColorMaterialProperty
-    , combine
-    , Credit
-    , CzmlDataSource
-    , CustomDataSource
-    , DataSourceCollection
-    , DataSourceDisplay
-    , DeveloperError
-    , EasingFunction
-    , Ellipsoid
-    , EllipsoidGeodesic
-    , EllipsoidTerrainProvider
-    , Entity
-    , EventHelper
-    , GeographicTilingScheme
-    , GeometryInstance
-    , getImagePixels
-    , Globe
-    , GroundPrimitive
-    , HeadingPitchRange
-    , HeightReference
-    , HeightmapTerrainData
-    , HorizontalOrigin
-    , ImageryLayer
-    , ImageryState
-    , IntersectionTests
-    , JulianDate
-    , LabelGraphics
-    , LabelStyle
-    , Math
-    , Matrix3
-    , Matrix4
-    , PinBuilder
-    , PolygonGeometry
-    , PolygonHierarchy
-    , PolygonPipeline
-    , PolylineDashMaterialProperty
-    , Property
-    , Quaternion
-    , Ray
-    , Rectangle    
-    , RequestScheduler
-    , RequestState
-    , Resource
-    , RuntimeError
-    , ScreenSpaceEventHandler
-    , ScreenSpaceEventType
-    , SkyAtmosphere
-    , SkyBox
-    , createTaskProcessorWorker
-    , TerrainProvider
-    , TileAvailability
-    , TileCoordinatesImageryProvider
-    , TileProviderError    
-    , TimeIntervalCollection
-    , Transforms
-    , TrustedServers
-    , VerticalOrigin
-    , Viewer
-    , WebMapServiceImageryProvider
-    , WebMapTileServiceImageryProvider
-    , WebMercatorTilingScheme
-    , when
-    , defaultValue    
-    , defined
-    , deprecationWarning
-    , sampleTerrainMostDetailed
-    , Request
-    , RequestType
-    , TimeInterval 
-    , VERSION
-
-} from 'cesium';
-
-export {
-    
-    ApproximateTerrainHeights
-    , Billboard
     , BillboardCollection
+    , BillboardGraphics
     , BoundingSphere
     , CallbackProperty
     , Camera
     , Cartesian2
     , Cartesian3
     , Cartographic
+    , Cesium3DTileStyle
     , CesiumTerrainProvider
     , CustomHeightmapTerrainProvider
     , CircleGeometry
@@ -109,9 +19,10 @@ export {
     , ColorGeometryInstanceAttribute
     , ColorMaterialProperty
     , combine
+    , clone
     , Credit
-    , CustomDataSource
     , CzmlDataSource
+    , CustomDataSource
     , DataSourceCollection
     , DataSourceDisplay
     , DeveloperError
@@ -125,13 +36,16 @@ export {
     , GeometryInstance
     , getImagePixels
     , Globe
+    , GpxDataSource
     , GroundPrimitive
     , HeadingPitchRange
+    , HeadingPitchRoll 
     , HeightReference
     , HeightmapTerrainData
     , HorizontalOrigin
     , ImageryLayer
     , ImageryState
+    , Ion
     , IntersectionTests
     , JulianDate
     , LabelGraphics
@@ -144,14 +58,16 @@ export {
     , PolygonHierarchy
     , PolygonPipeline
     , PolylineDashMaterialProperty
+    , PolylineOutlineMaterialProperty
     , Property
     , Quaternion
     , Ray
-    , Rectangle    
+    , Rectangle
     , RequestScheduler
     , RequestState
     , Resource
     , RuntimeError
+    , Simon1994PlanetaryPositions
     , ScreenSpaceEventHandler
     , ScreenSpaceEventType
     , SkyAtmosphere
@@ -169,14 +85,110 @@ export {
     , WebMapServiceImageryProvider
     , WebMapTileServiceImageryProvider
     , WebMercatorTilingScheme
-    , when
-    , defaultValue    
     , defined
     , deprecationWarning
     , sampleTerrainMostDetailed
     , Request
     , RequestType
-    , TimeInterval 
+    , TimeInterval
     , VERSION
-    
+
+} from 'cesium';
+
+export {
+
+    ApproximateTerrainHeights
+    , Billboard
+    , BillboardCollection
+    , BillboardGraphics
+    , BoundingSphere
+    , CallbackProperty
+    , Camera
+    , Cartesian2
+    , Cartesian3
+    , Cartographic
+    , Cesium3DTileStyle
+    , CesiumTerrainProvider
+    , CustomHeightmapTerrainProvider
+    , CircleGeometry
+    , ClockRange
+    , ClockStep
+    , Color
+    , ColorGeometryInstanceAttribute
+    , ColorMaterialProperty
+    , combine
+    , clone
+    , Credit
+    , CustomDataSource
+    , CzmlDataSource
+    , DataSourceCollection
+    , DataSourceDisplay
+    , DeveloperError
+    , EasingFunction
+    , Ellipsoid
+    , EllipsoidGeodesic
+    , EllipsoidTerrainProvider
+    , Entity
+    , EventHelper
+    , GeographicTilingScheme
+    , GeometryInstance
+    , getImagePixels
+    , Globe
+    , GroundPrimitive
+    , GpxDataSource
+    , HeadingPitchRange
+    , HeadingPitchRoll 
+    , HeightReference
+    , HeightmapTerrainData
+    , HorizontalOrigin
+    , ImageryLayer
+    , ImageryState
+    , Ion
+    , IntersectionTests
+    , JulianDate
+    , LabelGraphics
+    , LabelStyle
+    , Math
+    , Matrix3
+    , Matrix4
+    , PinBuilder
+    , PolygonGeometry
+    , PolygonHierarchy
+    , PolygonPipeline
+    , PolylineDashMaterialProperty
+    , PolylineOutlineMaterialProperty
+    , Property
+    , Quaternion
+    , Ray
+    , Rectangle
+    , RequestScheduler
+    , RequestState
+    , Resource
+    , RuntimeError
+    , Simon1994PlanetaryPositions
+    , ScreenSpaceEventHandler
+    , ScreenSpaceEventType
+    , SkyAtmosphere
+    , SkyBox
+    , createTaskProcessorWorker
+    , TerrainProvider
+    , TileAvailability
+    , TileCoordinatesImageryProvider
+    , TileProviderError
+    , TimeIntervalCollection
+    , Transforms
+    , TrustedServers
+    , VerticalOrigin
+    , Viewer
+    , WebMapServiceImageryProvider
+    , WebMapTileServiceImageryProvider
+    , WebMercatorTilingScheme
+    , defined
+    , deprecationWarning
+    , sampleTerrainMostDetailed
+    , Request
+    , RequestType
+    , TimeInterval
+    , VERSION
+
 };
