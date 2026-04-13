@@ -351,7 +351,7 @@ class Raster extends Layer {
             if (self.getDisgregatedLayerNames().some((layerName) => {
                 const node = self.getLayerNodeByName(layerName);
                 if (node?.Dimension && node?.Dimension.name === "time") {
-                    let timeValues = node.Dimension.textContent.split('/');
+                    let timeValues = node.Dimension.textContent.replace(/\s+/g, '').split('/');
                     if (timeValues.length > 1) {
                         //esto cuando se indica rango de fechas                    
                         self.time = {
@@ -1696,11 +1696,11 @@ class Raster extends Layer {
         return url;
     }
 
-    getPreferredInfoFormat() {
+    getPreferredInfoFormat(availableFormats) {
         const layer = this;
         var result = null;
 
-        const infoFormats = layer.wrap.getInfoFormats();
+        const infoFormats = availableFormats ?? layer.wrap.getInfoFormats();
         if (infoFormats) {
             for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
                 var format = TC.wrap.layer.Raster.infoFormatPreference[i];
@@ -2089,8 +2089,8 @@ class Raster extends Layer {
     }
 
     async getWFSCapabilities() {
-        const self = this;
-        const layer = await self.#getWfsLayer(await self.getWFSURL());
+        const url = await this.getWFSURL();
+        const layer = await this.#getWfsLayer(url);
         return await layer.getCapabilitiesPromise();
     }
 
