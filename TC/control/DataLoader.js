@@ -103,14 +103,20 @@ class DataLoader extends TabContainer {
         super(...arguments);
         const self = this;
 
+        // Consultamos la configuración de los controles hijos primero en el sitio esperado, luego en el sitio obsoleto.
+        const suggestions = self.options.wmsSuggestions ??
+            self.options.controls.find((ctl) => ctl.name === "externalWMS").options.suggestions;
+        const enableDragAndDrop = self.options.enableDragAndDrop ??
+            self.options.controls.find((ctl) => ctl.name === "fileImport").options.enableDragAndDrop;
+
         self.controlOptions = [
             {
                 title: 'addWMS',
-                externalWMS: { suggestions: self.options.wmsSuggestions }
+                externalWMS: { suggestions },
             },
             {
                 title: 'openFile',
-                fileImport: { enableDragAndDrop: self.options.enableDragAndDrop }
+                fileImport: { enableDragAndDrop },
             }
         ];
         self.defaultSelection = 0;
@@ -135,10 +141,6 @@ class DataLoader extends TabContainer {
         const self = this;
         self.model.title = self.getLocaleString("addMaps");
         super.updateModel();
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();        
     }
 }
 
