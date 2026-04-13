@@ -289,7 +289,7 @@ class TimeControl extends WebComponentControl {
         if (self.step) {
 
             if ((self.lastTime - self.firstTime) / self.step > 1000) {
-                self.step = (self.lastTime - self.firstTime) / self.step;
+                self.step = (self.lastTime - self.firstTime) / 1000;
             }
 
             for (let markTime = self.firstTime; markTime <= self.lastTime; markTime += self.step) {
