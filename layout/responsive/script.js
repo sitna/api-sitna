@@ -150,7 +150,7 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 if (tab.tagName === ('H2')) {
                     for (var i = 0; i < map.controls.length; i++) {
                         const ctl = map.controls[i];
-                        if (ctl.div && ctl.div.contains(tab)) {
+                        if (ctl.div && ctl.div.contains(tab) && ctl.div != ctl.map.div) {
                             if (ctl.isHighlighted()) {
                                 ctl.unhighlight();
                             }
@@ -191,7 +191,8 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                                 ".tc-ctl-bms-node > label",
                                 ".tc-ctl-meas-select sitna-tab",
                                 ".tc-ctl-mod-btn-select",
-                                ".tc-ctl-mod-btn-del-vertex"
+                                ".tc-ctl-mod-btn-del-vertex",
+                                ".tc-ctl-search sitna-button.tc-ctl-route-directions-btn",
                             ],
                             "changes": [
                                 {

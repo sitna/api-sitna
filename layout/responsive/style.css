@@ -637,12 +637,6 @@ ul.tc-ctl-toc-branch ul.tc-ctl-toc-branch.tc-collapsed, ul.tc-ctl-toc-branch li.
     content: '\f021';
 }
 
-.tc-ctl-wlm .tc-ctl-wlm-dd:after {
-    font-family: 'FontAwesome';
-    content: '\f0c9\f07d';
-}
-
-
 .tc-ctl-coords {
     padding: 0.2em;
     /*-ms-transform: translate(50%, -50%) rotate( -90deg );
@@ -675,13 +669,13 @@ ul.tc-ctl-toc-branch ul.tc-ctl-toc-branch.tc-collapsed, ul.tc-ctl-toc-branch li.
     height: 2em;
 }
 
-.tc-ctl-search .tc-ctl-search-txt, .tc-ctl-search .tc-ctl-search-list-container ul {
+.tc-ctl-search .tc-ctl-search-txt {
     margin-left: 0.2em;
 }
 
-.tc-ctl-search .tc-ctl-search-list-container ul {
+div.tc-ctl-search-list-container ul {
     line-height: 2.5em;
-    width: calc(100% - 0.5em - 0.1em); /* Se reduce un extra de 0.1em porque se ensancha con posicionamiento absoluto */
+    width: 100%;
 }
 
 .tc-ctl-search-loading::after {
@@ -859,6 +853,10 @@ ul.tc-ctl-finfo-layers > li.tc-checked h4 {
     width: 100%;
     display: flex;
     justify-content: center;
+}
+
+.tc-ctl-finfo-counter.tc-hidden {
+    display: none;
 }
 
 .tc-ctl-finfo-counter-pages {
@@ -1250,6 +1248,12 @@ ul.tc-ctl-finfo-layers > li.tc-checked a.tc-ctl-finfo-open {
         margin: 0;
         color: var(--title-color);
         font-weight: normal;
+    }
+
+    .tc-tools-panel .tc-ctl-mod-deleted-features h3 {
+        font-size: 0.9rem;
+        text-align: left;
+        margin: 0.9em 0 0.5em 0.3em;
     }
 
 .tc-legend-panel {
@@ -1652,14 +1656,6 @@ div.tc-ctl-rpanel div.tc-ctl-rpanel-info.tc-ctl-ftools-zoom {
     flex-direction: column;
 }
 
-.tc-ctl-rpanel a.tc-ctl-print-btn,
-.tc-ctl-rpanel .tc-ctl-finfo-btn button.tc-icon-btn,
-.tc-ctl-rpanel .tc-ctl-finfo-btn input[type=checkbox],
-.tc-ctl-rpanel-menu button.tc-icon-btn,
-.tc-ctl-rpanel-menu sitna-button[variant="minimal"] {
-    font-size: 1.5em;
-}
-
 .tc-ctl-rpanel .tc-ctl-finfo-btn button.tc-icon-btn,
 .tc-ctl-rpanel .tc-ctl-finfo-btn input[type=checkbox] {
     margin-left: 0.5em;
@@ -1870,6 +1866,10 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     width: 100%;
 }
 
+.tc-ctl-route-content {
+    max-height: 40vh;
+}
+
 @media screen and (pointer: fine) {
     .tc-map {
         --sitna-pointer-ratio: 0.75;
@@ -1882,8 +1882,9 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         width: auto;
     }
 
-    .tc-map div.tc-ctl-cctr div.tc-ctl.tc-ctl-rpanel div.tc-ctl-rpanel-main.tc-resizable {
+    .tc-map div.tc-ctl-cctr div.tc-ctl.tc-ctl-rpanel div.tc-ctl-rpanel-main.tc-resizable:has(.tc-ctl-rpanel-chart .tc-track-chart) {
         width: 25vw;
+        min-width: 22rem;
     }
 
     .tc-ctl-rpanel sitna-button.tc-ctl-rpanel-btn-min {
@@ -2051,6 +2052,10 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         /* Para la bola con el número de resultados */
         padding-left: 0;
     }
+
+    .tc-ctl-route-content {
+        max-height: 80vh;
+    }
 }
 
 @media screen and (min-height: 40em) and (pointer: fine), screen and (max-resolution: 1dppx) and (min-height: 40em) {
@@ -2200,7 +2205,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         width: 227px;
     }
 
-    .tc-ctl-search .tc-ctl-search-txt, .tc-ctl-search .tc-ctl-search-list-container ul {
+    .tc-ctl-search .tc-ctl-search-txt {
         margin-left: 0.3em;
     }
 
@@ -2336,8 +2341,8 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         padding-top: 0.5em;
     }
 
-    .tc-map div.tc-ctl-cctr li > div.tc-ctl,
-    .tc-map div.tc-ctl-cctr li > div > .tc-ctl {
+    .tc-map div.tc-ctl-cctr > ul > li > div.tc-ctl,
+    .tc-map div.tc-ctl-cctr > ul > li > div > .tc-ctl {
         margin-bottom: 0.5em;
     }
 
@@ -2506,7 +2511,7 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
         max-height: 0;
         border-top: 1px solid #eee;
         overflow: hidden;
-        animation: accordion-finfo-collapse 0.6s;
+        /*animation: accordion-finfo-collapse 0.6s;*/
         /* en edge se ven las barras de scroll aun teniendo max-height 0 */
         visibility: hidden;
     }
