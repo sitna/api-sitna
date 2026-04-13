@@ -66,10 +66,13 @@ const stylePropertyNames = new Set([
     'labelKey',
     'labelOutlineWidth',
     'labelOutlineColor',
+    'labelBackgroundColor',
     'labelOffset',
     'fontColor',
     'fontSize'
 ]);
+
+const sortableElements = new WeakMap();
 
 
 var Util = {
@@ -138,8 +141,8 @@ var Util = {
             }
 
             return {
-                upHill: Math.round(uphill),
-                downHill: Math.round(downhill)
+                uphill: Math.round(uphill),
+                downhill: Math.round(downhill)
             };
 
         } else { return null; }
@@ -245,7 +248,7 @@ var Util = {
     },
 
     getMapLocale: function (map) {
-        return map.getLocale();
+        return map?.getLocale();
     },
 
     regex: {
@@ -356,6 +359,15 @@ var Util = {
             return '';
         }
         return value;
+    },
+
+    getDistanceText(distance, locale) {
+        if (distance >= 1000) {
+            return Util.formatNumber(Math.round(distance / 10) / 100, locale) + ' km';
+        }
+        else {
+            return Util.formatNumber(Math.round(distance), locale) + ' m';
+        }
     },
 
     getTextFromCssVar: function (varName, contextElement = document.documentElement) {
@@ -795,6 +807,28 @@ var Util = {
         }
         return result;
     },
+
+
+    /**
+     * Convierte una distancia en metros a grados de latitud o longitud.
+     * @param {number} meters - Distancia en metros.
+     * @param {number} latitude - Latitud en grados donde calcular la conversión.
+     * @returns {{latDeg:number, lonDeg:number}}
+     */
+    metersToDegrees: function (meters, latitude) {
+        const earthRadius = 6370997; // Radio WGS84
+        // 1° de latitud en metros = longitud del meridiano
+        const metersPerDegreeLat = (Math.PI * earthRadius) / 180;
+
+        // 1° de longitud depende de la latitud
+        const metersPerDegreeLon = (Math.PI * earthRadius * Math.cos(latitude * Math.PI / 180)) / 180;
+
+        return {
+            latDeg: meters / metersPerDegreeLat,
+            lonDeg: meters / metersPerDegreeLon
+        };
+    },
+
 
     radToDeg: function (rad) { // convert radians to degrees
         return rad * 180 / Math.PI;
@@ -1863,9 +1897,9 @@ var Util = {
             ["Ä", "A"], ["Ö", "O"], ["Ü", "U"],
             ["á", "a"], ["é", "e"], ["í", "i"], ["ó", "o"], ["ú", "u"],
             ["Á", "A"], ["É", "E"], ["Í", "I"], ["Ó", "O"], ["Ú", "U"],
-            ["ñ", "n"], ["Ñ", "N"], ["ç", "c"], ["Ç", "C"]
+            ["ñ", "n"], ["Ñ", "N"], ["ç", "c"], ["Ç", "C"], ["²", "2"]
         ]);
-        return t.replace(/[öäüÖÄÜáéíóúÁÉÍÓÚñÑçÇ]/g, function (match) {
+        return t.replace(/[öäüÖÄÜáéíóúÁÉÍÓÚñÑçÇ\²]/g, function (match) {
             return translate.get(match);
         });
     },
@@ -1978,6 +2012,7 @@ var Util = {
             }, '');
 
         };
+
         if (!Array.isArray(layers) && !(layers instanceof Object))
             layers = [layers];
 
@@ -2330,6 +2365,22 @@ var Util = {
         return Object.assign({}, ...styles);
     },
 
+    stylesEqual: function (style1, style2) {
+        if (!style1 && !style2) return true;
+        if (!style1 || !style2) return false;
+        const keys1 = Object.keys(style1).filter(k => Util.isStyleOption(k));
+        const keys2 = Object.keys(style2).filter(k => Util.isStyleOption(k));
+        if (keys1.length !== keys2.length) {
+            return false;
+        }
+        for (let key of keys1) {
+            if (style1[key] !== style2[key]) {
+                return false;
+            }
+        }
+        return true;
+    },
+
     formatCoord: function (x, nDecimales) {
         return x.toLocaleString(Util.getLocaleUserChoice(), { maximumFractionDigits: nDecimales });
 
@@ -2367,7 +2418,7 @@ var Util = {
 
     getWebWorkerCrossOriginURL: function (url) {
         return new Promise(function (resolve, reject) {
-            if (Object.hasOwn(window, 'Worker')) {
+            if ('Worker' in window) {
                 // Para evitar problemas con IE10 y Opera evitamos el uso de blobs cuando es evitable
                 if (Util.isSameOrigin(url)) {
                     resolve(url);
@@ -2566,12 +2617,126 @@ var Util = {
         );
     },
 
+    makeSortableList: function (listElement, options = {}) {
+        const handleSelector = options.handleSelector || '.tc-sortable-handle';
+        const draggingClassName = options.draggingClassName || 'tc-sortable-dragging';
+        listElement.addEventListener('pointerdown', (e) => {
+            const handle = e.target;
+            if (handle.matches(handleSelector)) {
+                const listItem = handle.closest('li');
+                listItem.classList.add(draggingClassName);
+                const startIndex = Array.from(listElement.children).indexOf(listItem);
+                sortableElements.set(listItem, {
+                    startY: e.clientY,
+                    height: listItem.getBoundingClientRect().height,
+                    startIndex,
+                    currentIndex: startIndex,
+                });
+                handle.setPointerCapture(e.pointerId);
+            }
+        });
+
+        const getTranslateY = (element) => {
+            const translate = element.style.translate;
+            if (translate) {
+                const match = translate.match(/0px (-?\d+(?:\.\d+)?)px/);
+                if (match) return parseFloat(match[1]);
+            }
+            return 0;
+        };
+
+        listElement.addEventListener('pointermove', (e) => {
+            const handle = e.target;
+            if (handle.matches(handleSelector)) {
+                const listItem = handle.closest('li');
+                const listItems = Array.from(listItem.parentElement.children);
+                const listItemRects = listItems.map((elm) => elm.getBoundingClientRect());
+                const listItemIndex = listItems.indexOf(listItem);
+                requestAnimationFrame(() => {
+                    const sortableData = sortableElements.get(listItem);
+                    if (sortableData) {
+                        const deltaY = e.clientY - sortableData.startY;
+                        listItem.style.translate = `0 ${deltaY}px`;
+                        const listItemRect = listItem.getBoundingClientRect();
+                        for (let i = 0; i < listItemIndex; i++) {
+                            const sibling = listItems[i];
+                            const siblingRect = listItemRects[i];
+                            const siblingTranslateY = getTranslateY(sibling);
+                            if (listItemRect.top < siblingRect.top + siblingRect.height / 2) {
+                                if (siblingTranslateY === 0) {
+                                    sibling.style.translate = `0 ${sortableData.height}px`;
+                                    sortableData.currentIndex = i;
+                                }
+                            }
+                            else {
+                                if (siblingTranslateY > 0) {
+                                    sibling.style.translate = `0 0`;
+                                    sortableData.currentIndex = i - 1;
+                                }
+                            }
+                        }
+                        for (let i = listItemIndex + 1; i < listItems.length; i++) {
+                            const sibling = listItems[i];
+                            const siblingRect = listItemRects[i];
+                            const siblingTranslateY = getTranslateY(sibling);
+                            if (listItemRect.top + listItemRect.height > siblingRect.top + siblingRect.height / 2) {
+                                if (siblingTranslateY === 0) {
+                                    sibling.style.translate = `0 -${sortableData.height}px`;
+                                    sortableData.currentIndex = i;
+                                }
+                            }
+                            else {
+                                if (siblingTranslateY < 0) {
+                                    sibling.style.translate = `0 0`;
+                                    sortableData.currentIndex = i + 1;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        listElement.addEventListener('pointerup', (e) => {
+            const handle = e.target;
+            if (handle.matches(handleSelector)) {
+                const listItem = handle.closest('li');
+                const listItems = Array.from(listItem.parentElement.children);
+                const sortableData = sortableElements.get(listItem);
+                if (!sortableData) return;
+                for (const item of listItems) {
+                    item.style.removeProperty("translate");
+                }
+                listItem.classList.remove(draggingClassName);
+                let newIndex = sortableData.currentIndex;
+                if (sortableData.currentIndex > sortableData.startIndex) newIndex++;
+                if (newIndex > 0) {
+                    const referenceNode = listItems[newIndex - 1];
+                    referenceNode.insertAdjacentElement('afterend', listItem);
+                }
+                else {
+                    listItem.parentElement.insertAdjacentElement('afterbegin', listItem);
+                }
+                handle.releasePointerCapture(e.pointerId);
+                options.callback?.(listItem, sortableData.currentIndex, sortableData.startIndex);
+                sortableElements.delete(listItem);
+            }
+        });
+    },
+
     color
 };
 
 const _queryHeaderConstructor = function (capabilities) {
-    var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd" ' +
-        ' service="WFS" {resultType} {format} ';
+    var queryHeader = 'xsi:schemaLocation="http://www.opengis.net/wfs ';
+    switch (capabilities.version) {
+        case "1.0.0":
+            queryHeader += ' http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd';
+            break;
+        default:
+            queryHeader += ' http://schemas.opengis.net/wfs/1.1.0/wfs.xsd';
+    }
+    queryHeader += '" service="WFS" {resultType} {format} ';
     switch (capabilities.version) {
         case "1.0.0":
         case "1.1.0":
