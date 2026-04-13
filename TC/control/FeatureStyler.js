@@ -11,6 +11,7 @@ import Polygon from '../../SITNA/feature/Polygon.js';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
 
 Consts.event.STYLECHANGE = 'stylechange.tc';
 
@@ -19,6 +20,7 @@ const elementName = 'sitna-feature-styler';
 
 const formatColor = function (color) {
     if (color) {
+        if (Array.isArray(color)) color = Util.color.rgbToHex(color);
         const match = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
         if (match && match.length) {
             return '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
@@ -34,6 +36,7 @@ class FeatureStylerModel {
         this.fillColor = "";
         this.opacity = "";
         this.symbolRadius = "";
+        this.putBackStyle = "";
     }
 }
 class FeatureStyler extends WebComponentControl {
@@ -185,6 +188,10 @@ class FeatureStyler extends WebComponentControl {
 
             self.addUIEventListeners();
 
+            self.addEventListener(Consts.event.STYLECHANGE, function (_e) {
+                setTimeout(() => self.#updateStyleRemoveButton(), 200);
+            });
+
             if (Util.isFunction(callback)) {
                 callback();
             }
@@ -210,6 +217,23 @@ class FeatureStyler extends WebComponentControl {
         self.#radiusSelector.addEventListener(Consts.event.CHANGE, function (e) {
             self.setRadius(parseFloat(e.target.value));
         });
+
+        // Evento para revertir estilo
+        self.querySelector('.' + self.CLASS + '-btn-remove').addEventListener(Consts.event.CLICK, function (_e) {
+            if (!self.feature) return;
+
+            const layerStyle = self.feature.layer?.styles[self.feature.STYLETYPE];
+            if (layerStyle) {
+                const oldStyle = { ...self.getStyle() };
+                self.setStyle(layerStyle);
+                self.#triggerStyleChange(oldStyle);
+            }
+
+            if (layerStyle) self.setStyle(layerStyle);
+
+            self.#updateStyleRemoveButton();
+        });
+
     }
 
     setStyles(styles) {
@@ -344,22 +368,22 @@ class FeatureStyler extends WebComponentControl {
     }
 
     setLayer(layer) {
-        const self = this;
-        self.layer = layer;
-        if (!layer) {
-            return self;
-        }
-        let styles = self.#previousStyles.get(layer);
+        this.layer = layer;
+        this.feature = null;
+        this.#updateStyleRemoveButton();
+        if (!layer) return this;
+
+        let styles = this.#previousStyles.get(layer);
         if (!styles) {
             if (layer.styles) {
-                styles = [{}, self.#initialStyles, layer.styles];
+                styles = [{}, this.#initialStyles, layer.styles];
             }
             else {
-                styles = [{}, self.#initialStyles].concat(layer
+                styles = [{}, this.#initialStyles].concat(layer
                     .features
-                    .map(f => {
+                    .map((f) => {
                         const style = f.getStyle();
-                        if (Object.keys(style).length === 0) {
+                        if (!style || Object.keys(style).length === 0) {
                             return null;
                         }
                         const styleObj = {};
@@ -385,8 +409,8 @@ class FeatureStyler extends WebComponentControl {
             }
             styles = Util.extend(...styles);
         }
-        self.setStyles(styles);
-        return self;
+        this.setStyles(styles);
+        return this;
     }
 
     #isSupportedProperty(name) {
@@ -396,31 +420,31 @@ class FeatureStyler extends WebComponentControl {
     }
 
     setFeature(feature) {
-        const self = this;
-        self.layer = null;
+        this.feature = feature;
+        this.layer = null;
         const style = feature?.getStyle();
+        this.#updateStyleRemoveButton();
         switch (true) {
             case feature instanceof Polyline:
             case feature instanceof MultiPolyline:
-                self.mode = Consts.geom.POLYLINE;
+                this.mode = Consts.geom.POLYLINE;
                 break;
             case feature instanceof Point:
             case feature instanceof MultiPoint:
-                self.mode = Consts.geom.POINT;
+                this.mode = Consts.geom.POINT;
                 break;
             default:
-                self.mode = Consts.geom.POLYGON;
+                this.mode = Consts.geom.POLYGON;
         }
         if (style && Object.keys(style).length > 0) {
-            self.setStyle(style);
+            this.setStyle(style);
         }
-        return self;
+        return this;
     }
 
     #setColorWatch(colorPicker, color) {
-        const toHex = c => new Number(c).toString(16).padStart(2, '0');
         if (Array.isArray(color)) {
-            color = `#${toHex(color[0])}${toHex(color[1])}${toHex(color[2])}`;
+            color = Util.color.rgbToHex(color);
         }
         else {
             const match = color.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
@@ -455,19 +479,20 @@ class FeatureStyler extends WebComponentControl {
     }
 
     #setPropertyColor(property, watchFn, color) {
-        const self = this;
-        const style = self.#style;
+        const style = this.#style;
+        let oldStyle;
         if (style) {
-            watchFn.call(self, color);
+            oldStyle = { ...style };
+            watchFn.call(this, color);
             const currentValue = style[property];
             if (currentValue === color) {
-                return self;
+                return this;
             }
             style[property] = color;
         }
 
-        self.#triggerStyleChange({ property: property, value: color });
-        return self;
+        this.#triggerStyleChange(oldStyle);
+        return this;
     }
 
     setStrokeColor(color) {
@@ -497,14 +522,16 @@ class FeatureStyler extends WebComponentControl {
         if (!Number.isNaN(alpha)) {
             self.setFillOpacityWatch(Math.round(alpha * 100));
             const style = self.#style;
+            let oldStyle;
             if (style) {
+                oldStyle = { ...style };
                 if (style.fillOpacity === alpha) {
                     return self;
                 }
                 style.fillOpacity = alpha;
             }
 
-            self.#triggerStyleChange({ property: 'fillOpacity', value: alpha });
+            self.#triggerStyleChange(oldStyle);
         }
         return self;
     }
@@ -528,14 +555,16 @@ class FeatureStyler extends WebComponentControl {
         if (!Number.isNaN(width)) {
             self.setStrokeWidthWatch(width);
             const style = self.#style;
+            let oldStyle;
             if (style) {
+                oldStyle = { ...style };
                 if (style.strokeWidth === width) {
                     return self;
                 }
                 style.strokeWidth = width;
             }
 
-            self.#triggerStyleChange({ property: 'strokeWidth', value: width });
+            self.#triggerStyleChange(oldStyle);
         }
         return self;
     }
@@ -558,14 +587,16 @@ class FeatureStyler extends WebComponentControl {
         if (!Number.isNaN(radius)) {
             self.setRadiusWatch(radius);
             const style = self.#style;
+            let oldStyle;
             if (style) {
+                oldStyle = { ...style };
                 if (style.radius === radius) {
                     return self;
                 }
                 style.radius = radius;
             }
 
-            self.#triggerStyleChange({ property: 'radius', value: radius });
+            self.#triggerStyleChange(oldStyle);
         }
         return self;
     }
@@ -599,22 +630,56 @@ class FeatureStyler extends WebComponentControl {
         return self;
     }
 
-    #triggerStyleChange(data) {
-        const self = this;
-        const event = new CustomEvent(Consts.event.STYLECHANGE, { detail: data });
-        self.dispatchEvent(event);
+    async #updateStyleRemoveButton() {
+        await this.renderPromise();
+        let visible = false;
+        if (this.feature) {
+            let layerStyle = this.feature.layer?.findTreeNode(this.feature)?.style;
+            if (layerStyle) {
+                if (Util.isFunction(layerStyle)) layerStyle = layerStyle(this.feature);
+                else layerStyle = { ...layerStyle };
+                let featureStyle = this.feature.getStyle();
+                if (Util.isFunction(featureStyle)) featureStyle = featureStyle(this.feature);
+                for (const key of Object.keys(layerStyle)) {
+                    if (!Object.hasOwn(featureStyle, key)) {
+                        delete layerStyle[key];
+                    }
+                }
+                if (!Util.stylesEqual(featureStyle, layerStyle)) visible = true;
+            }
+        }
+        this.querySelector(`.${this.CLASS}-btn-remove`).classList.toggle(Consts.classes.HIDDEN, !visible);
     }
+
+    #triggerStyleChange(oldStyle) {
+        const event = new ControlEvent(Consts.event.STYLECHANGE, { control: this, oldStyle });
+        this.dispatchEvent(event);
+    }
+
     updateModel() {
-        this.model.strokeColor = this.getLocaleString('strokeColor');
-        this.model.selectColor = this.getLocaleString('selectColor');
-        this.model.width = this.getLocaleString('width');
-        this.model.fillColor = this.getLocaleString('fillColor');
-        this.model.opacity = this.getLocaleString('opacity');
-        this.model.symbolRadius = this.getLocaleString('symbolRadius');
+        for (const key of Object.keys(this.model)) {
+            if (!key.startsWith("#")) {
+                this.model[key] = this.getLocaleString(key);
+            }
+        }
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
+
+    getStyleName(geometryName) {
+        switch (geometryName) {
+            case Consts.geom.POINT:
+            case Consts.geom.MULTIPOINT:
+                return 'point';
+            case Consts.geom.POLYLINE:
+            case Consts.geom.MULTIPOLYLINE:
+                return 'line';
+            case Consts.geom.POLYGON:
+            case Consts.geom.MULTIPOLYGON:
+            case Consts.geom.CIRCLE:
+            case Consts.geom.RECTANGLE:
+                return 'polygon';
+            default:
+                return null;
+        }
     }
 }
 

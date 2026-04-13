@@ -7,6 +7,12 @@
     text-align: left;
 }
 
+    .tc-ctl-fstyler .tc-ctl-fstyler-stroke input, 
+    .tc-ctl-fstyler .tc-ctl-fstyler-fill input, 
+    .tc-ctl-fstyler .tc-ctl-fstyler-radius input {
+        margin-left: 0.2em;
+    }
+
 .tc-ctl-fstyler-fill.tc-hidden, .tc-ctl-fstyler-radius.tc-hidden {
     display: none;
 }
@@ -30,4 +36,11 @@
     margin-left: 0.2em;
     transform: translateY(-0.3em) rotate(-20deg);
     transform-origin: 20% 50%;
+}
+
+.tc-ctl-fstyler sitna-button.tc-ctl-fstyler-btn-remove {
+    --sitna-icon-text: '\2b8c';
+    --sitna-minimal-button-text-color: var(--sitna-highlighted-text-color);
+    float: right;
+    margin: 0.5em 0;
 }
