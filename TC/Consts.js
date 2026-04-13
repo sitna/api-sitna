@@ -82,12 +82,10 @@
  * @property {string} layer.IGN_FR_DYNRELIEF - Identificador de la capa de relieve del WMS del Instituto Geográfico Nacional Francés.
  * @property {string} layer.IGN_FR_ORTHOPHOTO - Identificador de la capa de ortofoto del WMTS del Instituto Geográfico Nacional Francés. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
  * @property {string} layer.IGN_FR_RELIEF - Identificador de la capa de relieve del WMTS del Instituto Geográfico Nacional Francés. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
- * @property {string} layer.MAPBOX_SATELLITE - Identificador de la capa de Mapbox Satellite a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
- * @property {string} layer.MAPBOX_STREETS - Identificador de la capa de Mapbox Streets a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
  * @property {string} layer.OPENTOPOMAP - Identificador de la capa de OpenTopoMap a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
  * @property {string} layer.OSM - Identificador de la capa de OpenStreetMap a través del WMTS de la API SITNA. Esta capa solo es compatible con el sistema de referencia EPSG:3857.
  * @property {object} layerType - Colección de identificadores de tipo de capa.
- * @property {string} layerType.KML - *__Obsoleta__: En lugar de esta propiedad es recomendable usar `SITNA.Consts.layerType.VECTOR` para cargar archivos KML.*
+ * @property {string} layerType.KML - __Obsoleta__: En lugar de esta propiedad es recomendable usar `SITNA.Consts.layerType.VECTOR` para cargar archivos KML.*
  *
  * Identificador de capa de tipo KML.
  * @property {string} layerType.VECTOR - Identificador de capa de tipo vectorial.
@@ -347,9 +345,6 @@ Consts.layer = {
     CARTO_VOYAGER: 'carto_voyager',
     CARTO_LIGHT: 'carto_light',
     CARTO_DARK: 'carto_dark',
-
-    MAPBOX_STREETS: 'mapbox_streets',
-    MAPBOX_SATELLITE: 'mapbox_satellite',
 
     BLANK: 'ninguno'
 };
