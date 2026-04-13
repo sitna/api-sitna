@@ -959,6 +959,130 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      */
 
     /**
+     * Importa entidades geográficas desde el contenido de un archivo geográfico. El formato del archivo se detecta automáticamente a partir de su contenido, por lo que no es necesario especificar el formato.
+     * @method importDocument
+     * @memberof SITNA.Map
+     * @instance
+     * @param {string|ArrayBuffer} content - Contenido del archivo geográfico a importar. Es de tipo `string` para archivos de texto (por ejemplo, GeoJSON o KML) y `ArrayBuffer` para archivos binarios (por ejemplo, GeoPackage).
+     * @return {Promise<SITNA.feature.Feature[]>} Promesa que se resuelve con un array de entidades geográficas importadas.
+     * @example <caption>[Ver en vivo](../examples/Map.importDocument.html)</caption> {@lang html}
+<div>
+    <textarea id="input">
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "MultiPolygon",
+                "coordinates": [
+                    [
+                        [
+                            [
+                                -1.7615865275535461,
+                                42.672209962577625
+                            ],
+                            [
+                                -1.7615674313887766,
+                                42.672268210367491
+                            ],
+                            [
+                                -1.7615043483128052,
+                                42.672297795516641
+                            ],
+                            [
+                                -1.7614328958534353,
+                                42.672283010410624
+                            ],
+                            [
+                                -1.761403951812939,
+                                42.672238597804274
+                            ],
+                            [
+                                -1.7613757256022331,
+                                42.6722317816322
+                            ],
+                            [
+                                -1.7613651273534221,
+                                42.672211774016532
+                            ],
+                            [
+                                -1.7613757525136196,
+                                42.672187412152851
+                            ],
+                            [
+                                -1.7613994678264495,
+                                42.672178023796071
+                            ],
+                            [
+                                -1.7614208594149792,
+                                42.672182406629872
+                            ],
+                            [
+                                -1.7614548172226869,
+                                42.6721654653988
+                            ],
+                            [
+                                -1.7614600797544937,
+                                42.672151194661005
+                            ],
+                            [
+                                -1.7614896859967675,
+                                42.672143824166405
+                            ],
+                            [
+                                -1.761495866225778,
+                                42.672156471585666
+                            ],
+                            [
+                                -1.7615484408892454,
+                                42.672166261641365
+                            ],
+                            [
+                                -1.7615865275535461,
+                                42.672209962577625
+                            ]
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "TITLE": "Ermita De Eunate",
+                "GEOM_AREA": 197.62,
+                "GEOM_PERI": 55.29
+            },
+            "id": "CATAST_Pol_Edificacion.314482"
+        }
+    ]
+}
+    </textarea>
+    <button type="button" id="import">Importar datos</button>
+</div>
+<div id="my-map"></div>
+<script>
+    const map = new SITNA.Map("my-map");
+    // Esperamos a que el mapa esté cargado para añadir la capa y el evento de importación de datos.
+    map.loaded(async () => {
+        // Capa donde se añadirán las entidades importadas.
+        const targetLayer = await map.addLayer({
+            id: "importedData",
+            title: "Datos importados",
+            type: SITNA.Consts.layerType.VECTOR
+        });
+            
+        document.getElementById("import").addEventListener("click", async function () {
+            const input = document.getElementById("input").value;
+            const features = await map.importDocument(input);
+            if (features) {
+                await targetLayer.addFeatures(features);
+                map.zoomToFeatures(features);
+            }
+        });
+    });
+</script>
+     */
+
+    /**
      * Objeto proporcionado en las respuestas a peticiones de datos de búsqueda ({@link SITNA.Map#getMunicipalities}, etc.).
      * @typedef SearchResultItem
      * @memberof SITNA
