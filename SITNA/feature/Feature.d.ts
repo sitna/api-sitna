@@ -1,4 +1,4 @@
-import { Layer } from "../../SITNA/layer/Layer";
+import { Layer } from "../layer/Layer";
 
 export interface FeatureOptions {
     data?: object | string;
