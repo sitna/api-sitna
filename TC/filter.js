@@ -73,11 +73,15 @@ TC.filter.Filter.prototype.writeInnerArrayCondition_ = function (_filters) {
 }
 
 TC.filter.Filter.prototype.getText = function (wfsVersion) {    
-    if (wfsVersion && parseFloat(wfsVersion,10) >= 2) {
+    if (wfsVersion && parseFloat(wfsVersion, 10) >= 2) {
         this._defaultPrefixNS = this._wfs2prefixNS;
         this._defaultNSURL = this._wfs2NSURL;
         this._fieldTitle = this._wfs2FieldTitle;
         this._escapeAttrName = this._wfs2EscapeAttrName;
+        this._gmlVersion = '3.2';
+    }
+    else {
+        this._gmlVersion = '2.1';
     }
     return this.writeFilterCondition_();
 };
@@ -560,7 +564,7 @@ TC.filter.Spatial.prototype.write = function () {
     const tag = this.getTagName();
     const fieldTitle = this._fieldTitle;
     const name = this.geometryName;
-    const geometry = this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(undefined, this.wrap.getAxisOrientation());
+    const geometry = this.geometry instanceof TC.filter.Function ? this.writeInnerCondition_(this.geometry) : this.geometry.wrap.toGML(this._gmlVersion, this.wrap.getAxisOrientation());
     if (this.geometryName) {
         return `<${prefix}:${tag}><${prefix}:${fieldTitle}>${name}</${prefix}:${fieldTitle}>${geometry}</${prefix}:${tag}>`;
     }
