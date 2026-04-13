@@ -5,9 +5,6 @@ import Util from '../Util.js';
 import Control from '../Control.js';
 import Feature from '../../SITNA/feature/Feature.js';
 import Point from '../../SITNA/feature/Point.js';
-import Polyline from '../../SITNA/feature/Polyline.js';
-import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
-import Geometry from '../Geometry.js';
 import InfoDisplay from './InfoDisplay.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
@@ -15,25 +12,6 @@ TC.control = TC.control || {};
 
 const pointElevationCache = new WeakMap();
 const elevationProfileCache = new Map();
-
-const getElevationProfileFromCache = function (feature) {
-    if (feature) {
-        const coords = feature.getCoords();
-        if (coords) {
-            return elevationProfileCache.get(coords.toString());
-        }
-        return null;
-    }
-};
-
-const cacheElevationProfile = function (feature, data) {
-    if (feature) {
-        const coords = feature.getCoords();
-        if (coords) {
-            elevationProfileCache.set(coords.toString(), data);
-        }
-    }
-};
 
 const removeElevationProfileFromCache = function (feature) {
     if (feature) {
@@ -82,9 +60,6 @@ class Elevation extends Control {
             .on(Consts.event.FEATUREREMOVE, function (e) {
                 removeElevationProfileFromCache(e.feature);
             })
-            .on(Consts.event.FEATUREREMOVE, function (e) {
-                removeElevationProfileFromCache(e.feature);
-            })
             .on(Consts.event.LAYERREMOVE, function (e) {
                 e.layer.features && e.layer.features.forEach(feat => removeElevationProfileFromCache(feat));
             })
@@ -92,6 +67,20 @@ class Elevation extends Control {
                 // Añadimos datos de elevación si se han añadido previamente
                 if (pointElevationCache.has(e.control.currentFeature)) {
                     self.displayElevationValue(e.control.currentFeature);
+                }
+            })
+            .on(Consts.event.THREED_TILES_CHANGE, function (e) {
+                if (e.change === "visibility") {
+                    self.getProfilePanel().then(function (resultsPanel) {
+                        if (resultsPanel.elevationProfileChartData && resultsPanel.isVisible()) { 
+                            if (e.tileset.visible) {
+                                if (self.set3DtileData) self.set3DtileData(e.tileset.url);
+                            }
+                            else {
+                                resultsPanel.removeDataOnChart("mds");
+                            }
+                        }                            
+                    });                    
                 }
             });        
 
@@ -144,7 +133,7 @@ class Elevation extends Control {
             if (!elevationValues) {
                 const tool = await self.getElevationTool();
                 const elevation = await tool.getElevation({
-                    crs: self.map.crs,
+                    crs: self.map.getCRS(),
                     coordinates: [feature.geometry]
                 });
                 if (elevation.length) {
@@ -169,7 +158,7 @@ class Elevation extends Control {
                         const featElm = ctl.caller.getFeatureElement(feature);
                         if (featElm) {
                             target = featElm.querySelector('tbody');
-                            targets.push(target);
+                            if (target) targets.push(target);
                         }
                     });
                 displayControls
@@ -178,7 +167,7 @@ class Elevation extends Control {
                         const container = ctl.getInfoContainer();
                         if (container) {
                             target = container.querySelector('tbody');
-                            targets.push(target);
+                            if (target) targets.push(target);
                         }
                     });
 
@@ -204,185 +193,21 @@ class Elevation extends Control {
     }
 
     async displayElevationProfile(featureOrCoords, options = {}) {
-        const self = this;
-        let lines;
-        switch (true) {
-            case featureOrCoords instanceof Polyline:
-                lines = [featureOrCoords.geometry];
-                break;
-            case featureOrCoords instanceof MultiPolyline:
-                lines = featureOrCoords.geometry;
-                break;
-            case featureOrCoords instanceof Feature:
-                return;
-            default:
-                lines = [featureOrCoords];
-        }
-        const resultsPanel = await self.getProfilePanel();
-        resultsPanel.open();
-        const renderProfile = async function (profile) {
-            const resultsPanel = await self.getProfilePanel();
-            await resultsPanel.renderPromise();
-            self.renderElevationProfile(profile);
-        };
+        const panel = await this.getProfilePanel();
+        const profile = panel.getElevationProfileControl();        
+        panel.open();
+        profile.reset();        
         if (featureOrCoords instanceof Feature) {
-            resultsPanel.setCurrentFeature(featureOrCoords);
-            const profile = getElevationProfileFromCache(featureOrCoords);
-            if (profile) {
-                renderProfile(profile);
-                return;
-            }
+            panel.currentFeature = featureOrCoords;
         }
-        const render = function (elevCoordLines, options) {
-            let elevLines = elevCoordLines;
-            let maxElevation = Number.NEGATIVE_INFINITY;
-            let minElevation = Number.POSITIVE_INFINITY;
-            if (self.map.getCRS() !== self.map.options.utmCrs) {
-                elevLines = Util.reproject(elevCoordLines, self.map.getCRS(), self.map.options.utmCrs);
-            }
-            const profile = elevLines
-                .map(line => {
-                    let distance = 0.0;
-                    return line.map(function calculateDistanceAndExtremes(point, idx, arr) {
-                        let prev = idx === 0 ? point : arr[idx - 1];
-                        distance += Math.hypot(point[0] - prev[0], point[1] - prev[1]);
-                        var ele = point[2] || 0;
-                        if (typeof ele === 'number') {
-                            maxElevation = Math.max(ele, maxElevation);
-                            minElevation = Math.min(ele, minElevation);
-                        }
-                        return [distance, ele];
-                    });
-                })
-                .reduce(function (prev, curr) {
-                    const lastDistance = prev[prev.length - 1][0];
-                    curr.forEach(elm => elm[0] += lastDistance);
-                    return prev.concat(curr);
-                });
-
-            if (profile.length === 1) {
-                // Espera una línea, duplicamos el punto para que no se rompa el renderizado del gráfico
-                profile.push(profile[0]);
-            }
-            const coords = elevLines.flat();
-            let elevationData = {
-                x: profile.map(function (elm) {
-                    return elm[0];
-                }),
-                ele: profile.map(function (elm) {
-                    return elm[1] || 0;
-                }),
-                coords: coords,
-                min: minElevation,
-                max: maxElevation
-            };
-
-            const elevationGainOptions = {
-                coords: coords
-            };
-            if (typeof self.options === 'object' && self.map.options.elevation) {
-                elevationGainOptions.hillDeltaThreshold = self.options.hillDeltaThreshold || self.map.options.elevation.hillDeltaThreshold;
-            }
-            if (minElevation === 0 && maxElevation === 0 && options.onlyOriginalElevation) {
-                elevationData = {
-                    msg: self.getLocaleString("geo.trk.chart.chpe.empty")
-                };
-            }
-            Util.extend(elevationData, TC.tool.Elevation.getElevationGain(elevationGainOptions), options);
-
-            if (options.isSecondary && self.elevationProfileChartData) {
-                if (!self.elevationProfileChartData.secondaryElevationProfileChartData) {
-                    self.elevationProfileChartData.showLegend = true;
-                    self.elevationProfileChartData.secondaryElevationProfileChartData = [];
-                    self.elevationProfileChartData.secondaryElevationProfileChartData.push(elevationData);
-                } else {
-                    self.elevationProfileChartData.secondaryElevationProfileChartData[0] = elevationData;
-                }
-            }
-
-            // Cacheamos el perfil
-            if (featureOrCoords instanceof Feature && !options.ignoreCaching) {
-                cacheElevationProfile(featureOrCoords, elevationData);
-            }
-            renderProfile(elevationData);
-        };
-
-        await self.map?.wait(async () => {
-
-            const tool = await self.getElevationTool();
-
-            if (options.originalElevation) {
-                render(lines, options);
-            }
-            if (options.onlyOriginalElevation) {
-                return;
-            }
-
-            const timestamp = Date.now();
-            self.#depTimestamp = timestamp;
-            const elevationOptionsTemplate = {
-                crs: self.map.getCRS()
-            };
-
-            if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
-                elevationOptionsTemplate.resolution = tool.options.resolution;
-            }
-            const sampleNumber = Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") ? tool.options.sampleNumber : 0;
-            if (sampleNumber > 0) {
-                elevationOptionsTemplate.resolution = 0;
-            }
-
-            // Repartimos las muestras proporcionalmente entre todas las líneas
-            const sampleNumberCollection = new Array(lines.length);
-            sampleNumberCollection.fill(sampleNumber);
-            if (sampleNumber > 0) {
-                const lineDistances = new Array(lines.length);
-                let totalDistance = 0;
-                lines.forEach((line, idx) => {
-                    const pl = new Polyline(line);
-                    const lineDistance = pl.getLength();
-                    lineDistances[idx] = lineDistance;
-                    totalDistance += lineDistance;
-                });
-                sampleNumberCollection.forEach((sn, idx, arr) => {
-                    arr[idx] = Math.floor(sn * lineDistances[idx] / totalDistance);
-                });
-            }
-            const interpolatedLines = lines.map((line, idx) => {
-                const interpolationOptions = Object.assign({}, elevationOptionsTemplate, {
-                    sampleNumber: sampleNumberCollection[idx]
-                });
-                return Geometry.interpolate(line, interpolationOptions);
-            });
-
-            const elevationPromises = interpolatedLines.map((interpolatedLine, idx) => {
-                const elevationOptions = Object.assign({}, elevationOptionsTemplate, {
-                    coordinates: interpolatedLine,
-                    partialCallback: function (elevCoords) {
-                        if (timestamp === self.#depTimestamp) { // Evitamos que una petición anterior machaque una posterior
-                            interpolatedLines[idx] = elevCoords;
-                            render(interpolatedLines, {
-                                isSecondary: Object.keys(options).length === 0 ? false : true,
-                                ignoreCaching: options.ignoreCaching
-                            });
-                        }
-                    },
-                    resolution: 0,
-                    sampleNumber: 0
-                });
-                return tool.getElevation(elevationOptions);
-            });
-
-            try {
-                await Promise.all(elevationPromises);
-                if (options.callback && Util.isFunction(options.callback)) {
-                    options.callback();
-                }
-            }
-            catch (_error) {
-                self.resetElevationProfile();
-            }
-        });
+        else {
+            //borrar el contenido alfanumerico
+            const resultsPanel = await this.getProfilePanel();
+            if (resultsPanel.infoDiv.firstChild) resultsPanel.infoDiv.removeChild(resultsPanel.infoDiv.firstChild);
+        }
+        //URI: delay de 200ms para esperar a que la animacion css termine
+        await Util.getTimedPromise(null, 200);
+        return profile.displayElevationProfile(featureOrCoords, options);
     }
 
     async createProfilePanel() {
@@ -402,25 +227,21 @@ class Elevation extends Control {
             }
         };
 
-        let addControlPromise;
-        const addResultsPanelChart = function (controlContainer) {
-            resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
-            addControlPromise = controlContainer.addControl('resultsPanel', resultsPanelOptions);
-        };
+        let resultsPanel;
 
         if (self.options.displayOn) {
             let controlContainer = self.map.getControlsByClass('TC.control.' + self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
             if (!controlContainer) {
                 controlContainer = await self.map.addControl(self.options.displayOn);
             }
-            addResultsPanelChart(controlContainer);
+            resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
+            resultsPanel = await controlContainer.addControl('resultsPanel', resultsPanelOptions);
         } else {
             resultsPanelOptions.div = document.createElement('div');
             self.map.div.appendChild(resultsPanelOptions.div);
-            addControlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
+            resultsPanel = await self.map.addControl('resultsPanel', resultsPanelOptions);
         }
 
-        const resultsPanel = await addControlPromise;
         resultsPanel.caller = self;
         self.resultsPanel = resultsPanel;
         self._decorateChartPanel();
@@ -428,38 +249,26 @@ class Elevation extends Control {
     }
 
     async getProfilePanel() {
-        const self = this;
-        if (!self.#resultsPanelPromise) {
-            self.#resultsPanelPromise = self.createProfilePanel();
+        if (!this.#resultsPanelPromise) {
+            this.#resultsPanelPromise = this.createProfilePanel();
         }
-        return await self.#resultsPanelPromise;
+        return await this.#resultsPanelPromise;
     }
 
     resetElevationProfile() {
-        const self = this;
-        if (self.options.displayElevation && self.resultsPanel) {
-            self.elevationProfileChartData = {
-                x: [0],
-                ele: [0],
-                coords: [0, 0, 0],
-                upHill: 0,
-                downHill: 0
-            };
-            self.resultsPanel.openChart(self.elevationProfileChartData);
+        if (this.options.displayElevation && this.resultsPanel) {
+            this.resultsPanel.getElevationProfileControl().reset();
         }
     }
 
     renderElevationProfile(profileData) {
         const self = this;
-        if (!profileData.isSecondary) {
-            self.elevationProfileChartData = profileData || self.elevationProfileChartData;
-        }
         self.getProfilePanel().then(function (resultsPanel) {
             if (!resultsPanel.div.classList.contains(Consts.classes.HIDDEN)) {
                 if (profileData.isSecondary) {
-                    resultsPanel.loadDataOnChart(self.elevationProfileChartData);
+                    resultsPanel.loadDataOnChart(profileData);
                 } else {
-                    resultsPanel.openChart(self.elevationProfileChartData);
+                    resultsPanel.openChart(profileData);
                 }
                 if (!resultsPanel.isMinimized()) {
                     resultsPanel.doVisible();
@@ -478,26 +287,18 @@ class Elevation extends Control {
     _decorateChartPanel() {
     }
 
-    getElevationTooltip(d) {
-        const self = this;
-        self.resultsPanel.wrap.showElevationMarker({
-            data: d,
-            layer: self.resultsPanel.currentFeature && self.resultsPanel.currentFeature.layer,
-            coords: self.elevationProfileChartData.coords
-        });
+    getElevationProfileChartData() {
+        return this.resultsPanel?.div.querySelector('sitna-elevation-profile')?.chartData;
+    }
 
-        return self.resultsPanel.getElevationChartTooltip(d);
+    getElevationTooltip(d) {
+        return this.resultsPanel?.div.querySelector('sitna-elevation-profile')?.getElevationTooltip(d);
     }
 
     removeElevationTooltip() {
-        const self = this;
-        if (self.resultsPanel) {
-            if (self.resultsPanel.chart && self.resultsPanel.chart.chart) {
-                self.resultsPanel.chart.chart.tooltip.hide();
-            }
-            self.resultsPanel.wrap.hideElevationMarker();
-        }
+        this.resultsPanel?.div.querySelector('sitna-elevation-profile')?.removeElevationTooltip();
     }
+
     async updateModel() {
         const self = this;
         const profilePanel = await self.getProfilePanel();
@@ -513,10 +314,6 @@ class Elevation extends Control {
             self.elevationDataModel["heightOverTerrain"] = self.getLocaleString("heightOverTerrain");
         }
 
-    }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
     }
 }
 
