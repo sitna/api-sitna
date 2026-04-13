@@ -61,6 +61,18 @@ class Observer {
                     set: function (value) {
                         element.value = value;
                     }
+                });                
+                element.attributes.removeNamedItem(attribute.name.toLowerCase())
+                break;
+            case "tc-vc-checked":
+                this.#addProperty(attribute.value, {
+                    node: element,
+                    get: function () {
+                        return element.checked;
+                    },
+                    set: function (value) {
+                        element.checked = value;
+                    }
                 });
                 element.attributes.removeNamedItem(attribute.name.toLowerCase())
                 break;
