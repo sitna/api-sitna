@@ -112,10 +112,6 @@ class MultiMarker extends MultiPoint {
     getCoords(options) {
         return this.getCoordinates(options);
     }
-
-    setCoords(coords) {
-        return this.setCoordinates(coords);
-    }
 }
 
 export default MultiMarker;

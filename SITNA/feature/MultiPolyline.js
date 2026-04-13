@@ -145,7 +145,7 @@ class MultiPolyline extends Feature {
      */
     getCoordinates(options) {
         if (options?.pointArray) {
-            return this.getCoordsArray();
+            return this.getCoordsArray(options);
         }
         return super.getCoordinates.call(this, options);
     }
@@ -169,12 +169,8 @@ class MultiPolyline extends Feature {
         return this.getCoordinates(options);
     }
 
-    setCoords(coords) {
-        return this.setCoordinates(coords);
-    }
-
-    getCoordsArray() {
-        return this.getCoordinates().flat();
+    getCoordsArray(options) {
+        return this.getCoordinates(options).flat();
     }
 
     appendPolyline(polyline) {

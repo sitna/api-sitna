@@ -207,16 +207,8 @@ class Circle extends Feature {
         return Math.hypot(circonferencePoint[0] - center[0], circonferencePoint[1] - center[1]);
     }
 
-    getCoords() {
-        return this.getCoordinates();
-    }
-
-    setCoords(coords) {
-        return this.setCoordinates(coords);
-    }
-
-    getCoordsArray() {
-        return this.getCoordinates();
+    getCoordsArray(options) {
+        return this.getCoordinates(options);
     }
 
     getGeometryType() {

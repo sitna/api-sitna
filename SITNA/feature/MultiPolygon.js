@@ -228,12 +228,8 @@ class MultiPolygon extends Feature {
         return this.getCoordinates(options);
     }
 
-    setCoords(coords) {
-        return this.setCoordinates(coords);
-    }
-
-    getCoordsArray() {
-        return this.getCoordinates().flat(2);
+    getCoordsArray(options) {
+        return this.getCoordinates(options).flat(2);
     }
 
     /**

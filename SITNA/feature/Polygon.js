@@ -234,12 +234,8 @@ class Polygon extends Feature {
         return this.getCoordinates(options);
     }
 
-    setCoords(coords) {
-        return this.setCoordinates(coords);
-    }
-
-    getCoordsArray() {
-        return this.getCoordinates().flat();
+    getCoordsArray(options) {
+        return this.getCoordinates(options).flat();
     }
 
     /**

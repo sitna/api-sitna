@@ -154,12 +154,8 @@ class Polyline extends Feature {
         return super.setCoordinates.call(this, coords);
     }
 
-    setCoords(coords) {
-        return this.setCoordinates(coords);
-    }
-
-    getCoordsArray() {
-        return this.getCoordinates();
+    getCoordsArray(options) {
+        return this.getCoordinates(options);
     }
 
     /**
