@@ -13,7 +13,12 @@
 export default class ControlEvent extends Event {
     control;
     constructor(type, options) {
-        super(type, options);
-        Object.assign(this, options);
+        const allowedKeys = ['control', 'message'];
+        const optionGroups = Object.groupBy(Object.entries(options), ([key]) => allowedKeys.includes(key) ? 'control' : 'super');
+        const superOptions = Object.fromEntries(optionGroups.super || []);
+        const controlEventOptions = Object.fromEntries(optionGroups.control || []);
+        if (!Object.hasOwn(superOptions, 'bubbles')) superOptions.bubbles = true;
+        super(type, superOptions);
+        Object.assign(this, controlEventOptions);
     }
 }
