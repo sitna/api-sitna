@@ -502,10 +502,11 @@ class Layer {
         return 'No se pudo obtener el documento de capacidades del servicio ' + this.url + ': [' + reason + ']';
     }
 
-    getCapabilitiesOnline() {
+    getCapabilitiesOnline(options = {}) {
         const self = this;
+        if (options.noCache) self.#onlineCapabilitiesPromise = null;
         const result = self.#onlineCapabilitiesPromise = self.#onlineCapabilitiesPromise || new Promise(function (resolve, reject) {
-            const url = self.getGetCapabilitiesUrl();
+            const url = self.getGetCapabilitiesUrl(options);
 
             self.proxificationTool.fetch(url, { retryAttempts: 2 }).then(function (data) {
                 self.#parseCapabilities(data.responseText)
@@ -692,15 +693,15 @@ export default Layer;
  *             }
  *         },
  *         {
- *             id: "mapbox",
- *             title: "Mapbox Streets",
+ *             id: "carto",
+ *             title: "CARTO Voyager",
  *             type: SITNA.Consts.layerType.WMTS,
  *             encoding: SITNA.Consts.WMTSEncoding.RESTFUL,
- *             url: "//idena.navarra.es/navegar/api/wmts/mapbox/",
+ *             url: "//idena.navarra.es/navegar/api/wmts/carto/",
  *             format: SITNA.Consts.mimeType.PNG,
- *             layerNames: "streets",
+ *             layerNames: "voyager",
  *             matrixSet: "WorldWebMercatorQuad",
- *             thumbnail: "//idena.navarra.es/navegar/api/TC/css/img/thumb-mapbox-streets.png",
+ *             thumbnail: "//idena.navarra.es/navegar/api/TC/css/img/thumb-carto-voyager.png",
  *             overviewMapLayer: SITNA.Consts.layer.CARTO_DARK
  *         }
  *     ];

@@ -96,6 +96,8 @@ const compareStyles = function (objTo, objFrom, distinct = true) {
  */
 class Vector extends Layer {
 
+    TITLE_SEPARATOR = ' › ';
+
     /**
      * Lista de entidades geográficas que hay en la capa.
      * @member features
@@ -107,6 +109,7 @@ class Vector extends Layer {
 
     selectedFeatures = [];
     #usedIds = new Set();
+    #treeNodesByFeature = new WeakMap();
 
     //esta promise se resolverá cuando el capabilities esté descargado y parseado
     //se utiliza para saber cuándo está listo el capabilities en los casos en los que se instancia el layer pero no se añade al mapa
@@ -253,11 +256,14 @@ class Vector extends Layer {
                     if (self.styles) {
                         const addLegendItem = function (geometryType, features, style) {
                             if (features.length) {
-                                legend.push({
+                                const node = {
                                     src: Util.getLegendImageFromStyle(style, { geometryType }),
                                     geometryType,
+                                    style,
                                     features,
-                                });
+                                };
+                                features.forEach((f) => self.#treeNodesByFeature.set(f, node));
+                                legend.push(node);
                             }
                         };
                         if (self.styles?.point) {
@@ -381,11 +387,20 @@ class Vector extends Layer {
 
             result.name = self.name || result.name;
             result.customLegend = self.options.customLegend; //Atributo para pasar una plantilla HTML diferente a la por defecto (LegendNode.html)
-            result.title = self.title || result.title;
+            const layerPath = self.getPath();
+            let layerTitle = self.title;
+            if (!result.children.length) {
+                layerTitle = self.title ? self.title + (layerPath.length ? self.TITLE_SEPARATOR + layerPath.join(self.TITLE_SEPARATOR) : '') : null;
+            }
+            result.title = layerTitle || result.title;
             result.uid = self.id;
         }
-        self.tree = result
+        self.tree = result;
         return result;
+    }
+
+    findTreeNode(feature) {
+        return this.#treeNodesByFeature.get(feature);
     }
 
     async #addFeatureInternal(multipleFeatureFunction, coord, options) {
@@ -415,10 +430,12 @@ class Vector extends Layer {
             const isNative = TC.wrap.Feature.prototype.isNative(coords);
             if (coords instanceof FeatureConstructor) {
                 feature = coords;
+                coords = feature.getCoordinates();
             }
             else {
                 if (isNative) {
                     feature = coords._wrap && coords._wrap.parent;
+                    if (feature) coords = feature.getCoordinates();
                 }
                 if (!feature) {
                     opts.layer = self;
@@ -430,6 +447,10 @@ class Vector extends Layer {
                     }
                     feature = new FeatureConstructor(coords, opts);
                 }
+            }
+            if (feature.options.crs && self.map) {
+                // Si la geometría tiene un CRS específico, lo transformamos al CRS del mapa
+                feature.transformCoordinates(feature.options.crs, self.map.crs);
             }
             feature.layer = self;
             features[i] = feature;
@@ -795,7 +816,7 @@ class Vector extends Layer {
         const self = this;
         if (feature.layer && self.features.indexOf(feature) >= 0) {
             self.wrap.removeFeature(feature);
-            feature.layer = null;
+            feature.remove();
         }
     }
 
@@ -854,11 +875,19 @@ class Vector extends Layer {
     }
 
     getDescribeFeatureTypeUrl(layerNames) {
-        const self = this;
-        const version = self.options.version || self.capabilities.version || '1.1.0';
-        let featureType = layerNames || self.featureType;
+        const version = this.options.version || this.capabilities.version || '1.1.0';
+        let featureType = layerNames || this.featureType;
         featureType = Array.isArray(featureType) ? featureType : [featureType];
-        return self.url + '?service=WFS&' + 'version=' + version + '&request=DescribeFeatureType&typename=' + featureType.join(',') + '&outputFormat=' + encodeURIComponent(self.capabilities.Operations.DescribeFeatureType.outputFormat);
+        const urlParams = {
+            service: 'WFS',
+            version,
+            request: 'DescribeFeatureType',
+            typename: featureType.join(','),
+        };
+        if (this.capabilities.Operations.DescribeFeatureType?.outputFormat) {
+            urlParams.outputFormat = this.capabilities.Operations.DescribeFeatureType.outputFormat;
+        }
+        return Util.addURLParameters(this.url, urlParams);
     }
 
     async describeFeatureType(layerName, callback, error) {
@@ -878,6 +907,7 @@ class Vector extends Layer {
             }
             self.#featureTypeParser ??= new FeatureTypeParser();
             const dftProcess = async function (layers) {
+                await self.getCapabilitiesPromise();
                 var data = await self.proxificationTool.fetchXML(self.getDescribeFeatureTypeUrl(layers || self.featureType));
                 return await self.#featureTypeParser.parseFeatureTypeDescription(data, layers);
             };
@@ -1059,10 +1089,11 @@ class Vector extends Layer {
             const groupIndex = this.groupIndex ?? this.options?.groupIndex;
             const groupCount = this.groupCount ?? this.options?.groupCount;
             const groupName = this.groupName ?? this.options?.groupName;
-            if (result.length === 0 || groupCount > 1) {
-                if (groupName) result.push(groupName);
-                else result.push((groupIndex ?? 0) + 1);
-            }
+            // Comentada la condición de groupCount porque no queremos que el path sea distinto en grupos únicos
+            //if (result.length === 0 || groupCount > 1) {
+            if (groupName) result.push(groupName);
+            else if (groupCount > 1) result.push((groupIndex ?? 0) + 1);
+            //}
         }
         return result;
     }
@@ -1210,9 +1241,9 @@ class Vector extends Layer {
     }
 
     setStyles(options) {
-        const self = this;
-        self.styles = Util.extend({}, options);
-        self.wrap.setStyles(options);
+        this.styles = Util.extend({}, options);
+        this.tree = null;
+        this.wrap.setStyles(options);
     }
 
     getNextFeatureId(options = {}) {
@@ -1266,7 +1297,7 @@ class Vector extends Layer {
         }
 
         // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
-        const isGeo = self.map?.wrap.isGeo() || self.owner?.map?.wrap.isGeo();
+        const isGeo = self.map?.wrap.isGeo() || self.owner?.map?.wrap.isGeo() || self.map?.on3DView || self.owner?.map?.on3DView;
         const precision = Math.pow(10, (isGeo ? Consts.DEGREE_PRECISION : Consts.METER_PRECISION) + 1);
         let commonStyles = null;
         const features = options.features || self.features;
@@ -1326,7 +1357,7 @@ class Vector extends Layer {
             });
             lObj.style = commonStyles;
         }
-        if (this.#featureTypeMetadata) {
+        if (this.#featureTypeMetadata && !Util.isFunction(this.#featureTypeMetadata)) {
             lObj.metadata = {
                 origin: this.#featureTypeMetadata.origin,
                 attributes: this.#featureTypeMetadata.attributes,
@@ -1431,15 +1462,23 @@ class Vector extends Layer {
         return clone;
     }
 
-    getGetCapabilitiesUrl() {
-        const self = this;
-        if (self.type === Consts.layerType.WFS) {
-            const getUrl = () => self.options.url || self.url;
-            const _src = !Util.isSecureURL(getUrl()) && Util.isSecureURL(Util.toAbsolutePath(getUrl())) ? self.getBySSL_(getUrl()) : getUrl();
+    async getCapabilitiesOnline() {
+        const result = await super.getCapabilitiesOnline();
+        if (result.version === '1.1.0') {
+            // No soportamos versión 1.1.0, pedimos versión 1.0.0
+            return await super.getCapabilitiesOnline({ version: '1.0.0', noCache: true });
+        }
+        return result;
+    }
+
+    getGetCapabilitiesUrl(options = {}) {
+        if (this.type === Consts.layerType.WFS) {
+            const getUrl = () => this.options.url || this.url;
+            const _src = !Util.isSecureURL(getUrl()) && Util.isSecureURL(Util.toAbsolutePath(getUrl())) ? this.getBySSL_(getUrl()) : getUrl();
 
             var params = {};
             params.SERVICE = 'WFS';
-            params.VERSION = '2.0.0';
+            params.VERSION = options.version ?? '2.0.0';
             params.REQUEST = 'GetCapabilities';
 
             return _src + '?' + Util.getParamString(params);
@@ -1447,69 +1486,49 @@ class Vector extends Layer {
         return null;
     }
 
-    getCapabilitiesPromise() {
-        const self = this;
-        if (self.type === Consts.layerType.WFS) {
-            return new Promise((resolve, reject) => {
-                const processedCapabilities = function (capabilities) {
-                    // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
-                    // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
-                    self.capabilities = self.capabilities || capabilities;
-                    TC.capabilitiesWFS[self.options.url || self.url] = TC.capabilitiesWFS[self.options.url || self.url] || capabilities;
-                    TC.capabilitiesWFS[actualUrl] = TC.capabilitiesWFS[actualUrl] || capabilities;
-                    resolve(capabilities);
-                };
+    async getCapabilitiesPromise() {
+        if (this.type === Consts.layerType.WFS) {
+            let result;
 
-                var actualUrl = (self.options.url || self.url).replace(/https ?:/gi, '');
+            var actualUrl = (this.options.url || this.url).replace(/https ?:/gi, '');
 
-                if (self.capabilities) {
-                    resolve(self.capabilities);
-                    self.#capabilitiesPromise = Promise.resolve(self.capabilities);
+            if (this.capabilities) {
+                this.#capabilitiesPromise = Promise.resolve(this.capabilities);
+                result = this.capabilities;
+            }
+            else if (TC.capabilitiesWFS[actualUrl]) {
+                this.#capabilitiesPromise = Promise.resolve(TC.capabilitiesWFS[actualUrl]);
+                result = TC.capabilitiesWFS[actualUrl];
+            }
+
+            const onlinePromise = this.getCapabilitiesOnline();
+            const cachePromise = capabilitiesPromises[actualUrl];
+            capabilitiesPromises[actualUrl] = this.#capabilitiesPromise = cachePromise ||
+                Promise.any([onlinePromise, this.getCapabilitiesFromStorage()]);
+
+            onlinePromise
+                .then((capabilities) => this.capabilities ??= capabilities)
+                .catch(() => false);
+
+            try {
+                const capabilities = await capabilitiesPromises[actualUrl];
+                // Si existe el capabilities no machacamos, porque provoca efectos indeseados en la gestión de capas.
+                // En concreto, se regeneran los UIDs de capas, como consecuencia los controles de la API interpretan como distintas capas que son la misma.
+                this.capabilities = this.capabilities || capabilities;
+                TC.capabilitiesWFS[this.options.url || this.url] = TC.capabilitiesWFS[this.options.url || this.url] || capabilities;
+                TC.capabilitiesWFS[actualUrl] = TC.capabilitiesWFS[actualUrl] || capabilities;
+                result = this.capabilities;
+            }
+            catch (error) {
+                if (this.map) {
+                    this.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: this, message: 'couldNotGetCapabilities' }));
                 }
-                if (TC.capabilitiesWFS[actualUrl]) {
-                    resolve(TC.capabilitiesWFS[actualUrl]);
-                    self.#capabilitiesPromise = Promise.resolve(TC.capabilitiesWFS[actualUrl]);
-
-                }
-
-                const cachePromise = capabilitiesPromises[actualUrl];
-                capabilitiesPromises[actualUrl] = self.#capabilitiesPromise = cachePromise || new Promise(function (res, rej) {
-                    const onlinePromise = self.getCapabilitiesOnline();
-                    const storagePromise = self.getCapabilitiesFromStorage();
-
-                    onlinePromise
-                        .then(function (capabilities) {
-                            res(capabilities);
-                        })
-                        .catch(function (error) {
-                            storagePromise.catch(function () {
-                                rej(error);
-                            });
-                        });
-                    storagePromise
-                        .then(function (capabilities) {
-                            res(capabilities);
-                        })
-                        .catch(function () {
-                            onlinePromise.catch(function (error) {
-                                rej(error);
-                            });
-                        });
-                });
-
-                capabilitiesPromises[actualUrl].then(function (capabilities) {
-                    processedCapabilities(capabilities);
-                })
-                    .catch(function (error) {
-                        if (self.map) {
-                            self.map.dispatchEvent(new LayerEvent(Consts.event.LAYERERROR, { layer: self, message: 'couldNotGetCapabilities' }));
-                        }
-                        reject(error);
-                    });
-            });
+                throw error;
+            }
+            return result;
         }
         else {
-            return Promise.reject(new Error(`Layer "${self.id}" does not have capabilities document`));
+            throw new Error(`Layer "${this.id}" does not have capabilities document`);
         }
     }
 
