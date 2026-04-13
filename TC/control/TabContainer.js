@@ -47,53 +47,49 @@ class TabContainer extends Container {
         self.template = module.default;
     }
 
-    render(callback) {
-        const self = this;
-                
-        return self.renderData({
-            controlId: self.getId(),
-            title: self.title,
-            deselectableTabs: self.options.deselectableTabs,
-            controls: self.controlOptions
-        }, function () {
-            
-            self.div.querySelectorAll('sitna-tab').forEach((tab) => {
-                const target = tab.target;
-
-                // GLS 24/01/2020 necesitamos un mutation observer para poder quitar el tc.collapsed cuando volvamos de  
-                // otro control ya que no hay click porque la pestaña ya está activa.
-                const observerTabElementAddCollapsedClass = new MutationObserver(function (mutations) {
-                    mutations.forEach(function (mutation) {
-                        if (mutation.target.classList.contains(Consts.classes.COLLAPSED)) {
-                            mutation.target.classList.remove(Consts.classes.COLLAPSED);
-                        }
-                    });
-                });
-                observerTabElementAddCollapsedClass.observe(target, { attributes: true });
-
-                tab.callback = function () {
-                    if (this.selected) {
-                        target.classList.remove(Consts.classes.COLLAPSED);
-                    }
-                };
-            });
-
-            // GLS: Si en el register de control se llama a render, ¿por qué volvemos a llamarlo aquí?
-            //for (var i = 0, len = self._ctlPromises.length; i < len; i++) {
-            //    self.getControl(i).then(function (ctl) {
-            //        ctl.render();
-            //    });
-            //}
-
-            if (typeof self.defaultSelection === 'number') {
-                self.div.querySelectorAll('sitna-tab')[self.defaultSelection].onClick();
-            }
-
-            if (typeof callback === 'function') {
-                callback();
-            }
-            
+    async render(callback) {
+        await this.renderData({
+            controlId: this.getId(),
+            title: this.title,
+            deselectableTabs: this.options.deselectableTabs,
+            controls: this.controlOptions
         });
+
+        this.div.querySelectorAll('sitna-tab').forEach((tab) => {
+            const target = tab.target;
+
+            // GLS 24/01/2020 necesitamos un mutation observer para poder quitar el tc.collapsed cuando volvamos de  
+            // otro control ya que no hay click porque la pestaña ya está activa.
+            const observerTabElementAddCollapsedClass = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.target.classList.contains(Consts.classes.COLLAPSED)) {
+                        mutation.target.classList.remove(Consts.classes.COLLAPSED);
+                    }
+                });
+            });
+            observerTabElementAddCollapsedClass.observe(target, { attributes: true });
+
+            tab.callback = function () {
+                if (this.selected) {
+                    target.classList.remove(Consts.classes.COLLAPSED);
+                }
+            };
+        });
+
+        // GLS: Si en el register de control se llama a render, ¿por qué volvemos a llamarlo aquí?
+        //for (var i = 0, len = this._ctlPromises.length; i < len; i++) {
+        //    this.getControl(i).then(function (ctl) {
+        //        ctl.render();
+        //    });
+        //}
+
+        if (typeof this.defaultSelection === 'number') {
+            this.div.querySelectorAll('sitna-tab')[this.defaultSelection].onClick();
+        }
+
+        if (typeof callback === 'function') {
+            callback();
+        }
     }
 
     async onRender() {
@@ -117,10 +113,10 @@ class TabContainer extends Container {
                 ctlOptions = ctl[ctlName];
             }
 
-            self._ctlPromises[i] = self.map.addControl(ctlName, Util.extend({
+            self._ctlPromises.push(self.map.addControl(ctlName, Util.extend({
                 id: self.uids[i],
                 div: self.div.querySelector('.' + self.CLASS + '-elm-' + i)
-            }, ctlOptions));
+            }, ctlOptions)));
         });
 
         const classSelector = `.${self.CLASS}`;
@@ -180,10 +176,7 @@ class TabContainer extends Container {
             ctl.model[key] = self.getLocaleString(key);
         }
     }
-    async updateLanguage() {
-        const self = this;
-        self.updateModel();
-    }
+
 }
 
 TabContainer.prototype.CLASS = 'tc-ctl-tctr';

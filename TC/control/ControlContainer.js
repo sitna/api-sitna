@@ -40,10 +40,10 @@ class ControlContainer extends Container {
 
         self.controlOptions.forEach(function addCtl(ctl, i) {
             const ctlName = Object.keys(ctl).find(key => ["position", "index"].indexOf(key) < 0);
-            self._ctlPromises[i] = self.map.addControl(ctlName, Util.extend({
+            self._ctlPromises.push(self.map.addControl(ctlName, Util.extend({
                 id: self.uids[i],
                 div: self.div.querySelector('.' + self.CLASS + '-elm-' + i).querySelector('div')
-            }, ctl[ctlName].options || ctl[ctlName]));
+            }, ctl[ctlName].options || ctl[ctlName])));
         });
 
         await Promise.all(self._ctlPromises);
@@ -123,9 +123,6 @@ class ControlContainer extends Container {
         var addedElement = li.appendChild(options.htmlElement);
         addedElement.setAttribute('class', addedElement.getAttribute('class') + ' tc-ctl');
         return addedElement;
-    }
-    updateLanguage = async function () {
-        
     }
 }
 

@@ -12,7 +12,7 @@ class Container extends Control {
         this.ctlCount = this.controlOptions.length;
         this.defaultSelection = this.options.defaultSelection;
 
-        this._ctlPromises = new Array(this.ctlCount);
+        this._ctlPromises = [];
     }
 
     async register(map) {
