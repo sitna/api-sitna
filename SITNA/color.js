@@ -1,4 +1,10 @@
-﻿
+﻿class ColorError extends Error {
+	constructor(message) {
+		super(message);
+		this.name = "ColorError";
+	}
+}
+
 const colorUtilities = {
 	hueToRgb: function ([p, q, t]) {
 		colorUtilities.assertArrayColor([p, q, t]);
@@ -54,9 +60,14 @@ const colorUtilities = {
 	hexToRgb: function (s) {
 		colorUtilities.assertHexColor(s);
 
+		let numbers = s.substring(1);
 		// Also support the short syntax (ie "#FFF") as input.
-		const n = parseInt((s.length === 4 ? s[0] + s[1] + s[1] + s[2] + s[2] + s[3] + s[3] : s).substring(1), 16);
-        return [n >> 16 & 0xff, n >> 8 & 0xff, n & 0xff] // devuelve r, g, b entre 0 y 255
+		if (s.length < 6) numbers = numbers.split('').map((c) => c + c).join('');
+		const n = parseInt(numbers, 16);
+		if (numbers.length === 6) {
+			return [n >> 16 & 0xff, n >> 8 & 0xff, n & 0xff]; // devuelve r, g, b entre 0 y 255
+		}
+		return [n >> 24 & 0xff, n >> 16 & 0xff, n >> 8 & 0xff, n & 0xff]; // devuelve r, g, b, a entre 0 y 255
 	},
 
 	rgbToHex: function ([r, g, b]) { // r, g, b entre 0 y 255
@@ -258,16 +269,20 @@ const colorUtilities = {
 
 	assertArrayColor: function (color) {
 		if (!Array.isArray(color) || (color.length < 3)) {
-			throw new Error(`Color ${color} must be an array with three components`);
+			throw new ColorError(`Color ${color} must be an array with three components`);
 		}
 		if (color.some(c => typeof c !== 'number' || isNaN(c))) {
-			throw new Error(`Color components in ${color} must be numbers`);
+			throw new ColorError(`Color components in ${color} must be numbers`);
         }
 	},
 
+	isHexColor: function (color) {
+		return typeof color === 'string' && /^#([0-9a-fA-F]{3,4}){1,2}$/.test(color);
+	},
+
 	assertHexColor: function (color) {
-		if (typeof color !== 'string' || !/^#([0-9a-fA-F]{3}){1,2}$/.test(color)) {
-			throw new Error(`Color ${color} must be a hex string like "#RRGGBB" or "#RGB"`);
+		if (!colorUtilities.isHexColor(color)) {
+			throw new ColorError(`Color ${color} must be a hex string like "#RRGGBB" or "#RGB"`);
 		}
 	},
 };
@@ -278,4 +293,5 @@ colorUtilities.goldenAngleColor = colorUtilities.goldenAngleColorGenerator(
     colorUtilities.goldenAngleDefaultLightness
 );
 
+export { ColorError };
 export default colorUtilities;
