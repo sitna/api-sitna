@@ -41,6 +41,15 @@
             text-decoration: none;
         }
 
+    .instructions button:not(.close-btn) {
+        margin: 1em;
+        background-color: steelblue;
+        color: white;
+        border: none;
+        border-radius: 0.2em;
+        padding: 0.5em;
+    }
+
 .controls {
     top: 140px;
 }
