@@ -57,7 +57,10 @@ class Click extends Control {
 
     activate() {
         const self = this;
-        if (self.wrap) {
+        if (self.map.on3DView) {
+            self.map.view3D.linked2DControls[self.constructor.name]?.activate(self);
+        }
+        else if (self.wrap) {
             self.wrap.activate();
         }
         super.activate.call(self);
@@ -65,6 +68,9 @@ class Click extends Control {
 
     deactivate() {
         const self = this;
+        if (self.map.on3DView) {
+            self.map.view3D.linked2DControls[self.constructor.name]?.deactivate();
+        }
         if (self.wrap) {
             self.wrap.deactivate();
         }
