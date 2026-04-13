@@ -249,18 +249,6 @@ class Toggle extends Component {
         this.#setOptionalAttribute('unchecked-icon-text', value);
     }    
 
-    get title() {
-        return this.getAttribute('title');
-    }
-
-    set title(value) {
-        this.setAttribute('title', value);
-    }
-
-    #onTitleChange() {
-        this.#checkbox.setAttribute('title', this.title);
-    }
-
     #onUncheckedIconTextChange() {
         this.#setDataValue('unchecked-icon-text', this.uncheckedIconText);
     }
