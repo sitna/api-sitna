@@ -101,10 +101,12 @@ class Feature {
     #hasSelectedStyle = false;
     #selected = false;
     #visibilityState = Consts.visibility.VISIBLE;
-
-    constructor(coords, options) {
+    #initialCoordinates = null;
+    
+        constructor(coords, options) {
 
         let olFeatureId;
+        const opts = this.options = Util.extend(true, {}, options);
         this.wrap = new TC.wrap.Feature();
         this.wrap.parent = this;
         if (this.wrap.isNative(coords)) {
@@ -112,6 +114,7 @@ class Feature {
             coords._wrap = this.wrap;
             olFeatureId = this.wrap.getId();
             this.geometry = this.wrap.getGeometry();
+            this.#initialCoordinates = structuredClone(this.geometry);
             if (coords._group) {
                 this.group = coords._group;
             }
@@ -120,8 +123,6 @@ class Feature {
             }
             this.setData(this.wrap.getData());
         }
-
-        var opts = this.options = Util.extend(true, {}, options);
 
         this.id = olFeatureId || opts.id || TC.getUID();
         if (this.wrap.feature && !olFeatureId) {
@@ -141,7 +142,7 @@ class Feature {
 
         if (opts.selected) {
             this.select();
-        }
+        }                       
     }
 
     getPath() {
@@ -154,6 +155,10 @@ class Feature {
             result = [this.group ?? this.options.group];
         }
         return result;
+    }
+
+    hasSelectedStyle() {
+        return this.#hasSelectedStyle;
     }
 
     setVisibility(visible) {
@@ -226,7 +231,7 @@ class Feature {
         }
         this.wrap.setStyle(newStyle);
         return this;
-    }
+    }    
 
     toggleSelectedStyle(condition) {
         if (this.#hasSelectedStyle !== condition) {
@@ -255,7 +260,8 @@ class Feature {
         //const sourceCrs = options?.geometryCrs || (self.layer?.map?.on3DView ? self.layer.map.view3D.view2DCRS:self.layer?.map?.crs);
         //const destCrs = options?.crs || self.layer?.map?.getCRS() || Cfg.utmCrs;
         const sourceCrs = options?.geometryCrs || self.layer?.map?.crs;
-        const destCrs = options?.crs || self.layer?.map?.options.utmCrs || Cfg.utmCrs;
+        const isGeo = self.layer?.map?.wrap.isGeo();
+        const destCrs = options?.crs || (isGeo ? self.layer?.map?.options.geoCrs : self.layer?.map?.crs) || Cfg.utmCrs;
         self.geometry = self.wrap.getGeometry();
         if (sourceCrs && destCrs && sourceCrs !== destCrs) {
             return Util.reproject(this.geometry, sourceCrs, destCrs);
@@ -293,8 +299,16 @@ class Feature {
         if (Array.isArray(coords)) {
             toNumberCoords(coords);
         }
-
+                
         this.geometry = coords;
+        if (this.#initialCoordinates) this.#initialCoordinates = null;
+        else this.#initialCoordinates = structuredClone(coords);
+        this.wrap.setGeometry(coords);        
+        return this;
+    }
+
+    transformCoordinates(sourceCrs, destCrs) {
+        const coords = this.getCoordinates({ geometryCrs: sourceCrs, crs: destCrs });
         this.wrap.setGeometry(coords);
         return this;
     }
@@ -307,7 +321,7 @@ class Feature {
         return this.setCoordinates(coords);
     }
 
-    getCoordsArray() {
+    getCoordsArray(options) {
         const isPoint = function (elm) {
             return Array.isArray(elm) && elm.length >= 2 && typeof elm[0] === 'number' && typeof elm[1] === 'number';
         };
@@ -323,7 +337,7 @@ class Feature {
             }
             return acc;
         };
-        return flattenFn(this.getCoordinates());
+        return flattenFn(this.getCoordinates(options));
     }
 
     getGeometryStride() {
@@ -375,44 +389,44 @@ class Feature {
      * @returns {SITNA.feature.Feature} La propia entidad geográfica.
      */
     setData(data) {
-        if (typeof data === 'string') {
-            this.data = data;
-        }
-        else {
-            this.data = { ...this.data, ...data };
-            this.attributes = this.attributes || [];
-            for (var key in data) {
-                let attr = this.attributes.find(attr => attr.name === key);
-                if (attr) {
-                    attr.value = data[key];
-                }
-                else {
-                    this.attributes.push({ name: key, value: data[key] });
-                }
+            if (typeof data === 'string') {
+                this.data = data;
             }
-            this.wrap.setData(data);
-        }
+            else {
+                this.data = { ...this.data, ...data };
+                this.attributes = this.attributes || [];
+                for (var key in data) {
+                    let attr = this.attributes.find(attr => attr.name === key);
+                    if (attr) {
+                        attr.value = data[key];
+                    }
+                    else {
+                        this.attributes.push({ name: key, value: data[key] });
+                    }
+                }
+                this.wrap.setData(data);
+            }        
         return this;
     }
 
     unsetData(key) {
-        delete this.data[key];
-        const attr = (this.attributes || []).find(attr => attr.name === key);
-        if (attr) {
-            this.attributes.splice(this.attributes.indexOf(attr), 1);
-        }
-        this.wrap.unsetData(key);
+            delete this.data[key];
+            const attr = (this.attributes || []).find(attr => attr.name === key);
+            if (attr) {
+                this.attributes.splice(this.attributes.indexOf(attr), 1);
+            }
+            this.wrap.unsetData(key);        
         return this;
     }
 
     clearData() {
-        this.data = {};
-        this.attributes = [];
-        this.wrap.clearData();
+            this.data = {};
+            this.attributes = [];
+            this.wrap.clearData();
         return this;
     }
 
-    getInfo(options) {
+        getInfo(options) {
         let result = null;
         const locale = options?.locale || this.layer?.map && Util.getMapLocale(this.layer.map);
         const data = this.getData();
@@ -572,7 +586,7 @@ class Feature {
     clone() {
         const nativeClone = this.wrap.cloneFeature();
         nativeClone._wrap = this.wrap;
-        const result = new this.constructor(nativeClone, this.options);
+        const result = new this.constructor(nativeClone, { ...this.options });
         if (this.folders) {
             result.folders = this.folders.slice();
         }
@@ -602,6 +616,7 @@ class Feature {
             if (!popup) {
                 popup = await map.addControl('popup');
             }
+            const oldFeature = popup.currentFeature;
             if (popup.isVisible() && popup.currentFeature !== this) {
                 popup.hide();
             }
@@ -609,7 +624,13 @@ class Feature {
             map.getControlsByClass('TC.control.Popup')
                 .filter(p => p !== popup && p.isVisible())
                 .forEach(p => p.hide());
-            if (!popup.getContainerElement()) await popup.renderPromise();            
+            //URI: Si abrimos un popUp cerramos los paneles de elevacion (caller instanceof TC.control.Elevation) y que estuviesen
+            //asociados a la geometría seleccionada anterior (oldFeature). De esta manera no cerramos otros paneles de elevación como
+            //los del un track
+            map.getControlsByClass('TC.control.ResultsPanel')
+                .filter(ctrl => ctrl.caller instanceof TC.control.Elevation && ctrl.currentFeature === oldFeature)
+                .forEach((p) => p.close());
+            if (!popup.getContainerElement()) await popup.renderPromise();
             popup.setDragged(false);
             this.wrap.showPopup(Object.assign({}, options, { control: popup }));
             map.trigger(Consts.event.POPUP, { control: popup });
@@ -638,15 +659,18 @@ class Feature {
             if (controlContainer) {
                 resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
                 //URI 24/01/2022 comprobar que ya existe un resultpanel para la feature en cuestión, sino se crea uno nuevo
-                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.currentFeature === this);
+                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.caller === map.activeControl);
                 if (!panel) panel = await controlContainer.addControl('resultsPanel', resultsPanelOptions);
             } else {
                 resultsPanelOptions.div = document.createElement('div');
                 map.div.appendChild(resultsPanelOptions.div);
                 //URI 24/01/2022 comprobar que ya existe un resultpanel para la feature en cuestión, sino se crea uno nuevo
-                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultsPanel => resultsPanel.currentFeature === this);
+                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.caller === map.activeControl);
                 if (!panel) panel = await map.addControl('resultsPanel', resultsPanelOptions);
             }
+            const oldFeature = panel.currentFeature;
+
+            panel.caller?.highlightedFeature?.toggleSelectedStyle(false);
 
             panel.currentFeature = this;
 
@@ -660,7 +684,7 @@ class Feature {
             // cerramos los paneles con feature asociada que no sean gráfico
             const panels = map.getControlsByClass('TC.control.ResultsPanel');
             panels.filter(ctrl => panel !== ctrl).forEach(function (p) {
-                if (p.currentFeature && !p.chart) {
+                if (p.currentFeature && p.currentFeature === oldFeature) {
                     p.close();
                 }
             });
@@ -683,13 +707,7 @@ class Feature {
                 }
             });
             resizeObserver.observe(panel.infoDiv);
-
-            var onViewChange = function (_e) {
-                map.off(Consts.event.VIEWCHANGE, onViewChange);
-
-                panel.close();
-            };
-            map.on(Consts.event.VIEWCHANGE, onViewChange);
+                        
             return panel;
         }
         return null;
@@ -753,6 +771,19 @@ class Feature {
         Feature.addSpecialAttributeEventListeners(control.getContainerElement());
     }
 
+    closeInfoControls() {
+        if (this.infoControl?.isVisible() && this.infoControl.currentFeature === this) {
+            this.infoControl.close();
+            this.infoControl = null;
+        }
+        const map = this.layer?.map;
+        if (map) {
+            map.controls
+                .filter((ctl) => ctl.isVisible?.() && ctl.currentFeature === this)
+                .forEach((ctl) => ctl.close());
+        }
+    }
+
     static async showImageDialog(img) {
         const templates = await Feature.loadInfoTemplates();
         const html = await Util.getRenderedHtml(templates['tc-ctl-finfo-dialog'], {
@@ -811,13 +842,26 @@ class Feature {
         return this.#selected;
     }
 
-    toGML(version, srsName) {
+        toGML(version, srsName) {
         return this.wrap.toGML(version, srsName);
+    }
+
+    remove() {
+        if (this.layer?.features.includes(this)) {
+            this.layer.removeFeature(this);
+        }
+        this.layer = null;
+        if (this.#initialCoordinates) {
+            const initialCoords = this.#initialCoordinates;
+            this.setCoordinates(structuredClone(this.#initialCoordinates));
+            this.#initialCoordinates = initialCoords;
+        }
     }
 
     static async getInfoTemplates() {
         const cssClassName = 'tc-ctl-finfo';
         const mainTemplatePromise = import('../../TC/templates/tc-ctl-finfo.mjs');
+        const serviceTemplatePromise = import('../../TC/templates/tc-ctl-finfo-service.mjs');
         const attributesTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr.mjs');
         const objectTemplatePromise = import('../../TC/templates/tc-ctl-finfo-object.mjs');
         const buttonsTemplatePromise = import('../../TC/templates/tc-ctl-finfo-buttons.mjs');
@@ -831,6 +875,7 @@ class Feature {
         const template = {};
         template[cssClassName] = (await mainTemplatePromise).default;
         template[cssClassName + '-attr'] = (await attributesTemplatePromise).default;
+        template[cssClassName + '-service'] = (await serviceTemplatePromise).default;
         template[cssClassName + '-object'] = (await objectTemplatePromise).default;
         template[cssClassName + '-buttons'] = (await buttonsTemplatePromise).default;
         template[cssClassName + '-dialog'] = (await dialogTemplatePromise).default;
