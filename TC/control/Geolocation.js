@@ -37,6 +37,7 @@ import Marker from '../../SITNA/feature/Marker.js';
 import Geometry from '../Geometry.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import WebComponentControl from './WebComponentControl.js';
 
 TC.control = TC.control || {};
 
@@ -397,6 +398,9 @@ class Geolocation extends Control {
                 var kmlPattern = '.' + Consts.format.KML.toLowerCase();
                 var gpxPattern = '.' + Consts.format.GPX.toLowerCase();
 
+                const availableTracks = await self.getAvailableTracks();
+                if (availableTracks.some(t => t.name === fileName)) return;
+
                 // GLS: ¿es un GPX?
                 if (fileName.toLowerCase().indexOf(gpxPattern) === fileName.length - gpxPattern.length ||
                     // GLS: ¿es un KML y viene desde el upload de Geolocation?
@@ -497,15 +501,19 @@ class Geolocation extends Control {
 
         }.bind(self));
 
-        map.on(Consts.event.PROJECTIONCHANGE, function (e) {
-            if (self.elevationChartData) {
-                self.elevationChartData.coords = Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
-                if (self.elevationChartData.secondaryElevationProfileChartData && self.elevationChartData.secondaryElevationProfileChartData.length)
-                    self.elevationChartData.secondaryElevationProfileChartData.forEach((secElevChartData) => {
-                        secElevChartData.coords = Util.reproject(secElevChartData.coords, e.oldCrs, e.newCrs);
-                    });
-            }
-        });
+        self.map
+            .on(Consts.event.RESULTSPANELMIN, function () { self.clearChartProgress(); })
+            .on(Consts.event.RESULTSPANELCLOSE, function () { self.clearChartProgress(); });
+
+        //map.on(Consts.event.PROJECTIONCHANGE, function (e) {
+        //    if (self.elevationChartData) {
+        //        self.elevationChartData.coords = Util.reproject(self.elevationChartData.coords, e.oldCrs, e.newCrs);
+        //        if (self.elevationChartData.secondaryElevationProfileChartData && self.elevationChartData.secondaryElevationProfileChartData.length)
+        //            self.elevationChartData.secondaryElevationProfileChartData.forEach((secElevChartData) => {
+        //                secElevChartData.coords = Util.reproject(secElevChartData.coords, e.oldCrs, e.newCrs);
+        //            });
+        //    }
+        //});
 
         map.on(Consts.event.DIALOG, function (e) {
             if (e.control) {
@@ -965,7 +973,9 @@ class Geolocation extends Control {
             } else {
                 options.resolution = 0;
             }
-            self.elevationControl = await self.map.addControl('elevation', options);
+            self.elevationControl = await self.map.addControl('elevation', {
+                ...options, displayMode: WebComponentControl.displayMode.PANEL
+            });
 
             self.elevationControl._decorateChartPanel = function () {
                 this.resultsPanel.setCurrentFeature = function (_feature) {
@@ -2115,7 +2125,7 @@ class Geolocation extends Control {
 
     clearChartProgress() {
         const self = this;
-        self.getElevationControl().then(elevCtl => elevCtl && elevCtl.removeElevationTooltip());
+        self.getElevationControl().then((elevCtl) => elevCtl?.removeElevationTooltip());
     }
 
     setChartProgress = function (previous, _current, _distance, _doneTime) {
@@ -2128,42 +2138,24 @@ class Geolocation extends Control {
         var done = previous.d;
         //var locale = self.map.getLocale()?.replace('_', '-') || undefined;
 
-        if (self.elevationChartData) {
-            self.setSecondaryElevationProfileCoordinates(self.elevationChartData.coords);
+        self.getElevationControl().then(elevCtl => elevCtl &&
+            elevCtl.getProfilePanel().then(function (panel) {
+                const profile = panel.getElevationProfileControl();
+                if (profile.chartData) {
+                    profile.setSecondaryElevationProfileCoordinates(profile.chartData.coords);
 
-            let iX = 0;
-            while (self.elevationChartData.x[iX] <= done) {
-                iX++;
-            }
-
-            self.getElevationControl().then(elevCtl => elevCtl &&
-                elevCtl.getProfilePanel().then(function (panel) {
-                    if (panel) {
-                        panel.chart.chart.tooltip.show({ x: self.elevationChartData.x[iX === 0 ? 0 : iX - 1] });
-                        panel.wrap.hideElevationMarker();
+                    let iX = 0;
+                    while (profile.chartData.x[iX] <= done) {
+                        iX++;
                     }
-                }));
-        }
-    }
 
-    setSecondaryElevationProfileCoordinates(sourceCoordinates) {
-        const self = this;
-        const secProfileData = self.elevationChartData?.secondaryElevationProfileChartData?.[0];
 
-        if (secProfileData?.ele && !secProfileData?.coords) {
-
-            // Aplanamos a una lista de puntos
-            let level = -2;
-            let levelElm = sourceCoordinates;
-            do {
-                level++;
-                levelElm = levelElm[0];
-            }
-            while (Array.isArray(levelElm));
-            secProfileData.coords = sourceCoordinates
-                .flat(level)
-                .map((c, i) => [c[0], c[1], secProfileData.ele[i]]);
-        }
+                    if (profile) {
+                        profile.chart.chart.tooltip.show({ x: profile.chartData.x[iX === 0 ? 0 : iX - 1] });
+                        profile.wrap.hideElevationMarker();
+                    }
+                }
+            }));
     }
 
     getTimeInterval(timeFrom, timeTo) {
@@ -2196,22 +2188,23 @@ class Geolocation extends Control {
         if (self.getSelectedTrackItem() === li && // si el usuario a activado la película del track ya seleccionado no repintamos
             elevCtl.resultsPanel && elevCtl.resultsPanel.chart && elevCtl.resultsPanel.chart.chart) {
             if (!self.hasElevation) {
-                self.hasElevation = elevCtl.elevationProfileChartData.min === 0 && elevCtl.elevationProfileChartData.max === 0 ? false : true;
+                const elevationProfileChartData = elevCtl.getElevationProfileChartData();
+                self.hasElevation = !(elevationProfileChartData.min === 0 && elevationProfileChartData.max === 0);
             }
             self.wrap.simulateTrack();
         } else {
-            self.drawTrack(li, false).then(function () {
-                if (self.elevationChartData &&
-                    self.elevationChartData.min === 0 &&
-                    self.elevationChartData.max === 0) {   // no tenemos elevación original
+            await self.drawTrack(li, false);
+            const elevationProfileChartData = elevCtl.getElevationProfileChartData();
+            if (elevationProfileChartData) {
+                if (elevationProfileChartData.min === 0 && elevationProfileChartData.max === 0) {   // no tenemos elevación original
                     self.map.toast(self.getLocaleString("geo.trk.simulate.empty"), { duration: 10000 });
                     self.hasElevation = false; // establecemos a false para que no muestra el progreso en el perfil ya que siempre será elevación 0
-                } else if (!(self.elevationChartData.min === 0 && self.elevationChartData.max === 0)) {
+                } else {
                     self.hasElevation = true;
                 }
+            }
 
-                self.wrap.simulateTrack();
-            });
+            self.wrap.simulateTrack();
         }
     }
 
@@ -2336,7 +2329,9 @@ class Geolocation extends Control {
                         return longLayout && isAnyLine(f);
                     });
 
-                    let line = options?.feature || features[0];
+                    const originalLine = options?.feature || features[0];
+                    let line = originalLine.clone();
+                    line.layer = originalLine.layer;
                     //URI: Si el mapa esta en 3D se reproyecta la ruta si el CRS del para 2D y 3D son distintos
                     if (self.map.on3DView && self.map.view3D.view2DCRS !== self.map.view3D.crs)
                         line.setCoordinates(Util.reproject(line.getCoordinates(), self.map.view3D.view2DCRS, self.map.view3D.crs));
@@ -2364,19 +2359,12 @@ class Geolocation extends Control {
                             onlyOriginalElevation: !self.options.displayElevation ? true : false,
                             ignoreCaching: true,
                             time: time,
+                            key: "gps",
+                            colorClass: "tc-gps",
                             callback: function () {
-                                self.elevationChartData = elevCtl.elevationProfileChartData;
-                                self.hasElevation = elevCtl.elevationProfileChartData.min === 0 && elevCtl.elevationProfileChartData.max === 0 ? false : true;
-                                self.#cacheElevationProfile(elevCtl.elevationProfileChartData, li.dataset.uid);
-
-                                self.resultsPanelChart.div.addEventListener('mouseover', function (_e) {
-                                    if (self.trackLayer && self.trackLayer.getVisibility() && self.trackLayer.getOpacity() > 0)
-                                        self.wrap.activateSnapping.call(self.wrap);
-                                });
-                                self.resultsPanelChart.div.addEventListener('mouseout', function (_e) {
-                                    if (self.trackLayer && (!self.trackLayer.getVisibility() && self.trackLayer.getOpacity() == 0))
-                                        self.wrap.deactivateSnapping.call(self.wrap);
-                                });
+                                const elevationChartData = elevCtl.getElevationProfileChartData();
+                                self.hasElevation = !(elevationChartData.min === 0 && elevationChartData.max === 0);
+                                self.#cacheElevationProfile(elevationChartData, li.dataset.uid);
 
                                 self.map
                                     .on(Consts.event.RESULTSPANELMIN, function () { self.clearChartProgress(); })
@@ -2384,6 +2372,14 @@ class Geolocation extends Control {
 
                                 // mantenemos el mismo nombre de archivo al descargar desde panel y desde la lista.
                                 elevCtl.getProfilePanel().then(function (resultsPanel) {
+                                    resultsPanel.div.addEventListener('mouseover', function (_e) {
+                                        if (self.trackLayer && self.trackLayer.getVisibility() && self.trackLayer.getOpacity() > 0)
+                                            self.wrap.activateSnapping.call(self.wrap);
+                                    });
+                                    resultsPanel.div.addEventListener('mouseout', function (_e) {
+                                        if (self.trackLayer && (!self.trackLayer.getVisibility() && self.trackLayer.getOpacity() == 0))
+                                            self.wrap.deactivateSnapping.call(self.wrap);
+                                    });
                                     let selectedTrackItem = self.getSelectedTrackItem();
                                     if (selectedTrackItem) {
                                         resultsPanel.currentFeature.fileName = self.#getDownloadFileName(selectedTrackItem);
@@ -2401,13 +2397,13 @@ class Geolocation extends Control {
                 }
             } else {
                 if (!self.options.displayElevation) {
-                    delete cachedProfile.secondaryElevationProfileChartData[0];
+                    //delete cachedProfile.secondaryElevationProfileChartData[0];
+                    cachedProfile.secondaryElevationProfileChartData={ };
                 }
-                self.elevationChartData = cachedProfile;
                 const resultsPanel = await elevCtl.getProfilePanel();
                 await resultsPanel.renderPromise();
                 resultsPanel.doVisible();
-                elevCtl.renderElevationProfile(self.elevationChartData);
+                elevCtl.renderElevationProfile(cachedProfile);
                 resultsPanel.setCurrentFeature();
             }
             return;
@@ -2721,7 +2717,7 @@ class Geolocation extends Control {
 
     getSelectedTrackItem() {
         const self = this;
-        return self.track.trackList.querySelector('li.' + Consts.classes.CHECKED);
+        return self.track?.trackList.querySelector('li.' + Consts.classes.CHECKED);
     }
 
     clearSelectedTrack() {
