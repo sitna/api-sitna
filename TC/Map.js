@@ -30,7 +30,7 @@ import filterNs from './filter.js';
 import wwBlob from '../workers/tc-jsonpack-web-worker-blob.mjs';
 import './Controller.js';
 import './Observer.js';
-import { GMLFilter } from '../SITNA/filter.js'
+import { GMLFilter } from '../SITNA/filter.js';
 
 TC.EventTarget = EventTarget;
 TC.i18n = TC.i18n || i18n;
@@ -162,13 +162,12 @@ const jsonpackProcess = function (action, json) {
 const supportsFileSystemAccess = Util.isFunction(DataTransferItem.prototype.getAsFileSystemHandle);
 const isStatefulLayer = (layer) => layer.type === Consts.layerType.WMS ||
     supportsFileSystemAccess && layer.type === Consts.layerType.VECTOR && layer.file && !layer.stealth;
-
 const _addToHistory = async function (e) {
     const self = this;
 
     var { state, index } = await self.exportState();
-    if (self.replaceCurrent) {
-        window.history.replaceState(state, null, null);
+    if (self.replaceCurrent) {        
+        window.history.replaceState(state, null, null);        
         delete self.replaceCurrent;
         return;
     } else {
@@ -183,7 +182,7 @@ const _addToHistory = async function (e) {
             currentState = Util.utf8ToBase64(state);
             // Si el estado es distinto y no hay un estado posterior actualmente
             if (currentState !== previousState && index > lastStateIndex) {
-                lastStateIndex = index;
+                lastStateIndex = index;                
                 window.history.pushState(state, null, window.location.href.split('#').shift() + '#' + currentState);
             }
         };
@@ -195,6 +194,7 @@ const _addToHistory = async function (e) {
                 case e.type === Consts.event.BASELAYERCHANGE:
                 case e.type === Consts.event.LAYERORDER:
                 case e.type === Consts.event.ZOOM:
+                case e.type === Consts.event.THREED_TILES_CHANGE:
                     saveState();
                     break;
                 case e.type === Consts.event.UPDATEPARAMS:
@@ -215,17 +215,17 @@ const _addToHistory = async function (e) {
         }
     }
 };
-
+let waitIdArray = [];
 const _loadIntoMap = async function (stringOrJson) {
     const self = this;
     const promises = [];
 
     if (!stringOrJson) {
         return;
-    }
-
-    await self.wait(async () => {
+    }    
+    return await self.wait(async (waitId) => {
         let obj;
+        waitIdArray.push(waitId);
         if (typeof stringOrJson === "string") {
             try {
                 obj = await jsonpackProcess('unpack', stringOrJson);
@@ -242,7 +242,6 @@ const _loadIntoMap = async function (stringOrJson) {
         } else {
             obj = stringOrJson;
         }
-
         // CRS
         if (obj.crs && obj.crs !== self.crs ||
             typeof obj.crs === 'undefined' && self.crs !== self.options.crs) {
@@ -270,10 +269,28 @@ const _loadIntoMap = async function (stringOrJson) {
                     });
                 }
             }
-
             //extent
-            if (obj.ext) {
-                promises.push(self.setExtent(obj.ext, { animate: false }));
+            if (obj.ext && !self.on3DView && !obj.vw3) {
+                const defer = Promise.withResolvers();
+                promises.push(defer.promise);
+                self.setExtent(obj.ext, { animate: false }, defer.resolve);
+            }            
+            else if (obj.vw3 && self.on3DView) {
+                promises.push(self.view3D.importState(obj.vw3));
+            }
+            else if (!self.on3DView && obj.vw3) {
+                //establecer el modo 3D
+                const threeDCtrl = self.getControlsByClass(TC.control.ThreeD)?.[0];
+                if (threeDCtrl) {
+                    promises.push(threeDCtrl.set3D(true));
+                }
+            }
+            else if (!obj.vw3 && self.on3DView) {
+                //deshacer el modo 3D
+                const threeDCtrl = self.getControlsByClass(TC.control.ThreeD)?.[0];
+                if (threeDCtrl) {
+                    promises.push(threeDCtrl.unset3D(obj.ext));
+                }
             }
         }
 
@@ -356,6 +373,7 @@ const _loadIntoMap = async function (stringOrJson) {
         catch (e) {
             TC.error(e);
         }
+        return waitId;
     });
 };
 
@@ -460,7 +478,7 @@ const _checkMaxFeatures = async function (numMaxfeatures, urlData, data) {
 const _makePostCall = function (objLayer, data) {
     return new Promise(function (resolve) {
         objLayer.mapLayer.proxificationTool.fetch(objLayer.url, {
-            data: data,
+            data,
             contentType: 'application/xml',
             type: 'POST'
         }).then(function (response) {
@@ -478,7 +496,7 @@ const _makePostCall = function (objLayer, data) {
                     return;
                 }
             }
-            resolve({ response: response });
+            resolve({ response });
         }).catch(function (e) {
             resolve({
                 errors: [{
@@ -530,10 +548,10 @@ const getFiltersForLayers = async function (layer, availableLayers, filter) {
         //para duplicar el filtro con los nombres de las geometrias y los emvolvemos en un filtro OR
         else if (geometryFields.length > 1) {
             const changeGeometryName = function (filter, geometryName) {
-                if (Object.hasOwn(filter, 'geometryName')) {
+                if ('geometryName' in filter) {
                     filter.geometryName = geometryName;
                 }
-                if (Object.hasOwn(filter, 'condition')) {
+                if ('condition' in filter) {
                     changeGeometryName(filter.condition);
                 }
                 filter.conditions?.forEach((c) => changeGeometryName(c));
@@ -891,6 +909,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
         var init = async function () {
 
+            if (self.availableBaseLayers.length === 0) {
+                self.availableBaseLayers = await TC.Cfg.getAvailableBaseLayers();
+            }
+
             self.state = self.options.stateful ? await self.checkLocation() : undefined;
 
             if (self.options.layout) {
@@ -1025,6 +1047,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 await self.addLayer(Util.extend(lyrCfg, { isBase: true, map: self }));
             }
 
+            const layerPromises = [];
+
             //vamos creando un array de capas a añadir. Primero añadimos las capas de estado
             (!self.state || !self.state.layers ? [] : self.state.layers.map(function (stateLayer) {
                 const lyrCfg = {
@@ -1059,7 +1083,9 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     }))
                 //por ultimo recorremos el Array añadiendo las capas al mapa
                 .forEach((lyrCfg) => {
-                    self.addLayer(lyrCfg).then(function (layer) {
+                    const layerPromise = self.addLayer(lyrCfg);
+                    layerPromises.push(layerPromise);
+                    layerPromise.then(function (layer) {
                         if (layer.wrap.getRootLayerNode) {
                             var rootNode = layer.wrap.getRootLayerNode();
                         }
@@ -1086,7 +1112,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         });
                 }
                 );
-            Promise.all(ctlPromises).finally(function () {
+            Promise.all(ctlPromises.concat(layerPromises)).finally(function () {
                 // 13/03/2020 si tenemos estado de controles, pasamos a establecer los estados
                 if (self.state && self.state.ctl) {
                     self.importControlStates(self.state.ctl);
@@ -1411,7 +1437,8 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             Consts.event.LAYERVISIBILITY,
             Consts.event.ZOOM,
             Consts.event.BASELAYERCHANGE,
-            Consts.event.UPDATEPARAMS
+            Consts.event.UPDATEPARAMS,
+            Consts.event.THREED_TILES_CHANGE
         ].join(' ');
 
         // gestión siguiente - anterior
@@ -1423,10 +1450,13 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             Consts.event.FEATUREMODIFY,
             Consts.event.FEATURESADD,
             Consts.event.FEATURESCLEAR,
-            Consts.event.UPDATEPARAMS
+            Consts.event.UPDATEPARAMS,
+            Consts.event.THREED_TILES_CHANGE
         ].join(' ');
 
-        self.on(eventsToMapChange, () => self.trigger(Consts.event.MAPCHANGE));
+        self.on(eventsToMapChange, (e) =>
+            self.trigger(Consts.event.MAPCHANGE)
+        );
 
         // registramos el estado inicial                
         self.replaceCurrent = true;
@@ -1445,26 +1475,39 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 _addToHistory.call(self, e);
             }, 500);
         });
-
-        // gestión siguiente - anterior
-        globalThis.addEventListener('popstate', function (e) {
+        
+        let popStatePromisesCounter = 0;
+        const popStateManager = async (promise) => {
+            popStatePromisesCounter++;
+            self.off(events, fn_addToHistory);
+            await promise;
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    popStatePromisesCounter--;
+                    resolve();
+                }, self.view3D ? 1000 : Consts.ZOOM_ANIMATION_DURATION);
+            })
+            
+        };
+        // gestión siguiente - anterior        
+        globalThis.addEventListener('popstate', async function (e) {
             self.wait(Util.getTimedPromise(async function () {
-                if (e) {
-                    // eliminamos la suscripción para no registrar el cambio de estado que vamos a provocar
-                    self.off(events, fn_addToHistory);
-
+                if (e && e.state) {                
                     var state = e.state;
                     if (Object.prototype.toString.call(state) === '[object Object]') {
                         state = await self.checkLocation();
                     }
-
-                    // gestionamos la actualización para volver a suscribirnos a los eventos del mapa                        
-                    await _loadIntoMap.call(self, state);
-                    setTimeout(function () {
+                    await popStateManager(_loadIntoMap.call(self, state));
+                    if (popStatePromisesCounter === 0) {
+                        if (self.view3D) clearTimeout(self.view3D.timeoutDelay);
                         self.on(events, fn_addToHistory);
-                    }, 200);
+                        const li = self.getLoadingIndicator();
+                        waitIdArray.forEach((id) => li?.removeWait(id));
+                        waitIdArray = [];                        
+                    }
+                    
                 }
-            }, MIN_TIMEOUT_VALUE));
+            }, MIN_TIMEOUT_VALUE));            
         });
     }
 
@@ -1472,6 +1515,13 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         const self = this;
         var state = {};
         let index = stateIndex++;
+
+        if (self.on3DView && self.view3D.cameraControls) {
+            state.vw3 = self.view3D.cameraControls.getCameraState();
+            const scenes = self.getControlsByClass(TC.control.Scenes)?.[0];
+            if (scenes)
+                state.vw3 = Object.assign({}, { ts: scenes.exportState() }, state.vw3);
+        }
 
         if (self.crs !== self.options.crs) {
             state.crs = self.crs;
@@ -1557,10 +1607,6 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             }
         });
 
-        if (self.on3DView && self.view3D.cameraControls) {
-            state.vw3 = self.view3D.cameraControls.getCameraState();
-        }
-
         const extraStates = options.extraStates ?? self.#extraStates;
         if (extraStates) {
             Util.extend(state, extraStates);
@@ -1589,7 +1635,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     async refreshMapState(options) {
         const { state } = await this.exportState(options);
         const currentState = Util.utf8ToBase64(state);
-        window.history.replaceState(state, null, window.location.href.split('#').shift() + '#' + currentState);
+        window.history.replaceState(state, null, window.location.href.split('#').shift() + '#' + currentState);        
     }
 
     addControlState(control) {
@@ -1893,7 +1939,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 await Promise.all([self.wrap.getMap(), lyr.wrap.getLayer()]);
             }
             catch (error) {
-                const err = error instanceof Error ? error : new Error(error);
+                const err = Error.isError(error) ? error : new Error(error);
                 err.layerId = layer.id;
                 throw err;
             }
@@ -2045,6 +2091,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             self.wrap.insertLayer(olLayer, olIdx);
             if (beforeIdx > -1) {
                 self.layers.splice(beforeIdx, 1);
+                if (beforeIdx < idx) idx--;
             }
             self.layers.splice(idx, 0, layer);
             self.workLayers = self.layers.filter(function (elm) {
@@ -2331,13 +2378,12 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         }
         return result;
     }
-
     async wait(functionOrPromise) {
         let result;
-        const promise = Util.isFunction(functionOrPromise) ? functionOrPromise() : functionOrPromise;
         const li = this.getLoadingIndicator();
-        const waitId = li?.addWait();
-        try {
+        const waitId = li?.addWait(); 
+        const promise = Util.isFunction(functionOrPromise) ? functionOrPromise(waitId) : functionOrPromise;
+        try {            
             result = await promise;
         }
         catch (e) {
@@ -2611,6 +2657,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     extentMargin = self.options.extentMargin;
                 }
                 for (var i = 0; i < features.length; i++) {
+                    //var b = new features[i].constructor(TC.Util.reproject(features[i].geometry,self.getCRS(),self.on3DView?self.view3D.view2DCRS:self.getCRS())).getBounds();
                     var b = features[i].getBounds();
                     if (b) {
                         bounds[0] = Math.min(bounds[0], b[0]);
@@ -3053,6 +3100,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 toastInfo.toast.parentElement.removeChild(toastInfo.toast);
             }
             toastInfo.toast = null;
+            delete toasts[text];
         }
         return this;
     }
@@ -3164,6 +3212,11 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         return this;
     }
 
+    importDocument(document) {
+        const docs = Array.isArray(document) ? document : [document];
+        return this.wrap.importDocument(docs);
+    }
+
     async getElevationTool() {
         const self = this;
         if (!self.elevation && !self.options.elevation) {
@@ -3199,11 +3252,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
     extractFeatures(options = {}) {
         const self = this;
-        const arrPromises = [];
         const filter = options.filter;
-        const outputFormat = options.outputFormat;
         const download = options.download;
-        const layersToExtract = options.layers || self.layers;
+        const layers = options.layers || self.workLayers;
+        const layersToExtract = layers.filter((layer) => layer.isRaster());
 
         const services = {};
 
@@ -3214,12 +3266,12 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             }, '') || mapLayer.tree && mapLayer.tree.title || mapLayer.capabilities.Service.Title;
         };
 
-
-        const getCRS = function () {
+        const getCRS = function (outputFormat) {
             if (download && (outputFormat === Consts.mimeType.JSON || outputFormat === Consts.mimeType.KML))
                 return Consts.SRSDOWNLOAD_GEOJSON_KML;
             return Util.toURNCRS(self.getCRS());
         };
+
         const _postOrDownload = async function (objlayer, data) {
             if (!download) {
                 const response = await _makePostCall(objlayer, data);
@@ -3234,49 +3286,61 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 const cacheAction = await objlayer.mapLayer.proxificationTool.cacheHost.getAction(objlayer.url);
                 return {
                     url: cacheAction.action(objlayer.url),
-                    data: data
+                    data,
                 };
             }
         };
-        layersToExtract.forEach(function (layer) {
-            if (!layer.getVisibility() || self.workLayers.indexOf(layer) < 0 || layer.type !== Consts.layerType.WMS) {
-                return;
-            }
-            var availableLayers = layer.getDisgregatedLayerNames() || layer.availableNames;
+        const serviceProm = new WeakMap();
+
+        return layersToExtract.reduce(function fromLayerToPromise(accumulated,layer) {
             const url = layer.url.toLowerCase();
             var serviceObj = services[url];
             if (!serviceObj) {
                 serviceObj = services[url] = {
-                    url: url,
+                    url,
                     layers: [],
                     mapLayers: [layer],
                     layerNames: []
                 };
+            }            
+
+            const getEmptyService = () => Promise.resolve({ service: serviceObj });
+
+            if (!layer.getVisibility() || !self.workLayers.includes(layer) || layer.type !== Consts.layerType.WMS) {
+                return getEmptyService();
             }
-            for (var i = 0; i < availableLayers.length; i++) {
-                var name = availableLayers[i];
+
+            const availableLayerNames = layer.getDisgregatedLayerNames() || layer.availableNames;
+
+            for (const name of availableLayerNames) {
                 //URI:se quita la exclusion de capas no visibles por escala
                 /*if (!layer.isVisibleByScale(name) && !download)
                     continue;*/
-                if (!layer.wrap.getInfo(name).queryable)
-                    continue;
+                if (!layer.wrap.getInfo(name).queryable) continue;
                 serviceObj.layerNames.push(name);
                 var path = layer.getPath(name);
                 serviceObj.layers.push({
-                    name: name,
+                    name,
                     title: path[0],
                     path: path.slice(1),
                     features: []
                 });
             }
+
             if (serviceObj.layerNames.length === 0) {
-                return;
+                return getEmptyService();
             }
-            if (typeof serviceObj.request !== "undefined") {
-                return;
+
+            serviceObj.request = layer.getWFSCapabilities(); //WFSCapabilities.Promises(url);
+
+            if (typeof serviceObj.request === "undefined") {
+                return getEmptyService();
             }
-            serviceObj.request = serviceObj.request || layer.getWFSCapabilities(); //WFSCapabilities.Promises(url);
-            arrPromises.push(new Promise(function (resolve, _reject) {
+            if (serviceProm.has(serviceObj)) {
+                return accumulated;
+            }
+
+            accumulated.push(new Promise(function (resolve, _reject) {
                 serviceObj.request.then(function (capabilities) {
                     var service = null;
                     var errors = [];
@@ -3286,24 +3350,25 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         }
                     }
                     var _numMaxFeatures = null;
-                    var layerList = service.layerNames;
+                    const mapLayer = service.mapLayers[0];
+                    const layerList = service.layerNames;
                     if (!(layerList instanceof Array) || !layerList.length) return;//condici\u00f3n de salida
                     //comprobamos que tiene el getfeature habilitado
                     if (typeof capabilities.Operations.GetFeature === "undefined") {
                         errors.push({ key: Consts.WFSErrors.GETFEATURE_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } });
-                        resolve({ "errors": errors });
+                        resolve({ service, errors });
                         return;
                     }
                     var availableLayers = [];
                     for (var i = 0; i < layerList.length; i++) {
                         //Comprbamos si la capa en el WMS tiene el mimso nombre que en el WFS
-                        var layer = layerList[i];
+                        let layer = layerList[i];
                         //quitamos los ultimos caracteres que sean "_" , cosas de Idena
                         while (layer[layer.length - 1] === "_") {
                             layer = layer.substring(0, layer.lastIndexOf("_"));
                         }
-                        if (!Object.prototype.hasOwnProperty.call(capabilities.FeatureTypes, layer.substring(layerList[i].indexOf(":") + 1))) {
-                            var titles = service.mapLayers[0].getPath(layer.substring(layerList[i].indexOf(":") + 1));
+                        if (!Object.hasOwn(capabilities.FeatureTypes, layer.substring(layerList[i].indexOf(":") + 1))) {
+                            var titles = mapLayer.getPath(layer.substring(layerList[i].indexOf(":") + 1));
                             errors.push({ key: Consts.WFSErrors.LAYERS_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service), "layerName": titles[titles.length - 1] } });
                             continue;
                         }
@@ -3312,32 +3377,51 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                     }
                     if (availableLayers.length === 0) {
                         errors.push({ key: Consts.WFSErrors.NO_VALID_LAYERS, params: { serviceTitle: _getServiceTitle(service) } });
-                        resolve({ "errors": errors });
+                        resolve({ service, errors });
                         return;
+                    }
+                    let outputFormat = options.outputFormat;
+                    if (!outputFormat) {
+                        //elegimos el formato de salida: primero el preferido, si no el primero de la lista
+                        const outputFormatMimeTypes = capabilities
+                            .Operations
+                            .GetFeature
+                            .outputFormat
+                            .map((format => format.toUpperCase()))
+                            .map((format) => Consts.mimeType[Object.entries(Consts.format)
+                                .find(([, value]) => value === format)?.[0]]);
+                        const outputFormatMimeType = layer.getPreferredInfoFormat(outputFormatMimeTypes);
+                        if (outputFormatMimeType) {
+                            [, outputFormat] = Object.entries(Consts.format).find(([key]) =>
+                                Consts.mimeType[key] === outputFormatMimeType);
+                        }
+                        else {
+                            outputFormat = capabilities.Operations.GetFeature.outputFormat[0];
+                        }
                     }
                     if (!(capabilities.Operations.GetFeature.outputFormat.includes(outputFormat.toLowerCase()) || capabilities.Operations.GetFeature.outputFormat.includes(outputFormat.toUpperCase()))) {
                         errors.push({ key: Consts.WFSErrors.NO_VALID_FORMAT, params: { serviceTitle: _getServiceTitle(service), format: outputFormat } });
-                        resolve({ "errors": errors });
+                        resolve({ service, errors });
                         return;
                     }
                     if (capabilities.Operations.GetFeature.CountDefault)
                         _numMaxFeatures = capabilities.Operations.GetFeature.CountDefault.DefaultValue;
                     //comprobamos si soporta querys    
                     if (
-                        capabilities.version === "1.0.0" && !Object.prototype.hasOwnProperty.call(capabilities.Operations.GetFeature.Operations, "Query")
+                        capabilities.version === "1.0.0" && !Object.hasOwn(capabilities.Operations.GetFeature.Operations, "Query")
                         ||
                         (capabilities.version === "2.0.0" || capabilities.version === "1.1.0") && capabilities.Operations.QueryExpressions.indexOf("wfs:Query") < 0
                     ) {
                         errors.push({ key: Consts.WFSErrors.QUERY_NOT_AVAILABLE, params: { serviceTitle: _getServiceTitle(service) } });
-                        resolve({ "errors": errors });
+                        resolve({ service, errors });
                         return;
                     }
                     const operationUrl = capabilities.Operations.GetFeature.DCPType ? capabilities.Operations.GetFeature.DCPType[1].HTTP.Post.onlineResource : capabilities.Operations.GetFeature.DCP.HTTP.Post.href;
 
-                    getFiltersForLayers(service.mapLayers[0], availableLayers, filter)//clonar filtro
+                    getFiltersForLayers(mapLayer, availableLayers, filter)//clonar filtro
                         .then(function (filters) {
                             if (_numMaxFeatures) {
-                                _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer: service.mapLayers[0] }, Util.WFSQueryBuilder(filters, null, capabilities, outputFormat, true, getCRS())).then(function (response) {
+                                _checkMaxFeatures(_numMaxFeatures, { url: operationUrl, mapLayer }, Util.WFSQueryBuilder(filters, null, capabilities, outputFormat, true, getCRS(outputFormat))).then(function (response) {
                                     if (response.errors && response.errors.length > 0) {
                                         switch (response.errors[0].key) {
                                             case Consts.WFSErrors.INDETERMINATE:
@@ -3350,40 +3434,43 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                                                 response.errors[0].params = { serviceTitle: _getServiceTitle(service) };
                                                 break;
                                         }
-                                        resolve(response);
+                                        resolve(Object.assign({ service }, response));
                                     }
                                     else {
-                                        _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filters, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
-                                            resolve(Object.assign({ service: service, errors: errors }, response));
+                                        _postOrDownload({ url: operationUrl, mapLayer, service: service }, Util.WFSQueryBuilder(filters, null, capabilities, outputFormat, false, getCRS(outputFormat))).then(function (response) {
+                                            resolve(Object.assign({ service, errors }, response));
                                         });
                                     }
                                 });
                             }
                             else {
-                                _postOrDownload({ url: operationUrl, mapLayer: service.mapLayers[0], service: service }, Util.WFSQueryBuilder(filters, null, capabilities, download ? outputFormat : Consts.mimeType.JSON, false, getCRS())).then(function (response) {
-                                    resolve(Object.assign({ service: service, errors: errors }, response));
+                                _postOrDownload({ url: operationUrl, mapLayer, service: service }, Util.WFSQueryBuilder(filters, null, capabilities, outputFormat, false, getCRS(outputFormat))).then(function (response) {
+                                    resolve(Object.assign({ service, errors }, response));
 
                                 });
                             }
                         }).catch(function (e) {
                             resolve({
+                                service,
                                 errors: [{
                                     key: Consts.WFSErrors.INDETERMINATE,
                                     params: { err: e.name, errorThrown: e.message, serviceTitle: _getServiceTitle(service) }
-                                }]
+                                }],
                             });
                         });
                 }, function (e) {
                     var service = null;
-                    for (var title in services)
+                    for (var title in services) {
                         if (services[title].request && services[title].request === serviceObj.request) {
                             service = services[title];
                         }
-                    resolve({ errors: [{ key: Consts.WFSErrors.GETCAPABILITIES, params: { err: e.name, serviceTitle: _getServiceTitle(service) } }] });
-                });
+                    }
+                    resolve({ service, errors: [{ key: Consts.WFSErrors.GETCAPABILITIES, params: { err: e.name, serviceTitle: _getServiceTitle(service) } }] });
+                });                
             }));
-        });
-        return arrPromises;
+            serviceProm.set(serviceObj, accumulated.at(-1));
+            return accumulated;
+        },[]);
     }
 
     updateSize() {
