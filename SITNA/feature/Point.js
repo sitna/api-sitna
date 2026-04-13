@@ -139,8 +139,12 @@ class Point extends Feature {
         return this.getCoordinates(options);
     }
 
-    getCoordsArray() {
-        return [this.getCoordinates()];
+    getCoordsArray(options) {
+        return [this.getCoordinates(options)];
+    }
+
+    getLength() {
+        return 0;
     }
 
     getGeometryType() {
