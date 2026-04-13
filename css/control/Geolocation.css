@@ -304,6 +304,10 @@ input#tc-ctl-geolocation-track-available-srch {
     height: 2.1em;
 }
 
+    .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li.tc-checked div.tc-ctl-geolocation-tools-active sitna-toggle {
+        font-size: 1.2em;
+    }
+
 .tc-ctl-geolocation-track-warning {
     display: flex;
     justify-content: center;
