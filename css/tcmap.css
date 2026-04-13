@@ -48,6 +48,9 @@
 @import url(control/TrackEdit.css);
 @import url(control/LagerLegend.css);
 @import url(control/ImageMagnifier.css);
+@import url(control/Models.css);
+@import url(control/Route.css);
+@import url(control/ElevationProfile.css);
 
 :root {
     /* custom variables */
@@ -58,6 +61,7 @@
     --sitna-color-05: #333333;
     --sitna-color-06: #c52737; /*rojo*/
     --sitna-color-07: #3b3bc6; /*azul*/
+    --sitna-color-08: #60a934; /*verde*/
     --main-bg-color: var(--sitna-color-01); /* --- LEGACY --- */
     --sitna-background-color: var(--main-bg-color);
     --text-main-color: var(--sitna-color-05); /* --- LEGACY --- */
@@ -177,10 +181,11 @@
     --list-hl-color: var(--sitna-highlighted-text-color);
     --list-hl-bg-color: color-mix(in hsl, var(--main-bg-color) 80%, var(--main-hl-color));
     --active-zone-bg-color: var(--sitna-bg11-txt1-color);
-    --track-profile-original-color: var(--sitna-color-06);
-    --track-profile-mdt-color: var(--sitna-color-07);
-    --sitna-even-row-background-color: var(--sitna-background-color);
-    --sitna-odd-row-background-color: var(--sitna-bg11-txt1-color);
+    --track-profile-original-color: var(--sitna-color-07);
+    --track-profile-mdt-color: var(--sitna-color-06);
+    --track-profile-mds-color: var(--sitna-color-08);
+    --table-even-row-bg-color: var(--sitna-background-color);
+    --table-odd-row-bg-color: var(--sitna-bg11-txt1-color);
     --sitna-toast-duration: 5s;
     --sitna-info-color: var(--sitna-color-07);
     --sitna-warning-color: goldenrod;
@@ -212,6 +217,8 @@
     --icon-filter: '\e931';
     --icon-print: '\e91b';
     --icon-placemark: '\e932';
+    --icon-style: '\e934';
+    --icon-time: '\23f1\fe0e'; /* ⏱ \fe0e es la marca para forzar carácter monocromo */
     --sitna-indeterminate-icon-text: '?';
     --sitna-checked-icon-text: '\2714\fe0e'; /* ✔ \fe0e es la marca para forzar carácter monocromo */
     --sitna-unchecked-icon-text: '';
@@ -277,6 +284,14 @@
     user-select: none;
     -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
+
+    .tc-map .ol-viewport.ol-grab {
+        cursor: grab;
+    }
+
+    .tc-map .ol-viewport.ol-grabbing {
+        cursor: grabbing;
+    }
 
 .tc-map a, .tc-ctl a, .tc-modal a {
     color: var(--sitna-link-color);
@@ -731,6 +746,7 @@ sitna-tab {
 
 @keyframes fade-grow {
     0% {
+        display: none;
         opacity: 0;
         transform: scale(0.95);
     }
@@ -741,6 +757,7 @@ sitna-tab {
     }
 
     100% {
+        display: block;
         transform: none;
     }
 }
