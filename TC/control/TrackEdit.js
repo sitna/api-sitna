@@ -92,7 +92,7 @@ class TrackEdit extends FileEdit {
                                     crs: self.map.crs
                                 });
                                 editCtl.displayMeasurement(e.feature);
-                                const style = e.feature.getStyle() || {};
+                                const style = e.feature.getStyle() ?? {};
                                 style.label = ctl.trackLayer.styles?.point?.label;
                                 e.feature.setStyle(style);
                             }
