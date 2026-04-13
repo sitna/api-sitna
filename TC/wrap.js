@@ -61,7 +61,8 @@ const wrap = {
         Modify: function () { wrap.Control.apply(this, arguments); },
         OfflineMapMaker: function () { wrap.Control.apply(this, arguments); },
         Edit: function () { wrap.Control.apply(this, arguments); },
-        ResultsPanel: function () { wrap.Control.apply(this, arguments); }
+        ResultsPanel: function () { wrap.Control.apply(this, arguments); },
+        ElevationProfile: function () { wrap.Control.apply(this, arguments); }
     },
     Feature: function () { },
     Geometry: function () { },
