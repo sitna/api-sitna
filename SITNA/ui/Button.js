@@ -212,7 +212,7 @@ class Button extends Component {
         if (newValue !== Button.variant.DEFAULT) {
             this.#button.classList.add(newValue);
         }
-        const text = this.text;
+        const text = this.text || this.textContent;
         if (text && (newValue === Button.variant.TEXTLESS || newValue === Button.variant.MINIMAL ||
             (newValue === Button.variant.LINK && !this.hasAttribute('title')))) {
             this.#button.setAttribute('title', text);
