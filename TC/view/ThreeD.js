@@ -3211,6 +3211,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 case e.type == Consts.event.FEATURESIMPORT: {                    
                     self.map.one(Consts.event.VECTORUPDATE, (e) => {
                         const layer = e.layer;
+                        if (!self.view3D) return;
                         let importedFeaturesDatasource = self.view3D.viewer.dataSources.getByName(layer.id);
                         if (importedFeaturesDatasource.length === 0) {
                             importedFeaturesDatasource = new cesium.CustomDataSource(layer.id);
@@ -3400,9 +3401,9 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     if (self.map.on3DView) {
                         self.viewer.clock.shouldAnimate = false;
-                        //const currentTime = cesium.JulianDate.fromDate(new Date());
-                        //currentTime.secondsOfDay = isNaN(currentTime.secondsOfDay) ? 0 : currentTime.secondsOfDay;
-                        //self.viewer.clock.currentTime = currentTime;
+                        const currentTime = cesium.JulianDate.fromDate(new Date());
+                        currentTime.secondsOfDay = isNaN(currentTime.secondsOfDay) ? 0 : currentTime.secondsOfDay;
+                        self.viewer.clock.currentTime = currentTime;
                     }
 
                     if (self.view3D.trackDataSource) {                        
@@ -3612,32 +3613,29 @@ const ThreeD = (function (namespace, signature, factory) {
             };
 
             if (Consts.view.THREED === view) {
-                let gfiClassName;
                 let gfiControl;
                 switch (true) {
                     case self.allowedControls.includes("multiFeatureInfo") && self.map.getControlsByClass(TC.control.MultiFeatureInfo).length > 0:
-                        gfiClassName = TC.control.MultiFeatureInfo.name;
                         gfiControl = self.map.getControlsByClass(TC.control.MultiFeatureInfo)[0];
                         break;
                     case self.allowedControls.includes("featureInfo") && self.map.getControlsByClass(TC.control.FeatureInfo).length > 0:
-                        gfiClassName = TC.control.FeatureInfo.name;
                         gfiControl = self.map.getControlsByClass(TC.control.FeatureInfo)[0];
                         break;
                 }
                 if (gfiControl) {
                     if (!gfiControl.featureInfoControls) {
-                        self.view3D.linked2DControls[gfiClassName] = new FeatureInfo({ map: self, parent: gfiControl });
+                        self.view3D.linked2DControls[gfiControl.id] = new FeatureInfo({ map: self, parent: gfiControl });
                         gfiControl.highlightedFeature?.toggleSelectedStyle(false);
-                        self.view3D.linked2DControls[gfiClassName].activate(gfiControl);
+                        self.view3D.linked2DControls[gfiControl.id].activate(gfiControl.id);
                     }
                     else
-                        gfiControl.featureInfoControls.forEach((ctl, index) => {
-                            self.view3D.linked2DControls[ctl.constructor.name] = new FeatureInfo({ map: self, parent: ctl });
+                        gfiControl.featureInfoControls.forEach((ctl) => {
+                            self.view3D.linked2DControls[ctl.id] = new FeatureInfo({ map: self, parent: ctl });
                             ctl.highlightedFeature?.toggleSelectedStyle(false);
                             if (ctl === self.map.activeControl)
-                                self.view3D.linked2DControls[ctl.constructor.name].activate(ctl);
+                                self.view3D.linked2DControls[ctl.id].activate(ctl);
                         });
-                    self.view3D.linked2DControls[self.map.activeControl.constructor.name]?.AddClickException((entity) => {
+                    self.view3D.linked2DControls[self.map.activeControl.id]?.AddClickException((entity) => {
                         if (entity._wrap?.parent && entity._wrap?.parent?.layer === self.view3D.linked2DControls.geolocation.trackLayer)
                             return self.view3D.linked2DControls.geolocation.trackLayer.features.filter((feature) => feature instanceof TC.feature.Point).includes(entity._wrap.parent)
                         else
@@ -3883,17 +3881,12 @@ const ThreeD = (function (namespace, signature, factory) {
                                                         // gestionamos las posiciones anterior y actual y la distancia
                                                         distanceCurrent += new cesium.EllipsoidGeodesic(previousPosition, currentPosition).surfaceDistance;
                                                         previousPosition = currentPosition;
-
-                                                        this.viewer.refresh();
                                                     }
                                                 }.bind(this));
 
                                                 this.viewer.clock.shouldAnimate = true;
 
-                                            }.bind(this));
-
-                                            //self.view3D.customRender.restart();
-                                            this.viewer.refresh();
+                                            }.bind(this));                                                                                       
 
                                         }.bind(this, track.wrap.feature.getGeometry().layout, coordinates2D));
                                     }.bind(this));
@@ -5046,7 +5039,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 var add = function () {
                     // TODO: el convert debería ser uno o varios webworker, si son muchas features se colapsa.
                     if (feature.wrap.feature3D) { 
-                        if (datasource && !datasource.entities.contains(feature.wrap.feature3D)) {
+                        if (datasource && !(feature.wrap.feature3D instanceof CustomEntity) && !datasource.entities.contains(feature.wrap.feature3D)) {
                             datasource.entities.add(feature.wrap.feature3D);
                             linkFeature(self, feature, feature.wrap.feature3D);
                         }
@@ -5098,7 +5091,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 };
 
                 // GLS: para no pintar la cruz-marker del FeatureInfo
-                const activeControl = TC.Map.get(self.map).activeControl.constructor.name;
+                const activeControl = TC.Map.get(self.map).activeControl.id;
                 if ((self.linked2DControls[activeControl]?.get2DMarker() === feature) ||
                     (self.linked2DControls[activeControl]?.isPending())) {
                     // GLS: llega antes aquí que al callback de la instrucción que crea la feature, por eso necesito el timeout
@@ -5344,16 +5337,20 @@ const ThreeD = (function (namespace, signature, factory) {
                 const self = this;
                 return await self.tileSetManager.getTileSetHeight(geoCoords, url ? self.tileSetManager.tilesets[url] :undefined);
             },
+            elevationMarkerPosition: null,
             // darle una vuelta cuando esté mejor. no se me ocurre nada mejor
             addElevationMarker: function (coords, context) {
                 const self = this;
+                self.elevationMarkerPosition = cesium.Cartesian3.fromDegrees(coords[0], coords[1]);
                 if (self.viewer && !self.viewer.view3DElevationMarkerPromise) {
                     self.viewer.view3DElevationMarkerPromise = true;
                     if (!context.view3DElevationMarker) {
                         self.viewer.readyPromise.then(function () {
                             delete self.viewer.view3DElevationMarkerPromise;
                             let entity = new cesium.Entity({
-                                position: cesium.Cartesian3.fromDegrees(coords[0], coords[1]),
+                                position: new cesium.CallbackProperty(() => {
+                                    return self.elevationMarkerPosition
+                                }, false),
                                 name: 'elevationMarker',
                                 point: {
                                     show: true,
@@ -5375,16 +5372,14 @@ const ThreeD = (function (namespace, signature, factory) {
             },
             setElevationMarker: function (coords, context) {
                 const self = this;
-                if (self.viewer) {
+                if (self.viewer && !self.viewer.clock.shouldAnimate) {
                     self.viewer.readyPromise.then(function () {
                         if (context.view3DElevationMarker) {
-                            const position = coords;
-                            //const position = self.view2DCRS !== self.crs ? Util.reproject(coords, self.view2DCRS, self.crs) : coords;
-                            context.view3DElevationMarker.position = cesium.Cartesian3.fromDegrees(position[0], position[1]);
+                            self.elevationMarkerPosition = cesium.Cartesian3.fromDegrees(coords[0], coords[1]);
                             if (!context.view3DElevationMarker.show) {
                                 context.view3DElevationMarker.show = true;
                             }
-                            self.viewer.refresh();
+                            self.viewer.scene.requestRender();
                         } else {
                             self.addElevationMarker(coords, context);
                         }
@@ -5394,8 +5389,7 @@ const ThreeD = (function (namespace, signature, factory) {
             hideElevationMarker: function (context) {
                 const self = this;
                 if (self.viewer && context.view3DElevationMarker) {
-                    context.view3DElevationMarker.show = false;
-                    self.viewer.refresh();
+                    context.view3DElevationMarker.show = false;                    
                     //self.viewer.readyPromise.then(function () {
                     //    self.removeFeature.call(self, context.view3DElevationMarker);
                     //    delete context.view3DElevationMarker;
@@ -5410,10 +5404,10 @@ const ThreeD = (function (namespace, signature, factory) {
                 marker:null,
                 set: function (feature) {                    
                     if (!feature) return;                    
-                    this.highlightFeature.current = feature;                    
+                    this.highlightFeature.current = feature; 
+                    feature.highLighted = true;
                     if (feature.polyline) {                        
-                        const style = feature._wrap.parent.getStyle();                    
-                        feature.highLighted = true;
+                        const style = feature._wrap.parent.getStyle();
                         const strokeColor = cesium.Color.fromCssColorString(style.strokeColor);
                         //feature.polyline.width = new cesium.CallbackProperty(() => { return style.strokeWidth + (2* 2) }, false);                        
                         feature.polyline.material = new cesium.PolylineDashMaterialProperty({
@@ -5432,9 +5426,9 @@ const ThreeD = (function (namespace, signature, factory) {
                     
                     feature = feature || this.highlightFeature.current;
                     if (feature) {
+                        delete feature.highLighted;
                         const style = feature._wrap.parent.getStyle();
-                        if (feature.polyline) {
-                            delete feature.highLighted;
+                        if (feature.polyline) {                            
                             //feature.polyline.width = new cesium.CallbackProperty(() => { return style.strokeWidth - (2 * 2) }, true);
                             feature.polyline.material = new cesium.PolylineDashMaterialProperty({
                                 color: cesium.Color.fromCssColorString(style.strokeColor),
