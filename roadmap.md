@@ -1,7 +1,7 @@
 # Roadmap
 *Leer esto en [español](./roadmap.es-ES.md).*
 
-Planned upgrades as on 05/20/2025:
+Planned upgrades as on 04/16/2026:
 1.	~~Removal of jQuery dependency.~~ :heavy_minus_sign: :two::zero::zero:
 2.	~~Removal of Modernizr dependency.~~ :heavy_minus_sign: :two::zero::zero:
 3.	~~Migration to OpenLayers 5.~~ :arrow_up: :two::zero::zero:
