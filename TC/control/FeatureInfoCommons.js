@@ -752,15 +752,10 @@ class FeatureInfoCommons extends Click {
                     const feature = self.#getFeatureFromListItem(li);
                     if (feature && window.getSelection() && window.getSelection().toString().trim().length === 0) {
                         // Proceso para desactivar highlightFeature mientras hacemos zoom
-                        var zoomHandler = function zoomHandler() {
-                            self.#zooming = false;
-                            self.map.off(Consts.event.ZOOM, zoomHandler);
-                        };
-                        self.map.on(Consts.event.ZOOM, zoomHandler);
                         self.#zooming = true;
                         ///////
-
                         self.map.zoomToFeatures([feature], { animate: true });
+                        setTimeout(() => self.#zooming = false, Consts.ZOOM_ANIMATION_DURATION);
                     }
                 }
                 else {
