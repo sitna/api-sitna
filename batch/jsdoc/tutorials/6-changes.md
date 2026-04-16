@@ -1,3 +1,6 @@
+### [4.9.1](https://github.com/sitna/api-sitna/releases/tag/v4.9.1)
+- Corrección de errores.
+
 ### [4.9.0](https://github.com/sitna/api-sitna/releases/tag/v4.9.0)
 - Incrementada versión de Cesium a 1.130.
 - Añadido control de escenas para cargar modelos con 3D Tiles.
