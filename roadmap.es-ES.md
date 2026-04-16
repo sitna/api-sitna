@@ -31,11 +31,11 @@ Mejoras planeadas a día de 20/05/2025:
 27. ~~Clases para instanciar entidades geográficas.~~ ✨ :four::zero::zero:
 28. ~~Operador "distinto de" en el control de consultas WFS.~~ ✨ :four::zero::zero:
 29. ~~Editor de archivos geográficos.~~ ✨ :four::two::zero:
-30. Réplica de funcionalidad en vista 2D a vista 3D. ✨
-31. Leyenda para capas vectoriales. ✨
-32. Paleta de colores automática para las entidades geográficas. ✨
-33. Selección por el usuario del estilo de las capas y entidades vectoriales. ✨
-34. Capacidad en el editor WFS de deshacer todos los cambios de una entidad geográfica. ✨
+30. ~~Réplica de funcionalidad en vista 2D a vista 3D.~~ ✨ :four::nine::zero:
+31. ~~Leyenda para capas vectoriales.~~ ✨ :four::eight::zero:
+32. ~~Paleta de colores automática para las entidades geográficas.~~ ✨ :four::eight::zero:
+33. ~~Selección por el usuario del estilo de las capas y entidades vectoriales.~~ ✨ :four::nine::zero:
+34. ~~Capacidad en el editor WFS de deshacer todos los cambios de una entidad geográfica.~~ ✨ :four::nine::zero:
 35. ~~Visualización de ruta completa en los resultados del buscador de capas.~~ ✨ :four::zero::zero:
 36. ~~Herramienta en el panel de resultados de la consulta WFS para volver a centrar resultados cuando se ha hecho zoom.~~ ✨ :four::one::zero:
 37. ~~Herramienta en el selector de tipo de consulta de entidad geográfica para hacer zoom a todas las entidades seleccionadas.~~ ✨ :four::one::zero:
@@ -60,8 +60,8 @@ Mejoras planeadas a día de 20/05/2025:
 56. Ampliación de la lista de formatos de descarga de imágenes. ⚡
 57. Disponibilidad de las constricciones de acceso al servicio junto a la acreditación. ✨
 58. Enlace al texto descriptivo de los servicios WMS en la lista de capas disponibles. ✨
-59. Soporte a dimensión temporal en capas WMS. ✨
-60. Actualización de Cesium para soporte de 3D Tiles. :arrow_up:
+59. ~~Soporte a dimensión temporal en capas WMS.~~ ✨ :four::seven::zero:
+60. ~~Actualización de Cesium para soporte de 3D Tiles.~~ :arrow_up: :four::nine::zero:
 61. Enrutamiento mediante OpenRouteService. ✨
 
 :hash::hash::hash: Mejora añadida en la versión \#.\#.\#
