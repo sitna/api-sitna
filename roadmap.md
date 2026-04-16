@@ -31,11 +31,11 @@ Planned upgrades as on 05/20/2025:
 27. ~~Classes for creating feature instances.~~ ✨ :four::zero::zero:
 28. ~~_"Different from"_ operator in the WFS queries control.~~ ✨ :four::zero::zero:
 29. ~~Geographic file editing.~~ ✨ 4️⃣2️⃣0️⃣
-30. Functionality transfer from 2D view to 3D view. ✨
-31. Vector layer legend. ✨
-32. Automatic feature color palette. ✨
-33. Vector layer and feature style user selection. ✨
-34. Tool in WFS editing control to undo all changes in a feature. ✨
+30. ~~Functionality transfer from 2D view to 3D view.~~ ✨ :four::nine::zero:
+31. ~~Vector layer legend.~~ ✨ :four::eight::zero:
+32. ~~Automatic feature color palette.~~ ✨ :four::eight::zero:
+33. ~~Vector layer and feature style user selection.~~ ✨ :four::nine::zero:
+34. ~~Tool in WFS editing control to undo all changes in a feature.~~ ✨ :four::nine::zero:
 35. ~~Complete path viewing in layer search results.~~ ✨ :four::zero::zero:
 36. ~~Tool to recenter results after panning/zooming in WFS query results panel.~~ ✨ :four::one::zero:
 37. ~~Tool in feature information mode selector to zoom to all selected features.~~ ✨ :four::one::zero:
@@ -60,8 +60,8 @@ Planned upgrades as on 05/20/2025:
 56. Image download format list expansion. ⚡
 57. Service access constraints availability with attributions. ✨
 58. Links to WMS service abstracts at available layer catalog. ✨
-59. Time dimension support in WMS layers. ✨
-60. Cesium update for 3D Tiles support. ⬆️
+59. ~~Time dimension support in WMS layers.~~ ✨ :four::seven::zero:
+60. ~~Cesium update for 3D Tiles support.~~ ⬆️ :four::nine::zero:
 61. Routing with OpenRouteService. ✨
 
 :hash::hash::hash: Upgrade fulfilled with version \#.\#.\#
