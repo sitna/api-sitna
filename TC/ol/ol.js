@@ -5075,6 +5075,7 @@ TC.wrap.layer.Vector.prototype.addFeatures = async function (features) {
         source = source.getSource();
     }
     for (const f of features) {
+        if (!f._wrap) TC.wrap.Feature.createFeature(f);
         if (f._wrap.parent && !this.parent.features.includes(f._wrap.parent)) {
             this.parent.features.push(f._wrap.parent);
         }
@@ -6717,10 +6718,7 @@ TC.wrap.control.ElevationProfile.prototype.showElevationMarker = function (optio
         this.elevationMarker.getElement().style.display = '';
         const olMap = map.wrap.map;
         if (!olMap.getOverlayById(this.elevationMarker.getId())) {
-            olMap.addOverlay(this.elevationMarker);
-            if (map.on3DView && position) {
-                map.view3D.addElevationMarker(position, this.parent);
-            }
+            olMap.addOverlay(this.elevationMarker);            
         }
         this.elevationMarker.setPosition(position);
         if (map.on3DView && position) {
@@ -8819,7 +8817,7 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
     const self = this;
     const olFeat = self.feature;
     if (options === null) {
-        olFeat.setStyle(null);        
+        olFeat.setStyle(null);
         return;
     }
     const feature = self.parent;
@@ -8848,7 +8846,7 @@ TC.wrap.Feature.prototype.setStyle = function (options) {
             });
         setTimeout(() => {
             self.parent.layer.map.view3D.refresh();
-        },100);
+        }, 100);
     }
 
     if (Object.hasOwn(olFeat, '_originalStyle')) {
@@ -9401,10 +9399,10 @@ TC.wrap.control.Draw.prototype.activate = function (mode) {
             if (self.parent.map.on3DView) {
                 if (!self.interaction3D)
                     self.parent.map.addEventListener(TC.Consts.event.VIEWCHANGE, function (evt) {
-                        if (evt.detail === TC.Consts.view.DEFAULT) { 
+                        if (evt.detail === TC.Consts.view.DEFAULT) {
                             self.interaction3D.destroy();
                             self.interaction3D = null;
-                        }                        
+                        }
                     })
                 self.interaction3D = self.interaction3D || new Draw3D(mode, layer, self.parent.map.view3D, function (feature) {
                     return layer.addFeature(feature);
