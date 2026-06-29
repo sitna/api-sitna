@@ -20,7 +20,6 @@
   * [Geo Noáin (Valle de Elorz) / Noain (Elortzibar)](https://idena.navarra.es/municipios/noain "Infraestructura de Datos Espaciales de Noáin (Valle de Elorz) / Noain (Elortzibar)")
 
 * Usos en Gobierno de Navarra del visor de KMLs:
-  * [Zonas de baño naturales](https://www.navarra.es/es/medio-ambiente/zonas-de-bano-naturales "Zonas de baño naturales. Gobierno de Navarra")
   * [Listados contables: Municipios](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Municipios.kml "Presupuesto y Cuentas")
   * [Listados contables: Concejos](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Presupuesto y Cuentas")
   * [Listados contables: Mancomunidades](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Presupuesto y Cuentas")
