@@ -170,7 +170,7 @@ class MultiPolyline extends Feature {
     }
 
     getCoordsArray(options) {
-        return this.getCoordinates(options).flat();
+        return super.getCoordinates(options).flat();
     }
 
     appendPolyline(polyline) {
