@@ -29,14 +29,15 @@ class Button extends Component {
      * @property {string} TEXTLESS="textless" - Variante visual en la que no hay texto de botón.
      * @property {string} LINK="link" - Variante visual en la que el botón toma el aspecto de un enlace de hipertexto.
      * @property {string} MINIMAL="minimal" - Variante visual en la que el botón consiste en un icono enmarcado en un cuadrado ajustado.
-     * @static
+     * @property {string} OVERLAY="overlay" - Variante visual para cuando el botón se superpone al mapa.
      * @readonly
      */
     static variant = {
         DEFAULT: 'default',
         TEXTLESS: 'textless',
         LINK: 'link',
-        MINIMAL: 'minimal'
+        MINIMAL: 'minimal',
+        OVERLAY: 'overlay',
     };
 
     static action = {
@@ -139,7 +140,7 @@ class Button extends Component {
         const text = this.text || this.textContent;
         if (this.textContent !== text) this.textContent = text ?? '';
         const variant = this.variant;
-        if (variant === Button.variant.TEXTLESS || variant === Button.variant.MINIMAL ||
+        if (variant === Button.variant.TEXTLESS || variant === Button.variant.MINIMAL || variant === Button.variant.OVERLAY ||
             (variant === Button.variant.LINK && !this.hasAttribute('title'))) {
             if (text) {
                 this.#button.setAttribute('title', text);
@@ -164,7 +165,7 @@ class Button extends Component {
 
     /**
      * Variante visual del botón. Los valores posibles son los definidos en el enumerado estático `SITNA.ui.Button.variant`. El valor por defecto es `default`.
-     * Esta propiedad existe como atributo HTML y como propiedad JavaScript.
+     * @summary Atributo HTML: `variant`
      * @memberof SITNA.ui.Button
      * @instance
      * @type {string}
@@ -213,7 +214,7 @@ class Button extends Component {
             this.#button.classList.add(newValue);
         }
         const text = this.text || this.textContent;
-        if (text && (newValue === Button.variant.TEXTLESS || newValue === Button.variant.MINIMAL ||
+        if (text && (newValue === Button.variant.TEXTLESS || newValue === Button.variant.MINIMAL || newValue === Button.variant.OVERLAY ||
             (newValue === Button.variant.LINK && !this.hasAttribute('title')))) {
             this.#button.setAttribute('title', text);
         }
@@ -246,6 +247,7 @@ class Button extends Component {
     /**
      * Indica si el botón está activo o no. El significado de esta propiedad depende del contexto en el que se use el botón, pero en general
      * se refiere a que el botón está "presionado" o "seleccionado". Visualmente el botón se muestra con un color de resalte.
+     * @summary Atributo HTML: `active`
      * @memberof SITNA.ui.Button
      * @instance
      * @type {string}
@@ -295,8 +297,7 @@ class Button extends Component {
      * Texto del icono del botón. La idea de este atributo es que su valor sea algún carácter gráfico de los que ofrece Unicode o 
      * las fuentes tipográficas que son colecciones de iconos. En este segundo caso, se puede especificar qué fuente tipográfica es 
      * asignando su nombre como valor a la variable CSS `--sitna-icon-font-family`, dentro del ámbito del botón.
-     * 
-     * Esta propiedad también existe como el atributo HTML `icon-text`.
+     * @summary Atributo HTML: `icon-text`
      * @memberof SITNA.ui.Button
      * @instance
      * @type {string}
