@@ -15,7 +15,7 @@ const bgClassName = '.tc-ctl-img-magnifier-bg';
 
 const elementName = 'sitna-image-magnifier';
 
-class ImageMagnifierMode {
+class ImageMagnifierModel {
     constructor() {
         this.textToClose = "";
         this.textToOpen = "";
@@ -41,8 +41,8 @@ class ImageMagnifier extends WebComponentControl {
         self.title = "[[textToClose]]";//texts.textToClose;
         
         
-        self.model = new ImageMagnifierMode();
-        //self.controller = new Controller(self.model, new Observer(self));
+        self.model = new ImageMagnifierModel();
+        self.controller = new Controller(self.model, new Observer(self));
     }
 
     #mouseEnterEvent(event,img, zoom) {
@@ -79,6 +79,9 @@ class ImageMagnifier extends WebComponentControl {
             //lado derecho de la pantalla
             x = clientRect.left - selfRect.width + clientRect.width / 2 + shiftX;
             self.classList.add(leftClassName);
+        }
+        if (y < 0) {
+            y = x = 0;
         }
         self.style.top = y + "px";
         self.style.left = x + "px";
