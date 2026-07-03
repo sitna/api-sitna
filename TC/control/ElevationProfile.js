@@ -11,8 +11,6 @@ import Point from "../../SITNA/feature/Point.js";
 import Polyline from "../../SITNA/feature/Polyline.js";
 import MultiPolyline from "../../SITNA/feature/MultiPolyline.js";
 
-const elementName = 'sitna-elevation-profile';
-
 const elevationProfileCache = new Map();
 
 class ElevationProfileModel {
@@ -23,6 +21,10 @@ class ElevationProfileModel {
 }
 
 class ElevationProfile extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-elevation-profile', this);
+    }
 
     currentFeature = null;
     displayElevation = true;
@@ -91,11 +93,12 @@ class ElevationProfile extends WebComponentControl {
             })
             .on(Consts.event.PROJECTIONCHANGE, function (e) {
                 if (self.chartData) {
-                    self.chartData.coords = Util.reproject(self.chartData.coords, e.oldCrs, e.newCrs);
+                    self.chartData.coords = Util.reproject(self.chartData.coords, self.chartData.crs ?? e.oldCrs, e.newCrs);
                     if (self.chartData.secondaryElevationProfileChartData && self.chartData.secondaryElevationProfileChartData.length)
                         self.chartData.secondaryElevationProfileChartData.forEach((secElevChartData) => {
-                            secElevChartData.coords = Util.reproject(secElevChartData.coords, e.oldCrs, e.newCrs);
+                            secElevChartData.coords = Util.reproject(secElevChartData.coords, self.chartData.crs ?? e.oldCrs, e.newCrs);
                         });
+                    self.chartData.crs = e.newCrs;
                 }
             })
             .on(Consts.event.THREED_TILES_CHANGE, function (e) {
@@ -155,7 +158,7 @@ class ElevationProfile extends WebComponentControl {
             let minElevation = Number.POSITIVE_INFINITY;
             const isGeo = self.map.wrap.isGeo();
             const destCrs = isGeo ? self.map.options.utmCrs : self.map.crs;
-            if (self.map.getCRS() !== destCrs) {
+            if (!Util.CRSCodesEqual(self.map.getCRS(), destCrs)) {
                 elevLines = Util.reproject(elevCoordLines, self.map.getCRS(), destCrs);
             }
             const profile = elevLines
@@ -191,15 +194,12 @@ class ElevationProfile extends WebComponentControl {
                     return elm[1] || 0;
                 }),
                 coords,
+                crs: destCrs,
                 min: minElevation,
                 max: maxElevation,
                 colorClass: options.colorClass,
             };
 
-            const elevationGainOptions = { coords };
-            if (typeof self.options === 'object' && self.map.options.elevation) {
-                elevationGainOptions.hillDeltaThreshold = self.options.hillDeltaThreshold || self.map.options.elevation.hillDeltaThreshold;
-            }
             if (minElevation === 0 && maxElevation === 0 && options.onlyOriginalElevation) {
                 elevationData = {
                     msg: self.getLocaleString("geo.trk.chart.chpe.empty")
@@ -285,7 +285,8 @@ class ElevationProfile extends WebComponentControl {
                                     isSecondary: true,
                                     ignoreCaching: true,
                                     key: "mds",
-                                    colorClass: "tc-mds"
+                                    colorClass: "tc-mds",
+                                    hillDeltaThreshold: options.hillDeltaThreshold,
                                 });
                             },
                             resolution: 0,
@@ -308,6 +309,7 @@ class ElevationProfile extends WebComponentControl {
                                 ignoreCaching: options.ignoreCaching,
                                 key: "mdt",
                                 colorClass: "tc-mdt",
+                                hillDeltaThreshold: options.hillDeltaThreshold,
                             });
                             if (self.map.on3DView) {
                                 await get3DtilesElevation(null, Array.from(interpolatedLines));
@@ -333,6 +335,7 @@ class ElevationProfile extends WebComponentControl {
                 self.reset();
             }
         });
+        return this.currentFeature;
     }
 
     async getElevationTool() {
@@ -349,7 +352,7 @@ class ElevationProfile extends WebComponentControl {
     async renderChart(options = {}) {
         const c3 = (await import(/* webpackMode: "lazy-once" */ 'c3')).default;
         let data = options.data;
-        Util.extend(data, Util.getElevationGain({ ...data, hillDeltaThreshold: options.hillDeltaThreshold }), options);
+        Util.extend(data, Util.getElevationGain({ hillDeltaThreshold: options.hillDeltaThreshold, ...data }), options);
         data.ele = data.ele.map(val => val === null ? 0 : val);
         let locale = Util.getMapLocale(this.map);
 
@@ -918,7 +921,8 @@ class ElevationProfile extends WebComponentControl {
         this.wrap.showElevationMarker({
             data: d,
             layer: this.currentFeature?.layer,
-            coords: this.chartData.coords
+            crs: this.chartData.crs,
+            coords: this.chartData.coords,
         });
 
         return this.getElevationChartTooltip(d);
@@ -1056,5 +1060,4 @@ class ElevationProfile extends WebComponentControl {
 }
 
 ElevationProfile.prototype.CLASS = 'tc-ctl-elev-profile';
-customElements.get(elementName) || customElements.define(elementName, ElevationProfile);
 export default ElevationProfile;
