@@ -89,7 +89,8 @@ button::before {
 }
 
 button.minimal::before,
-button.textless::before {
+button.textless::before,
+button.overlay::before {
     padding-right: 0;
 }
 
@@ -180,6 +181,37 @@ button.textless {
         :host([variant="minimal"]) button:disabled::before {            
             color: var(--sitna-disabled-button-text-color);
         }
+
+:host([variant="overlay"]) button {
+    text-indent: -1000vw;
+    aspect-ratio: 1;
+    height: 2em;
+    z-index: 10002;
+    color: var(--sitna-overlay-button-color);
+    border-radius: calc(var(--sitna-border-radius) * 0.67);
+    border: 0;
+    background-color: var(--sitna-overlay-button-background-color);
+    padding: 0;
+    font-size: initial;
+    outline: none;
+}
+
+    :host([variant="overlay"]) button::before {
+        position: absolute;
+        font-size: 1em;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+        text-indent: 0;
+        line-height: 2em;
+        left: 0;
+        top: 0;
+    }
+
+:host([variant="overlay"]) button.active {
+    color: var(--sitna-active-overlay-button-color);
+    background-color: var(--sitna-active-overlay-button-background-color);
+}
 
 button.link {
     background-color: transparent;
