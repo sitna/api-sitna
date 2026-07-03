@@ -1,3 +1,6 @@
+### [4.9.2](https://github.com/sitna/api-sitna/releases/tag/v4.9.2)
+- Corrección de errores.
+
 ### [4.9.1](https://github.com/sitna/api-sitna/releases/tag/v4.9.1)
 - Corrección de errores.
 

@@ -1,6 +1,6 @@
 {
   "name": "api-sitna",
-  "version": "4.9.1",
+  "version": "4.9.2",
   "description": "API de creación de mapas JavaScript",
   "homepage": "https://sitna.navarra.es/api/doc/",
   "main": "./index.js",
@@ -58,7 +58,7 @@
     "style-loader": "^2.0.0",
     "terser-webpack-plugin": "^5.3.16",
     "url-loader": "^4.1.1",
-    "webpack": "5.75.0",
+    "webpack": "5.106.2",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^5.2.3"
   },
