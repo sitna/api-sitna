@@ -207,7 +207,7 @@ class Elevation extends Control {
         }
         //URI: delay de 200ms para esperar a que la animacion css termine
         await Util.getTimedPromise(null, 200);
-        return profile.displayElevationProfile(featureOrCoords, options);
+        return await profile.displayElevationProfile(featureOrCoords, options);
     }
 
     async createProfilePanel() {
