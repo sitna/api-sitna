@@ -581,6 +581,9 @@ class FileImport extends WebComponentControl {
                     };
                     if (layer._fileHandle) {
                         layerState.file = layer._fileHandle.name;
+                        if (layer.file !== layer._fileHandle.name) {
+                            layerState.vfile = layer.file;
+                        }
                     }
                     return layerState;
                 })
@@ -590,22 +593,17 @@ class FileImport extends WebComponentControl {
     }
 
     async importState(state) {
-        const self = this;
-        if (self.map) {
-            const layerPromises = [];
-            await self.loadLayersFromFile(self.map.workLayers);
-            state.layers
-                .filter(function (layer) {
-                    return !self.map.workLayers.some(l => l.file && layer.file === l.file);
-                })
-                .forEach(function (layerData) {
-                    layerPromises.push(self.map.addLayer({
-                        id: self.getUID(),
-                        title: layerData.title,
-                        owner: self,
-                        type: Consts.layerType.VECTOR
-                    }));
-                });
+        if (this.map) {
+            await this.loadLayersFromFile(this.map.workLayers);
+            const layerPromises = state.layers
+                .filter((layer) => !this.map.workLayers.some((l) => l.file &&
+                    (layer.file === l.file || layer.vfile === l.file)))
+                .map((layerData) => this.map.addLayer({
+                    id: this.getUID(),
+                    title: layerData.title,
+                    owner: this,
+                    type: Consts.layerType.VECTOR
+                }));
 
             const layers = await Promise.all(layerPromises);
             for (var i = 0, len = layers.length; i < len; i++) {
@@ -616,7 +614,7 @@ class FileImport extends WebComponentControl {
                         layer.features[j].folders = state.layers[ii].state.path;
                     }
                 });
-                self.getLayers().push(layer);
+                this.getLayers().push(layer);
             }
         }
     }
