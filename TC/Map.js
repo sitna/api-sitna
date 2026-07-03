@@ -1527,12 +1527,17 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             state.crs = self.crs;
         }
 
-        var ext = self.getExtent();
-        for (var i = 0; i < ext.length; i++) {
-            if (Math.abs(ext[i]) > 180)
-                ext[i] = Math.floor(ext[i] * 1000) / 1000;
+        // Puede darse el caso de que el getExtent lance un error porque el mapa no esté completamente cargado, 
+        // en ese caso no añadimos el extent al estado, lo que hará que al cargar ese estado se use el extent inicial del mapa.
+        try {
+            var ext = self.getExtent();
+            for (var i = 0; i < ext.length; i++) {
+                if (Math.abs(ext[i]) > 180)
+                    ext[i] = Math.floor(ext[i] * 1000) / 1000;
+            }
+            state.ext = ext;
         }
-        state.ext = ext;
+        catch (e) { };
 
         //determinar capa base
         let baseLayerData;
@@ -2064,13 +2069,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
 
     async insertLayer(layer, idx, callback) {
         const self = this;
-        var beforeIdx = -1;
-        for (var i = 0; i < self.layers.length; i++) {
-            if (layer === self.layers[i]) {
-                beforeIdx = i;
-                break;
-            }
-        }
+        let beforeIdx = self.layers.indexOf(layer);
 
         const olLayerPromise = layer.wrap.getLayer();
         const targetLayer = self.layers[idx];
@@ -2089,15 +2088,15 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         if (olIdx >= 0) {
             layer.map = self;
             self.wrap.insertLayer(olLayer, olIdx);
-            if (beforeIdx > -1) {
-                self.layers.splice(beforeIdx, 1);
-                if (beforeIdx < idx) idx--;
-            }
             self.layers.splice(idx, 0, layer);
-            self.workLayers = self.layers.filter(function (elm) {
-                return !elm.isBase;
-            });
-            self.trigger(Consts.event.LAYERORDER, { layer: layer, oldIndex: beforeIdx, newIndex: idx });
+            if (beforeIdx > -1) {
+                if (idx < beforeIdx) beforeIdx++;
+                self.layers.splice(beforeIdx, 1);
+            }
+            self.workLayers = self.wrap.getWorkLayers();
+            self.layers = self.baseLayers.concat(self.workLayers);
+            const newIndex = self.layers.indexOf(layer);
+            self.trigger(Consts.event.LAYERORDER, { layer: layer, oldIndex: beforeIdx, newIndex });
         }
         if (Util.isFunction(callback)) {
             callback();
@@ -2126,25 +2125,27 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         const self = this;
         var result = null;
         var found = false;
+        let layerObj;
 
         if (typeof layer === 'string') {
             var i;
             for (i = 0; i < self.layers.length; i++) {
                 if (self.layers[i].id === layer) {
-                    layer = self.layers[i];
+                    layerObj = self.layers[i];
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                layer = self.getAvailableBaseLayer(layer);
-                if (layer) {
-                    layer = await self.addLayer(Util.extend(true, {}, layer, { isDefault: true, isBase: true, map: self }));
+                layerObj = self.getAvailableBaseLayer(layer);
+                if (layerObj) {
+                    layerObj = await self.addLayer(Util.extend(true, {}, layerObj, { isDefault: true, isBase: true, map: self }));
                     found = true;
                 }
             }
         }
         else {
+            layerObj = layer;
             if (self.layers.indexOf(layer) < 0) {
                 layer.isDefault = true;
                 layer.isBase = true;
@@ -2164,17 +2165,17 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             found = true;
         }
         if (!found) {
-            TC.error('Base layer is not available');
+            TC.error(`Base layer "${layerObj?.id ?? layer}" is not available`);
             return result;
         }
 
-        if (layer.type === Consts.layerType.WMS ||
-            layer.type === Consts.layerType.WMTS && !Util.CRSCodesEqual(layer.getProjection(), self.crs)) {
-            layer.setProjection({ crs: self.crs });
+        if (layerObj.type === Consts.layerType.WMS ||
+            layerObj.type === Consts.layerType.WMTS && !Util.CRSCodesEqual(layerObj.getProjection(), self.crs)) {
+            layerObj.setProjection({ crs: self.crs });
         }
 
-        if (!layer.isCompatible(self.getCRS())) {
-            let fallbackLayer = layer.fallbackLayer;
+        if (!layerObj.isCompatible(self.getCRS())) {
+            let fallbackLayer = layerObj.fallbackLayer;
             if (typeof fallbackLayer === 'string') {
                 fallbackLayer = self.getAvailableBaseLayer(fallbackLayer);
                 if (fallbackLayer) {
@@ -2187,14 +2188,14 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 return result;
             }
         }
-        self.trigger(Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layer });
+        self.trigger(Consts.event.BEFOREBASELAYERCHANGE, { oldLayer: self.getBaseLayer(), newLayer: layerObj });
 
-        result = layer;
+        result = layerObj;
         await self.wrap.getMap();
-        const olLayer = await layer.wrap.getLayer();
+        const olLayer = await layerObj.wrap.getLayer();
         await self.wrap.setBaseLayer(olLayer);
-        self.baseLayer = layer;
-        self.dispatchEvent(new LayerEvent(Consts.event.BASELAYERCHANGE, { layer }));
+        self.baseLayer = layerObj;
+        self.dispatchEvent(new LayerEvent(Consts.event.BASELAYERCHANGE, { layer: layerObj }));
         if (Util.isFunction(callback)) {
             callback();
         }
@@ -2378,6 +2379,16 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         }
         return result;
     }
+
+    async getControlContainer() {
+        const [container] = this.getControlsByClass('ControlContainer');
+        if (container) {
+            await container.renderPromise();
+            return container.addElement(document.createElement('div'));
+        }
+        return this.div;
+    }
+
     async wait(functionOrPromise) {
         let result;
         const li = this.getLoadingIndicator();
@@ -2488,14 +2499,14 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 const code = 'EPSG:' + projData.code;
                 TC.loadProjDef({
                     crs: code,
-                    def: projData.wkt || projData.proj4,
+                    def: projData.wkt2 || projData.wkt || projData.proj4,
                     name: projData.name,
                     silent: true,
                 });
                 return {
                     code: code,
                     name: projData.name,
-                    def: projData.wkt || projData.proj4,
+                    def: projData.wkt2 || projData.wkt || projData.proj4,
                     unit: projData.unit
                 };
             });
@@ -3292,7 +3303,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
         };
         const serviceProm = new WeakMap();
 
-        return layersToExtract.reduce(function fromLayerToPromise(accumulated,layer) {
+        return layersToExtract.reduce(function fromLayerToPromise(accumulated, layer) {
             const url = layer.url.toLowerCase();
             var serviceObj = services[url];
             if (!serviceObj) {
@@ -3304,7 +3315,10 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                 };
             }            
 
-            const getEmptyService = () => Promise.resolve({ service: serviceObj });
+            const getEmptyService = () => {
+                accumulated.push(Promise.resolve({ service: serviceObj }));
+                return accumulated;
+            };
 
             if (!layer.getVisibility() || !self.workLayers.includes(layer) || layer.type !== Consts.layerType.WMS) {
                 return getEmptyService();
@@ -3470,7 +3484,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             }));
             serviceProm.set(serviceObj, accumulated.at(-1));
             return accumulated;
-        },[]);
+        }, []);
     }
 
     updateSize() {
