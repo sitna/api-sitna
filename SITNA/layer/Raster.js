@@ -351,13 +351,39 @@ class Raster extends Layer {
             if (self.getDisgregatedLayerNames().some((layerName) => {
                 const node = self.getLayerNodeByName(layerName);
                 if (node?.Dimension && node?.Dimension.name === "time") {
+                    const getNearestDate = (dateRange) => {
+                        if (Date.now() > new Date(dateRange.at(-1)).getTime()) {
+                            //extremo mayor
+                            return new Date(timeValues.at(-1)).getTime();
+                        }
+                        else if (Date.now() < new Date(dateRange[0]).getTime()) {
+                            //extremo menor
+                            return new Date(timeValues[0]).getTime()
+                        }
+                        else {
+                            //mas cercano
+                            let left = 0;
+                            let right = dateRange.length - 1;
+                            while (left <= right) {
+                                const mid = Math.floor((left + right) / 2);
+                                if (new Date(timeValues[mid]).getTime() === Date.now()) {
+                                    return new Date(timeValues[mid]).getTime();
+                                }
+                                if (new Date(timeValues[mid]).getTime() < Date.now()) {
+                                    left = mid + 1;
+                                } else {
+                                    right = mid - 1;
+                                }
+                            }
+                        }
+                    };
                     let timeValues = node.Dimension.textContent.replace(/\s+/g, '').split('/');
                     if (timeValues.length > 1) {
                         //esto cuando se indica rango de fechas                    
                         self.time = {
                             firstTime: new Date(timeValues[0]).getTime(),
                             lastTime: new Date(timeValues[1]).getTime(),
-                            from: new Date(node.Dimension.default),
+                            from: node.Dimension.default !== "current" ? new Date(node.Dimension.default) : getNearestDate(timeValues),
                             step: Util.iso8601ToMilliseconds(timeValues[2]),
                         };
 
@@ -369,7 +395,7 @@ class Raster extends Layer {
                         self.time = {
                             firstTime: new Date(timeValues[0]).getTime(),
                             lastTime: new Date(timeValues[timeValues.length - 1]).getTime(),
-                            from: new Date(node.Dimension.default),
+                            from: node.Dimension.default !== "current" ? new Date(node.Dimension.default) : getNearestDate(timeValues),
                             range: timeValues.map((date) => new Date(date).getTime())
                         };
 
