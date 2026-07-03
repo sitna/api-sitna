@@ -182,6 +182,8 @@ class Elevation {
                 }
             }
         }
+
+        return [];
     }
 
     async setGeometry(options = {}) {
