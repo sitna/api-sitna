@@ -339,6 +339,7 @@ class DrawMeasureModify extends Measure {
                     if (self.elevationProfileActive) {
                         const html = e.control.getInfoContainer().innerHTML;
                         e.control.hide();
+                        e.control.close();
                         self.getElevationControl().then(function (ctl) {
                             if (ctl.resultsPanel) {
                                 ctl.resultsPanel.setCurrentFeature(feature);
