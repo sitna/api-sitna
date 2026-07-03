@@ -3137,6 +3137,10 @@ iframe.tc-video-attr, video.tc-video-attr, img.tc-img-attr, iframe.tc-embed-attr
     .tc-ctl-nav-slider, .tc-ctl-nav-bar {
         display: none;
     }
+
+    .tc-tools-panel:not(.tc-collapsed-right).tc-slide-panel > div.tc-panel-content {        
+        margin-top: 3.5em;
+    }
 }
 
 @container sitnaMap (width < 24em) {
