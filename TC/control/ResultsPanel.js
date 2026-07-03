@@ -189,27 +189,7 @@ class ResultsPanel extends InfoDisplay {
             elm.classList.add(toAdd);
             elm.classList.remove(toRemove);
         }
-    }
-    //#manageClassList(classElement, toAdd, toRemove) {
-    //    const elm = this.div.querySelector('.' + classElement);
-    //    if (elm) {
-    //        return new Promise(resolve => {
-    //            const onEnd = () => {
-    //                elm.removeEventListener('animationend', onEnd);
-    //                resolve();
-    //            };
-    //            if (elm.classList.contains(toAdd)) {
-    //                onEnd();
-    //                return;
-    //            }
-    //            elm.addEventListener('animationend', onEnd, { once: true });
-    //            elm.classList.add(toAdd);
-    //            elm.classList.remove(toRemove);
-    //            if (!getComputedStyle(elm).animationName) onEnd();
-    //        });            
-    //    }
-    //    return true;
-    //}
+    }    
 
     show(classElement) {
         const elm = this.div.querySelector('.' + classElement);
@@ -334,8 +314,7 @@ class ResultsPanel extends InfoDisplay {
             });
         }
         if (self.content) {
-            self.content = self.content;
-
+            
             if (self.#titles) {
                 self.setTitles(self.#titles);
             } else {
