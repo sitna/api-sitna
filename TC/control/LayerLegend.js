@@ -574,6 +574,7 @@ class LayerLegend extends WebComponentControl {
     static = false;
     #on3DMode = false;
     #wcsLayer = false;
+    #extentHasChanged = true;
 
     constructor() {
         super(...arguments);
@@ -621,6 +622,7 @@ class LayerLegend extends WebComponentControl {
     async getLegend() {
         const self = this;
         if (!self.#layer || !self.#layer.map || !(self.#layer instanceof SITNA.layer.Raster)) return;
+        if (!self.#extentHasChanged) return;
         self.innerHTML = "";
         if (!self.containerControl.isVisible() || (!self.#layer.availableNames.some((layername) => self.#layer.isVisibleByScale(layername)) && !self.#on3DMode)) {
             
@@ -634,7 +636,8 @@ class LayerLegend extends WebComponentControl {
                     if(self.#layer.availableNames.some((name => self.#layer.isVisibleByScale(name)))) {
                         await self.setData([]);
                     return;
-                }
+                    }
+                
                 var legendObject = await self.#layer.getLegend(self.#on3DMode || self.#wcsLayer);
                 legendObject = legendObject?.filter((data) => data);
                 if (legendObject && legendObject.length)
@@ -670,6 +673,7 @@ class LayerLegend extends WebComponentControl {
                 }));   
             });
         }
+        self.#extentHasChanged = false;
     }
 
     async register(map) {
@@ -694,11 +698,14 @@ class LayerLegend extends WebComponentControl {
         
         let timer = null;
         const _onZoomEvent = function (_e) {
+            const eventType = _e.type;
             if (timer) {
                 clearTimeout(timer)
                 timer = null;
             }
             timer = setTimeout(() => {
+                if (eventType === Consts.event.ZOOM)
+                    self.#extentHasChanged = true;
                 self.getLegend();
             }, 300);
         };
