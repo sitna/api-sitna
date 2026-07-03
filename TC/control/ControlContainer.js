@@ -92,7 +92,7 @@ class ControlContainer extends Container {
         }, callback);
     }
 
-    async addControl(control, options) {
+    async addControl(control, options = {}) {
         const self = this;
         options.position = options.position || options.side || self.POSITION.LEFT;
 
@@ -110,19 +110,15 @@ class ControlContainer extends Container {
         return ctrl;
     }
 
-    addElement(options) {
-        const self = this;
+    addElement(htmlElement, options = {}) {
+        options.position = options.position || options.side || this.POSITION.LEFT;
 
-        options.position = options.position || options.side || self.POSITION.LEFT;
+        const li = document.createElement('li');
+        li.setAttribute('class', this.CLASS + '-elm ' + (this.CLASS + '-elm-' + this.ctlCount++ + ' '));
 
-        var li = document.createElement('li');
-        li.setAttribute('class', self.CLASS + '-elm ' + (self.CLASS + '-elm-' + self.ctlCount++ + ' '));
+        this.div.querySelector('ul.' + this.CLASS + '-' + options.position).appendChild(li);
 
-        self.div.querySelector('ul.' + self.CLASS + '-' + options.position).appendChild(li);
-
-        var addedElement = li.appendChild(options.htmlElement);
-        addedElement.setAttribute('class', addedElement.getAttribute('class') + ' tc-ctl');
-        return addedElement;
+        return li.appendChild(htmlElement);
     }
 }
 
