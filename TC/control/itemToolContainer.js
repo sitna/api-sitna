@@ -49,29 +49,32 @@ const itemToolContainer = {
         const self = this;
         if (Util.isFunction(tool.renderFn)) {
             const container = self.getToolContainer(elm);
-            const button = tool.renderFn(container, elm.dataset.layerId);
-            if (button) {
-                const lastButton = container.querySelector(`.tc-item-tool-last`);
-                if (lastButton) {
-                    lastButton.insertAdjacentElement('beforebegin', button);
-                }
-                else {
-                    container.appendChild(button);
-                }
-                if (Util.isFunction(tool.actionFn)) {
-                    const eventName = (button instanceof Toggle) ? 'change' : Consts.event.CLICK;
-                    button.addEventListener(eventName, function (_e) {
-                        tool.actionFn.call(button);
-                    }, { passive: true });
-                }
-                if (Util.isFunction(tool.updateFn) && tool.updateEvents) {
-                    self.map.on(tool.updateEvents.join(' '), function (e) {
-                        if (!e.layer || e.layer.id === button.dataset.layerId) {
-                            tool.updateFn.call(button, e);
-                        }
-                    });
+            if (!self.isVisible || self.isVisible()) {
+                const button = tool.renderFn(container, elm.dataset.layerId);
+                if (button) {
+                    const lastButton = container.querySelector(`.tc-item-tool-last`);
+                    if (lastButton) {
+                        lastButton.insertAdjacentElement('beforebegin', button);
+                    }
+                    else {
+                        container.appendChild(button);
+                    }
+                    if (Util.isFunction(tool.actionFn)) {
+                        const eventName = (button instanceof Toggle) ? 'change' : Consts.event.CLICK;
+                        button.addEventListener(eventName, function (_e) {
+                            tool.actionFn.call(button);
+                        }, { passive: true });
+                    }
+                    if (Util.isFunction(tool.updateFn) && tool.updateEvents) {
+                        self.map.on(tool.updateEvents.join(' '), function (e) {
+                            if (!e.layer || e.layer.id === button.dataset.layerId) {
+                                tool.updateFn.call(button, e);
+                            }
+                        });
+                    }
                 }
             }
+            
         }
     },
 
