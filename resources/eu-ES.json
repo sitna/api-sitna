@@ -652,7 +652,7 @@
   "time": "Ordua",
   "datetime": "Data eta ordua",
   "clickToEnlarge": "Handitzeko klik egin",
-  "clickToClose": "Ixteko klik egin",
+  "clickToClose": "Askatu ixteko",
   "time.first": "Lehenengoa",
   "time.backward": "Aurrekoa",
   "time.forward": "Hurrengoa",
@@ -697,10 +697,10 @@
   "routeError": "Errorea ibilbidea kalkulatzean: {message}",
   "elevationProfile": "Goratze profila",
   "noElevationData": "Ez dago goratze daturik",
-  "scene.title": "3D Scenes(EU)",
-  "scene.show.hide": "Show/hide(EU)",
-  "scene.zoomTo": "Zoom to scene(EU)",
-  "scene.show.hide.shadow": "Show/hide shadow(EU)",
-  "scene.opacity": "Opacity(EU)",
-  "scene.shadow.moment": "Shadow moment(EU)"
+  "scene.title": "3D-eszenak",
+  "scene.show.hide": "Erakutsi/ezkutatu",
+  "scene.zoomTo": "Zoom eszenara",
+  "scene.show.hide.shadow": "Itzala erakutsi/ezkutatu",
+  "scene.opacity": "Opakutasuna",
+  "scene.shadow.moment": "Itzalen momentua"
 }

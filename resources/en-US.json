@@ -652,7 +652,7 @@
   "time": "Time",
   "datetime": "Date and Time",
   "clickToEnlarge": "Click to enlarge",
-  "clickToClose": "Click to close",
+  "clickToClose": "Release to close",
   "time.first": "First",
   "time.backward": "Backward",
   "time.forward": "Forward",
