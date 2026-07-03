@@ -64,7 +64,6 @@ class WorkLayerManagerGroupModel {
 
 class WorkLayerManager extends TOC {
     CLICKEVENT = 'click';
-    #sortable;
 
     constructor() {
         super(...arguments);
@@ -151,7 +150,6 @@ class WorkLayerManager extends TOC {
         }
         await self.renderData(options ? Util.extend(self.map.getLayerTree(), options) : self.map.getLayerTree());
         self.addUIEventListeners();
-        const Sortable = (await import('sortablejs')).default;
         self.map.workLayers
             .filter(function (layer) {
                 return !layer.stealth;
@@ -172,13 +170,19 @@ class WorkLayerManager extends TOC {
 
 
         const ul = self.div.querySelector('ul');
-        self.#sortable = Sortable.create(ul, {
-            handle: '.' + self.CLASS + '-dd',
-            animation: 150,
-            onSort: function (e) {
-                self.#moveLayer(e.item, e.oldIndex, e.newIndex);
+
+        Util.makeSortableList(self.div.querySelector('ul'), {
+            handleSelector: `.${this.CLASS}-dd`,
+            callback: (listItem, newIndex, oldIndex) => {
+                if (newIndex > oldIndex) {
+                    self.#moveLayer(listItem, oldIndex, newIndex - 1);
+                }
+                else if (newIndex < oldIndex) {
+                    self.#moveLayer(listItem, oldIndex, newIndex + 1);
+                }
             }
         });
+
 
         ul.addEventListener('keydown', TC.EventTarget.listenerBySelector('li', function (e) {
             // Para mover capas con el teclado.
@@ -189,28 +193,24 @@ class WorkLayerManager extends TOC {
                     return;
                 }
             }
-            const swap = function (oldIdx, newIdx) {
-                const sortableItems = self.#sortable.toArray();
-                const buffer = sortableItems[oldIdx];
-                sortableItems[oldIdx] = sortableItems[newIdx];
-                sortableItems[newIdx] = buffer;
-                self.#sortable.sort(sortableItems);
-                self.#moveLayer(elm, oldIdx, newIdx);
-            };
             const listItems = self.getLayerUIElements();
+            const swap = async function (oldIdx, newIdx) {
+                const layerId = elm.dataset.layerId;
+                await self.#moveLayer(elm, oldIdx, newIdx);
+                const newElm = ul.querySelector(`[data-layer-id="${layerId}"]`);
+                if (newElm) newElm.focus();
+            };
             const elmIdx = listItems.indexOf(elm);
             switch (true) {
                 case /Up$/.test(e.key):
                     if (elmIdx > 0) {
                         swap(elmIdx, elmIdx - 1);
-                        elm.focus();
                         e.stopPropagation();
                     }
                     break;
                 case /Down$/.test(e.key):
                     if (elmIdx < listItems.length - 1) {
                         swap(elmIdx, elmIdx + 1);
-                        elm.focus();
                         e.stopPropagation();
                     }
                     break;
@@ -650,7 +650,7 @@ class WorkLayerManager extends TOC {
                             //mainTitleElm.title = mainTitleElm.textContent;
                             // Obtenemos las rutas de todas las entidades y eliminamos los duplicados
                             const uniquePaths = [...new Set(layer.features.map(f => f.getPath().join(' &rsaquo; ')))];
-                            if (uniquePaths.length > 1) secTitleElm.innerHTML = uniquePaths.join(' &bull; ');
+                            if (uniquePaths.length >= 1) secTitleElm.innerHTML = uniquePaths.join(' &bull; ');
                         }
                         else {
                             let fullTitle = layerTitle;
@@ -769,7 +769,7 @@ class WorkLayerManager extends TOC {
         const listElement = this.div.querySelector('ul');
         listElement.replaceChildren();
         layerElements.forEach((element) => {
-            listElement.appendChild(element);
+            listElement.insertAdjacentElement('afterbegin', element);
         });
     }
 
@@ -813,7 +813,7 @@ class WorkLayerManager extends TOC {
         return this.getLayerUIElements().find(li => li.dataset.layerId === layer.id);
     }
 
-    #shouldBeDelAllVisible = function () {
+    #shouldBeDelAllVisible() {
         return !this.layers.some(layer => layer.unremovable);
     }
 
@@ -821,24 +821,16 @@ class WorkLayerManager extends TOC {
         return this.layers.length;
     }
 
-    #moveLayer = function (listItem, oldIndex, newIndex, callback) {
+    async #moveLayer(listItem, _oldIndex, newIndex, callback) {
         const self = this;
         const layerItems = self.getLayerUIElements();
-        var targetItem;
-        if (newIndex > oldIndex) {
-            targetItem = layerItems[newIndex - 1];
-        }
-        else if (newIndex < oldIndex) {
-            targetItem = layerItems[newIndex + 1];
-        }
-        else {
-            return;
-        }
+        const targetItem = layerItems[newIndex];
         const sourceLayer = self.map.getLayer(listItem.dataset.layerId);
         const targetLayer = self.map.getLayer(targetItem.dataset.layerId);
+        if (sourceLayer === targetLayer) return;
         const newIdx = self.map.layers.indexOf(targetLayer);
         if (newIdx >= 1 && newIdx < self.map.layers.length) {
-            self.map.insertLayer(sourceLayer, newIdx, callback);
+            await self.map.insertLayer(sourceLayer, newIdx, callback);
         }
     }
     updateModel() {
