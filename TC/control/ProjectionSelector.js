@@ -33,7 +33,7 @@ class ProjectionSelector extends Control {
                 TC.getProjectionData({ crs: Util.getCRSCode(crs) }).then((projData) => {
                     TC.loadProjDef({
                         crs,
-                        def: projData.proj4 || projData.wkt,
+                        def: projData.proj4 || projData.wkt2 || projData.wkt,
                         name: projData.name,
                         callback: () => self.setProjection({ crs, allowFallbackLayer: true }),
                     })
