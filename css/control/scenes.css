@@ -1,5 +1,6 @@
-﻿.tc-ctl-scenes h2 {
+﻿.tc-ctl.tc-ctl-scenes h2 {
     display: flex;
+    text-transform: none;
     justify-content: space-between;
 }
     .tc-ctl-scenes h2 sitna-toggle {
@@ -74,7 +75,5 @@
     grid-row-start: 2;
     margin-left: 4px;
 }
-.tc-ctl-scenes h2{
-    text-transform:none;
-}
+
     
