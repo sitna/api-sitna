@@ -114,7 +114,7 @@
     <Content Include="css\control\ImageMagnifier.css" />
     <Content Include="css\control\Route.css" />
     <Content Include="css\control\TimeLine.css" />
-    <Content Include="css\control\scenes.css" />
+    <Content Include="css\control\Scenes.css" />
     <Content Include="css\control\TrackEdit.css" />
     <Content Include="css\control\LayerLegend.css" />
     <Content Include="css\img\directions-bike.svg" />
