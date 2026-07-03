@@ -78,6 +78,7 @@ class FeatureTools extends Control {
     FILE_TITLE_SEPARATOR = '__';
     _dialogDiv;
     #parentControl;
+    #zoomAbortController;
 
     constructor() {
         super(...arguments);
@@ -184,7 +185,6 @@ class FeatureTools extends Control {
 
                                 self.#setToolButtonHandlers(ctl);
 
-                                self.#decorateDisplay(ctl);
                                 self.controller = new Controller(self.model, new Observer(tools));
                                 self.updateModel();
 
@@ -205,13 +205,18 @@ class FeatureTools extends Control {
     #decorateDisplay(displayControl) {
         const self = this;
 
+        this.#zoomAbortController?.abort();
+        this.#zoomAbortController = new AbortController();
+        const { signal } = this.#zoomAbortController;
+
+
         displayControl.getContainerElement().querySelectorAll('table.tc-attr').forEach(function (attributeTable) {
             if (!displayControl.caller && displayControl.currentFeature) { // Si es un popup/panel propio de la feature
 
                 // Añadimos un zoom a la feature al pulsar en la tabla
                 attributeTable.addEventListener(Consts.event.CLICK, function (_e) {
                     self.zoomToFeatures([self.getCurrentFeature(displayControl)]);
-                }, { passive: true });
+                }, { passive: true, signal });
 
                 attributeTable.classList.add(self.CLASS + '-zoom');
                 attributeTable.setAttribute('title', self.getLocaleString('clickToCenter'));
@@ -220,7 +225,7 @@ class FeatureTools extends Control {
             attributeTable.querySelectorAll('a, label, input, video, audio').forEach(function (a) {
                 a.addEventListener(Consts.event.CLICK, function (e) {
                     e.stopPropagation(); // No queremos zoom si pulsamos en un enlace
-                }, { passive: true });
+                }, { passive: true, signal });
             });
         });
         const table = displayControl.getContainerElement().querySelector(`.${displayControl.CLASS}-body > table`);
@@ -290,6 +295,8 @@ class FeatureTools extends Control {
                 uiDiv.classList.toggle(Consts.classes.ACTIVE, !!isActive);
             }, 100);
         }
+
+        self.#decorateDisplay(ctl);
     }
 
     onDownloadButtonClick(e) {
