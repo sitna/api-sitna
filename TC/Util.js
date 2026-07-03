@@ -72,8 +72,15 @@ const stylePropertyNames = new Set([
     'fontSize'
 ]);
 
-const sortableElements = new WeakMap();
-
+const getBrowserDragFeatures = function () {
+    const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+    return {
+        pointerDownEvent: isFinePointer ? 'pointerdown' : 'touchstart',
+        pointerMoveEvent: isFinePointer ? 'pointermove' : 'touchmove',
+        pointerUpEvent: isFinePointer ? 'pointerup' : 'touchend',
+        getPointerCoordinates: (e) => isFinePointer ? e : e.changedTouches[0]
+    };
+};
 
 var Util = {
 
@@ -399,7 +406,7 @@ var Util = {
         else if (div instanceof HTMLElement) {
             result = div;
         }
-        else if (div && '$' in window && div instanceof $ && div.length) {
+        else if (div && '$' in window && div instanceof window.$ && div.length) {
             result = div[0];
         }
         else {
@@ -1225,13 +1232,21 @@ var Util = {
         }
         let urlObj;
         let isRelative = false;
-        try {
+        if (URL.canParse(url)) {
             urlObj = new URL(url);
         }
-        catch (e) {
-            if (e instanceof TypeError) {
+        else {
+            //check if url has protocol
+            if (url.startsWith("//") && URL.canParse(window.location.protocol + url))
+                urlObj = new URL(window.location.protocol + url);
+            //si no intentamos ver si es una URL relativa
+            else if (URL.canParse(url, window.location.href)) {
                 isRelative = true;
                 urlObj = new URL(url, window.location.href);
+            }
+            else { 
+                //si no lanzamos una excepción
+                throw 'No es una URL válida';
             }
         }
         for (var key in parameters) {
@@ -2617,22 +2632,138 @@ var Util = {
         );
     },
 
+    makeDraggableElement: function (element, options = {}) {
+        const handleSelector = options.handleSelector || '.tc-draggable-handle';
+        const draggingClassName = options.draggingClassName || 'tc-draggable-dragging';
+        let startX = null, startY = null;
+        let pastDeltaX = 0, pastDeltaY = 0;
+        let previousX = 0, previousY = 0;
+
+        const browserDrag = getBrowserDragFeatures();
+
+        const getPixels = (value) => value.match(/px/) ? parseFloat(value) : 0;
+        const getTranslate = (elm) => {
+            let x, y;
+            const style = getComputedStyle(elm);
+            let match;
+            if (options.useTransform) {
+                const translateMatch = style.transform.match(/translate\((.+)\)/);
+                if (translateMatch) {
+                    match = translateMatch[1].match(/(\S+),\s*(\S+)/);
+                }
+            }
+            else {
+                match = style.translate.match(/(\S+)\s+(\S+)/);
+            }
+            if (!match) {
+                y = '0px';
+                match = style.translate.match(/(\S+)/);
+                if (!match || match[1] === 'none') {
+                    x = '0px';
+                }
+            }
+            x ??= match[1];
+            y ??= match[2];
+            return [getPixels(x), getPixels(y)];
+        };
+        const setTranslate = (style, x, y) => {
+            if (options.useTransform) style.transform = `translate(${x}px, ${y}px)`;
+            else style.translate = `${x}px ${y}px`;
+        };
+
+        const onPointermove = (e) => {
+            requestAnimationFrame(() => {
+                const coordinates = browserDrag.getPointerCoordinates(e);
+                let deltaX = options.axis === 'y' ? 0 : coordinates.clientX - startX;
+                let deltaY = options.axis === 'x' ? 0 : coordinates.clientY - startY;
+                if (options.containment instanceof HTMLElement) {
+                    const elementRect = element.getBoundingClientRect();
+                    const containmentRect = options.containment.getBoundingClientRect();
+
+                    const deltaDeltaX = deltaX - pastDeltaX;
+                    if (elementRect.left + deltaDeltaX < containmentRect.left) {
+                        deltaX = pastDeltaX;
+                    } else if (elementRect.right + deltaDeltaX > containmentRect.right) {
+                        deltaX = pastDeltaX;
+                    }
+                        
+                    const deltaDeltaY = deltaY - pastDeltaY;
+                    if (elementRect.top + deltaDeltaY < containmentRect.top) {
+                        deltaY = pastDeltaY;
+                    } else if (elementRect.bottom + deltaDeltaY > containmentRect.bottom) {
+                        deltaY = pastDeltaY;
+                    }
+                }
+                setTranslate(element.style, previousX + deltaX, previousY + deltaY);
+                pastDeltaX = deltaX;
+                pastDeltaY = deltaY;
+                options.dragMoveCallback?.(element, [deltaX, deltaY]);
+            });
+        };
+
+        element.addEventListener(browserDrag.pointerDownEvent, (e) => {
+            const handle = e.target;
+            if (options.handleSelector ? handle.matches(handleSelector) : handle.matches(handleSelector) || e.currentTarget === element) {
+                const isValid = options.dragStartCallback?.(element, e) ?? true;
+
+                element.addEventListener(browserDrag.pointerMoveEvent, onPointermove);
+                if (isValid) {
+                    [previousX, previousY] = getTranslate(element);
+                    const coordinates = browserDrag.getPointerCoordinates(e);
+                    startX = coordinates.clientX;
+                    startY = coordinates.clientY;
+                    element.classList.add(draggingClassName);
+                    handle.setPointerCapture(e.pointerId);
+                }
+            }
+        });
+
+        element.addEventListener(browserDrag.pointerUpEvent, (e) => {
+            const handle = e.target;
+            if (options.handleSelector ? handle.matches(handleSelector) : handle.matches(handleSelector) || e.currentTarget === element) {
+                element.removeEventListener(browserDrag.pointerMoveEvent, onPointermove);
+                if (startX === null) return;
+                const coordinates = browserDrag.getPointerCoordinates(e);
+                const deltaX = options.axis === 'y' ? 0 : coordinates.clientX - startX;
+                const deltaY = options.axis === 'x' ? 0 : coordinates.clientY - startY;
+                element.classList.remove(draggingClassName);
+                handle.releasePointerCapture(e.pointerId);
+                if (options.dragEndCallback?.(element, [deltaX, deltaY]) ?? true) {
+                    previousX += deltaX;
+                    previousY += deltaY;
+                }
+                else {
+                    setTranslate(element.style, previousX, previousY);
+                }
+                startX = null;
+                startY = null;
+                pastDeltaX = 0;
+                pastDeltaY = 0;
+            }
+        });
+    },
+
     makeSortableList: function (listElement, options = {}) {
+        const sortableElements = new WeakMap();
         const handleSelector = options.handleSelector || '.tc-sortable-handle';
         const draggingClassName = options.draggingClassName || 'tc-sortable-dragging';
-        listElement.addEventListener('pointerdown', (e) => {
+
+        const browserDrag = getBrowserDragFeatures();
+
+        listElement.addEventListener(browserDrag.pointerDownEvent, (e) => {
             const handle = e.target;
+            const coordinates = browserDrag.getPointerCoordinates(e);
             if (handle.matches(handleSelector)) {
                 const listItem = handle.closest('li');
                 listItem.classList.add(draggingClassName);
                 const startIndex = Array.from(listElement.children).indexOf(listItem);
                 sortableElements.set(listItem, {
-                    startY: e.clientY,
+                    startY: coordinates.clientY,
                     height: listItem.getBoundingClientRect().height,
                     startIndex,
                     currentIndex: startIndex,
                 });
-                handle.setPointerCapture(e.pointerId);
+                if (e.pointerId) handle.setPointerCapture(e.pointerId);
             }
         });
 
@@ -2645,9 +2776,11 @@ var Util = {
             return 0;
         };
 
-        listElement.addEventListener('pointermove', (e) => {
+        listElement.addEventListener(browserDrag.pointerMoveEvent, (e) => {
             const handle = e.target;
+            const coordinates = browserDrag.getPointerCoordinates(e);
             if (handle.matches(handleSelector)) {
+                e.preventDefault();
                 const listItem = handle.closest('li');
                 const listItems = Array.from(listItem.parentElement.children);
                 const listItemRects = listItems.map((elm) => elm.getBoundingClientRect());
@@ -2655,7 +2788,7 @@ var Util = {
                 requestAnimationFrame(() => {
                     const sortableData = sortableElements.get(listItem);
                     if (sortableData) {
-                        const deltaY = e.clientY - sortableData.startY;
+                        const deltaY = coordinates.clientY - sortableData.startY;
                         listItem.style.translate = `0 ${deltaY}px`;
                         const listItemRect = listItem.getBoundingClientRect();
                         for (let i = 0; i < listItemIndex; i++) {
@@ -2697,7 +2830,7 @@ var Util = {
             }
         });
 
-        listElement.addEventListener('pointerup', (e) => {
+        listElement.addEventListener(browserDrag.pointerUpEvent, (e) => {
             const handle = e.target;
             if (handle.matches(handleSelector)) {
                 const listItem = handle.closest('li');
@@ -2717,7 +2850,7 @@ var Util = {
                 else {
                     listItem.parentElement.insertAdjacentElement('afterbegin', listItem);
                 }
-                handle.releasePointerCapture(e.pointerId);
+                if (e.pointerId) handle.releasePointerCapture(e.pointerId);
                 options.callback?.(listItem, sortableData.currentIndex, sortableData.startIndex);
                 sortableElements.delete(listItem);
             }
