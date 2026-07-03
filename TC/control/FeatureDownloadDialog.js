@@ -151,7 +151,7 @@ class FeatureDownloadDialog extends WebComponentControl {
 
         if (mustInterpolate || featuresToAddElevation.some((f) => f !== null)) {
             const elevOptions = {
-                crs: self.map.getCRS(),
+                crs: self.map.crs,
                 features: featuresToAddElevation,
                 maxCoordQuantity: options.elevation && options.elevation.maxCoordQuantity,
                 resolution: options.elevation.resolution,
