@@ -44,7 +44,7 @@ TC.control = TC.control || {};
 Consts.event.TOOLSCLOSE = Consts.event.TOOLSCLOSE || 'toolsclose.tc';
 Consts.event.TOOLSOPEN = Consts.event.TOOLSOPEN || 'toolsopen.tc';
 Consts.event.DIALOG = Consts.event.DIALOG || 'dialog.tc';
-Consts.classes.UNPLUGGED = "tc-unplugged";
+Consts.classes.LOCKED = "tc-locked";
 
 const isPolyline = (feat) => feat instanceof Polyline;
 const isMultiPolyline = (feat) => feat instanceof MultiPolyline;
@@ -264,10 +264,27 @@ class Geolocation extends Control {
     #startMarker;
     #finishMarker;
     #drawing;
+    #overlayContainer;
 
     constructor() {
         super(...arguments);
         const self = this;
+
+        this.styles = {
+            locationPoint: this.options.styles?.locationPoint || {
+                radius: 6,
+                fillColor: '#00ced1',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWidth: 2,
+            },
+            accuracyCircle: this.options.styles?.accuracyCircle || {
+                strokeColor: '#ffffff',
+                strokeWidth: 1,
+                fillColor: '#00ced1',
+                fillOpacity: 0.3,
+            },
+        }
 
         self.#dialogDiv = Util.getDiv(self.options.dialogDiv);
         if (!self.options.dialogDiv) {
@@ -304,8 +321,8 @@ class Geolocation extends Control {
 
         map._bufferFeatures = [];
 
-        self.hillDeltaThreshold = self.options && self.options.hillDeltaThreshold ||
-            self.map.options.elevation && self.map.options.elevation.hillDeltaThreshold ||
+        self.hillDeltaThreshold = self.options?.hillDeltaThreshold ??
+            self.map.options.elevation?.hillDeltaThreshold ??
             20;
 
         const gpsLayerPromise = map.addLayer({
@@ -398,8 +415,8 @@ class Geolocation extends Control {
                 var kmlPattern = '.' + Consts.format.KML.toLowerCase();
                 var gpxPattern = '.' + Consts.format.GPX.toLowerCase();
 
-                const availableTracks = await self.getAvailableTracks();
-                if (availableTracks.some(t => t.name === fileName)) return;
+                //const availableTracks = await self.getAvailableTracks();
+                //if (availableTracks.some((t) => t.name === fileName)) return;
 
                 // GLS: ¿es un GPX?
                 if (fileName.toLowerCase().indexOf(gpxPattern) === fileName.length - gpxPattern.length ||
@@ -1246,87 +1263,89 @@ class Geolocation extends Control {
         self.track.deactivateButton.classList.add(Consts.classes.HIDDEN);
     }
 
-    async renderData(data, callback) {
-        const self = this;
+    async getOverlayContainer() {
+        this.#overlayContainer ??= await this.map.getControlContainer();
+        return this.#overlayContainer;
+    }
 
-        const sel = self.const.selector;
+    async renderData(data, callback) {
+
+        const sel = this.const.selector;
 
         await super.renderData(data);
 
-        self.track = {
-            activateButton: self.div.querySelector(`.${self.CLASS}-track-ui-activate`),
-            deactivateButton: self.div.querySelector(`.${self.CLASS}-track-ui-deactivate`),
-            trackSearch: self.div.querySelector(`.${self.CLASS}-track-available-srch`),
-            trackImportFile: self.div.querySelector(`.${self.CLASS}-track-import`),
-            trackSave: self.div.querySelector(`.${self.CLASS}-track-save`),
-            trackAdd: self.div.querySelector(`.${self.CLASS}-track-add-wpt`),
-            trackContinue: self.#dialogDiv.querySelector(`.${self.CLASS}-track-continue`),
-            trackRenew: self.#dialogDiv.querySelector(`.${self.CLASS}-track-new`),
-            trackClose: self.#dialogDiv.querySelector(`.${self.CLASS}-continue-track-dialog sitna-button.tc-modal-close`),
-            //trackAddSegment: self.div.querySelector('#tc-ctl-geolocation-track-segment'),
-            trackWarningOk: self.#dialogDiv.querySelector(`.${self.CLASS}-track-warning-ok`)
+        this.track = {
+            activateButton: this.div.querySelector(`.${this.CLASS}-track-ui-activate`),
+            deactivateButton: this.div.querySelector(`.${this.CLASS}-track-ui-deactivate`),
+            trackSearch: this.div.querySelector(`.${this.CLASS}-track-available-srch`),
+            trackImportFile: this.div.querySelector(`.${this.CLASS}-track-import`),
+            trackSave: this.div.querySelector(`.${this.CLASS}-track-save`),
+            trackAdd: this.div.querySelector(`.${this.CLASS}-track-add-wpt`),
+            trackContinue: this.#dialogDiv.querySelector(`.${this.CLASS}-track-continue`),
+            trackRenew: this.#dialogDiv.querySelector(`.${this.CLASS}-track-new`),
+            trackClose: this.#dialogDiv.querySelector(`.${this.CLASS}-continue-track-dialog sitna-button.tc-modal-close`),
+            //trackAddSegment: this.div.querySelector('#tc-ctl-geolocation-track-segment'),
+            trackWarningOk: this.#dialogDiv.querySelector(`.${this.CLASS}-track-warning-ok`)
         };
 
-        self.track.trackList = self.div.querySelector(`.${self.CLASS}-track-available-lst`);
+        this.track.trackList = this.div.querySelector(`.${this.CLASS}-track-available-lst`);
 
-        self.track.trackToolPanelOpened = self.div.querySelector(`.${self.CLASS}-track-panel-block sitna-toggle`);
+        this.track.trackToolPanelOpened = this.div.querySelector(`.${this.CLASS}-track-panel-block sitna-toggle`);
 
-        self.track.trackName = self.div.querySelector(`.${self.CLASS}-track-title`);
+        this.track.trackName = this.div.querySelector(`.${this.CLASS}-track-title`);
 
-        self.track.trackWPT = self.div.querySelector(`.${self.CLASS}-track-waypoint`);
-
+        this.track.trackWPT = this.div.querySelector(`.${this.CLASS}-track-waypoint`);
         if (Util.detectMobile()) {
             if (matchMedia('screen and (max-height: 50em) and (max-width: 50em)').matches)
-                self.track.trackToolPanelOpened.checked = false;
+                this.track.trackToolPanelOpened.checked = false;
         }
 
         if (globalThis.File && globalThis.FileReader && globalThis.FileList && globalThis.Blob) {
-            self.track.trackImportFile.disabled = false;
+            this.track.trackImportFile.disabled = false;
         } else {
             console.log('no es posible la importación');
         }
 
-        self.uiSimulate = function (_simulate, elm) {
+        this.uiSimulate = (_simulate, elm) => {
             if (elm) {
 
                 var cnt = elm.tagName === 'LI' ? elm : elm.parentNode;
                 const btnPause = cnt.querySelector(sel.PAUSE);
-                btnPause.classList.add(self.const.className.PLAY);
-                btnPause.setAttribute('title', self.getLocaleString("tr.lst.start"));
-                self.simulationStopped = true;
+                btnPause.classList.add(this.const.className.PLAY);
+                btnPause.setAttribute('title', this.getLocaleString("tr.lst.start"));
+                this.simulationStopped = true;
 
             }
         };
 
-        self.on(self.const.event.TRACKIMPORT, async function (e) {
-            if (!self.isDisabled) {
+        this.on(this.const.event.TRACKIMPORT, async (e) => {
+            if (!this.isDisabled) {
                 let uidToDraw = e.uid;
-                if (self.currentTrackUid) {
-                    const availableTracks = await self.getAvailableTracks()
-                    const selectedTrack = availableTracks.find((track) => track.uid == self.currentTrackUid);
+                if (this.currentTrackUid) {
+                    const availableTracks = await this.getAvailableTracks()
+                    const selectedTrack = availableTracks.find((track) => track.uid == this.currentTrackUid);
                     const importedTrack = availableTracks.find((track) => track.uid == e.uid);
-                    if (await selectedTrack?.fileHandle?.isSameEntry(importedTrack?.fileHandle)) uidToDraw = self.currentTrackUid;
+                    if (await selectedTrack?.fileHandle?.isSameEntry(importedTrack?.fileHandle)) uidToDraw = this.currentTrackUid;
                 }
-                await self.#bindTracks();
-                const listElement = self.track.trackList.querySelector('li[data-uid="' + uidToDraw + '"]');
-                self.#drawTrack(listElement.querySelector(self.const.selector.ACTIVATOR)).then(function () {
-                    if (self.loadingState) {
-                        delete self.loadingState;
-                        self.toShare = null;
+                await this.#bindTracks();
+                const listElement = this.track.trackList.querySelector('li[data-uid="' + uidToDraw + '"]');
+                this.#drawTrack(listElement.querySelector(this.const.selector.ACTIVATOR)).then(() => {
+                    if (this.loadingState) {
+                        delete this.loadingState;
+                        this.toShare = null;
                     }
                 });
-                const transitionEvent = function (_event) {
+                const transitionEvent = (_event) => {
                     listElement.scrollIntoView({ behavior: "smooth", block: "end" });
                     listElement.removeEventListener("transitionend", transitionEvent, false);
                 };
                 listElement.addEventListener("transitionend", transitionEvent, false);
             } else {
-                self.map.toast(self.getLocaleString("geo.trk.import.disabled"), { type: Consts.msgType.WARNING });
+                this.map.toast(this.getLocaleString("geo.trk.import.disabled"), { type: Consts.msgType.WARNING });
             }
         });
 
-        self.#bindTracks();
-
+        this.#bindTracks();
         if (Util.isFunction(callback)) {
             callback();
         }
@@ -1586,12 +1605,10 @@ class Geolocation extends Control {
         const self = this;
         self.#isFollowing = value;
         if (self.trackCenterButton) {
-            const btn = self.trackCenterButton.querySelector("button");
-            btn.classList.toggle(Consts.classes.UNPLUGGED, !value);
-            btn.title = self.getLocaleString(value ? "geo.trk.notCenter" : "geo.trk.center")
+            const btn = self.trackCenterButton.querySelector('sitna-button');
+            btn.text = self.getLocaleString(value ? "geo.trk.notCenter" : "geo.trk.center");
+            btn.classList.toggle(Consts.classes.LOCKED, !!value);
         }
-        !value && self.trackCenterButton && self.trackCenterButton.querySelector("button").classList.add(Consts.classes.UNPLUGGED);
-        value && self.trackCenterButton && self.trackCenterButton.querySelector("button").classList.remove(Consts.classes.UNPLUGGED);
     }
 
     async moveTo(where) {
@@ -2185,8 +2202,8 @@ class Geolocation extends Control {
         const elevCtl = await self.getElevationControl();
         elevCtl.removeElevationTooltip();
         self.simulationSpeed = 1;
-        if (self.getSelectedTrackItem() === li && // si el usuario a activado la película del track ya seleccionado no repintamos
-            elevCtl.resultsPanel && elevCtl.resultsPanel.chart && elevCtl.resultsPanel.chart.chart) {
+        // si el usuario a activado la película del track ya seleccionado no repintamos
+        if (self.getSelectedTrackItem() === li && elevCtl.resultsPanel?.chart?.chart) {
             if (!self.hasElevation) {
                 const elevationProfileChartData = elevCtl.getElevationProfileChartData();
                 self.hasElevation = !(elevationProfileChartData.min === 0 && elevationProfileChartData.max === 0);
@@ -2357,6 +2374,7 @@ class Geolocation extends Control {
                         let elevOptions = {
                             originalElevation: true,
                             onlyOriginalElevation: !self.options.displayElevation ? true : false,
+                            hillDeltaThreshold: self.hillDeltaThreshold,
                             ignoreCaching: true,
                             time: time,
                             key: "gps",
@@ -2382,11 +2400,14 @@ class Geolocation extends Control {
                                     });
                                     let selectedTrackItem = self.getSelectedTrackItem();
                                     if (selectedTrackItem) {
+                                        resultsPanel.currentFeature = originalLine;
                                         resultsPanel.currentFeature.fileName = self.#getDownloadFileName(selectedTrackItem);
                                     }
                                 });
                             }
                         };
+                        // Esta línea es para que se muestre seleccionada la línea que está en el mapa, como haría si se mostrara su perfil directamente.
+                        originalLine.toggleSelectedStyle(true);
                         elevCtl.displayElevationProfile(line, elevOptions);
                     } else {
                         self.map.toast(self.getLocaleString('geo.trk.upload.onlyPoints.warn'), { type: TC.Consts.msgType.WARNING });
@@ -2398,7 +2419,7 @@ class Geolocation extends Control {
             } else {
                 if (!self.options.displayElevation) {
                     //delete cachedProfile.secondaryElevationProfileChartData[0];
-                    cachedProfile.secondaryElevationProfileChartData={ };
+                    cachedProfile.secondaryElevationProfileChartData = {};
                 }
                 const resultsPanel = await elevCtl.getProfilePanel();
                 await resultsPanel.renderPromise();
