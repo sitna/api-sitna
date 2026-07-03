@@ -1051,7 +1051,7 @@ class FeatureInfoCommons extends Click {
         const self = this;
         var result;
         const info = self.info;
-        if (info && info.services) {
+        if (info && info.services && service) {
             result = info.services.find((srv) => srv.url === service.url);
             if (result) {
                 result = result.layers[layerIdx];
