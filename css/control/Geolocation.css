@@ -48,22 +48,37 @@
         padding: 0;
     }
 
-.tc-map .tc-ctl-geolocation-track-center button.tc-unplugged {
-    cursor: pointer;
+
+.tc-map .tc-ctl-geolocation-track-center sitna-button {
+    --sitna-icon-text: "\e926";
+    position: relative;
 }
 
-.tc-ctl-geolocation-track-center button:after {
-    font-family: mapskin;
-    content: "\e925";
-}
 
-.tc-ctl-geolocation-track-center button.tc-unplugged:after {
-    content: "\e926";
-}
+    .tc-map .tc-ctl-geolocation-track-center sitna-button.tc-locked {
+        --sitna-icon-text: "\e925";
+        cursor: pointer;
+    }
 
-.tc-ctl-geolocation sitna-button.tc-ctl-geolocation-track-panel-help {
-    opacity: 0.5;
-}
+        .tc-map .tc-ctl-geolocation-track-center sitna-button.tc-locked::after {
+            font-family: var(--sitna-icon-font-family);
+            font-size: 1.5em;
+            width: 1.33em;
+            height: 1.33em;
+            top: 0;
+            left: 0;
+            text-align: center;
+            line-height: 1.33em;
+            position: absolute;
+            z-index: 100000;
+            content: '\e937';
+            pointer-events: none;
+        }
+
+
+    .tc-ctl-geolocation sitna-button.tc-ctl-geolocation-track-panel-help {
+        opacity: 0.5;
+    }
 
 .tc-ctl-geolocation .tc-ctl-geolocation-track {
     max-height: 28em;
@@ -430,7 +445,7 @@ div.tc-ctl-geolocation-track-snap-info {
 
         .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim > .tc-spn-speed {
             font-weight: bold;
-            font-family: Arial;
+            font-family: var(--sitna-text-font-family);
             font-size: 85%;
             color: var(--text-sec-color);
             text-decoration: none;
