@@ -141,7 +141,7 @@ import ControlEvent from '../../SITNA/control/ControlEvent.js';
 import Geometry from '../Geometry.js';
 import FeatureTypeParser from '../tool/FeatureTypeParser.js';
 import { GMLFilter } from '../../SITNA/filter.js';
-import { Draw3D, Select3D, Modify3D } from '../view/ThreeD.js';
+import { Draw3D, Select3D } from '../view/ThreeD.js';
 
 TC.wrap = wrap;
 const featureNamespace = {};
@@ -1514,6 +1514,10 @@ TC.wrap.Map.prototype.insertLayer = function (olLayer, indexOrObject) {
 
 TC.wrap.Map.prototype.removeLayer = function (olLayer) {
     this.map.removeLayer(olLayer);
+};
+
+TC.wrap.Map.prototype.getWorkLayers = function () {
+    return this.map.getLayerGroup().getLayers().getArray().slice(1).map((l) => l._wrap.parent);
 };
 
 TC.wrap.Map.prototype.getLayerCount = function () {
@@ -3720,11 +3724,12 @@ const createNativeStyle = function (options, olFeat) {
             (Array.isArray(styleOptions) ? styleOptions : [styleOptions]).forEach(function (currentStyle, index) {
                 nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {},
                     {
-                        "stroke": new ol.style.Stroke({
+                        stroke: new ol.style.Stroke({
                             color: getStyleValue(currentStyle.strokeColor, feature),
                             width: getStyleValue(currentStyle.strokeWidth, feature),
                             lineDash: currentStyle.lineDash
-                        })
+                        }),
+                        zIndex: currentStyle.zIndex,
                     });
             });
         }
@@ -3737,7 +3742,8 @@ const createNativeStyle = function (options, olFeat) {
                         color: getStyleValue(currentStyle.strokeColor, feature),
                         width: getStyleValue(currentStyle.strokeWidth, feature),
                         lineDash: currentStyle.lineDash
-                    })
+                    }),
+                    zIndex: currentStyle.zIndex,
                 };
                 if (currentStyle.fillColor) {
                     newStyleOptions.fill = new ol.style.Fill({
@@ -3770,14 +3776,20 @@ const createNativeStyle = function (options, olFeat) {
 
                 if (Number.isNaN(circleOptions.radius)) circleOptions.radius = TC.Cfg.styles?.point?.radius;
                 if (!Number.isNaN(circleOptions.radius)) {
-                    nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, { "image": new ol.style.Circle(circleOptions) });
+                    nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, {
+                        image: new ol.style.Circle(circleOptions),
+                        zIndex: currentStyle.zIndex,
+                    });
                 }
             });
 
         }
 
         if (typeof styleOptions.label === "string" || styleOptions.labelKey) {
-            nativeStyleOptions[nativeStyleOptions.length] = { "text": createNativeTextStyle(styleOptions, feature) };
+            nativeStyleOptions[nativeStyleOptions.length] = {
+                text: createNativeTextStyle(styleOptions, feature),
+                zIndex: styleOptions.zIndex,
+            };
         }
 
         if (styles.marker && (isPoint || !olFeat)) {
@@ -3797,7 +3809,7 @@ const createNativeStyle = function (options, olFeat) {
                         iconSize = [getStyleValue(currentStyle.width, feature), getStyleValue(currentStyle.height, feature)];
                     }
                     nativeStyleOptions[index] = Object.assign(nativeStyleOptions[index] || {}, {
-                        "image": new ol.style.Icon({
+                        image: new ol.style.Icon({
                             crossOrigin: 'anonymous',
                             anchor: currentStyle.anchor || styles.marker.anchor || [0.5, 1],
                             anchorXUnits: currentStyle.anchorXUnits || ANCHOR_DEFAULT_UNITS,
@@ -3808,7 +3820,8 @@ const createNativeStyle = function (options, olFeat) {
                             //10/11/2021 URI: Recuperamos la rotación de los iconos que viene en grados y lo pasamos a radianes
                             rotation: currentStyle.rotation ? currentStyle.rotation / 180 * Math.PI : undefined
                         }),
-                        "text": createNativeTextStyle(currentStyle, feature)
+                        text: createNativeTextStyle(currentStyle, feature),
+                        zIndex: currentStyle.zIndex,
                     });
                 }
             });
@@ -4483,7 +4496,7 @@ TC.wrap.layer.Vector.prototype.createVectorSource = function (options, nativeSty
                         let ajaxOptions = {};
                         let crs = projection.getCode();
                         let version = options.version || capabilities.version || '1.1.0';
-                        capabilities.version = version;
+                        capabilities.version ??= version;
                         let url = serviceUrl;
                         let featureType = Array.isArray(options.featureType) ? options.featureType : [options.featureType];
                         //const isSpatial = function (filter) {
@@ -5022,17 +5035,15 @@ TC.wrap.layer.Vector.prototype.setStyles = function (options) {
             olLayer.setStyle(self.createStyles({ styles: options }));
             if (self.parent.map?.on3DView) {
                 const features = olLayer.getSource().getFeatures();
+
                 features.forEach((f) => {
                     f._wrap.feature3D.setStyle(options[f._wrap.parent.STYLETYPE]);
+                    self.parent.map.view3D.viewer?.refresh();
                 });
-
-                setTimeout(() => {
-                    self.parent.map.view3D.refresh();
-                }, 100);
             }
 
         }
-        self.parent.map?.trigger(Consts.event.VECTORUPDATE, { layer: self.parent });
+        //self.parent.map?.trigger(Consts.event.VECTORUPDATE, { layer: self.parent });
     });
 };
 
@@ -5710,22 +5721,12 @@ TC.wrap.control.Geolocation.prototype.positionChangehandler = async function (ge
                 }
             });
 
-            const features = await Promise.all([self.parent.gpsLayer.addPoint(projectedPosition, {
-                radius: 6,
-                fillColor: '#00CED1',
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWidth: 2,
-                showsPopup: false
-            }), self.parent.gpsLayer.addCircle({ center: projectedPosition, radius: accuracy }, {
-                strokeColor: '#ffffff',
-                strokeWidth: 1,
-                fillColor: '#00CED1',
-                fillOpacity: 0.3,
-                showsPopup: false
-            })]);
-            const marker = features[0];
-            const accuracyCircle = features[1];
+            const [marker, accuracyCircle] = await Promise.all([
+                self.parent.gpsLayer.addPoint(projectedPosition,
+                    { ...self.parent.styles.locationPoint, showsPopup: false }),
+                self.parent.gpsLayer.addCircle({ center: projectedPosition, radius: accuracy },
+                    { ...self.parent.styles.accuracyCircle, showsPopup: false })
+            ]);
             self.parent.geotrackingPosition = true;
 
             if (self.parent.firstPosition == false) {
@@ -5733,8 +5734,9 @@ TC.wrap.control.Geolocation.prototype.positionChangehandler = async function (ge
 
                 if (!self.parent.trackCenterButton) {
                     self.parent.trackCenterButton = self.parent.div.querySelector('.' + self.parent.CLASS + '-track-center');
-                    self.parent.trackCenterButton.querySelector('button').addEventListener('click', function () {
-                        if (!this.classList.contains(Consts.classes.UNPLUGGED)) {
+                    self.parent.trackCenterButton.classList.add('tc-ctl');
+                    self.parent.trackCenterButton.querySelector('sitna-button').addEventListener('click', function () {
+                        if (this.classList.contains(Consts.classes.LOCKED)) {
                             self.parent.setFollowing(false);
                             return;
                         }
@@ -5758,13 +5760,8 @@ TC.wrap.control.Geolocation.prototype.positionChangehandler = async function (ge
                         });
                     });
 
-                    var controlContainer = self.parent.map.getControlsByClass('TC.control.ControlContainer')[0];
-                    if (controlContainer) {
-                        self.parent.trackCenterButton = controlContainer.addElement({ position: controlContainer.POSITION.LEFT, htmlElement: self.parent.trackCenterButton });
-                    } else {
-                        self.parent.map.div.appendChild(self.parent.trackCenterButton);
-                    }
-
+                    const controlContainer = await self.parent.getOverlayContainer();
+                    controlContainer.appendChild(self.parent.trackCenterButton);
                 }
                 self.parent.trackCenterButton.classList.remove(Consts.classes.HIDDEN);
                 self.parent.setFollowing(true);
@@ -5920,8 +5917,9 @@ TC.wrap.control.Geolocation.prototype.setGeotracking = function (tracking) {
             self.currentPositionTrk = [];
         }
 
-        if (self.parent.trackCenterButton)
+        if (self.parent.trackCenterButton) {
             self.parent.trackCenterButton.classList.add(Consts.classes.HIDDEN);
+        }
     }
 };
 
@@ -6439,7 +6437,8 @@ TC.wrap.control.Geolocation.prototype.simulateTrack = function () {
                     fillColor: '#ff0000',
                     fillOpacity: 0.5,
                     strokeColor: '#ffffff',
-                    strokeWidth: 2
+                    strokeWidth: 2,
+                    zIndex: 10,
                 });
             }
 
@@ -6718,7 +6717,7 @@ TC.wrap.control.ElevationProfile.prototype.showElevationMarker = function (optio
         this.elevationMarker.getElement().style.display = '';
         const olMap = map.wrap.map;
         if (!olMap.getOverlayById(this.elevationMarker.getId())) {
-            olMap.addOverlay(this.elevationMarker);            
+            olMap.addOverlay(this.elevationMarker);
         }
         this.elevationMarker.setPosition(position);
         if (map.on3DView && position) {
@@ -8208,7 +8207,7 @@ TC.wrap.Feature.prototype.getLegend = function () {
         if (image) {
             if (image instanceof ol.style.Icon) {
                 result.src = image.getSrc();
-                var img = image.getImage();
+                var img = image.getImage(1);
                 if (img.width) {
                     result.width = img.width;
                     result.height = img.height;
@@ -10166,9 +10165,11 @@ const createSelectedStyle = function (feat) {
         originalStyle = createNativeStyle({ styles: {} }, feat);
     }
     if (Util.isFunction(originalStyle)) {
+        let selectedStyle;
         return function (f, r) {
             //URI:Incrementamos el ZIndex para que este por encima del resto de features de la capa
-            return addHaloToStyle(originalStyle(f, r)).map((style) => { style.setZIndex((style.getZIndex() || 0) + 1); return style });
+            selectedStyle ??= addHaloToStyle(originalStyle(f, r)).map((style) => { style.setZIndex((style.getZIndex() || 0) + 1); return style });
+            return selectedStyle;
         };
     }
     //URI:Incrementamos el ZIndex para que este por encima del resto de features de la capa
