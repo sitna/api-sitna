@@ -317,7 +317,8 @@ class Legend extends MapContents {
                             entries.forEach(entry => {
                                 callback(entry.isIntersecting)                                
                             });
-                        });
+                            self.isInBox = entries.every((entry) => entry.isIntersecting)
+                        }, { threshold:0.5 });
                         observer.observe(self.div);
                     }
 
@@ -362,8 +363,8 @@ class Legend extends MapContents {
     }
 
     isVisible() {
-        const self = this;
-        return Util.isInViewport(self.div) && self.div.checkVisibility();
+        const self = this;        
+        return self.isInBox && self.div.checkVisibility();
     }
 
     updateModel() {
@@ -384,8 +385,7 @@ class Legend extends MapContents {
         if (self.map ?.magnifier ?.model){
             self.map.magnifier.model.textToOpen = self.getLocaleString("clickToEnlarge");
             self.map.magnifier.model.textToClose = self.getLocaleString("clickToClose");
-        }
-            
+        }            
     }
 }
 
