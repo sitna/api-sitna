@@ -24,7 +24,6 @@
   * [Listados contables: Concejos](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Presupuesto y Cuentas")
   * [Listados contables: Mancomunidades](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Presupuesto y Cuentas")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
-  * [Centros de Interpretación de la Naturaleza](https://www.navarra.es/es/web/cin-navarra)
   * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales)
 
 * Desarrollos propios del Gobierno de Navarra:
@@ -48,9 +47,7 @@
   * [IDE Menorca](http://ide.cime.es/visor/?lang=es-ES "Infraestructura de Datos Espaciales de Menorca")
   
 * Desarrollos de [ANIMSA](https://www.animsa.es/) para el Ayuntamiento de Pamplona:
-  * [Eventos en la vía pública](http://policiamunicipal.pamplona.es/verPagina.aspx?IdPag=110 "Eventos en la vía pública. Policía Municipal de Pamplona")
+  * [Eventos en la vía pública](https://policiamunicipal.pamplona.es/mapa-de-eventos "Eventos en la vía pública. Policía Municipal de Pamplona")
 
 * Otros desarrollos:
-  * [Visualizador SITMUN](https://sitmun.github.io/sitmun-viewer-app/public/map/1/2)
-  * Rutas Navarra - [Senderos homologados](http://www.rutasnavarra.com/Navarra/Senderos.aspx)
-  * Rutas Navarra - [Catálogo de montes de Navarra](https://www.rutasnavarra.com/Navarra/Cumbres.aspx)
+  * [Visualizador SITMUN](https://sitmun.github.io/sitmun-viewer-app/public/dashboard)
