@@ -47,7 +47,7 @@ Planned upgrades as on 04/16/2026:
 43. ~~Option to copy or share a map image.~~ ✨ :bookmark:4.4.0
 44. ~~Option to share PDF when printing.~~ ✨ :bookmark:4.4.0
 45. Migration to OpenLayers 10 and WebGL rendering mode. ⬆️
-46. Capability of accepting geographic coordinates when adding markers. ✨
+46. ~~Capability of accepting geographic coordinates when adding markers.~~ ✨ :bookmark:4.10.0
 47. ~~Example compilation page.~~ :memo: :bookmark:4.4.0
 48. ~~Sandboxes for examples.~~ 📝 :bookmark:4.4.0
 49. ~~Feature reading from geographic documents loaded in memory.~~ ✨ :bookmark:4.10.0
