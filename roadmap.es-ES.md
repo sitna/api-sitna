@@ -47,7 +47,7 @@ Mejoras planeadas a día de 16/04/2026:
 43. ~~Opción de copiar o compartir imagen de mapa.~~ ✨ :bookmark:4.4.0
 44. ~~Opción de compartir el PDF al imprimir.~~ ✨ :bookmark:4.4.0
 45. Migración a OpenLayers 10 y modo WebGL. ⬆️
-46. Capacidad de admitir coordenadas geográficas al añadir marcadores. ✨
+46. ~~Capacidad de admitir coordenadas geográficas al añadir marcadores.~~ ✨ :bookmark:4.10.0
 47. ~~Página recopiladora de ejemplos.~~ :memo: :bookmark:4.4.0
 48. ~~Sandbox para los ejemplos.~~ :memo: :bookmark:4.4.0
 49. ~~Lectura de entidades geográficas desde documentos geográficos cargados en memoria.~~ ✨ :bookmark:4.10.0
