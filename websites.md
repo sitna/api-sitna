@@ -24,7 +24,6 @@
   * [Listados contables: Concejos](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Budget and Accounting")
   * [Listados contables: Mancomunidades](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Budget and Accounting")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
-  * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales "Wildfire prevention")
 
 * Govenment of Navarre's own developments:
   * Anonymous access:
@@ -38,6 +37,7 @@
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire "Air Quality")
     * [Censo de instalaciones deportivas de Navarra](https://www.navarra.es/CensoInstalacionesDeportivas "Sport Facility Census of Navarre")
     * [Visor de incidencias de tráfico](https://visorcontroltrafico.navarra.es/ "Traffic incident viewer")
+    * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales "Wildfire prevention")
   * Authenticated access:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Personal Health Folder. Government of Navarre")
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Building Evaluation Report Registry. Government of Navarre")
