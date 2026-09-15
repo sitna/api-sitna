@@ -24,7 +24,6 @@
   * [Listados contables: Concejos](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Concejos.kml "Presupuesto y Cuentas")
   * [Listados contables: Mancomunidades](https://sitna.navarra.es/kml/?url=https://administracionelectronica.navarra.es/AccesoFicheros/DownloadFile.aspx?CodigoCompleto=Portal@@@Mapas/Mancomunidades.kml "Presupuesto y Cuentas")
   * [Oficinas de registro Cl@ve](https://www.navarra.es/es/tramites/ayuda-para-tramitar-por-internet/clave/oficinas-de-registro)
-  * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales)
 
 * Desarrollos propios del Gobierno de Navarra:
   * Acceso anónimo:
@@ -38,6 +37,7 @@
     * [Calidad del Aire](https://www.navarra.es/es/calidaddelaire)
     * [Censo de instalaciones deportivas de Navarra](https://www.navarra.es/CensoInstalacionesDeportivas)
     * [Visor de incidencias de tráfico](https://visorcontroltrafico.navarra.es/)
+    * [Prevención de incendios forestales](https://www.navarra.es/es/prevencion-de-incendios-forestales)
   * Acceso autenticado:
     * [Carpeta personal de Salud](https://administracionelectronica.navarra.es/CarpetaSalud/inicio "Carpeta personal de Salud. Gobierno de Navarra")
     * Informes de Evaluación de Edificios - [Listado de Edificios](https://administracionelectronica.navarra.es/InformeEdificios/ListadoEdificios.aspx "Registro de Informes de Evaluación de Edificios. Gobierno de Navarra")
