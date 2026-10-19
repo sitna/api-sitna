@@ -101,6 +101,24 @@ const Defaults = (function () {
         }
         return result;
     };
+    //const clusterRadiusExpression = [
+    //    '+',
+    //    2,
+    //    [
+    //        '*',
+    //        [
+    //            'round',
+    //            [
+    //                'sqrt',
+    //                [
+    //                    'length',
+    //                    ['get', 'features']
+    //                ]
+    //            ]
+    //        ],
+    //        5
+    //    ]
+    //];
 
     return {
         imageRatio: 1.05,
@@ -177,6 +195,7 @@ const Defaults = (function () {
         * @see MapOptions
         * @property {boolean|ControlOptions} [attribution=true] - Si se establece a un valor *truthy*, el mapa tiene atribución. 
         * @property {boolean|ControlOptions} [basemapSelector=false] - Si se establece a un valor *truthy*, el mapa tiene un selector de mapas de fondo.
+        * @property {boolean|CenterOnLocationOptions} [centerOnLocation=false] - Si se establece a un valor *truthy*, el mapa tiene un control de centrado en posición actual.
         * @property {boolean|ClickOptions} [click=false] - Si se establece a un valor *truthy*, el mapa tiene un control que gestiona los clics del usuario sobre su ventana de visualización.
         * La atribución es un texto superpuesto al mapa que actúa como reconocimiento de la procedencia de los datos que se muestran.
         * @property {boolean|CoordinatesOptions} [coordinates=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de coordenadas y de sistema de referencia espacial.
@@ -186,6 +205,7 @@ const Defaults = (function () {
         * @property {boolean|TabContainerOptions} [download=false] - Si se establece a un valor *truthy*, el mapa tiene un control que permite descargar la imagen actual del mapa o las capas cargadas como un archivo de datos vectoriales.
         * Para llevar a cabo esta segunda operación, es necesario que las capas del mapa tengan asociado un servicio WFS al servicio WMS que muestra las entidades en el mapa (software como GeoServer realiza esto automáticamente).
         * El control infiere la URL del servicio WFS a partir de la [operación DescribeLayer del estándar WMS-SLD](https://docs.geoserver.org/latest/en/user/services/wms/reference.html#describelayer).
+        * @property {boolean|DrawOptions} [draw=false] - Si se establece a un valor *truthy*, el mapa tiene un control para dibujar geometrías en el mapa.
         * @property {boolean|DrawMeasureModifyOptions} [drawMeasureModify=false] - Si se establece a un valor *truthy*, el mapa tiene un control para dibujar, medir y modificar geometrías en el mapa.
         * @property {boolean|FeatureInfoOptions} [featureInfo=true] - Si se establece a un valor *truthy*, el mapa responde a los clics con un información de las capas cargadas de tipo WMS. Se usa para ello la petición `getFeatureInfo` del standard WMS.
         * @property {boolean|ControlOptions} [fullScreen=false] - Si se establece a un valor *truthy*, el mapa incorpora un botón para activar el modo de pantalla completa.
@@ -194,9 +214,10 @@ const Defaults = (function () {
         *
         * Este control se usa habitualmente en combinación con `workLayerManager`. Hay más información de cómo funcionan ambos controles en 
         * la página de documentación de {@link LayerCatalogOptions}.
+        * @property {boolean|LayerComparerOptions} [layerComparer=false] - Si se establece a un valor *truthy*, el mapa tiene un control para comparar capas.
         * @property {boolean|ControlOptions} [legend=false] - Si se establece a un valor *truthy*, el mapa tiene leyenda.
         * @property {boolean|ControlOptions} [loadingIndicator=true] - Si se establece a un valor *truthy*, el mapa tiene un indicador de espera de carga.
-        * @property {boolean|ControlOptions} [measure=false] - Si se establece a un valor *truthy*, el mapa tiene un medidor de longitudes, áreas y perímetros.
+        * @property {boolean|DrawOptions} [measure=false] - Si se establece a un valor *truthy*, el mapa tiene un medidor de longitudes, áreas y perímetros.
         * @property {boolean|MultiFeatureInfoOptions} [multiFeatureInfo=false] - Si se establece a un valor *truthy*, el mapa incluye un control que permite la
         * obtención de información de las entidades que se intersecan con puntos, líneas o polígonos dibujados por el usuario. Para líneas y polígonos, 
         * es necesario que las capas del mapa tengan asociado un servicio WFS al servicio WMS que muestra las entidades en el mapa (software como GeoServer realiza esto automáticamente).
@@ -408,7 +429,7 @@ const Defaults = (function () {
 
         /**
         * Opciones de estilo de entidades geográficas.
-        * @interface LayerStyleOptions
+        * @interface VectorStyleOptions
         * @property {PointStyleOptions} [point] - Opciones de estilo de punto.
         * @property {PolylineStyleOptions} [line] - Opciones de estilo de línea.
         * @property {PolygonStyleOptions} [polygon] - Opciones de estilo de polígono.
@@ -483,7 +504,7 @@ const Defaults = (function () {
                 point: {
                     fillColor: '#333366',
                     fillOpacity: 0.6,
-                    radius: getClusterRadius,
+                    radius: getClusterRadius, //clusterRadiusExpression,
                     label: '${features.length}',
                     fontColor: "#ffffff",
                     fontSize: 9
