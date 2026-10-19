@@ -53,7 +53,7 @@
         }
 
         // Lanzar el parser (igual que en tu código)
-        TerrainParser.apply(this, [this.getCapabilities()]);
+        const response = TerrainParser.apply(this, [this.getCapabilities()]);
 
         // OGCHelper "estático" pero en la instancia (igual que en tu código)
         this.OGCHelper = {};
@@ -404,6 +404,7 @@ class WCSTerrainProvider extends OGCTerrainProvider {
     }
 
     getCapabilities() {
+        const self = this;
         const urlGetCapabilities =
             `${this.urlofServer}?SERVICE=WCS&VERSION=1.0.0&request=GetCapabilities`;
 
@@ -422,6 +423,8 @@ class WCSTerrainProvider extends OGCTerrainProvider {
                         this.attributions.site = linkNode.getAttribute('about');
                     }
                 }
+            }).catch((ex) => {
+                console.warn("Error: " + self.url + " : " + (ex.statusCode || "") + " " + (ex.response?.querySelector("*")?.textContent || ""));
             });
 
         this.description = this.description || {};
