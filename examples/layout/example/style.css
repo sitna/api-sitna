@@ -63,7 +63,7 @@ ul.tc-ctl-toc-branch {
 }
 
 li.tc-ctl-toc-node {
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     margin: 0;
     padding: 0 20px;
     padding-right: 0;
@@ -94,7 +94,7 @@ li.tc-ctl-toc-leaf {
 }
 
 li.tc-ctl-legend-node {
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     font-weight: bold;
     margin-top: 0.5em;
     padding: 10px;
