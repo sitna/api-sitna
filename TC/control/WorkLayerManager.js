@@ -124,13 +124,41 @@ class WorkLayerManager extends TOC {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-wlm.mjs');
-        const elementTemplatePromise = import('../templates/tc-ctl-wlm-elm.mjs');
-        const elementInfoTemplatePromise = import('../templates/tc-ctl-wlm-elm-info.mjs');
-        const elementInfoLegendTemplatePromise = import('../templates/tc-ctl-wlm-elm-info-legend.mjs');
-        const singleTemplatePromise = import('../templates/tc-ctl-wlm-type-sgl.mjs');
-        const groupTemplatePromise = import('../templates/tc-ctl-wlm-type-grp.mjs');
-        const groupNodeTemplatePromise = import('../templates/tc-ctl-wlm-type-grp-node.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm.mjs'
+        );
+        const elementTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm-elm" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm-elm.mjs'
+        );
+        const elementInfoTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm-elm-info" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm-elm-info.mjs'
+        );
+        const elementInfoLegendTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm-elm-info-legend" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm-elm-info-legend.mjs'
+        );
+        const singleTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm-type-sgl" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm-type-sgl.mjs'
+        );
+        const groupTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm-type-grp" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm-type-grp.mjs'
+        );
+        const groupNodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wlm-type-grp-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wlm-type-grp-node.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -239,6 +267,7 @@ class WorkLayerManager extends TOC {
                 textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
                 textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
             });
+            map.magnifier.containerControl = self;
             map.div.appendChild(map.magnifier);
         }
 
