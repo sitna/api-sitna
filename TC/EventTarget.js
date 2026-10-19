@@ -127,7 +127,7 @@ etProto.off = function (events, callback) {
 etProto.trigger = function (type, options) {
     const self = this;
     //Compatibilidad hacia atrás
-    if (window.$ && $.Event && type instanceof $.Event) {
+    if (window.$ && window.$.Event && type instanceof window.$.Event) {
         options = {};
         Object.keys(type).forEach(function (key) {
             if (key !== 'type') {
