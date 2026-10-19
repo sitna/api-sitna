@@ -2,10 +2,10 @@
 import Feature from './Feature.js';
 
 /**
- * Entidad geográfica con geometría poligonal.
  * @class Polygon
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica con geometría poligonal.
  * @param {Array.<Array.<number[]>>} coordinates - Coordenadas del polígono en las unidades del CRS del mapa. 
  * Estas son un array de anillos, siendo el primer anillo las coordenadas del contorno del polígono 
  * y los anillos subsiguientes las coordenadas del los agujeros en el polígono si estos existen.
@@ -172,7 +172,7 @@ import Feature from './Feature.js';
  * @memberof SITNA.feature.Polygon
  * @instance
  * @param {PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
- * @returns {SITNA.feature.Polygon} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class Polygon extends Feature {
@@ -187,7 +187,7 @@ class Polygon extends Feature {
     }
 
     /**
-     * Obtiene las coordenadas de los vértices de los contornos del polígono en el CRS actual del mapa.
+     * Obtiene las coordenadas de los vértices de los contornos del polígono en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.Polygon
      * @instance
@@ -207,7 +207,7 @@ class Polygon extends Feature {
      * @memberof SITNA.feature.Polygon
      * @instance
      * @param {Array.<Array.<number[]>>} coordinates - Coordenadas de los vértices de los contornos del polígono en el CRS actual del mapa.
-     * @returns {SITNA.feature.Polygon} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (coords) {
@@ -304,6 +304,8 @@ export default Polygon;
  * @property {number} [fillOpacity=0.3] - Opacidad de relleno, valor de 0 a 1.
  * @property {string} [fontColor="#000000"] - Color del texto de la etiqueta descriptiva de la entidad geográfica, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fontSize=10] - Tamaño en puntos tipográficos (`pt`) de la fuente del texto de la etiqueta descriptiva de la entidad geográfica.
+ * @property {boolean} [geographic] - Indica si las las coordenadas del polígono están definidas en grados,
+ * en cuyo caso el orden es [longitud, latitud].
  * @property {string} [group] - Nombre de grupo en el que incluir la entidad geográfica. Todos las entidades geográficas con el mismo valor en esta propiedad se consideran en un mismo grupo.
  * Los grupos se muestran en la tabla de contenidos y en la leyenda.
  * @property {string} [labelKey] - Nombre de atributo del cual extraer el valor de la etiqueta si esta existe.

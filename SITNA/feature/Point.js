@@ -4,10 +4,10 @@ import Util from '../../TC/Util.js';
 import Feature from './Feature.js';
 
 /**
- * Entidad geográfica que representa un punto del mapa.
  * @class Point
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica que representa un punto del mapa.
  * @param {number[]} coordinates - Coordenadas del punto expresadas en las unidades del CRS del mapa.
  * @param {PointOptions} [options] Objeto de opciones del punto.
  * @see SITNA.layer.Vector#addPoint
@@ -96,7 +96,7 @@ import Feature from './Feature.js';
  * @memberof SITNA.feature.Point
  * @instance
  * @param {PointStyleOptions} style - Objeto de opciones de estilo de punto.
- * @returns {SITNA.feature.Point} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class Point extends Feature {
@@ -112,12 +112,12 @@ class Point extends Feature {
     }
 
     /**
-     * Establece las coordenadas del punto en el CRS actual del mapa.
+     * Establece las coordenadas del punto en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method setCoordinates
      * @memberof SITNA.feature.Point
      * @instance
      * @param {number[]} coordinates - Coordenadas del punto en el CRS actual del mapa.
-     * @returns {SITNA.feature.Point} La propia entidad geográfica.
+     * @returns {this}
      */
 
     /**
@@ -209,6 +209,8 @@ export default Point;
  * @property {number} [fillOpacity=0.3 (0.6 en clusters)] - Opacidad de relleno, valor de 0 a 1.
  * @property {string} [fontColor="#000000" ("#ffffff" en clusters)] - Color del texto de la etiqueta descriptiva del punto, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fontSize=10 (9 en clusters)] - Tamaño en puntos tipográficos (`pt`) de la fuente del texto de la etiqueta descriptiva del punto.
+ * @property {boolean} [geographic] - Indica si las las coordenadas del punto están definidas en grados,
+ * en cuyo caso el orden es [longitud, latitud].
  * @property {string} [group] - Nombre de grupo en el que incluir el punto. 
  * Todos los puntos con el mismo valor en esta propiedad se consideran en un mismo grupo. 
  * Los grupos se muestran en la tabla de contenidos y en la leyenda.

@@ -1,10 +1,10 @@
 ﻿import MultiPoint from './MultiPoint.js';
 
 /**
- * Entidad geográfica que representa un conjunto de marcadores (puntos con icono asociado).
  * @class MultiMarker
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica que representa un conjunto de marcadores (puntos con icono asociado).
  * @param {Array.<number[]>} coordinates - Array de las coordenadas de cada punto expresadas en el CRS del mapa.
  * @param {MarkerOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.feature.Marker
@@ -68,7 +68,7 @@
  * @memberof SITNA.feature.MultiMarker
  * @instance
  * @param {MarkerStyleOptions} style - Objeto de opciones de estilo de marcador.
- * @returns {SITNA.feature.MultiMarker} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class MultiMarker extends MultiPoint {
@@ -88,12 +88,12 @@ class MultiMarker extends MultiPoint {
     }
 
     /**
-     * Establece las coordenadas de los puntos en el CRS actual del mapa.
+     * Establece las coordenadas de los puntos en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method setCoordinates
      * @memberof SITNA.feature.MultiMarker
      * @instance
      * @param {Array.<number[]>} coordinates - Coordenadas de los puntos en el CRS actual del mapa.
-     * @returns {SITNA.feature.MultiMarker} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (coords) {

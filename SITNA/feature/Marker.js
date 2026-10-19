@@ -7,10 +7,10 @@ import i18n from '../../TC/i18n.js';
 TC.i18n = TC.i18n || i18n;
 
 /**
- * Entidad geográfica que representa un marcador (punto con un icono asociado) del mapa.
  * @class Marker
  * @memberof SITNA.feature
  * @extends SITNA.feature.Point
+ * @summary Entidad geográfica que representa un marcador (punto con un icono asociado) del mapa.
  * @param {number[]} coordinates - Coordenadas del punto expresadas en las unidades del CRS del mapa.
  * @param {MarkerOptions} [options] Objeto de opciones de marcador.
  * @see SITNA.Map#addMarker
@@ -61,12 +61,12 @@ TC.i18n = TC.i18n || i18n;
  */
 
 /**
- * Establece las coordenadas del punto en el CRS actual del mapa.
+ * Establece las coordenadas del punto en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
  * @method setCoordinates
  * @memberof SITNA.feature.Marker
  * @instance
  * @param {number[]} coordinates - Coordenadas del punto en el CRS actual del mapa.
- * @returns {SITNA.feature.Marker} La propia entidad geográfica.
+ * @returns {this}
  */
 
 /**
@@ -83,7 +83,7 @@ TC.i18n = TC.i18n || i18n;
  * @memberof SITNA.feature.Marker
  * @instance
  * @param {MarkerStyleOptions} style - Objeto de opciones de estilo de marcador.
- * @returns {SITNA.feature.Marker} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class Marker extends Point {
@@ -152,6 +152,8 @@ export default Marker;
  * @property {object|string} [data] - Diccionario de pares clave-valor que representa los atributos alfanuméricos del marcador o bien cadena de caracteres con el código HTML asociado al mismo. Al pulsar sobre el marcador, bien una tabla con los atributos o bien el HTML especificado se mostrarán en un bocadillo.
  * @property {string} [fontColor="#000000"] - Color del texto de la etiqueta descriptiva del marcador, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fontSize=10] - Tamaño en puntos tipográficos (`pt`) de la fuente del texto de la etiqueta descriptiva del marcador.
+ * @property {boolean} [geographic] - Indica si las las coordenadas de la geometría del marcador están definidas en grados,
+ * en cuyo caso el orden es [longitud, latitud].
  * @property {string} [group] - Nombre de grupo en el que incluir el marcador. Todos los marcadores con el mismo valor en esta propiedad se consideran en un mismo grupo, y
  * con ello comparten el mismo icono. El icono se selecciona por orden de la lista de clases CSS definida en `classes`. Los grupos se muestran en la tabla de contenidos y en la leyenda.
  * @property {number} [height=32] - Altura en píxeles del icono.

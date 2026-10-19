@@ -2,10 +2,10 @@
 import Consts from '../../TC/Consts.js';
 
 /**
- * Entidad geográfica que representa un conjunto de puntos.
  * @class MultiPoint
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica que representa un conjunto de puntos.
  * @param {Array.<number[]>} coordinates - Array de las coordenadas de cada punto expresadas en el CRS del mapa.
  * @param {PointOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.feature.Point
@@ -56,7 +56,7 @@ import Consts from '../../TC/Consts.js';
  * @memberof SITNA.feature.MultiPoint
  * @instance
  * @param {PointStyleOptions} style - Objeto de opciones de estilo de punto.
- * @returns {SITNA.feature.MultiPoint} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class MultiPoint extends Feature {
@@ -72,7 +72,7 @@ class MultiPoint extends Feature {
     }
 
     /**
-     * Obtiene las coordenadas de los puntos en el CRS actual del mapa.
+     * Obtiene las coordenadas de los puntos en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.MultiPoint
      * @instance
@@ -88,7 +88,7 @@ class MultiPoint extends Feature {
      * @memberof SITNA.feature.MultiPoint
      * @instance
      * @param {Array.<number[]>} coordinates - Coordenadas de los puntos en el CRS actual del mapa.
-     * @returns {SITNA.feature.MultiPoint} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (coords) {

@@ -3,10 +3,10 @@ import Feature from './Feature.js';
 import Polyline from './Polyline.js';
 
 /**
- * Entidad geográfica que representa un conjunto de líneas de varios segmentos en el mapa.
  * @class MultiPolyline
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica que representa un conjunto de líneas de varios segmentos en el mapa.
  * @param {Array.<Array.<number[]>>} coordinates - Coordenadas de las líneas expresadas como un array de 
  * coordenadas de objetos {@link SITNA.feature.Polyline}.
  * @param {PolylineOptions} [options] Objeto de opciones de la entidad geográfica.
@@ -122,7 +122,7 @@ import Polyline from './Polyline.js';
  * @memberof SITNA.feature.MultiPolyline
  * @instance
  * @param {PolylineStyleOptions} style - Objeto de opciones de estilo de línea.
- * @returns {SITNA.feature.MultiPolyline} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class MultiPolyline extends Feature {
@@ -137,7 +137,7 @@ class MultiPolyline extends Feature {
     }
 
     /**
-     * Obtiene las coordenadas de los vértices de las líneas en el CRS actual del mapa.
+     * Obtiene las coordenadas de los vértices de las líneas en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.MultiPolyline
      * @instance
@@ -156,7 +156,7 @@ class MultiPolyline extends Feature {
      * @memberof SITNA.feature.MultiPolyline
      * @instance
      * @param {Array.<Array.<number[]>>} coordinates - Coordenadas de los vértices de las líneas en el CRS actual del mapa.
-     * @returns {SITNA.feature.MultiPolyline} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (Array.isArray(coords) && Array.isArray(coords[0]) && !Array.isArray(coords[0][0])) {

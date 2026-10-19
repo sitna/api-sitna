@@ -2,10 +2,10 @@
 import Consts from '../../TC/Consts.js';
 
 /**
- * Entidad geográfica compuesta de varios elementos con geometría poligonal.
  * @class MultiPolygon
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica compuesta de varios elementos con geometría poligonal.
  * @param {Array.<Array.<Array.<number[]>>>} coordinates - Coordenadas de la geometría expresadas como un array de
  * coordenadas de objetos {@link SITNA.feature.Polygon}.
  * @param {PolygonOptions} [options] Objeto de opciones de la entidad geográfica.
@@ -161,7 +161,7 @@ import Consts from '../../TC/Consts.js';
  * @memberof SITNA.feature.MultiPolygon
  * @instance
  * @param {PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
- * @returns {SITNA.feature.MultiPolygon} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class MultiPolygon extends Feature {
@@ -176,7 +176,7 @@ class MultiPolygon extends Feature {
     }
 
     /**
-     * Obtiene las coordenadas de los vértices de los polígonos en el CRS actual del mapa.
+     * Obtiene las coordenadas de los vértices de los polígonos en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.MultiPolygon
      * @instance
@@ -196,7 +196,7 @@ class MultiPolygon extends Feature {
      * @memberof SITNA.feature.MultiPolygon
      * @instance
      * @param {Array.<Array.<Array.<number[]>>>} coordinates - Coordenadas de los vértices de los polígonos en el CRS actual del mapa.
-     * @returns {SITNA.feature.MultiPolygon} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (coords) {

@@ -2,10 +2,10 @@
 import Feature from './Feature.js';
 
 /**
- * Entidad geográfica que representa una línea de varios segmentos en el mapa.
  * @class Polyline
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica que representa una línea de varios segmentos en el mapa.
  * @param {Array.<number[]>} coordinates - Coordenadas de la línea expresadas como un array de coordenadas 
  * de puntos (los vértices de la línea) en las unidades del CRS del mapa.
  * @param {PolylineOptions} [options] Objeto de opciones de la entidad geográfica.
@@ -117,7 +117,7 @@ import Feature from './Feature.js';
  * @memberof SITNA.feature.Polyline
  * @instance
  * @param {PolylineStyleOptions} style - Objeto de opciones de estilo de línea.
- * @returns {SITNA.feature.Polyline} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class Polyline extends Feature {
@@ -132,7 +132,7 @@ class Polyline extends Feature {
     }
 
     /**
-     * Obtiene las coordenadas de los vértices de la línea en el CRS actual del mapa.
+     * Obtiene las coordenadas de los vértices de la línea en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.Polyline
      * @instance
@@ -145,7 +145,7 @@ class Polyline extends Feature {
      * @memberof SITNA.feature.Polyline
      * @instance
      * @param {Array.<number[]>} coordinates - Coordenadas de los vértices de la línea en el CRS actual del mapa.
-     * @returns {SITNA.feature.Polyline} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (Array.isArray(coords) && !Array.isArray(coords[0])) {
@@ -207,6 +207,8 @@ export default Polyline;
  * de la entidad geográfica o bien cadena de caracteres con el código HTML asociado al mismo. Al pulsar sobre la línea, bien una tabla con los atributos o bien el HTML especificado se mostrarán en un bocadillo.
  * @property {string} [fontColor="#000000"] - Color del texto de la etiqueta descriptiva de la entidad geográfica, representado en formato hex triplet (`#RRGGBB`).
  * @property {number} [fontSize=10] - Tamaño en puntos tipográficos (`pt`) de la fuente del texto de la etiqueta descriptiva de la entidad geográfica.
+ * @property {boolean} [geographic] - Indica si las las coordenadas de la línea están definidas en grados,
+ * en cuyo caso el orden es [longitud, latitud].
  * @property {string} [group] - Nombre de grupo en el que incluir la entidad geográfica. Todos las entidades geográficas con el mismo valor en esta propiedad se consideran en un mismo grupo.
  * Los grupos se muestran en la tabla de contenidos y en la leyenda.
  * @property {string} [labelKey] - Nombre de atributo del cual extraer el valor de la etiqueta si esta existe.

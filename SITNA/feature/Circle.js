@@ -3,10 +3,10 @@ import Feature from './Feature.js';
 import Polygon from './Polygon.js';
 
 /**
- * Entidad geográfica que representa un círculo en el mapa.
  * @class Circle
  * @memberof SITNA.feature
  * @extends SITNA.feature.Feature
+ * @summary Entidad geográfica que representa un círculo en el mapa.
  * @param {CircleGeometry|Array.<number[]>} geometry - Si el parámetro es un array, las coordenadas
  * del círculo expresadas como un array de dos elementos, el primero son las coordenadas del centro 
  * en las unidades del CRS del mapa y el segundo son las coordenadas de un punto de su circunferencia, 
@@ -121,7 +121,7 @@ import Polygon from './Polygon.js';
  * @memberof SITNA.feature.Circle
  * @instance
  * @param {PolygonStyleOptions} style - Objeto de opciones de estilo de polígono.
- * @returns {SITNA.feature.Circle} La propia entidad geográfica.
+ * @returns {this}
  */
 
 class Circle extends Feature {
@@ -139,8 +139,7 @@ class Circle extends Feature {
         // Adoptamos la convención de introducir las coordenadas de dos puntos:
         // El primero es el centro, el segundo es cualquiera de la circunferencia.
         let geom = geometry;
-        if (Object.prototype.hasOwnProperty.call(geometry, 'center') &&
-            Object.prototype.hasOwnProperty.call(geometry, 'radius')) {
+        if (Object.hasOwn(geometry, 'center') && Object.hasOwn(geometry, 'radius')) {
             geom = [geometry.center, [geometry.center[0] + geometry.radius, geometry.center[1]]];
         }
         const center = geom[0];
@@ -156,7 +155,7 @@ class Circle extends Feature {
     }
 
     /**
-     * Obtiene las coordenadas de la geometría del círculo en el CRS actual del mapa.
+     * Obtiene las coordenadas de la geometría del círculo; en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.Circle
      * @instance
@@ -174,7 +173,7 @@ class Circle extends Feature {
      * del círculo expresadas como un array de dos elementos, el primero son las coordenadas del centro
      * en las unidades del CRS del mapa y el segundo son las coordenadas de un punto de su circunferencia,
      * en las unidades del CRS actual del mapa (metros por defecto).
-     * @returns {SITNA.feature.Circle} La propia entidad geográfica.
+     * @returns {this}
      */
     setCoordinates(coords) {
         if (coords) {
