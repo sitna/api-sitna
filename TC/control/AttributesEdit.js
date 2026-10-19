@@ -9,10 +9,9 @@ import Feature from '../../SITNA/feature/Feature.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 import FeatureHistory from '../tool/FeatureHistory.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
 
 TC.control = TC.control || {};
-
-const elementName = 'sitna-attributes-edit';
 
 const getDataTypeFromValue = (value) => {
     if (value === null) {
@@ -74,6 +73,10 @@ class AttributesEditModel {
 
 class AttributesEdit extends WebComponentControl {
 
+    static {
+        customElements.define('sitna-attributes-edit', this);
+    }
+
     #feature;
     #attributeData = [];
     #clientControl;
@@ -121,10 +124,26 @@ class AttributesEdit extends WebComponentControl {
     }
 
     async loadTemplates() {
-        const mainTemplatePromise = import('../templates/tc-ctl-attr-edit.mjs');
-        const tableTemplatePromise = import('../templates/tc-ctl-attr-edit-table.mjs');
-        const rowTemplatePromise = import('../templates/tc-ctl-attr-edit-row.mjs');
-        const newRowTemplatePromise = import('../templates/tc-ctl-attr-edit-new.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-attr-edit" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-attr-edit.mjs'
+        );
+        const tableTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-attr-edit-table" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-attr-edit-table.mjs'
+        );
+        const rowTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-attr-edit-row" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-attr-edit-row.mjs'
+        );
+        const newRowTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-attr-edit-new" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-attr-edit-new.mjs'
+        );
         const template = {};
         template[this.CLASS] = (await mainTemplatePromise).default;
         template[this.CLASS + '-table'] = (await tableTemplatePromise).default;
@@ -192,10 +211,10 @@ class AttributesEdit extends WebComponentControl {
                             if (sourceItem.optional && targetItem.optional) {
                                 newItem.optional = true;
                             }
-                            if (Object.prototype.hasOwnProperty.call(targetItem, 'type') && !Object.prototype.hasOwnProperty.call(sourceItem, 'type')) {
+                            if (Object.hasOwn(targetItem, 'type') && !Object.hasOwn(sourceItem, 'type')) {
                                 newItem.type = targetItem.type;
                             }
-                            else if (targetItem.type === sourceItem.type || !Object.prototype.hasOwnProperty.call(targetItem, 'type')) {
+                            else if (targetItem.type === sourceItem.type || !Object.hasOwn(targetItem, 'type')) {
                                 newItem.type = sourceItem.type;
                             }
                             newItem.value = mergeFeatureMetadata(targetItem.value, sourceItem.value, false, equalsPredicate);
@@ -321,7 +340,7 @@ class AttributesEdit extends WebComponentControl {
                 else {
                     featureAttributeData = getCommonAttributeData(featuresToCheck.filter((f) => f !== this.#feature));
                 }
-                if (featureAttributeData.length) {
+                if (featureAttributeData?.length) {
                     if (layerAttributeMetadata.length) {
                         const mergeAttributes = function (layerAttributes, featureAttributes) {
                             if (featureAttributes) {
@@ -380,7 +399,7 @@ class AttributesEdit extends WebComponentControl {
                                 });
                                 if (!featureAttrEntry) {
                                     let value;
-                                    if (Object.prototype.hasOwnProperty.call(attr, 'value')) {
+                                    if (Object.hasOwn(attr, 'value')) {
                                         value = getDataFromMetadata(attr.value);
                                     }
                                     if (value === undefined && !attr.optional) {
@@ -730,14 +749,14 @@ class AttributesEdit extends WebComponentControl {
                     this.feature = e.detail?.feature;
                 }, 100);
             };
-            this.#clientControl.addEventListener(Consts.event.DRAWEND, onDrawEnd, { signal });
+            this.#clientControl.addEventListener(ControlEvent.type.DRAWEND, onDrawEnd, { signal });
             const onDrawReset = (_e) => {
                 if (this.mode !== Consts.geom.POINT) {
                     this.feature = null;
                 }
             };
-            this.#clientControl.addEventListener(Consts.event.DRAWSTART, onDrawReset, { signal });
-            this.#clientControl.addEventListener(Consts.event.DRAWCANCEL, onDrawReset, { signal });
+            this.#clientControl.addEventListener(ControlEvent.type.DRAWSTART, onDrawReset, { signal });
+            this.#clientControl.addEventListener(ControlEvent.type.DRAWCANCEL, onDrawReset, { signal });
             onDrawEnd({});
         }
     }
@@ -834,7 +853,7 @@ class AttributesEdit extends WebComponentControl {
                         if (layer.features.length > 1 && layer.features.every((f) => {
                             let featureData = f.getData();
                             for (const pathElement of path) {
-                                if (Object.prototype.hasOwnProperty.call(featureData, pathElement)) {
+                                if (Object.hasOwn(featureData, pathElement)) {
                                     featureData = featureData[pathElement];
                                 }
                                 else {
@@ -1073,6 +1092,5 @@ class AttributesEdit extends WebComponentControl {
 }
 
 AttributesEdit.prototype.CLASS = 'tc-ctl-attr-edit';
-customElements.get(elementName) || customElements.define(elementName, AttributesEdit);
 TC.control.AttributesEdit = AttributesEdit;
 export default AttributesEdit;
