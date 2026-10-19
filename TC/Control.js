@@ -360,7 +360,7 @@ TC.inherit(TC.Control, EventTarget);
     
     ctlProto.getDownloadDialog = async function () {
         const self = this;
-        self._downloadDialog = self._downloadDialog || self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
+        self._downloadDialog = self._downloadDialog || self.map.getControlsByClass('FeatureDownloadDialog')[0];
         if (!self._downloadDialog) {
             self._downloadDialog = await self.map.addControl('FeatureDownloadDialog');
         }
