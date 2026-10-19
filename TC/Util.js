@@ -1322,11 +1322,17 @@ var Util = {
                 modal = modal.parentElement;
             }
 
-            hide(modal);
+            if (modal) hide(modal);
+            else {
+                modal = target;
+                while (modal && !modal.matches('dialog')) {
+                    modal = modal.parentElement;
+                }
+                if (modal) modal.close();
+            }
         } else {
-            Array.prototype.forEach.call(document.querySelectorAll('.tc-modal'), function (modal) {
-                hide(modal);
-            });
+            Array.prototype.forEach.call(document.querySelectorAll('.tc-modal'), (modal) => hide(modal));
+            Array.prototype.forEach.call(document.querySelectorAll('.tc-map dialog[open]'), (dialog) => dialog.close());
         }
 
         if (callback) {
@@ -2667,6 +2673,11 @@ var Util = {
             return [getPixels(x), getPixels(y)];
         };
         const setTranslate = (style, x, y) => {
+            if (x === 0 && y === 0) {
+                if (options.useTransform) style.removeProperty('transform');
+                else style.removeProperty('translate');
+                return;
+            }
             if (options.useTransform) style.transform = `translate(${x}px, ${y}px)`;
             else style.translate = `${x}px ${y}px`;
         };
@@ -2705,15 +2716,14 @@ var Util = {
             const handle = e.target;
             if (options.handleSelector ? handle.matches(handleSelector) : handle.matches(handleSelector) || e.currentTarget === element) {
                 const isValid = options.dragStartCallback?.(element, e) ?? true;
-
-                element.addEventListener(browserDrag.pointerMoveEvent, onPointermove);
                 if (isValid) {
+                    element.addEventListener(browserDrag.pointerMoveEvent, onPointermove);
                     [previousX, previousY] = getTranslate(element);
                     const coordinates = browserDrag.getPointerCoordinates(e);
                     startX = coordinates.clientX;
                     startY = coordinates.clientY;
                     element.classList.add(draggingClassName);
-                    handle.setPointerCapture(e.pointerId);
+                    if (e.pointerId > -1) handle.setPointerCapture(e.pointerId);
                 }
             }
         });
@@ -2727,7 +2737,7 @@ var Util = {
                 const deltaX = options.axis === 'y' ? 0 : coordinates.clientX - startX;
                 const deltaY = options.axis === 'x' ? 0 : coordinates.clientY - startY;
                 element.classList.remove(draggingClassName);
-                handle.releasePointerCapture(e.pointerId);
+                if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
                 if (options.dragEndCallback?.(element, [deltaX, deltaY]) ?? true) {
                     previousX += deltaX;
                     previousY += deltaY;
@@ -2763,7 +2773,7 @@ var Util = {
                     startIndex,
                     currentIndex: startIndex,
                 });
-                if (e.pointerId) handle.setPointerCapture(e.pointerId);
+                if (e.pointerId > -1) handle.setPointerCapture(e.pointerId);
             }
         });
 
@@ -2850,7 +2860,7 @@ var Util = {
                 else {
                     listItem.parentElement.insertAdjacentElement('afterbegin', listItem);
                 }
-                if (e.pointerId) handle.releasePointerCapture(e.pointerId);
+                if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
                 options.callback?.(listItem, sortableData.currentIndex, sortableData.startIndex);
                 sortableElements.delete(listItem);
             }
