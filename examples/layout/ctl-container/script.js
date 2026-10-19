@@ -189,15 +189,15 @@
 
                 map.loaded(function () {
 
-                    ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
+                    ovmap = map.getControlsByClass('OverviewMap')[0];
                     if (ovmap) {
                         ovmap.loaded(function () {
                             ovmap.disable();
                         });
                     }
                     //mover el Multifeature info dentro del TOC
-                    const toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
-                    const mfi = map.getControlsByClass('TC.control.MultiFeatureInfo')[0];
+                    const toc = map.getControlsByClass('WorkLayerManager')[0];
+                    const mfi = map.getControlsByClass('MultiFeatureInfo')[0];
                     if (toc && mfi) {
                         toc.div.querySelector('.' + toc.CLASS + '-content').firstChild.insertAdjacentElement('beforebegin', mfi.div);
                     }
