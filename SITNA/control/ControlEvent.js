@@ -12,8 +12,18 @@
  */
 export default class ControlEvent extends Event {
     control;
+
+    static type = {
+        DRAWSTART: 'sitna:drawstart',
+        DRAWEND: 'sitna:drawend',
+        DRAWCANCEL: 'sitna:drawcancel',
+        DRAWUNDO: 'sitna:drawundo',
+        DRAWREDO: 'sitna:drawredo',
+        POINTDRAW: 'sitna:pointdraw',
+    };
+
     constructor(type, options) {
-        const allowedKeys = ['control', 'message'];
+        const allowedKeys = ['control', 'message', 'feature', 'point', 'transform'];
         const optionGroups = Object.groupBy(Object.entries(options), ([key]) => allowedKeys.includes(key) ? 'control' : 'super');
         const superOptions = Object.fromEntries(optionGroups.super || []);
         const controlEventOptions = Object.fromEntries(optionGroups.control || []);
