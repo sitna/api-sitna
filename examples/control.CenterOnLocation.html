@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso del control CenterOnLocation</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>
+            Ejemplo de uso del control <a href="../doc/CenterOnLocation.html">CenterOnLocation</a>.
+            Pulse en el botón para centra el mapa en su ubicación actual. 
+            El control se encargará de solicitar los permisos necesarios al usuario y de mostrar un mensaje de error en caso de que no se puedan obtener las coordenadas.
+        </p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div id="my-map"></div>
+    <script>
+        // Creamos un mapa con un control CenterOnLocation.
+        // El control tendrá estilos personalizados para los indicadores de posición y precisión.
+        const myMap = new SITNA.Map("my-map", {
+            controls: {
+                centerOnLocation: {
+                    styles: {
+                        locationPoint: {
+                            strokeColor: '#00ff7b',
+                            strokeWidth: 3,
+                            strokeOpacity: 0.5,
+                            radius: 8,
+                            fillColor: '#00ff7b',
+                            fillOpacity: 0.4,
+                        },
+                        accuracyCircle: {
+                            strokeColor: '#00ff7b',
+                            strokeWidth: 1,
+                            strokeOpacity: 0.5,
+                            fillColor: '#00ff7b',
+                            fillOpacity: 0.2,
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

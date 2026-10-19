@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de uso del control LayerComparer</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>
+            Ejemplo de uso del control <a href="../doc/SITNA.control.LayerComparer.html">LayerComparer</a>.
+        </p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+    <div id="my-map"></div>
+    <script>
+        // Creamos un mapa con un control LayerComparer.
+        const myMap = new SITNA.Map("my-map", {
+            layout: "layout/ctl-container",
+            controls: {
+                layerComparer: {
+                    div: "slot1",
+                    view: SITNA.control.LayerComparer.view.SWIPE,
+                    availableViews: [
+                        SITNA.control.LayerComparer.view.SINGLE,
+                        SITNA.control.LayerComparer.view.TRANSPARENCY,
+                        SITNA.control.LayerComparer.view.SWIPE,
+                        SITNA.control.LayerComparer.view.SPYGLASS,
+                        SITNA.control.LayerComparer.view.SPLIT,
+                        SITNA.control.LayerComparer.view.TIMELINE
+                    ],
+                    secondaryBaseLayers: [SITNA.Consts.layer.IDENA_ORTHOPHOTO],
+                    timelines: [
+                        [
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2012,
+                                from: "2012-01-01",
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2014, 
+                                from: "2014-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2017,
+                                from: "2017-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2018,
+                                from: "2018-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2019,
+                                from: "2019-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2020,
+                                from: "2020-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2021,
+                                from: "2021-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2022,
+                                from: "2022-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO2023,
+                                from: "2023-01-01"
+                            },
+                            {
+                                layer: SITNA.Consts.layer.IDENA_ORTHOPHOTO,
+                                from: "2025-01-01"
+                            }
+                        ]
+                    ]
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de creación de entidades geográficas con coordenadas en grados</title>
+    <link rel="stylesheet" href="examples.css" />
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de creación de entidades geográficas con coordenadas definidas en grados.</p>
+        <p>Pulse sobre el marcador creado para ver sus coordenadas.</p>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+
+    <div id="my-map"></div>
+    <script>
+        const map = new SITNA.Map("my-map");
+        map.loaded(async () => {
+            // Creamos una capa vectorial para mostrar las entidades geográficas
+            const vectorLayer = await map.addLayer({
+                id: "entidades",
+                type: SITNA.Consts.layerType.VECTOR,
+                title: "Entidades geográficas",
+            });
+
+            // Creamos un marcador con coordenadas en grados (utilizando el CRS EPSG:4326)
+            const marker = new SITNA.feature.Marker([-1.00587, 42.98741], { geographic: true });
+
+            // Creamos un objeto de propiedades para el marcador
+            const data = {};
+            data["Coordenadas originales (en grados)"] = marker.getCoordinates();
+
+            // Añadimos el marcador a la capa vectorial
+            await vectorLayer.addFeature(marker);
+            data["Coordenadas en el mapa"] = marker.getCoordinates();
+
+            // Establecemos las propiedades del marcador para mostrar las coordenadas al hacer clic sobre él
+            marker.setData(data);
+        });
+    </script>
+
+</body>
+</html>

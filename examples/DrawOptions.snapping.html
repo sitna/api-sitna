@@ -1,36 +1,57 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
-	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-    <title>SITNA - Ejemplo de MapControlsOptions.drawMeasureModify</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de DrawOptions.snapping</title>
     <link rel="stylesheet" href="examples.css" />
+    <style>
+        .radio-input {
+            padding-right: 0.5em;
+            top: 150px;
+        }
+
+            .radio-input label {
+                display: block;
+            }
+
+        #slot1 sitna-draw {
+            display: block;
+            margin: 1em;
+        }
+    </style>
 </head>
 <body>
     <div class="instructions">
-        <p>Ejemplo de uso de la propiedad snapping de <a href="..//doc/DrawMeasureModifyOptions.html">DrawMeasureModifyOptions</a>.</p>
-        <p>Control de dibujo y medición con tres diferentes opciones de ajuste.</p>
-        <p>Editar el código quitando el comentario correspondiente para observar los distintos efectos.</p>
+        <p>Ejemplo de uso de la propiedad snapping de <a href="../doc/DrawOptions.html">DrawOptions</a>.</p>
+        <p>Control de dibujo con tres diferentes opciones de ajuste.</p>
+    </div>
+    <div class="instructions radio-input">
+        <p>Seleccionar una opción de ajuste:</p>
+        <label><input type="radio" name="snapping-type" id="radio-true" value="true"><strong>true</strong> (Se fija a entidades dibujadas)</label>
+        <label><input type="radio" name="snapping-type" id="radio-layer" value="layer"><strong>SITNA.layer.Vector</strong> (Se fija a entidades de una capa específica)</label>
+        <label><input type="radio" name="snapping-type" id="radio-features" checked value="features"><strong>SITNA.feature.Feature[]</strong> (Se fija a entidades geográficas específicas)</label>
     </div>
     <script src="../"></script>
     <script type="text/javascript" src="examples.js"></script>
 
-    <div id="mapa"></div>
+    <div id="my-map"></div>
     <script>
         // Definimos una capa de referencia para los ajustes de vértices.
         const referenceLayer = new SITNA.layer.Vector({
             id: "reference",
-            type: SITNA.Consts.layerType.VECTOR
+            type: SITNA.Consts.layerType.VECTOR,
+            title: "Elementos de referencia para ajuste"
         });
         // Creamos dos estilos para diferenciar las entidades de la capa de referencia.
         const depotStyle = {
-            fillColor: "rgba(255, 128, 0, 0.2)",
-            strokeColor: "rgba(255, 128, 0, 1)",
+            fillColor: "rgb(255 128 0 / 0.2)",
+            strokeColor: "rgb(255 128 0 / 1)",
             strokeWidth: 2
         };
         const homeStyle = {
-            fillColor: "rgba(0, 128, 255, 0.2)",
-            strokeColor: "rgba(0, 128, 255, 1)",
+            fillColor: "rgb(0 128 255 / 0.2)",
+            strokeColor: "rgb(0 128 255 / 1)",
             strokeWidth: 2
         };
         // Creamos dos colecciones de entidades para la capa de referencia.
@@ -138,24 +159,42 @@
             ], homeStyle)
         ];
         const allLandLots = depots.concat(homes);
-        // Establecemos un layout simplificado apto para hacer demostraciones de controles.
-        SITNA.Cfg.layout = "layout/ctl-container";
-        // Instanciamos el mapa con el control de dibujo, medida y modificación de geometrías en el primer contenedor.
+
+        // Creamos la lógica de selección de tipo de propiedad snapping según el radio button seleccionado.
+        const radioTrue = document.getElementById("radio-true");
+        const radioLayer = document.getElementById("radio-layer");
+        const radioFeatures = document.getElementById("radio-features");
+        radioTrue.addEventListener("change", () => {
+            if (radioTrue.checked) {
+                document.querySelector("sitna-draw").setSnapping(true);
+            }
+        });
+        radioLayer.addEventListener("change", () => {
+            if (radioLayer.checked) {
+                document.querySelector("sitna-draw").setSnapping(referenceLayer);
+            }
+        });
+        radioFeatures.addEventListener("change", () => {
+            if (radioFeatures.checked) {
+                document.querySelector("sitna-draw").setSnapping(depots);
+            }
+        });
+
+        // Instanciamos el mapa con un layout simplificado con el control de dibujo en el primer contenedor.
         // Añadimos una capa de referencia para los ajustes de vértices.
-        const map = new SITNA.Map("mapa", {
+        const myMap = new SITNA.Map("my-map", {
+            layout: "layout/ctl-container",
             initialExtent: [610231, 4733866, 610711, 4734095],
             controls: {
-                drawMeasureModify: {
+                draw: {
                     div: "slot1",
-                    // Se muestran las tres opciones de ajuste de vértices, dos de ellas dentro de un comentario:
-                    //snapping: true, // Activamos el ajuste de vértices solamente entre las geometrías dibujadas.
-                    //snapping: referenceLayer, // Activamos el ajuste de vértices con todas las entidades de la capa de referencia.
-                    snapping: depots, // Activamos el ajuste de vértices solamente con las entidades de un grupo.
+                    mode: SITNA.Consts.geom.POLYGON,
+                    snapping: depots // Activamos el ajuste de vértices solamente con las entidades de un grupo.
                 }
             }
         });
-        map.loaded(() => {
-            map.addLayer(referenceLayer);
+        myMap.loaded(() => {
+            myMap.addLayer(referenceLayer);
             referenceLayer.addFeatures(allLandLots);
         });
     </script>

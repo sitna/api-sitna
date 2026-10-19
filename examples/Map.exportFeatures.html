@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>SITNA - Ejemplo de SITNA.Map.exportFeatures</title>
+    <link rel="stylesheet" href="examples.css" />
+    <style>
+        #output {
+            height: 60vh;
+            width: 25vw;
+        }
+
+        .text-output {
+            padding-right: 0.5em;
+            top: 150px;
+        }
+
+            .text-output form {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+        .tc-map.tc-lo .tc-tools-panel.tc-slide-panel > div.tc-panel-content {
+            min-height: 15em;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <p>Ejemplo de uso de <a href="../doc/SITNA.Map.html#exportFeatures">SITNA.Map.exportFeatures</a>.</p>
+        <p>Exportar entidades geográficas a un formato de documento geográfico.</p>
+    </div>
+    <div class="instructions text-output">
+        <form>
+            <select id="format">
+                <option value="JSON">GeoJSON</option>
+                <option value="KML">KML</option>
+                <option value="GML">GML</option>
+                <option value="WKT">WKT</option>
+            </select>
+            <button type="button" id="export">Exportar entidades geográficas dibujadas</button>
+            <textarea id="output">
+            </textarea>
+        </form>
+    </div>
+    <script src="../"></script>
+    <script type="text/javascript" src="examples.js"></script>
+	
+    <div id="my-map"></div>
+    <script>
+        // Creamos un mapa con un control de dibujo.
+        const myMap = new SITNA.Map("my-map", {
+            layout: "layout/ctl-container",
+            controls: {
+                drawMeasureModify: {
+                    div: "slot1"
+                }
+            }
+        });
+
+        // Cuando se pulse el botón de exportar, se obtendrán las entidades geográficas dibujadas y se exportarán al formato seleccionado.
+        document.getElementById("export").addEventListener("click", async () => {
+            // Obtenemos el control de dibujo mediante una consulta al DOM
+            const drawControl = document.querySelector("sitna-draw-measure-modify");
+            const features = (await drawControl.getLayer()).features;
+            document.getElementById("output").value = await myMap.exportFeatures(features, {
+                format: document.getElementById("format").value
+            });
+        });
+    </script>
+	
+</body>
+</html>
