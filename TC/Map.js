@@ -276,7 +276,8 @@ const _loadIntoMap = async function (stringOrJson) {
                 self.setExtent(obj.ext, { animate: false }, defer.resolve);
             }            
             else if (obj.vw3 && self.on3DView) {
-                promises.push(self.view3D.importState(obj.vw3));
+                if(self.view3D.importState)
+                    promises.push(self.view3D.importState(obj.vw3));
             }
             else if (!self.on3DView && obj.vw3) {
                 //establecer el modo 3D
@@ -1112,12 +1113,11 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
                         });
                 }
                 );
-            Promise.all(ctlPromises.concat(layerPromises)).finally(function () {
+            Promise.all(ctlPromises.concat(layerPromises)).finally(async function () {
                 // 13/03/2020 si tenemos estado de controles, pasamos a establecer los estados
                 if (self.state && self.state.ctl) {
-                    self.importControlStates(self.state.ctl);
+                    await self.importControlStates(self.state.ctl);
                 }
-
                 self.isReady = true;
                 self.trigger(Consts.event.MAPREADY);
             });
@@ -2352,7 +2352,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
     getDefaultControl() {
         let candidate;
         if (this.options.defaultActiveControl) {
-            candidate = this.getControlsByClass('TC.control.' + this.options.defaultActiveControl.substr(0, 1).toUpperCase() + this.options.defaultActiveControl.substr(1))[0];
+            candidate = this.getControlsByClass(this.options.defaultActiveControl.substr(0, 1).toUpperCase() + this.options.defaultActiveControl.substr(1))[0];
         }
         if (!candidate) {
             candidate = this.getControlsByClass(MultiFeatureInfo)[0];
@@ -3092,15 +3092,19 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             });
     }
 
-    importControlStates(controlStates) {
-        controlStates.forEach((state) => {
+    async importControlStates(controlStates) {
+        this.importControlStatesPromise = Promise.all(controlStates.map((state) => {
             const ctl = this.getControlById(state.id);
-            if (ctl) {
-                this.loaded(function () {
-                    ctl.importState(state);
-                });
-            }
-        });
+            return new Promise((resolve) => {
+                if (ctl) {
+                    this.loaded(async function () {
+                        await ctl.importState(state);
+                        resolve();
+                    });
+                }
+            })
+        }));
+        return this.importControlStatesPromise;
     }
 
     toastHide(text) {
@@ -3274,7 +3278,7 @@ class BasicMap extends EventTarget { // Nombre de clase: ¿LeanMap? ¿CoreMap?
             const mapLayer = service.mapLayers[0];
             return service.title || service.mapLayers.reduce(function (prev, cur) {
                 return prev || cur.title;
-            }, '') || mapLayer.tree && mapLayer.tree.title || mapLayer.capabilities.Service.Title;
+            }, '') || mapLayer.tree?.title || mapLayer.capabilities.Service.Title;
         };
 
         const getCRS = function (outputFormat) {
