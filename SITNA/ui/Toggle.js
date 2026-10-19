@@ -3,8 +3,7 @@
 const elementName = "sitna-toggle";
 
 /**
- * Componente web que representa un interruptor. Admite dos estilos visuales (variantes): casilla de verificación y
- * conmutador.
+ * Admite dos estilos visuales (variantes): casilla de verificación y conmutador.
  * 
  * Como web component, puede instanciarse programáticamente con JavaScript o se puede crear directamente en HTML, mediante 
  * el elemento `<sitna-toggle>`.
@@ -13,6 +12,7 @@ const elementName = "sitna-toggle";
  * los estilos del botón no son accesibles desde el DOM de la página. Para personalizar los estilos,
  * se pueden usar las [variables CSS]{@tutorial 4-css_variables} disponibles.
  * @class Toggle
+ * @summary `<sitna-toggle>`<p>Componente web que representa un interruptor.</p>
  * @memberof SITNA.ui
  * @extends HTMLElement
  * @see [Usando shadow DOM](https://developer.mozilla.org/es/docs/Web/API/Web_components/Using_shadow_DOM)
@@ -103,7 +103,7 @@ class Toggle extends Component {
 
     /**
      * Variante visual del elemento interruptor. Los valores posibles son los definidos en el enumerado estático `SITNA.ui.Toggle.variant`. El valor por defecto es `checkbox`.
-     * Esta propiedad existe como atributo HTML y como propiedad JavaScript.
+     * @summary Atributo HTML: `variant`
      * @memberof SITNA.ui.Toggle
      * @instance
      * @type {string}
@@ -187,8 +187,7 @@ class Toggle extends Component {
      * Texto del icono del elemento cuando está marcado. La idea de este atributo es que su valor sea algún carácter gráfico de los que ofrece Unicode o 
      * las fuentes tipográficas que son colecciones de iconos. En este segundo caso, se puede especificar qué fuente tipográfica es 
      * asignando su nombre como valor a la variable CSS `--sitna-icon-font-family`, dentro del ámbito del elemento.
-     * 
-     * Esta propiedad también existe como el atributo HTML `checked-icon-text` o como la variable CSS `--sitna-checked-icon-text`.
+     * @summary Atributo HTML: `checked-icon-text`<br>Variable CSS: `--sitna-checked-icon-text`
      * @memberof SITNA.ui.Toggle
      * @instance
      * @type {string}
@@ -230,8 +229,7 @@ class Toggle extends Component {
      * Texto del icono del elemento cuando está desmarcado. La idea de este atributo es que su valor sea algún carácter gráfico de los que ofrece Unicode o 
      * las fuentes tipográficas que son colecciones de iconos. En este segundo caso, se puede especificar qué fuente tipográfica es 
      * asignando su nombre como valor a la variable CSS `--sitna-icon-font-family`, dentro del ámbito del elemento.
-     * 
-     * Esta propiedad también existe como el atributo HTML `unchecked-icon-text` o como la variable CSS `--sitna-unchecked-icon-text`.
+     * @summary Atributo HTML: `unchecked-icon-text`<br>Variable CSS: `--sitna-unchecked-icon-text`
      * @memberof SITNA.ui.Toggle
      * @instance
      * @type {string}
@@ -258,8 +256,7 @@ class Toggle extends Component {
      * carácter gráfico de los que ofrece Unicode o las fuentes tipográficas que son colecciones de iconos. En este segundo caso, 
      * se puede especificar qué fuente tipográfica es asignando su nombre como valor a la variable CSS `--sitna-icon-font-family`, 
      * dentro del ámbito del elemento.
-     * 
-     * Esta propiedad también existe como el atributo HTML `indeterminate-icon-text` o como la variable CSS `--sitna-unchecked-icon-text`.
+     * @summary Atributo HTML: `indeterminate-icon-text`<br>Variable CSS: `--sitna-indeterminate-icon-text`
      * @memberof SITNA.ui.Toggle
      * @instance
      * @type {string}

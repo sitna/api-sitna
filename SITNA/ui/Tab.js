@@ -5,7 +5,7 @@ import Util from '../../TC/Util.js';
 const elementName = "sitna-tab";
 
 /**
- * Componente web que representa una pestaña. Este componente se utiliza en grupos de más de un elemento y permite visualizar 
+ * Este componente se utiliza en grupos de más de un elemento y permite visualizar 
  * distintos contenidos relacionados en función de la pestaña seleccionada.
  * 
  * Como web component, puede instanciarse programáticamente con JavaScript o se puede crear directamente en HTML, mediante 
@@ -15,6 +15,7 @@ const elementName = "sitna-tab";
  * los estilos del botón no son accesibles desde el DOM de la página. Para personalizar los estilos,
  * se pueden usar las [variables CSS]{@tutorial 4-css_variables} disponibles.
  * @class Tab
+ * @summary `<sitna-tab>`<p>Componente web que representa una pestaña.</p>
  * @memberof SITNA.ui
  * @extends HTMLElement
  * @see [Usando shadow DOM](https://developer.mozilla.org/es/docs/Web/API/Web_components/Using_shadow_DOM)
@@ -86,7 +87,7 @@ class Tab extends Component {
 
     /**
      * Grupo al que pertenece la pestaña. En las pestañas de un mismo grupo, solo puede estar seleccionada una a la vez. 
-     * Esta propiedad existe también como atributo HTML.
+     * @summary Atributo HTML: `group`
      * @memberof SITNA.ui.Tab
      * @instance
      * @type {string}
@@ -116,6 +117,7 @@ class Tab extends Component {
 
     /**
      * Propiedad que define si la pestaña está seleccionada.
+     * @summary Atributo HTML: `selected`
      * @memberof SITNA.ui.Tab
      * @instance
      * @type {boolean}
@@ -157,7 +159,7 @@ class Tab extends Component {
 
     /**
      * Propiedad que define si la pestaña se puede deseleccionar si se pulsa sobre ella cuando ya está seleccionada.
-     * Esta propiedad existe también como atributo HTML.
+     * @summary Atributo HTML: `deselectable`
      * @memberof SITNA.ui.Tab
      * @instance
      * @type {boolean}

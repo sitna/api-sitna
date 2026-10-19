@@ -3,7 +3,7 @@
 const elementName = "sitna-button";
 
 /**
- * Componente web que representa un botón. Puede tener un icono y un texto, y admite varios estilos visuales (variantes).
+ * Puede tener un icono y un texto, y admite varios estilos visuales (variantes).
  * 
  * Como web component, puede instanciarse programáticamente con JavaScript o se puede crear directamente en HTML, mediante 
  * el elemento `<sitna-button>`.
@@ -12,6 +12,7 @@ const elementName = "sitna-button";
  * los estilos del botón no son accesibles desde el DOM de la página. Para personalizar los estilos,
  * se pueden usar las [variables CSS]{@tutorial 4-css_variables} disponibles.
  * @class Button
+ * @summary `<sitna-button>`<p>Componente web que representa un botón.</p>
  * @memberof SITNA.ui
  * @extends HTMLElement
  * @see [Usando shadow DOM](https://developer.mozilla.org/es/docs/Web/API/Web_components/Using_shadow_DOM)
@@ -21,6 +22,7 @@ const elementName = "sitna-button";
 class Button extends Component {
 
     #button;
+    //#commandListener;
 
     /**
      * @memberof SITNA.ui.Button
@@ -67,6 +69,17 @@ class Button extends Component {
         this.#onDisabledChange();
         this.#onIconChange();
         this.#onIconTextChange();
+        // if (!!CommandEvent && !this.#commandListener) {
+        //     this.#commandListener = () => {
+        //         if (this.hasAttribute('commandfor')) {
+        //             this.dispatchEvent(new CommandEvent('command', {
+        //                 source: this,
+        //                 command: this.getAttribute('command'),
+        //             }));
+        //         }
+        //     };
+        //     this.addEventListener('click', this.#commandListener);
+        // }
     }
 
     static get observedAttributes() {
