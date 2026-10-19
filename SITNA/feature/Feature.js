@@ -10,15 +10,15 @@ import ControlContainer from '../../TC/control/ControlContainer.js';
 import Handlebars from '../../lib/handlebars/helpers.js';
 
 /**
- * Espacio de nombres de las entidades geográficas del mapa.
  * @namespace SITNA.feature
+ * @summary Espacio de nombres de las entidades geográficas del mapa.
  */
 
 /**
- * Entidad geográfica genérica (sin especificar geometría) del mapa. Normalmente no se instancia directamente
- * esta clase, sino objetos de clases que heredan de esta.
+ * Normalmente no se instancia directamente esta clase, sino objetos de clases que heredan de esta.
  * @class Feature
  * @memberof SITNA.feature
+ * @summary Entidad geográfica genérica (sin especificar geometría) del mapa. 
  * @param {Array} coordinates - Coordenadas de la geometría expresadas en las unidades del CRS del mapa.
  * @param {FeatureOptions} [options] Objeto de opciones de la entidad geográfica.
  * @see SITNA.layer.Vector#addFeature
@@ -96,6 +96,8 @@ import Handlebars from '../../lib/handlebars/helpers.js';
 </script>
  */
 
+const infoResultsPanels = new WeakMap();
+
 class Feature {
     STYLETYPE = Consts.geom.POLYGON;
     #hasSelectedStyle = false;
@@ -114,7 +116,9 @@ class Feature {
             coords._wrap = this.wrap;
             olFeatureId = this.wrap.getId();
             this.geometry = this.wrap.getGeometry();
-            this.#initialCoordinates = structuredClone(this.geometry);
+            if (options.standalone !== false) {
+                this.#initialCoordinates = structuredClone(this.geometry);
+            }
             if (coords._group) {
                 this.group = coords._group;
             }
@@ -164,7 +168,7 @@ class Feature {
     setVisibility(visible) {
         // Ocultamos el posible popup
         if (!visible && this.showsPopup && this.layer) {
-            var popup = this.layer.map.getControlsByClass('TC.control.Popup').filter(function (popup) {
+            var popup = this.layer.map.getControlsByClass('Popup').filter(function (popup) {
                 return popup.currentFeature === this;
             });
 
@@ -221,7 +225,7 @@ class Feature {
             if (this.layer?.styles?.[this.STYLETYPE]) {
                 mergedStyles.unshift(this.layer.styles[this.STYLETYPE]);
             }
-            if (this.layer?.map.options.styles?.[this.STYLETYPE]) {
+            if (this.layer?.map?.options.styles?.[this.STYLETYPE]) {
                 mergedStyles.unshift(this.layer.map.options.styles[this.STYLETYPE]);
             }
             if (Cfg?.styles?.[this.STYLETYPE]) {
@@ -249,7 +253,7 @@ class Feature {
     }
 
     /**
-     * Obtiene las coordenadas de la entidad geográfica en el CRS actual del mapa.
+     * Obtiene las coordenadas de la entidad geográfica en el CRS actual del mapa si este existe o, en su defecto, en el CRS nativo de la entidad geográfica.
      * @method getCoordinates
      * @memberof SITNA.feature.Feature
      * @instance
@@ -263,7 +267,7 @@ class Feature {
         const isGeo = self.layer?.map?.wrap.isGeo();
         const destCrs = options?.crs || (isGeo ? self.layer?.map?.options.geoCrs : self.layer?.map?.crs) || Cfg.utmCrs;
         self.geometry = self.wrap.getGeometry();
-        if (sourceCrs && destCrs && sourceCrs !== destCrs) {
+        if (sourceCrs && destCrs && !Util.CRSCodesEqual(sourceCrs, destCrs)) {
             return Util.reproject(this.geometry, sourceCrs, destCrs);
         }
         return this.geometry;
@@ -386,7 +390,7 @@ class Feature {
      * @memberof SITNA.feature.Feature
      * @instance
      * @param {Object} data - Diccionario de pares clave/valor con los atributos a establecer.
-     * @returns {SITNA.feature.Feature} La propia entidad geográfica.
+     * @returns {this}
      */
     setData(data) {
             if (typeof data === 'string') {
@@ -604,7 +608,7 @@ class Feature {
             let popup = control || this.popup;
             if (!popup) {
                 // Buscamos un popup existente que no esté asociado a un control.
-                var popups = map.getControlsByClass('TC.control.Popup');
+                var popups = map.getControlsByClass('Popup');
                 for (var i = 0, len = popups.length; i < len; i++) {
                     var p = popups[i];
                     if (!p.caller) {
@@ -621,13 +625,13 @@ class Feature {
                 popup.hide();
             }
             popup.currentFeature = this;
-            map.getControlsByClass('TC.control.Popup')
+            map.getControlsByClass('Popup')
                 .filter(p => p !== popup && p.isVisible())
                 .forEach(p => p.hide());
             //URI: Si abrimos un popUp cerramos los paneles de elevacion (caller instanceof TC.control.Elevation) y que estuviesen
             //asociados a la geometría seleccionada anterior (oldFeature). De esta manera no cerramos otros paneles de elevación como
             //los del un track
-            map.getControlsByClass('TC.control.ResultsPanel')
+            map.getControlsByClass('ResultsPanel')
                 .filter(ctrl => ctrl.caller instanceof TC.control.Elevation && ctrl.currentFeature === oldFeature)
                 .forEach((p) => p.close());
             if (!popup.getContainerElement()) await popup.renderPromise();
@@ -656,38 +660,29 @@ class Feature {
                 }
             };
             var controlContainer = map.getControlsByClass(ControlContainer)[0];
+            panel = infoResultsPanels.get(map);
             if (controlContainer) {
                 resultsPanelOptions.position = controlContainer.POSITION.RIGHT;
-                //URI 24/01/2022 comprobar que ya existe un resultpanel para la feature en cuestión, sino se crea uno nuevo
-                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.caller === map.activeControl);
                 if (!panel) panel = await controlContainer.addControl('resultsPanel', resultsPanelOptions);
             } else {
                 resultsPanelOptions.div = document.createElement('div');
                 map.div.appendChild(resultsPanelOptions.div);
-                //URI 24/01/2022 comprobar que ya existe un resultpanel para la feature en cuestión, sino se crea uno nuevo
-                panel = map.getControlsByClass('TC.control.ResultsPanel').find(resultPanel => resultPanel.caller === map.activeControl);
                 if (!panel) panel = await map.addControl('resultsPanel', resultsPanelOptions);
             }
-            const oldFeature = panel.currentFeature;
+            infoResultsPanels.set(map, panel);
 
-            panel.caller?.highlightedFeature?.toggleSelectedStyle(false);
+            // cerramos los paneles con feature asociada que no sean gráfico
+            const panels = map.getControlsByClass('ResultsPanel');
+            panels.filter(p => p.currentFeature && p.currentFeature !== this).forEach(p => p.close())
 
             panel.currentFeature = this;
 
             // GLS: si contamos con el contenedor de controles no es necesario cerra el resto de paneles ya que no habrá solape excepto los paneles
             if (map.getControlsByClass(ControlContainer).length === 0) {
-                map.getControlsByClass('TC.control.ResultsPanel').filter(ctrl => ctrl.options.content === "table").forEach(function (p) {
+                map.getControlsByClass('ResultsPanel').filter(ctrl => ctrl.options.content === "table").forEach(function (p) {
                     p.close();
                 });
-            }
-
-            // cerramos los paneles con feature asociada que no sean gráfico
-            const panels = map.getControlsByClass('TC.control.ResultsPanel');
-            panels.filter(ctrl => panel !== ctrl).forEach(function (p) {
-                if (p.currentFeature && p.currentFeature === oldFeature) {
-                    p.close();
-                }
-            });
+            }            
 
             panel.menuDiv.innerHTML = '';
             panel.open(options.html || this.getInfo({ locale: map.getLocale() }), panel.getInfoContainer(), { shadow: options.shadow });
@@ -768,6 +763,7 @@ class Feature {
             }
         }
         this.infoControl = control;
+        this.infoControl.caller = null;
         Feature.addSpecialAttributeEventListeners(control.getContainerElement());
     }
 
@@ -848,7 +844,7 @@ class Feature {
 
     remove() {
         if (this.layer?.features.includes(this)) {
-            this.layer.removeFeature(this);
+            this.layer.wrap.removeFeature(this);
         }
         this.layer = null;
         if (this.#initialCoordinates) {
@@ -860,17 +856,61 @@ class Feature {
 
     static async getInfoTemplates() {
         const cssClassName = 'tc-ctl-finfo';
-        const mainTemplatePromise = import('../../TC/templates/tc-ctl-finfo.mjs');
-        const serviceTemplatePromise = import('../../TC/templates/tc-ctl-finfo-service.mjs');
-        const attributesTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr.mjs');
-        const objectTemplatePromise = import('../../TC/templates/tc-ctl-finfo-object.mjs');
-        const buttonsTemplatePromise = import('../../TC/templates/tc-ctl-finfo-buttons.mjs');
-        const dialogTemplatePromise = import('../../TC/templates/tc-ctl-finfo-dialog.mjs');
-        const valueTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-val.mjs');
-        const videoTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-video.mjs');
-        const imageTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-image.mjs');
-        const audioTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-audio.mjs');
-        const embedTemplatePromise = import('../../TC/templates/tc-ctl-finfo-attr-embed.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo.mjs'
+        );
+        const serviceTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-service" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-service.mjs'
+        );
+        const attributesTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-attr.mjs'
+        );
+        const objectTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-object" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-object.mjs'
+        );
+        const buttonsTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-buttons" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-buttons.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-dialog" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-dialog.mjs'
+        );
+        const valueTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr-val" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-attr-val.mjs'
+        );
+        const videoTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr-video" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-attr-video.mjs'
+        );
+        const imageTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr-image" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-attr-image.mjs'
+        );
+        const audioTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr-audio" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-attr-audio.mjs'
+        );
+        const embedTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr-embed" */
+            /* webpackMode: "lazy" */
+            '../../TC/templates/tc-ctl-finfo-attr-embed.mjs'
+        );
 
         const template = {};
         template[cssClassName] = (await mainTemplatePromise).default;
@@ -910,6 +950,8 @@ export default Feature;
  * alfanuméricos de la entidad geográfica o bien cadena de caracteres con el código HTML asociado a la misma. 
  * Al pulsar sobre la entidad geográfica, bien una tabla con los atributos o bien el HTML especificado 
  * se mostrarán en un bocadillo.
+ * @property {boolean} [geographic] - Indica si las las coordenadas de la geometría de la entidad geográfica están definidas en grados,
+ * en cuyo caso el orden es [longitud, latitud].
  * @property {string} [group] - Nombre de grupo en el que incluir la entidad geográfica. 
  * Los grupos se muestran en la tabla de contenidos y en la leyenda.
  * @property {string} [layer] - Identificador de una capa de tipo [SITNA.Consts.layerType.VECTOR]{@link SITNA.Consts} en la
@@ -917,6 +959,33 @@ export default Feature;
  * Cuando un objeto de este tipo se pasa como parámetro a {@link SITNA.Map#addMarker} y no se especifica 
  * esta propiedad, se creará una capa específica para las entidades geográficas que se añadan.
  * @property {boolean} [showPopup] - Si se establece a `true`, la entidad geográfica se añade al mapa con el bocadillo de información asociada visible por defecto.
+ * @example <caption>Ejemplo de creación de entidades geográficas con coordenadas en grados [Ver en vivo](../examples/feature.geographic.html)</caption> {@lang html}
+    <div id="my-map"></div>
+    <script>
+        const map = new SITNA.Map("my-map");
+        map.loaded(async () => {
+            // Creamos una capa vectorial para mostrar las entidades geográficas
+            const vectorLayer = await map.addLayer({
+                id: "entidades",
+                type: SITNA.Consts.layerType.VECTOR,
+                title: "Entidades geográficas",
+            });
+
+            // Creamos un marcador con coordenadas en grados (orden [longitud, latitud])
+            const marker = new SITNA.feature.Marker([-1.00587, 42.98741], { geographic: true });
+
+            // Creamos un objeto de propiedades para el marcador
+            const data = {};
+            data["Coordenadas originales (en grados)"] = marker.getCoordinates();
+
+            // Añadimos el marcador a la capa vectorial
+            await vectorLayer.addFeature(marker);
+            data["Coordenadas en el mapa"] = marker.getCoordinates();
+
+            // Establecemos las propiedades del marcador para mostrar las coordenadas al hacer clic sobre él
+            marker.setData(data);
+        });
+    </script>
  */
 
 /**
@@ -924,7 +993,7 @@ export default Feature;
  * de una entidad geográfica hay que tener en cuenta que el resultado depende de en qué unidades están definidas 
  * sus coordenadas y sobre qué CRS se proyecta la entidad.
  * @interface MeasurementOptions
- * @property {string} [crs=["EPSG:25830"]{@link https://epsg.io/25830}] - Cadena con el código identificador del CRS sobre la que se proyecta la geometría de la entidad geográfica.
+ * @property {string} [crs=["EPSG:25830"]{@link https://epsg.io/25830}] - Cadena con el código identificador del CRS sobre el que se proyecta la geometría de la entidad geográfica.
  * Dado que al proyectar una entidad geográfica sobre un plano se puede alterar su forma o tamaño, la medida es 
  * dependiente del CRS utilizado.
  * @property {string} [geometryCrs] - Cadena con el código identificador del CRS en que están las coordenadas 
