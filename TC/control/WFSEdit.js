@@ -263,7 +263,7 @@ class WFSEdit extends SWCacheClient {
 
 
         map.ready(function () {
-            map.getControlsByClass('TC.control.WorkLayerManager').forEach(function (ctl) {
+            map.getControlsByClass('WorkLayerManager').forEach(function (ctl) {
                 const editIconText = Util.getTextFromCssVar('--icon-edit', ctl.div);
                 ctl.addItemTool({
                     renderFn: function (container, layerId) {
@@ -457,7 +457,11 @@ class WFSEdit extends SWCacheClient {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-wfsedit.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-wfsedit" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsedit.mjs'
+        );
         self.template = module.default;
     }
 
@@ -479,7 +483,7 @@ class WFSEdit extends SWCacheClient {
             layers: editLayers,
             showOriginalFeatures: self.showsOriginalFeatures,
             highlightChanges: self.highlightsAdded || self.highlightsModified || self.highlightsRemoved,
-            controlId: self.id
+            controlId: self.getId()
         });
 
         self.#layerSelect = self.div.querySelector(`.${self.CLASS}-layer .${self.CLASS}-layer-sel`);
@@ -539,7 +543,7 @@ class WFSEdit extends SWCacheClient {
             self.highlightRemoved(e.target.checked);
         });
 
-        const colorRegExp = new RegExp(`${self.CLASS}-view-clr-(.+)-${self.id}`);
+        const colorRegExp = new RegExp(`${self.CLASS}-view-clr-(.+)-${self.getId()}`);
         const onColorClick = function (_e) {
             const input = this.parentElement.querySelector('input[type=color]');
             const layerEditData = self.getLayerEditData();
@@ -582,15 +586,15 @@ class WFSEdit extends SWCacheClient {
             self[`_${prefix}Watch`].src = getLegendImage(layer, layerEditData.geometryType);
         };
 
-        const addedColorInputId = `${self.CLASS}-view-clr-added-${self.id}`;
+        const addedColorInputId = `${self.CLASS}-view-clr-added-${self.getId()}`;
         viewToolsDiv.querySelector(`label[for="${addedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
         document.getElementById(addedColorInputId).addEventListener('change', onColorChange);
 
-        const modifiedColorInputId = `${self.CLASS}-view-clr-modified-${self.id}`;
+        const modifiedColorInputId = `${self.CLASS}-view-clr-modified-${self.getId()}`;
         viewToolsDiv.querySelector(`label[for="${modifiedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
         document.getElementById(modifiedColorInputId).addEventListener('change', onColorChange);
 
-        const removedColorInputId = `${self.CLASS}-view-clr-removed-${self.id}`;
+        const removedColorInputId = `${self.CLASS}-view-clr-removed-${self.getId()}`;
         viewToolsDiv.querySelector(`label[for="${removedColorInputId}"]`).addEventListener(Consts.event.CLICK, onColorClick, { passive: true });
         document.getElementById(removedColorInputId).addEventListener('change', onColorChange);
 
@@ -1114,7 +1118,7 @@ class WFSEdit extends SWCacheClient {
                     }
                     const prefix = fullLayerName.substr(0, colonIdx);
                     const shortLayerName = fullLayerName.substring(colonIdx + 1);
-                    if (layers.length !== 1 || Object.prototype.hasOwnProperty.call(capabilities.FeatureTypes, shortLayerName)) {
+                    if (layers.length !== 1 || Object.hasOwn(capabilities.FeatureTypes, shortLayerName)) {
                         const wfsLayerOptions = {
                             id: self.getUID(),
                             type: Consts.layerType.WFS,
