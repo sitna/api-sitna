@@ -104,7 +104,7 @@ import Polygon from '../../SITNA/feature/Polygon.js';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
 import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
 import Button from '../../SITNA/ui/Button.js';
-
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
@@ -382,8 +382,7 @@ const _onFeaturesUpdate = function (e) {
         }
         var features = e.layer.features;
         if (features.length > 0) {
-            if (ctl.toShare && ctl.toShare.doZoom) {
-                ctl.setQueryToSearch({ doZoom: false });
+            if (ctl.toShare?.doZoom) {
                 ctl.map.zoomToFeatures(features);
             }
             const serviceAttrName = 'h3_' + ctl.getLocaleString('service');
@@ -421,7 +420,9 @@ const _onFeaturesUpdate = function (e) {
 const _onBeforeApplyQuery = function (e) {
     const ctl = e.layer.owner;
     if (ctl && e.layer === ctl.resultsLayer && e.query) {
-        ctl.setQueryToSearch({ filter: e.query.filter });
+        const queryOptions = { filter: e.query.filter };
+        if (ctl.toShare && Object.hasOwn(ctl.toShare, "doZoom")) queryOptions.doZoom = ctl.toShare.doZoom;
+        ctl.setQueryToSearch(queryOptions);
     }
 };
 
@@ -785,7 +786,7 @@ class WFSQuery extends Control {
                                     //check si las capas hijas están en capabilties WFS
                                     var layers = layer.getDisgregatedLayerNames ? layer.getDisgregatedLayerNames() : layer.featureType;
                                     layers = layers.filter(function (l) {
-                                        return Object.prototype.hasOwnProperty.call(WFSCapabilities.FeatureTypes, l.substring(l.indexOf(":") + 1));
+                                        return Object.hasOwn(WFSCapabilities.FeatureTypes, l.substring(l.indexOf(":") + 1));
                                     });
                                     if (!layers.length) {
                                         button.classList.add(hiddenCssClass);
@@ -841,14 +842,46 @@ class WFSQuery extends Control {
 
     async loadTemplates() {
         const self = this;
-        const dialogTemplatePromise = import('../templates/tc-ctl-wfsquery-dialog.mjs');
-        const formTemplatePromise = import('../templates/tc-ctl-wfsquery-form.mjs');
-        const filterTemplatePromise = import('../templates/tc-ctl-wfsquery-filter.mjs');
-        const tableTemplatePromise = import('../templates/tc-ctl-wfsquery-table.mjs');
-        const valueTemplatePromise = import('../templates/tc-ctl-finfo-attr-val.mjs');
-        const objectTemplatePromise = import('../templates/tc-ctl-finfo-object.mjs');
-        const geometryTemplatePromise = import('../templates/tc-ctl-wfsquery-geom.mjs');
-        const shareDialogTemplatePromise = import('../templates/tc-ctl-wfsquery-share-dialog.mjs');
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wfsquery-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsquery-dialog.mjs'
+        );
+        const formTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wfsquery-form" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsquery-form.mjs'
+        );
+        const filterTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wfsquery-filter" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsquery-filter.mjs'
+        );
+        const tableTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wfsquery-table" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsquery-table.mjs'
+        );
+        const valueTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-attr-val" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-finfo-attr-val.mjs'
+        );
+        const objectTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-finfo-object" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-finfo-object.mjs'
+        );
+        const geometryTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wfsquery-geom" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsquery-geom.mjs'
+        );
+        const shareDialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-wfsquery-share-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-wfsquery-share-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
@@ -1182,7 +1215,7 @@ class WFSQuery extends Control {
 
     setQueryToSearch(options) {
         const self = this;
-        if (Object.keys(options).length === 1 && Object.prototype.hasOwnProperty.call(options, "doZoom")) {
+        if (Object.keys(options).length === 1 && Object.hasOwn(options, "doZoom")) {
             self.toShare = Util.extend(self.toShare, { doZoom: options.doZoom });
         } else if (options.filter || self.resultsLayer && self.resultsLayer.filter instanceof filter.Filter) {
             const currentQuery = self.getCurrentQuery();
@@ -1193,7 +1226,7 @@ class WFSQuery extends Control {
                 title: currentQuery.title,
                 name: currentQuery.name,
                 filter: options.filter ? options.filter : self.resultsLayer.filter.getText(),
-                doZoom: Object.prototype.hasOwnProperty.call(options, 'doZoom') ? options.doZoom : true
+                doZoom: Object.hasOwn(options, 'doZoom') ? options.doZoom : true
             });
         }
     }
@@ -1202,13 +1235,13 @@ class WFSQuery extends Control {
         const self = this;
         if (self.toShare) {
             return {
-                id: self.id,
+                id: self.getId(),
                 queryResult: JSON.stringify(self.toShare)
             };
         }
         //else if (self.exportsState && self.resultsLayer) {
         //    return {
-        //        id: self.id,
+        //        id: self.getId(),
         //        layer: self.resultsLayer.exportState({
         //            exportStyles: false
         //        })
@@ -1305,7 +1338,7 @@ class WFSQuery extends Control {
                 var col = tabla.querySelectorAll(".tc-table > tbody > tr");
                 var j = 1;
                 for (var key in data[0]) {
-                    if (Object.prototype.hasOwnProperty.call(dataTypes, key)) {
+                    if (Object.hasOwn(dataTypes, key)) {
                         const dataType = dataTypes[key].type["#text"]?.type || dataTypes[key].type;
                         if (dataType && !(dataType instanceof Object)) {
                             if (dataType.indexOf("int") >= 0 ||
@@ -1774,11 +1807,11 @@ class WFSQuery extends Control {
                     styles: self.styles
                 });
                 result = await self.drawControl.getLayer();
-                self.drawControl.on(Consts.event.DRAWEND, function (e) {
+                self.drawControl.addEventListener(ControlEvent.type.DRAWEND, function (e) {
                     e.feature.showsPopup = false;
                     self.geometryPanel.close();
 
-                    const op = self.modalDialog.querySelector(`input[name="${self.id}-condition"]:checked`).value;
+                    const op = self.modalDialog.querySelector(`input[name="${self.getId()}-condition"]:checked`).value;
                     const field = self.#getFieldPath();
                     let spatialFilter;
                     switch (op) {
@@ -1807,8 +1840,8 @@ class WFSQuery extends Control {
                         closeCallback: () => self.clearFilters()
                     });
                 });
-                self.drawControl.on(Consts.event.DRAWCANCEL, function (e) {
-                    e.ctrl.deactivate();
+                self.drawControl.addEventListener(ControlEvent.type.DRAWCANCEL, function (_e) {
+                    self.drawControl.deactivate();
                 });
             }
         }
@@ -1819,7 +1852,10 @@ class WFSQuery extends Control {
         self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-draw`).classList.toggle(Consts.classes.HIDDEN, !mode);
         self.geometryPanel.div.querySelector(`.${self.CLASS}-geom-btn`).classList.toggle(Consts.classes.HIDDEN, !!mode);
         if (mode) {
-            self.drawControl.setMode(mode, start);
+            self.drawControl.mode = mode;
+            if (start) self.drawControl.activate();
+            else if (self.drawControl.isActive()) self.drawControl.deactivate();
+
         }
         return result;
     }
@@ -1911,7 +1947,7 @@ class WFSQuery extends Control {
                     {
                         operators: filterByOperation,
                         attributes: data,
-                        controlId: self.id
+                        controlId: self.getId(),
                     }, function (html) {
                         const dialog = self.modalDialog;
                         const form = self.getForm();
@@ -1929,7 +1965,7 @@ class WFSQuery extends Control {
                                 self.#changeAttributeEvent(this, form, data);
                             })
 
-                            form.querySelectorAll(`input[name="${self.id}-condition"]`).forEach(ipt => {
+                            form.querySelectorAll(`input[name="${self.getId()}-condition"]`).forEach(ipt => {
                                 ipt.addEventListener('change', async function (e) {
                                     form.querySelector(`.${self.CLASS}-geomtype-line-btn`).disabled = e.target.value === 'within';
                                     const valueField = self.#getValueInput(modalBody);
@@ -2003,18 +2039,18 @@ class WFSQuery extends Control {
         var layers = layer.getDisgregatedLayerNames ? layer.getDisgregatedLayerNames() : layer.featureType;
         //quitamos aquellas que no estén disponibles en el WFS
         layers = layers.filter(function (l) {
-            return Object.prototype.hasOwnProperty.call(capabilities.FeatureTypes, l.substring(l.indexOf(":") + 1));
+            return Object.hasOwn(capabilities.FeatureTypes, l.substring(l.indexOf(":") + 1));
         });
         if (layers.length > 1) {
             modalBody.classList.remove(loadingCssClass);
             const combo = dialog.getElementsByClassName("tc-combo")[0];
             //bindeamos el onchange de combo
             combo.addEventListener("change", function () {
+                self.clearFilters();
                 if (!this.value) {
                     var form = self.getForm();
                     form.replaceChildren(); // Vaciar nodo
                     for (var i = 0; i < form.children.length; i++) form.removeChild(form.children[i]);
-                    self.clearFilters();
                     return;
                 }
                 dialog.querySelector(".tc-modal-body .tc-ctl-wfsquery-message", dialog).classList.add(hiddenCssClass);
@@ -2029,7 +2065,7 @@ class WFSQuery extends Control {
             //comprabamos que la capa existe en el capabilities
             var layerCapabilities = capabilities.FeatureTypes[layers[0].substring(layers[0].indexOf(":") + 1)];
             if (layerCapabilities) {
-                currentQuery.title = capabilities.FeatureTypes[layers[0].substring(layers[0].indexOf(":") + 1)].Title;
+                currentQuery.title = layerCapabilities.Title;
                 currentQuery.name = layers[0];
                 await self.#chooseLeafLayer(currentQuery.layer, currentQuery.name, dialog);
             }
@@ -2144,7 +2180,7 @@ class WFSQuery extends Control {
             layer.getDisgregatedLayerNames().forEach(function (value, _index) {
                 var path = layer.getPath(value);
                 //quitamos aquellas que no estén disponibles en el WFS
-                if (Object.prototype.hasOwnProperty.call(capabilities.FeatureTypes, value.substring(value.indexOf(":") + 1)))
+                if (Object.hasOwn(capabilities.FeatureTypes, value.substring(value.indexOf(":") + 1)))
                     layers.push({ name: value, title: path[path.length - 1] });
             });
             layers.sort(function (a, b) {
@@ -2247,20 +2283,26 @@ class WFSQuery extends Control {
         const type = data.attributes[f.propertyName || geomName].type
 
         switch (true) {
-            case Util.isGeometry(type):
-                var layer = await self.showGeometryPanel(f.geometry.STYLETYPE, false);
-                self.geometryPanel.close();
-                var newFilter = new f.constructor(null, f.geometry, self.map.crs);
+            case Util.isGeometry(type): {
+                let layer;
+                if (self.geometryPanel) layer = await self.drawControl.getLayer();
+                else {
+                    // Si no se ha inicializado el panel de geometría, lo hacemos ahora para que se cree la capa de dibujo y podamos añadir la geometría a ella.
+                    layer = await self.showGeometryPanel(f.geometry.STYLETYPE, false);
+                    self.geometryPanel.close();
+                }
+                const newFilter = new f.constructor(null, f.geometry, self.map.crs);
                 newFilter._abbr = operation;
                 switch (f.geometry.STYLETYPE) {
-                    case 'polygon':
-                        var coords = f.geometry.getCoordinates()[0];
+                    case 'polygon': {
+                        const coords = f.geometry.getCoordinates()[0];
                         if (coords[0][0] === coords[1][0] && coords[0][1] === coords[3][1] &&
                             coords[3][0] === coords[3][0] && coords[1][1] === coords[1][1])
                             newFilter._valueToShow = self.getLocaleString('box');
                         else
                             newFilter._valueToShow = self.getLocaleString('polygon');
                         break;
+                    }
                     case 'line':
                         newFilter._valueToShow = self.getLocaleString('line');
                         break;
@@ -2269,6 +2311,7 @@ class WFSQuery extends Control {
                 self.getCurrentQuery().filter.push(newFilter);
                 layer.addFeature(f.geometry);
                 break;
+            }
             case type.indexOf("int") >= 0:
             case type.indexOf("float") >= 0:
             case type.indexOf("double") >= 0:
