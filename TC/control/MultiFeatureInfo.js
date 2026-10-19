@@ -215,8 +215,22 @@ class MultiFeatureInfo extends FeatureInfoCommons {
             self.featureInfoControl.activate();
             self.lastCtrlActive = self.featureInfoControl;
 
-            const newGetResultStyles = function (serviceUrl, layerName) {
-                return self.featureInfoControl.getResultStyles(serviceUrl, layerName);
+            // Creamos un nuevo método getResultStyles que:
+            // 1- añade a la lista de colores prohibidos el color de trazo de la geometría de selección, para que no se use en los resultados.
+            // 2- llama al método original getResultStyles del control de selección por punto, para tener los colores sincronizados.
+            const newGetResultStyles = function (serviceUrl, layerName, options = {}) {
+                const forbiddenColors = options.forbiddenColors ? options.forbiddenColors.slice() : [];
+                if (this.filterLayer) {
+                    if (this === self.lineFeatureInfoControl) {
+                        const lineStrokeColor = this.filterLayer.styles.line?.strokeColor;
+                        if (lineStrokeColor) forbiddenColors.push(lineStrokeColor);
+                    }
+                    else if (this === self.polygonFeatureInfoControl) {
+                        const polygonStrokeColor = this.filterLayer.styles.polygon?.strokeColor;
+                        if (polygonStrokeColor) forbiddenColors.push(polygonStrokeColor);
+                    }
+                }
+                return self.featureInfoControl.getResultStyles(serviceUrl, layerName, { ...options, forbiddenColors });
             };
             if (self.lineFeatureInfoControl) {
                 self.lineFeatureInfoControl.getResultStyles = newGetResultStyles;
@@ -231,13 +245,17 @@ class MultiFeatureInfo extends FeatureInfoCommons {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-m-finfo.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-m-finfo" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-m-finfo.mjs'
+        );
         self.template = module.default;
     }
 
     render(callback) {
         const self = this;
-        var renderData = { controlId: self.id };
+        var renderData = { controlId: self.getId() };
         if (self.modes[Consts.geom.POINT]) {
             renderData.pointSelectValue = Consts.geom.POINT;
         }
