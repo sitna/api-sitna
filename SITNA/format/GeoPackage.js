@@ -243,8 +243,7 @@ const exportFeatures = async function (features, options = {}) {
             const pkColumn = featureTypeMetadata?.attributes?.find(c => c.isId);
             const pkColumnName = sanitizeName(pkColumn?.name ?? 'id');
 
-            if (pkColumn || Object.prototype.hasOwnProperty.call(featuresToExport[0], "id") ||
-                Object.prototype.hasOwnProperty.call(featuresToExport[0], "ID")) {
+            if (pkColumn || Object.hasOwn(featuresToExport[0], "id") || Object.hasOwn(featuresToExport[0], "ID")) {
                 columns.push(FeatureColumn.createPrimaryKeyColumnWithIndexAndName(i++, pkColumnName));
             }
             columns.push(FeatureColumn.createGeometryColumn(i++, 'geometry', geometryType.toUpperCase(), true, null));
@@ -267,7 +266,7 @@ const exportFeatures = async function (features, options = {}) {
                 if (attributeName.toLowerCase() === pkColumnName) continue;
                 var fieldValue = firstFeature.data[attributeName];
                 if (!/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(attributeName)) {
-                    if (!options.adaptNames) {
+                    if (!options.adaptPropertyNames) {
                         throw new FieldNameError('Field "' + attributeName + '" is invalid', { cause: attributeName });
                     }
                     sanitizedColumnNames.set(attributeName, sanitizeName(attributeName));
@@ -307,16 +306,16 @@ const exportFeatures = async function (features, options = {}) {
                 //const geometry=(hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))))(new ol.format.WKB().writeGeometry(feature.wrap.feature.getGeometry(),{featureProjection:currentCrs,dataProjection:currentCrs}));
                 geometryData.setGeometry(geometry);
                 featureRow.setValueWithColumnName(featureRow.geometryColumn.name, geometryData);
-                if (Object.prototype.hasOwnProperty.call(feature, "id")) {
+                if (Object.hasOwn(feature, "id")) {
                     featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.id));
                 }
-                else if (Object.prototype.hasOwnProperty.call(feature, "ID")) {
+                else if (Object.hasOwn(feature, "ID")) {
                     featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.ID));
                 }
-                else if (Object.prototype.hasOwnProperty.call(feature.data, "id")) {
+                else if (Object.hasOwn(feature.data, "id")) {
                     featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.data.id));
                 }
-                else if (Object.prototype.hasOwnProperty.call(feature.data, "ID")) {
+                else if (Object.hasOwn(feature.data, "ID")) {
                     featureRow.setValueWithColumnName(pkColumnName, getSafeId(feature.data.ID));
                 }
                 for (var y in feature.data || feature.attributes) {
@@ -339,7 +338,7 @@ const exportFeatures = async function (features, options = {}) {
         }
     }
 
-    return await myPackage.export();
+    return new Blob([await myPackage.export()]);
 };
 
 const getColumnName = (c) => c.dataColumn ? c.dataColumn.name : c.name;
@@ -459,7 +458,7 @@ class GeoPackage extends BinaryFormat {
     async writeFeatures(features, options = {}) {
         return await exportFeatures(features.map((f) => f._wrap.parent), {
             crs: options.featureProjection,
-            adaptNames: options.adaptNames
+            adaptPropertyNames: options.adaptPropertyNames
         });
     }
 
@@ -468,7 +467,7 @@ class GeoPackage extends BinaryFormat {
         for (const feat of features) {
             const featureMetadata = this.featureMetadata.get(feat);
             if (featureMetadata) {
-                if (!Object.prototype.hasOwnProperty.call(result, featureMetadata.name)) {
+                if (!Object.hasOwn(result, featureMetadata.name)) {
                     result[featureMetadata.name] = [];
                 }
                 result[featureMetadata.name].push(feat);

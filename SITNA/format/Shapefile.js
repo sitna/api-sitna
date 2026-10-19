@@ -211,7 +211,7 @@ const exportFeatures = async function (features, options = {}) {
         const groups = features.reduce(fillGroupMap, new Map());
         for (let [geometryType, featureList] of groups.entries()) {
 
-            if (!options.adaptNames) {
+            if (!options.adaptPropertyNames) {
                 for (const feature of featureList) {
                     for (const name in feature.data) {
                         if (name.length > 10 || !/^[a-zA-Z][a-zA-Z0-9_:]*$/.test(name)) {
@@ -451,7 +451,7 @@ class Shapefile extends BinaryFormat {
         //este objeto tiene una referencia al objeto del atributo "filename" del objeto zipCompressed
         let shpParams = null;
         //Si no tiene información referente al shp actual lo inicializo
-        if (!Object.prototype.hasOwnProperty.call(this.#shapeParts, fileNameWithoutExtension)) {
+        if (!Object.hasOwn(this.#shapeParts, fileNameWithoutExtension)) {
             const fileNames = options
                 .fileNames
                 .filter((fn) => fn.startsWith(fileNameWithoutExtension))
@@ -499,7 +499,7 @@ class Shapefile extends BinaryFormat {
     async writeFeatures(features, options = {}) {
         return await exportFeatures(features.map((f) => f._wrap.parent), {
             crs: options.featureProjection,
-            adaptNames: options.adaptNames,
+            adaptPropertyNames: options.adaptPropertyNames,
             acceptTimeLoss: options.acceptTimeLoss,
         });
     }
