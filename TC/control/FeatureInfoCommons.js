@@ -149,7 +149,7 @@ class FeatureInfoCommons extends Click {
         await self.setDisplayMode(self.options.displayMode || map.defaultInfoContainer || Consts.infoContainer.POPUP);
 
         map.loaded(function () {
-            const shareCtl = map.getControlsByClass('TC.control.Share')[0];
+            const shareCtl = map.getControlsByClass('Share')[0];
             if (shareCtl) {
                 self.loadSharedFeature(shareCtl.loadParamFeature());
             }
@@ -329,6 +329,7 @@ class FeatureInfoCommons extends Click {
         if (this.filterFeature) {
             if (this.lastTimestamp < options.timestamp) {
                 this.info = {
+                    featureCount: options.featureCount,
                     services: options.services ? options.services.map((s) => Util.extend(true, {}, s, {
                         layers: s.pending ? [] : s.layers.map((l) => Util.extend(true, {}, l))
                     })) : []
@@ -337,6 +338,7 @@ class FeatureInfoCommons extends Click {
             }
             else {
                 if (this.info) {
+                    this.info.featureCount = options.featureCount;
                     for (let i = 0; i < this.info.services.length; i++) {
                         const service = this.info.services[i];
                         service.layers = options.services?.[i].layers.map((l) => Util.extend(true, {}, l)) ?? [];
@@ -421,6 +423,8 @@ class FeatureInfoCommons extends Click {
                 ctlPromise = self.map.addControl('resultsPanel', resultsPanelOptions);
             }
             self.resultsPanel = await ctlPromise;
+            self.resultsPanel._titleBarSelector = null;
+            self.resultsPanel.toolContainerSelector = ".tc-ctl-rpanel-menu";
             self.resultsPanel.caller = self;
         }
         return self.resultsPanel;
@@ -509,7 +513,7 @@ class FeatureInfoCommons extends Click {
                         self.dataModel.viewEnlargedImage = self.getLocaleString("viewEnlargedImage");
                         self.dataModel.audioFormatNotCompatible = self.getLocaleString("audioFormatNotCompatible");
                         self.dataModel.videoFormatNotCompatible = self.getLocaleString("videoFormatNotCompatible");
-                        self.dataModel.openInNewTab = self.getLocaleString("openInNewTab");
+                        self.dataModel.openInNewTab = self.getLocaleString("openInNewTab");                        
                     });
 
                 }
@@ -595,16 +599,15 @@ class FeatureInfoCommons extends Click {
     }
 
     closeResults() {
-        const self = this;
-        switch (self.displayMode) {
+        switch (this.displayMode) {
             case Consts.infoContainer.RESULTS_PANEL:
-                if (self.resultsPanel && self.resultsPanel.isVisible()) {
-                    self.resultsPanel.close();
+                if (this.resultsPanel?.isVisible() && this.resultsPanel.caller === this) {
+                    this.resultsPanel.close();
                 }
                 break;
             default:
-                if (self.popup && self.popup.isVisible()) {
-                    self.popup.hide();
+                if (this.popup?.isVisible() && this.popup.caller === this) {
+                    this.popup.hide();
                 }
                 break;
         }
@@ -679,7 +682,7 @@ class FeatureInfoCommons extends Click {
             const menu = self.getMenuTarget();
             if (features.length > 1) {
                 // Hay más de una feature
-                self.getRenderedHtml(`${self.CLASS}-buttons`, { id: self.id }).then(function (html) {
+                self.getRenderedHtml(`${self.CLASS}-buttons`, { id: self.getId() }).then(function (html) {
                     if (!menu.querySelector(`.${self.CLASS}-btn-dl`)) {
                         menu.insertAdjacentHTML('beforeend', html);
                         menu.querySelector(`.${self.CLASS}-btn-dl`).addEventListener(Consts.event.CLICK, async function (_e) {
@@ -1127,7 +1130,7 @@ class FeatureInfoCommons extends Click {
         return false;
     }
 
-    getResultStyles(serviceUrl, layerName) {
+    getResultStyles(serviceUrl, layerName, options) {
         let serviceStyles = this.#layerStyles.get(serviceUrl);
         if (!serviceStyles) {
             serviceStyles = new Map(); 
@@ -1135,7 +1138,7 @@ class FeatureInfoCommons extends Click {
         }
         let styles = serviceStyles.get(layerName);
         if (!styles) {
-            styles = Vector.getNextStyles();
+            styles = Vector.getNextStyles(options);
             serviceStyles.set(layerName, styles);
         }
         return styles;
@@ -1196,7 +1199,7 @@ class FeatureInfoCommons extends Click {
         await self.#layersPromise;
         if (state.layer) await self.resultsLayer.importState(state.layer);
         if (state.query) {
-            self.importQuery(state.query);
+            await self.importQuery(state.query);
         }
     }
 
@@ -1363,8 +1366,9 @@ class FeatureInfoCommons extends Click {
         return result;
     }
 
-    importQuery(query) {
+    async importQuery(query) {
         const self = this;
+        const deferred = Promise.withResolvers();
         if (query.filter) {
             self.activate();
             self.filterLayer.importState(query.filter)
@@ -1387,8 +1391,11 @@ class FeatureInfoCommons extends Click {
                         }
                     };
                     self.map.on(Consts.event.FEATUREHIGHLIGHT, onFeatureHighlight);
+                    deferred.resolve();
                 });
+            return deferred.promise;
         }
+        else return Promise.resolve();
     }
 
     static async renderFeatureAttributeTable(options = {}) {
