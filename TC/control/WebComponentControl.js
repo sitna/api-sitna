@@ -8,11 +8,29 @@ import Handlebars from '../../lib/handlebars/helpers.js';
 TC.control = TC.control || {};
 TC.i18n = TC.i18n || i18n;
 
-const elementName = 'sitna-control';
+/**
+ * Cualquier control creado por el desarrollador debe cumplir esta interfaz.
+ * @interface MapControl
+ * @summary Interfaz de programación de un control de usuario que interactúa con el mapa.
+ * @see {@link SITNA.control.Control}
+ * @see {@tutorial 2-controls}
+ * @borrows SITNA.control.Control#map as MapControl#map
+ * @borrows SITNA.control.Control#template as MapControl#template
+ * @borrows SITNA.control.Control#show as MapControl#show
+ * @borrows SITNA.control.Control#hide as MapControl#hide
+ * @borrows SITNA.control.Control#render as MapControl#render
+ * @borrows SITNA.control.Control#renderData as MapControl#renderData
+ * @borrows SITNA.control.Control#getRenderedHtml as MapControl#getRenderedHtml
+ * @borrows SITNA.control.Control#loadTemplates as MapControl#loadTemplates
+ * @borrows SITNA.control.Control#register as MapControl#register
+ * @borrows SITNA.control.Control#unregister as MapControl#unregister
+ * @borrows SITNA.control.Control#activate as MapControl#activate
+ * @borrows SITNA.control.Control#deactivate as MapControl#deactivate
+ * @borrows SITNA.control.Control#addUIEventListeners as MapControl#addUIEventListeners
+ * @borrows SITNA.control.Control#sitna:controlrender as MapControl#sitna:controlrender
+ */
 
 /**
- * Clase base que implementa {@link MapControl}, la interfaz de programación de un control de usuario.
- * 
  * Si un desarrollador quiere crear un control personalizado, puede heredar de esta clase y sobreescribir
  * los métodos y propiedades que necesite. Además, como el control es elemento personalizado 
  * ([custom element](https://developer.mozilla.org/es/docs/Web/API/Web_components/Using_custom_elements)) 
@@ -20,6 +38,7 @@ const elementName = 'sitna-control';
  * dándole un nombre de etiqueta HTML. Este nombre debe seguir [una serie de reglas](https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name), 
  * como por ejemplo contener un guión, para que los navegadores lo reconozcan como un elemento personalizado.
  * @class Control
+ * @summary Clase base que implementa {@link MapControl}, la interfaz de programación de un control de usuario.
  * @memberof SITNA.control
  * @extends HTMLElement
  * @implements {MapControl}
@@ -148,17 +167,10 @@ const elementName = 'sitna-control';
     </script>
  */
 
-/**
- * Interfaz de programación de un control de usuario que interactúa con el mapa. Cualquier control creado por 
- * el desarrollador debe cumplir esta interfaz.
- *  @interface MapControl
- * @see {@link SITNA.control.Control}
- * @see {@tutorial 2-controls}
- */
 class WebComponentControl extends HTMLElement {
+
     /** 
-     * Plantilla o colección de plantillas que utiliza el control para su representación. 
-     * Si es un objeto, las claves son los nombres de las plantillas y los valores son las plantillas o las URLs 
+     * Si esta propiedad es un objeto, las claves son los nombres de las plantillas y los valores son las plantillas o las URLs 
      * desde las que obtenerlas. Si es una función, se asume que es una plantilla ya compilada que ejecutada 
      * devuelve el HTML resultante de la representación. Si es una cadena de texto, se asume que es la URL desde la que
      * obtener la plantilla.
@@ -166,16 +178,16 @@ class WebComponentControl extends HTMLElement {
      * Los controles integrados en la API SITNA utilizan plantillas de Handlebars. Si se quiere usar otro motor de plantillas,
      * hay que reimplementar el método {@link MapControl#render}.
      * 
-     * @memberof MapControl
+     * @memberof SITNA.control.Control
+     * @summary Plantilla o colección de plantillas que utiliza el control para su representación.
      * @type {object|function}
      * @instance
      */
     template;
 
     /**
-     * Refencia al mapa en el que está insertado el control.
-     * 
-     * @memberof MapControl
+     * @memberof SITNA.control.Control
+     * @summary Refencia al mapa en el que está insertado el control.
      * @type {SITNA.Map|null}
      * @instance
      */
@@ -293,37 +305,35 @@ class WebComponentControl extends HTMLElement {
     }
 
     initProperty(name) {
-        const self = this;
-        if (Object.hasOwn(self.options, name)) {
-            self[name] = self.options[name];
-        }
-        return self;
-    }
-
-    /**
-     * Muestra el control en pantalla.
-     * 
-     * @function
-     * @name show
-     * @memberof MapControl
-     * @returns {MapControl} El mismo control.
-     * @instance
-     */
-    show() {
-        this.style.display = '';
-        if (this.options.displayMode === WebComponentControl.displayMode.PANEL) {
-            this.getContainerPanel().then(panel => panel.open());
+        if (Object.hasOwn(this.options, name)) {
+            this[name] = this.options[name];
         }
         return this;
     }
 
     /**
-     * Oculta el control de la pantalla.
-     * 
+     * @function
+     * @name show
+     * @async
+     * @memberof SITNA.control.Control
+     * @summary Muestra el control en pantalla.
+     * @returns {Promise}
+     * @instance
+     */
+    async show() {
+        this.style.display = '';
+        if (this.options.displayMode === WebComponentControl.displayMode.PANEL) {
+            const panel = await this.getContainerPanel();
+            panel.open();
+        }
+    }
+
+    /**
      * @function
      * @name hide
-     * @memberof MapControl
-     * @returns {MapControl} El mismo control.
+     * @memberof SITNA.control.Control
+     * @summary Oculta el control de la pantalla.
+     * @returns {this}
      * @instance
      */
     hide() {
@@ -334,7 +344,7 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Renderiza los contenidos del control. Esto incluye asignar a los elementos del control 
+     * Tras renderizar, se asignan a los elementos del control 
      * los gestores de eventos asociados a la interfaz de usuario si los hay.
      * 
      * Cualquier implementación de este método debe llevar a cabo los siguientes procesos:
@@ -349,7 +359,8 @@ class WebComponentControl extends HTMLElement {
      * @function
      * @name render
      * @async
-     * @memberof MapControl
+     * @memberof SITNA.control.Control
+     * @summary Renderiza los contenidos del control.
      * @param {function} [callback] Función que se ejecuta cuando el control ha sido representado.
      * @returns {Promise}
      * @instance
@@ -369,21 +380,20 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * @event MapControl#sitna:controlrender
-     * @description Evento que dispara un objeto que cumple con la interfaz {@link MapControl} cuando se ha renderizado.
+     * @event SITNA.control.Control#sitna:controlrender
+     * @summary Evento que dispara un objeto que cumple con la interfaz {@link MapControl} cuando se ha renderizado.
      */
 
 
     /**
-     * Carga las plantillas que utiliza el control para su representación e inicializa la propiedad
-     * {@link MapControl#template}.
-     * 
      * Dependiendo de la implementación, este método cargará las plantillas haciendo peticiones a URLs, importando módulos, etc., 
      * después las procesará si es necesario y finalmente las asignará a {@link MapControl#template}.
      * @function
      * @name loadTemplates
      * @async
-     * @memberof MapControl
+     * @memberof SITNA.control.Control
+     * @summary Carga las plantillas que utiliza el control para su representación e inicializa la propiedad
+     * {@link MapControl#template}.
      * @returns {Promise}
      * @instance
      * @example <caption>[Ver en vivo](../examples/control.template.html)</caption> {@lang html}
@@ -490,7 +500,7 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Renderiza los contenidos del control pasándole datos a la plantilla. Este es un método de utilidad que es llamado 
+     * Este es un método de utilidad que es llamado 
      * por la implementación de {@link MapControl#render} de {@link SITNA.control.Control}.
      * 
      * Este método lleva a cabo los siguientes procesos:
@@ -502,6 +512,7 @@ class WebComponentControl extends HTMLElement {
      * @name renderData
      * @async
      * @memberof SITNA.control.Control
+     * @summary Renderiza los contenidos del control pasándole datos a la plantilla.
      * @param {object} data - Datos que se pasan a la plantilla para su representacón. 
      * Generalmente es un diccionario de pares clave-valor, para que la plantilla los utilice.
      * @param {function} [callback] Función que se ejecuta cuando el control ha sido representado.
@@ -533,8 +544,6 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Obtiene el HTML resultante de renderizar una plantilla con unos datos.
-     * 
      * Si la propiedad {@link MapControl#template} no está definida, 
      * se llama al método {@link MapControl#loadTemplates} para cargar las plantillas.
      * 
@@ -542,6 +551,7 @@ class WebComponentControl extends HTMLElement {
      * @name getRenderedHtml
      * @async
      * @memberof SITNA.control.Control
+     * @summary Obtiene el HTML resultante de renderizar una plantilla con unos datos.
      * @param {string} templateId - Identificador de la plantilla que se quiere renderizar.
      * @param {object} data - Datos que se pasan a la plantilla para su representación. 
      * Generalmente es un diccionario de pares clave-valor, para que la plantilla los utilice.
@@ -621,7 +631,7 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Registra el control en el mapa. Normalmente no es necesario llamar a este método directamente,
+     * Normalmente no es necesario llamar a este método directamente,
      * ya que se le llama desde {@link SITNA.Map#addControl}.
      * 
      * Se puede sobreescribir para añadir lógica de interacciones del control con el mapa.
@@ -629,9 +639,10 @@ class WebComponentControl extends HTMLElement {
      * @function
      * @name register
      * @async
-     * @memberof MapControl
+     * @memberof SITNA.control.Control
+     * @summary Registra el control en el mapa.
      * @param {SITNA.Map} map - Instancia del mapa en el que se registra el control.
-     * @returns {Promise<MapControl>} El propio control.
+     * @returns {Promise<this>}
      * @instance
      */
     async register(map) {
@@ -658,14 +669,15 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Desregistra el control del mapa. Normalmente no es necesario llamar a este método directamente,
+     * Normalmente no es necesario llamar a este método directamente,
      * ya que se le llama siempre que se elimine el control de entre los descendientes del elemento contenedor 
      * del mapa.
      * 
      * @function
      * @name unregister
-     * @memberof MapControl
-     * @returns {MapControl} El propio control.
+     * @memberof SITNA.control.Control
+     * @summary Desregistra el control del mapa.
+     * @returns {this}
      * @instance
      */
     unregister() {
@@ -686,8 +698,7 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Activa el control como gestor de las acciones de puntero en el área del mapa. 
-     * Si hay otro control activo, lo desactiva antes.
+     * Antes de activar el control actual, si hay otro control activo, lo desactiva.
      * 
      * En ocasiones, es necesario realizar acciones específicas mediante pulsaciones en el mapa, por ejemplo,
      * para dibujar geometrías. En estos casos, se activa el control que gestiona estas acciones.
@@ -696,8 +707,9 @@ class WebComponentControl extends HTMLElement {
      * estuviera activo hasta entonces se desactiva automáticamente.
      * @function
      * @name activate
-     * @memberof MapControl
-     * @returns {MapControl} El propio control.
+     * @memberof SITNA.control.Control
+     * @summary Activa el control como gestor de las acciones de puntero en el área del mapa.
+     * @returns {this}
      * @instance
      */
     activate() {
@@ -716,14 +728,14 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Desactiva el control como gestor de las acciones de puntero en el área del mapa. Por defecto,
-     * se activa automáticamente el control predeterminado del mapa o, si no hay control predeterminado,
+     * Por defecto, se activa automáticamente el control predeterminado del mapa o, si no hay control predeterminado,
      * el control que estuviera activo antes que éste.
      * @function
      * @name deactivate
-     * @memberof MapControl
+     * @memberof SITNA.control.Control
+     * @summary Desactiva el control como gestor de las acciones de puntero en el área del mapa.
      * @param {boolean} [stopChain=false] - Si es <code>true</code>, no se activa automáticamente ningún otro control.
-     * @returns {MapControl} El propio control.
+     * @returns {this}
      * @instance
      */
     deactivate(stopChain = false) {
@@ -827,12 +839,11 @@ class WebComponentControl extends HTMLElement {
     }
 
     /**
-     * Añade los gestores de eventos asociados a la interfaz de usuario del control.
-     * 
      * @function
      * @name addUIEventListeners
-     * @memberof MapControl
-     * @returns {MapControl} El propio control.
+     * @memberof SITNA.control.Control
+     * @summary Añade los gestores de eventos asociados a la interfaz de usuario del control.
+     * @returns {this}
      * @instance
      */
     addUIEventListeners() {
@@ -868,7 +879,7 @@ class WebComponentControl extends HTMLElement {
 
     async getDownloadDialog() {
         const self = this;
-        self.#downloadDialog ??= self.map.getControlsByClass('TC.control.FeatureDownloadDialog')[0];
+        self.#downloadDialog ??= self.map.getControlsByClass('FeatureDownloadDialog')[0];
         if (!self.#downloadDialog) {
             self.#downloadDialog = await self.map.addControl('FeatureDownloadDialog');
         }
@@ -946,17 +957,24 @@ class WebComponentControl extends HTMLElement {
     #getNativeListener(evt, callback) {
         const self = this;
         const result = function (evt) {
-            const cbParameter = {
-                type: evt.type,
-                target: self,
-                currentTarget: self
-            };
-            if (evt.detail) {
-                Object.keys(evt.detail).forEach(function (key) {
-                    if (!(key in cbParameter)) {
-                        cbParameter[key] = evt.detail[key];
-                    }
-                });
+            let cbParameter;
+            // Si el evento es un CustomEvent, se crea un objeto con los parámetros del evento
+            if (evt instanceof CustomEvent) {
+                cbParameter = {
+                    type: evt.type,
+                    target: self,
+                    currentTarget: self
+                };
+                if (evt.detail) {
+                    Object.keys(evt.detail).forEach(function (key) {
+                        if (!(key in cbParameter)) {
+                            cbParameter[key] = evt.detail[key];
+                        }
+                    });
+                }
+            }
+            else {
+                cbParameter = evt;
             }
             return callback.call(self, cbParameter);
         }.bind(this);
@@ -1079,6 +1097,5 @@ class WebComponentControl extends HTMLElement {
 }
 
 WebComponentControl.prototype.CLASS = 'tc-ctl';
-customElements.get(elementName) || customElements.define(elementName, WebComponentControl);
 TC.control.WebComponentControl = WebComponentControl;
 export default WebComponentControl;
