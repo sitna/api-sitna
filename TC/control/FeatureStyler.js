@@ -16,7 +16,6 @@ import ControlEvent from '../../SITNA/control/ControlEvent.js';
 Consts.event.STYLECHANGE = 'stylechange.tc';
 
 const className = 'tc-ctl-fstyler';
-const elementName = 'sitna-feature-styler';
 
 const formatColor = function (color) {
     if (color) {
@@ -40,6 +39,11 @@ class FeatureStylerModel {
     }
 }
 class FeatureStyler extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-feature-styler', this);
+    }
+
     #classSelector = '.' + className;
     #style;
     #strokeColorPicker;
@@ -123,7 +127,11 @@ class FeatureStyler extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-fstyler.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-fstyler" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-fstyler.mjs'
+        );
         self.template = module.default;
     }
 
@@ -684,6 +692,5 @@ class FeatureStyler extends WebComponentControl {
 }
 
 FeatureStyler.prototype.CLASS = 'tc-ctl-fstyler';
-customElements.get(elementName) || customElements.define(elementName, FeatureStyler);
 TC.control.FeatureStyler = FeatureStyler;
 export default FeatureStyler;

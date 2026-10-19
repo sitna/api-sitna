@@ -33,8 +33,6 @@ window.addEventListener('beforeunload', function onBeforeunload(e) {
     }
 }, { capture: true });
 
-const elementName = 'sitna-file-edit';
-
 class FileEditModel {
     constructor() {
         this.save = "";
@@ -43,6 +41,10 @@ class FileEditModel {
 }
 
 class FileEdit extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-file-edit', this);
+    }
 
     TITLE_SEPARATOR = ' › ';
     #userPreferences = new WeakMap();
@@ -223,7 +225,11 @@ class FileEdit extends WebComponentControl {
     }
 
     async loadTemplates() {
-        const panelTemplatePromise = import('../templates/tc-ctl-fedit.mjs');
+        const panelTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-fedit" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-fedit.mjs'
+        );
         this.template = (await panelTemplatePromise).default;
     }
 
@@ -349,10 +355,10 @@ class FileEdit extends WebComponentControl {
 
         const setDrawMode = function (ctl, geometryName, hasSimple, hasComplex) {
             if (hasSimple) {
-                ctl.setMode(Consts.geom[geometryName]);
+                ctl.mode = Consts.geom[geometryName];
             }
             else if (hasComplex) {
-                ctl.setMode(Consts.geom['MULTI' + geometryName]);
+                ctl.mode = Consts.geom['MULTI' + geometryName];
             }
         }
 
@@ -656,6 +662,5 @@ class FileEdit extends WebComponentControl {
 }
 
 FileEdit.prototype.CLASS = 'tc-ctl-fedit';
-customElements.get(elementName) || customElements.define(elementName, FileEdit);
 TC.control.FileEdit = FileEdit;
 export default FileEdit;

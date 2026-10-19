@@ -10,7 +10,6 @@ import { line as lineTemplate } from '../tool/WellKnowNameTemplates.js';
 TC.control = TC.control || {};
 
 const className = 'tc-ctl-layer-legend';
-const elementName = 'sitna-layer-legend';
 const loadingClassName = 'tc-ctl-layer-legend-loading';
 
 const _defaultPolygonValues = {
@@ -548,7 +547,7 @@ const getTextSymbolizer = async function (textSymbolyzer, text) {
             styles.push('fill-opacity="' + textSymbolyzer["fill-opacity"] + '"');
         if (textSymbolyzer.halo) {
             styles.push('stroke="' + textSymbolyzer.halo.fill + '"');
-            if (Object.prototype.hasOwnProperty.call(textSymbolyzer.halo, "fill-opacity"))
+            if (Object.hasOwn(textSymbolyzer.halo, "fill-opacity"))
                 styles.push('stroke-opacity="' + textSymbolyzer.halo['fill-opacity'] + '"');                
             styles.push('stroke-width="' + Math.round(textSymbolyzer.halo.radius) + '"');
             styles.push('paint-order="stroke"');
@@ -566,6 +565,11 @@ const getFontSymbolizer = (graphic, size) => {
 };
 
 class LayerLegend extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-layer-legend', this);
+    }
+
     CLASS = className;
     #classSelector = '.' + className;
     #layer;
@@ -739,15 +743,16 @@ class LayerLegend extends WebComponentControl {
                 self.parentNode?.removeChild(self)
                 self.remove();
             }
-        }, { signal: self.controller.signal });
+        }, { signal: self.controller?.signal });
 
-        map.on(Consts.event.LAYERVISIBILITY, _onHideEvent, { signal: self.controller.signal });
+        map.on(Consts.event.LAYERVISIBILITY, _onHideEvent, { signal: self.controller?.signal });
 
         if (!map.magnifier) {
             map.magnifier = new ImageMagnifier(3, {
                 textToOpen: Util.getLocaleString(map.getLocale(), "clickToEnlarge"),
                 textToClose: Util.getLocaleString(map.getLocale(), "clickToClose")
             });
+            map.magnifier.containerControl = self;
             map.div.appendChild(map.magnifier);
         }
 
@@ -768,7 +773,7 @@ class LayerLegend extends WebComponentControl {
                 self.getLegend();
             }
             
-        }, { signal: self.controller.signal })
+        }, { signal: self.controller?.signal })
 
         self.getLegend();
     }
@@ -780,13 +785,16 @@ class LayerLegend extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-legend-node.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-legend-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-legend-node.mjs'
+        );
         self.template = module.default;
     }
     
 }
 
-customElements.get(elementName) || customElements.define(elementName, LayerLegend);
 TC.control.LayerLegend = LayerLegend;
 export default LayerLegend;
 export async function CreateSymbolizer(rules,layer) {

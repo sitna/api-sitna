@@ -4,8 +4,6 @@ import Layer from '../../SITNA/layer/Layer.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-const elementName = 'sitna-attribution';
-
 class AttributionModel {
     constructor() {
         //super();
@@ -26,6 +24,11 @@ class AttributionView extends Observer {
 }
 
 class Attribution extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-attribution', this);
+    }
+
     constructor() {
         super(...arguments);
         const self = this;
@@ -225,7 +228,11 @@ class Attribution extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const { default: template } = await import('../templates/tc-ctl-attrib.mjs');
+        const { default: template } = await import(
+            /* webpackChunkName: "tc-ctl-attrib" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-attrib.mjs'
+        );
         self.template = template;
     }
 
@@ -274,5 +281,4 @@ class Attribution extends WebComponentControl {
 }
 
 Attribution.prototype.CLASS = 'tc-ctl-attrib';
-customElements.get(elementName) || customElements.define(elementName, Attribution);
 export default Attribution;

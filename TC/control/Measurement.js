@@ -15,8 +15,6 @@ import Observer from '../Observer.js';
 
 TC.control = TC.control || {};
 
-const elementName = 'sitna-measurement';
-
 class MeasurementModel {
     constructor() {
         this["2dLength"]= "";
@@ -34,6 +32,10 @@ class MeasurementModel {
 }
 
 class Measurement extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-measurement', this);
+    }
 
     static units = {
         m: { weight: 0, abbr: "m²" },
@@ -158,7 +160,11 @@ class Measurement extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-msmt.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-msmt" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-msmt.mjs'
+        );
         self.template = module.default;
     }
 
@@ -539,6 +545,5 @@ class Measurement extends WebComponentControl {
 }
 
 Measurement.prototype.CLASS = 'tc-ctl-msmt';
-customElements.get(elementName) || customElements.define(elementName, Measurement);
 TC.control.Measurement = Measurement;
 export default Measurement;

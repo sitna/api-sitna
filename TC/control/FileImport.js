@@ -17,8 +17,6 @@ import Controller from '../Controller.js';
 
 TC.control = TC.control || {};
 
-const elementName = 'sitna-file-import';
-
 class FileImportModel {
     constructor() {
         this.openFile = "";
@@ -30,6 +28,10 @@ class FileImportModel {
 }
 
 class FileImport extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-file-import', this);
+    }
 
     #layerMetadataCache = new Map();
 
@@ -370,8 +372,16 @@ class FileImport extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-file.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-file-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-file" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-file.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-file-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-file-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -760,6 +770,5 @@ class FileImport extends WebComponentControl {
 TC.mix(FileImport, layerOwner);
 
 FileImport.prototype.CLASS = 'tc-ctl-file';
-customElements.get(elementName) || customElements.define(elementName, FileImport);
 TC.control.FileImport = FileImport;
 export default FileImport;

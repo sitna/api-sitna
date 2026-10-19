@@ -3,7 +3,7 @@ import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
 import wrap from '../ol/ol.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
@@ -23,6 +23,8 @@ const getIsoStringFromDate = dateValue => dateValue.toLocaleString("sv-SE").repl
 
 const pointCloudExtension = "3DTILES_draco_point_compression";
 
+const elementName = 'sitna-3d-scenes';
+
 class ScenesEntity {
     constructor() {
         this.scenesTitle="";
@@ -38,9 +40,8 @@ class ScenesEntity {
     }    
 }
 
-class Scenes extends Control {
+class Scenes extends WebComponentControl {
     #scenesList = [];
-    #sortable;
     #pointAdjustTime;
     constructor(div,data) {
         super(...arguments);
@@ -88,7 +89,11 @@ class Scenes extends Control {
     }
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-scenes.mjs');        
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-scenes" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-scenes.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -230,5 +235,6 @@ class Scenes extends Control {
 }
 
 Scenes.prototype.CLASS = 'tc-ctl-scenes';
+customElements.get(elementName) || customElements.define(elementName, Scenes);
 TC.control.Scenes = Scenes;
 export default Scenes;

@@ -5,13 +5,17 @@ import TC from '../../TC.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-const optionElementName = 'sitna-language-option';
 class LanguageSelectorModel {
     constructor() {
         this.selectLanguage = "";
     }
 }
 class LanguageOption extends HTMLElement {
+
+    static {
+        customElements.define('sitna-language-option', this);
+    }
+
     #link;
 
     constructor(options) {
@@ -106,11 +110,13 @@ class LanguageOption extends HTMLElement {
 }
 
 LanguageOption.prototype.CLASS = 'tc-ctl-lang-link';
-customElements.get(optionElementName) || customElements.define(optionElementName, LanguageOption);
-
-const controlElementName = 'sitna-language-select'
 
 class LanguageSelector extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-language-select', this);
+    }
+
     static PARAMETER_NAME = "lang";
     static COOKIE_NAME = 'SITNA.language';
     static #currentLocale;
@@ -238,7 +244,11 @@ class LanguageSelector extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-lang-select.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-lang-select" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lang-select.mjs'
+        );
         self.template = module.default;
     }
 
@@ -359,5 +369,4 @@ LanguageSelector.currentLocale;
 TC.control = TC.control || {};
 TC.control.LanguageSelector = LanguageSelector;
 LanguageSelector.prototype.CLASS = 'tc-ctl-lang-select';
-customElements.get(controlElementName) || customElements.define(controlElementName, LanguageSelector);
 export default LanguageSelector;

@@ -13,8 +13,6 @@ const classNameAvailable = 'tc-ctl-img-magnified';
 const noAnchorClassName = 'tc-ctl-img-magnifier-no-anchor';
 const bgClassName = '.tc-ctl-img-magnifier-bg';
 
-const elementName = 'sitna-image-magnifier';
-
 class ImageMagnifierModel {
     constructor() {
         this.textToClose = "";
@@ -23,6 +21,11 @@ class ImageMagnifierModel {
 }
 
 class ImageMagnifier extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-image-magnifier', this);
+    }
+
     #classSelector = '.' + className;     
     #parent;
     #zoom;
@@ -200,5 +203,4 @@ class ImageMagnifier extends WebComponentControl {
 TC.control = TC.control || {};
 ImageMagnifier.prototype.CLASS = 'tc-ctl-img-magnifier';
 TC.control.ImageMagnifier = ImageMagnifier;
-customElements.get(elementName) || customElements.define(elementName, ImageMagnifier);
 export default ImageMagnifier;

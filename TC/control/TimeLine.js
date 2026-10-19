@@ -9,7 +9,6 @@ import WebComponentControl from './WebComponentControl.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-const elementName = 'sitna-time-control';
 const timeSeparatorChar = 'T';
 const splitDateTimeString = value => value.split(timeSeparatorChar);
 const getDateStringFromDateTimeString = value => splitDateTimeString(value)[0];
@@ -176,6 +175,10 @@ class TimeControlModel{
 
 class TimeControl extends WebComponentControl {
 
+    static {
+        customElements.define('sitna-time-control', this);
+    }
+
     static adjustTimeToSteps = (firstTime, step, value) => firstTime + Math.floor((value - firstTime) / step) * step;
     static adjustTimeToRange = (range, value) => range.includes(value) ? value : findClosestNumber(range,value) ;
     static frameRate = 0.5; //-- frames per second --> por defecto
@@ -271,7 +274,11 @@ class TimeControl extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-timeline.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-timeline" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-timeline.mjs'
+        );
         self.template = module.default;
     }
     async register(map) {
@@ -472,7 +479,7 @@ class TimeControl extends WebComponentControl {
     }
 
 }
-customElements.get(elementName) || customElements.define(elementName, TimeControl);
+
 TimeControl.prototype.CLASS = 'tc-ctl-timecontrol';
 TC.control.TimeControl = TimeControl;
 

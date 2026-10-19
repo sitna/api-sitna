@@ -4,8 +4,6 @@ import Util from '../Util.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
-const elementName = 'sitna-fullscreen';
-
 const document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
 class FullScreenModel {
     constructor() {
@@ -14,6 +12,11 @@ class FullScreenModel {
 }
 
 class FullScreen extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-fullscreen', this);
+    }
+
     #byBtn = false;
 
     async register(map) {
@@ -121,7 +124,11 @@ class FullScreen extends WebComponentControl {
     }
 
     async loadTemplates() {
-        const module = await import('../templates/tc-ctl-fscreen.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-fscreen" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-fscreen.mjs'
+        );
         this.template = module.default;
     }
 
@@ -132,5 +139,4 @@ class FullScreen extends WebComponentControl {
 }
 
 FullScreen.prototype.CLASS = 'tc-ctl-fscreen';
-customElements.get(elementName) || customElements.define(elementName, FullScreen);
 export default FullScreen;
