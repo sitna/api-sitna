@@ -116,8 +116,8 @@ TC.filter = filter;
 /**
  * @event SITNA.Map#sitna:layerupdate
  * @type {SITNA.layer.LayerEvent}
- * @description Evento que se dispara cuando una capa del mapa se ha actualizado.
- * El evento se dispara una vez que la capa ha cargado todos sus datos y cada vez que se recarga.
+ * @summary Evento que se dispara cuando una capa del mapa se ha actualizado.
+ * @description El evento se dispara una vez que la capa ha cargado todos sus datos y cada vez que se recarga.
  * @property {SITNA.layer.Layer} layer - Capa que se ha actualizado.
  * @see SITNA.Map#sitna:layererror
  * @example <caption>[Ver en vivo](../examples/Event.layerupdate.html)</caption> {@lang html}
@@ -409,7 +409,7 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Añade una capa al mapa. Si se le pasa un objeto que implementa la interfaz {@link LayerOptions} como parámetro `layer`
+     * Si se le pasa un objeto que implementa la interfaz {@link LayerOptions} como parámetro `layer`
      * y tiene definida la propiedad `url`, establece por defecto
      * el tipo de capa a [SITNA.Consts.layerType.KML]{@link SITNA.Consts} si la URL acaba en _**.kml**_.
      * 
@@ -418,6 +418,9 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Añade una capa al mapa.
+     * @fires SITNA.Map#sitna:layeradd
+     * 
      * @param {string|LayerOptions|SITNA.layer.Layer} layer - Identificador de capa, objeto de opciones de capa o
      * instancia de la clase {@link SITNA.layer.Layer}.
      * @param {function} [callback] Función a la que se llama tras ser añadida la capa.     
@@ -505,11 +508,12 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      */
 
     /**
-     * Añade un control al mapa. Un control es un objeto que implementa la interfaz {@link MapControl}.
+     * Un control es un objeto que implementa la interfaz {@link MapControl}.
      * @method addControl
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Añade un control al mapa.
      * @param {string|MapControl|ControlOptions} control - Nombre de control, objeto que implementa la interfaz {@link MapControl} u objeto de opciones de control.
      * @param {ControlOptions} [options] Opciones de configuración del control.     
      * @returns {Promise<MapControl>} Objeto de control añadido.
@@ -929,10 +933,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      */
 
     /**
-     * Exporta el mapa a una imagen PNG. Para poder utilizar este método hay que establecer la opción `crossOrigin` al instanciar {@link SITNA.Map}. 
+     * Para poder utilizar este método hay que establecer la opción `crossOrigin` al instanciar {@link SITNA.Map}. 
      * @method exportImage
      * @memberof SITNA.Map
      * @instance
+     * @summary Exporta el mapa a una imagen PNG.
      * @return {string} Imagen en un [data URI](https://developer.mozilla.org/es/docs/Web/HTTP/Basics_of_HTTP/Datos_URIs).
      * @see [Atributos de configuración CORS]{@link https://developer.mozilla.org/es/docs/Web/HTML/Atributos_de_configuracion_CORS}
      * @example <caption>[Ver en vivo](../examples/Map.exportImage.html)</caption> {@lang html} 
@@ -959,10 +964,64 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
      */
 
     /**
-     * Importa entidades geográficas desde el contenido de un archivo geográfico. El formato del archivo se detecta automáticamente a partir de su contenido, por lo que no es necesario especificar el formato.
+     * @method exportFeatures
+     * @memberof SITNA.Map
+     * @instance
+     * @async
+     * @summary Exporta las entidades pasadas como parámetro a un archivo geográfico en memoria.
+     * @param {SITNA.feature.Feature[]} features - Lista de entidades geográficas a exportar.
+     * @param {object} options - Opciones de exportación.
+     * @param {boolean} [options.adaptPropertyNames=false] - Determina si se adaptarán los nombres de las propiedades 
+     * de las entidades geográficas a los requisitos de formato del archivo geográfico de salida. 
+     * Por ejemplo, en el caso de GeoPackage, los nombres de las propiedades se adaptarán a un texto sin caracteres especiales ni espacios.
+     * @param {string} [options.fileName] - Nombre del archivo geográfico de salida.
+     * @param {string} options.format - Formato del archivo geográfico de salida. El valor de este parámetro es cualquiera 
+     * de los de la propiedad `format` de {@link SITNA.Consts}.
+     * @return {Promise<string|Blob>} Contenido del archivo geográfico resultante de la exportación.
+     * La promesa se resuelve con un valor de tipo `string` para formatos de texto (por ejemplo, GeoJSON o KML) y con un `Blob` 
+     * para formatos binarios (por ejemplo, GeoPackage), dependiendo de lo que acepte cada formato como contenido de archivo geográfico.
+     * @example <caption>[Ver en vivo](../examples/Map.exportFeatures.html)</caption> {@lang html}
+    <form>
+        <select id="format">
+            <option value="JSON">GeoJSON</option>
+            <option value="KML">KML</option>
+            <option value="GML">GML</option>
+            <option value="WKT">WKT</option>
+        </select>
+        <button type="button" id="export">Exportar entidades geográficas dibujadas</button>
+        <textarea id="output">
+        </textarea>
+    </form>
+    <div id="my-map"></div>
+    <script>
+        // Creamos un mapa con un control de dibujo.
+        const myMap = new SITNA.Map("my-map", {
+            layout: "layout/ctl-container",
+            controls: {
+                drawMeasureModify: {
+                    div: "slot1"
+                }
+            }
+        });
+
+        // Cuando se pulse el botón de exportar, se obtendrán las entidades geográficas dibujadas y se exportarán al formato seleccionado.
+        document.getElementById("export").addEventListener("click", async () => {
+            // Obtenemos el control de dibujo mediante una consulta al DOM
+            const drawControl = document.querySelector("sitna-draw-measure-modify");
+            const features = (await drawControl.getLayer()).features;
+            document.getElementById("output").value = await myMap.exportFeatures(features, {
+                format: document.getElementById("format").value
+            });
+        });
+    </script>
+     */
+
+    /**
+     * El formato del archivo se detecta automáticamente a partir de su contenido, por lo que no es necesario especificar el formato.
      * @method importDocument
      * @memberof SITNA.Map
      * @instance
+     * @summary Importa entidades geográficas desde el contenido de un archivo geográfico.
      * @param {string|ArrayBuffer} content - Contenido del archivo geográfico a importar. Es de tipo `string` para archivos de texto (por ejemplo, GeoJSON o KML) y `ArrayBuffer` para archivos binarios (por ejemplo, GeoPackage).
      * @return {Promise<SITNA.feature.Feature[]>} Promesa que se resuelve con un array de entidades geográficas importadas.
      * @example <caption>[Ver en vivo](../examples/Map.importDocument.html)</caption> {@lang html}
@@ -1278,20 +1337,20 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     */
 
     /**
-     * Registra un evento del mapa.
      * @method addEventListener
      * @memberof SITNA.Map
      * @instance
+     * @summary Registra un evento del mapa.
      * @param {string} event - Tipo de evento.
      * @param {function} listener - Función a la que se le pasa el evento como parámetro.     
      * @see SITNA.layer.LayerEvent
      */
 
     /**
-     * Elimina un detector de evento de mapa previamente registrado con [addEventListener]{@link SITNA.Map#addEventListener}.
      * @method removeEventListener
      * @memberof SITNA.Map
      * @instance
+     * @summary Elimina un detector de evento de mapa previamente registrado con [addEventListener]{@link SITNA.Map#addEventListener}.
      * @param {string} event - Tipo de evento.
      * @param {function} listener - Función a eliminar de la lista de detectores de evento.     
      * @see SITNA.layer.LayerEvent
@@ -1403,11 +1462,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Obtiene los valores ({@link SITNA.SearchResultItem}) de los municipios disponibles en la capa de IDENA.
      * @method getMunicipalities
      * @memberof SITNA.Map
      * @instance
      * @async  
+     * @summary Obtiene los valores ({@link SITNA.SearchResultItem}) de los municipios disponibles en la capa de IDENA.
      * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.
      * @returns {Promise<SITNA.SearchResultItem[]>} Lista de municipios.
      * @example <caption>[Ver en vivo](../examples/Map.getMunicipalities.html)</caption> {@lang html} 
@@ -1457,11 +1516,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
         return this.getQueryableData(Consts.mapSearchType.MUNICIPALITY, callback);
     }
     /**
-     * Obtiene los valores ({@link SITNA.SearchResultItem}) de los cascos urbanos disponibles en la capa de IDENA.
      * @method getUrbanAreas
      * @memberof SITNA.Map
      * @instance
      * @async  
+     * @summary Obtiene los valores ({@link SITNA.SearchResultItem}) de los cascos urbanos disponibles en la capa de IDENA.
      * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.  
      * @returns {Promise<SITNA.SearchResultItem[]>} Lista de cascos urbanos.
      * @example <caption>[Ver en vivo](../examples/Map.getUrbanAreas.html)</caption> {@lang html}
@@ -1512,11 +1571,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Obtiene los valores ({@link SITNA.SearchResultItem}) de las mancomunidades de residuos disponibles en la capa de IDENA. 
      * @method getCommonwealths
      * @memberof SITNA.Map
      * @instance
      * @async  
+     * @summary Obtiene los valores ({@link SITNA.SearchResultItem}) de las mancomunidades de residuos disponibles en la capa de IDENA. 
      * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.  
      * @returns {Promise<SITNA.SearchResultItem[]>} Lista de mancomunidades.
      * @example <caption>[Ver en vivo](../examples/Map.getCommonwealths.html)</caption> {@lang html}
@@ -1567,11 +1626,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Obtiene los valores ({@link SITNA.SearchResultItem}) de los concejos disponibles en la capa de IDENA. 
      * @method getCouncils
      * @memberof SITNA.Map
      * @instance
      * @async  
+     * @summary Obtiene los valores ({@link SITNA.SearchResultItem}) de los concejos disponibles en la capa de IDENA.
      * @param {SITNA.Map~SearchDataCallback} callback - Función a la que se llama tras obtener los datos.  
      * @returns {Promise<SITNA.SearchResultItem[]>} Lista de concejos.
      * @example <caption>[Ver en vivo](../examples/Map.getCouncils.html)</caption> {@lang html}
@@ -1622,11 +1681,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Busca la mancomunidad de residuos y pinta en el mapa la entidad geográfica encontrada que corresponda al identificador indicado.
      * @method searchCommonwealth
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Busca la mancomunidad de residuos y pinta en el mapa la entidad geográfica encontrada que corresponda al identificador indicado.
      * @param {string} id Identificador de la entidad geográfica a pintar.
      * @param {SITNA.Map~SearchByIdCallback} [callback] Función a la que se llama tras aplicar el filtro.  
      * @returns {Promise<string>} Identificador de consulta realizada. Su valor es `null` si no hay resultado.
@@ -1657,11 +1716,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Busca el concejo que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
      * @method searchCouncil
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Busca el concejo que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
      * @param {string} id - Identificador de la entidad geográfica a pintar.
      * @param {SITNA.Map~SearchByIdCallback} [callback] - Función a la que se llama tras aplicar el filtro.  
      * @returns {Promise<string>} Identificador de consulta realizada. Su valor es `null` si no hay resultado.
@@ -1692,11 +1751,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Busca el casco urbano que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
      * @method searchUrbanArea
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Busca el casco urbano que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
      * @param {string} id Identificador de la entidad geográfica a pintar.
      * @param {SITNA.Map~SearchByIdCallback} [callback] Función a la que se llama tras aplicar el filtro.  
      * @returns {Promise<string>} Identificador de consulta realizada. Su valor es `null` si no hay resultado.
@@ -1726,11 +1785,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Busca el municipio que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
      * @method searchMunicipality
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Busca el municipio que corresponda con el identificador pasado como parámetro y pinta la entidad geográfica encontrada en el mapa.
      * @param {string} id Identificador de la entidad geográfica a pintar.
      * @param {SITNA.Map~SearchByIdCallback} [callback] Función a la que se llama tras aplicar el filtro.  
      * @returns {Promise<string>} Identificador de consulta realizada. Su valor es `null` si no hay resultado.
@@ -1862,11 +1921,11 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Busca y pinta en el mapa la entidad geográfica encontrada correspondiente al identificador establecido.
      * @method searchFeature
      * @memberof SITNA.Map
      * @instance
      * @async
+     * @summary Busca y resalta en el mapa la entidad geográfica encontrada correspondiente al identificador establecido.
      * @param {string} layer - Nombre de la capa de IDENA en la cual buscar.
      * @param {string} field - Campo de la capa de IDENA en el cual buscar.
      * @param {string} id - Identificador de la entidad geográfica por el cual filtrar.
@@ -2018,10 +2077,10 @@ const Map = globalThis.SITNA?.Map || class SitnaMap extends BasicMap {
     }
 
     /**
-     * Elimina del mapa la entidad geográfica encontrada en la última búsqueda. 
      * @method removeSearch
      * @memberof SITNA.Map
      * @instance
+     * @summary Elimina del mapa la entidad geográfica encontrada en la última búsqueda.
      * @param {function} [callback] Función a la que se llama tras eliminar la entidad geográfica.  
      * @example <caption>[Ver en vivo](../examples/Map.removeSearch.html)</caption> {@lang html} 
      * <div class="instructions query">
