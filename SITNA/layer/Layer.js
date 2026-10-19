@@ -46,15 +46,16 @@ const cleanOgcUrl = function (url) {
 };
 
 /**
- * Espacio de nombres de las capas del mapa.
  * @namespace SITNA.layer
+ * @summary Espacio de nombres de las capas del mapa.
  */
 
 /**
- * Capa de mapa. Esta clase no debería instanciarse directamente, sino mediante alguna de las clases que heredan de ella.
+ * Esta clase no debería instanciarse directamente, sino mediante alguna de las clases que heredan de ella.
  * @class Layer
  * @memberof SITNA.layer
  * @abstract
+ * @summary Clase abstracta que representa una capa de mapa.
  * @param {LayerOptions} [options] Objeto de opciones de configuración de la capa.
  * @see SITNA.Map#getLayer
  */
