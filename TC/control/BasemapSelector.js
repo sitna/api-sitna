@@ -190,9 +190,21 @@ class BasemapSelector extends MapContents {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-bms.mjs');
-        const nodeTemplatePromise = import('../templates/tc-ctl-bms-node.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-bms-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-bms" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-bms.mjs'
+        );
+        const nodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-bms-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-bms-node.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-bms-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-bms-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -204,7 +216,7 @@ class BasemapSelector extends MapContents {
     async render(callback) {
         const self = this;
         self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', { isDialog: true });
-        await super.render(callback, Util.extend({}, self.options, { controlId: self.id }));
+        await super.render(callback, Util.extend({}, self.options, { controlId: self.getId() }));
         self.controller = new Controller(self.model, new Observer(self.div));
         self.dialogController =new Controller(self.modelDialog, new Observer(self._dialogDiv));
         return self;
@@ -301,7 +313,7 @@ class BasemapSelector extends MapContents {
                 self.layerInfos[displayLayer.id] = displayLayer.getInfo(displayLayer.names[0]);
             }
 
-            self.getRenderedHtml(self.CLASS + '-node', { layer: self.layerTrees[displayLayer.id], info: self.layerInfos[displayLayer.id], controlId: self.id }).then(function (out) {
+            self.getRenderedHtml(self.CLASS + '-node', { layer: self.layerTrees[displayLayer.id], info: self.layerInfos[displayLayer.id], controlId: self.getId() }).then(function (out) {
                 const parser = new DOMParser();
                 const newLi = parser.parseFromString(out, 'text/html').body.firstChild;
                 var uid = newLi.dataset.layerUid;
@@ -584,7 +596,7 @@ class BasemapSelector extends MapContents {
         const processLayer = bl => {
             if (bl) {
                 const info = bl.getInfo ? bl.getInfo(bl.names[0]) : null;
-                return { layer: bl, info: info, controlId: self.id };
+                return { layer: bl, info: info, controlId: self.getId() };
             }
             return {};
         };
