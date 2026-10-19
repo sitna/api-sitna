@@ -153,3 +153,19 @@ de la API SITNA mediante el archivo `angular.json`, añadiendo las siguientes l�
     }
 ],
 ```
+
+## Instalar la API SITNA como WebJar
+La API SITNA está también disponible como WebJar en el repositorio [Maven Central](https://central.sonatype.com/artifact/io.github.sitna/api-sitna). 
+Para añadirlo, abre una consola de comandos en la carpeta donde está el archivo `pom.xml` de tu proyecto y ejecuta el siguiente comando,
+modificando la ruta al archivo JAR según corresponda:
+```
+mvn install:install-file -Dfile=path/to/api-sitna-webjar.jar -DgroupId=io.github.sitna -DartifactId=api-sitna -Dversion=4.10.0 -Dpackaging=jar
+```
+Una vez instalado, se añadirá la dependencia en el archivo `pom.xml` de tu proyecto:
+``` xml
+<dependency>
+    <groupId>io.github.sitna</groupId>
+    <artifactId>api-sitna</artifactId>
+    <version>4.10.0</version>
+</dependency>
+```
