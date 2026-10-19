@@ -15,6 +15,15 @@ export default class LayerEvent extends Event {
     layer;
     newData;
     message;
+
+    static type = {
+        BASELAYERCHANGE: 'sitna:baselayerchange',
+        LAYERADD: 'sitna:layeradd',
+        LAYERERROR: 'sitna:layererror',
+        LAYERREMOVE: 'sitna:layerremove',
+        LAYERUPDATE: 'sitna:layerupdate',
+    };
+
     constructor(type, options) {
         super(type, options);
         Object.assign(this, options);
