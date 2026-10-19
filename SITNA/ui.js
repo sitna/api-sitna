@@ -4,8 +4,9 @@ import Toggle from './ui/Toggle.js';
 import Tab from './ui/Tab.js';
 
 /**
- * Espacio de nombres de los componentes de la interfaz de usuario. Cada componente es un [Web Component](https://developer.mozilla.org/es/docs/Web/API/Web_components) que puede ser instanciado directamente en HTML o creado dinámicamente con JavaScript.
+ * Cada componente es un [Web Component](https://developer.mozilla.org/es/docs/Web/API/Web_components) que puede ser instanciado directamente en HTML o creado dinámicamente con JavaScript.
  * @namespace SITNA.ui
+ * @summary Espacio de nombres de los componentes de la interfaz de usuario.
  */
 
 export default {

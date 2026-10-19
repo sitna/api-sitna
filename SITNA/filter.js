@@ -6,8 +6,8 @@ import Layer from './layer/Layer.js';
 //const filter = { and, bbox, between, contains, disjoint, during, dwithin, equalTo, greaterThan, greaterThanOrEqualTo, intersects, isNull, lessThan, lessThanOrEqualTo, like, not, notEqualTo, or, within }
 
 /**
-* Espacio de nombres de funciones para la contrucción de filtros en capas [Raster]{@link SITNA.layer.Raster} y [Vector]{@link SITNA.layer.Vector}.
 * @namespace SITNA.filter
+* @summary Espacio de nombres de funciones para la contrucción de filtros en capas [Raster]{@link SITNA.layer.Raster} y [Vector]{@link SITNA.layer.Vector}.
 */
 
 ol_filter.prototype.getFilterText = function (dataOrLayer) {
@@ -51,7 +51,7 @@ const Filter = ol_filter;
  * @memberof SITNA.filter
  * @param {...SITNA.filter.Filter} condiciones Lista de condiciones de filtrado.
  * @returns {SITNA.filter.Filter} Filtro `<And>`
-* @example <caption>Ejemplo de contatenación de filtros mediante el operador lógico `<And>` [Ver en vivo](../examples/filter.and.html)</caption> {@lang html}
+ * @example <caption>Ejemplo de contatenación de filtros mediante el operador lógico `<And>` [Ver en vivo](../examples/filter.and.html)</caption> {@lang html}
  * <div id="mapa"></div>
  * <script>
  *    // Establecemos un layout simplificado apto para hacer demostraciones de controles.
