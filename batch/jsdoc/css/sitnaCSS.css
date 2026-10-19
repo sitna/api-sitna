@@ -49,3 +49,7 @@ td.attributes + td:not(.last) {
     /* Celda de valores por defecto */
     font-family: monospace;
 }
+
+.page-header .summary {
+    display: none;
+}
