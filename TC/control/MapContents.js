@@ -245,7 +245,7 @@ class MapContents extends Control {
                         img.src = Consts.BLANK_IMAGE
                     }
                     else
-                        TC.error(err);
+                        TC.error(Error.isError(err) ? err : (err.text || 'HTTP status: ' + err.status));
                 });
             }
         }
