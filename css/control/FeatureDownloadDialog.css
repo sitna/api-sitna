@@ -1,7 +1,7 @@
 ﻿
 .tc-ctl-dldlog-dl {
     padding: 0.5em;
-    background-image: linear-gradient(45deg, var(--main-bg-color) 25%, var(--sec-divider-color) 25%, var(--sec-divider-color) 50%, var(--main-bg-color) 50%, var(--main-bg-color) 75%, var(--sec-divider-color) 75%, var(--sec-divider-color) 100%);
+    background-image: linear-gradient(45deg, var(--sitna-background-color) 25%, var(--sec-divider-color) 25%, var(--sec-divider-color) 50%, var(--sitna-background-color) 50%, var(--main-bg-color) 75%, var(--sec-divider-color) 75%, var(--sec-divider-color) 100%);
     /* background-size: 3.13px 3.13px; */
     background-size: 4.66px 4.66px;
     border-radius: 0.3em;
@@ -49,10 +49,10 @@
 .tc-ctl-dldlog .tc-ctl-dldlog-dl h2 {
     color: var(--title-color);
     text-transform: lowercase;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     border-bottom: 1px solid;
     border-bottom-color: var(--main-divider-color);
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     font-size: 1.1em;
     font-weight: bold;
     padding: 0.2em;
@@ -141,9 +141,9 @@
         display: none;
     }
 
-    .tc-ctl-dldlog .tc-ctl-dldlog-elev-ip label input[type=radio]:checked ~ span {
-        border-color: var(--main-hl-color);
-    }
+.tc-ctl-dldlog .tc-ctl-dldlog-elev-ip label input[type=radio]:checked ~ span {
+    border-color: var(--sitna-main-accent-color);
+}
 
     .tc-ctl-dldlog .tc-ctl-dldlog-elev-ip label input[type=radio][value="0"] ~ span {
         background-image: url(../img/uip-features.svg);

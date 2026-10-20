@@ -61,8 +61,8 @@
 }
 
 .tc-ctl-tctr-select input[type=radio]:checked ~ span {
-    border-color: var(--main-hl-color);
-    color: var(--main-hl-color);
+    border-color: var(--sitna-main-accent-color);
+    color: var(--sitna-main-accent-color);
     z-index: 10007;
-    border-bottom-color: var(--main-bg-color);
+    border-bottom-color: var(--sitna-background-color);
 }

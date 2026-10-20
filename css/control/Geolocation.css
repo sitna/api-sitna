@@ -403,10 +403,10 @@ div.tc-ctl-geolocation-track-snap-info {
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li.tc-checked sitna-button[variant="minimal"] {
-        --sitna-minimal-button-background-color: color-mix(in hsl, var(--list-hl-bg-color) 85%, var(--text-main-color));
-        --sitna-disabled-button-text-color: color-mix(in hsl, var(--list-hl-bg-color) 80%, var(--text-main-color));
-        --sitna-disabled-button-background-color: color-mix(in hsl, var(--list-hl-bg-color) 90%, var(--text-main-color));
-        --sitna-disabled-button-border-color: color-mix(in hsl, var(--list-hl-bg-color) 90%, var(--text-main-color));
+        --sitna-minimal-button-background-color: color-mix(in hsl, var(--list-hl-bg-color) 85%, var(--sitna-text-color));
+        --sitna-disabled-button-text-color: color-mix(in hsl, var(--list-hl-bg-color) 80%, var(--sitna-text-color));
+        --sitna-disabled-button-background-color: color-mix(in hsl, var(--list-hl-bg-color) 90%, var(--sitna-text-color));
+        --sitna-disabled-button-border-color: color-mix(in hsl, var(--list-hl-bg-color) 90%, var(--sitna-text-color));
     }
 
     .tc-ctl-geolocation .tc-ctl-geolocation-track-available-lst > li div.tc-ctl-geolocation-tools-sim {
@@ -447,7 +447,7 @@ div.tc-ctl-geolocation-track-snap-info {
             font-weight: bold;
             font-family: var(--sitna-text-font-family);
             font-size: 85%;
-            color: var(--text-sec-color);
+            color: var(--sitna-secondary-text-color);
             text-decoration: none;
             cursor: auto;
             white-space: nowrap;

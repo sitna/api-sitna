@@ -33,7 +33,7 @@
         text-align: center;
         box-sizing: border-box;
         border: 0.1em solid transparent;
-        background-color: var(--main-bg-color);
+        background-color: var(--sitna-background-color);
         display: inline-block;
         flex-grow: 1;
     }

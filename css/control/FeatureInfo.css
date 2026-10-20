@@ -28,7 +28,7 @@
     }
 
 .tc-ctl-finfo-coords-val {
-    color: var(--text-main-color);
+    color: var(--sitna-text-color);
 }
 
 .tc-ctl-finfo ul.tc-ctl-finfo-services, .tc-ctl-finfo ul.tc-ctl-finfo-layers, .tc-ctl-finfo ul.tc-ctl-finfo-features {
@@ -76,7 +76,7 @@
     font-size: 0.9em;
     margin: 0 0 0.5em 0;
     color: var(--title-color);
-    text-shadow: 0 0 0.3em var(--main-bg-color);
+    text-shadow: 0 0 0.3em var(--sitna-background-color);
     cursor: pointer;
     user-select: text;
 }
@@ -109,14 +109,14 @@
 
 .tc-ctl-finfo .tc-ctl-finfo-result pre {
     width: 40vw;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     margin: 0;
 }
 
 .tc-ctl-finfo .tc-ctl-finfo-result iframe {
     width: 40vw;
     height: 40dvh;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     /*border:0;
     box-shadow: none;
     display: block;*/
@@ -196,7 +196,7 @@ audio.tc-audio-attr {
     font-style: italic;
     color: var(--disabled-text-color);
     padding: 0.5em;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     list-style-type: none;
     box-sizing: border-box;
     border-radius: 0.2em;
@@ -212,7 +212,7 @@ audio.tc-audio-attr {
     font-size: 0.67em;
     font-weight: bold;
     background-color: var(--sec-divider-color);
-    color: var(--text-sec-color);
+    color: var(--sitna-secondary-text-color);
     vertical-align: top;
 }
 
@@ -235,7 +235,7 @@ audio.tc-audio-attr {
 
     .tc-ctl-finfo ul.tc-ctl-finfo-features li.tc-checked table:not(.tc-complex-attr) {
         cursor: zoom-in;
-        outline: 0.2em var(--main-hl-color) solid;
+        outline: 0.2em var(--sitna-main-accent-color) solid;
     }
 
 /* Para hacer sitio al botón de herramientas */
@@ -273,7 +273,7 @@ div.tc-3d .tc-ctl-finfo-coords-pair.tc-ctl-finfo-elev:before, div.tc-3d .tc-ctl-
 }
 
 .tc-ctl-finfo-btn {
-    order: 2;
+    order: 3;
     display: flex;
     gap: 0.3em;
     align-items: center;

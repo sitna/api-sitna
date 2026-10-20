@@ -127,8 +127,8 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
     }
 
 .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-modal-form input[type=radio]:checked + label {
-    background-color: var(--main-hl-color);
-    border-color: var(--main-hl-color);
+    background-color: var(--sitna-main-accent-color);
+    border-color: var(--sitna-main-accent-color);
 }
 
 .tc-ctl-wfsquery-modal-window .tc-modal-body .tc-ctl-wfsquery-where {
@@ -286,13 +286,13 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 }
 
 .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading {
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
 }
 
     .tc-ctl-wfsquery-modal-window .tc-modal-body.tc-loading:before {
         content: " ";
         border-radius: 50%;
-        box-shadow: var(--sitna-background-color) 6vmin 0 0 0, var(--sitna-background-color) 4.243vmin 4.243vmin 0 0, var(--main-bg-color) 0 6vmin 0 0, var(--sitna-background-color) -4.243vmin 4.243vmin 0 0, var(--sitna-background-color) -6vmin 0 0 0, var(--sitna-background-color) -4.243vmin -4.243vmin 0 0, var(--sitna-background-color) 0 -6vmin 0 0, var(--sitna-background-color) 4.243vmin -4.243vmin 0 0;
+        box-shadow: var(--sitna-background-color) 6vmin 0 0 0, var(--sitna-background-color) 4.243vmin 4.243vmin 0 0, var(--sitna-background-color) 0 6vmin 0 0, var(--sitna-background-color) -4.243vmin 4.243vmin 0 0, var(--sitna-background-color) -6vmin 0 0 0, var(--sitna-background-color) -4.243vmin -4.243vmin 0 0, var(--sitna-background-color) 0 -6vmin 0 0, var(--sitna-background-color) 4.243vmin -4.243vmin 0 0;
         position: absolute;
         width: 3vmin;
         height: 3vmin;
@@ -423,7 +423,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 
 
 .tc-ctl-wfsquery-list.tc-ctl-search-list {
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     border: 1px solid var(--sec-divider-color);
     border-radius: var(--sitna-border-radius);
     list-style-type: none;
@@ -451,7 +451,7 @@ tc-ctl-wfsquery .tc-ctl-wfsquery-dialog.tc-modal {
 }
 
 .tc-ctl-wfsquery-opt-geom {
-    color: var(--main-hl-color);
+    color: var(--sitna-main-accent-color);
 }
 
 .tc-modal.tc-ctl-wfsquery-dialog .tc-modal-form {

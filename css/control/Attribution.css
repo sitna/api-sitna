@@ -1,6 +1,6 @@
 ﻿.tc-ctl.tc-ctl-attrib {
     position: absolute;
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     font-size: 0.8em;
     bottom: 0;
     left: 50%;

@@ -81,8 +81,8 @@
         padding-top: 0.6rem;
         top: calc(-1 * var(--thumb-border-width));
         left: calc(-1 * var(--thumb-border-width));
-        color: var(--thumb-text-color);
-        text-shadow: 0.1em 0.1em 0 var(--thumb-text-shadow-color), 0.1em -0.1em 0 var(--thumb-text-shadow-color), -0.1em 0.1em 0 var(--thumb-text-shadow-color), -0.1em -0.1em 0 var(--thumb-text-shadow-color);
+        color: var(--sitna-thumbnail-text-color);
+        text-shadow: 0.1em 0.1em 0 var(--sitna-thumbnail-text-shadow-color), 0.1em -0.1em 0 var(--sitna-thumbnail-text-shadow-color), -0.1em 0.1em 0 var(--sitna-thumbnail-text-shadow-color), -0.1em -0.1em 0 var(--sitna-thumbnail-text-shadow-color);
         height: calc(3.9rem - 2 * var(--thumb-border-width));
         width: 4rem;
     }
@@ -147,8 +147,8 @@
 }
 
 .tc-ctl-bms-more-dialog .tc-ctl-bms-node label span {
-    color: var(--thumb-text-color);
-    text-shadow: var(--thumb-text-shadow-color) -0.06rem 0, var(--thumb-text-shadow-color) 0rem 0.08rem, var(--thumb-text-shadow-color) 0.08rem 0, var(--thumb-text-shadow-color) 0rem -0.06rem, var(--thumb-text-shadow-color) 0.06rem 0.08rem;
+    color: var(--sitna-thumbnail-text-color);
+    text-shadow: var(--sitna-thumbnail-text-shadow-color) -0.06rem 0, var(--sitna-thumbnail-text-shadow-color) 0rem 0.08rem, var(--sitna-thumbnail-text-shadow-color) 0.08rem 0, var(--sitna-thumbnail-text-shadow-color) 0rem -0.06rem, var(--sitna-thumbnail-text-shadow-color) 0.06rem 0.08rem;
 }
 
 .tc-details .tc-ctl-bms-node label {
@@ -163,7 +163,7 @@
     }
 
         .tc-details .tc-ctl-bms-node label span:after {
-            color: var(--thumb-text-color);
+            color: var(--sitna-thumbnail-text-color);
         }
 
 .tc-ctl-bms-node input[type=radio] ~ span {
@@ -173,7 +173,7 @@
 
 .tc-ctl-bms-node input[type=radio]:checked ~ span {
     cursor: default;
-    border-color: var(--main-hl-color);
+    border-color: var(--sitna-main-accent-color);
 }
 
 .tc-ctl-bms-node input[type=radio].tc-disabled ~ span:after {
@@ -184,7 +184,7 @@
     right: 0;
     text-shadow: none;
     font-size: 1.2em;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     width: 1.8em;
     height: 1.8em;
     line-height: 1.8em;
@@ -258,16 +258,16 @@ ul.tc-ctl-bms-branch input[type=radio] {
 }
 
     ul.tc-ctl-bms-branch input[type=radio]:checked + div {
-        background-color: var(--main-hl-color);
+        background-color: var(--sitna-main-accent-color);
         border: 1px solid;
-        border-color: var(--main-hl-color);
+        border-color: var(--sitna-main-accent-color);
     }
 
 .tc-ctl-bms-crs-code {
     display: inline-block;
     font-weight: bold;
     background-color: var(--sec-divider-color);
-    color: var(--text-sec-color);
+    color: var(--sitna-secondary-text-color);
     padding: 0.1em 0.2em;
     border-radius: calc(var(--sitna-border-radius) / 2);
 }

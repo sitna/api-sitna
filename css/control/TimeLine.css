@@ -153,7 +153,7 @@ sitna-time-control.tc-ctl .tc-ctl-timeline-datetime input[type="datetime-local"]
 .tc-time-dimension span.tc-ctl-lcat-leaf-time:before,
 .tc-time-dimension span.tc-ctl-lcat-leaf-time:hover:before,
 .tc-time-dimension tc-ctl-lcat-node.tc-ctl-lcat-leaf.tc-checked span.tc-ctl-lcat-leaf-time:before {
-    color: var(--text-main-color);
+    color: var(--sitna-text-color);
     font-style: normal;
-    cursor:default;
+    cursor: default;
 }

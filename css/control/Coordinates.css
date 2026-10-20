@@ -34,7 +34,7 @@
     background-color: #fff;
     opacity: 0.7;
     z-index: 9999;
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     font-size: 0.7em;
     padding: 0.2em;
     color: #999;
@@ -124,7 +124,7 @@ div.tc-ctl-coords-main {
 }
 
 .tc-ctl-coords-crs, .tc-ctl-coords-geocrs, .tc-ctl-coords-x, .tc-ctl-coords-y, .tc-ctl-coords-lat, .tc-ctl-coords-lon, .tc-ctl-coords-elevation {
-    color: var(--text-main-color);
+    color: var(--sitna-text-color);
     font-size: 1em;
 }
 
@@ -152,7 +152,7 @@ div.tc-ctl-coords-main {
     display: inline-block;
     font-weight: bold;
     background-color: var(--sec-divider-color);
-    color: var(--text-sec-color);
+    color: var(--sitna-secondary-text-color);
     padding: 0.1em 0.2em;
     border-radius: calc(var(--sitna-border-radius) / 2);
     pointer-events: none;

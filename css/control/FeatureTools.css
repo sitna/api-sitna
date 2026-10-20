@@ -2,7 +2,7 @@
 .tc-ctl-ftools {
     z-index: 10011;
     display: none;
-    order: 3;
+    order: 4;
     flex-grow: 3;
     gap: 0.2em;
 }
@@ -16,7 +16,7 @@
     .tc-ctl-ftools sitna-button {
         position: relative;
         font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
-        --sitna-minimal-button-text-color: var(--main-hl-color);
+        --sitna-minimal-button-text-color: var(--sitna-main-accent-color);
     }
 
         .tc-ctl-ftools sitna-button.tc-hidden {

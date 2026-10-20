@@ -24,7 +24,7 @@
 .tc-ctl-load-dots {
     position: absolute;
     top: 0;
-    background-color: var(--main-hl-color);
+    background-color: var(--sitna-main-accent-color);
     width: 20px;
     height: 20px;
     animation-name: bounce-fading-bar;

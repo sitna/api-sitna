@@ -35,7 +35,7 @@
     font-size: 0.67em;
     font-weight: bold;
     background-color: var(--sec-divider-color);
-    color: var(--text-sec-color);
+    color: var(--sitna-secondary-text-color);
     vertical-align: top;
 }
 
@@ -46,7 +46,7 @@
 
 .tc-ctl-wlm li.tc-ctl-wlm-elm {
     position: relative;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     border: 1px solid var(--sitna-tab-border-color);
     border-radius: var(--sitna-border-radius);
     padding: 0.3em;
@@ -56,11 +56,11 @@
 }
 
     .tc-ctl-wlm li.tc-ctl-wlm-elm.sortable-chosen {
-        background-color: color-mix(in srgb, var(--text-main-color) 10%, var(--main-bg-color));
+        background-color: color-mix(in srgb, var(--sitna-text-color) 10%, var(--sitna-background-color));
     }
 
         .tc-ctl-wlm li.tc-ctl-wlm-elm.sortable-chosen .tc-ctl-wlm-dd {
-            background-color: color-mix(in srgb, var(--text-main-color) 10%, var(--active-zone-bg-color));
+            background-color: color-mix(in srgb, var(--sitna-text-color) 10%, var(--active-zone-bg-color));
         }
 
     .tc-ctl-wlm li.tc-ctl-wlm-elm.tc-dragend {
@@ -404,7 +404,7 @@
     background-color: var(--sitna-bg11-txt1-color);
     z-index: 20000;
     border-radius: var(--sitna-border-radius);
-    color: var(--text-sec-color);
+    color: var(--sitna-secondary-text-color);
     padding: 0.3em;
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
 }

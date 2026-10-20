@@ -26,7 +26,7 @@ div.tc-ctl-toc-tree div.tc-ctl-toc-empty {
     font-style: italic;
     color: var(--disabled-text-color);
     padding: 0.5em;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     list-style-type: none;
 }
 
@@ -36,7 +36,7 @@ div.tc-ctl-toc-tree > div.tc-ctl-toc-empty.tc-hidden {
 
 .tc-ctl-toc li.tc-ctl-toc-node {
     position: relative;
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     margin: 0;
     padding: 0 20px;
     padding-right: 0;
@@ -56,7 +56,7 @@ div.tc-ctl-toc-tree > div.tc-ctl-toc-empty.tc-hidden {
 
     .tc-ctl-toc li.tc-ctl-toc-node > span {
         vertical-align: top;
-        background-color: var(--main-bg-color);
+        background-color: var(--sitna-background-color);
     }
 
     .tc-ctl-toc li.tc-ctl-toc-node sitna-toggle {
@@ -87,19 +87,19 @@ div.tc-ctl-toc-tree > div.tc-ctl-toc-empty.tc-hidden {
 .tc-ctl-toc ul.tc-ctl-toc-branch li.tc-ctl-toc-node:last-child {
     /* img/lastnode.png */
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALEAAACxABrSO9dQAAAAd0SU1FB9YIBhQIIhs+gc8AAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAFhJREFUOE/tzUEKgDAQBMEF//+Afe1IQLCRTryJgkJdkvRY3Z3aqmaSLP0DTwyM+5kXDdyx7zj3v9J1jD4yMB6taEQWkUZkEWlEFpFGZBFpRBaRRmTRKbUD3MALjd92TQsAAAAASUVORK5CYII=) no-repeat;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
 }
 
 .tc-ctl-toc ul.tc-ctl-toc-branch li.tc-ctl-toc-node.tc-collapsed:last-child {
     /* img/lastnode-collapsed.png */
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALEQAACxEBf2RfkQAAAAd0SU1FB9YIBhQIIhs+gc8AAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAGVJREFUOE/tzcEJgDAQBdEF+y8g1a4EBIdlEg2KJwPvEHW+0VrL2CJGMnPqH/hioL8fWR7op9xfGrhi53juf6U6VO4eUQmeDVS3BvpHMxqRRaQRWUQakUWkEVlEGpFFpBFZdMrYAVwrEFV8yTH0AAAAAElFTkSuQmCC) no-repeat;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
 }
 
 .tc-ctl-toc ul.tc-ctl-toc-branch li.tc-ctl-toc-leaf:last-child {
     /* img/lastleaf.png */
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAUCAYAAACEYr13AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALDwAACw8BkvkDpQAAAAd0SU1FB9YIBhQIIhs+gc8AAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjExR/NCNwAAAFdJREFUOE/tzTEKgDAQBdEF73+APe2XCOIUkxQWomDxqs38VHentqqZJEv/wBMD4z7zooG7jgH7lSw8fWRgPFrRiCwijcgi0ogsIo3IItKILCKNyKJLagc9jQWTqTPg4gAAAABJRU5ErkJggg==) no-repeat;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
 }
 
 .tc-ctl-toc ul.tc-ctl-toc-branch.tc-collapsed {

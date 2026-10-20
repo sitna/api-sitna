@@ -2,7 +2,7 @@
 .tc-ctl.tc-ctl-img-magnifier {
     position: fixed;
     z-index: 10010;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     cursor: pointer;
     padding: 10px;
     max-width: 100%;
@@ -21,16 +21,15 @@
     height: 100%;
 }
 
-.tc-ctl.tc-ctl-img-magnifier:before {    
-    content: " ";
-    width: 10px;
-    height: 10px;
-    background-color: var(--main-bg-color);
-    display: block;
-    position: absolute;    
-    transform: rotate(45deg);
-    
-}
+    .tc-ctl.tc-ctl-img-magnifier:before {
+        content: " ";
+        width: 10px;
+        height: 10px;
+        background-color: var(--sitna-background-color);
+        display: block;
+        position: absolute;
+        transform: rotate(45deg);
+    }
     .tc-ctl.tc-ctl-img-magnifier.tc-ctl-img-magnifier-no-anchor:before {
         display: none;
     }

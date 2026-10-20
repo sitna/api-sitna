@@ -56,7 +56,7 @@
     right: 0;
     width: 1em;
     height: 1em;
-    background-color: var(--main-hl-color);
+    background-color: var(--sitna-main-accent-color);
     z-index: 10000;
     animation-name: bounce-fading-bar;
     animation-duration: 1.3s;
