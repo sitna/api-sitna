@@ -1,6 +1,7 @@
 ﻿import TC from '../../TC.js';
 import Util from '../Util.js';
 import Consts from '../Consts.js';
+import Share from './Share.js';
 
 TC.control = TC.control || {};
 
@@ -8,32 +9,35 @@ TC.control = TC.control || {};
 TC.control.infoShare = {
 
     getDiv: function (divElement) {
-        const self = this;
-        return divElement ? divElement : self._dialogDiv;
+        if (divElement) return divElement;
+        if (this._dialogDiv) return this._dialogDiv;
+        if (this instanceof HTMLElement) return this;
+        return this.div;
     },
 
     getShareDialog: async function (divElement) {
-        const self = this;
-        const dialogDiv = self.getDiv(divElement);
-        if (!self._shareCtl) {
-            self._shareCtl = await self.map.addControl('share', {
-                id: self.getUID(),
-                div: dialogDiv.querySelector('.tc-modal-body .' + self.CLASS + '-share-dialog-ctl'),
-                includeControls: false
+        const dialogDiv = this.getDiv(divElement);
+        if (!this._shareCtl) {
+            const div = dialogDiv.querySelector('.tc-modal-body .' + this.CLASS + '-share-dialog-ctl');
+            this._shareCtl = await this.map.addControl('share', {
+                id: this.getUID(),
+                div,
+                includeControls: false,
+                modes: [Share.mode.LINK, Share.mode.HTML],
             });
-            self._shareCtl.caller = self;
-            self._shareCtl.extraParams = null;
+            div.id = this._shareCtl.id;
+            this._shareCtl.caller = this;
+            this._shareCtl.extraParams = null;
         }
-        return self._shareCtl;
+        return this._shareCtl;
     },
 
     onShowShareDialog: async function () {
-        const self = this;
-        self.toShare = self.toShare || {};
-        self.toShare.doZoom = true;
+        this.toShare = this.toShare || {};
+        this.toShare.doZoom = true;
         // para gestionar el zoom a la feature al compartir desde el control o el general, ya que la capa que contiene la feature no cambia por lo que no salta.
-        self.map.trigger(Consts.event.MAPCHANGE);
-        const shareCtl = self._shareCtl;
+        this.map.trigger(Consts.event.MAPCHANGE);
+        const shareCtl = this._shareCtl;
         const shareDiv = shareCtl.div;
         const link = await shareCtl.generateLink();
         const input = shareDiv.querySelector(".tc-url input[type=text]");
@@ -44,27 +48,34 @@ TC.control.infoShare = {
     },
 
     showShareDialog: function (divElement) {
-        const self = this;
-        const dialogDiv = self.getDiv(divElement);
-        const shareDialog = dialogDiv.querySelector('.' + self.CLASS + '-share-dialog');
-        Util.showModal(shareDialog, {
-            openCallback: function () {
-                self.onShowShareDialog(shareDialog).then(function () {
-                    self.map.trigger(Consts.event.DIALOG, { control: self._shareCtl, action: "share" });
-                });
-            },
-            closeCallback: function () {
-                self.onCloseShareDialog();
-            }
-        });
+        const dialogDiv = this.getDiv(divElement);
+        const shareDialog = dialogDiv.querySelector('.' + this.CLASS + '-share-dialog');
+        const openCallback = () => {
+            this.onShowShareDialog().then(() => {
+                this.map.trigger(Consts.event.DIALOG, { control: this._shareCtl, action: "share" });
+            });
+        };
+        const closeCallback = () => {
+            this.onCloseShareDialog();
+        };
+        if (shareDialog.tagName === 'DIALOG') {
+            shareDialog.showModal();
+            openCallback();
+            shareDialog.onclose = closeCallback;
+        }
+        else {
+            Util.showModal(shareDialog, {
+                openCallback,
+                closeCallback,
+            });
+        }
     },
 
     onCloseShareDialog: function () {
-        const self = this;
-        self.toShare = self.toShare || {};
-        self.toShare.doZoom = false;
+        this.toShare = this.toShare || {};
+        this.toShare.doZoom = false;
         // para gestionar el zoom a la feature al compartir desde el control o el general, ya que la capa que contiene la feature no cambia por lo que no salta.
-        self.map.trigger(Consts.event.MAPCHANGE);
+        this.map.trigger(Consts.event.MAPCHANGE);
     }
 
 };
