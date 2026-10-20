@@ -51,7 +51,7 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             // Colapsamos los controles de tipo web component, porque no los podemos colapsar por markup
             map.controls.forEach(c => {
                 if (c instanceof HTMLElement) {
-                    if (c.parentElement && c.parentElement.classList.contains(SITNA.Consts.classes.COLLAPSED)) {
+                    if (!c.containerControl && c.parentElement?.classList.contains(SITNA.Consts.classes.COLLAPSED)) {
                         c.classList.add(SITNA.Consts.classes.COLLAPSED);
                     }
                 }
@@ -62,7 +62,7 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             const rcollapsedClass = TC.Consts.classes.COLLAPSED_RIGHT || 'right-collapsed';
             const lcollapsedClass = TC.Consts.classes.COLLAPSED_LEFT || 'left-collapsed';
 
-            const ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
+            const ovmap = map.getControlsByClass('OverviewMap')[0];
 
             map.div.querySelectorAll(/* --- LEGACY --- */`.${TC.Consts.classes.RIGHT_PANEL} > h1, .right-panel > h1`).forEach(function (elm) {
                 elm.addEventListener(SITNA.Consts.event.CLICK, function (e) {
@@ -98,13 +98,6 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
             /* --- LEGACY --- */
             const toolsPanel = map.div.querySelector('.' + TC.Consts.classes.TOOLS_PANEL) || map.div.querySelector('#tools-panel');
 
-            const collapseExceptions = map
-                .getControlsByClass(TC.control.Search)
-                .concat(map.getControlsByClass(TC.control.LanguageSelector))
-                .concat(map.controls.filter(c => c.containerControl))
-                .map(c => c.id)
-                .filter(id => toolsPanel.querySelector('#' + id));
-
             const toggleCollapsed = function (value) {
                 const self = this;
                 let element;
@@ -114,6 +107,13 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
                 else {
                     element = self.div;
                 }
+                const collapseExceptions = map
+                    .getControlsByClass(TC.control.Search)
+                    .concat(map.getControlsByClass(TC.control.LanguageSelector))
+                    .concat(map.controls.filter((c) => c.containerControl))
+                    .concat(map.controls.filter((c) => c.caller))
+                    .map((c) => c.id)
+                    .filter((id) => toolsPanel.querySelector('#' + id));
                 if (!collapseExceptions.includes(self.id)) {
                     element.classList.toggle(SITNA.Consts.classes.COLLAPSED, value);
                 }
@@ -166,15 +166,15 @@ document.querySelectorAll('.tc-map').forEach(function (elm) {
 
             map.loaded(function () {
 
-                const ovmap = map.getControlsByClass('TC.control.OverviewMap')[0];
+                const ovmap = map.getControlsByClass('OverviewMap')[0];
                 if (ovmap) {
                     ovmap.loaded(function () {
                         ovmap.disable();
                     });
                 }
                 //mover el Multifeature info dentro del TOC
-                const toc = map.getControlsByClass('TC.control.WorkLayerManager')[0];
-                const mfi = map.getControlsByClass('TC.control.MultiFeatureInfo')[0];
+                const toc = map.getControlsByClass('WorkLayerManager')[0];
+                const mfi = map.getControlsByClass('MultiFeatureInfo')[0];
                 if (toc && mfi) {
                     toc.div.querySelector('.' + toc.CLASS + '-content').insertAdjacentElement('afterend', mfi.div);
                     mfi.containerControl = toc;
