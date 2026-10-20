@@ -1,8 +1,10 @@
 
 window.CESIUM_BASE_URL = TC.apiLocation + 'lib/cesium/build/';
 
+import { toCesiumColor, joinBillboardLabel } from '../view/ThreeDUtils';
+
 import {
-    ApproximateTerrainHeights
+    ApproximateTerrainHeights    
     , Billboard
     , BillboardCollection
     , BillboardGraphics
@@ -57,6 +59,7 @@ import {
     , IntersectionTests
     , JulianDate
     , LabelStyle
+    , Material
     , Math
     , Matrix3
     , Matrix4
@@ -104,11 +107,12 @@ import {
 
 } from 'cesium';
 
+
 //import CesiumTerrainProvider from './CesiumTerrainProvider.js';
 
 const cesium = {
 
-    ApproximateTerrainHeights
+    ApproximateTerrainHeights    
     , Billboard
     , BillboardCollection
     , BillboardGraphics
@@ -163,6 +167,7 @@ const cesium = {
     , IntersectionTests
     , JulianDate
     , LabelStyle
+    , Material
     , Math
     , Matrix3
     , Matrix4
@@ -329,12 +334,11 @@ cesium.ImageryLayer.prototype._requestImagery = function (imagery) {
 };
 
 // requerido para que pasar por el algoritmo de proxificación
-cesium.Resource.prototype._fetchImage = cesium.Resource.prototype.fetchImage;
+cesium.Resource.prototype.__fetchImage = cesium.Resource.prototype.fetchImage;
 
-cesium.Resource.prototype.fetchImage = function () {
+cesium.Resource.prototype.fetchImage = function (options) {
     if (this.tcLayer) {
-        let self = this;
-        let options = arguments;
+        let self = this;        
 
         let deferred = Promise.withResolvers();
 
@@ -348,7 +352,7 @@ cesium.Resource.prototype.fetchImage = function () {
                 }
                 else {
                     self.request.throttleByServer = false;
-                    cesium.Resource.prototype._fetchImage.apply(self, options).then(deferred.resolve, deferred.reject);
+                    cesium.Resource.prototype.__fetchImage.apply(self, options).then(deferred.resolve, deferred.reject);
                 }
             })
             .catch(function (error) {
@@ -357,10 +361,10 @@ cesium.Resource.prototype.fetchImage = function () {
 
         return deferred.promise;
     } else {
-        return cesium.Resource.prototype._fetchImage.apply(this, arguments);
+        return cesium.Resource.prototype.__fetchImage.apply(this, options);
     }
 };
-cesium.Entity.prototype.setStyle = function (style) {
+cesium.Entity.prototype.setStyle = async function (style) {
     if (this.point) {
         this.point.color = cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity);//cesium.Color.fromBytes.apply(this, [...style.fillColor.slice(0, 3), 255 * style.fillColor[3]]);
         this.point.pixelSize = (style.radius - style.strokeWidth) * 2;//(style.radius * 2) - style.strokeWidth / 2;
@@ -377,60 +381,78 @@ cesium.Entity.prototype.setStyle = function (style) {
         if (this.properties.hasProperty("fillColor"))
             this.properties["fillColor"].setValue(style.fillColor);
         else
-            this.properties.addProperty("fillColor", style.fillColor);
-        //this.polygon.material = cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity);
-        //this.polygon.material = new cesium.ColorMaterialProperty(cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity));
-        if (!(this.polygon.material.color instanceof cesium.CallbackProperty)) {
-            this.polygon.material.color = new cesium.CallbackProperty(() => {
-                return cesium.Color.fromCssColorString(this.properties["fillColor"].getValue()).withAlpha(this.properties["fillOpacity"].getValue());
-            }, false);
-        }
+            this.properties.addProperty("fillColor", style.fillColor);        
+        this.polygon.material = undefined;        
+        this.polygon.material = cesium.Color.fromCssColorString(style.fillColor).withAlpha(style.fillOpacity);
         
     }
-    if (this.polyline) {
-        //this.polyline.width = style.strokeWidth;
+    if (this.polyline) {        
         this.polyline.width = new cesium.CallbackProperty(() => {
             if (this.highLighted)
-                return style.strokeWidth + (4);
+                return style.strokeWidth * 3;
             else
                 return style.strokeWidth;
-
         }, false);
         if (style.strokeColor) {
             const strokeColor = cesium.Color.fromCssColorString(style.strokeColor);
-            this.polyline.material = new cesium.PolylineDashMaterialProperty(this.highLighted ?
-                Object.assign({}, this.polyline.material.getValue(), {
+            this.polyline.material = undefined;
+            this.polyline.material = this.highLighted ?
+                new cesium.PolylineOutlineMaterialProperty({
                     color: strokeColor,
-                    gapColor: new cesium.Color(window.Math.abs(strokeColor.red - 1), window.Math.abs(strokeColor.green - 1), window.Math.abs(strokeColor.blue - 1), strokeColor.alpha),
-                    dashLength: 30
+                    outlineWidth: style.strokeWidth * 2,
+                    outlineColor: new cesium.Color(window.Math.abs(strokeColor.red - 1), window.Math.abs(strokeColor.green - 1), window.Math.abs(strokeColor.blue - 1), strokeColor.alpha)
                 }) :
-                Object.assign({}, this.polyline.material.getValue(), {
-                    color: cesium.Color.fromCssColorString(style.strokeColor),
-                    gapColor: cesium.Color.fromCssColorString(style.strokeColor),
-                    dashLength: 30
-                })
-            );
+                strokeColor;
         }
     }
+    if (this.label) {
+        if (style.label) {
+            this.label.text = style.label;
+            this.label.pixelOffset = new cesium.Cartesian2(...(style.labelOffset || [0, 0]));
+            if (style.labelBackgroundColor) {
+                this.label.showBackground = true;
+                this.label.backgroundColor = toCesiumColor(style.labelBackgroundColor);
+            }
+            else
+                this.label.showBackground = false;
+            if (style.labelOutlineColor)
+                this.label.outlineColor = toCesiumColor(style.labelOutlineColor);
+            else 
+                this.label.outlineColor = cesium.Color.WHITE;
+            this.label.outlineWidth = style.labelOutlineWidth || 4;
+
+            this.label.font = style.font;
+            if (style.fontColor)
+                this.label.fillColor.setValue(toCesiumColor(style.fontColor));
+        }
+        else
+            this.label = null;       
+
+    }
     if (this.billboard) {
-        this.billboard.image = style.url;
+        if (style.label) {
+            delete this.label;            
+            this.billboard.image = await joinBillboardLabel(style);
+        }
+        else
+            this.billboard.image = style.url;
         this.billboard.width = style.width;
-        this.billboard.height = style.height;
+        this.billboard.height = style.height;       
     }    
 }
 
 cesium.Entity.prototype.setLabel = function (style) {
-    this.position = this.point ? this.position.getValue() : cesium.BoundingSphere.fromPoints(this.polyline.positions.getValue()).center;
+    this.position = this.position ? this.position.getValue() : cesium.BoundingSphere.fromPoints(this.polyline.positions.getValue()).center;
 
     this.label = style ? {
-        outlineColor: cesium.Color.fromCssColorString(style.outlineColor),
-        fillColor: cesium.Color.fromCssColorString(style.fontColor),
-        outlineWidth: style.outlineWidth,
+        outlineColor: toCesiumColor(style.outlineColor),
+        fillColor: toCesiumColor(style.fontColor),
+        outlineWidth: style.outlineWidth || 2,        
         font: style.font,
         text: style.text,
         style: cesium.LabelStyle.FILL_AND_OUTLINE,
         heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-        pixelOffset: this.polyline ? new cesium.Cartesian2(0, 0) : new cesium.Cartesian2(0, -25)
+        pixelOffset: style.offset ? new cesium.Cartesian2(...style.offset) : new cesium.Cartesian2(0, 0) //this.polyline ? new cesium.Cartesian2(0, 0) : new cesium.Cartesian2(0, -20)
     } : null;
 }
 
@@ -461,14 +483,14 @@ cesium.Viewer.prototype.pick = function (position) {
 }
 
 cesium.Viewer.prototype.refresh = function () {    
-    if (this && this.scene) { 
+    if (this && this.scene) {
         this.scene.requestRender();
         setTimeout(() => {
-            if(!this.isDestroyed())this.scene.forceRender(cesium.JulianDate.now());
+            if (!this.isDestroyed()) this.scene.forceRender(this.clock.currentTime);
         }, 100);
     }
-        
 }
+
 cesium.Viewer.prototype.areaPlanarFromEntityPolygon = function(positions) {
 
     if (!positions || positions.length < 3) return 0;
@@ -503,13 +525,13 @@ cesium.Entity.prototype.getStyle = function () {
             fillColor: this.polygon.material.getValue().color.toCssHexString().substring(0, 7),
             fillOpacity: this.polygon.material.getValue().color.alpha,
             strokeColor: this.polyline.material.getValue().color.toCssHexString().substring(0, 7),
-            strokeWidth: this.highLighted ? this.polyline.width.getValue() - (2 * 2) : this.polyline.width.getValue()
+            strokeWidth: this.highLighted ? this.polyline.width.getValue() / 3 : this.polyline.width.getValue()
         });
     }
     else if (this.polyline) {
         Object.assign(returnValue, /*TC.Cfg.styles.line,*/ {
             strokeColor: this.polyline.material.getValue().color.toCssHexString().substring(0, 7),
-            strokeWidth: this.highLighted ? this.polyline.width.getValue() - (2 * 2) : this.polyline.width.getValue()
+            strokeWidth: this.highLighted ? this.polyline.width.getValue() / 3 : this.polyline.width.getValue()
         });
     }
     else if (this.point) {

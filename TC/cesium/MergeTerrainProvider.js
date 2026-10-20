@@ -32,7 +32,7 @@ class MergeTerrainProvider extends CustomHeightmapTerrainProvider {
 
         this.defaultFallbackProvider = new cesium.EllipsoidTerrainProvider();        
 
-        Promise.all([/*this.surfaceHasTilesToRender.promise,*/...terrains.map(function (options, _index) {
+        Promise.allSettled([/*this.surfaceHasTilesToRender.promise,*/...terrains.map(function (options, _index) {
             if (options.type === "WMTS" || (!options.type && options.url.indexOf("WMTS") >= 0)) {
                 return (new cesium.WMTSTerrainProvider(options, view)).readyPromise;
             }
@@ -47,7 +47,7 @@ class MergeTerrainProvider extends CustomHeightmapTerrainProvider {
                     credit: options.credit
                 });
         })]).then((_terrains) => {
-            this.terrains = _terrains;
+            this.terrains = _terrains.filter((terrain) => terrain.status === "fulfilled").map((terrain)=> terrain.value );
             this.terrains.forEach((terrain) => {
                 this.maximumLevel = Math.max(this.maximumLevel, terrain.availability?._maximumLevel || 0);
             })
