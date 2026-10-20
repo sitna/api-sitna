@@ -1,7 +1,7 @@
 ﻿import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
@@ -18,18 +18,22 @@ class ExternalWMSModel {
     }
 }
 
-class ExternalWMS extends Control {
+class ExternalWMS extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-wms-load', this);
+    }
+
     #addedUrls = [];
 
     constructor() {
         super(...arguments);
-        const self = this;
 
-        self.count = 0;
+        this.count = 0;
 
-        self.allowReprojection = Object.prototype.hasOwnProperty.call(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
+        this.allowReprojection = Object.hasOwn(this.options, 'allowReprojection') ? this.options.allowReprojection : true;
 
-        self.model = new ExternalWMSModel();
+        this.model = new ExternalWMSModel();
     }
 
     async register(map) {
@@ -42,12 +46,12 @@ class ExternalWMS extends Control {
 
                 if (url) {
                     self.pending_markServicesAsSelected = self.pending_markServicesAsSelected || [];
-                    if (self.div.querySelectorAll('select option').length === 0 && url && self.pending_markServicesAsSelected.indexOf(url) === -1) {
+                    if (self.querySelectorAll('select option').length === 0 && url && self.pending_markServicesAsSelected.indexOf(url) === -1) {
                         self.pending_markServicesAsSelected.push(url);
                     }
 
                     const selectedOptions = [];
-                    self.div.querySelectorAll('select option').forEach(function (option) {
+                    self.querySelectorAll('select option').forEach(function (option) {
                         if (option.value.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '')) {
                             selectedOptions.push(option);
                         }
@@ -63,7 +67,11 @@ class ExternalWMS extends Control {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-xwms.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-xwms" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-xwms.mjs'
+        );
         self.template = module.default;
     }
 
@@ -74,7 +82,7 @@ class ExternalWMS extends Control {
 
             self.pending_markServicesAsSelected.forEach(function (elemUrl) {
                 const selectedOptions = [];
-                self.div.querySelectorAll('select option').forEach(function (option) {
+                self.querySelectorAll('select option').forEach(function (option) {
                     if (Util.addProtocol(option.value) === Util.addProtocol(elemUrl)) {
                         selectedOptions.push(option);
                     }
@@ -91,28 +99,28 @@ class ExternalWMS extends Control {
             if (typeof callback === 'function') {
                 callback();
             }
-            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controller = new Controller(self.model, new Observer(self));
             self.updateModel();
         });
     }
 
     addUIEventListeners() {
         const self = this;
-        self.div.querySelector('select').addEventListener('change', function (evt) {
+        self.querySelector('select').addEventListener('change', function (evt) {
             if (evt.target.value !== '') {
                 var url = evt.target.value;
                 if (url.indexOf('//') === 0) {
                     url = location.protocol + url;
                 }
-                self.div.querySelector('input').value = url;
+                self.querySelector('input').value = url;
                 evt.target.value = '';
             }
         });
-        self.div.querySelector('sitna-button[name="agregar"]').addEventListener('click', function (_e) {
+        self.querySelector('sitna-button[name="agregar"]').addEventListener('click', function (_e) {
             self.addWMS();
         });
-        self.div.querySelector('input').addEventListener('keyup', (e) => {
-            if (e.key && e.key.toLowerCase() === "enter" && self.div.querySelector('input').value.trim().length > 0) {
+        self.querySelector('input').addEventListener('keyup', (e) => {
+            if (e.key && e.key.toLowerCase() === "enter" && self.querySelector('input').value.trim().length > 0) {
                 self.addWMS();
             }
         });
@@ -120,7 +128,7 @@ class ExternalWMS extends Control {
 
     addWMS(serviceUrl) {
         const self = this;
-        let url = serviceUrl ?? self.div.querySelector('input').value.trim();
+        let url = serviceUrl ?? self.querySelector('input').value.trim();
 
         if (!url) {
             TC.alert(self.getLocaleString('typeAnAddress'));
@@ -165,7 +173,7 @@ class ExternalWMS extends Control {
                         }
                     }
 
-                    const addButton = self.div.querySelector('sitna-button');
+                    const addButton = self.querySelector('sitna-button');
                     addButton.disabled = true;
 
                     var obj = {
@@ -202,10 +210,10 @@ class ExternalWMS extends Control {
                             }
 
                             self.map.trigger(Consts.event.EXTERNALSERVICEADDED, { layer: layer });
-                            self.div.querySelector('input').value = '';
+                            self.querySelector('input').value = '';
 
                             const selectedOptions = [];
-                            self.div.querySelectorAll('select option').forEach(function (option) {
+                            self.querySelectorAll('select option').forEach(function (option) {
                                 if (option.value.replace(/https?:\/\/|\/\//, '') === url.replace(/https?:\/\/|\/\//, '')) {
                                     selectedOptions.push(option);
                                 }
