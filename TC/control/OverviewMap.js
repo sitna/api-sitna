@@ -14,6 +14,7 @@ import Util from '../Util.js';
 import Control from '../Control.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import Vector from '../../SITNA/layer/Vector.js';
+import OverviewMapWrapper from '../ol/OverviewMap.js';
 
 TC.control = TC.control || {};
 TC.Control = Control;
@@ -31,7 +32,11 @@ class OverviewMap extends Control {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-ovmap.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-ovmap" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-ovmap.mjs'
+        );
         self.template = module.default;
     }
 
@@ -115,7 +120,7 @@ class OverviewMap extends Control {
         };
 
         const ctl = await super.register.call(self, map);
-        self.wrap = new TC.wrap.control.OverviewMap(self);
+        self.wrap = new OverviewMapWrapper(self);
         await map.loaded();
         self.defaultLayer = instanceLayer(self.options.layer);
         self.layer = instanceLayer(map.baseLayer.overviewMapLayer || self.options.layer || map.options.baseLayers[0] || map.availableBaseLayers[0]);

@@ -33,6 +33,7 @@
 import TC from '../../TC.js';
 import wrap from '../ol/ol.js';
 import Control from '../Control.js';
+import ClickWrapper from '../ol/Click.js';
 
 TC.control = TC.control || {};
 TC.wrap = wrap;
@@ -46,7 +47,7 @@ class Click extends Control {
             self.callback = self.options.callback;
         }
 
-        self.wrap = new TC.wrap.control.Click(self);
+        self.wrap = new ClickWrapper(self);
     }
 
     register(map) {
@@ -58,7 +59,7 @@ class Click extends Control {
     activate() {
         const self = this;
         if (self.map.on3DView) {
-            self.map.view3D.linked2DControls[self.id]?.activate(self);
+            self.map.view3D.linked2DControls[self.getId()]?.activate(self);
         }
         else if (self.wrap) {
             self.wrap.activate();
@@ -69,7 +70,7 @@ class Click extends Control {
     deactivate() {
         const self = this;
         if (self.map.on3DView) {
-            self.map.view3D.linked2DControls[self.id]?.deactivate();
+            self.map.view3D.linked2DControls[self.getId()]?.deactivate();
         }
         if (self.wrap) {
             self.wrap.deactivate();

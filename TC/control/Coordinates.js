@@ -23,6 +23,7 @@ import ProjectionSelector from './ProjectionSelector.js';
 import Popup from './Popup.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
+import CoordinatesWrapper from '../ol/Coordinates.js';
 
 TC.control = TC.control || {};
 
@@ -70,7 +71,7 @@ class Coordinates extends ProjectionSelector {
         self.lon = 0;
         self.units = Consts.units.METERS;
         self.isGeo = false;
-        self.allowReprojection = Object.prototype.hasOwnProperty.call(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
+        self.allowReprojection = Object.hasOwn(self.options, 'allowReprojection') ? self.options.allowReprojection : true;
 
         self.#cssClasses = {
             CRS: self.CLASS + '-crs',
@@ -89,7 +90,7 @@ class Coordinates extends ProjectionSelector {
         };
 
         self.geoCrs = self.options.geoCrs || Cfg.geoCrs;
-        self.wrap = new TC.wrap.control.Coordinates(self);
+        self.wrap = new CoordinatesWrapper(self);
 
         self.model = new CoordinatesModel();
         self.modelDialog = new CoordinatesDialogModel();
@@ -208,8 +209,16 @@ class Coordinates extends ProjectionSelector {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-coords.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-coords-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-coords" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-coords.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-coords-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-coords-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;

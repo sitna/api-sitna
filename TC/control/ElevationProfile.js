@@ -10,6 +10,7 @@ import Feature from "../../SITNA/feature/Feature.js";
 import Point from "../../SITNA/feature/Point.js";
 import Polyline from "../../SITNA/feature/Polyline.js";
 import MultiPolyline from "../../SITNA/feature/MultiPolyline.js";
+import ElevationProfileWrapper from "../ol/ElevationProfile.js";
 
 const elevationProfileCache = new Map();
 
@@ -63,14 +64,18 @@ class ElevationProfile extends WebComponentControl {
         this.chart.tooltip = this.getElevationTooltip;
         this.chart.onmouseout = this.removeElevationTooltip;
 
-        this.wrap = new TC.wrap.control.ElevationProfile(this);
+        this.wrap = new ElevationProfileWrapper(this);
 
         this.model = new ElevationProfileModel();
 
     }
 
     async loadTemplates() {
-        const mainTemplatePromise = import('../templates/tc-ctl-rpanel-chart.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-rpanel-chart" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-rpanel-chart.mjs'
+        );
 
         const template = {};
         template[this.CLASS] = (await mainTemplatePromise).default;
@@ -231,7 +236,7 @@ class ElevationProfile extends WebComponentControl {
                 crs: self.map.getCRS()
             };
 
-            if (Object.prototype.hasOwnProperty.call(tool.options, "resolution")) {
+            if (Object.hasOwn(tool.options, "resolution")) {
                 //si con coordenadas geograficas paso la resolución a grados
                 if (self.map.wrap.isGeo())
                     elevationOptionsTemplate.resolution = Util.metersToDegrees(tool.options.resolution, self.map.getCenter()[1]).latDeg;                    
@@ -244,7 +249,7 @@ class ElevationProfile extends WebComponentControl {
                 else
                     elevationOptionsTemplate.resolution =  tool.options.resolution;
             }
-            const sampleNumber = Object.prototype.hasOwnProperty.call(tool.options, "sampleNumber") ? tool.options.sampleNumber : 0;
+            const sampleNumber = Object.hasOwn(tool.options, "sampleNumber") ? tool.options.sampleNumber : 0;
             if (sampleNumber > 0) {
                 elevationOptionsTemplate.resolution = 0;
             }
@@ -381,7 +386,7 @@ class ElevationProfile extends WebComponentControl {
             colorClass: data.colorClass || "",            
         };
 
-        const hasSecondaryElevationProfileChartData = this.chartData.secondaryElevationProfileChartData &&
+        const hasSecondaryElevationProfileChartData = this.chartData?.secondaryElevationProfileChartData &&
             Array.isArray(this.chartData.secondaryElevationProfileChartData) &&
             this.chartData.secondaryElevationProfileChartData.length > 0 && this.chartData.secondaryElevationProfileChartData[0];
 

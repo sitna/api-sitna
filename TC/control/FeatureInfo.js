@@ -36,6 +36,7 @@ import Util from '../Util.js';
 import Cfg from '../Cfg.js';
 import FeatureInfoCommons from './FeatureInfoCommons.js';
 import md5 from 'md5';
+import FeatureInfoWrapper from '../ol/FeatureInfo.js';
 
 TC.control = TC.control || {};
 
@@ -63,7 +64,7 @@ class FeatureInfo extends FeatureInfoCommons {
     constructor() {
         super(...arguments);
         const self = this;
-        self.wrap = new TC.wrap.control.FeatureInfo(self);
+        self.wrap = new FeatureInfoWrapper(self);
     }
 
     async register(map) {

@@ -15,6 +15,7 @@ import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import FeatureInfoCommons from './FeatureInfoCommons.js';
 import filter from '../filter.js';
+import GeometryFeatureInfoWrapper from '../ol/GeometryFeatureInfo.js';
 
 TC.control = TC.control || {};
 TC.filter = filter;
@@ -23,7 +24,7 @@ class GeometryFeatureInfo extends FeatureInfoCommons {
     constructor() {
         super(...arguments);
         const self = this;
-        self.wrap = new TC.wrap.control.GeometryFeatureInfo(self);
+        self.wrap = new GeometryFeatureInfoWrapper(self);
         self._isDrawing = false;
         self._isSearching = false;
         self._drawToken = false;

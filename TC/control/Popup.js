@@ -4,6 +4,7 @@ import Util from '../Util.js';
 import InfoDisplay from './InfoDisplay.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import PopupWrapper from '../ol/Popup.js';
 
 TC.control = TC.control || {};
 
@@ -83,7 +84,7 @@ class Popup extends InfoDisplay {
         super(...arguments);
         const self = this;
 
-        self.wrap = new TC.wrap.control.Popup(self);
+        self.wrap = new PopupWrapper(self);
         self.model = new PopupModel();
         self.contentModel = new PopupContentModel();
     }
@@ -171,7 +172,11 @@ class Popup extends InfoDisplay {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-popup.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-popup" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-popup.mjs'
+        );
         self.template = module.default;
     }
 
