@@ -20,14 +20,13 @@
 import TC from '../../TC.js';
 import Util from '../Util.js';
 import Consts from '../Consts.js';
+import EventTarget from '../EventTarget.js';
 import MapInfo from './MapInfo.js';
 import ScaleBar from './ScaleBar.js';
 import '../tool/Proxification.js';
 import { CreateSymbolizer } from './LayerLegend.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
-
-TC.control = TC.control || {};
 
 const ORIENTATION = {
     PORTRAIT: 'portrait',
@@ -503,6 +502,11 @@ class PrintMapToolsModel {
 }
 
 class PrintMap extends MapInfo {
+
+    static {
+        customElements.define('sitna-print-map', this);
+    }
+
     constructor() {
         super(...arguments);
         const self = this;
@@ -512,9 +516,21 @@ class PrintMap extends MapInfo {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-prnmap.mjs');
-        const viewTemplatePromise = import('../templates/tc-ctl-prnmap-view.mjs');
-        const toolsTemplatePromise = import('../templates/tc-ctl-prnmap-tools.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-prnmap" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-prnmap.mjs'
+        );
+        const viewTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-prnmap-view" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-prnmap-view.mjs'
+        );
+        const toolsTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-prnmap-tools" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-prnmap-tools.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -526,10 +542,10 @@ class PrintMap extends MapInfo {
     render(callback) {
         const self = this;
         self.renderPromise().then(() => {
-            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controller = new Controller(self.model, new Observer(self));
             self.updateModel();
         });
-        return super.renderData.call(self, { controlId: self.id }, callback);
+        return super.renderData.call(self, { controlId: self.getId() }, callback);
         
     }
 
@@ -551,7 +567,7 @@ class PrintMap extends MapInfo {
             self.map.setView(Consts.view.PRINTING);
 
             var codeContainer = document.querySelector('.' + self.CLASS + '-qrcode');
-            const cb = self.div.querySelector(`.${self.CLASS}-image-qr`);
+            const cb = self.querySelector(`.${self.CLASS}-image-qr`);
             if (!cb.disabled && cb.checked) {
                 if (!codeContainer) {
                     codeContainer = document.createElement('div');
@@ -569,13 +585,13 @@ class PrintMap extends MapInfo {
 
             const printBtnSelector = '.' + self.CLASS + '-btn';
             self.map.on(Consts.event.STARTLOADING, function () {
-                const printBtn = self.div.querySelector(printBtnSelector);
+                const printBtn = self.querySelector(printBtnSelector);
                 printBtn.classList.add(Consts.classes.DISABLED);
                 printBtn.disabled = true;
             });
 
             self.map.on(Consts.event.STOPLOADING, function () {
-                const printBtn = self.div.querySelector(printBtnSelector);
+                const printBtn = self.querySelector(printBtnSelector);
                 printBtn.classList.remove(Consts.classes.DISABLED);
                 printBtn.disabled = false;
             });
@@ -700,8 +716,8 @@ class PrintMap extends MapInfo {
                 });
             }
 
-            self.orientation = self.div.querySelector("#print-design").value;
-            self.format = self.div.querySelector("#print-size").value;
+            self.orientation = self.querySelector("#print-design").value;
+            self.format = self.querySelector("#print-size").value;
 
             self.currentFormat = self.CLASS + '-' + self.orientation + '-' + self.format;
 
@@ -711,13 +727,13 @@ class PrintMap extends MapInfo {
             updateCanvas(self.currentFormat);
         };
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('.' + self.CLASS + '-btn', print));
+        self.addEventListener('click', EventTarget.listenerBySelector('.' + self.CLASS + '-btn', print));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (_evt) {
+        self.addEventListener('click', EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (_evt) {
             self.generateLink();
         }));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (_evt) {
+        self.addEventListener('click', EventTarget.listenerBySelector('h2', function (_evt) {
             if (!self.registeredListeners) {
                 self.generateLink();
             }
@@ -1132,7 +1148,7 @@ class PrintMap extends MapInfo {
         const self = this;
         // GLS: añadimos el QR
         //QR
-        const cb = self.div.querySelector(`.${self.CLASS}-image-qr`);
+        const cb = self.querySelector(`.${self.CLASS}-image-qr`);
         if (!cb.disabled && cb.checked) {
             const qrTarget = document.querySelector('.' + self.CLASS + '-qrcode');
             qrTarget.innerHTML = '';
@@ -1153,7 +1169,7 @@ class PrintMap extends MapInfo {
     generateFileName() {
         const self = this;
         var filename = window.location.host + '_';
-        var title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+        var title = self.querySelector('.' + self.CLASS + '-title').value.trim();
 
         if (title) {
             filename += title;
@@ -1235,7 +1251,7 @@ class PrintMap extends MapInfo {
         
         const basics = [self.getLogo, function () {
             var titleColumn = getTitleColumn(layout);
-            titleColumn.text = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+            titleColumn.text = self.querySelector('.' + self.CLASS + '-title').value.trim();
             return titleColumn;
         }, self.getScaleBar, self.drawQR];
         
@@ -1264,7 +1280,7 @@ class PrintMap extends MapInfo {
         if (self.#hasLegendToPrint() && // GLS: validamos que haya capas visibles por escala 
             printLayout.content.length === 2) { // GLS: es la primera descarga o hemos resetado la leyenda por algún zoom por lo que no tenemos la leyenda en el layout
 
-            const title = self.div.querySelector('.' + self.CLASS + '-title').value.trim();
+            const title = self.querySelector('.' + self.CLASS + '-title').value.trim();
             printLayout.content.push({
                 pageBreak: 'before',
                 pageOrientation: (self.options.legend && self.options.legend.orientation) || ORIENTATION.PORTRAIT,
@@ -1291,8 +1307,8 @@ class PrintMap extends MapInfo {
 
     manageMaxLengthExceed(maxLengthExceed) {
         const self = this;
-        const alertElm = self.div.querySelector('.' + self.CLASS + '-alert');
-        const checkboxQR = self.div.querySelector(`.${self.CLASS}-image-qr`);
+        const alertElm = self.querySelector('.' + self.CLASS + '-alert');
+        const checkboxQR = self.querySelector(`.${self.CLASS}-image-qr`);
 
         checkboxQR.disabled = maxLengthExceed.qr;
 
@@ -1305,7 +1321,7 @@ class PrintMap extends MapInfo {
 
     async generateLink() {
         const self = this;
-        const checkbox = self.div.querySelector(`.${self.CLASS}-div sitna-toggle.${self.CLASS}-image-qr`);
+        const checkbox = self.querySelector(`.${self.CLASS}-div sitna-toggle.${self.CLASS}-image-qr`);
         checkbox.disabled = true;
         checkbox.classList.add(Consts.classes.LOADING);
         const result = await MapInfo.prototype.generateLink.call(self);
@@ -1341,5 +1357,4 @@ class PrintMap extends MapInfo {
 }
 
 PrintMap.prototype.CLASS = 'tc-ctl-prnmap';
-TC.control.PrintMap = PrintMap;
 export default PrintMap;

@@ -1,12 +1,10 @@
 ﻿import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util, { MapImage } from '../Util.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 import Proxification from '../tool/Proxification.js';
 
-TC.control = TC.control || {};
-
-class MapInfo extends Control {
+class MapInfo extends WebComponentControl {
 
     async register(map) {
         await super.register.call(this, map);
@@ -39,7 +37,7 @@ class MapInfo extends Control {
             const state = {};
             if (this.featureToShare || this.sharedFeaturesLayer) {
                 let layerState;
-                state.id = this.id;
+                state.id = this.getId();
                 if (this.featureToShare) {
                     const featureToShare = this.featureToShare.clone();
                     featureToShare.showsPopup = true;
@@ -204,7 +202,7 @@ class MapInfo extends Control {
 
     drawScaleBarIntoCanvas(options = {}) {
         let canvas;
-        let sb = this.map.getControlsByClass(TC.control.ScaleBar);
+        let sb = this.map.getControlsByClass('ScaleBar');
         if (sb.length === 0) {
             return null;
         }
@@ -352,5 +350,4 @@ class MapInfo extends Control {
 }
 
 MapInfo.prototype.CLASS = 'tc-ctl-mi';
-TC.control.MapInfo = MapInfo;
 export default MapInfo;

@@ -2,13 +2,13 @@
 import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
+import EventTarget from '../EventTarget.js';
 import MapInfo from './MapInfo.js';
 import filter from '../filter.js';
 import Polygon from '../../SITNA/feature/Polygon.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-TC.control = TC.control || {};
 TC.filter = filter;
 
 const toFixed = function (number) {
@@ -46,10 +46,6 @@ class DownloadModel {
         this["noValidService.instructions"] = "";
         this.formatImageTitle = "";
         this.formatVectorTitle = "";
-    }
-}
-class DownloadDialogModel {
-    constructor() {
         this.downloadData = "";
         this["dl.instructions.1"] = "";
         this["dl.instructions.2"] = "";
@@ -62,116 +58,114 @@ class DownloadDialogModel {
 }
 
 class Download extends MapInfo {
+
+    static {
+        customElements.define('sitna-download', this);
+    }
+
     #activeElement;
 
-    constructor(options = {}) {
+    constructor() {
         super(...arguments);
-        const self = this;
 
-        self._dialogDiv = Util.getDiv(options.dialogDiv);
-        if (!options.dialogDiv) {
-            document.body.appendChild(self._dialogDiv);
-        }
-        self.model = new DownloadModel();
-        self.dialogModel = new DownloadDialogModel();
+        this.model = new DownloadModel();
     }
 
     async loadTemplates() {
-        const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-download.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-download-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-download" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-download.mjs'
+        );
 
         const template = {};
-        template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
-        self.template = template;
+        template[this.CLASS] = (await mainTemplatePromise).default;
+        this.template = template;
     }
 
     async render(callback) {
-        const self = this;
-        await super.renderData.call(self, {
-            controlId: self.id,
-            deselectableTabs: self.options.deselectableTabs,
+        await super.renderData.call(this, {
+            controlId: this.getId(),
+            deselectableTabs: this.options.deselectableTabs,
             clipboard: !!navigator?.clipboard?.write
-        }, function () {
-            const firstTab = self.div.querySelector(`.tc-ctl-tctr-select sitna-tab:first-of-type`);
+        }, () => {
+            const firstTab = this.querySelector(`.tc-ctl-tctr-select sitna-tab:first-of-type`);
             if (firstTab && firstTab.attributes["for"]) {
-                self.#activeElement = document.getElementById(firstTab.attributes["for"].value);
+                this.#activeElement = document.getElementById(firstTab.attributes["for"].value);
             }
 
-            self.addUIEventListeners();
+            this.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-            self.controller = new Controller(self.model, new Observer(self.div));
-            self.updateModel();
+            this.controller = new Controller(this.model, new Observer(this));
+            this.updateModel();
         });
-        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog');
-        self.dialogController = new Controller(self.dialogModel, new Observer(self._dialogDiv));
-
     }
 
     addUIEventListeners() {
-        const self = this;
-        self.div.querySelectorAll(`.tc-ctl-tctr-select sitna-tab`).forEach(function (tab) {
-            tab.callback = function () {
-                const target = this.target;
+        this.querySelectorAll(`.tc-ctl-tctr-select sitna-tab`).forEach((tab) => {
+            tab.callback = () => {
+                const target = tab.target;
                 if (target) {
-                    self.#activeElement = target;
+                    this.#activeElement = target;
                 }
             };
         });
-        self.div.querySelector('.' + self.CLASS + '-image select').addEventListener("change", function (e) {
-            self.div.querySelector(".tc-ctl-clipboard-btn").disabled = !ClipboardItem.supports(e.target.value);
+        this.querySelector('.' + this.CLASS + '-image select').addEventListener("change", (e) => {
+            this.querySelector(".tc-ctl-clipboard-btn").disabled = !ClipboardItem.supports(e.target.value);
+        });
+
+        const closeDialog = (e) => e.currentTarget.closest('dialog').close();
+        this.querySelectorAll(`dialog sitna-button.tc-modal-close`).forEach((btn) => {
+            btn.addEventListener(Consts.event.CLICK, closeDialog);
         });
     }
 
     async register(map) {
-        const self = this;
-        await super.register.call(self, map);
+        await super.register.call(this, map);
 
         // GLS: Añado el flag al mapa para tenerlo en cuenta cuando se establece la función de carga de imágenes
-        self.map.crossOrigin = 'anonymous';
+        this.map.crossOrigin = 'anonymous';
 
-        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-btn', () => self.#download()), { passive: true });
-        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-download-help', (evt) => self.#showHelp(evt)), { passive: true });
-        self.div.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('.tc-ctl-clipboard-btn', () => self.#copyImage()), { passive: true });
+        this.addEventListener(Consts.event.CLICK, EventTarget.listenerBySelector('.tc-ctl-download-btn', () => this.#download()), { passive: true });
+        this.addEventListener(Consts.event.CLICK, EventTarget.listenerBySelector('.tc-ctl-download-help', (evt) => this.#showHelp(evt)), { passive: true });
+        this.addEventListener(Consts.event.CLICK, EventTarget.listenerBySelector('.tc-ctl-clipboard-btn', () => this.#copyImage()), { passive: true });
 
-        self.div.addEventListener('change', TC.EventTarget.listenerBySelector(`.${self.CLASS}-image-qr`, function (e) {
+        this.addEventListener('change', EventTarget.listenerBySelector(`.${this.CLASS}-image-qr`, (e) => {
             if (e.target.checked) {
-                self.generateLink();
+                this.generateLink();
             } else {
-                self.div.querySelector('.' + self.CLASS + '-alert').classList.add(Consts.classes.HIDDEN);
+                this.querySelector('.' + this.CLASS + '-alert').classList.add(Consts.classes.HIDDEN);
             }
         }));
 
-        self.div.addEventListener('click', TC.EventTarget.listenerBySelector('h2', function (_evt) {
-            if (!self.registeredListeners) {
-                self.generateLink();
+        this.addEventListener('click', EventTarget.listenerBySelector('h2', (_evt) => {
+            if (!this.registeredListeners) {
+                this.generateLink();
             }
-            self.registerListeners();
+            this.registerListeners();
         }));
 
-        return self;
+        return this;
     }
 
     async #downLoadImage(format) {
-        const self = this;
-        const li = self.map.getLoadingIndicator();
+        const li = this.map.getLoadingIndicator();
         const wait = li && li.addWait();
 
-        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr[disabled]`) &&
-            self.#activeElement.querySelector(`.${self.CLASS}-image-qr[checked]`);
-        const fileName = window.location.hostname + '_' + self.map.crs.replace(':', '') + '_' + Util.getFormattedDate(new Date().toString(), true);
+        const includeQR = !this.#activeElement.querySelector(`.${this.CLASS}-image-qr[disabled]`) &&
+            this.#activeElement.querySelector(`.${this.CLASS}-image-qr[checked]`);
+        const fileName = window.location.hostname + '_' + this.map.crs.replace(':', '') + '_' + Util.getFormattedDate(new Date().toString(), true);
         const fileExtension = '.' + format.split('/')[1];
-        if (self.#activeElement.querySelector(`.${self.CLASS}-image-wld[checked]`) && !self.map.on3DView) {            
+        if (this.#activeElement.querySelector(`.${this.CLASS}-image-wld[checked]`) && !this.map.on3DView) {            
             const worldFileExtension = format === Consts.mimeType.JPEG ? '.jgw' : '.pgw';
-            const blob = await self.generateImage(format, true, includeQR);
-            const extent = self.map.getExtent();
+            const blob = await this.generateImage(format, true, includeQR);
+            const extent = this.map.getExtent();
             import('jszip').then(async (module) => {
                 const JSZip = module.default;
-                var canvases = self.map.wrap.getCanvas();
+                var canvases = this.map.wrap.getCanvas();
                 var newCanvas = canvases.length > 1 ? Util.mergeCanvases(canvases) : canvases[0];
                 const xScale = (extent[2] - extent[0]) / newCanvas.width;
                 const ySkew = 0;
@@ -190,8 +184,8 @@ ${toFixed(yOrigin)}`);
                 zip.generateAsync({ type: "blob" }).then(function (blob) {
                     Util.downloadBlob(fileName + ".zip", blob);
                     li && li.removeWait(wait);
-                }, function (err) {
-                    TC.error(self.getLocaleString('dl.export.map.error') + ': ' + err.message);
+                }, (err) => {
+                    TC.error(this.getLocaleString('dl.export.map.error') + ': ' + err.message);
                     li && li.removeWait(wait);
                 });
             });
@@ -200,10 +194,10 @@ ${toFixed(yOrigin)}`);
         else {
             
             try {
-                const dataURL = await self.generateImage(format, false, includeQR);
+                const dataURL = await this.generateImage(format, false, includeQR);
                 Util.downloadDataURI(fileName + fileExtension, format, dataURL);
             } catch (e) {
-                TC.error(self.getLocaleString('dl.export.map.error') + ': ' + e.message);
+                TC.error(this.getLocaleString('dl.export.map.error') + ': ' + e.message);
             }
             li && li.removeWait(wait);
         }
@@ -232,7 +226,9 @@ ${toFixed(yOrigin)}`);
             });
             const responseArray = await Promise.all(arrPromises);
 
-            var responses = responseArray.filter(item => !!item);
+            var responses = responseArray
+                .filter((item) => !!item)
+                .filter((item) => item.service.layers.length > 0);
             if (responses.length === 0) {
                 this.#showAlert({ key: Consts.WFSErrors.NO_LAYERS });
                 return;
@@ -273,13 +269,12 @@ ${toFixed(yOrigin)}`);
     }
 
     async #copyImage() {
-        const self = this;
-        const li = self.map.getLoadingIndicator();
+        const li = this.map.getLoadingIndicator();
         const wait = li && li.addWait();
         const format=this.#activeElement.querySelector('select').value;
-        const includeQR = !self.#activeElement.querySelector(`.${self.CLASS}-image-qr[disabled]`) &&
-            self.#activeElement.querySelector(`.${self.CLASS}-image-qr[checked]`);
-        const blob = await self.generateImage(format, true, includeQR);
+        const includeQR = !this.#activeElement.querySelector(`.${this.CLASS}-image-qr[disabled]`) &&
+            this.#activeElement.querySelector(`.${this.CLASS}-image-qr[checked]`);
+        const blob = await this.generateImage(format, true, includeQR);
         const clipboardItemData = {
             [blob.type]: blob
         };
@@ -287,7 +282,7 @@ ${toFixed(yOrigin)}`);
         try {
             await navigator.clipboard.write([clipboardItem]);
             li && li.removeWait(wait);
-            self.map.toast(self.getLocaleString('copiedClipboard'), { type: Consts.msgType.INFO });
+            this.map.toast(this.getLocaleString('copiedClipboard'), { type: Consts.msgType.INFO });
         }
         catch (e) {
             TC.error(e.message);
@@ -309,47 +304,44 @@ ${toFixed(yOrigin)}`);
     }
 
     #showAlert(error) {
-        const self = this;
-        const alert = self.div.querySelector('.tc-alert-warning:not(.' + self.CLASS + '-alert)');
+        const alert = this.querySelector('.tc-alert-warning:not(.' + this.CLASS + '-alert)');
         var errorMsg;
         switch (error.key) {
             case Consts.WFSErrors.MAX_NUM_FEATURES:
-                errorMsg = Util.formatTemplate(alert.querySelector("#zoom-msg-" + self.id).innerHTML, { serviceName: error.params.serviceTitle });
+                errorMsg = Util.formatTemplate(alert.querySelector("#zoom-msg-" + this.getId()).innerHTML, { serviceName: error.params.serviceTitle });
                 break;
             case Consts.WFSErrors.NO_LAYERS:
-                errorMsg = self.getLocaleString('noLayersLoaded');
+                errorMsg = this.getLocaleString('noLayersLoaded');
                 break;
             case Consts.WFSErrors.GETCAPABILITIES:
-                errorMsg = Util.formatTemplate(alert.querySelector("#novalid-msg-" + self.id).innerHTML, { serviceName: error.params.serviceTitle });
+                errorMsg = Util.formatTemplate(alert.querySelector("#novalid-msg-" + this.getId()).innerHTML, { serviceName: error.params.serviceTitle });
                 break;
             case Consts.WFSErrors.NO_FEATURES:
-                errorMsg = alert.querySelector("#noFeatures-msg-" + self.id).innerHTML;
+                errorMsg = alert.querySelector("#noFeatures-msg-" + this.getId()).innerHTML;
                 break;
             case Consts.WFSErrors.INDETERMINATE:
-                errorMsg = self.getLocaleString("wfs.IndeterminateError");
-                self.map.toast(errorMsg, { type: Consts.msgType.ERROR });
+                errorMsg = this.getLocaleString("wfs.IndeterminateError");
+                this.map.toast(errorMsg, { type: Consts.msgType.ERROR });
                 TC.error(Util.formatTemplate("Error:{error} \r\n Descripcion:{descripcion} \r\n Servicio:{serviceName}", { error: error.params.err, descripcion: error.params.errorThrown, serviceName: error.params.serviceTitle }), Consts.msgErrorMode.CONSOLE);
                 return;
             case Consts.WFSErrors.NO_VALID_FORMAT:
-                errorMsg = self.getLocaleString("wfs.NoValidFormat", { serviceTitle: error.params.serviceTitle, format: error.params.format.toUpperCase() });
+                errorMsg = this.getLocaleString("wfs.NoValidFormat", { serviceTitle: error.params.serviceTitle, format: error.params.format.toUpperCase() });
                 break;
             default:
-                errorMsg = self.getLocaleString("wfs." + error.key, error.params);
+                errorMsg = this.getLocaleString("wfs." + error.key, error.params);
                 break;
         }
-        self.map.toast(errorMsg, { type: Consts.msgType.WARNING });
+        this.map.toast(errorMsg, { type: Consts.msgType.WARNING });
     }
     
     #showHelp = function (evt) {
-        const self = this;
         evt.stopPropagation();
-        Util.showModal(self._dialogDiv.querySelector(`.${self.CLASS}-help-dialog`));
+        this.querySelector(`dialog.${this.CLASS}-help-dialog`).showModal();
     }
 
     manageMaxLengthExceed(maxLengthExceed) {
-        const self = this;
-        const alert = self.div.querySelector('.' + self.CLASS + '-alert');
-        const checkboxQR = self.div.querySelector(`.${self.CLASS}-image-qr`);
+        const alert = this.querySelector('.' + this.CLASS + '-alert');
+        const checkboxQR = this.querySelector(`.${this.CLASS}-image-qr`);
 
         checkboxQR.disabled = maxLengthExceed.qr;
 
@@ -361,54 +353,22 @@ ${toFixed(yOrigin)}`);
     }
 
     async generateLink() {
-        const self = this;
-        const checkbox = self.div.querySelector(`.${self.CLASS}-div .${self.CLASS}-image-qr`);
+        const checkbox = this.querySelector(`.${this.CLASS}-div .${this.CLASS}-image-qr`);
         checkbox.disabled = true;
         checkbox.classList.add(Consts.classes.LOADING);
-        const result = await super.generateLink.call(self);
+        const result = await super.generateLink.call(this);
         checkbox.classList.remove(Consts.classes.LOADING);
         return result;
     }
-    updateModel() {
-        const self = this;
-        self.model.download = self.getLocaleString("download");
-        self.model["dl.export.map"] = self.getLocaleString("dl.export.map");
-        self.model["dl.export.vector"] = self.getLocaleString("dl.export.vector");
-        self.model.format = self.getLocaleString("format");
-        self.model.createQrCodeToImage = self.getLocaleString("createQrCodeToImage");
-        self.model.appendQRCode = self.getLocaleString("appendQRCode");
-        self.model["appendWorldFile.explanation"] = self.getLocaleString("appendWorldFile.explanation");
-        self.model.appendWorldFile = self.getLocaleString("appendWorldFile");
-        self.model.copyImageFromCurrentMap = self.getLocaleString("copyImageFromCurrentMap");
-        self.model.copyClipboard = self.getLocaleString("copyClipboard");
-        self.model.downloadImageFromCurrentMap = self.getLocaleString("downloadImageFromCurrentMap");
-        self.model.qrAdvice = self.getLocaleString("qrAdvice");
-        self.model.showDownloadHelp = self.getLocaleString("showDownloadHelp");
-        self.model.downloadLayersFromCurrentExtent = self.getLocaleString("downloadLayersFromCurrentExtent");
-        self.model.tooManyFeatures = self.getLocaleString("tooManyFeatures");
-        self.model["tooManyFeatures.instructions"] = self.getLocaleString("tooManyFeatures.instructions");
-        self.model.noLayersLoaded = self.getLocaleString("noLayersLoaded");
-        self.model["noLayersLoaded.instructions"] = self.getLocaleString("noLayersLoaded.instructions");
-        self.model.tooManySelectedLayers = self.getLocaleString("tooManySelectedLayers");
-        self.model["tooManySelectedLayers.instructions"] = self.getLocaleString("tooManySelectedLayers.instructions");
-        self.model.noData = self.getLocaleString("noData");
-        self.model["noData.instructions"] = self.getLocaleString("noData.instructions");
-        self.model.noValidService = self.getLocaleString("noValidService");
-        self.model["noValidService.instructions"] = self.getLocaleString("noValidService.instructions");
-        self.model.formatImageTitle = self.getLocaleString("format");
-        self.model.formatVectorTitle = self.getLocaleString("format");
 
-        self.dialogModel.downloadData = self.getLocaleString("downloadData");
-        self.dialogModel["dl.instructions.1"] = self.getLocaleString("dl.instructions.1");
-        self.dialogModel["dl.instructions.2"] = self.getLocaleString("dl.instructions.2");
-        self.dialogModel["dl.instructions.3"] = self.getLocaleString("dl.instructions.3");
-        self.dialogModel["dl.instructions.4"] = self.getLocaleString("dl.instructions.4");
-        self.dialogModel["dl.instructions.5"] = self.getLocaleString("dl.instructions.5");
-        self.dialogModel["dl.instructions.6"] = self.getLocaleString("dl.instructions.6");
-        self.dialogModel.close = self.getLocaleString("close");
+    updateModel() {
+        for (const key of Object.keys(this.model)) {
+            if (!key.startsWith("#")) {
+                this.model[key] = this.getLocaleString(key);
+            }
+        }
     }
 }
 
 Download.prototype.CLASS = 'tc-ctl-download';
-TC.control.Download = Download;
 export default Download;

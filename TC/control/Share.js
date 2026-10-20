@@ -5,8 +5,6 @@ import MapInfo from './MapInfo.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
-TC.control = TC.control || {};
-
 class ShareModel {
     constructor() {
         this.share = "";
@@ -44,46 +42,70 @@ class ShareDialogModel {
 }
 
 class Share extends MapInfo {
+
+    static {
+        customElements.define('sitna-share', this);
+    }
+
     MAILTO_MAX_LENGTH = 256;
     IFRAME_WIDTH = '600px';
     IFRAME_HEIGHT = '450px';
     FEATURE_PARAM = 'showfeature';
     MOBILEFAV;
     NAVALERT;
+
+    static mode = {
+        LINK: 'link',
+        HTML: 'html',
+        IMAGE: 'image'
+    };
+    #hasLink = true;
+    #hasHtml = true;
+    #hasImage = true;
+
     #dialogDiv;
     #dialogConfirmDiv;
 
     constructor() {
         super(...arguments);
-        const self = this;
 
-        self.#dialogDiv = Util.getDiv(self.options.dialogDiv);
-        if (!self.options.dialogDiv) {
-            document.body.appendChild(self.#dialogDiv);
+        this.#dialogDiv = Util.getDiv(this.options.dialogDiv);
+        if (!this.options.dialogDiv) {
+            document.body.appendChild(this.#dialogDiv);
         }
-        self.model = new ShareModel();
-        self.dialogModel = new ShareDialogModel();
+
+        if (Array.isArray(this.options.modes)) {
+            if (!this.options.modes.includes(Share.mode.LINK)) {
+                this.#hasLink = false;
+            }
+            if (!this.options.modes.includes(Share.mode.HTML)) {
+                this.#hasHtml = false;
+            }
+            if (!this.options.modes.includes(Share.mode.IMAGE)) {
+                this.#hasImage = false;
+            }
+        }
+
+        this.model = new ShareModel();
+        this.dialogModel = new ShareDialogModel();
     }
 
     async register(map) {
-        const self = this;
-
-        await super.register.call(self, map);
+        await super.register.call(this, map);
 
         // URI: Añado el flag al mapa, de la misma manera que se hace con el control de download, para tenerlo en cuenta cuando se establece la función de carga de imágenes
-        self.map.crossOrigin = 'anonymous';
+        this.map.crossOrigin = 'anonymous';
 
-        self.exportsState = true;        
+        this.exportsState = true;        
 
-        self.map.on(Consts.event.MAPCHANGE, function (_e) {
-            const self = this;
-            const input = self.div.querySelector('.tc-url input[type=text]');
+        this.map.on(Consts.event.MAPCHANGE, (_e) => {
+            const input = this.querySelector('.tc-url input[type=text]');
             if (input) {
                 input.dataset.update = true;                
             }
 
-            delete self.map._controlStatesCache;
-        }.bind(self));
+            delete this.map._controlStatesCache;
+        });
 
         //Cuando se añada o borre una capa, comprobamos de nuevo si la URL cumple los requisitos de longitud para habilitar el control
         //map.on(Consts.event.MAPLOAD, function () {
@@ -93,19 +115,31 @@ class Share extends MapInfo {
         //});     
 
         map.loaded(() => {
-            if (!self.div.classList.contains(Consts.classes.COLLAPSED)) {
-                self.update();
+            if (!this.classList.contains(Consts.classes.COLLAPSED)) {
+                this.update();
             }
         });
 
-        return self;
+        return this;
     }
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-share.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-share-dialog.mjs');
-        const dialogConfirmTemplatePromise = import('../templates/tc-ctl-share-confirm-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-share" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-share.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-share-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-share-dialog.mjs'
+        );
+        const dialogConfirmTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-share-confirm-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-share-confirm-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -117,14 +151,20 @@ class Share extends MapInfo {
     async render(callback) {
         const self = this;
         self.#dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);        
-        await super.renderData.call(self, { controlId: self.id, native: !!navigator.share }, function () {
+        await super.renderData.call(self, {
+            controlId: self.getId(),
+            native: !!navigator.share,
+            hasLink: self.#hasLink,
+            hasHtml: self.#hasHtml,
+            hasImage: self.#hasImage,
+        }, function () {
 
             //Si el navegador no soporta copiar al portapapeles, ocultamos el botón de copiar
             if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
-                self.div.querySelectorAll('button').forEach(function (btn) {
+                self.querySelectorAll('button').forEach(function (btn) {
                     btn.classList.remove('hide');
                 });
-                self.div.querySelectorAll('input[type=text]').forEach(function (input) {
+                self.querySelectorAll('input[type=text]').forEach(function (input) {
                     delete input.dataset.dataOriginalTitle;
                 });
             }
@@ -134,7 +174,7 @@ class Share extends MapInfo {
             if (Util.isFunction(callback)) {
                 callback();
             }
-            self.controller = new Controller(self.model, new Observer(self.div));
+            self.controller = new Controller(self.model, new Observer(self));
             self.dialogController = new Controller(self.dialogModel, new Observer(self.#dialogDiv));
             self.updateModel();
         });
@@ -143,25 +183,25 @@ class Share extends MapInfo {
     addUIEventListeners() {
         const self = this;
 
-        self.div.querySelector('h2').addEventListener('click', function (_e) {
+        self.querySelector('h2').addEventListener('click', function (_e) {
             self.update();
         });
                 
-        self.div.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`).addEventListener('change', function (e) {
+        self.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`).addEventListener('change', function (e) {
             const btn = e.target;
             btn.disabled = true;
             if (!btn.checked)
-                self.div.querySelector("input.tc-textbox.tc-url").dataset.update = true
+                self.querySelector("input.tc-textbox.tc-url").dataset.update = true
             self.#selectInputField(btn, btn.checked).then(() => {
                 btn.disabled = false;
             })
         });
         //copiar  al portapapeles
-        self.div.querySelectorAll(`.${self.CLASS}-url-box sitna-button.${self.CLASS}-btn-copy`).forEach(elm => {
+        self.querySelectorAll(`.${self.CLASS}-url-box sitna-button.${self.CLASS}-btn-copy`).forEach(elm => {
             elm.addEventListener('click', async function (_e) {
                 const btn = _e.target;
                 const input = btn.closest(".tc-ctl-share-url-box").querySelector("input.tc-textbox");
-                const chkShorten = self.div.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`);
+                const chkShorten = self.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`);
                 if (chkShorten) chkShorten.checked = !!input.dataset.shortened;
                 if (navigator.clipboard?.writeText) {
                     _e.target.classList.add(Consts.classes.LOADING);
@@ -194,14 +234,14 @@ class Share extends MapInfo {
             });
         });
 
-        self.div.querySelector('input[type=text]').addEventListener('click', function (e) {
-            const chk = self.div.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`);
+        self.querySelector('input[type=text]').addEventListener('click', function (e) {
+            const chk = self.querySelector(`.${self.CLASS}-url-box sitna-toggle.${self.CLASS}-btn-shorten`);
             if (chk.checked && e.target.dataset.update) chk.checked = false;
             self.#selectInputField(e.target);
         });
 
         //Enviar por e-mail
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-email`).addEventListener('click', async function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-email`).addEventListener('click', async function (_e) {
             const url = await self.shortenedLink();
             if (url) {
                 const body = encodeURIComponent(url + "\n");
@@ -213,7 +253,7 @@ class Share extends MapInfo {
         });
 
         //Generar código QR        
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-qr`).addEventListener("click", function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-qr`).addEventListener("click", function (_e) {
             const qrContainer = self.#dialogDiv.querySelector(`.${self.CLASS}-qrcode`);
             qrContainer.innerHTML = '';
 
@@ -238,7 +278,7 @@ class Share extends MapInfo {
         };
 
         //Compartir en Facebook
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-facebook`).addEventListener("click", function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-facebook`).addEventListener("click", function (_e) {
             const w = window.open();
             self.shortenedLink().then(function (url) {
                 openSocialMedia(w, url, function (url) {
@@ -248,7 +288,7 @@ class Share extends MapInfo {
         });
 
         //Compartir en Twitter
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-twitter`).addEventListener("click", function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-twitter`).addEventListener("click", function (_e) {
             const w = window.open();
             self.shortenedLink().then(function (url) {
                 openSocialMedia(w, url, function (url) {
@@ -260,7 +300,7 @@ class Share extends MapInfo {
 
         //Compartir en Whatsapp
         
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-whatsapp`).addEventListener("click", function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-whatsapp`).addEventListener("click", function (_e) {
             self.shortenedLink().then(async function (url) {
                 if (Util.detectMobile()) {
                     const waText = 'whatsapp://send?text=';
@@ -282,7 +322,7 @@ class Share extends MapInfo {
         });
 
         //Guardar en marcadores
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-bookmark`).addEventListener("click", async function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-bookmark`).addEventListener("click", async function (_e) {
             var bookmarkURL = await self.generateLink();
             var bookmarkTitle = document.title;
 
@@ -308,7 +348,7 @@ class Share extends MapInfo {
             }
         });
         //Compartir nativo
-        self.div.querySelector(`sitna-button.${self.CLASS}-btn-native`)?.addEventListener("click", async function (_e) {
+        self.querySelector(`sitna-button.${self.CLASS}-btn-native`)?.addEventListener("click", async function (_e) {
             _e.target.classList.add(Consts.classes.LOADING);
             self.shortenedLink().then(async function (url) {
                 try {
@@ -335,7 +375,7 @@ class Share extends MapInfo {
             
         });
         //Compartir PNG nativo
-        self.div.querySelector(`button.${self.CLASS}-btn-png-native`)?.addEventListener("click", async function (_e) {
+        self.querySelector(`button.${self.CLASS}-btn-png-native`)?.addEventListener("click", async function (_e) {
             _e.target.classList.add(Consts.classes.LOADING);
             try {
                 self.#shareImage("image/png").then(() => {
@@ -351,7 +391,7 @@ class Share extends MapInfo {
             _e.target.active = false;
         });
         //Compartir JPG nativo
-        self.div.querySelector(`button.${self.CLASS}-btn-jpg-native`)?.addEventListener("click", async function (_e) {
+        self.querySelector(`button.${self.CLASS}-btn-jpg-native`)?.addEventListener("click", async function (_e) {
             _e.target.classList.add(Consts.classes.LOADING);
             try {
                 await self.#shareImage("image/jpeg").then(() => {
@@ -372,7 +412,7 @@ class Share extends MapInfo {
 
     async #selectInputField(elm, shorten, _input=null) {
         const self = this;
-        const input = _input || self.div.querySelector("input.tc-textbox.tc-url");
+        const input = _input || self.querySelector("input.tc-textbox.tc-url");
 
         if (shorten) {
             if (input.dataset.update || !input.dataset.shortened) {
@@ -415,7 +455,7 @@ class Share extends MapInfo {
 
     async #shareImage(format) {
         const self = this;
-        const includeQR = self.div.querySelector(`.${self.CLASS}-chk-qr`).checked;
+        const includeQR = self.querySelector(`.${self.CLASS}-chk-qr`).checked;
         const blob = await self.generateImage(format, true, includeQR);
         const fileName = document.title + "." + format.substr(format.indexOf("/") + 1);
         const file = new File([blob], fileName, { type: format })
@@ -462,7 +502,7 @@ class Share extends MapInfo {
     manageMaxLengthExceed(maxLengthExceed) {
         const self = this;
 
-        const browserAlert = self.div.querySelector(`.${self.CLASS}-alert`);
+        const browserAlert = self.querySelector(`.${self.CLASS}-alert`);
         //Si la URL sobrepasa el tamaño máximo avisamos que puede fallar en Edge
         browserAlert.classList.toggle(Consts.classes.HIDDEN, !maxLengthExceed.browser);
 
@@ -516,22 +556,22 @@ class Share extends MapInfo {
 
     async update() {
         const self = this;
-        const input = self.div.querySelector('.tc-url input[type=text]');
+        const input = self.querySelector('.tc-url input[type=text]');
         if (input.value.trim().length === 0) {
             self.updateUI();
             const link = await self.generateLink();
             self.registerListeners();
             input.value = link;
-            self.div.querySelector('.tc-iframe input[type=text]').value = await self.generateIframe(link);
+            self.querySelector('.tc-iframe input[type=text]').value = await self.generateIframe(link);
         }
     }
 
     updateUI() {
         const self = this;
-        const shareIconContainer = self.div.querySelector(`.${self.CLASS}-icons`);
-        const textboxes = self.div.querySelectorAll(`.${self.CLASS}-url-box tc-textbox`);
-        const buttons = self.div.querySelectorAll(`.${self.CLASS}-url-box button`);
-        const alert = self.div.querySelector('.' + self.CLASS + '-alert');
+        const shareIconContainer = self.querySelector(`.${self.CLASS}-icons`);
+        const textboxes = self.querySelectorAll(`.${self.CLASS}-url-box tc-textbox`);
+        const buttons = self.querySelectorAll(`.${self.CLASS}-url-box button`);
+        const alert = self.querySelector('.' + self.CLASS + '-alert');
         shareIconContainer.classList.add(Consts.classes.LOADING);
         textboxes.forEach(tb => tb.disabled = true);
         buttons.forEach(btn => {
@@ -615,5 +655,4 @@ class Share extends MapInfo {
 }
 
 Share.prototype.CLASS = 'tc-ctl-share';
-TC.control.Share = Share;
 export default Share;
