@@ -1,5 +1,7 @@
 ﻿(function () {
 
+    let proxyUrl;
+
     // Arreglo del bug de actualización de la cache
     self.addEventListener('install', function (event) {
         const cacheName = 'TC.offline.map.root';
@@ -48,6 +50,15 @@
 
                     return fetch(event.request).catch(function (reason) {
                         console.log('[fetch] Could not fetch ' + event.request.url + ': ' + reason);
+                        if (reason instanceof TypeError && proxyUrl) {
+                            let url = event.request.url;
+                            if (!url.startsWith(proxyUrl)) {
+                                return fetch(proxyUrl + encodeURIComponent(url))
+                                    .catch(function (reason) {
+                                        console.log('[fetch] Could not fetch ' + event.request.url + ' via proxy: ' + reason);
+                                    });
+                            }
+                        }
                     });
                 })
         );
@@ -74,6 +85,9 @@
         const silent = event.data.silent;
         const urlList = event.data.list;
         switch (action) {
+            case 'init':
+                proxyUrl = event.data.proxyUrl;
+                break;
             case 'create':
                 currentMapStates[name] = action;
                 caches.delete(name).finally(function () {
@@ -86,9 +100,9 @@
                                 if (idx === urlList.length) {
                                     if (!silent) {
                                         postMessage({
-                                            action: action,
-                                            name: name,
-                                            requestId: requestId,
+                                            action,
+                                            name,
+                                            requestId,
                                             event: 'cached'
                                         });
                                     }
@@ -101,22 +115,22 @@
                                         function () {
                                             if (!silent) {
                                                 postMessage({
-                                                    action: action,
-                                                    name: name,
-                                                    requestId: requestId,
+                                                    action,
+                                                    name,
+                                                    requestId,
                                                     event: 'progress',
-                                                    count: count,
+                                                    count,
                                                     total: urlList.length
                                                 });
                                             }
                                         },
                                         function () {
                                             postMessage({
-                                                action: action,
-                                                name: name,
-                                                requestId: requestId,
+                                                action,
+                                                name,
+                                                requestId,
                                                 event: 'error',
-                                                url: url
+                                                url
                                             });
                                         }
                                     )

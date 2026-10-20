@@ -48,13 +48,9 @@ class SWCacheClient extends Control {
                 }).then(
                     function (reg) {
                         self.serviceWorkerEnabled = true;
-                        if (reg.installing) {
-                            resolve(reg.installing);
-                        } else if (reg.waiting) {
-                            resolve(reg.waiting);
-                        } else if (reg.active) {
-                            resolve(reg.active);
-                        }
+                        const sw = reg.installing || reg.waiting || reg.active;
+                        sw.postMessage({ action: 'init', proxyUrl: TC.Cfg.proxy });
+                        resolve(sw);
                         console.log(reg.scope, 'register');
                     },
                     function (reason) {
