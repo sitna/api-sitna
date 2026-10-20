@@ -17,10 +17,10 @@ import WebComponentControl from './WebComponentControl.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
+import EditWrapper from '../ol/Edit.js';
 
 TC.wrap = wrap;
-
-const elementName = 'sitna-edit';
 
 class EditModel {
     constructor() {
@@ -40,6 +40,11 @@ class EditModel {
 }
 
 class Edit extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-edit', this);
+    }
+
     #classSelector;
     #selectors;
     #previousActiveControl;
@@ -86,7 +91,7 @@ class Edit extends WebComponentControl {
             .initProperty('snapping')
             .initProperty('mode')
             .initProperty('otherToolsIncluded');
-        self.wrap = new TC.wrap.control.Edit(self);
+        self.wrap = new EditWrapper(self);
         self.layer = null;
         //self.feature = self.options.feature ? self.options.feature : null;
         self.callback = Util.isFunction(arguments[2]) ? arguments[2] : (self.options.callback ? self.options.callback : null);
@@ -151,9 +156,10 @@ class Edit extends WebComponentControl {
     async #onSnappingChange() {
         const self = this;
         const snapping = self.snapping ? self.layer || self.snapping : false;
-        (await self.getPointDrawControl()).snapping = snapping;
-        (await self.getLineDrawControl()).snapping = snapping;
-        (await self.getPolygonDrawControl()).snapping = snapping;
+        (await self.getPointDrawControl()).setSnapping(snapping);
+        (await self.getLineDrawControl()).setSnapping(snapping);
+        (await self.getPolygonDrawControl()).setSnapping(snapping);
+        (await self.getModifyControl()).setSnapping(snapping);
     }
 
     get mode() {
@@ -393,10 +399,26 @@ class Edit extends WebComponentControl {
     async loadTemplates() {
         const self = this;
 
-        const mainTemplatePromise = import('../templates/tc-ctl-edit.mjs');
-        const importTemplatePromise = import('../templates/tc-ctl-edit-import.mjs');
-        const importLayerTemplatePromise = import('../templates/tc-ctl-edit-import-layer.mjs');
-        const importFeatureTemplatePromise = import('../templates/tc-ctl-edit-import-feature.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-edit" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-edit.mjs'
+        );
+        const importTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-edit-import" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-edit-import.mjs'
+        );
+        const importLayerTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-edit-import-layer" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-edit-import-layer.mjs'
+        );
+        const importFeatureTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-edit-import-feature" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-edit-import-feature.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -411,7 +433,6 @@ class Edit extends WebComponentControl {
         await super.renderData.call(self, {
             controlId: self.getId(),
             stylable: self.stylable,
-            snapping: self.snapping,
             otherToolsIncluded: self.otherToolsIncluded
         });
 
@@ -428,12 +449,13 @@ class Edit extends WebComponentControl {
         self.pointDrawControl.id = self.getUID();
         self.lineDrawControl.id = self.getUID();
         self.polygonDrawControl.id = self.getUID();
-        self.pointDrawControl.snapping = self.snapping;
-        self.lineDrawControl.snapping = self.snapping;
-        self.polygonDrawControl.snapping = self.snapping;
+        self.pointDrawControl.setSnapping(self.snapping);
+        self.lineDrawControl.setSnapping(self.snapping);
+        self.polygonDrawControl.setSnapping(self.snapping);
         //self.cutDrawControl = controls[3];
         self.modifyControl = controls[3];
         self.modifyControl.id = self.getUID();
+        self.modifyControl.setSnapping(self.snapping);
         self.history = self.modifyControl.history;
 
         self.modifyControlAttributesEditor = await self.getModifyControlAttributeEditor();
@@ -490,7 +512,7 @@ class Edit extends WebComponentControl {
         };
         const drawendHandler = async function (e) {
             await addElevation(e.feature);
-            self.trigger(Consts.event.DRAWEND, { feature: e.feature });
+            //self.trigger(Consts.event.DRAWEND, { feature: e.feature });
         };
         const drawcancelHandler = function () {
             self.cancel();
@@ -498,22 +520,22 @@ class Edit extends WebComponentControl {
         const measureHandler = function (e) {
             self.#measurementControl.displayMeasurement(e);
         };
+        self.pointDrawControl.addEventListener(ControlEvent.type.DRAWEND, drawendHandler)
+        self.pointDrawControl.addEventListener(ControlEvent.type.DRAWCANCEL, drawcancelHandler);
         self.pointDrawControl
-            .on(Consts.event.DRAWEND, drawendHandler)
-            .on(Consts.event.DRAWCANCEL, drawcancelHandler)
             .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, measureHandler);
+        self.lineDrawControl.addEventListener(ControlEvent.type.DRAWSTART, drawstartHandler);
+        self.lineDrawControl.addEventListener(ControlEvent.type.DRAWEND, drawendHandler);
+        self.lineDrawControl.addEventListener(ControlEvent.type.DRAWCANCEL, drawcancelHandler);
         self.lineDrawControl
-            .on(Consts.event.DRAWSTART, drawstartHandler)
-            .on(Consts.event.DRAWEND, drawendHandler)
-            .on(Consts.event.DRAWCANCEL, drawcancelHandler)
             .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, measureHandler);
+        self.polygonDrawControl.addEventListener(ControlEvent.type.DRAWSTART, drawstartHandler);
+        self.polygonDrawControl.addEventListener(ControlEvent.type.DRAWEND, drawendHandler);
+        self.polygonDrawControl.addEventListener(ControlEvent.type.DRAWCANCEL, drawcancelHandler);
         self.polygonDrawControl
-            .on(Consts.event.DRAWSTART, drawstartHandler)
-            .on(Consts.event.DRAWEND, drawendHandler)
-            .on(Consts.event.DRAWCANCEL, drawcancelHandler)
             .on(Consts.event.MEASURE + ' ' + Consts.event.MEASUREPARTIAL, measureHandler);
         //self.cutDrawControl
-        //    .on(Consts.event.DRAWEND, function (e) {
+        //    .on(ControlEvent.type.DRAWEND, function (e) {
         //        //TC.loadJS(
         //        //    !window.turf && !turf.lineSplit,
         //        //    [TC.apiLocation + 'lib/turf/line-split'],
@@ -524,7 +546,7 @@ class Edit extends WebComponentControl {
 
         //        //self.layer.features.filter(f => f)
         //    })
-        //    .on(Consts.event.DRAWCANCEL, drawcancelHandler);
+        //    .on(ControlEvent.type.DRAWCANCEL, drawcancelHandler);
 
         self.modifyControl
             .on(Consts.event.FEATUREMODIFY, async function onFeatureModify(e) {
@@ -723,9 +745,9 @@ class Edit extends WebComponentControl {
     async setComplexGeometry(isMultiple) {
         const self = this;
         self.isMultiple = isMultiple;
-        //(await self.getPointDrawControl()).setMode(isMultiple ? Consts.geom.MULTIPOINT : Consts.geom.POINT);
-        (await self.getLineDrawControl()).setMode(isMultiple ? Consts.geom.MULTIPOLYLINE : Consts.geom.POLYLINE);
-        (await self.getPolygonDrawControl()).setMode(isMultiple ? Consts.geom.MULTIPOLYGON : Consts.geom.POLYGON);
+        //(await self.getPointDrawControl()).mode = isMultiple ? Consts.geom.MULTIPOINT : Consts.geom.POINT;
+        (await self.getLineDrawControl()).mode = isMultiple ? Consts.geom.MULTIPOLYLINE : Consts.geom.POLYLINE;
+        (await self.getPolygonDrawControl()).mode = isMultiple ? Consts.geom.MULTIPOLYGON : Consts.geom.POLYGON;
     }
 
     getLayerEditData(optionalLayer) {
@@ -1241,5 +1263,4 @@ class Edit extends WebComponentControl {
 }
 
 Edit.prototype.CLASS = 'tc-ctl-edit';
-customElements.get(elementName) || customElements.define(elementName, Edit);
 export default Edit;
