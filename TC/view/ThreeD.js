@@ -1,29 +1,26 @@
+
 import TC from '../../TC.js';
 import Consts from '../Consts.js';
 import Util from '../Util.js';
 import MapContents from '../control/MapContents.js';
-import Point from '../../SITNA/feature/Point.js';
-import Marker from '../../SITNA/feature/Marker.js';
 import Polyline from '../../SITNA/feature/Polyline.js';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
-import Polygon from '../../SITNA/feature/Polygon.js';
-import MultiPolygon from '../../SITNA/feature/MultiPolygon.js';
-import Circle from '../../SITNA/feature/Circle.js';
 import Raster from '../../SITNA/layer/Raster.js';
 import Vector from '../../SITNA/layer/Vector.js';
-import Modify from '../control/Modify.js';
 import mainTemplate from '../templates/tc-ctl-3d.mjs';
 import overlayTemplate from '../templates/tc-view-3d-overlay.mjs';
 import camControlsTemplate from '../templates/tc-view-3d-cm-ctls.mjs';
 import MergeTerrainProvider from '../cesium/MergeTerrainProvider.js';
 import TileSetManager from '../cesium/TileSetManager.js';
-import ThreeDDraw from './ThreeDDraw.js';
-import ControlEvent from '../../SITNA/control/ControlEvent.js';
-import FeatureInfo from './ThreeDGFI.js';
-import { tcFeatureConstructor, cartesianToArray } from './ThreeDUtils.js';
+import { ThreeDDraw } from '../control/3D/ThreeDDraw.js';
 import CustomEntity from './CustomEntity.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
+import FeatureConverter from './FeatureConverter.js';
+import MouseMove from './ThreeDMouseMove.js';
+import DragAndDrop from './ThreeDDragAndDrop.js';
+import GeolocationWrapper from '../ol/Geolocation.js';
+
 
 TC.view = TC.view || {};
 TC.control = TC.control || {};
@@ -31,18 +28,6 @@ TC.control.MapContents = MapContents;
 
 Consts.CESIUMNS = 'cesium';
 //cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5YTllZmUxYy1iNTliLTQ0OTktOTM0Zi05ZWJjNmM3Mzg2NGIiLCJpZCI6MTQ1Nzc3LCJpYXQiOjE2ODYzMDc0OTN9.yJXgEQCrQ1N2_y0U2loBzzabTygNuQUcsB0Ahs6IlqA";
-const tcFeatureFromEntity = function (entity) {
-    if (entity.polygon)
-        return new Polygon(entity.polygon.hierarchy.getValue().positions.map(function (point) {
-            return cartesianToArray(point);
-        }), { id: entity.id })
-    else if (entity.polyline)
-        return new Polyline(entity.polyline.positions.getValue().map(function (point) {
-            return cartesianToArray(point);
-        }), { id: entity.id })
-    else
-        return new Point(cartesianToArray(entity.position.getValue(cesium.JulianDate.now)), { id: entity.id });
-}
 
 class ThreeDCameraModel {
     constructor() {
@@ -78,7 +63,6 @@ const ThreeD = (function (namespace, signature, factory) {
             HIGHLIGHTED: 'tc-highlighted',
             OUTFOCUS: 'tc-outfocus'
         },
-        allowedControls: [],
         template: {},
 
         viewer: null,
@@ -130,12 +114,16 @@ const ThreeD = (function (namespace, signature, factory) {
                 if (typeof ctlOptions.div === 'string') {
                     ctlOptions.div = self.div.querySelector('#' + ctlOptions.div) || ctlOptions.div;
                 }
-                map.addControl(name, ctlOptions).then((ctl) => {
-                    ctl.div.parentElement.removeChild(ctl.div);
-                    document.querySelector(".tc-panel-content").appendChild(ctl.div);
-                    ctl.div.classList.add(Consts.classes.COLLAPSED)
-                });
-                //ctlPromises.push(self.addControl(name, ctlOptions));
+                else {                    
+                    ctlOptions.div = document.createElement("div");
+                    document.querySelector(".tc-panel-content").appendChild(ctlOptions.div)
+                }
+                map.addControl(name, ctlOptions).then((ctl) => {                    
+                    ctl.classList.add(Consts.classes.COLLAPSED);
+                    ctlOptions.div.classList.add(Consts.classes.COLLAPSED);
+                    //ctlOptions.div.id = ctl.id;
+                    //ctl.id = "";
+                });                
             }
         }
 
@@ -201,21 +189,15 @@ const ThreeD = (function (namespace, signature, factory) {
 
     // Funciones para cálculo de FOV
     const getFarCoords = function (origin, nearPoint) {
-        var radius = 1000000; // 1000 km
-        var dx = nearPoint[0] - origin[0];
-        var dy = nearPoint[1] - origin[1];
-        var angle = Math.atan(dy / dx);
+        const radius = 1000000; // 1000 km
+        const dx = nearPoint[0] - origin[0];
+        const dy = nearPoint[1] - origin[1];
+        let angle = Math.atan(dy / dx);
         // Math.atan solo da resultados entre -90º y 90º, si estamos mirando al hemisferio oeste hay que sumar 180º al ángulo
         if (dx < 0) {
             angle = angle + Math.PI;
         }
         return [origin[0] + radius * Math.cos(angle), origin[1] + radius * Math.sin(angle)];
-    };
-
-    const distanceSquared = function (p1, p2) {
-        var dx = p2[0] - p1[0];
-        var dy = p2[1] - p1[1];
-        return dx * dx + dy * dy;
     };
 
     const getFarMapCoords = function (obj) {
@@ -230,12 +212,7 @@ const ThreeD = (function (namespace, signature, factory) {
             nextPixel.y = Math.round(nextPixel.y * 9 / 10);
             var nextCoords = pickMapCoords.call(self, nextPixel);
             if (nextCoords) {
-                // Ordenamos la dupla por distancia, porque si estamos mirando desde dentro de un monte 
-                // el punto que se supone que es el más lejano en realidad está más cerca.
-                var coordsArray = [obj.nearMapCoords, nextCoords].sort(function (a, b) {
-                    return distanceSquared(obj.cameraPosition, a) - distanceSquared(obj.cameraPosition, b);
-                });
-                return getFarCoords.apply(this, coordsArray);
+                return getFarCoords.apply(this, [obj.nearMapCoords, nextCoords]);
             }
         }
         return null;
@@ -603,6 +580,19 @@ const ThreeD = (function (namespace, signature, factory) {
             }
         };
         self.parent.view3D.timeoutDelay = 0;
+        const getCameraPosition = () => {
+            var camera = self.getCamera();
+            return camera.positionCartographic;
+        };
+
+        const getCameraPositionXY = (position) => {
+            var view = self.parent;
+            if (view.view3D.crs !== view.view3D.view2DCRS) {
+                return Util.reproject([cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)], view.view3D.crs, view.view3D.view2DCRS);
+            }
+            return [cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)];
+        };
+
         var cameraChanged = () => {
             if (self.parent.view3D.timeoutDelay) clearTimeout(self.parent.view3D.timeoutDelay);
             self.parent.view3D.timeoutDelay = setTimeout(() => {
@@ -611,13 +601,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 if (!view.viewer) return;
                 self.parent.map.trigger(Consts.event.CAMERACHANGE, { position: self.parent.view3D.getCameraData() });
 
-                var camera = self.getCamera();
-                var position = camera.positionCartographic;
-                if (view.view3D.crs !== view.view3D.view2DCRS) {
-                    self._coordsXY = Util.reproject([cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)], view.view3D.crs, view.view3D.view2DCRS);
-                } else {
-                    self._coordsXY = [cesium.Math.toDegrees(position.longitude), cesium.Math.toDegrees(position.latitude)];
-                }
+                var position = getCameraPosition();
+                self._coordsXY = getCameraPositionXY(position);
                 view.mapView.setCenter(self._coordsXY);
                 view.mapView.setResolution(calcResolutionForDistance.call(view, position.height, position.latitude));
             }, 500);
@@ -653,11 +638,11 @@ const ThreeD = (function (namespace, signature, factory) {
             // flacunza: calculamos el polígono de FOV para dibujar en el mapa de situación
             // Lo calculamos aunque no nos estemos moviendo porque el terreno puede estar cargándose
             if (self._coordsXY) {
-                view._ovMap = view._ovMap || view.map.getControlsByClass('TC.control.OverviewMap')[0];
+                view._ovMap = view._ovMap || view.map.getControlsByClass('OverviewMap')[0];
                 if (view._ovMap) {
                     view._ovMap.renderPromise().then(function () {
-
-                        view._ovMap.wrap.draw3DCamera({ position: self._coordsXY, heading: camera.heading, fov: self.parent.view3D.getFovCoords() });
+                        const position = getCameraPosition();
+                        view._ovMap.wrap.draw3DCamera({ position: getCameraPositionXY(position), heading: camera.heading, fov: self.parent.view3D.getFovCoords() });
                     });
                 }
             }
@@ -1843,690 +1828,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     return wmsLayer.call(this, layer);
             }
         };
-    };
-    const FeatureConverter = function () {
-        var toCesiumColor = function (hexStringColor, alpha) {
-            if (hexStringColor instanceof Array) {
-                hexStringColor = "rgba(" + hexStringColor[0] + ", " + hexStringColor[1] + ", " + hexStringColor[2] + ", " + hexStringColor[3] + ")";
-            }
-            var color = cesium.Color.fromCssColorString(hexStringColor);
-            if (alpha !== undefined) {
-                return color.withAlpha(alpha);
-            }
-
-            return color;
-        }
-        var setStyleProperties = function (styles, properties, feature) {
-            for (var key in properties) { // recorremos el diccionario de propiedades que admitimos como estilo
-                var attr = styles[properties[key].prop];
-                if (attr !== undefined) {
-                    if (typeof (attr) === "function") { // si la propiedad del estilo es una función (como en el control de búsquedas) invocamos para obtener el valor
-                        var val = attr(feature);
-                        if (val) {
-                            properties[key].val = val;
-                        }
-                    } else {
-                        properties[key].val = attr; // obtenenemos el valor
-                    }
-                }
-            }
-        }
-
-        var getFeatureStyle = function (feature) {
-            var styles;
-
-            if (!feature.layer || (feature.layer && !hasOwnProperty.call(feature.layer, 'styles'))) {
-                styles = TC.Defaults.styles;
-            } else {
-                styles = feature.layer.styles;
-            }
-
-            styles = styles[feature.STYLETYPE] == undefined ?
-                styles[(feature.STYLETYPE === "polyline" ? "line" : feature.STYLETYPE)] :
-                styles[(feature.STYLETYPE === "multipolygon" ? "polygon" : feature.STYLETYPE)];
-
-            styles = Util.extend({}, styles, feature.options, feature.getStyle());
-
-            return styles;
-        }
-
-        function createLine(id, coords, options, callback) {
-            const entityOps = {
-                name: id,
-                polyline: {
-                    positions: coords,
-                    width: options.width,
-                    material: options.material,
-                    clampToGround: true
-                }
-            }
-            createLabel(entityOps, options, coords);
-
-            callback(new cesium.Entity(entityOps));
-        }
-
-        function createPolygon(id, coords, options, callback) {
-            const isMultiPolygon = !!coords[0][0];
-            const outlineCoords = isMultiPolygon ? coords[0] : coords;
-
-            const polygonHierarchy = {
-                positions: (outlineCoords[0].equals(outlineCoords.at(-1)) ? outlineCoords.slice(0, -1) : outlineCoords)
-            }            
-            if (coords.slice(1).length && isMultiPolygon)
-                polygonHierarchy.holes = coords.slice(1).map((hole) => { return { "positions": hole } }); 
-
-            const entityOps = {
-                name: id,                
-                polygon: {
-                    hierarchy: polygonHierarchy,
-                    material: options.color,
-                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                },
-                polyline: {
-                    positions: outlineCoords,
-                    width: options.width,
-                    material: options.outlineColor,
-                    clampToGround: true
-                }
-            }
-           
-            createLabel(entityOps, options, outlineCoords);
-            var entity = new cesium.Entity(entityOps);
-
-            callback(entity);
-        }
-        function createLabel(entityOps, options, coords) {
-            if (options.label) {
-                entityOps.position = coords instanceof cesium.Cartesian3 ? coords : cesium.BoundingSphere.fromPoints(coords).center;
-                entityOps.label = {
-                    text: options.label,
-                    pixelOffset: new cesium.Cartesian2(...(options.labelOffset || [0, 0])),
-                    eyeOffset: new cesium.Cartesian3(0, 0, 0),
-                    outlineColor: cesium.Color.WHITE,
-                    font: options.fontSize + 'pt sans-serif',
-                    fillColor: options.fontColor,
-                    //fillColor: cesium.Color.fromBytes.apply({}, options.fontColor),
-                    outlineWidth: 4,
-                    //font: style.font,
-                    style: cesium.LabelStyle.FILL_AND_OUTLINE,
-                    heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                    horizontalOrigin: cesium.HorizontalOrigin.CENTER,
-                    verticalOrigin: cesium.VerticalOrigin.CENTER
-
-                }
-                if (options.fontColor)
-                    entityOps.label.fillColor = options.fontColor;
-                if (options.fontSize)
-                    entityOps.label.font = options.fontSize + "pt sans-serif";
-            }
-
-        }
-
-        var polygonConverter = function (feature) {
-            var polygon = {};
-            var styles = getFeatureStyle(feature);
-
-            polygon.options = function () {
-                var opt = {};
-                var properties = {
-                    color: { prop: 'fillColor' },
-                    opacity: { prop: 'fillOpacity' },
-                    outlineColor: { prop: 'strokeColor' },
-                    outlineOpacity: { prop: 'strokeOpacity' },
-                    width: { prop: 'strokeWidth' },
-                    fontColor: { prop: 'fontColor' },
-                    fontSize: { prop: 'fontSize' },
-                    label: { prop: 'label' },
-                };
-
-                setStyleProperties(styles, properties, feature);
-                var color;
-                if (hasOwnProperty.call(properties.color, 'val')) {
-                    if (hasOwnProperty.call(properties.opacity, 'val')) {
-                        color = toCesiumColor(properties.color.val, properties.opacity.val);
-                    } else {
-                        color = toCesiumColor(properties.color.val);
-                    }
-                }
-
-                opt.color = color;
-
-                if (hasOwnProperty.call(properties.outlineColor, 'val')) {
-                    if (hasOwnProperty.call(properties.outlineOpacity, 'val')) {
-                        color = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
-                    } else {
-                        color = toCesiumColor(properties.outlineColor.val);
-                    }
-                }
-
-                opt.outlineColor = color;
-
-                if (hasOwnProperty.call(properties.width, 'val')) {
-                    //opt.width = properties.width.val;
-                    opt.width = new cesium.CallbackProperty(() => {
-                        if (feature.wrap.feature3D?.highLighted)
-                            return properties.width.val * 3;
-                        else
-                            return properties.width.val;
-
-                    }, false);
-                }
-
-                if (hasOwnProperty.call(properties.label, 'val')) {
-                    opt.label = properties.label.val;
-
-                    if (hasOwnProperty.call(properties.fontColor, 'val')) {
-                        opt.fontColor = toCesiumColor(properties.fontColor.val);
-                    }
-                    if (hasOwnProperty.call(properties.fontSize, 'val')) {
-                        opt.fontSize = properties.fontSize.val;
-                    }
-                }
-
-                return opt;
-            };
-
-            if (feature instanceof MultiPolygon) {
-                polygon.geometryType = function (coords, options) {
-                    return new Promise(function (resolve, reject) {
-                        var getting = [];
-
-                        var geomPolygons = [];                                               
-
-                        var getGeom = function (outlineCoords, index) {
-                            const arrProm = [new Promise(function (res, _rej) {
-                                createPolygon(feature.id + "_" + index, outlineCoords, options, function (entity) {
-                                    geomPolygons.push(entity);
-                                    res();
-                                });                                
-                            })];
-                            if (outlineCoords.length > 1) {
-                                options.material = options.outlineColor;
-                                //si tiene agujeros 
-                                outlineCoords.slice(1).forEach((holes, i) => {
-                                    arrProm.push(new Promise(function (res, _rej) {
-                                        createLine(feature.id + "_" + index + "_" + i, holes, options, function (entity) {
-                                            geomPolygons.push(entity);
-                                            res();
-                                        });
-                                    }));
-                                })
-                            }
-                            
-                            return Promise.all(arrProm);
-                        }
-                        for (var i = 0; i < coords.length; i++) {                            
-                            getting.push(getGeom(coords[i],i));                            
-                        }
-
-                        Promise.all(getting).then(function () {
-                            getting = [];
-                            //resolve([geomOutlines]);
-                            resolve(geomPolygons);
-                        }).catch(reject);
-                    });
-                };
-            }
-            else if (feature instanceof Polygon) {
-                polygon.geometryType = function (coords, options) {
-                    return new Promise(function (resolve, _reject) {
-                        if (Array.isArray(coords) && coords.length === 1 && Array.isArray(coords[0])) {
-                            coords = coords[0];
-                        }
-                        createPolygon(feature.id, coords,
-                            options, function (entity) {
-
-                                resolve(entity);
-                            });
-                    });
-                };
-            }
-
-            return polygon;
-        };
-        var lineConverter = function (feature) {
-            var line = {};
-            var styles = getFeatureStyle(feature);
-
-            line.options = function () {
-                var opt = {};
-                var properties = {
-                    material: { prop: 'strokeColor' },
-                    opacity: { prop: 'strokeOpacity' },
-                    width: { prop: 'strokeWidth' },
-                    fontColor: { prop: 'fontColor' },
-                    fontSize: { prop: 'fontSize' },
-                    label: { prop: 'label' },
-                };
-
-                setStyleProperties(styles, properties, feature);
-
-                if (hasOwnProperty.call(properties.width, 'val')) {
-                    //opt.width = properties.width.val;                    
-                    opt.width = new cesium.CallbackProperty(() => {
-                        if (feature.wrap.feature3D?.highLighted)
-                            return properties.width.val * 3;
-                        else
-                            return properties.width.val;
-
-                    }, false);
-                }
-
-                var color;
-                if (hasOwnProperty.call(properties.material, 'val')) {
-                    if (hasOwnProperty.call(properties.opacity, 'val')) {
-                        color = toCesiumColor(properties.material.val, properties.opacity.val);
-                    } else {
-                        color = toCesiumColor(properties.material.val);
-                    }
-                }
-
-                opt.material = color;
-                
-                if (hasOwnProperty.call(properties.label, 'val')) {
-                    opt.label = properties.label.val;
-
-                    if (hasOwnProperty.call(properties.fontColor, 'val')) {
-                        opt.fontColor = toCesiumColor(properties.fontColor.val);
-                    }
-                    if (hasOwnProperty.call(properties.fontSize, 'val')) {
-                        opt.fontSize = properties.fontSize.val;
-                    }
-                }
-
-                return opt;
-            };
-
-            if (feature instanceof MultiPolyline) {
-                line.geometryType = function (coords, options) {
-                    return new Promise(function (resolve, reject) {
-                        var geomInstances = [];
-
-                        var getting = [];
-
-                        if (coords.length == 1) {
-                            coords = coords[0];
-
-                            getting.push(new Promise(function (res, _rej) {
-                                createLine(feature.id, coords, options, function (entity) {
-                                    geomInstances.push(entity);
-                                    res();
-                                });
-                            }));
-
-
-                        } else {
-                            coords = coords.sort(function (a, b) {
-                                if (a.length > b.length) {
-                                    return -1;
-                                }
-                                if (a.length < b.length) {
-                                    return 1;
-                                }
-                                return 0;
-                            });
-                            //var pixelSize = getPixelSize(coords[0]);
-                            for (var i = 0; i < coords.length; i++) {
-
-                                getting.push(new Promise(function (res, _rej) {
-                                    createLine(feature.id, coords[i], options, function (entity) {
-                                        geomInstances.push(entity);
-                                        res();
-                                    });
-                                }));
-                            }
-                        }
-
-                        Promise.all(getting).then(function () {
-                            getting = [];
-
-                            resolve(geomInstances);
-                        }).catch(reject);
-                    });
-                };
-            }
-            else if (feature instanceof Polyline) {
-                line.geometryType = function (coords, options) {
-                    return new Promise(function (resolve, _reject) {
-
-                        createLine(feature.id, coords, options, function (entity) {
-                            resolve(entity);
-                        });
-                    });
-                };
-            }
-
-            return line;
-        };
-        var pointConverter = function (feature) {
-            var point = {};
-            var styles = getFeatureStyle(feature);
-
-            point.options = function () {
-                var opt = {};
-
-                var properties = {
-                    rotation: { prop: 'angle' },
-                    label: { prop: 'label' },
-                    labelOffset: { prop: 'labelOffset' },
-                    fontSize: { prop: 'fontSize' },
-                    fontColor: { prop: 'fontColor' },
-                    outlineLabelColor: { prop: 'labelOutlineColor' },
-                    outlineLabelWidth: { prop: 'labelOutlineWidth' },
-                    anchor: { prop: 'anchor' },
-                    height: { prop: 'height' },
-                    width: { prop: 'width' },
-                    url: { prop: 'url' },
-                    color: { prop: 'fillColor' },
-                    opacity: { prop: 'fillOpacity' },
-                    outlineColor: { prop: 'strokeColor' },
-                    outlineOpacity: { prop: 'strokeOpacity' },
-                    outlineWidth: { prop: 'strokeWidth' },
-                    radius: { prop: 'radius' }
-                };
-
-                setStyleProperties(styles, properties, feature);
-
-                if (hasOwnProperty.call(properties.anchor, 'val')) {
-                    if (!hasOwnProperty.call(properties.url, 'val') && (feature.options.url || feature.options.cssClass)) {
-                        opt.url = feature.options.url || TC.Util.getFeatureStyleFromCss(feature.options.cssClass)?.url;
-                    } else {
-                        opt.url = properties.url.val;
-                    }
-
-                    opt.anchor = properties.anchor.val;
-                }
-
-                if (hasOwnProperty.call(properties.height, 'val')) {
-                    opt.height = properties.height.val;
-                }
-
-                if (hasOwnProperty.call(properties.width, 'val')) {
-                    opt.width = properties.width.val;
-                }
-
-                if (hasOwnProperty.call(properties.rotation, 'val')) {
-                    opt.rotation = properties.rotation.val;
-                }
-
-                if (hasOwnProperty.call(properties.label, 'val')) {
-                    opt.label = properties.label.val;
-
-                }
-
-                if (hasOwnProperty.call(properties.fontSize, 'val')) {
-                    opt.fontSize = properties.fontSize.val;
-                    if (hasOwnProperty.call(properties.labelOffset, 'val')) {
-                        opt.labelOffset = properties.labelOffset.val;
-                    }
-                }
-
-                if (hasOwnProperty.call(properties.fontColor, 'val')) {
-                    opt.fontColor = toCesiumColor(properties.fontColor.val);
-                }
-
-                if (hasOwnProperty.call(properties.outlineLabelColor, 'val')) {
-                    opt.outlineLabelColor = toCesiumColor(properties.outlineLabelColor.val);
-                }
-
-                if (hasOwnProperty.call(properties.outlineLabelWidth, 'val')) {
-                    opt.outlineLabelWidth = properties.outlineLabelWidth.val;
-                }
-
-
-                if (hasOwnProperty.call(properties.color, 'val')) {
-                    if (hasOwnProperty.call(properties.opacity, 'val')) {
-                        opt.color = toCesiumColor(properties.color.val, properties.opacity.val);
-                    } else {
-                        opt.color = toCesiumColor(properties.color.val);
-                    }
-                }
-
-                if (hasOwnProperty.call(properties.outlineColor, 'val')) {
-                    if (hasOwnProperty.call(properties.outlineOpacity, 'val')) {
-                        opt.outlineColor = toCesiumColor(properties.outlineColor.val, properties.outlineOpacity.val);
-                    } else {
-                        opt.outlineColor = toCesiumColor(properties.outlineColor.val);
-                    }
-                }
-
-                if (hasOwnProperty.call(properties.outlineWidth, 'val')) {
-                    opt.outlineWidth = properties.outlineWidth.val;
-                }
-
-                if (hasOwnProperty.call(properties.radius, 'val')) {
-                    opt.radius = properties.radius.val;
-                }
-
-                return opt;
-            };
-
-            if (feature instanceof Marker) {
-                point.geometryType = function (coords, options) {
-                    var billboard = {
-                        name: feature.id,
-                        position: coords[0],
-                        billboard: {
-                            image: options.url,
-                            width: options.width,
-                            height: options.height,
-                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
-                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                            disableDepthTestDistance: 0
-                        }
-                    };
-
-                    if (options.anchor && options.anchor.length > 0) {
-                        billboard.billboard.pixelOffset = new cesium.Cartesian2(options.anchor[0], options.anchor[1]);
-                    }
-
-                    if (!options.label) {
-                        return new cesium.Entity(billboard);
-                    } else {
-                        billboard.label = {
-                            text: options.label,
-                            eyeOffset: new cesium.Cartesian3(0, 0, 0),
-                            pixelOffset: new cesium.Cartesian2(...(options.labelOffset || [0, 0])),
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                            horizontalOrigin: cesium.HorizontalOrigin.CENTER,
-                            verticalOrigin: cesium.VerticalOrigin.CENTER,
-                            font: options.fontSize + 'pt sans-serif',
-                            fillColor: options.fontColor,
-                            outlineColor: cesium.Color.WHITE,
-                            outlineWidth: 4,
-                            style: cesium.LabelStyle.FILL_AND_OUTLINE
-                            //eyeOffset: new cesium.Cartesian3(3000, 0, -100)
-                        };
-
-                        return new cesium.Entity(billboard);
-                    }
-                };
-            }
-            else if (feature instanceof Point) {
-                var pinBuilder = new cesium.PinBuilder();
-
-                point.geometryType = function (coords, options) {
-                    var text = options.label;
-                    var entityOps = {
-                        name: feature.id,
-                        position: coords[0],
-                    }
-                    if (text && (/^([A-Z])\w+$/gi.test(text) || !(/^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)))) {
-                        let property = /^\$\{(?<property>\w+)\}$/gi.exec(text)?.groups["property"];
-                        if (property && feature.data[property])
-                            options.label = feature.data[property];
-                        createLabel(entityOps, options, coords[0]);
-                    }
-
-                    if (text && /^[0-9]*\-{0,1}[a-z]{0,4}$/gi.test(text)) {
-                        entityOps["billboard"] = {
-                            image: pinBuilder.fromText(text, options.fontColor, 48).toDataURL(),
-                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
-                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                            disableDepthTestDistance: 0
-                        }
-                    }
-                    else if (options.radius && options.radius > 0) {
-                        entityOps["point"] = {
-                            color: options.color,
-                            pixelSize: (options.radius - options.outlineWidth) * 2,
-                            outlineWidth: options.outlineWidth,
-                            outlineColor: options.outlineColor,
-                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND
-                        }
-                    }
-                    else {
-                        entityOps["billboard"] = {
-                            image: pinBuilder.fromColor(cesium.Color.fromCssColorString(feature.options.fillColor ? feature.options.fillColor : TC.Cfg.styles.point.fillColor), 32).toDataURL(),
-                            //eyeOffset: new cesium.Cartesian3(0, 0, 10),
-                            verticalOrigin: cesium.VerticalOrigin.BOTTOM,
-                            horizontalOrigin: cesium.HorizontalOrigin.CENTER,
-                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                            disableDepthTestDistance: 0
-                        }
-                    }
-
-                    return new cesium.Entity(entityOps);
-                };
-            }
-
-            return point;
-        };
-
-        this.convert = function (_scn, feature, sourceCrs, targetCrs) {
-            const self = this;
-
-            var byPromise = false;
-            var cartesians = [];
-            var toCartesian = async function (coord, arr) {
-                if (!Array.isArray(coord)) {
-                    return;
-                }
-
-                if (sourceCrs !== targetCrs) {
-                    coord = Util.reproject(coord, sourceCrs, targetCrs);
-                }
-                //if (coord.length > 2) {
-                //    arr.push(cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]));
-                //}
-                //else {
-                //    let aaa = await _scn.sampleHeightMostDetailed([new cesium.Cartographic.fromDegrees(coord[0], coord[1])]);
-                //    arr.push(cesium.Cartesian3.fromRadians(aaa[0].longitude, aaa[0].latitude, aaa[0].height))
-                //}
-                
-                arr.push(coord.length > 2 ?
-                    cesium.Cartesian3.fromDegrees(coord[0], coord[1], coord[2]) :
-                    cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
-            };
-
-            var obj;
-            var geometry = feature.geometry;
-            var converter;
-
-            var points,
-                ringsOrPolylines,
-                polygons;
-
-            var forPoints = function (points, arr) {
-                if (Array.isArray(points)) {
-                    for (var i = 0; i < points.length; i++) {
-                        toCartesian(points[i], arr);
-                    }
-                }
-            };
-            var forRingsOrPolylines = function (ringsOrPolylines, arr) {
-                if (Array.isArray(ringsOrPolylines)) {
-                    for (var i = 0; i < ringsOrPolylines.length; i++) {
-                        arr.push([]);
-                        forPoints(ringsOrPolylines[i], arr[arr.length - 1]);
-                    }
-                }
-            };
-            var forPolygons = function (polygons) {
-                if (Array.isArray(polygons)) {
-                    for (var i = 0; i < polygons.length; i++) {
-                        cartesians.push([]);
-                        forRingsOrPolylines(polygons[i], cartesians[cartesians.length - 1]);
-                    }
-                }
-            };
-
-            switch (true) {
-                case feature instanceof MultiPolygon:
-                    polygons = geometry;
-                    if (Array.isArray(polygons)) {
-                        forPolygons(polygons);
-
-                        converter = polygonConverter.call(self, feature);
-                        byPromise = true;
-                    }
-                    break;
-                case feature instanceof Circle:
-                    feature = feature.toPolygon();
-                    geometry = feature.geometry;
-                case feature instanceof Polygon || feature instanceof MultiPolyline:
-                    ringsOrPolylines = geometry;
-                    if (Array.isArray(ringsOrPolylines)) {
-                        forRingsOrPolylines(ringsOrPolylines, cartesians);
-
-                        if (feature instanceof Polygon) {
-                            converter = polygonConverter(feature);
-                            byPromise = true;
-                        }
-                        else if (feature instanceof MultiPolyline) {
-                            converter = lineConverter(feature);
-                            byPromise = true;
-                        }
-                    }
-                    break;
-                case feature instanceof Polyline:
-                    points = geometry;
-                    if (Array.isArray(points)) {
-                        forPoints(points, cartesians);
-
-                        converter = lineConverter(feature);
-                        byPromise = true;
-                    }
-                    break;
-                case feature instanceof Marker:
-                    points = [geometry];
-                    forPoints(points, cartesians);
-
-                    converter = pointConverter(feature);
-                    break;
-                case feature instanceof Point:
-                    points = [geometry];
-                    forPoints(points, cartesians);
-
-                    converter = pointConverter(feature);
-                    break;
-            }
-
-            if (cartesians.length == 0) {
-                return null;
-            }
-
-            obj = {
-                id: feature.id,
-                attributes: feature.data,
-                boundigSphere: cesium.BoundingSphere.fromPoints(cartesians)
-            };
-
-            if (!byPromise) { // si estamos pintando líneas, obtenemos posiciones con altura
-                obj.geometry = converter.geometryType(cartesians, converter.options());
-            } else {
-                obj.geometry = function (provider) {
-                    converter.provider = provider;
-                    return converter.geometryType(cartesians, converter.options());
-                }
-            }
-
-            return obj;
-        };
-    };
+    };    
 
     const currentMapCfg = {
         baseMap: '',
@@ -2639,9 +1941,9 @@ const ThreeD = (function (namespace, signature, factory) {
         else
             self.terrainFallback = [defaultFallback()];
 
-        if (options.controls) {
-            self.allowedControls = options.controls;
-        }
+        //if (options.controls) {
+        //    self.allowedControls = options.controls;
+        //}
 
         if (options.controls3D) {
             self.controls3D = options.controls3D;
@@ -2671,12 +1973,17 @@ const ThreeD = (function (namespace, signature, factory) {
 
     viewProto.apply = function (options = {}) {
         const self = this;
-
+        const signal = options.signal;        
+        const resolver = Promise.withResolvers();
+        self.applyEndPromise = resolver.promise;
+        if (signal) signal.onabort = () => {
+            applyEnd()
+        }
         if (options.map) {
             self.map = options.map;
 
-            if (self.map.getDefaultControl() !== self.map.activeControl)
-                self.map.activeControl?.deactivate();
+            //if (self.map.getDefaultControl() !== self.map.activeControl)
+            //    self.map.activeControl?.deactivate();
 
             if (!self.map.view3D) {
                 var viewName = self.VIEWNAME = self.VIEWNAME.substr(0, 1).toLowerCase() + self.VIEWNAME.substr(1);
@@ -2703,32 +2010,7 @@ const ThreeD = (function (namespace, signature, factory) {
         if (!self.waiting) {
             self.waiting = self.map.getLoadingIndicator().addWait();
         }
-
-        if (!self.ctrlsToMng) {
-            var ctls = [];
-            for (var i = 0, len = self.allowedControls.length; i < len; i++) {
-                var ctl = self.allowedControls[i];
-                ctl = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
-                var ctlsOnMap = self.map.getControlsByClass('TC.control.' + ctl);
-                if (ctlsOnMap.length === 0) {
-                    ctl = ctl.toUpperCase();
-                    ctlsOnMap = self.map.getControlsByClass('TC.control.' + ctl);
-                }
-                ctls = ctls.concat(ctlsOnMap);
-            }
-            self.map.on(Consts.event.CONTROLADD, function (e) {
-                //var instance = new Function("return new " + ctrlClass + "()")();
-                if (self.allowedControls.some((ctl) => {
-                    const className = ctl.substr(0, 1).toUpperCase() + ctl.substr(1);
-                    return TC.control[className] && e.control instanceof TC.control[className];
-                })) {
-                    self.ctrlsToMng.push(e.control);
-                }
-
-            });
-
-            self.ctrlsToMng = ctls;
-        }
+        
 
         self.map.on3DView = true;
 
@@ -2749,11 +2031,15 @@ const ThreeD = (function (namespace, signature, factory) {
                     options.callback();
                 }, 1000);    
             }
+            resolver.resolve();
         };
 
+
         try {
-            self.view3D.loadViewer.call(self)
+            self.view3D.loadViewer.call(self, signal)
                 .then(function () {
+
+                    if (signal?.aborted) return;
 
                     self.divThreedMap.classList.remove(self.CLASS + '-div-fadeOut');
                     self.divThreedMap.classList.add(self.CLASS + '-div-fadeIn');
@@ -2767,6 +2053,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     // mapas de fondo y capas
                     setMustReprojectOfBaseLayers.call(self, self.map)
                         .then(function () {
+                            if (signal?.aborted) return;
                             // extent
                             self.view3D.setCameraFromMapView.call(self);
 
@@ -2796,6 +2083,7 @@ const ThreeD = (function (namespace, signature, factory) {
                             });
 
                             self.viewer.readyPromise.then(async function () {
+                                if (signal?.aborted) return;
 
                                 if (!self.view3D.cameraControls) self.view3D.cameraControls = new CameraControls(self);
                                 else self.view3D.cameraControls.render.call(self.view3D.cameraControls);
@@ -2807,9 +2095,9 @@ const ThreeD = (function (namespace, signature, factory) {
                                 if (options.state) {
 
                                     self.divThreedMap.classList.remove(self.classes.LOADING);
-                                    
+                                    console.log("========= Importing state=======");
                                     await self.view3D.importState(options.state, applyEnd);
-
+                                    console.log("========= Imported state =======");
                                     applyEnd();
                                                                            
                                     //self.map.getControlsByClass(TC.control.Scenes)[0].importState(options.state.ts);
@@ -2829,8 +2117,10 @@ const ThreeD = (function (namespace, signature, factory) {
                                     };
 
                                     const animationCallback = function () {
-                                        cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
-                                        cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+                                        if (self.viewer) { 
+                                            cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
+                                            cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+                                        }                                        
 
                                         applyEnd();
                                     };
@@ -2844,8 +2134,10 @@ const ThreeD = (function (namespace, signature, factory) {
                                         const GeoCRSExtent = TC.Util.reprojectExtent(extent, self.map.crs, self.view3D.crs);
 
                                         const animationCallback = function () {
-                                            cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
-                                            cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+                                            if (self.viewer) {
+                                                cesium.Camera.DEFAULT_VIEW_RECTANGLE = self.view3D.initialRectangle = self.viewer.camera.computeViewRectangle();
+                                                cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+                                            }
 
                                             applyEnd();
                                         };
@@ -2921,16 +2213,22 @@ const ThreeD = (function (namespace, signature, factory) {
         }
     };
 
+    viewProto.activateControl = (evt) => {
+        viewProto.map.view3D.linked2DControls[evt.detail.control.id]?.activate();
+    }
+    viewProto.deactivateControl = (evt) => {
+        viewProto.map.view3D.linked2DControls[evt.detail.control.id]?.deactivate();
+    } 
+
     viewProto.unapply = function (options) {
         const self = this;
-
+        self.unapplying = true;
         if (!self.waiting) {
             self.waiting = self.map.getLoadingIndicator().addWait();
-        }        
+        }
 
-        if (self.map.getDefaultControl() !== self.map.activeControl)
-            self.map.activeControl?.deactivate();        
-            
+        self.map.removeEventListener(Consts.event.CONTROLACTIVATE, self.activateControl);
+        self.map.removeEventListener(Consts.event.CONTROLDEACTIVATE, self.deactivateControl);               
 
         //deseleccionar features
         self.map.view3D.highlightFeature.unset.apply(self.map.view3D, [self.map.view3D.highlightFeature.current]);
@@ -2946,7 +2244,7 @@ const ThreeD = (function (namespace, signature, factory) {
                         delete feature2D.wrap.feature3D;
                     });
         }
-        for (let i = 0; i < self.view3D.viewer.dataSources.length; i++) {
+        for (let i = 0; i < self.view3D.viewer?.dataSources.length; i++) {
             const dataSource = self.view3D.viewer.dataSources.get(i);
             if (dataSource?.entities.values.length) {
                 dataSource?.entities.values.forEach((entity) => {
@@ -2956,8 +2254,8 @@ const ThreeD = (function (namespace, signature, factory) {
                 })
                 dataSource?.entities.removeAll();
             }
-        }
-        
+        }        
+
         self.view3D.threeDDraw = null;
 
         self.map.on3DView = false;
@@ -2966,62 +2264,68 @@ const ThreeD = (function (namespace, signature, factory) {
         if (self.viewer && self.viewer.trackedEntity) {
             self.view3D.linked2DControls.geolocation.wrap.simulateTrackEnd();
         }
+        const unapplyCommon = (forced) => {
+            self.map.div.classList.remove(Consts.classes.THREED);
+            const setExtent = options.extent ? self.map.setExtent(options.extent) : self.view3D.setViewFromCameraView.call(self);
 
-        self.view3D.cameraControls.resetRotation({ duration: 1000 })
-            .then(function () {
+            setExtent.then(function () {
+                self.divThreedMap.classList.remove(self.classes.MAP3D, self.CLASS + '-div-fadeIn');
+                self.divThreedMap.classList.add(self.CLASS + '-div-fadeOut');
+                self.mapView.viewHTML.classList.remove(self.CLASS + '-div-fadeOut');
+                self.mapView.viewHTML.classList.add(self.CLASS + '-div-fadeIn');
 
-                var animationCallback = function () {
+                (forced ? self.view3D.cancel :self.view3D.destroy).call(self).then(() => {
+                    self.map.getLoadingIndicator().removeWait(self.waiting);
+                    delete self.waiting;
 
-                    self.map.div.classList.remove(Consts.classes.THREED);
-
-                    /* atribuciones del terreno */
-                    self.map.trigger(Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: self.viewer.scene.terrainProvider });
-
-                    if (self.viewer.scene.terrainProvider.fallbackProvider) {
-                        self.viewer.scene.terrainProvider.fallbackProvider.forEach(function (provider) {
-                            self.map.trigger(Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: provider });
-                        });
+                    if (options?.callback) {
+                        options.callback();
                     }
-                    const setExtent = options.extent ? self.map.setExtent(options.extent) : self.view3D.setViewFromCameraView.call(self);
-
-                    setExtent.then(function () {
-                        self.divThreedMap.classList.remove(self.classes.MAP3D, self.CLASS + '-div-fadeIn');
-                        self.divThreedMap.classList.add(self.CLASS + '-div-fadeOut');
-                        self.mapView.viewHTML.classList.remove(self.CLASS + '-div-fadeOut');
-                        self.mapView.viewHTML.classList.add(self.CLASS + '-div-fadeIn');
-
-                        self.view3D.destroy.call(self).then(() => { 
-                            self.map.getLoadingIndicator().removeWait(self.waiting);
-                            delete self.waiting;
-
-                            if (options?.callback) {
-                                options.callback();
-                            }
-                        });
-
-
-                        
-                    });
-
-                    self.mapView.setRotation(0);
-                    if (self._ovMap) {
-                        self._ovMap.wrap.draw3DCamera(null);
-                    }
-                };
-
-                var bottom = pickBottomPoint(self.viewer.scene);
-                var transform = cesium.Matrix4.fromTranslation(bottom);
-                var angle = computeAngleToZenith(self.viewer.scene, bottom);
-
-                transform = cesium.Matrix4.fromTranslation(bottom);
-                self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
-                    duration: options.instant?1:1500,
-                    callback: animationCallback
                 });
-            })
-            .catch(function (e) {
-                throw (e);
             });
+            delete self.unapplying;
+        }
+        if (self.view3D.cameraControls)
+            self.view3D.cameraControls.resetRotation({ duration: 1000 })
+                .then(function () {
+
+                    var animationCallback = function () {                                               
+
+                        /* atribuciones del terreno */
+                        self.map.trigger(Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: self.viewer.scene.terrainProvider });
+
+                        if (self.viewer.scene.terrainProvider.fallbackProvider) {
+                            self.viewer.scene.terrainProvider.fallbackProvider.forEach(function (provider) {
+                                self.map.trigger(Consts.event.TERRAINPROVIDERREMOVE, { terrainProvider: provider });
+                            });
+                        }
+
+                        unapplyCommon();                        
+
+                        self.mapView.setRotation(0);
+                        if (self._ovMap) {
+                            self._ovMap.wrap.draw3DCamera(null);
+                        }
+                        
+                    };
+
+                    var bottom = pickBottomPoint(self.viewer.scene);
+                    var transform = cesium.Matrix4.fromTranslation(bottom);
+                    var angle = computeAngleToZenith(self.viewer.scene, bottom);
+
+                    transform = cesium.Matrix4.fromTranslation(bottom);
+                    self.view3D.rotateAroundAxis(self.viewer.scene.camera, -angle, self.viewer.scene.camera.right, transform, {
+                        duration: options.instant ? 1 : 1500,
+                        callback: animationCallback
+                    });
+                })
+                .catch(function (e) {
+                    delete self.unapplying;
+                    throw (e);
+                });
+        else {
+            unapplyCommon(true);
+        }
     };
     
 
@@ -3057,6 +2361,16 @@ const ThreeD = (function (namespace, signature, factory) {
                 case csFeature instanceof Object: {
                     addedFeature = (dataSource || this.viewer).entities.getById(csFeature.id);
                     if (!addedFeature) {
+                        if (csFeature.polyline)
+                            csFeature.polyline.zIndex = (dataSource || this.viewer).entities.values.reduce((max, entity) => {
+                                const zIndex = entity.polyline?.zIndex?.getValue?.() ?? entity.polyline?.zIndex ?? 0;
+                                return Math.max(max, zIndex);
+                            }, 0) +1;
+                        if (csFeature.polygon)
+                            csFeature.polygon.zIndex = (dataSource || this.viewer).entities.values.reduce((max, entity) => {
+                                const zIndex = entity.polyline?.zIndex?.getValue?.() ?? entity.polyline?.zIndex ?? 0;
+                                return Math.max(max, zIndex);
+                            }, 0) + 1
                         addedFeature = (dataSource || this.viewer).entities.add(csFeature);
                     }
                     break;
@@ -3126,7 +2440,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 }
                 case e.type == Consts.event.LAYERORDER: {
                     for (var i = 0; i < self.view3D.workLayers.length; i++) {
-                        if (self.view3D.workLayers[i].imageryProvider && self.view3D.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
+                        if (e.layer instanceof TC.layer.Raster &&  self.view3D.workLayers[i].imageryProvider && self.view3D.workLayers[i].imageryProvider.layers.join(',') === e.layer.names.join(',')) {
 
                             if (e.oldIndex > e.newIndex) {
                                 const positions = e.oldIndex - e.newIndex;
@@ -3158,7 +2472,7 @@ const ThreeD = (function (namespace, signature, factory) {
                             dataSource = new cesium.CustomDataSource(e.layer.id);                            
                             self.view3D.dataSources.set(e.layer, dataSource);
                         }                        
-                        dataSource = self.view3D.dataSources.get(e.layer)                        
+                        dataSource = self.view3D.dataSources.get(e.layer);
                         if (dataSource instanceof Promise) {
                             dataSource = await dataSource;
                             self.view3D.dataSources.set(e.layer, dataSource);
@@ -3166,13 +2480,8 @@ const ThreeD = (function (namespace, signature, factory) {
                         if (!self.view3D.viewer.dataSources.contains(dataSource))
                             self.view3D.viewer.dataSources.add(dataSource);
                         dataSource.show = true;
-
-                        if (e.layer.features.includes(e.feature)) {
-                            self.view3D.addFeature.call(self.view3D, feature, dataSource);
-                            if (feature.hasSelectedStyle() || feature.wrap.feature3D?.editing) {
-                                self.map.activeControl.wrap.selectInteraction.setSelected(feature.wrap.feature3D);
-                                feature.wrap.feature3D.unhighlight();
-                            }
+                        if (e.layer.features.includes(e.feature)/* && e.layer !== self.map.activeControl.filterLayer*/) {
+                            self.view3D.addFeature.call(self.view3D, feature, dataSource);                                                                                    
                         }
                         self.view3D.viewer.refresh();
                     }
@@ -3407,162 +2716,51 @@ const ThreeD = (function (namespace, signature, factory) {
             }
         };
         /* fin geolocation */
-        const checkAvailabilityControl = function (mapCtrl, ctrlsToMngCLASS) {
-            if (!mapCtrl.containerControl && !mapCtrl.caller)
-                return ctrlsToMngCLASS.indexOf(mapCtrl.CLASS) < 0
-            else
-                return checkAvailabilityControl(mapCtrl.containerControl || mapCtrl.caller, ctrlsToMngCLASS)
-        }
+        
         const alterAllowedControls = function (view) {
             var self = this;
-            const ctrlsToMngCLASS = self.ctrlsToMng.map(function (ctrl) { return ctrl.CLASS });
-
-            self.map.controls.forEach(function (mapCtrl) {
-                if (checkAvailabilityControl(mapCtrl, ctrlsToMngCLASS)) {                    
-                    switch (true) {
-                        case (Consts.view.DEFAULT == view):
-                            mapCtrl.enable();
-                            break;
-                        case (Consts.view.THREED == view):
-                            mapCtrl.disable();
-                            break;
-                    }
-                }
-            });
-
-            switch (true) {
-                case (Consts.view.DEFAULT == view):
-                    document.querySelectorAll('[data-no-3d]').forEach(function (elm) {
-                        elm.classList.remove(Consts.classes.THREED_HIDDEN);
-                    });
-                    self.ctrlsToMng.forEach(function (ctl) {
-                        if (ctl.div) ctl.div.classList.remove(Consts.classes.THREED);
-                    });
-                    break;
-                case (Consts.view.THREED == view):
-                    document.querySelectorAll('[data-no-3d]').forEach(function (elm) {
-                        elm.classList.add(Consts.classes.THREED_HIDDEN);
-                    });
-                    self.ctrlsToMng.forEach(function (ctl) {
-                        ctl.div?.classList.add(Consts.classes.THREED);
-                    });
-                    break;
-            }
-            var isDragging = false;
-            var draggingFeature = null;
-                        
-            let _blockDragging = false;
             
-            const onMouseMoveOnCanvas = (movement) => {
-                // Si estamos anclados a una entidad ignoro los click en el terreno  
-                if (self.viewer.trackedEntity) {
-                    return;
-                }
-                var pickedFeature = self.viewer.scene.pick(movement.endPosition);
-                if (pickedFeature && pickedFeature.id &&
-                    (!(self.map.activeControl instanceof TC.control.Draw) ||
-                    (pickedFeature.id._wrap && pickedFeature.id._wrap.parent.layer?.owner instanceof TC.control.Geolocation && pickedFeature.id._wrap.parent instanceof Point)
-                )) {
-                    self.viewer.canvas.style.cursor = 'pointer';
-                } else {
-                    self.viewer.canvas.style.cursor = 'default';
-                }
-                if (isDragging && draggingFeature && !_blockDragging) {
-                    const newPosition = self.viewer.scene.globe.pick(self.viewer.camera.getPickRay(movement.endPosition), self.viewer.scene);
-                    draggingFeature.id.position = newPosition;                    
-                    //bloqueamos el drag de entidades a cada 200 milisegundos
-                    _blockDragging = true;
-                    self.viewer.refresh();
-                    setTimeout(function () {
-                        _blockDragging = false;
-                    }, 200);
-                }
-                ///////* a borrar */
-                
 
-            };
-            const onLeftDownOnCanvas = (movement) => {
-                var pickedFeature = self.viewer.scene.pick(movement.position);
-                if (pickedFeature && pickedFeature.id && pickedFeature.id === self.viewer.entities.getById("pegman")) {
-                    isDragging = true;
-                    _startDragPos = pickedFeature.id.position.getValue();
-                    draggingFeature = pickedFeature;
-                    self.viewer.scene.screenSpaceCameraController.enableInputs = false;
-                }
-            };
-            const onLeftUpOnCanvas = (movement) => {
-                isDragging = false;
-                if (draggingFeature) {
-                    const newPosition = self.viewer.scene.globe.pick(self.viewer.camera.getPickRay(movement.position), self.viewer.scene);
-                    //draggingFeature.id.position = newPosition;
-                    draggingFeature.primitive.position = newPosition;
-                    var positionCartographic = cesium.Ellipsoid.WGS84.cartesianToCartographic(newPosition);
-                    var positionCartographicOld = cesium.Ellipsoid.WGS84.cartesianToCartographic(_startDragPos);
-                    //const newPosition = cesium.Cartographic.fromCartesian(movement.position);
-                    self.map.trigger(Consts.event.THREED_DRAG, { pickedFeature: draggingFeature.id, newCoords: [cesium.Math.toDegrees(positionCartographic.longitude), cesium.Math.toDegrees(positionCartographic.latitude)], oldCoords: [cesium.Math.toDegrees(positionCartographicOld.longitude), cesium.Math.toDegrees(positionCartographicOld.latitude)] });                    
-                    draggingFeature = null;
-                    self.viewer.scene.screenSpaceCameraController.enableInputs = true;
-
-                }
-            };
-
-            if (Consts.view.THREED === view) {                
-                let gfiControl;
-                switch (true) {
-                    case self.allowedControls.includes("multiFeatureInfo") && self.map.getControlsByClass(TC.control.MultiFeatureInfo).length > 0:                        
-                        gfiControl = self.map.getControlsByClass(TC.control.MultiFeatureInfo)[0];
-                        break;
-                    case self.allowedControls.includes("featureInfo") && self.map.getControlsByClass(TC.control.FeatureInfo).length > 0:                        
-                        gfiControl = self.map.getControlsByClass(TC.control.FeatureInfo)[0];
-                        break;
-                }
-                if (gfiControl) {
-                    if (!gfiControl.featureInfoControls) {
-                        self.view3D.linked2DControls[gfiControl.id] = new FeatureInfo({ map: self, parent: gfiControl });
-                        gfiControl.highlightedFeature?.toggleSelectedStyle(false);
-                        self.view3D.linked2DControls[gfiControl.id].activate(gfiControl.id);
-                    }
-                    else
-                        gfiControl.featureInfoControls.forEach((ctl) => {
-                            self.view3D.linked2DControls[ctl.id] = new FeatureInfo({ map: self, parent: ctl });
-                            ctl.highlightedFeature?.toggleSelectedStyle(false);
-                            if (ctl === self.map.activeControl)
-                                self.view3D.linked2DControls[ctl.id].activate(ctl);
+            if (Consts.view.THREED === view) {
+                const importPromise = self.map.controls.filter((c) => !c.containerControl && c.constructor)
+                    .map((control) => control.constructor.name)
+                    .map((control) => {                                        
+                        const promise = import("../control/3D/" + control + ".js");
+                        promise.then(({ default: ControlFor3d }) => {
+                            console.warn('Módulo 3D de ' + control + ' cargado');
+                            for (const controlInstance of self.map.getControlsByClass(control)) {
+                                new ControlFor3d({ map: self, twoDControl: controlInstance });
+                            }
+                        }).catch((err) => {
+                            if (err.code !== "MODULE_NOT_FOUND") throw err;
                         });
-                    self.view3D.linked2DControls[self.map.activeControl.id]?.AddClickException((entity) => {
-                        if (entity._wrap?.parent && entity._wrap?.parent?.layer === self.view3D.linked2DControls.geolocation.trackLayer)
-                            return self.view3D.linked2DControls.geolocation.trackLayer.features.filter((feature) => feature instanceof TC.feature.Point).includes(entity._wrap.parent)
-                        else
-                            return true;
-                    });
-                }
+                        return promise;
+                    });                
+                importPromise.push(self.applyEndPromise);
+                Promise.allSettled(importPromise).then(() => {
+                    if (self.unapplying || !self.viewer) return;
+                    self.view3D.linked2DControls[self.map.activeControl.id]?.activate();
+                    self.map.addEventListener(Consts.event.CONTROLACTIVATE, self. activateControl);
+                    self.map.addEventListener(Consts.event.CONTROLDEACTIVATE, self.deactivateControl);
+                });
                 
-                if (!self.eventHandlers) {
-                    self.eventHandlers = {};
-                }
-
-                self.eventHandlers.handlerOfFeatures = new cesium.ScreenSpaceEventHandler(self.viewer.scene.canvas);                
-                self.eventHandlers.handlerOfFeatures.setInputAction(onMouseMoveOnCanvas, cesium.ScreenSpaceEventType.MOUSE_MOVE);
-                self.eventHandlers.handlerOfFeatures.setInputAction(onLeftDownOnCanvas, cesium.ScreenSpaceEventType.LEFT_DOWN);
-                self.eventHandlers.handlerOfFeatures.setInputAction(onLeftUpOnCanvas, cesium.ScreenSpaceEventType.LEFT_UP);
+                self.mouseInteraction = new MouseMove(self.viewer);
+                self.mouseInteraction.activate();
+                self.dragDropInteraction = new DragAndDrop(self.viewer);
+                self.dragDropInteraction.activate();
 
             } else if (Consts.view.DEFAULT === view) {
-                if (self.eventHandlers.handlerOfFeatures) {
-                    self.eventHandlers.handlerOfFeatures.removeInputAction(cesium.ScreenSpaceEventType.MOUSE_MOVE); 
-                    self.eventHandlers.handlerOfFeatures.removeInputAction(cesium.ScreenSpaceEventType.LEFT_DOWN); 
-                    self.eventHandlers.handlerOfFeatures.removeInputAction(cesium.ScreenSpaceEventType.LEFT_UP);
-                    self.eventHandlers.handlerOfFeatures.destroy();
-                }
+
+                self.dragDropInteraction?.deactivate();
+                self.dragDropInteraction = null;
+
+                self.mouseInteraction?.deactivate();
+                self.mouseInteraction = null;
+
+                self.mouseInteraction?.destroy();                
+                self.dragDropInteraction?.destroy(); 
             }
-
-            if (!self.view3D.linked2DControls.geolocation &&
-                Object.keys(self.map.options.controls).indexOf("geolocation") > -1 &&
-                self.allowedControls.indexOf("geolocation") > -1) {
-                self.view3D.linked2DControls.geolocation = self.ctrlsToMng.find(function (ctrl) {
-                    return ctrl instanceof TC.control.Geolocation;
-                });
-
-            }            
+                            
             if (self.view3D.linked2DControls.geolocation) {
 
                 var geolocation2D = self.view3D.linked2DControls.geolocation;
@@ -3586,8 +2784,8 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     geolocation2D.reset = function () {
 
-                        TC.wrap.control.Geolocation.prototype.setGeotracking = geolocation2D._setGeotracking;
-                        TC.wrap.control.Geolocation.prototype.simulateTrack = geolocation2D._wrap_simulateTrack;
+                        GeolocationWrapper.prototype.setGeotracking = geolocation2D._setGeotracking;
+                        GeolocationWrapper.prototype.simulateTrack = geolocation2D._wrap_simulateTrack;
 
                         geolocation2D.simulateTrack = geolocation2D._simulateTrack;
                         geolocation2D.displayTrackProfile = geolocation2D._displayTrackProfile;
@@ -3605,8 +2803,8 @@ const ThreeD = (function (namespace, signature, factory) {
                     geolocation2D.on(geolocation2D.const.event.TRACKIMPORT, geolocation_videoControls_);
 
 
-                    geolocation2D._setGeotracking = TC.wrap.control.Geolocation.prototype.setGeotracking;
-                    TC.wrap.control.Geolocation.prototype.setGeotracking = function (tracking) {
+                    geolocation2D._setGeotracking = GeolocationWrapper.prototype.setGeotracking;
+                    GeolocationWrapper.prototype.setGeotracking = function (tracking) {
 
                         geolocation2D._setGeotracking.call(geolocation2D.wrap, tracking);
 
@@ -3775,13 +2973,13 @@ const ThreeD = (function (namespace, signature, factory) {
 
                                                         // gestionamos las posiciones anterior y actual y la distancia
                                                         distanceCurrent += new cesium.EllipsoidGeodesic(previousPosition, currentPosition).surfaceDistance;
-                                                        previousPosition = currentPosition;
+                                                        previousPosition = currentPosition;                                                        
                                                     }
                                                 }.bind(this));
                                                 this.viewer.clock.shouldAnimate = true;
 
-                                            }.bind(this));                                                                                       
-
+                                            }.bind(this));
+                                            
                                         }.bind(this, track.wrap.feature.getGeometry().layout, coordinates2D));
                                     }.bind(this));
                                 }
@@ -3790,8 +2988,8 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     }.bind(self);
 
-                    geolocation2D._wrap_simulateTrack = TC.wrap.control.Geolocation.prototype.simulateTrack;
-                    TC.wrap.control.Geolocation.prototype.simulateTrack = function () {
+                    geolocation2D._wrap_simulateTrack = GeolocationWrapper.prototype.simulateTrack;
+                    GeolocationWrapper.prototype.simulateTrack = function () {
                     };
                 } else {
                     // Si en el paso de 3D a 2D hay perfil dibujado, lanzamos el resize
@@ -3949,14 +3147,15 @@ const ThreeD = (function (namespace, signature, factory) {
                     surface._debug.tilesWaitingForChildren > 0;
             },
 
-            loadViewer: function () {
+            loadViewer: function (signal) {
                 const self = this;
                 return new Promise(function (resolve, _reject) {
                     if (!self.viewer) {
                         import('../cesium/cesium.js').then(async function (module) {
+                            if (signal?.aborted) _reject();
                             const cesium = module.default;
                             //cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1YjFkNDRhNy0wOTg5LTQxZmMtYTgyZS04ZWU2MDAzZmI2NTUiLCJpZCI6Mjk0NDAyLCJhc3NldElkIjozNDU1OTk5LCJhc3NldHMiOnsiMzQ1NTk5OSI6eyJ0eXBlIjoiM0RUSUxFUyJ9fSwic3JjIjoiYjAxYTgzZjQtNWY3ZS00NWYxLWEyY2UtZTIxOTUwNjA0YzQ1IiwiaWF0IjoxNzY0MjUyOTE3LCJleHAiOjE3NjQyNTY1MTd9.MtuxpesXE99K3Ft4dcAoGiGOnoAJJ3kbiIlWH7u8xgo";
-                                                        
+                            
                             var terrainProvider;
                             if (self.terrainFallback) {
                                 terrainProvider = await new MergeTerrainProvider([self.terrain, ...self.terrainFallback], self);
@@ -3964,7 +3163,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
                             } else {
                                 if (self.terrainFallback) {
-                                    console.warn("Se ha definido fallckback de terreno pero no se ha especificado contorno");
+                                    console.warn("Se ha definido fallback de terreno pero no se ha especificado contorno");
                                 }
                                 terrainProvider = new cesium.CesiumTerrainProvider({
                                     url: self.terrain.url.trim()
@@ -4024,7 +3223,7 @@ const ThreeD = (function (namespace, signature, factory) {
                                 selectionIndicator: false,
                                 globe: globe,
                                 scene3DOnly: true,
-                                //skyBox: false,
+                                skyBox: false,
                                 //skyAtmosphere: false,
                                 requestRenderMode: true,
                                 maximumRenderTimeChange: Infinity
@@ -4082,7 +3281,7 @@ const ThreeD = (function (namespace, signature, factory) {
                                     self.divThreedMap.classList.remove(self.classes.LOADING);
                                     self.map.toast(self.getLocaleString("fi.error"), { type: Consts.msgType.ERROR });
 
-                                    self.map.getControlsByClass('TC.control.ThreeD').forEach(ctl => ctl.unset3D());
+                                    self.map.getControlsByClass('ThreeD').forEach(ctl => ctl.unset3D());
                                 }
                             }, self);
 
@@ -4118,6 +3317,9 @@ const ThreeD = (function (namespace, signature, factory) {
                             });
 
                             // enlazamos con los eventos del mapa 2D
+                            self.map.importControlStatesPromise
+
+                            await (self.map.importControlStatesPromise || Promise.resolve())
                             self.view3D._event2DHandler = event2DHandler.bind(self);
                             self.map.on(listenTo.join(' '), self.view3D._event2DHandler);
 
@@ -4219,6 +3421,18 @@ const ThreeD = (function (namespace, signature, factory) {
                                     "pitch": camera.pitch * (180 / Math.PI)
                                 }
                             }
+                            self.view3D.getCameraDistance = function () {
+
+                                const scene = self.viewer.scene;
+                                var ray = self.viewer.camera.getPickRay(new cesium.Cartesian2(scene.canvas.clientWidth / 2, scene.canvas.clientHeight / 2));
+                                var position = self.viewer.scene.globe.pick(ray, self.viewer.scene);
+                                if (position)
+                                    return cesium.Cartesian3.distance(
+                                        self.viewer.camera.position,
+                                        position
+                                    );
+                                else return 0;
+                            }
                             self.view3D.Coordinates2DTo3D = function (coords) {
                                 const _coords = coords instanceof cesium.Cartesian2 ? coords : new cesium.Cartesian2(coords[0], coords[1]);
 
@@ -4262,38 +3476,6 @@ const ThreeD = (function (namespace, signature, factory) {
                                 self.map.view3D.getScene().forceRender(cesium.JulianDate.now());
                                 return marker;
 
-                            }
-                            self.view3D.setPegman = function (position, angle) {
-                                if (!(position instanceof cesium.Cartesian3 || position instanceof cesium.Cartesian2)) {
-                                    position = cesium.Cartesian3.fromDegrees(position[0], position[1]);
-                                }
-                                const heading = cesium.Math.toRadians(angle - 90);
-                                const pitch = 0;
-                                const roll = 0;
-                                const hpr = new cesium.HeadingPitchRoll(heading, pitch, roll);
-                                const orientation = cesium.Transforms.headingPitchRollQuaternion(
-                                    position,
-                                    hpr
-                                );
-                                let pegman = self.viewer.entities.getById("pegman");
-                                if (!pegman)
-                                    pegman = self.viewer.entities.add({
-                                        id: "pegman",
-                                        position: position,
-                                        orientation: orientation,
-                                        model: {
-                                            uri: TC.apiLocation + "resources/data/pegman.glb",
-                                            heightReference: cesium.HeightReference.CLAMP_TO_GROUND,
-                                            minimumPixelSize:50,
-                                        }
-                                    });
-                                else {
-                                    pegman.position = position;
-                                    pegman.orientation = orientation;
-                                    pegman.show = true;
-                                }
-                                self.viewer.refresh();
-                                return pegman;
                             }
 
                             self.view3D.setCenter = function (xy) {
@@ -4890,17 +4072,18 @@ const ThreeD = (function (namespace, signature, factory) {
             addFeature: function (feature, datasource, featureCRS) {
                 var self = this;
 
-                var add = function () {
-                    // TODO: el convert debería ser uno o varios webworker, si son muchas features se colapsa.
-                    if (feature.wrap.feature3D) { 
+                var add = async function () {
+                    // TODO: el convert debería ser uno o varios webworker, si son muchas features se colapsa.                    
+                    if (feature.wrap.feature3D) {
                         if (datasource && !(feature.wrap.feature3D instanceof CustomEntity) && !datasource.entities.contains(feature.wrap.feature3D)) {
                             datasource.entities.add(feature.wrap.feature3D);
                             linkFeature(self, feature, feature.wrap.feature3D);
                         }
                         return;
-                    }                        
+                    }
                     var csfeature = featureConverter.convert(self.viewer.scene, feature, featureCRS || self.view2DCRS, self.crs);
-                    if (csfeature ) {
+
+                    if (csfeature) {
                         if (typeof csfeature.geometry === 'function') {
                             // estoy aquí // tengo que validar qué proveedor escoger, afecta, hay mucha diferencia de alturas, podría ir por capa?? búsquedas fijo por el de por defecto y track validar??
                             csfeature.geometry(self.viewer.terrainProvider).then(function (newGeometry) {
@@ -4911,18 +4094,7 @@ const ThreeD = (function (namespace, signature, factory) {
                                         geometries: newGeometry,
                                         dataSource: datasource,
                                         feature2D: feature
-                                    })
-                                    //newGeometry.forEach(function (geom) {
-                                    //    if (geom instanceof Array) {
-                                    //        geom.forEach(function (geo) {
-                                    //            geo = addFeature.call(self, geo, datasource);
-                                    //            linkFeature(self, feature, geo);
-                                    //        });
-                                    //    } else {
-                                    //        geom = addFeature.call(self, geom, datasource);
-                                    //        linkFeature(self, feature, geom);
-                                    //    }
-                                    //});
+                                    })                                    
                                 }
                                 else {
                                     var geom = addFeature.call(self, newGeometry, datasource);
@@ -4944,22 +4116,29 @@ const ThreeD = (function (namespace, signature, factory) {
                     }
                 };
 
-                // GLS: para no pintar la cruz-marker del FeatureInfo
-                const activeControl = TC.Map.get(self.map).activeControl.id;
-                if ((self.linked2DControls[activeControl]?.get2DMarker() === feature) ||
-                    (self.linked2DControls[activeControl]?.isPending())) {
-                    // GLS: llega antes aquí que al callback de la instrucción que crea la feature, por eso necesito el timeout
-                    setTimeout(function () {
-                        if (self.linked2DControls[activeControl].get2DMarker() === feature) {
-                            return;
-                        } else {
-                            add();
-                        }
-                    }, 5);
-                } else if (self.linked2DControls.geolocation && self.linked2DControls.geolocation.geotrackingLayer === feature.layer && feature instanceof Polyline) {
+                //// GLS: para no pintar la cruz-marker del FeatureInfo
+                //const activeControl = TC.Map.get(self.map).activeControl.id;
+                //if ((self.linked2DControls[activeControl]?.get2DMarker() === feature) ||
+                //    (self.linked2DControls[activeControl]?.isPending())) {
+                //    // GLS: llega antes aquí que al callback de la instrucción que crea la feature, por eso necesito el timeout
+                //    setTimeout(function () {
+                //        if (self.linked2DControls[activeControl].get2DMarker() === feature) {
+                //            return;
+                //        } else {
+                //            add();
+                //        }
+                //    }, 5);
+                //} else 
+                if(self.linked2DControls.geolocation && self.linked2DControls.geolocation.geotrackingLayer === feature.layer && feature instanceof Polyline) {
                     return;
                 } else {
-                    add();
+                    if (feature instanceof TC.feature.Marker && self.linked2DControls[feature.layer.owner.id]?._setMarker) {
+                        const posCartesian = cesium.Cartesian3.fromDegrees(...feature.getCoordinates({ geometryCrs: self.view2DCRS, crs: self.crs }))
+                        self.linked2DControls[feature.layer.owner.id]?._setMarker(posCartesian);
+                    }
+                    else {
+                        add();
+                    }
                 }
             },
             removeFeature: function (feature,dataSource) {
@@ -5221,7 +4400,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     else {
                         context.view3DElevationMarker.show = true;
                     }
-                    self.viewer.refresh();
+                    //self.viewer.refresh();
                 }                
             },
             setElevationMarker: function (coords, context) {
@@ -5243,8 +4422,8 @@ const ThreeD = (function (namespace, signature, factory) {
             hideElevationMarker: function (context) {
                 const self = this;
                 if (self.viewer && context.view3DElevationMarker) {
-                    context.view3DElevationMarker.show = false;                    
-                    //self.viewer.readyPromise.then(function () {
+                    context.view3DElevationMarker.show = false;
+                                        //self.viewer.readyPromise.then(function () {
                     //    self.removeFeature.call(self, context.view3DElevationMarker);
                     //    delete context.view3DElevationMarker;
                     //});
@@ -5260,7 +4439,7 @@ const ThreeD = (function (namespace, signature, factory) {
                     if (!feature) return;                    
                     this.highlightFeature.current = feature;
                     const style = feature._wrap.parent.getStyle();
-                    feature.highLighted = true;
+                                        feature.highLighted = true;
                     if (feature.polyline) {                        
                                                 
                         const strokeColor = cesium.Color.fromCssColorString(style.strokeColor);
@@ -5281,12 +4460,9 @@ const ThreeD = (function (namespace, signature, factory) {
                     feature = feature || this.highlightFeature.current;
                     if (feature) {
                         delete feature.highLighted;
-                        const style = feature._wrap.parent.getStyle();                        
-                        delete feature.highLighted;  
-                        if (feature.polyline) {
-                                                      
-                            feature.polyline.material = new cesium.ColorMaterialProperty(cesium.Color.fromCssColorString(style.strokeColor));                            
-                            
+                        const style = feature._wrap.parent.getStyle();
+                        if (feature.polyline) {                                                      
+                            feature.polyline.material = new cesium.ColorMaterialProperty(cesium.Color.fromCssColorString(style.strokeColor));
                         }
                         else {
                             if (feature.marker) {
@@ -5301,6 +4477,54 @@ const ThreeD = (function (namespace, signature, factory) {
                 }
             },
 
+            cancel: function () {
+                var self = this;
+                var defer = Promise.withResolvers();
+                self.map.on3DView = false;
+                //self.map.view3D = null;
+
+                self.view3D.vector2DLayers = [];
+                self.view3D.vector2DFeatures = {
+                };
+
+                // eliminamos el enlace con los eventos del mapa 2D
+                self.map.off(listenTo.join(' '), self.view3D._event2DHandler);
+
+                // modificamos los controles disponibles
+                alterAllowedControls.call(self, Consts.view.DEFAULT);
+
+                //desactivar controles 3D propios
+                for (let name in self.controls3D) {
+                    const ctrName = name.substring(0, 1).toUpperCase() + name.substring(1)
+                    const ctl = self.map.getControlsByClass(TC.control[ctrName])[0];
+                    ctl.disable();
+                }
+
+                // sobrescribimos el comportamiento de lo botones + /- y la casita
+                override2DZoom.call(self, false);
+                self.view3D.baseLayer = null;
+
+                self.view3D.workLayers = [];
+
+                Object.keys(self.view3D.linked2DControls).forEach((key) => {
+                    self.view3D.linked2DControls[key]?.reset?.apply(self.view3D.linked2DControls[key]);
+                });
+                if (self.view3D.linked2DControls.geolocation) {
+                    self.view3D.linked2DControls.geolocation.isGeo = false;
+                    //self.view3D.linked2DControls.geolocation.reset();
+                }
+
+                self.view3?.tileLoadingHandlerOff?.call();
+                delete self.view3D.tileLoadingHandlerOff;
+                if (self.viewer) {
+                    self.viewer.clock.shouldAnimate = false;
+                    self.viewer.destroy();
+                    self.viewer = null;
+                }
+                return Promise.resolve();
+            },
+
+
             destroy: function () {
                 var self = this;
                 var defer = Promise.withResolvers();
@@ -5314,7 +4538,7 @@ const ThreeD = (function (namespace, signature, factory) {
                 // eliminamos el enlace con los eventos del mapa 2D
                 self.map.off(listenTo.join(' '), self.view3D._event2DHandler);
                 
-                                // modificamos los controles disponibles
+                // modificamos los controles disponibles
                 alterAllowedControls.call(self, Consts.view.DEFAULT);
 
                 //desactivar controles 3D propios
@@ -5326,9 +4550,7 @@ const ThreeD = (function (namespace, signature, factory) {
 
                 // sobrescribimos el comportamiento de lo botones + /- y la casita
                 override2DZoom.call(self, false);
-
-                //addNoCompatibleBaseLayers.call(self);
-
+                                
                 Promise.all(self.map.baseLayers.map(function (baseLayer) {
                     return Promise.resolve(!isCompatible(baseLayer, self.view3D.view2DCRS));
                 })).then(function (results) {
@@ -5366,8 +4588,8 @@ const ThreeD = (function (namespace, signature, factory) {
                                 control[0].showProjectionChangeDialog(dialogOptions);
                             }
                         };
-
                         var baseLayer = currentMapCfg.baseMap == self.Consts.BLANK_BASE ? currentMapCfg.baseVector : currentMapCfg.baseMap;
+                         
                         if (!baseLayer.isCompatible(self.map.getCRS())) {
 
                             if (!baseLayer.fallbackLayer) {
@@ -5390,6 +4612,7 @@ const ThreeD = (function (namespace, signature, factory) {
                         } else {
                             self.map.setBaseLayer(baseLayer, defer2.resolve);
                         }
+                                                
                     }
                     else
                         defer2.resolve();
@@ -5399,30 +4622,22 @@ const ThreeD = (function (namespace, signature, factory) {
 
                     self.view3D.workLayers = [];
 
-                    //URI esto reproyecta la features del GFI cuando no debería
-                    //self.map.workLayers.filter((wl) => wl.features?.length).forEach(function (wl) {
-                    //    wl.features.forEach((feature) => {
-                    //        if (feature?.wrap?.feature3D) {
-                    //            feature.setCoordinates(Util.reproject(feature.geometry, self.view3D.crs, self.view3D.view2DCRS));
-                    //        }
-                    //    })
-                    //});
-
                     self.view3D.cameraControls.unbind();
                     Object.keys(self.view3D.linked2DControls).forEach((key) => {
-                        self.view3D.linked2DControls[key]?.reset()
+                        self.view3D.linked2DControls[key]?.reset?.apply(self.view3D.linked2DControls[key]);
                     });
                     if (self.view3D.linked2DControls.geolocation) {
                         self.view3D.linked2DControls.geolocation.isGeo = false;
                         //self.view3D.linked2DControls.geolocation.reset();
                     }
 
-                    self.view3D.tileLoadingHandlerOff()
+                    self.view3?.tileLoadingHandlerOff.call();
                     delete self.view3D.tileLoadingHandlerOff;
+                    
                     self.viewer.clock.shouldAnimate = false;
                     self.viewer.destroy();
                     self.viewer = null;
-
+                    
                     if (triggerEvent) { // si lanzamos sin más, el control de coordenadas se renderizada en el cambio de vista y borra el modal de cambio de CRS
                         self.map.trigger(Consts.event.VIEWCHANGE, { view: Consts.view.DEFAULT });
                     }
@@ -5450,190 +4665,4 @@ const ThreeD = (function (namespace, signature, factory) {
 
 export default ThreeD;
 //envoltorio de los controles de dibujo modificion y selección
-export class Draw3D {
-    #mode;
-    #layer;
-    #view;
-    #control;
-    #control2dAbortController;
-    constructor(mode, layer, view, callback) {
-        const self = this;
-        this.#mode = mode;
-        this.#layer = layer;
-        this.#view = view;
-        this.#control = new ThreeDDraw(this.#view.viewer, this.#mode, {
-            dataSource: this.#view.dataSources.get(this.#layer)
-        });
-        this.#control.addEventListener('drawend', (evt) => {
-            const map = TC.Map.get(self.#view.map); 
-            map.activeControl?.trigger(Consts.event.MEASURE, evt.detail.measurements);
-            const apiFeature = tcFeatureConstructor(evt.detail.positions, evt.detail.type);
-            if (self.#view.view2DCRS !== self.#view.crs)
-                apiFeature.setCoordinates(apiFeature.getCoordinates({ geometryCrs: self.#view.crs, crs: self.#view.view2DCRS }));
-            apiFeature.setStyle(evt.detail.entity.getStyle());
-            map.activeControl?.trigger(Consts.event.DRAWEND, {
-                feature: apiFeature,
-                transform: { geometryCrs: self.#view.view2DCRS, crs: self.#view.crs }
-            });
-            if (callback)
-                callback(apiFeature)//.then(function (feature2D) {
-        });
-        this.#control.addEventListener('drawstart', (_evt) => {
-            const map = TC.Map.get(self.#view.map);
-            map.activeControl?.trigger(Consts.event.DRAWSTART, {});
-        });
-        this.#control.addEventListener('drawupdate', (evt) => {
-            const map = TC.Map.get(self.#view.map);
-            map.activeControl?.trigger(Consts.event.MEASUREPARTIAL, evt.detail.measurements);
-        });
-        this.#control.addEventListener('point', (evt) => {
-            const map = TC.Map.get(self.#view.map);
-            const geoCoords = cesium.Cartographic.fromCartesian(evt.detail.position);
-            map.activeControl?.trigger(Consts.event.POINT, {
-                point: [cesium.Math.toDegrees(geoCoords.longitude), cesium.Math.toDegrees(geoCoords.latitude)]
-            });
-        });
-        
-    }
-    #setStyle(style) {
-        this.#control.setStyle(style);
-    }
-    activate() {        
-        this.#control.activate();
-        const control2D = TC.Map.get(this.#view.map).activeControl;
-        this.#control.setStyle(control2D.getStyle());
-        this.#control2dAbortController?.abort();
-        this.#control2dAbortController = new AbortController();
-        const { signal } = this.#control2dAbortController;
-        control2D.addEventListener(Consts.event.STYLECHANGE, (_e) => {
-            this.#setStyle(control2D.getStyle());
-        }, { signal });
-    }
-    deactivate() { 
-        this.#control.deactivate();
-        this.#control2dAbortController?.abort();
-    }
-    destroy() {
-        this.deactivate();
-    }
 
-    popCoordinate() {
-        return this.#control.popCoordinate();
-    }
-    pushCoordinate(coordinate) {
-        this.#control.pushCoordinate(coordinate);
-    }
-    end() {
-        this.#control.end();
-    }
-    visibility(visible) {
-        this.#control.visibility(visible);
-    }
-}
-export class Select3D {
-    #control;
-    #layer;
-    #view;
-    #map
-    #selectCallback;
-    #pickedEntity;
-    constructor(layer, view) {
-        const self = this;
-        this.#layer = layer;
-        this.#view = view;
-        this.#control = new ThreeDDraw(this.#view.viewer, null, {
-            dataSource: this.#view.dataSources.get(this.#layer)
-        });
-        this.#map = TC.Map.get(this.#view.map);
-        this.features_ = {
-            clear: function () {                                                
-            },
-            extend: function () {                                                
-            }
-        }
-        this.#control.addEventListener('drawmodify', (evt) => {
-            const map = TC.Map.get(self.#view.map);
-            const oldCoordinates = evt.detail.entity._wrap.parent.getCoordinates();
-            const newFeature = tcFeatureConstructor(evt.detail.positions, evt.detail.type)
-            const originalFeat = evt.detail.entity._wrap.parent;
-            originalFeat.setCoordinates(newFeature.getCoordinates({ geometryCrs: this.#view.crs, crs: this.#view.view2DCRS }));
-            const newCoordinates = originalFeat.getCoordinates();
-            //originalFeat.setCoordinates(newFeature.getCoordinates());
-            map.activeControl?.history.setCoordinates(originalFeat, newCoordinates, oldCoordinates);
-            map.activeControl?.trigger(Consts.event.FEATUREMODIFY, {
-                feature: originalFeat,
-                layer: originalFeat.layer,
-                geometryChanged: true
-            });
-            this.#view.getScene().forceRender();
-        });
-        this.#control.addEventListener('unselect', (e) => {
-            const map = TC.Map.get(self.#view.map);
-            const controlEvent = new ControlEvent(Consts.event.FEATURESUNSELECT, { control: self });
-            controlEvent.features = e.detail.features;
-            map.activeControl?.dispatchEvent(controlEvent);
-        });
-    }
-    #remove(event){ 
-        if (event.feature.wrap?.feature3D && this.#layer === event.layer) {
-            this.#control.remove(event.feature.wrap.feature3D);
-            this.#pickedEntity = null;
-        }
-    }
-    #unselectFeature(evt) {
-        if (evt.control instanceof Modify && this.#pickedEntity) {
-            const unseletedFeature = (this.#pickedEntity._wrap?.parent || tcFeatureFromEntity(this.#pickedEntity));
-            unseletedFeature.setCoordinates(tcFeatureFromEntity(this.#pickedEntity).getCoordinates({ geometryCrs: this.#view.crs, crs: this.#view.view2DCRS }));
-            unseletedFeature.toggleSelectedStyle(false)
-            this.#selectCallback({ selected: [], deselected: [unseletedFeature.wrap.feature] });
-            this.#pickedEntity = null;
-        } 
-    }
-    activate(deleteMode) {
-        const self = this;
-        this.#map.on(Consts.event.FEATUREREMOVE, this.#remove.bind(self));
-        this.#map.on(Consts.event.CONTROLDEACTIVATE, this.#unselectFeature.bind(self));
-        this.#control.vertexRemove(deleteMode);
-        if (this.#control.entityForEdit && !deleteMode) this.#control.activate();
-        if (!deleteMode)
-            this.#control.activeSelectMode(function (selectedEntity) {
-                if (cesium.defined(selectedEntity)) {                    
-                    self.#pickedEntity = selectedEntity;
-                    self.#selectCallback({
-                        selected: [(selectedEntity._wrap?.parent || tcFeatureFromEntity(selectedEntity)).wrap.feature], deselected: []
-                    });
-                }
-            });
-        else
-            this.#control.deactivateSelectMode();
-    }
-    deactivate() {
-        this.#control.deactivateSelectMode();
-        this.#control.vertexRemove(false);
-        this.#control.deactivateEditing();
-        this.#map.off(Consts.event.FEATUREREMOVE, this.#remove);
-        this.#map.off(Consts.event.CONTROLDEACTIVATE, this.#unselectFeature);
-        this.#control.editMode = false;
-    }
-    setActive (active) {
-        active ? this.activate() : this.deactivate();
-    }
-    on(event, callback) {
-        this.#selectCallback = callback;
-    }
-    getFeatures () {                                            
-        if (!this.#control.getSelectedEntity()) {
-            return new ol.Collection();
-        }
-        return new ol.Collection([(this.#control.getSelectedEntity()._wrap?.parent || tcFeatureFromEntity(this.#control.getSelectedEntity())).wrap.feature]);
-    }
-    setSelected(entity){
-        this.#control.setSelectedEntity(entity);
-    }
-    /*features_ {
-        clear: function () {                                                
-        },
-        extend: function () {                                                
-        }
-    }*/
-}
