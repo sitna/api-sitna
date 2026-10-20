@@ -1,15 +1,19 @@
-﻿import TC from '../../TC.js';
-import WebComponentControl from './WebComponentControl.js';
-
-const elementName = 'sitna-scale-bar';
+﻿import WebComponentControl from './WebComponentControl.js';
+import ScaleBarWrapper from '../ol/ScaleBar.js';
 
 class ScaleBar extends WebComponentControl {
 
+    static {
+        customElements.define('sitna-scale-bar', this);
+    }
+
+    constructor() {
+        super(...arguments);
+        this.wrap = new ScaleBarWrapper(this);
+    }
+
     render() {
         this.classList.add(WebComponentControl.prototype.CLASS, this.CLASS);
-        if (!this.wrap) {
-            this.wrap = new TC.wrap.control.ScaleBar(this);
-        }
         this.wrap.render();
         const renderPromise = Promise.resolve();
         this._firstRender ??= renderPromise;
@@ -17,8 +21,8 @@ class ScaleBar extends WebComponentControl {
     }
 
     async register(map) {
-        const [, olMap] = await Promise.all([super.register.call(this, map), map.wrap.getMap()]);
-        olMap.addControl(this.wrap.ctl);
+        await super.register.call(this, map);
+        await this.wrap.register(map);
         return this;
     }
 
@@ -40,5 +44,4 @@ class ScaleBar extends WebComponentControl {
 }
 
 ScaleBar.prototype.CLASS = 'tc-ctl-sb';
-customElements.get(elementName) || customElements.define(elementName, ScaleBar);
 export default ScaleBar;
