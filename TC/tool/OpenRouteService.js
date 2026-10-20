@@ -40,7 +40,7 @@ class OpenRouteService {
     async getProfiles() {
         try {
             await this.init();
-            return Object.values(this.status.profiles).map((profile) => profile.profiles);
+            return Object.values(this.status.profiles).map((profile) => profile.encoder_name ?? profile.profiles);
         }
         catch(error) {
             return [];
@@ -87,29 +87,48 @@ class OpenRouteService {
             'Content-Type': 'application/json',
         };
         if (apiKey) headers['Authorization'] = apiKey;
-        let response;
-        try {
-            response = await fetch(`${this.#getDirectionsUrl(url)}/${profile}/geojson`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(payload)
-            });
-        }
-        catch (error) {
-            const fallbackResult = await this.#getFallbackRoute(options);
-            if (!fallbackResult) throw Error('Error fetching route data: ' + error.message);
-            return fallbackResult;
-        }
+        const response = await fetch(`${this.#getDirectionsUrl(url)}/${profile}/geojson`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        });
+        
+        const responseObject = await response.json();
         if (response.ok) {
-            return await response.json();
+            return responseObject;
         }
         else {
-            const fallbackResult = await this.#getFallbackRoute(options);
-            if (!fallbackResult) {
-                const errorObj = await response.json();
-                throw Error(errorObj.error.message);
+            let message = 'route.error.unknown';
+            switch (responseObject.error.code) {
+                case 2001:
+                    message = 'route.error.missingParameter';
+                    break;
+                case 2002:
+                    message = 'route.error.invalidParameterFormat';
+                    break;
+                case 2003:
+                    message = 'route.error.invalidParameterValue';
+                    break;
+                case 2004:
+                    message = 'route.error.limitExceeded';
+                    break;
+                case 2009:
+                    message = 'route.error.routeNotFound';
+                    break;
+                case 2010: {
+                    // Este es el código que se lanza cuando intentamos acceder a una zona geográfica 
+                    // fuera de la cubierta por GN, por eso vamos al fallback.
+                    message = 'route.error.pointNotFound';
+                    const fallbackResult = await this.#getFallbackRoute(options);
+                    if (fallbackResult) return fallbackResult;
+                    break;
+                }
             }
-            return fallbackResult;
+            if (!options.avoidAlternatives) {
+                const newOptions = { ...options, avoidAlternatives: true };
+                return await this.getRoute(newOptions);
+            }
+            throw Error(message);
         }
     }
 
@@ -124,15 +143,7 @@ class OpenRouteService {
                 url: this.options.fallbackUrl,
                 apiKey: this.options.fallbackApiKey,
             };
-            try {
-                return await this.getRoute(fallbackOptions);
-            } catch (error) {
-                if (!fallbackOptions.avoidAlternatives) {
-                    fallbackOptions.avoidAlternatives = true;
-                    return await this.getRoute(fallbackOptions);
-                }
-                else throw error;
-            }
+            return await this.getRoute(fallbackOptions);
         }
         return false;
     }
