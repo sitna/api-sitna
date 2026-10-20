@@ -5,6 +5,7 @@ import Cfg from '../../TC/Cfg.js';
 import Layer from '../../SITNA/layer/Layer.js';
 import LayerEvent from '../../SITNA/layer/LayerEvent.js';
 import Vector from './Vector.js';
+import RasterWrapper from '../../TC/ol/layer/Raster.js';
 import { GMLFilter } from '../filter.js';
 TC.layer = TC.layer || {};
 
@@ -68,10 +69,10 @@ const LegendStatusEnum = {
 }
 
 /**
- * Capa de tipo raster, como la de un WMS o un WMTS.
  * @class Raster
  * @memberof SITNA.layer
  * @extends SITNA.layer.Layer
+ * @summary Capa de tipo raster, como la de un WMS o un WMTS.
  * @param {RasterOptions} [options] Objeto de opciones de configuración de la capa.
  * @see SITNA.Map#getLayer
  */
@@ -126,7 +127,7 @@ class Raster extends Layer {
         //porque la forma habitual de detectar esto es por los eventos del mapa (que en esos casos no saltarán)
         self.#capabilitiesPromise = null;
 
-        self.wrap = new TC.wrap.layer.Raster(self);
+        self.wrap = new RasterWrapper(self);
 
         self.transparent = self.options.transparent === false ? false : true;
 
@@ -1728,8 +1729,8 @@ class Raster extends Layer {
 
         const infoFormats = availableFormats ?? layer.wrap.getInfoFormats();
         if (infoFormats) {
-            for (var i = 0; i < TC.wrap.layer.Raster.infoFormatPreference.length; i++) {
-                var format = TC.wrap.layer.Raster.infoFormatPreference[i];
+            for (var i = 0; i < RasterWrapper.infoFormatPreference.length; i++) {
+                var format = RasterWrapper.infoFormatPreference[i];
                 if (infoFormats.indexOf(format) >= 0) {
                     result = format;
                     break;

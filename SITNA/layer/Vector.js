@@ -17,6 +17,7 @@ import Circle from '../feature/Circle.js';
 import FeatureTypeParser from '../../TC/tool/FeatureTypeParser.js';
 import GMLBase from '../../lib/ol/format/GMLBase.js';
 import color from '../color.js';
+import VectorWrapper from '../../TC/ol/layer/Vector.js';
 
 TC.Layer = Layer;
 TC.layer = TC.layer || {};
@@ -87,10 +88,10 @@ const compareStyles = function (objTo, objFrom, distinct = true) {
 };
 
 /**
- * Capa con entidades geográficas vectoriales.
  * @class Vector
  * @memberof SITNA.layer
  * @extends SITNA.layer.Layer
+ * @summary Capa con entidades geográficas vectoriales.
  * @param {VectorOptions} [options] Objeto de opciones de configuración de la capa.
  * @see SITNA.Map#getLayer
  */
@@ -194,7 +195,7 @@ class Vector extends Layer {
             self.title = self.options.title || getFileName(self.url);
         }
 
-        self.wrap = new TC.wrap.layer.Vector(self);
+        self.wrap = new VectorWrapper(self);
 
         self.wrap._promise = new Promise((resolve, _reject) => {
             var ollyr = null;
@@ -448,9 +449,10 @@ class Vector extends Layer {
                     feature = new FeatureConstructor(coords, opts);
                 }
             }
-            if (feature.options.crs && self.map) {
+            if (self.map && (Object.hasOwn(feature.options, 'crs') || Object.hasOwn(feature.options, 'geographic'))) {
                 // Si la geometría tiene un CRS específico, lo transformamos al CRS del mapa
-                feature.transformCoordinates(feature.options.crs, self.map.crs);
+                const crs = feature.options.crs || (feature.options.geographic ? 'EPSG:4326' : self.map.crs);
+                if (!Util.CRSCodesEqual(crs, self.map.crs)) feature.transformCoordinates(crs, self.map.crs);
             }
             feature.layer = self;
             features[i] = feature;
@@ -862,7 +864,7 @@ class Vector extends Layer {
         const self = this;
         if (self.features && self.wrap) {
             if (self.map) {
-                const popups = self.map.getControlsByClass('TC.control.Popup');
+                const popups = self.map.getControlsByClass('Popup');
                 popups.forEach(function (pu) {
                     if (pu.isVisible() && self.features.indexOf(pu.currentFeature) >= 0) {
                         pu.hide();
@@ -1534,6 +1536,7 @@ class Vector extends Layer {
 
     setDraggable(draggable, onend, onstart) {
         this.wrap.setDraggable(draggable, onend, onstart);
+        this.isDraggable = draggable;
         return this;
     }
 
@@ -1581,7 +1584,7 @@ export default Vector;
 /**
  * Opciones de capa vectorial. Objetos que cumplan esta interfaz se utilizan al [configurar un mapa]{@linkplain MapOptions} o el [control del catálogo de capas]{@linkplain LayerCatalogOptions},
  * o como parámetro al [añadir una capa]{@linkplain SITNA.Map#addLayer}.
- * @interfaz VectorOptions
+ * @interface VectorOptions
  * @extends LayerOptions
  * @see MapOptions
  * @see LayerCatalogOptions
