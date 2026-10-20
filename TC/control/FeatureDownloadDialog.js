@@ -13,9 +13,12 @@ import Elevation from '../tool/Elevation.js'
 
 TC.control = TC.control || {};
 
-const elementName = 'sitna-download-file';
-
 class FeatureDownloadDialog extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-download-file', this);
+    }
+
     displaysElevation;
     #interpolation = false;
     #interpolationDistance = null;
@@ -61,7 +64,11 @@ class FeatureDownloadDialog extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-dldlog.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-dldlog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-dldlog.mjs'
+        );
         self.template = module.default;
     }
 
@@ -324,7 +331,7 @@ class FeatureDownloadDialog extends WebComponentControl {
         return await self.map.wait(async () => {
             let result = null;
             Util.closeModal();
-            const persistBySaving = this.persistenceMode === FeatureDownloadDialog.persistenceMode.SAVE && 
+            const persistBySaving = this.persistenceMode === FeatureDownloadDialog.persistenceMode.SAVE &&
                 !!window.showSaveFilePicker;
             // Si descargamos, clonamos las features para no modificar las originales
             // Si guardamos, modificamos las features originales
@@ -389,20 +396,20 @@ class FeatureDownloadDialog extends WebComponentControl {
                 data = await self.map.exportFeatures(proccessedFeatures, {
                     fileName: exportedFileName,
                     format,
-                    adaptNames: options.adaptNames,
+                    adaptPropertyNames: options.adaptPropertyNames,
                     acceptTimeLoss: options.acceptTimeLoss,
                 });
             }
             catch (e) {
                 if (e instanceof FieldNameError) {
                     const message = self.getLocaleString('fileWrite.fieldNameError', { name: e.cause });
-                    if (options.adaptNames) {
+                    if (options.adaptPropertyNames) {
                         TC.error(message, [Consts.msgErrorMode.TOAST, Consts.msgErrorMode.CONSOLE]);
                     }
                     else {
                         if (TC.confirm(self.getLocaleString('fileWrite.fieldNameWarning'))) {
                             const newOpts = { ...options };
-                            newOpts.adaptNames = true;
+                            newOpts.adaptPropertyNames = true;
                             self.persist(newOpts);
                         }
                         else {
@@ -467,7 +474,7 @@ class FeatureDownloadDialog extends WebComponentControl {
                             if (a.layer && b.layer) {
                                 result = a.layer.id.localeCompare(b.layer.id);
                             }
-                            if (result === 0) result = a.id.localeCompare(b.id);
+                            if (result === 0) result = String(a.id).localeCompare(String(b.id));
                             return result;
                         };
                         const layers = new Set();
@@ -543,6 +550,5 @@ class FeatureDownloadDialog extends WebComponentControl {
 }
 
 FeatureDownloadDialog.prototype.CLASS = 'tc-ctl-dldlog';
-customElements.get(elementName) || customElements.define(elementName, FeatureDownloadDialog);
 TC.control.FeatureDownloadDialog = FeatureDownloadDialog;
 export default FeatureDownloadDialog;
