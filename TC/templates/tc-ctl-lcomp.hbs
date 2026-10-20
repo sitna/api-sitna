@@ -1,0 +1,34 @@
+<h2>[[compareLayers]] <sitna-button variant="minimal" class="tc-ctl-lcomp-swap" text="[[swapLayers]]"></sitna-button></h2>
+<div class="tc-ctl-lcomp-container">
+    <div class="tc-ctl-lcomp-selectors">
+        <div class="tc-ctl-lcomp-layer-main"></div>
+        {{#if showButton}}<button class="tc-ctl-lcomp-btn" commandfor="{{controlId}}-dialog" command="show-modal"></button>{{/if}}
+        {{#each layers}}
+        <div class="tc-ctl-lcomp-layer-sec tc-ctl-lcomp-layer-sec-{{@index}}"></div>
+        {{/each}}
+    </div>
+    <div class="tc-ctl-lcomp-sliders">
+        <div class="tc-ctl-lcomp-view-spyglass-slider">
+            <h3>[[spyglassDiameter]]</h3>
+            <input type="range" min="{{spyglassMinRadius}}" max="{{spyglassMaxRadius}}" value="{{spyglassRadius}}" class="tc-ctl-lcomp-view-spyglass-slider-rng" />
+        </div>
+        <div class="tc-ctl-lcomp-view-transp-slider">
+            <h3>[[transparencyDegree]]</h3>
+            {{#each layers}}
+                {{#unless @first}}<h3>[[secondaryLayersTransparencyDegree]]</h3>{{/unless}}
+            <input type="range" min="0" max="1" value="{{#if @first}}0.5{{else}}0{{/if}}" step="0.01" class="tc-ctl-lcomp-view-transp-slider-rng tc-ctl-lcomp-view-transp-slider-rng-{{@index}}" />
+            {{/each}}
+        </div>
+        <div class="tc-ctl-lcomp-view-time-slider"></div>
+    </div>
+</div>
+<dialog id="{{controlId}}-dialog" closedby="any">
+    <div class="tc-modal-header">
+        <h3>[[comparativeViewTypes]]</h3> <sitna-button variant="minimal" class="tc-modal-close"></sitna-button>
+    </div>
+    <div class="tc-modal-body">
+        {{#each views}}
+        <label class="tc-map-comp-view tc-map-comp-view-{{.}}"><input type="radio" name="lcomp" value="{{.}}" /> {{i18n .}}</label>
+        {{/each}}
+    </div>
+</dialog>
