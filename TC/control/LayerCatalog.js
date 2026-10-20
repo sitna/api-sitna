@@ -106,7 +106,7 @@ const getLayerTree = function (layer) {
                 childrenVisible = true;
             }
         }
-        if (Object.prototype.hasOwnProperty.call(node, 'isVisible')) {
+        if (Object.hasOwn(node, 'isVisible')) {
             node.isVisible = !layer.names || !layer.names.length || childrenVisible || node.isVisible;
         }
         return node.isVisible;
@@ -191,13 +191,41 @@ class LayerCatalog extends ProjectionSelector {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-lcat.mjs');
-        const branchTemplatePromise = import('../templates/tc-ctl-lcat-branch.mjs');
-        const nodeTemplatePromise = import('../templates/tc-ctl-lcat-node.mjs');
-        const infoTemplatePromise = import('../templates/tc-ctl-lcat-info.mjs');
-        const resultsTemplatePromise = import('../templates/tc-ctl-lcat-results.mjs');
-        const pathResultsTemplatePromise = import('../templates/tc-ctl-lcat-results-path.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-lcat-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat.mjs'
+        );
+        const branchTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat-branch" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat-branch.mjs'
+        );
+        const nodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat-node.mjs'
+        );
+        const infoTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat-info" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat-info.mjs'
+        );
+        const resultsTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat-results" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat-results.mjs'
+        );
+        const pathResultsTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat-results-path" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat-results-path.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-lcat-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-lcat-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -427,7 +455,7 @@ class LayerCatalog extends ProjectionSelector {
         // Control de que las capas no tengan mismo id
         const nonRepeatedIds = new Set(self.layers.map(l => l.id));
         if (self.layers.length > nonRepeatedIds.size) {
-            console.warn(`LayerCatalog [${self.id}]: There are duplicate layer ids`);
+            console.warn(`LayerCatalog [${self.getId()}]: There are duplicate layer ids`);
         }
 
         self.resultController = [];
@@ -796,9 +824,7 @@ class LayerCatalog extends ProjectionSelector {
             if (name) {
                 span.classList.add(Consts.classes.SELECTABLE);
                 var info = layer.getInfo(name);
-                if (!Object.prototype.hasOwnProperty.call(info, 'abstract') &&
-                    !Object.prototype.hasOwnProperty.call(info, 'legend') &&
-                    !Object.prototype.hasOwnProperty.call(info, 'metadata')) {
+                if (!Object.hasOwn(info, 'abstract') && !Object.hasOwn(info, 'legend') && !Object.hasOwn(info, 'metadata')) {
                     a.parentElement.removeChild(a);
                 }
                 else {
@@ -906,10 +932,10 @@ class LayerCatalog extends ProjectionSelector {
 
     getLayerRootNode(layer) {
         if (!layer.isBase) {
-            const url = layer.options.url?.toLowerCase();
+            const url = layer.url?.toLowerCase();
             for (const li of this.#getRootNodes()) {
                 const lyr = this.getLayer(li.dataset.layerId);
-                if (lyr && lyr.type === layer.type && lyr.options.url.toLowerCase() === url) {
+                if (lyr?.type === layer.type && lyr.url.toLowerCase() === url) {
                     return li;
                 }
             }
