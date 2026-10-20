@@ -24,14 +24,15 @@ module.exports = {
                 exclude: [/node_modules/, /lib/],
                 use: {
                     loader: 'babel-loader',
+
                     options: {
-                        plugins: ['@babel/plugin-proposal-class-properties'
-                            , '@babel/plugin-proposal-class-static-block'
-                            , '@babel/plugin-proposal-private-methods'
-                            , '@babel/plugin-proposal-private-property-in-object'
-                            , '@babel/plugin-proposal-optional-chaining'
-                            , '@babel/plugin-proposal-logical-assignment-operators'
-                            , '@babel/plugin-proposal-nullish-coalescing-operator']
+                        plugins: [
+                            '@babel/plugin-proposal-class-properties',
+                            '@babel/plugin-proposal-class-static-block',
+                            '@babel/plugin-proposal-private-methods',
+                            '@babel/plugin-proposal-private-property-in-object',
+                            '@babel/plugin-proposal-logical-assignment-operators',
+                        ]
                     }
                 }
             },
@@ -54,7 +55,11 @@ module.exports = {
                         }
                     ]
                 }
-            }
+            },
+            {
+                test: /\.d\.ts$/,
+                loader: 'ignore-loader'
+            },
         ]
     },
     ignoreWarnings: [/Failed to parse source map/],
@@ -64,20 +69,26 @@ module.exports = {
         })
     ],
     optimization: {
+        moduleIds: 'deterministic',
+        chunkIds: 'deterministic',
         minimizer: [new TerserPlugin({
             terserOptions: {
                 format: {
                     comments: false,
                 },
+                keep_classnames: true,
+                keep_fnames: true                
             },
             extractComments: false,
-        })]
+        })],
+        concatenateModules: false
     },
     output: {
         filename: 'sitna.js',
         path: path.resolve(__dirname, '../dist'),
+        publicPath: 'auto',
         chunkFilename: 'chunks/[name].sitna.js',
         sourceMapFilename: 'maps/[file].map',
-        library: 'SITNA'
-    }
+        library: 'SITNA',
+    },
 };
