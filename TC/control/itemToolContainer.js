@@ -38,7 +38,8 @@ const itemToolContainer = {
 
     getToolContainer: function (itemElement) {
         const self = this;
-        return itemElement.querySelector(self._toolContainerSelector);
+        if (!self.caller?.highlightedFeature) return itemElement.querySelector(self._toolContainerSelector);
+        return itemElement.querySelector(self.toolContainerSelector) || itemElement.querySelector(self._toolContainerSelector);
     },
     getAddonsContainer: function (itemElement) {
         const self = this;
@@ -49,7 +50,7 @@ const itemToolContainer = {
         const self = this;
         if (Util.isFunction(tool.renderFn)) {
             const container = self.getToolContainer(elm);
-            if (!self.isVisible || self.isVisible()) {
+            if (container && (!self.isVisible || self.isVisible())) {
                 const button = tool.renderFn(container, elm.dataset.layerId);
                 if (button) {
                     const lastButton = container.querySelector(`.tc-item-tool-last`);
