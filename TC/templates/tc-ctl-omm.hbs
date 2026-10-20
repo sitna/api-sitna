@@ -26,3 +26,28 @@
         <sitna-button class="tc-ctl-omm-btn-cancel-dl" title="[[cancel]]" aria-label="[[cancel]]">[[cancel]]</sitna-button>
     </div>
 </div>
+<dialog class="tc-ctl-omm-dialog" closedby="any">
+    <div class="tc-modal-header">
+        <h3>[[newOfflineMap]]</h3>
+        <sitna-button variant="minimal" class="tc-modal-close" title="[[close]]">[[close]]</sitna-button>
+    </div>
+    <div class="tc-modal-body">
+        <input type="text" class="tc-ctl-omm-txt-name" placeholder="[[nameRequired]]" required />
+        <div class="tc-ctl-omm-bl-panel">
+            <h4>[[availableOfflineMaps]]</h4>
+            <p class="tc-ctl-omm-bl-panel-txt">[[selectAtLeastOne]]</p>
+            <ul class="tc-ctl-omm-bl-list"></ul>
+        </div>
+        <div class="tc-ctl-omm-res-panel tc-hidden">
+            <h4>[[maxRes]]</h4>
+            <div class="tc-ctl-omm-res"></div>
+            <input type="range" class="tc-ctl-omm-rng-maxres" disabled value="0" title="[[maxRes]]">
+            <div class="tc-ctl-omm-res-warn tc-alert tc-alert-info tc-hidden">[[mapNotVisibleAtFullExtent]]</div>
+        </div>
+        <div class="tc-ctl-omm-tile-count tc-hidden"></div>
+    </div>
+    <div class="tc-modal-footer">
+        <sitna-button class="tc-modal-close tc-ctl-omm-btn-ok" aria-label="[[ok]]" disabled>[[ok]]</sitna-button>
+        <sitna-button class="tc-modal-close tc-ctl-omm-btn-cancel" aria-label="[[cancel]]">[[cancel]]</sitna-button>
+    </div>
+</dialog>

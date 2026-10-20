@@ -1,7 +1,7 @@
 <h2>[[geo]]</h2>
-<div class="tc-ctl-geolocation-content">    
+<div class="tc-ctl-geolocation-content">
     <div class="tc-ctl-geolocation-track">
-        <div class="tc-ctl-geolocation-track-snap-info"></div>                
+        <div class="tc-ctl-geolocation-track-snap-info"></div>
         <div class="tc-ctl-geolocation-track-panel-block">
             <sitna-toggle title="[[geo.trk.panel.help.1]]" checked>[[geo.trk.panel.help.2]]</sitna-toggle>
             <sitna-button variant="minimal" icon="help" text="[[geo.trk.panel.help.3]]" class="tc-ctl-geolocation-track-panel-help"></sitna-button>
@@ -10,10 +10,10 @@
             <div class="tc-ctl-geolocation-select">
                 <sitna-tab text="[[geo.gps]]" title="[[geo.track.title]]" group="{{controlId}}-mode" selected for="{{controlId}}-geolocation-panel"></sitna-tab>
                 <sitna-tab text="[[geo.tracks]]" title="[[geo.tracks.title]]" group="{{controlId}}-mode" for="{{controlId}}-tracks-panel"></sitna-tab>
-            </div>                        
+            </div>
             <div id="{{controlId}}-tracks-panel" class="tc-ctl-geolocation-track-available tc-ctl-geolocation-track-cnt tc-ctl-geolocation-panel tc-hidden">
                 <i class="tc-ctl-geolocation-track-search-icon"></i>
-                <input id="tc-ctl-geolocation-track-available-srch" type="search" list="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-srch tc-textbox" placeholder="[[geo.filter.plhr]]" maxlength="200" />                
+                <input id="tc-ctl-geolocation-track-available-srch" type="search" list="tc-ctl-geolocation-track-available-lst" class="tc-ctl-geolocation-track-available-srch tc-textbox" placeholder="[[geo.filter.plhr]]" maxlength="200" />
                 <ol class="tc-list tc-ctl-geolocation-track-available-lst">
                     <li class="tc-ctl-geolocation-track-available-empty"><span>[[geo.noTracks]]</span></li>
                     <li class="tc-ctl-geolocation-track-not" hidden><span>[[noMatches]]</span></li>
@@ -24,10 +24,10 @@
                     <label class="tc-button tc-icon-button" for="uploaded-file-{{controlId}}" title="[[geo.trk.import.upload]]">[[geo.trk.import.lbl]]</label>
                 </div>
             </div>
-            <div id="{{controlId}}-geolocation-panel" class="tc-ctl-geolocation-tracks tc-ctl-geolocation-panel">    
-                <div class="tc-alert tc-alert-warning tc-hidden" >
+            <div id="{{controlId}}-geolocation-panel" class="tc-ctl-geolocation-tracks tc-ctl-geolocation-panel">
+                <div class="tc-alert tc-alert-warning tc-hidden">
                     <p id="panel-msg">
-                        [[geo.trk.panel.1]]                    
+                        [[geo.trk.panel.1]]
                         <ul>
                             <li>[[geo.trk.panel.2]]</li>
                             <li>[[geo.trk.panel.3]]</li>
@@ -35,9 +35,9 @@
                             <li>[[geo.trk.panel.5]]</li>
                         </ul>
                     </p>
-                </div>            
-                <div class="tc-ctl-geolocation-track-ui">   
-                    <div  class="tc-ctl-geolocation-track-render">
+                </div>
+                <div class="tc-ctl-geolocation-track-ui">
+                    <div class="tc-ctl-geolocation-track-render">
                         <sitna-toggle title="[[geo.trk.render]]" checked>[[geo.trk.render]]</sitna-toggle>
                     </div>
                     <sitna-button class="tc-ctl-geolocation-track-ui-activate" title="[[geo.track.activate.title]]">[[geo.track.activate]]</sitna-button>
@@ -58,5 +58,15 @@
 <div class="tc-ctl-geolocation-track-center tc-hidden">
     <sitna-button variant="overlay" class="tc-float-btn" text="[[geo.trk.center]]" active></sitna-button>
 </div>
+<dialog class="tc-ctl-geolocation-dialog tc-ctl-geolocation-share-dialog" closedby="any">
+    <div class="tc-modal-header">
+        <h3>[[geo.track]] <span>-</span> [[share]]</h3>
+        <sitna-button variant="minimal" class="tc-modal-close" title="[[close]]">[[close]]</sitna-button>
+    </div>
+    <div class="tc-modal-body">
+        <div class="tc-ctl-geolocation-share-dialog-ctl"></div>
+    </div>
+</dialog>
+
 
 

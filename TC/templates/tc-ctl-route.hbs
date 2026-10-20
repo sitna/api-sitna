@@ -1,17 +1,20 @@
 <h2>[[directions]]</h2>
 <div class="tc-ctl-route-header">
-{{#each profiles}}
-    <sitna-button variant="textless" title="[[{{.}}]]" data-profile="{{this}}"{{#if @first}} active{{/if}}>[[{{.}}]]</sitna-button>
-{{/each}}
+    {{#each profiles}}
+    <sitna-button variant="textless" title="[[{{.}}]]" data-profile="{{this}}">[[{{.}}]]</sitna-button>
+    {{/each}}
     <sitna-button variant="minimal" title="[[close]]" class="tc-ctl-route-close">[[close]]</sitna-button>
 </div>
 <div class="tc-ctl-route-content">
     <ul class="tc-ctl-route-destinations tc-list">
-
     </ul>
     <div class="tc-ctl-route-destination-actions">
         <sitna-button class="tc-ctl-route-destination-add">[[addDestination]]</sitna-button>
         <sitna-button class="tc-ctl-route-destination-switch">[[switchOrder]]</sitna-button>
+    </div>
+    <div class="tc-ctl-route-actions">
+        <sitna-button class="tc-ctl-route-share" disabled>[[shareRoute]]</sitna-button>
+        <sitna-button class="tc-ctl-route-download" disabled>[[downloadRoute]]</sitna-button>
     </div>
     {{#unless preference}}
     <div class="tc-ctl-route-preference">
@@ -26,3 +29,12 @@
     <ul class="tc-ctl-route-features">
     </ul>
 </div>
+<dialog class="tc-ctl-route-share-dialog" closedby="any">
+    <div class="tc-modal-header">
+        <h3>[[shareRoute]]</h3>
+        <sitna-button variant="minimal" class="tc-modal-close" title="[[close]]">[[close]]</sitna-button>
+    </div>
+    <div class="tc-modal-body">
+        <div class="tc-ctl-route-share-dialog-ctl"></div>
+    </div>
+</dialog>

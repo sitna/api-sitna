@@ -5,7 +5,7 @@
 </div>
 <div id="{{controlId}}-type-image" class="tc-ctl-tctr-elm tc-ctl-tctr-elm-image tc-group tc-ctl-download-cnt tc-ctl-download-image">
     <div>
-        <label>[[format]]:</label><select class="tc-combo"  title="[[formatImageTitle]]">
+        <label>[[format]]:</label><select class="tc-combo" title="[[formatImageTitle]]">
             <option value="image/png">PNG</option>
             <option value="image/jpeg">JPEG</option>
         </select>
@@ -50,4 +50,26 @@
         </div>
     </div>
 </div>
-
+<dialog class="tc-ctl-download-help-dialog" closedby="any">
+    <div class="tc-modal-header">
+        <h3>[[downloadData]]</h3>
+        <sitna-button variant="minimal" class="tc-modal-close" title="[[close]]">[[close]]</sitna-button>
+    </div>
+    <div class="tc-modal-body">
+        <p>[[dl.instructions.1]]</p>
+        <ul>
+            <li>[[dl.instructions.2]]</li>
+            <li>[[dl.instructions.3]]</li>
+            <li>
+                [[dl.instructions.4]]
+                <ul>
+                    <li>[[dl.instructions.5]]</li>
+                    <li>[[dl.instructions.6]]</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="tc-modal-footer">
+        <sitna-button class="tc-modal-close" aria-label="[[close]]">[[close]]</sitna-button>
+    </div>
+</dialog>
