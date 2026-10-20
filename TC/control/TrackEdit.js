@@ -9,12 +9,16 @@ import Toggle from '../../SITNA/ui/Toggle.js';
 import Point from '../../SITNA/feature/Point.js';
 import Polyline from '../../SITNA/feature/Polyline.js';
 import MultiPolyline from '../../SITNA/feature/MultiPolyline.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
 
 TC.control = TC.control || {};
 
-const elementName = 'sitna-track-edit';
-
 class TrackEdit extends FileEdit {
+
+    static {
+        customElements.define('sitna-track-edit', this);
+    }
+
     #geolocationControl;
     formats = [Consts.format.GPX, Consts.format.KMZ];
 
@@ -32,7 +36,11 @@ class TrackEdit extends FileEdit {
     }
 
     async loadTemplates() {
-        const panelTemplatePromise = import('../templates/tc-ctl-tedit.mjs');
+        const panelTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-tedit" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-tedit.mjs'
+        );
         this.template = (await panelTemplatePromise).default;
     }
 
@@ -104,13 +112,13 @@ class TrackEdit extends FileEdit {
                         self.map
                             .on(Consts.event.CONTROLACTIVATE, function (e) {
                                 if (e.control === lineCtl && lineCtl.layer === ctl.trackLayer) {
-                                    lineCtl.snapping = ctl.trackLayer.features.filter(f => !(f instanceof Point));
+                                    lineCtl.setSnapping(ctl.trackLayer.features.filter(f => !(f instanceof Point)));
                                 }
                             })
                             .on(Consts.event.FEATUREADD, function (e) {
                                 if (e.feature.layer === ctl.trackLayer &&
-                                    Array.isArray(lineCtl.snapping) && !(e.feature instanceof Point)) {
-                                    lineCtl.snapping.push(e.feature);
+                                    Array.isArray(lineCtl.getSnapping()) && !(e.feature instanceof Point)) {
+                                    lineCtl.getSnapping().push(e.feature);
                                 }
                             });
 
@@ -158,17 +166,17 @@ class TrackEdit extends FileEdit {
                                 });
                             }
                         };
-                        lineCtl.addEventListener(Consts.event.POINT, onDraw);
-                        lineCtl.addEventListener(Consts.event.DRAWUNDO, onDraw);
-                        lineCtl.addEventListener(Consts.event.DRAWREDO, onDraw);
-                        lineCtl.addEventListener(Consts.event.DRAWCANCEL, function (_e) {
+                        lineCtl.addEventListener(ControlEvent.type.POINTDRAW, onDraw);
+                        lineCtl.addEventListener(ControlEvent.type.DRAWUNDO, onDraw);
+                        lineCtl.addEventListener(ControlEvent.type.DRAWREDO, onDraw);
+                        lineCtl.addEventListener(ControlEvent.type.DRAWCANCEL, function (_e) {
                             if (lineCtl.layer === ctl.trackLayer) {
                                 ctl.displayTrackProfile(ctl.getSelectedTrackItem(), {
                                     forceRefresh: true
                                 });
                             }
                         });
-                        lineCtl.addEventListener(Consts.event.DRAWEND, function (e) {
+                        lineCtl.addEventListener(ControlEvent.type.DRAWEND, function (e) {
                             if (lineCtl.layer === ctl.trackLayer) {
                                 addElevations(e.detail.feature);
                             }
@@ -287,6 +295,5 @@ class TrackEdit extends FileEdit {
 }
 
 TrackEdit.prototype.CLASS = 'tc-ctl-tedit';
-customElements.get(elementName) || customElements.define(elementName, TrackEdit);
 TC.control.TrackEdit = TrackEdit;
 export default TrackEdit;
