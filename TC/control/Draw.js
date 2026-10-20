@@ -6,21 +6,21 @@ import WebComponentControl from './WebComponentControl.js';
 import './FeatureStyler.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
+import DrawWrapper from '../ol/Draw.js';
 
 TC.control = TC.control || {};
 
-Consts.event.DRAWSTART = 'drawstart.tc';
-Consts.event.DRAWEND = 'drawend.tc';
-Consts.event.DRAWCANCEL = 'drawcancel.tc';
-Consts.event.DRAWUNDO = 'drawundo.tc';
-Consts.event.DRAWREDO = 'drawredo.tc';
-Consts.event.POINT = 'point.tc';
+Consts.event.DRAWSTART = ControlEvent.type.DRAWSTART;
+Consts.event.DRAWEND = ControlEvent.type.DRAWEND;
+Consts.event.DRAWCANCEL = ControlEvent.type.DRAWCANCEL;
+Consts.event.DRAWUNDO = ControlEvent.type.DRAWUNDO;
+Consts.event.DRAWREDO = ControlEvent.type.DRAWREDO;
+Consts.event.POINTDRAW = ControlEvent.type.POINTDRAW;
 Consts.event.MEASURE = 'measure.tc';
 Consts.event.MEASUREPARTIAL = 'measurepartial.tc';
 Consts.event.STYLECHANGE = 'stylechange.tc';
 Consts.event.CHANGE = 'change';
-
-const elementName = 'sitna-draw';
 
 class DrawModel {
     constructor() {
@@ -33,7 +33,262 @@ class DrawModel {
     }
 }
 
+/**
+  * @interface DrawOptions
+  * @summary Opciones de control de dibujo.
+  * @property {HTMLElement|string} [div] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+  * @property {SITNA.layer.Vector|string} [layer] - Capa vectorial o identificador de dicha capa en la que se dibujarán las 
+  * entidades geográficas. Si no se especifica, el control creará una capa propia para este fin. 
+  * @property {string} [mode] - Modo de dibujo, es decir, qué tipo de geometría se va a dibujar.
+  * 
+  * Para establecer el modo hay que darle un valor de [SITNA.Consts.geom]{@link SITNA.Consts}. Este control tiene tres modos:
+  * punto, línea y polígono, correspondientes con los valores [SITNA.Consts.geom.POINT]{@link SITNA.Consts}, [SITNA.Consts.geom.POLYLINE]{@link SITNA.Consts} y 
+  * [SITNA.Consts.geom.POLYGON]{@link SITNA.Consts}.
+  * @property {boolean} [singleSketch=false] - Indica si el control solamente permite dibujar una sola entidad cada la vez.
+  * @property {boolean|SITNA.layer.Vector|Array<SITNA.feature.Feature>} [snapping] - Especifica si el dibujo de 
+  * geometrías tiene autoajuste, y en caso afirmativo, qué capa o entidades se usan para el ajuste. 
+  * 
+  * - Si se establece a verdadero, los vértices de las geometrías dibujadas se ajustarán a los vértices de las geometrías de las 
+  * entidades dibujadas previamente.
+  * - Si el valor es una instancia de [SITNA.layer.Vector]{@link SITNA.layer.Vector}, los vértices de las geometrías dibujadas 
+  * se ajustarán a los vértices de las geometrías de las entidades de la capa correspondiente. 
+  * - Si el valor es un array de [SITNA.feature.Feature]{@link SITNA.feature.Feature}, 
+  * los vértices de las geometrías dibujadas se ajustarán a los vértices de las geometrías de las entidades del array.
+  * @property {boolean} [stylable=false] - Indica si el control incluye herramientas para modificar el estilo de la entidad dibujada (color y grosor de trazo, color de relleno, etc.).
+  * @property {VectorStyleOptions} [styles] - Estilos para el dibujo de las entidades geográficas. Si se especifica, sobrescribe los estilos por defecto del control para el tipo de geometría que se esté dibujando.
+  * Si se establece a `false`, el control se instanciará sin capa asociada y no dibujará nada en el mapa, hasta que se le asigne una capa con el método {@link SITNA.control.Draw#setLayer}.
+  * @example <caption>Ejemplo de uso de la propiedad `snapping` [Ver en vivo](../examples/DrawOptions.snapping.html)</caption> {@lang html}
+    <div class="instructions radio-input">
+        <p>Seleccionar una opción de ajuste:</p>
+        <label><input type="radio" name="snapping-type" id="radio-true" value="true"><strong>true</strong> (Se fija a entidades dibujadas)</label>
+        <label><input type="radio" name="snapping-type" id="radio-layer" value="layer"><strong>SITNA.layer.Vector</strong> (Se fija a entidades de una capa específica)</label>
+        <label><input type="radio" name="snapping-type" id="radio-features" checked value="features"><strong>SITNA.feature.Feature[]</strong> (Se fija a entidades geográficas específicas)</label>
+    </div>
+    <div id="my-map"></div>
+    <script>
+        // Definimos una capa de referencia para los ajustes de vértices.
+        const referenceLayer = new SITNA.layer.Vector({
+            id: "reference",
+            type: SITNA.Consts.layerType.VECTOR,
+            title: "Elementos de referencia para ajuste"
+        });
+        // Creamos dos estilos para diferenciar las entidades de la capa de referencia.
+        const depotStyle = {
+            fillColor: "rgb(255 128 0 / 0.2)",
+            strokeColor: "rgb(255 128 0 / 1)",
+            strokeWidth: 2
+        };
+        const homeStyle = {
+            fillColor: "rgb(0 128 255 / 0.2)",
+            strokeColor: "rgb(0 128 255 / 1)",
+            strokeWidth: 2
+        };
+        // Creamos dos colecciones de entidades para la capa de referencia.
+        const depots = [
+            new SITNA.feature.Polygon([
+                [
+                    [610490.206, 4733953.307],
+                    [610498.028, 4734002.693],
+                    [610517.778, 4733999.564],
+                    [610509.956, 4733950.177],
+                    [610490.206, 4733953.307]
+                ]
+            ], depotStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610456.033, 4733945.572],
+                    [610466.99, 4733938.033],
+                    [610458.01, 4733924.984],
+                    [610447.054, 4733932.523],
+                    [610456.033, 4733945.572]
+                ]
+            ], depotStyle)
+        ];
+        const homes = [
+            new SITNA.feature.Polygon([
+                [
+                    [610460.061, 4734008.732],
+                    [610446.861, 4734010.438],
+                    [610450.08, 4734035.297],
+                    [610463.276, 4734033.591],
+                    [610460.061, 4734008.732]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610426.048, 4733952.592],
+                    [610429.269, 4733977.499],
+                    [610442.44, 4733975.795],
+                    [610439.219, 4733950.888],
+                    [610426.048, 4733952.592]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610460.061, 4734008.732],
+                    [610456.847, 4733983.879],
+                    [610443.648, 4733985.585],
+                    [610446.861, 4734010.438],
+                    [610460.061, 4734008.732]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610463.276, 4734033.591],
+                    [610476.472, 4734031.884],
+                    [610473.257, 4734007.025],
+                    [610460.061, 4734008.732],
+                    [610463.276, 4734033.591]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610439.219, 4733950.888],
+                    [610442.44, 4733975.795],
+                    [610455.61, 4733974.092],
+                    [610452.389, 4733949.185],
+                    [610439.219, 4733950.888]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610446.861, 4734010.438],
+                    [610433.67, 4734012.144],
+                    [610436.885, 4734037.003],
+                    [610450.08, 4734035.297],
+                    [610446.861, 4734010.438]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610452.389, 4733949.185],
+                    [610455.61, 4733974.092],
+                    [610468.777, 4733972.389],
+                    [610465.557, 4733947.482],
+                    [610452.389, 4733949.185]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610473.257, 4734007.025],
+                    [610470.043, 4733982.172],
+                    [610456.847, 4733983.879],
+                    [610460.061, 4734008.732],
+                    [610473.257, 4734007.025]
+                ]
+            ], homeStyle),
+            new SITNA.feature.Polygon([
+                [
+                    [610446.861, 4734010.438],
+                    [610443.648, 4733985.585],
+                    [610430.456, 4733987.292],
+                    [610433.67, 4734012.144],
+                    [610446.861, 4734010.438]
+                ]
+            ], homeStyle)
+        ];
+        const allLandLots = depots.concat(homes);
+
+        // Creamos la lógica de selección de tipo de propiedad snapping según el radio button seleccionado.
+        const radioTrue = document.getElementById("radio-true");
+        const radioLayer = document.getElementById("radio-layer");
+        const radioFeatures = document.getElementById("radio-features");
+        radioTrue.addEventListener("change", () => {
+            if (radioTrue.checked) {
+                document.querySelector("sitna-draw").setSnapping(true);
+            }
+        });
+        radioLayer.addEventListener("change", () => {
+            if (radioLayer.checked) {
+                document.querySelector("sitna-draw").setSnapping(referenceLayer);
+            }
+        });
+        radioFeatures.addEventListener("change", () => {
+            if (radioFeatures.checked) {
+                document.querySelector("sitna-draw").setSnapping(depots);
+            }
+        });
+
+        // Instanciamos el mapa con un layout simplificado con el control de dibujo en el primer contenedor.
+        // Añadimos una capa de referencia para los ajustes de vértices.
+        const myMap = new SITNA.Map("my-map", {
+            layout: "layout/ctl-container",
+            initialExtent: [610231, 4733866, 610711, 4734095],
+            controls: {
+                draw: {
+                    div: "slot1",
+                    mode: SITNA.Consts.geom.POLYGON,
+                    snapping: depots // Activamos el ajuste de vértices solamente con las entidades de un grupo.
+                }
+            }
+        });
+        myMap.loaded(() => {
+            myMap.addLayer(referenceLayer);
+            referenceLayer.addFeatures(allLandLots);
+        });
+    </script>
+  * @see {@link SITNA.control.Draw}
+  */
+
+/**
+ * Este control ofrece al usuario una interfaz para dibujar entidades puntuales, lineales y poligonales en el mapa.
+ * Otros controles hacen uso de este control cuando necesitan funcionalidades de dibujo.
+ * @class Draw
+ * @memberof SITNA.control
+ * @extends SITNA.control.Control
+ * @summary `<sitna-draw>`<p>Clase que implementa el control de dibujo de entidades geográficas.</p>
+ * @implements {MapControl}
+ * @param {HTMLElement|string} [container] - Elemento del DOM en el que crear el control o valor de atributo id de dicho elemento.
+ * @param {DrawOptions} [options] - Opciones de configuración del control.
+ * @see {@link SITNA.Map#addControl}
+ */
+
+/**
+ * @event SITNA.control.Draw#sitna:drawstart
+ * @type {SITNA.control.ControlEvent}
+ * @summary Evento que se dispara cuando se inicia un dibujo.
+ * @property {SITNA.feature.Feature} feature - Entidad que se está dibujando.
+ */
+
+/**
+ * @event SITNA.control.Draw#sitna:drawend
+ * @type {SITNA.control.ControlEvent}
+ * @summary Evento que se dispara cuando se finaliza un dibujo.
+ * @property {SITNA.feature.Feature} feature - Entidad que se ha dibujado.
+ */
+
+/**
+ * @event SITNA.control.Draw#sitna:drawcancel
+ * @type {SITNA.control.ControlEvent}
+ * @summary Evento que se dispara cuando se cancela un dibujo.
+ */
+
+/**
+ * @event SITNA.control.Draw#sitna:drawundo
+ * @type {SITNA.control.ControlEvent}
+ * @summary Evento que se dispara cuando se deshace un paso de dibujo.
+ */
+
+/**
+ * @event SITNA.control.Draw#sitna:drawredo
+ * @type {SITNA.control.ControlEvent}
+ * @summary Evento que se dispara cuando se rehace un paso de dibujo.
+ */
+
+/**
+ * @event SITNA.control.Draw#sitna:pointdraw
+ * @type {SITNA.control.ControlEvent}
+ * @summary Evento que se dispara cuando se dibuja un punto, bien como entidad completa o bien como vértice de una 
+ * línea o polígono.
+ * @property {number[]} point - Punto que se ha dibujado.
+ */
+
 class Draw extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-draw', this);
+    }
+
     #classSelector = '.' + Draw.prototype.CLASS;
     #style;
     #styler;
@@ -59,54 +314,50 @@ class Draw extends WebComponentControl {
 
     constructor() {
         super(...arguments);
-        const self = this;
 
-        self.styles = self.options.styles || Util.extend(true, {}, Defaults.styles);
-        self
+        this.styles = this.options.styles || Util.extend(true, {}, Defaults.styles);
+        this
             .initProperty('measurer')
             .initProperty('stylable')
             .initProperty('singleSketch')
             .initProperty('extensibleSketch')
-            .initProperty('snapping')
             .initProperty('mode');
-        // Si self.options.layer === false se instancia el control sin capa asociada
-        self.#hasOwnLayer = !(self.options.layer === false);
+        // Si this.options.layer === false se instancia el control sin capa asociada
+        this.#hasOwnLayer = !(this.options.layer === false);
+        this.#snapping = this.options.snapping;
 
-        self.history = [];
-        self.historyIndex = 0;
-        self.exportsState = true;
+        this.history = [];
+        this.historyIndex = 0;
+        this.exportsState = true;
 
-        self.#layerPromise = null;
+        this.#layerPromise = null;
 
-        self
-            .on(Consts.event.DRAWSTART, function (e) {
-                self.resetValues();
-                if (e.feature) {
-                    self.history = e.feature.getCoordinates();
-                    self.historyIndex = self.history.length;
-                }
-            })
-            .on(Consts.event.POINT, function (e) {
-                if (self.layer && self.singleSketch && self.layer.features && self.layer.features.length > 0) {
-                    self.layer.clearFeatures();
-                }
+        this.addEventListener(ControlEvent.type.DRAWSTART, (e) => {
+            this.resetValues();
+            if (e.feature) {
+                this.history = e.feature.getCoordinates();
+                this.historyIndex = this.history.length;
+            }
+        });
+        this.addEventListener(ControlEvent.type.POINTDRAW, (e) => {
+            if (this.layer && this.singleSketch && this.layer.features && this.layer.features.length > 0) {
+                this.layer.clearFeatures();
+            }
 
-                self.history.length = self.historyIndex;
-                self.history[self.historyIndex++] = e.point;
+            this.history.length = this.historyIndex;
+            this.history[this.historyIndex++] = e.point;
+            this.#setDrawState();
+        });
+        this.addEventListener(ControlEvent.type.DRAWEND, (e) => {
+            this.#setFeatureAddReadyState();
+            e.feature.setId(this.layer.getNextFeatureId());
+            this.getStyler().then((styler) => e.feature.setStyle(styler.getStyle()));
 
-                self.#setDrawState();
-            })
-            .on(Consts.event.DRAWEND, function (e) {
-                self.#setFeatureAddReadyState();
-
-                e.feature.setId(self.layer.getNextFeatureId());
-                self.getStyler().then((styler) => e.feature.setStyle(styler.getStyle()));
-
-                if (self.callback) {
-                    self.callback(e.feature);
-                }
-            });
-        self.model = new DrawModel();
+            if (this.callback) {
+                this.callback(e.feature);
+            }
+        });
+        this.model = new DrawModel();
     }
 
     connectedCallback() {
@@ -132,6 +383,15 @@ class Draw extends WebComponentControl {
         }
     }
 
+    /**
+     * Modo de dibujo activo. Puede ser punto, línea o polígono. Los valores están disponibles en la propiedad `geom` de {@link SITNA.Consts}.
+     * @summary Atributo HTML: `mode`
+     * @name mode
+     * @instance
+     * @memberof SITNA.control.Draw
+     * @type {string}
+     * @default {@link SITNA.Consts}.geom.POLYLINE
+     */
     get mode() {
         const self = this;
         if (self.hasAttribute('mode')) {
@@ -157,6 +417,15 @@ class Draw extends WebComponentControl {
         (await self.getStyler()).mode = mode;
     }
 
+    /**
+     * Determina si el control incluye herramientas para modificar el estilo de la entidad (color y grosor de trazo, color de relleno, etc.).
+     * @summary Atributo HTML: `stylable`
+     * @name stylable
+     * @instance
+     * @memberof SITNA.control.Draw
+     * @type {boolean}
+     * @default false
+     */
     get stylable() {
         return this.hasAttribute('stylable');
     }
@@ -179,18 +448,48 @@ class Draw extends WebComponentControl {
         this.toggleAttribute('measurer', !!value);
     }
 
-    get snapping() {
+    /**
+     * @method getSnapping
+     * @memberof SITNA.control.Draw
+     * @instance
+     * @summary Obtiene el estado del control de ajuste (snapping) del control de dibujo.
+     * @returns {boolean|SITNA.layer.Vector|Array<SITNA.feature.Feature>} El estado del control de ajuste, 
+     * tal como se define en la propiedad `snapping` de {@link DrawOptions}.
+     * @see DrawOptions
+     */
+    getSnapping() {
         return this.#snapping;
     }
 
-    set snapping(value) {
-        const self = this;
-        self.#snapping = value;
-        if (self.isActive) {
-            self.wrap.setSnapping(value);
+    /**
+     * @method setSnapping
+     * @memberof SITNA.control.Draw
+     * @instance
+     * @summary Establece el estado del control de ajuste (snapping) del control de dibujo.
+     * @param {boolean|SITNA.layer.Vector|Array<SITNA.feature.Feature>} value - El estado del control de ajuste, 
+     * tal como se define en la propiedad `snapping` de {@link DrawOptions}.
+     * @returns {this} La instancia del control, para permitir el encadenamiento de métodos.
+     * @see DrawOptions
+     */
+    setSnapping(value) {
+        this.#snapping = value;
+        if (this.isActive) {
+            this.wrap.setSnapping(value);
         }
+        return this;
     }
 
+    /**
+     * Determina si el control solamente permite dibujar una sola entidad cada la vez. 
+     * Si se establece a `true`, al iniciar un nuevo dibujo se eliminará el dibujo anterior. 
+     * Si se establece a `false`, se podrán dibujar varias entidades, y cada nueva entidad se añadirá a la capa sin eliminar las anteriores.
+     * @summary Atributo HTML: `single-sketch`
+     * @name singleSketch
+     * @instance
+     * @memberof SITNA.control.Draw
+     * @type {boolean}
+     * @default false
+     */
     get singleSketch() {
         return this.hasAttribute('single-sketch');
     }
@@ -199,6 +498,16 @@ class Draw extends WebComponentControl {
         this.toggleAttribute('single-sketch', !!value);
     }
 
+    /**
+     * Determina si se permite prolongar un dibujo existente, pulsando sobre el último punto dibujado. 
+     * Esta propiedad solamente tiene efecto si el control está en modo de dibujo de líneas.
+     * @summary Atributo HTML: `extensible-sketch`
+     * @name extensibleSketch
+     * @instance
+     * @memberof SITNA.control.Draw
+     * @type {boolean}
+     * @default false
+     */
     get extensibleSketch() {
         return this.hasAttribute('extensible-sketch');
     }
@@ -209,7 +518,11 @@ class Draw extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-draw.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-draw" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-draw.mjs'
+        );
         self.template = module.default;
     }
 
@@ -250,7 +563,7 @@ class Draw extends WebComponentControl {
                 self.callback = self.options.callback;
             }
 
-            self.wrap = new TC.wrap.control.Draw(self);
+            self.wrap = new DrawWrapper(self);
 
             self.getStyler().then(styler => {
                 styler.setStyles(self.styles);
@@ -358,51 +671,55 @@ class Draw extends WebComponentControl {
     }
 
     new() {
-        const self = this;
-        if (self.layer && self.singleSketch) {
-            self.layer.clearFeatures();
+        if (this.layer && this.singleSketch) {
+            this.layer.clearFeatures();
         }
-        self.#cancelBtn.disabled = false;
-        self.setMode(self.mode, true);
-        return self;
+        this.#cancelBtn.disabled = false;
+        this.#onModeChange();
+        if (this.mode) this.activate();
+        return this;
     }
 
     undo() {
-        const self = this;
-        let result = self.wrap.undo();
+        let result = this.wrap.undo();
         if (result) {
-            self.historyIndex--;
-            self.#setDrawState();
+            this.historyIndex--;
+            this.#setDrawState();
 
-            if (self.historyIndex <= 0) {
-                self.resetValues();
+            if (this.historyIndex <= 0) {
+                this.resetValues();
             }
-            self.trigger(Consts.event.DRAWUNDO);
+            this.dispatchEvent(new ControlEvent(ControlEvent.type.DRAWUNDO, { control: this }));
         }
 
         return result;
     }
 
     redo() {
-        const self = this;
         let result = this.wrap.redo();
         if (result) {
-            self.historyIndex++;
-            self.#setDrawState();
-            self.trigger(Consts.event.DRAWREDO);
+            this.historyIndex++;
+            this.#setDrawState();
+            this.dispatchEvent(new ControlEvent(ControlEvent.type.DRAWREDO, { control: this }));
         }
         return result;
     }
 
     cancel() {
-        const self = this;
-        self.resetValues();
-        self.#setFeatureAddReadyState();
-        self.#cancelBtn.disabled = true;
-        self.trigger(Consts.event.DRAWCANCEL, { ctrl: self });
-        return self;
+        this.resetValues();
+        this.#setFeatureAddReadyState();
+        this.#cancelBtn.disabled = true;
+        this.dispatchEvent(new ControlEvent(ControlEvent.type.DRAWCANCEL, { control: this }));
+        return this;
     }
 
+    /**
+     * @method activate
+     * @memberof SITNA.control.Draw
+     * @instance
+     * @summary Activa el control de dibujo, de forma que los eventos de puntero en el mapa se capturan para dibujar las entidades geográficas.
+     * @returns {SITNA.control.Draw} La instancia del control de dibujo, para permitir el encadenamiento de métodos.
+     */
     activate() {
         const self = this;
         self.#newBtn.active = true;
@@ -433,6 +750,13 @@ class Draw extends WebComponentControl {
         return self;
     }
 
+    /**
+     * @method deactivate
+     * @memberof SITNA.control.Draw
+     * @instance
+     * @summary Desactiva el control de dibujo, de forma que ya no captura los eventos de puntero en el mapa.
+     * @returns {SITNA.control.Draw} La instancia del control de dibujo, para permitir el encadenamiento de métodos.
+     */
     deactivate() {
         const self = this;
         if (self.#newBtn) {
@@ -446,17 +770,16 @@ class Draw extends WebComponentControl {
             self.wrap.deactivate();
         }
         self.resetValues();
-        //self.trigger(Consts.event.DRAWCANCEL, { ctrl: self });
+        //self.dispatchEvent(new ControlEvent(ControlEvent.type.DRAWCANCEL, { control: self }));
         return self;
     }
 
     clear() {
-        const self = this;
-        if (self.layer) {
-            self.layer.clearFatures();
+        if (this.layer) {
+            this.layer.clearFeatures();
         }
-        self.resetValues();
-        return self;
+        this.resetValues();
+        return this;
     }
 
     isExclusive() {
@@ -563,6 +886,14 @@ class Draw extends WebComponentControl {
         return self;
     }
 
+    /**
+     * @method getLayer
+     * @async
+     * @memberof SITNA.control.Draw
+     * @instance
+     * @summary Obtiene la capa vectorial en la que se dibujan las entidades geográficas.
+     * @returns {Promise<SITNA.layer.Vector>} La capa vectorial en la que el control dibuja.
+     */
     getLayer() {
         const self = this;
         if (self.layer) {
@@ -571,6 +902,14 @@ class Draw extends WebComponentControl {
         return this.#layerPromise;
     }
 
+    /**
+     * @method setLayer
+     * @memberof SITNA.control.Draw
+     * @instance
+     * @summary Establece la capa vectorial en la que se dibujarán las entidades geográficas.
+     * @param {SITNA.layer.Vector|string} layer - Capa vectorial o id de la capa vectorial en la que se dibujarán las entidades geográficas.
+     * @returns {this} La instancia del control de dibujo, para permitir el encadenamiento de métodos.
+     */
     setLayer(layer) {
         const self = this;
         if (self.map) {
@@ -612,11 +951,10 @@ class Draw extends WebComponentControl {
     }
 
     resetValues() {
-        const self = this;
-        self.history.length = 0;
-        self.historyIndex = 0;
-        self.#setDrawState();
-        return self;
+        this.history.length = 0;
+        this.historyIndex = 0;
+        this.#setDrawState();
+        return this;
     }
 
     async getStyler() {
@@ -705,6 +1043,5 @@ class Draw extends WebComponentControl {
 }
 
 Draw.prototype.CLASS = 'tc-ctl-draw';
-customElements.get(elementName) || customElements.define(elementName, Draw);
 TC.control.Draw = Draw;
 export default Draw;
