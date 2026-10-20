@@ -1,59 +1,60 @@
-﻿import TC from '../../TC.js';
-import Consts from '../Consts.js';
+﻿import Consts from '../Consts.js';
 import Cfg from '../Cfg.js';
 import Util from '../Util.js';
 import Scale from './Scale.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-TC.control = TC.control || {};
-
 class ScaleSelector extends Scale {
+    static {
+        customElements.define('sitna-scale-select', this);
+    }
+
     scales = null;
 
     async loadTemplates() {
-        const self = this;
-        const module = await import('../templates/tc-ctl-ss.mjs');
-        self.template = module.default;
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-ss" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-ss.mjs'
+        );
+        this.template = module.default;
     }
 
     async render(callback) {
-        const self = this;
-        if (!self.map) {
+        if (!this.map) {
             throw Error('ScaleSelector no registrado');
         }
-        if (!self.scales && self.map.options.resolutions) {
-            self.scales = self.map.options.resolutions.map(self.getScale, self);
+        if (!this.scales && this.map.options.resolutions) {
+            this.scales = this.map.options.resolutions.map(this.getScale, this);
         }
-        if (!self.scales) {
-            await self.map.wrap.getMap();
+        if (!this.scales) {
+            await this.map.wrap.getMap();
         }
-        self.scales = self.map.wrap.getResolutions().map(self.getScale, self);
-        await self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize, scales: self.scales }, function () {
+        this.scales = this.map.wrap.getResolutions().map(this.getScale, this);
+        await this.renderData({ scale: this.getScale(), screenSize: Cfg.screenSize, scales: this.scales }, () => {
 
-            self.div.querySelectorAll('option').forEach(function (option) {
-                option.textContent = '1:' + self.format(option.textContent.substr(2));
+            this.querySelectorAll('option').forEach((option) => {
+                option.textContent = '1:' + this.format(option.textContent.substring(2));
             });
 
-            self.addUIEventListeners();
+            this.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-            self.controller = new Controller(self.model, new Observer(self.div))
-            self.updateModel();
+            this.controller = new Controller(this.model, new Observer(this));
+            this.updateModel();
         });
     }
 
     addUIEventListeners() {
-        const self = this;
-
-        self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
-            self.setScreenSize();
+        this.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, () => {
+            this.setScreenSize();
         }, { passive: true });
 
-        self.div.querySelector('select').addEventListener('change', function () {
-            self.setScale(this.value);
+        this.querySelector('select').addEventListener('change', (e) => {
+            this.setScale(e.target.value);
         });
     }
 
@@ -63,15 +64,14 @@ class ScaleSelector extends Scale {
  *  Returns: number, the resolution
  */
     setScale(scale) {
-        const self = this;
-        let result = scale * .0254 / self.getDpi(Cfg.screenSize);
+        let result = scale * .0254 / this.getDpi(Cfg.screenSize);
         if (window.devicePixelRatio) {
             result = result / window.devicePixelRatio;
         }
-        if (self.metersPerDegree) {
-            result = result / self.metersPerDegree;
+        if (this.metersPerDegree) {
+            result = result / this.metersPerDegree;
         }
-        self.map.wrap.setResolution(result);
+        this.map.wrap.setResolution(result);
         return result;
     }
     
@@ -82,5 +82,4 @@ class ScaleSelector extends Scale {
 }
 
 ScaleSelector.prototype.CLASS = 'tc-ctl-ss';
-TC.control.ScaleSelector = ScaleSelector;
 export default ScaleSelector;

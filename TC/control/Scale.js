@@ -2,11 +2,9 @@
 import Consts from '../Consts.js';
 import Cfg from '../Cfg.js';
 import Util from '../Util.js';
-import Control from '../Control.js';
+import WebComponentControl from './WebComponentControl.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
-
-TC.control = TC.control || {};
 
 Consts.SCREEN_SIZE_KEY = 'TC.Map.screenSize';
 
@@ -16,52 +14,56 @@ class ScaleModel {
     }
 }
 
-class Scale extends Control {
+class Scale extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-scale', this);
+    }
 
     async loadTemplates() {
-        const self = this;
-        const module = await import('../templates/tc-ctl-scl.mjs');
-        self.template = module.default;
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-scl" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-scl.mjs'
+        );
+        this.template = module.default;
     }
 
     render(callback) {
-        const self = this;
-        self.model = new ScaleModel();
-        return self.renderData({ scale: self.getScale(), screenSize: Cfg.screenSize }, function () {
+        this.model = new ScaleModel();
+        return this.renderData({ scale: this.getScale(), screenSize: Cfg.screenSize }, () => {
 
-            const span = self.div.querySelector('span');
-            span.textContent = '1:' + self.format(span.textContent.substr(2));
+            const span = this.div.querySelector('span');
+            span.textContent = '1:' + this.format(span.textContent.substr(2));
 
-            self.addUIEventListeners();
+            this.addUIEventListeners();
 
             if (Util.isFunction(callback)) {
                 callback();
             }
-            self.controller = new Controller(self.model, new Observer(self.div))
-            self.updateModel();
+            this.controller = new Controller(this.model, new Observer(this.div))
+            this.updateModel();
         });
     }
 
     addUIEventListeners() {
-        const self = this;
-        self.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, function () {
-            self.setScreenSize();
+        this.div.querySelector('input[type="button"]').addEventListener(Consts.event.CLICK, () => {
+            this.setScreenSize();
         }, { passive: true });
     }
 
     register(map) {
-        const self = this;
-        const result = super.register.call(self, map);
+        const result = super.register.call(this, map);
         let screenSize = Util.storage.getLocalValue(Consts.SCREEN_SIZE_KEY);
         if (screenSize) {
             Cfg.screenSize = screenSize;
         }
         
 
-        self.render(function () {
-            map.on(Consts.event.ZOOM, function () {
-                delete self.metersPerDegree;
-                self.update();
+        this.render(() => {
+            map.on(Consts.event.ZOOM, () => {
+                delete this.metersPerDegree;
+                this.update();
             });            
         });
 
@@ -76,12 +78,11 @@ class Scale extends Control {
      *  setScreenSize: Prompts for screen size in inches, updates and stores value
      */
     setScreenSize() {
-        const self = this;
-        TC.prompt(self.getLocaleString('selectScreenSize'), Cfg.screenSize, function (value) {
+        TC.prompt(this.getLocaleString('selectScreenSize'), Cfg.screenSize, (value) => {
             if (value) {
                 Cfg.screenSize = parseFloat(value);
                 Util.storage.setLocalValue(Consts.SCREEN_SIZE_KEY, Cfg.screenSize);
-                self.update();
+                this.update();
             }
         });
     }
@@ -92,24 +93,23 @@ class Scale extends Control {
      *  Returns: number
      */
     getScale(resolution) {
-        const self = this;
         var result = 0;
-        var res = !resolution && self.map ? self.map.wrap.getResolution() : resolution;
+        var res = !resolution && this.map ? this.map.wrap.getResolution() : resolution;
         if (res) {
-            result = res * self.getDpi(Cfg.screenSize) / .0254;
+            result = res * this.getDpi(Cfg.screenSize) / .0254;
             if (window.devicePixelRatio) {
                 result = result * window.devicePixelRatio;
             }
         }
-        if (self.map && self.map.wrap.isGeo()) {
-            if (!self.metersPerDegree) {
-                var extent = self.map.getExtent();
+        if (this.map && this.map.wrap.isGeo()) {
+            if (!this.metersPerDegree) {
+                var extent = this.map.getExtent();
                 if (extent) {
-                    self.metersPerDegree = Util.getMetersPerDegree(extent);
+                    this.metersPerDegree = Util.getMetersPerDegree(extent);
                 }
             }
-            if (self.metersPerDegree) {
-                result = result * self.metersPerDegree;
+            if (this.metersPerDegree) {
+                result = result * this.metersPerDegree;
             }
         }
         return result;
@@ -120,23 +120,13 @@ class Scale extends Control {
      *  Returns: number
      */
     getDpi(screenSize) {
-        const self = this;
-        self.dpi = Math.sqrt(screen.width * screen.width + screen.height * screen.height) / screenSize;
-        return self.dpi;
+        this.dpi = Math.sqrt(screen.width * screen.width + screen.height * screen.height) / screenSize;
+        return this.dpi;
     }
 
     format(number) {
-        var n = (new Number(number)).toFixed(0);
-        var a = [];
-        while (n.length > 3) {
-            var l = n.length - 3;
-            a.unshift(n.substr(l));
-            n = n.substr(0, l);
-        }
-        if (n) {
-            a.unshift(n);
-        }
-        return a.join('.');
+        const n = Math.round(new Number(number));
+        return Util.formatNumber(n);
     }
     updateModel() {
         this.model.estimatedMapSize = this.getLocaleString("estimatedMapSize");
@@ -145,5 +135,4 @@ class Scale extends Control {
 }
 
 Scale.prototype.CLASS = 'tc-ctl-scl';
-TC.control.Scale = Scale;
 export default Scale;
