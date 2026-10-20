@@ -8,6 +8,10 @@
     display: block;
 }
 
+    .tc-ctl.tc-ctl-sv.tc-disabled {
+        display: none;
+    }
+
 .tc-map.tc-collapsed .tc-ctl-sv-btn {
     display: none;
 }

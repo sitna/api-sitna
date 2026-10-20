@@ -7,7 +7,7 @@
 sitna-route .tc-ctl-route-header {
     padding: 0 1em;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     align-items: center;
     font-size: 1.2em;
 }
@@ -59,7 +59,7 @@ sitna-route .tc-ctl-route-destination-drag::after {
     top: 0;
     display: block;
     text-align: center;
-    content: '\2b7f';
+    content: '\21c5';
 }
 
 sitna-route .tc-ctl-route-destination-search {
@@ -154,21 +154,32 @@ sitna-route sitna-button[data-profile="wheelchair"] {
     mask-image: url(../img/directions-wheelchair.svg);
 }
 
-sitna-route div.tc-ctl-route-destination-actions {
+sitna-route div.tc-ctl-route-destination-actions, sitna-route div.tc-ctl-route-actions {
     display: flex;
     justify-content: center;
+    gap: 0.2em;
+    flex-wrap: wrap;
+    margin: 0.5em 0;
 }
+
+    sitna-route div.tc-ctl-route-destination-actions sitna-button, sitna-route div.tc-ctl-route-actions sitna-button {
+        width: calc(50% - 0.1em);
+    }
 
 sitna-route sitna-button.tc-ctl-route-destination-switch {
     --sitna-icon-text: '\1f5d8';
-    border-radius: var(--sitna-border-radius);
-    margin: 0 1em;
 }
 
 sitna-route sitna-button.tc-ctl-route-destination-add {
     --sitna-icon-text: '\e904';
-    border-radius: var(--sitna-border-radius);
-    margin: 0 1em;
+}
+
+sitna-route sitna-button.tc-ctl-route-share {
+    --sitna-icon-text: var(--icon-share);
+}
+
+sitna-route sitna-button.tc-ctl-route-download {
+    --sitna-icon-text: var(--icon-download);
 }
 
 sitna-route .tc-ctl-route-step-instruction[data-type] {
@@ -289,7 +300,7 @@ sitna-route .tc-ctl-route-result-tabs {
 sitna-route ul.tc-ctl-route-segments {
     margin: 0.5em 0 0 0;
     padding: 0;
-}
+}   
 
     sitna-route ul.tc-ctl-route-segments.tc-hidden {
         display: none;
@@ -297,6 +308,10 @@ sitna-route ul.tc-ctl-route-segments {
 
 sitna-route div.tc-ctl-route-profile.tc-hidden {
     display: none;
+}
+
+sitna-route div.tc-ctl-route-profile > sitna-elevation-profile .tc-track-chart {
+    margin-top: 1em;
 }
 
 .tc-ctl-rpanel-body sitna-route {
@@ -320,7 +335,7 @@ sitna-route div.tc-ctl-route-profile.tc-hidden {
 }
 
     .tc-ctl-route-instructions sitna-button.tc-ctl-route-geolocation {
-        --sitna-icon-text: '\e925';
+        --sitna-icon-text: var(--sitna-geolocate-on-icon-text);
     }
 
 sitna-route .tc-track-chart {

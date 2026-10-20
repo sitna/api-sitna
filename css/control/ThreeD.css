@@ -8,6 +8,10 @@
     display: block;
 }
 
+    .tc-ctl.tc-ctl-3d.tc-disabled {
+        display: none;
+    }
+
 .tc-ctl-3d {
     width: 2em;
     height: 2em;

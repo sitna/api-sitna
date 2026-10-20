@@ -784,6 +784,11 @@ div.tc-ctl-rpanel-heading-samehw {
     /*padding: 5px 10px 15px 10px*/
 }
 
+
+.tc-ctl-rpanel .tc-ctl-rpanel-body:empty {
+    padding: 0;
+}
+
 .tc-ctl-rpanel sitna-draw {
     width: 100%;
 }
@@ -812,6 +817,7 @@ div.tc-ctl-rpanel-heading-samehw {
     /*border-top: 1px solid var(--main-divider-color);*/
     padding: 0.3em;
     min-height: 1em;
+    gap:0.3em;
 }
 
     .tc-ctl-rpanel-menu:empty {
@@ -823,6 +829,10 @@ div.tc-ctl-rpanel-heading-samehw {
     .tc-ctl-rpanel-menu .tc-ctl-ftools {
         padding-right: 0.5em;
     }
+
+    .tc-ctl-rpanel-menu .tc-ctl-rpanel-btn-share {
+        order: 2;
+    } 
 
 .tc-ctl-rpanel .tc-ctl-rpanel-info {
     flex-basis: 100%;
@@ -942,7 +952,7 @@ div.tc-3d .tc-ctl-rpanel .tc-ctl-rpanel-table {
 }
 
 .tc-ctl-rpanel-body {
-    position: relative; /* para que la impresora se mantega dentro del panel */
+    position: relative; /* para que la impresora se mantenga dentro del panel */
 }
 
     .tc-ctl-rpanel-body.tc-ctl-rpanel-table, .tc-ctl-rpanel-body.tc-ctl-rpanel-info:empty {

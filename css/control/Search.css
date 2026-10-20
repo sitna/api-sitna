@@ -34,19 +34,23 @@ div.tc-ctl-search-list-container li {
         width: 100%;
     }
 
-div.tc-ctl-search-list-container a {
-    font-size: 95%;
+div.tc-ctl-search-list-container {
+    font-family: var(--sitna-text-font-family);
 }
 
-    div.tc-ctl-search-list-container a.tc-ctl-search-li-empty {
-        cursor: pointer;
+    div.tc-ctl-search-list-container a {
+        font-size: 95%;
     }
 
-    div.tc-ctl-search-list-container a:focus {
-        font-weight: bold;
-        outline-style: none;
-        font-size: 100%;
-    }
+        div.tc-ctl-search-list-container a.tc-ctl-search-li-empty {
+            cursor: pointer;
+        }
+
+        div.tc-ctl-search-list-container a:focus {
+            font-weight: bold;
+            outline-style: none;
+            font-size: 100%;
+        }
 
 .tc-ctl-search-li-loading {
     cursor: none;
@@ -67,11 +71,11 @@ div.tc-ctl-search-list-container a {
 
 .tc-ctl-search-content {
     padding: 0.2em;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     display: flex;
     flex-wrap: wrap;
     border-radius: 0.2em;
-    font-family: Arial, helvetica, sans-serif;
+    font-family: var(--sitna-text-font-family);
     text-overflow: ellipsis;
     text-wrap: none;
 }
@@ -111,7 +115,7 @@ div.tc-ctl-search-list-container a {
     }
 
     45% {
-        color: var(--main-hl-color);
+        color: var(--sitna-main-accent-color);
     }
     
     60% {        
@@ -147,7 +151,7 @@ div.tc-ctl-search-list-container {
 }
 
     div.tc-ctl-search-list-container ul {
-        background-color: var(--main-bg-color);
+        background-color: var(--sitna-background-color);
         border: 1px solid #ccc;
         border-radius: var(--sitna-border-radius);
         box-sizing: border-box;
@@ -175,7 +179,7 @@ div.tc-ctl-search-list-container li.tc-ctl-search-examples {
     }
 
 .tc-ctl-search-examples sitna-button.tc-ctl-search-example {
-    --sitna-button-text-color: var(--text-main-color);
+    --sitna-button-text-color: var(--sitna-text-color);
     --sitna-button-background-color: var(--sitna-bg8-txt1-color);
     --sitna-button-border-color: var(--sitna-bg8-txt1-color);
     height: 1.5em;
