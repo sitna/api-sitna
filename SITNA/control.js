@@ -1,4 +1,6 @@
-﻿import Control from './control/Control.js';
+﻿import TC from '../TC.js';
+import Control from './control/Control.js';
+import WebComponentControl from '../TC/control/WebComponentControl.js';
 import Attribution from '../TC/control/Attribution.js';
 import BasemapSelector from '../TC/control/BasemapSelector.js';
 import CacheBuilder from '../TC/control/CacheBuilder.js';
@@ -58,19 +60,25 @@ import WFSQuery from '../TC/control/WFSQuery.js';
 import WorkLayerManager from '../TC/control/WorkLayerManager.js';
 import Route from '../TC/control/Route.js';
 import ElevationProfile from '../TC/control/ElevationProfile.js';
-
+import LayerComparer from '../TC/control/LayerComparer.js';
+import CompactBasemapSelector from '../TC/control/CompactBasemapSelector.js';
+import TimeSlider from '../TC/control/TimeSlider.js';
+import CenterOnLocation from '../TC/control/CenterOnLocation.js';
 
 /**
- * Espacio de nombres de los controles de la interfaz de usuario.
  * @namespace SITNA.control
+ * @summary Espacio de nombres de los controles de la interfaz de usuario.
  */
 
-export default {
+const control = {
     Control,
+    WebComponentControl,
     Attribution,
     BasemapSelector,
     CacheBuilder,
+    CenterOnLocation,
     Click,
+    CompactBasemapSelector,
     Container,
     ControlContainer,
     Coordinates,
@@ -80,6 +88,7 @@ export default {
     DrawMeasureModify,
     Edit,
     Elevation,
+    ElevationProfile,
     ExternalWMS,
     FeatureDownloadDialog,
     FeatureInfo,
@@ -91,6 +100,7 @@ export default {
     GeometryFeatureInfo,
     LanguageSelector,
     LayerCatalog,
+    LayerComparer,
     Legend,
     LineFeatureInfo,
     LoadingIndicator,
@@ -110,6 +120,7 @@ export default {
     PrintMap,
     ProjectionSelector,
     ResultsPanel,
+    Route,
     Scale,
     ScaleBar,
     ScaleSelector,
@@ -120,10 +131,12 @@ export default {
     SWCacheClient,
     TabContainer,
     ThreeD,
+    TimeSlider,
     TOC,
     WFSEdit,
     WFSQuery,
     WorkLayerManager,
-    Route,
-    ElevationProfile,
 };
+
+TC.control = control;
+export default control;
