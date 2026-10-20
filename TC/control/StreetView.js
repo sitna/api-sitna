@@ -39,8 +39,6 @@ import WebComponentControl from './WebComponentControl.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 
-const elementName = 'sitna-streetview';
-
 Consts.url.GOOGLEMAPS = '//maps.googleapis.com/maps/api/js?v=3';
 let gMapsUrl = Consts.url.GOOGLEMAPS;
 Cfg.proxyExceptions = Cfg.proxyExceptions || [];
@@ -55,6 +53,11 @@ class StreetViewModel {
 }
 
 class StreetView extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-streetview', this);
+    }
+
     viewDiv = null;
     #sv = null;
     #startLonLat = null;
@@ -237,8 +240,16 @@ class StreetView extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-sv.mjs');
-        const viewTemplatePromise = import('../templates/tc-ctl-sv-view.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-sv" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-sv.mjs'
+        );
+        const viewTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-sv-view" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-sv-view.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -247,38 +258,32 @@ class StreetView extends WebComponentControl {
     }
 
     async render() {
-        const self = this;
-        self.viewDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-view', null);
-        await self.renderData(null);
+        this.viewDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-view', null);
+        await this.renderData(null);
 
-        self.controller = new Controller(self.model, new Observer(self));
-        self.controller.add(self.viewDiv);
-        self.updateModel();
+        this.controller = new Controller(this.model, new Observer(this));
+        this.controller.add(this.viewDiv);
+        this.updateModel();
+        this.addUIEventListeners();
+    }
 
-        import("draggabilly").then(function (module) {
-            const Draggabilly = module.default;
-            const drag = new Draggabilly(self.querySelector('.' + self.CLASS + '-drag'), {
-                containment: (self.getMapDiv && self.mapDiv) || self.map.div
-            });
-            drag.on('dragStart', function (_e) {
-                self.#preset();
-            });
-            drag.on('dragEnd', function (_e) {
-                self.#resolve();
-                drag.setPosition(0, 0);
-            });
-            // Añadimos aviso de que este botón no se pulsa, se arrastra
-            self.querySelector('.' + self.CLASS + '-btn').addEventListener('click', function (e) {
-                const btnRect = e.target.getBoundingClientRect();
-                if (e.clientX >= btnRect.left &&
-                    e.clientX <= btnRect.right &&
-                    e.clientY >= btnRect.top &&
-                    e.clientY <= btnRect.bottom) {
-                    self.map.toast(self.getLocaleString('sv.instructions'), { type: TC.Consts.msgType.INFO });
+    addUIEventListeners() {
+        Util.makeDraggableElement(this.querySelector('.' + this.CLASS + '-drag'), {
+            containment: this.map.div,
+            dragStartCallback: () => this.#preset(),
+            dragEndCallback: (element, [deltaX, deltaY]) => {
+                const dragRect = element.getBoundingClientRect();
+                // Añadimos aviso de que este botón no se pulsa, se arrastra
+                if (dragRect.width > Math.abs(deltaX) / 2 && dragRect.height > Math.abs(deltaY) / 2) {
+                    this.map.toast(this.getLocaleString('sv.instructions'), { type: Consts.msgType.INFO });
+                    this.querySelector('.' + this.CLASS + '-btn').classList.remove(Consts.classes.CHECKED);
                 }
-            });
+                else {
+                    this.#resolve();
+                }
+                return false;
+            },
         });
-        
     }
 
     callback(coords) {
@@ -322,7 +327,7 @@ class StreetView extends WebComponentControl {
                 heading = 0;
             }
             if (self.map.on3DView) {
-                self.ThreeDMarker = self.map.view3D.setPegman(xy, heading);
+                self.ThreeDMarker = self.map.view3D.linked2DControls[self.getId()].setPegman(xy, heading);
             }
             else {
                 self.map.addMarker(xy, {
@@ -368,7 +373,7 @@ class StreetView extends WebComponentControl {
                 }
             }
             else {
-                self.map.view3D.setPegman(self.ThreeDMarker.position.getValue(), heading);
+                self.map.view3D.linked2DControls[self.getId()].setPegman(self.ThreeDMarker.position.getValue(), heading);
             }
 
         }
@@ -589,5 +594,4 @@ class StreetView extends WebComponentControl {
 }
 
 StreetView.prototype.CLASS = 'tc-ctl-sv';
-customElements.get(elementName) || customElements.define(elementName, StreetView);
 export default StreetView;
