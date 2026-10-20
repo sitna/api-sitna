@@ -79,7 +79,7 @@
   * - `firstQueryWord`: se indicará el campo o campos en los que buscar el código de municipio.
   * - `secondQueryWord`: se indicará el campo o campos en los que buscar el polígono.
   * - `thirdQueryWord`: se indicará el campo o campos en los que buscar la parcela.
-  * @property {LayerStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
+  * @property {VectorStyleOptions[]} styles - Colección de objetos de configuración de estilo. La relación entre capa y estilo se hace mediante el índice en la colección en `featureType` y en `styles`, por tanto,
   * deberá haber tantas instancias como capas definidas en `featureType`.
   * 
   * No está disponible `cluster`.
@@ -1045,7 +1045,7 @@
  * **NombreCascoUrbano** a `"Salinas de Pamplona"` mostrará en la lista de sugerencias el texto
  * *Salinas de Pamplona (Galar)*.
  * @property {string} url - Dirección del servicio WFS que aporta los datos para las búsquedas.
- * @property {string} [version="1.1.0"] - Versión del servicio WFS que aporta los datos para las búsquedas.
+ * @property {string} [version="2.0.0"] - Versión del servicio WFS que aporta los datos para las búsquedas.
  * @example <caption>[Ver en vivo](../examples/cfg.SearchTypeOptions.html)</caption> {@lang html}
     <div id="mapa"></div>    
     <script>
@@ -1181,7 +1181,7 @@ class SearchType {
 
         Util.extend(self, options);
 
-        self.version = self.version || '1.1.0';
+        self.version = self.version || '2.0.0';
 
         if (!self.searchFunction && self.parser) {
             // Creamos searchFunction por defecto.
@@ -2407,15 +2407,11 @@ class Search extends Control {
     constructor() {
         super(...arguments);
 
-        this._dialogDiv = Util.getDiv(this.options.dialogDiv);
-        if (!this.options.dialogDiv) {
-            document.body.appendChild(this._dialogDiv);
-        }
-
         this.exportsState = true;
+        this.abortController = new AbortController();
 
         this.url = this.options.url || '//idena.navarra.es/ogc/wfs';
-        this.version = this.options.version || '1.1.0';
+        this.version = this.options.version || '2.0.0';
         this.featurePrefix = this.options.featurePrefix || 'IDENA';
 
         this.mimimumPatternLength = this.options.minimumPatternLength ?? 3;
@@ -2423,8 +2419,6 @@ class Search extends Control {
         this.WFS_TYPE_ATTRS = ["url", "version", "geometryName", "featurePrefix", "featureType", "filter", "outputFormat"];
 
         this.queryableFeatures = this.options.queryableFeatures || false;
-
-        this.wrap = new TC.wrap.control.Search(this);
 
         this.interval = 500;
 
@@ -2521,7 +2515,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -2586,7 +2580,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -2660,24 +2654,27 @@ class Search extends Control {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-search.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-search-dialog.mjs');
-        const listTemplatePromise = import('../templates/tc-ctl-search-list.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-search" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-search.mjs'
+        );
+        const listTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-search-list" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-search-list.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
-        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
         template[self.CLASS + '-list'] = (await listTemplatePromise).default;
         self.template = template;
     }
 
     async render() {
         const self = this;
-        self.controller = new AbortController();
-        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', {});
         await self.renderData();
         self.controller = new Controller(self.model, new Observer(self.div));
-        self.dialogController = new Controller(self.model, new Observer(self._dialogDiv));
     }
 
     async renderData(data, callback) {
@@ -2733,9 +2730,9 @@ class Search extends Control {
         }
 
         const listContainerParent = self.div.closest('.' + Consts.classes.MAP) ?? document.body; 
-        const listHtml = await self.getRenderedHtml(self.CLASS + '-list');
+        const listHtml = await self.getRenderedHtml(self.CLASS + '-list', { controlId: self.getId() });
         listContainerParent.insertAdjacentHTML('beforeend', listHtml);
-        self.listContainer = listContainerParent.querySelector('.' + self.CLASS + '-list-container');
+        self.listContainer = listContainerParent.querySelector(`.${self.CLASS}-list-container[for="${self.getId()}"]`);
         self.#positionListContainer();
 
         self.examplesList = self.listContainer.querySelector('.' + self.CLASS + '-examples');
@@ -2882,14 +2879,14 @@ class Search extends Control {
                     }
                 }
             });
-        }, { passive: true, signal: self.controller.signal });
+        }, { passive: true, signal: self.abortController.signal });
 
 
         // GLS: añadimos la funcionalidad al mensaje de "No hay resultados", al hacer click repliega el mensaje.
         self.resultsList.addEventListener(Consts.event.CLICK, TC.EventTarget.listenerBySelector('a.' + self.CLASS + '-li-empty', function () {
             self.resultsList.classList.add(Consts.classes.HIDDEN);
             self.textInput.focus();
-        }), { passive: true, signal: self.controller.signal });
+        }), { passive: true, signal: self.abortController.signal });
 
         self.textInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -2905,7 +2902,7 @@ class Search extends Control {
                 }
                 return false;
             }
-        }, { signal: self.controller.signal });
+        }, { signal: self.abortController.signal });
         self.textInput.addEventListener('keyup', function (e) {
             switch (e.key) {
                 case 'Clear':
@@ -2917,7 +2914,7 @@ class Search extends Control {
                         search();
                     }
             }
-        }, { signal: self.controller.signal });
+        }, { signal: self.abortController.signal });
         self.textInput.addEventListener("search", function () {
             if (self.textInput.value.length === 0) {
                 delete self.toShare;
@@ -2925,7 +2922,7 @@ class Search extends Control {
                 self.resultsList.classList.add(Consts.classes.HIDDEN);
                 search();
             }
-        }, { signal: self.controller.signal });
+        }, { signal: self.abortController.signal });
         self.textInput.addEventListener("input", function () {
             if (self.textInput.value.length === 0) {
                 self.shareButton?.classList.add(Consts.classes.HIDDEN);
@@ -2935,7 +2932,7 @@ class Search extends Control {
             else {
                 self.hideExamples();
             }
-        }, { signal: self.controller.signal });
+        }, { signal: self.abortController.signal });
         const onfocus = () => {
             if (self.textInput.value.length === 0) self.showExamples();
         };
@@ -2946,10 +2943,10 @@ class Search extends Control {
                 self.hideExamples();
             }
         };
-        self.textInput.addEventListener("focus", onfocus, { signal: self.controller.signal });
-        self.textInput.addEventListener("focusin", onfocus, { signal: self.controller.signal });
-        self.textInput.addEventListener("focusout", onblur, { signal: self.controller.signal });
-        self.textInput.addEventListener("blur", onblur, { signal: self.controller.signal });
+        self.textInput.addEventListener("focus", onfocus, { signal: self.abortController.signal });
+        self.textInput.addEventListener("focusin", onfocus, { signal: self.abortController.signal });
+        self.textInput.addEventListener("focusout", onblur, { signal: self.abortController.signal });
+        self.textInput.addEventListener("blur", onblur, { signal: self.abortController.signal });
         self.textInput.addEventListener("targetCleared.autocomplete", function () {
             self.shareButton && self.shareButton.classList.add(Consts.classes.HIDDEN);
             self.resultsList.classList.add(Consts.classes.HIDDEN);
@@ -2958,10 +2955,10 @@ class Search extends Control {
             if (self.resultsList.querySelectorAll('li').length > 0) {
                 self.resultsList.classList.remove(Consts.classes.HIDDEN);
             }
-        }, { signal: self.controller.signal });
+        }, { signal: self.abortController.signal });
 
-        self.examplesList.addEventListener("focusout", onblur, { signal: self.controller.signal });
-        self.examplesList.addEventListener("blur", onblur, { signal: self.controller.signal });
+        self.examplesList.addEventListener("focusout", onblur, { signal: self.abortController.signal });
+        self.examplesList.addEventListener("blur", onblur, { signal: self.abortController.signal });
 
         const getNextSibling = function (elem, selector) {
             // Get the next sibling element
@@ -3024,9 +3021,15 @@ class Search extends Control {
             e.stopPropagation();
         };
 
-        self.textInput.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
-        self.resultsList.addEventListener('keydown', onKeydown, { signal: self.controller.signal });
+        self.textInput.addEventListener('keydown', onKeydown, { signal: self.abortController.signal });
+        self.resultsList.addEventListener('keydown', onKeydown, { signal: self.abortController.signal });
 
+        const shareDialog = self.div.querySelector(`dialog.${self.CLASS}-share-dialog`);
+        if (shareDialog) {
+            shareDialog.querySelector(`sitna-button.tc-modal-close`).addEventListener(Consts.event.CLICK, (_e) => {
+                shareDialog.close();
+            });
+        }
     }
 
     #positionListContainer() {
@@ -3062,7 +3065,7 @@ class Search extends Control {
         self.availableSearchTypes[Consts.searchType.CADASTRALPARCEL] = {
             suggestionRoot: null,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: '1.1.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3167,7 +3170,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: 'IDENA',
             geometryName: 'the_geom',
@@ -3194,7 +3197,9 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.MUNICIPALITY]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.MUNICIPALITY], pattern);
+            },
             stringPatternToCheck: self.stringPatternValidators.s_or_t,
             examples: ['egüés', 'eguesibar'],
         };
@@ -3203,7 +3208,7 @@ class Search extends Control {
         //    root: null,
         //    limit: false,
         //    url: self.url || '//idena.navarra.es/ogc/wfs',
-        //    version: self.version || '1.1.0',
+        //    version: self.version || '2.0.0',
         //    outputFormat: Consts.format.JSON,
         //    featurePrefix: self.featurePrefix || 'IDENA',
         //    geometryName: 'the_geom',
@@ -3252,14 +3257,16 @@ class Search extends Control {
         //            }
         //        }
         //    ],
-        //    searchFunction: self.getStringPattern.bind(this, [Consts.searchType.TOWN])
+        //    searchFunction: function (pattern) {
+        //        return this.getStringPattern([Consts.searchType.TOWN], pattern);
+        //    }
         //};
 
         self.availableSearchTypes[Consts.searchType.COUNCIL] = {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3272,7 +3279,9 @@ class Search extends Control {
             outputProperties: ['MUNICIPIO', 'CONCEJO'],
             suggestionTemplate: '{1} ({0})',
             searchWeight: 4,
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.COUNCIL]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.COUNCIL], pattern);
+            },
             stringPatternToCheck: self.stringPatternValidators.s_or_t,
             idPropertiesIdentifier: '#',
             suggestionListHeader: {
@@ -3296,7 +3305,7 @@ class Search extends Control {
             root: null,
             limit: null,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: '1.1.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3336,7 +3345,9 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.STREET]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.STREET], pattern);
+            },
             examples: [
                 'roncesvalles, burguete',
                 'orreaga, auritz',
@@ -3349,7 +3360,7 @@ class Search extends Control {
             root: null,
             limit: null,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3381,7 +3392,9 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.POSTALADDRESS]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.POSTALADDRESS], pattern);
+            },
             examples: [
                 'roncesvalles, burguete, 12',
                 'orreaga, auritz, 12',
@@ -3396,7 +3409,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3425,7 +3438,9 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.TOWN]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.TOWN], pattern);
+            },
             stringPatternToCheck: self.stringPatternValidators.s_or_t,
             examples: [
                 'hiriberri',
@@ -3437,7 +3452,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3469,7 +3484,9 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.PLACENAME]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.PLACENAME], pattern);
+            },
             stringPatternToCheck: self.stringPatternValidators.s_or_t
         };
 
@@ -3477,7 +3494,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3510,7 +3527,9 @@ class Search extends Control {
                     }
                 }
             ],
-            searchFunction: self.getStringPattern.bind(this, [Consts.searchType.PLACENAMEMUNICIPALITY]),
+            searchFunction: function (pattern) {
+                return this.getStringPattern([Consts.searchType.PLACENAMEMUNICIPALITY], pattern);
+            },
             stringPatternToCheck: [self.stringPatternValidators.ts, self.stringPatternValidators.st]
         };
 
@@ -3518,7 +3537,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3550,7 +3569,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3617,7 +3636,7 @@ class Search extends Control {
             root: null,
             limit: false,
             url: self.url || '//idena.navarra.es/ogc/wfs',
-            version: self.version || '1.1.0',
+            version: self.version || '2.0.0',
             outputFormat: Consts.format.JSON,
             featurePrefix: self.featurePrefix || 'IDENA',
             geometryName: 'the_geom',
@@ -3638,6 +3657,7 @@ class Search extends Control {
             styles: [
                 {
                     point: {
+                        radius: 0,
                         labelKey: ["DCARRETERA", "PK"],
                         fontColor: "#00b2fc",
                         fontSize: 14,
@@ -3805,53 +3825,47 @@ class Search extends Control {
                 }
 
                 if (allowedSearchType) {
-                    self.addAllowedSearchType(allowedKey, availableSearchType ? availableSearchType : allowedSearchType, self);
+                    self.addAllowedSearchType(allowedKey, availableSearchType ? availableSearchType : allowedSearchType);
                 }
             }
         }
     }
 
     addAllowedSearchType(name, options) {
-        const self = this;
-        self.allowedSearchTypes.push(new SearchType(name, options, self));
-        return self;
+        options ??= this.availableSearchTypes[name];
+        this.allowedSearchTypes.push(new SearchType(name, options, this));
+        return this;
     }
 
     getSearchTypeByRole(type) {
-        const self = this;
-        return self.allowedSearchTypes.find(allowed => allowed.typeName.toLowerCase() == type.toLowerCase());
+        return this.allowedSearchTypes.find((allowed) => allowed.typeName.toLowerCase() == type.toLowerCase());
     }
 
     getSearchTypeByFeature(id) {
-        const self = this;
-
-        const type = self.allowedSearchTypes.find(allowed => allowed.isFeatureOfThisType(id));
+        const type = this.allowedSearchTypes.find((allowed) => allowed.isFeatureOfThisType(id));
         return type ?? null;
     }
 
     getElementOnSuggestionList(id, dataRole) {
-        const self = this;
-
-        for (var i = 0; i < self.searchRequestsResults.length; i++) {
-            if (self.searchRequestsResults[i].id == id &&
-                (!dataRole || self.searchRequestsResults[i].dataRole === dataRole)) {
-                return self.searchRequestsResults[i];
+        for (var i = 0; i < this.searchRequestsResults.length; i++) {
+            if (this.searchRequestsResults[i].id == id &&
+                (!dataRole || this.searchRequestsResults[i].dataRole === dataRole)) {
+                return this.searchRequestsResults[i];
             }
         }
     }
 
     getLayer() {
-        const self = this;
-        return self.layerPromise;
+        return this.layerPromise;
     }
 
     getFeatures() {
-        const self = this;
-        return self.layer.features;
+        return this.layer.features;
     }
 
     cleanMap() {
         const self = this;
+        self.toShare = null;
 
         if (self.layer) {
             const l = self.layer;
@@ -4422,8 +4436,6 @@ class Search extends Control {
     #goToResult(id, dataRole) {
         const self = this;
 
-        self.toShare = { id: id, dataRole: dataRole };
-
         //02/03/2020 cuando selecciona un elemento abortamos peticiones pendientes
         if (self.searchRequestsAbortController) {
             self.searchRequestsAbortController.abort();
@@ -4443,6 +4455,8 @@ class Search extends Control {
             }
 
             self.cleanMap();
+
+            self.toShare = { id, dataRole };
 
             var goToObject = null;
                         
@@ -4579,7 +4593,7 @@ class Search extends Control {
             return self.#goToResult(id, dataRole);
             // si no está habilitada pero está disponible
         } else if (self.availableSearchTypes[dataRole]) {
-            self.addAllowedSearchType(dataRole, self.availableSearchTypes[dataRole], self);
+            self.addAllowedSearchType(dataRole);
             return self.#goToResult(id, dataRole);
         } else {
             alert('No se reconoce el tipo de búsqueda: ' + dataRole);
@@ -5107,14 +5121,14 @@ class Search extends Control {
         const self = this;
         if (self.toShare) {
             return {
-                id: self.id,
+                id: self.getId(),
                 searchText: self.textInput && self.textInput.value,
                 searchResult: JSON.stringify(self.toShare)
             };
         }
         //else if (self.exportsState && self.layer) {
         //    return {
-        //        id: self.id,
+        //        id: self.getId(),
         //        searchText: self.textInput && self.textInput.value,
         //        layer: self.layer.exportState({
         //            exportStyles: false
@@ -5124,7 +5138,7 @@ class Search extends Control {
         return null;
     }
 
-    importState(state) {
+    async importState(state) {
         const self = this;
         if (state.searchResult) {
             let sharedSearchResult = JSON.parse(state.searchResult);
@@ -5137,12 +5151,11 @@ class Search extends Control {
                     });
                 }
                 self.loadingState = true;
-                self.goToResult(sharedSearchResult.id, sharedSearchResult.dataRole).then(function () {
-                    delete self.loadingState;
-                    self.textInput.value = state.searchText;
-                    self.shareButton && self.shareButton.classList.remove(Consts.classes.HIDDEN);
-                    self.loading.reset();
-                });
+                await self.goToResult(sharedSearchResult.id, sharedSearchResult.dataRole);
+                delete self.loadingState;
+                self.textInput.value = state.searchText;
+                self.shareButton && self.shareButton.classList.remove(Consts.classes.HIDDEN);
+                self.map.getLoadingIndicator().reset();
             } else {
                 alert('shared results error');
             }
