@@ -16,7 +16,11 @@ module.exports = {
             {
                 test: /\.js$/,
                 enforce: 'pre',
-                use: ['source-map-loader']
+                use: ['source-map-loader'],
+                exclude: [
+                    /node_modules\/cesium/  
+                ]
+
             },
             {
                 test: path.resolve(__dirname, '../sitna.js'),
@@ -28,7 +32,11 @@ module.exports = {
                         return "TC.version = '" + p1 + " [" + (new Date()).toLocaleString() + "]';";
                     }
                 }
-            }
+            },
+            {
+                test: /\.d\.ts$/,
+                loader: 'ignore-loader'
+            },
         ]
     },
     ignoreWarnings: [/Failed to parse source map/],
@@ -38,7 +46,7 @@ module.exports = {
         })
     ],
     devServer: {
-        allowedHosts: 'auto',
+        allowedHosts: 'all',
         static: './dist',
         headers: {
             "Access-Control-Allow-Origin": "*",
