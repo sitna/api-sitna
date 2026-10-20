@@ -67,8 +67,6 @@ import ThreeDView from '../view/ThreeD.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 
-const elementName = 'sitna-3d';
-
 TC.view = TC.view || {};
 TC.view.ThreeD = ThreeDView;
 
@@ -80,21 +78,30 @@ class ThreeDModel {
 
 class ThreeD extends WebComponentControl {
 
+    static {
+        customElements.define('sitna-3d', this);
+    }
+
+    abortController;
+
+
     register(map) {
         const self = this;
-
         map.on(Consts.event.VIEWCHANGE, function (e) {
             if (e.view === Consts.view.THREED) { // cargamos la vista 3D desde el estado actualizamos el estado del botón
                 self.set3D();
             }
-        });
-        
+        });        
         return super.register.call(self, map);
     }
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-3d.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-3d" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-3d.mjs'
+        );
         self.template = module.default;
     }
 
@@ -150,9 +157,10 @@ class ThreeD extends WebComponentControl {
             self.button.disabled = false;
             deferred.resolve();
         };
+        self.abortController = new AbortController();
 
         if (!self.map.view3D || !self.map.on3DView) {
-            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled, instant });
+            TC.view.ThreeD.apply({ map: self.map, options: self.options, getRenderedHtml: self.getRenderedHtml, callback: removeDisabled, instant, signal: self.abortController.signal });
         }
 
         manageButton();
@@ -162,21 +170,28 @@ class ThreeD extends WebComponentControl {
     unset3D(bbox) {
         const self = this;
         const deferred = Promise.withResolvers();
-
+        const currentActiveControl = self.map.activeControl;
         self.button.disabled = true;
+        self.abortController?.abort();
+        try {
+            TC.view.ThreeD.unapply({
+                extent: bbox,
+                instant: !!bbox,
+                callback: function () {
+                    self.button.setAttribute('title', self.getLocaleString("threed.tip"));
 
-        TC.view.ThreeD.unapply({
-            extent: bbox,
-            instant: !!bbox,
-            callback: function () {
-                self.button.setAttribute('title', self.getLocaleString("threed.tip"));
+                    self.button.classList.remove(Consts.classes.CHECKED);
 
-                self.button.classList.remove(Consts.classes.CHECKED);
-
-                self.button.disabled = false;
-                return deferred.resolve();
-            }
-        });
+                    self.button.disabled = false;
+                    currentActiveControl.activate();
+                    return deferred.resolve();
+                }
+            });
+        }
+        catch (exc) {
+            console.log(exc);
+        }
+        
         return deferred.promise;
     }
 
@@ -245,5 +260,4 @@ class ThreeD extends WebComponentControl {
 }
 
 ThreeD.prototype.CLASS = 'tc-ctl-3d';
-customElements.get(elementName) || customElements.define(elementName, ThreeD);
 export default ThreeD;
