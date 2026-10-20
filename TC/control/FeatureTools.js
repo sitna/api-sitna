@@ -125,8 +125,16 @@ class FeatureTools extends Control {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-ftools.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-ftools-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-ftools" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-ftools.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-ftools-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-ftools-dialog.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -579,7 +587,7 @@ class FeatureTools extends Control {
             if (self.toShare.doZoom) {
                 state.doZoom = self.toShare.doZoom;
             }
-            state.id = self.id;
+            state.id = self.getId();
             if (self.toShare.feature) {
                 let layerState;
                 const featureToShare = self.toShare.feature.clone();

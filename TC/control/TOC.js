@@ -38,9 +38,21 @@ class TOC extends MapContents {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-toc.mjs');
-        const branchTemplatePromise = import('../templates/tc-ctl-toc-branch.mjs');
-        const nodeTemplatePromise = import('../templates/tc-ctl-toc-node.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-toc" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-toc.mjs'
+        );
+        const branchTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-toc-branch" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-toc-branch.mjs'
+        );
+        const nodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-toc-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-toc-node.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;

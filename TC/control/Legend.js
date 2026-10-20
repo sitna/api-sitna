@@ -57,8 +57,16 @@ class Legend extends MapContents {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-legend.mjs');
-        const nodeTemplatePromise = import('../templates/tc-ctl-legend-node.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-legend" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-legend.mjs'
+        );
+        const nodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-legend-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-legend-node.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;

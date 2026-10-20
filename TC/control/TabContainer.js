@@ -43,7 +43,11 @@ class TabContainer extends Container {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-tctr.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-tctr" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-tctr.mjs'
+        );
         self.template = module.default;
     }
 

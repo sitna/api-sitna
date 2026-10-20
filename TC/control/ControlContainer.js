@@ -74,8 +74,16 @@ class ControlContainer extends Container {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-cctr.mjs');
-        const nodeTemplatePromise = import('../templates/tc-ctl-cctr-node.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-cctr" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-cctr.mjs'
+        );
+        const nodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-cctr-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-cctr-node.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;

@@ -8,7 +8,11 @@ class TrackDownloadDialog extends FeatureDownloadDialog {
     async loadTemplates() {
         await super.loadTemplates();
         const self = this;
-        const module = await import('../templates/tc-ctl-geolocation-ext-dldlog.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-geolocation-ext-dldlog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation-ext-dldlog.mjs'
+        );
         self.template = {
             [self.CLASS]: self.template,
             [self.CLASS + '-ext-dldlog']: module.default

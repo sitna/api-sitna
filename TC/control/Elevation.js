@@ -89,8 +89,16 @@ class Elevation extends Control {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-ftools.mjs');
-        const valueTemplatePromise = import('../templates/tc-ctl-elev-val.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-ftools" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-ftools.mjs'
+        );
+        const valueTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-elev-val" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-elev-val.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -230,7 +238,7 @@ class Elevation extends Control {
         let resultsPanel;
 
         if (self.options.displayOn) {
-            let controlContainer = self.map.getControlsByClass('TC.control.' + self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
+            let controlContainer = self.map.getControlsByClass(self.options.displayOn[0].toUpperCase() + self.options.displayOn.substring(1))[0];
             if (!controlContainer) {
                 controlContainer = await self.map.addControl(self.options.displayOn);
             }

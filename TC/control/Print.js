@@ -38,8 +38,16 @@ class Print extends Control {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-print.mjs');
-        const pageTemplatePromise = import('../templates/tc-ctl-print-page.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-print" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-print.mjs'
+        );
+        const pageTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-print-page" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-print-page.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
