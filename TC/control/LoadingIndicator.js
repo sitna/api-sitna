@@ -6,6 +6,7 @@ TC.control = TC.control || {};
 
 class LoadingIndicator extends Control {
     #waits = {};
+    #isDebug = false;
 
     constructor() {
         super(...arguments);
@@ -20,7 +21,11 @@ class LoadingIndicator extends Control {
 
     async loadTemplates() {
         const self = this;
-        const module = await import('../templates/tc-ctl-load.mjs');
+        const module = await import(
+            /* webpackChunkName: "tc-ctl-load" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-load.mjs'
+        );
         self.template = module.default;
     }
 
@@ -63,45 +68,54 @@ class LoadingIndicator extends Control {
     }
 
     startWait(e) {
-        const self = this;
-        const layerId = e.layer.id;
-        if (self.#waits[layerId] === undefined) {
-            self.#waits[layerId] = 0;
+        if (this.#isDebug) {
+            console.warn('Starting wait for ' + e.layer.id);
+            console.trace();
         }
-        self.#waits[layerId] = self.#waits[layerId] + 1;
-        self.show();
+        const layerId = e.layer.id;
+        if (this.#waits[layerId] === undefined) {
+            this.#waits[layerId] = 0;
+        }
+        this.#waits[layerId] = this.#waits[layerId] + 1;
+        this.show();
 
-        self.map.trigger(Consts.event.STARTLOADING);
+        this.map.trigger(Consts.event.STARTLOADING);
     }
 
     stopWait(e) {
-        const self = this;
+        if (this.#isDebug) {
+            console.warn('Stopping wait for ' + e.layer.id);
+            console.trace();
+        }
         const layerId = e.layer.id;
-        var wait = self.#waits[layerId];
+        var wait = this.#waits[layerId];
         if (wait > 0) {
-            wait = self.#waits[layerId] = wait - 1;
+            wait = this.#waits[layerId] = wait - 1;
         }
         if (!wait) {
-            delete self.#waits[layerId];
+            delete this.#waits[layerId];
         }
-        const count = Object.keys(self.#waits).length;
+        const count = Object.keys(this.#waits).length;
         if (!count) {
-            self.hide();
-            self.map.trigger(Consts.event.STOPLOADING);
+            this.hide();
+            this.map.trigger(Consts.event.STOPLOADING);
         }
     }
 
     endWait(e) {
-        const self = this;
-        const layerId = e.layer.id;
-        var wait = self.#waits[layerId];
-        if (wait > 0) {
-            delete self.#waits[layerId];
+        if (this.#isDebug) {
+            console.warn('Ending wait for ' + e.layer.id);
+            console.trace();
         }
-        const count = Object.keys(self.#waits).length;
+        const layerId = e.layer.id;
+        var wait = this.#waits[layerId];
+        if (wait > 0) {
+            delete this.#waits[layerId];
+        }
+        const count = Object.keys(this.#waits).length;
         if (!count) {
-            self.hide();
-            self.map.trigger(Consts.event.STOPLOADING);
+            this.hide();
+            this.map.trigger(Consts.event.STOPLOADING);
         }
     }
 
@@ -113,14 +127,20 @@ class LoadingIndicator extends Control {
     }
 
     addWait(uid) {
-        const self = this;
+        if (this.#isDebug) console.warn('Adding wait for ' + uid);
         const result = uid || TC.getUID();
-        self.startWait({ layer: { id: result } });
+        this.startWait({ layer: { id: result } });
         return result;
     }
 
     removeWait(uid) {
+        if (this.#isDebug) console.warn('Removing wait for ' + uid);
         this.stopWait({ layer: { id: uid } });
+    }
+
+    setDebug(condition) {
+        this.#isDebug = condition;
+        console.warn('Debug mode ' + (condition ? 'enabled' : 'disabled') + ' for LoadingIndicator');
     }
 }
 
