@@ -2,8 +2,7 @@
 import WebComponentControl from './WebComponentControl.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
-
-const elementName = 'sitna-zoom-bar';
+import NavBarWrapper from '../ol/NavBar.js';
 
 class NavBarModel {
     constructor() {
@@ -14,24 +13,25 @@ class NavBarModel {
 }
 class NavBar extends WebComponentControl {
 
+    static {
+        customElements.define('sitna-zoom-bar', this);
+    }
+
     render() {
         const self = this;
         if (!self.wrap) {
-            self.wrap = new TC.wrap.control.NavBar(self);
+            self.wrap = new NavBarWrapper(self);
         }
         self.classList.add(WebComponentControl.prototype.CLASS, self.CLASS);
         const renderPromise = Promise.resolve();
         self._firstRender ??= renderPromise;
-        renderPromise.then(() => {
-            
-        });
         return renderPromise;
     }
 
     async register(map) {
         const self = this;
         const superRegisterPromise = super.register.call(self, map);
-        self.wrap.register(map);
+        await self.wrap.register(map);
 
         if (self.options.home === undefined || self.options.home) {
             await map.addControl('navBarHome');
@@ -61,5 +61,4 @@ class NavBar extends WebComponentControl {
 }
 
 NavBar.prototype.CLASS = 'tc-ctl-nav';
-customElements.get(elementName) || customElements.define(elementName, NavBar);
 export default NavBar;

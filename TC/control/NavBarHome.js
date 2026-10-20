@@ -4,8 +4,7 @@ import Util from '../Util.js';
 import WebComponentControl from './WebComponentControl.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
-
-const elementName = 'sitna-home';
+import NavBarHomeWrapper from '../ol/NavBarHome.js';
 
 TC.control = TC.control || {};
 class NavBarHomeModel{
@@ -15,10 +14,14 @@ class NavBarHomeModel{
 }
 class NavBarHome extends WebComponentControl {
 
+    static {
+        customElements.define('sitna-home', this);
+    }
+
     render() {
         const self = this;
         if (!self.wrap) {
-            self.wrap = new TC.wrap.control.NavBarHome(self);
+            self.wrap = new NavBarHomeWrapper(self);
         }
         self.classList.add(WebComponentControl.prototype.CLASS, self.CLASS);
         const renderPromise = Promise.resolve();
@@ -29,7 +32,7 @@ class NavBarHome extends WebComponentControl {
     async register(map) {
         const self = this;
         const superRegisterPromise = super.register.call(self, map);
-        self.wrap.register(map);
+        await self.wrap.register(map);
 
         map.on(Consts.event.PROJECTIONCHANGE, function (e) {
             const crs = e.newCrs;
@@ -53,5 +56,4 @@ class NavBarHome extends WebComponentControl {
 }
 
 NavBarHome.prototype.CLASS = 'tc-ctl-nav-home';
-customElements.get(elementName) || customElements.define(elementName, NavBarHome);
 export default NavBarHome;
