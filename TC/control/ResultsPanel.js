@@ -127,13 +127,13 @@ class ResultsPanel extends InfoDisplay {
         }
     };
     #titles;
+    #onResizeTimeout;
 
     constructor() {
         super(...arguments);
         const self = this;
 
         self.#titles = self.options.titles;
-        self.wrap = new TC.wrap.control.ResultsPanel(self);
 
         self.data = {};
         self.classes = {
@@ -146,7 +146,9 @@ class ResultsPanel extends InfoDisplay {
 
         self.content = self.contentType.TABLE;
 
+        self.toolContainerSelector = null;        
         self._toolContainerSelector = `.${self.CLASS}-tools`;
+        self._titleBarSelector = `.${self.CLASS}-title`;
 
         if (Util.isEmptyObject(self.options)) {
             self.options = { content: "table" };
@@ -217,9 +219,21 @@ class ResultsPanel extends InfoDisplay {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-rpanel.mjs');
-        const tableTemplatePromise = import('../templates/tc-ctl-rpanel-table.mjs');
-        //const chartTemplatePromise = import('../templates/tc-ctl-rpanel-chart.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-rpanel" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-rpanel.mjs'
+        );
+        const tableTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-rpanel-table" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-rpanel-table.mjs'
+        );
+        //const chartTemplatePromise = import(
+        //    /* webpackChunkName: "tc-ctl-rpanel-chart" */
+        //    /* webpackMode: "lazy" */
+        //    '../templates/tc-ctl-rpanel-chart.mjs'
+        //);
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -234,7 +248,7 @@ class ResultsPanel extends InfoDisplay {
             renderFn: function (container) {
                 //<sitna-button variant="minimal" icon-text="&#xe917;" class="tc-ctl-rpanel-btn-zoom" hidden text="{{i18n "shareQuery"}}"></sitna-button>
                 const className = self.CLASS + classNamePartial;
-                let button = container.querySelector('sitna-button.' + className);
+                let button = this.button || container.querySelector('sitna-button.' + className);
                 if (button) {
                     button.remove();
                     button = null;
@@ -249,6 +263,7 @@ class ResultsPanel extends InfoDisplay {
                     self.controller.add(button);
                     self.model[localeKey] = self.getLocaleString(localeKey);
                 }
+                this.button = button;
                 return button;
             },
             actionFn: actionFn
@@ -387,12 +402,12 @@ class ResultsPanel extends InfoDisplay {
             const interact = module.default;
             const target = "." + self.classes.RESIZABLE;
             const targetNodeSelector = '.tc-ctl-rpanel-main';
-            const targetNode = options.target && options.target.querySelector(targetNodeSelector) ||
-                document.querySelector(targetNodeSelector);
+            const targetNode = options.target?.querySelector(targetNodeSelector) ||
+                self.div.querySelector(targetNodeSelector);
             targetNode.classList.add(self.classes.RESIZABLE);
             targetNode.closest('.tc-ctl-rpanel').classList.add(self.classes.RESIZABLE);
-            if (!interact.isSet(target)) {
-                const svg = document.querySelector('.tc-chart.c3 svg');
+            if (!interact.isSet(targetNode)) {
+                const svg = self.div.querySelector('.tc-chart.c3 svg');
                 if (svg) {
                     svg.parentElement.style.maxHeight = 'unset';
                     svg.removeAttribute('max-height');
@@ -486,23 +501,38 @@ class ResultsPanel extends InfoDisplay {
     }
 
     onResize(e) {
-        const self = this;
         const target = e.target;
-        const profile = self.div.querySelector('sitna-elevation-profile');
+        const profile = this.div.querySelector('sitna-elevation-profile');
         if (profile) {
             target.classList.remove(Consts.classes.LOADING);
-            const newSize = profile.getChartSize();
-            if (newSize) {
-                profile.chart.chart.resize(profile.getBoundingClientRect());
-                const resizedTarget = self.div.querySelector(`.${self.classes.RESIZABLE}.tc-ctl-rpanel-main`);
-                resizedTarget.dataset.chartSizeWidth = newSize.width;
-                resizedTarget.dataset.chartSizeHeight = newSize.height;
+
+            const chartDisplay = profile.chart.chart.element.style.display;
+            profile.chart.chart.element.style.display = 'none';
+            if (this.#onResizeTimeout) {
+                clearTimeout(this.#onResizeTimeout);
             }
+            this.#onResizeTimeout = setTimeout(() => {
+                const newSize = profile.getBoundingClientRect()
+                if (chartDisplay) profile.chart.chart.element.style.display = chartDisplay;
+                else profile.chart.chart.element.style.removeProperty('display');
+                if (newSize) {
+                    const elevationGainElement = profile.querySelector('.tc-track-chart-elev-gain');
+                    if (elevationGainElement) {
+                        const elevationGainElementHeight = elevationGainElement.getBoundingClientRect().height;
+                        newSize.height -= elevationGainElementHeight;
+                    }
+                    profile.chart.chart.resize(newSize);
+                    const resizedTarget = this.div.querySelector(`.${this.classes.RESIZABLE}.tc-ctl-rpanel-main`);
+                    resizedTarget.dataset.chartSizeWidth = newSize.width;
+                    resizedTarget.dataset.chartSizeHeight = newSize.height;
+                }
+            }, 200);
         }
-        self.map.trigger(Consts.event.RESULTSPANELRESIZE, {
-            control: self, size: {
-                width: target.getBoundingClientRect().width,
-                height: target.getBoundingClientRect().height
+        const targetRect = target.getBoundingClientRect();
+        this.map.trigger(Consts.event.RESULTSPANELRESIZE, {
+            control: this, size: {
+                width: targetRect.width,
+                height: targetRect.height
             }
         });
     }
@@ -739,8 +769,8 @@ class ResultsPanel extends InfoDisplay {
                         }
                         self.#closeOpenedTableResultsPanel();
 
-                        const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
-                        self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
+                        const titleBar = self.div.querySelector(self._titleBarSelector);
+                        self.getItemTools().forEach(tool => self.addItemToolUI(titleBar || self.div, tool));
 
                         self.map.trigger(Consts.event.DRAWTABLE, { control: self });
                         self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
@@ -773,8 +803,8 @@ class ResultsPanel extends InfoDisplay {
             if (clientRect && clientRect.width > 30 && clientRect.height > 0) {
                 //window.cancelAnimationFrame(this.requestIsRendered);
 
-                const titleBar = self.div.querySelector('.tc-ctl-rpanel-title');
-                self.getItemTools().forEach(tool => self.addItemToolUI(titleBar, tool));
+                const titleBar = self.div.querySelector(self.menuContainerSelector) || self.div.querySelector(self._titleBarSelector);
+                self.getItemTools().forEach(tool => self.addItemToolUI(titleBar || self.div, tool));
                 //self.#closeOpenedTableResultsPanel();
                 this.map.trigger(Consts.event.DRAWTABLE, { control: self });
                 self.map.dispatchEvent(new ControlEvent(Consts.event.INFODISPLAY, { control: self }));
@@ -955,8 +985,6 @@ class ResultsPanel extends InfoDisplay {
         const self = this;
 
         await super.register.call(self, map);
-
-        self.wrap.register(map);
 
         if (self.openOn) {
             self.map.one(self.openOn, function (e, _args) {
