@@ -38,6 +38,7 @@ import Geometry from '../Geometry.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 import WebComponentControl from './WebComponentControl.js';
+import GeolocationWrapper from '../ol/Geolocation.js';
 
 TC.control = TC.control || {};
 
@@ -253,7 +254,6 @@ class Geolocation extends Control {
     snappingTolerance;
     currentTrackUid;
     #dialogDiv;
-    #shareDialogDiv;
     #trackVisibility = true;
     #isFollowing = true;
     #windowEventsAbortController;
@@ -291,9 +291,6 @@ class Geolocation extends Control {
             document.body.appendChild(self.#dialogDiv);
         }
 
-        self.#shareDialogDiv = Util.getDiv({});
-        document.body.appendChild(self.#shareDialogDiv);
-
         self.snappingTolerance = self.options.snappingTolerance || 50;
 
         self.exportsState = true;
@@ -303,7 +300,7 @@ class Geolocation extends Control {
         self._uiElementSelector = 'ol > li[data-id]';
         self._toolContainerSelector = `.${self.CLASS}-tools-active`;
 
-        self.wrap = new TC.wrap.control.Geolocation(self);
+        self.wrap = new GeolocationWrapper(self);
         self.model = new GeolocationModel();
         self.trackModel = new GeolocationTrackModel();
         self.infoPanelModel = new GeolocationToastModel();
@@ -423,7 +420,15 @@ class Geolocation extends Control {
                     // GLS: ¿es un KML y viene desde el upload de Geolocation?
                     fileName.toLowerCase().indexOf(kmlPattern) === fileName.length - kmlPattern.length && target === self) {
 
-                    self.clear(self.const.layer.TRACK);
+                    const trackItem = self.getSelectedTrackItem();
+                    let isAlreadyOpen = false;
+                    if (trackItem) {
+                        const trackData = await self.getTrackData(trackItem);
+                        if (trackData) {
+                            isAlreadyOpen = await trackData.fileHandle.isSameEntry(e.fileHandle);
+                        }
+                    }
+                    if (!isAlreadyOpen) self.clear(self.const.layer.TRACK);
                     const importedGPX = function () {
                         //Controlamos que todo ha acabado para hacer zoom a las features y ocultar el loading
                         setTimeout(function () {
@@ -548,7 +553,7 @@ class Geolocation extends Control {
         });
 
         map.on(Consts.event.FILESAVE, function (e) {
-            const newFile = Object.prototype.hasOwnProperty.call(e, 'oldFileHandle');
+            const newFile = Object.hasOwn(e, 'oldFileHandle');
             if (self.trackLayer._fileHandle) {
                 self.trackLayer._fileHandle.isSameEntry(e.fileHandle).then(result => {
                     if (result) {
@@ -611,13 +616,36 @@ class Geolocation extends Control {
     }
 
     async loadTemplates() {
-        const mainTemplatePromise = import('../templates/tc-ctl-geolocation.mjs');
-        const trackNodeTemplatePromise = import('../templates/tc-ctl-geolocation-track-node.mjs');
-        const trackSnappingTemplatePromise = import('../templates/tc-ctl-geolocation-track-snapping-node.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-geolocation-dialog.mjs');
-        const trackingToastTemplatePromise = import('../templates/tc-ctl-geolocation-tracking-toast.mjs');
-        const downloadDialogTemplatePromise = import('../templates/tc-ctl-geolocation-ext-dldlog.mjs');
-        const shareDialogTemplatePromise = import('../templates/tc-ctl-geolocation-share-dialog.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-geolocation" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation.mjs'
+        );
+        const trackNodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-geolocation-track-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation-track-node.mjs'
+        );
+        const trackSnappingTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-geolocation-track-snapping-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation-track-snapping-node.mjs'
+        );
+        const dialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-geolocation-dialog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation-dialog.mjs'
+        );
+        const trackingToastTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-geolocation-tracking-toast" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation-tracking-toast.mjs'
+        );
+        const downloadDialogTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-geolocation-ext-dldlog" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-geolocation-ext-dldlog.mjs'
+        );
 
         const template = {};
         template[this.CLASS] = (await mainTemplatePromise).default;
@@ -626,7 +654,6 @@ class Geolocation extends Control {
         template[this.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
         template[this.CLASS + '-tracking-toast'] = (await trackingToastTemplatePromise).default;
         template[this.CLASS + '-ext-dldlog'] = (await downloadDialogTemplatePromise).default;
-        template[this.CLASS + '-share-dialog'] = (await shareDialogTemplatePromise).default;
         this.template = template;
     }
 
@@ -634,11 +661,11 @@ class Geolocation extends Control {
         this.#dialogDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-dialog', null);
         await this.getDownloadDialog();
         const template = document.createElement('template');
-        template.innerHTML = await this.getRenderedHtml(this.CLASS + '-ext-dldlog', { controlId: this.id });
+        template.innerHTML = await this.getRenderedHtml(this.CLASS + '-ext-dldlog', { controlId: this.getId() });
         this._downloadDialogExtNode = template.content ? template.content.firstChild : template.firstChild;
-        this.#shareDialogDiv.innerHTML = await this.getRenderedHtml(this.CLASS + '-share-dialog', {});
 
-        await this.renderData({ controlId: this.id });
+        await this.renderData({ controlId: this.getId() });
+
         this.addUIEventListeners();
         if (Util.isFunction(callback)) {
             callback();
@@ -646,7 +673,6 @@ class Geolocation extends Control {
         this.controller = new Controller(this.model, new Observer(this.div));
         this.controller.add(this.#dialogDiv);
         this.controller.add(this._downloadDialogExtNode);
-        this.controller.add(this.#shareDialogDiv);
 
         this.updateModel();
     }
@@ -815,7 +841,7 @@ class Geolocation extends Control {
 
         list.addEventListener('click', TC.EventTarget.listenerBySelector(`.${self.CLASS} ${sel.SHARE}`, function (e) {
             self.#setTrackToShare(getParentListElement(e.target)).then(function () {
-                self.showShareDialog(self.#shareDialogDiv);
+                self.showShareDialog();
             });
         }));
 
@@ -944,6 +970,10 @@ class Geolocation extends Control {
             self.#trackVisibility = this.checked;
         });
 
+        const closeDialog = (e) => e.currentTarget.closest('dialog').close();
+        self.div.querySelectorAll(`dialog.${self.CLASS}-share-dialog sitna-button.tc-modal-close`).forEach((btn) => {
+            btn.addEventListener(Consts.event.CLICK, closeDialog);
+        });
     }
 
     #getDownloadFileName = function (elem) {
@@ -985,7 +1015,7 @@ class Geolocation extends Control {
             } else if (self.options.displayElevation) {
                 options = self.options.displayElevation;
             }
-            if (Object.prototype.hasOwnProperty.call(self.options, 'resolution')) { // la configuración de la resolución es distinta al obtener el perfil (0) que para la descarga (20). La configuración para la descarga se gestiona en getDownloadDialog...
+            if (Object.hasOwn(self.options, 'resolution')) { // la configuración de la resolución es distinta al obtener el perfil (0) que para la descarga (20). La configuración para la descarga se gestiona en getDownloadDialog...
                 options.resolution = self.options.resolution;
             } else {
                 options.resolution = 0;
@@ -1100,7 +1130,7 @@ class Geolocation extends Control {
                             self.trackLayer.file = options.fileHandle.name;
                         }
 
-                        self.div.querySelector(`sitna-tab[for="${self.id}-tracks-panel"]`).selected = true;
+                        self.div.querySelector(`sitna-tab[for="${self.getId()}-tracks-panel"]`).selected = true;
 
                         if (!options.isShared) {
                             // abrimos el panel de herramientas
@@ -1124,7 +1154,7 @@ class Geolocation extends Control {
                 return saved.uid.toString() === trackUid.toString();
             }).data;
 
-            const storageFeatures = new ol.format.GeoJSON().readFeatures(storageData);
+            const storageFeatures = this.wrap.readGeoJson(storageData);
             const tcFeatures = storageFeatures.map(f => TC.wrap.Feature.createFeature(f));
             let features = tcFeatures.map(function (f) {
                 const fObj = {};
@@ -1176,16 +1206,9 @@ class Geolocation extends Control {
                 const selectedTrackItem = self.getSelectedTrackItem();
                 if (selectedTrackItem) {
                     return self.#setTrackToShare(selectedTrackItem).then(function () {
-                        const shareDialog = self.#shareDialogDiv.querySelector('.' + self.CLASS + '-share-dialog');
-                        Util.showModal(shareDialog, {
-                            openCallback: function () {
-                                return infoShare.onShowShareDialog.call(self);
-                            },
-                            closeCallback: function () {
-                                infoShare.onCloseShareDialog.call(self);
-                            }
-                        });
-
+                        const shareDialog = self.div.querySelector('.' + self.CLASS + '-share-dialog');
+                        shareDialog.showModal();
+                        return infoShare.onShowShareDialog.call(self);
                     });
                 } else {
                     return Promise.resolve();
@@ -1295,6 +1318,15 @@ class Geolocation extends Control {
         this.track.trackName = this.div.querySelector(`.${this.CLASS}-track-title`);
 
         this.track.trackWPT = this.div.querySelector(`.${this.CLASS}-track-waypoint`);
+        if (this.options.visibleOverlay) {
+            const overlayContainer = await this.getOverlayContainer();
+            await import('./CenterOnLocation.js');
+            this.centerOnLocationButton = document.createElement('sitna-center-on-location');
+            this.centerOnLocationButton.caller = this;
+            this.centerOnLocationButton.styles.locationPoint = { ...this.styles.locationPoint };
+            this.centerOnLocationButton.styles.accuracyCircle = { ...this.styles.accuracyCircle };
+            overlayContainer.appendChild(this.centerOnLocationButton);
+        }
         if (Util.detectMobile()) {
             if (matchMedia('screen and (max-height: 50em) and (max-width: 50em)').matches)
                 this.track.trackToolPanelOpened.checked = false;
@@ -1470,7 +1502,7 @@ class Geolocation extends Control {
     }
 
     async #setTrackToShare(li) {
-        await this.getShareDialog(this.#shareDialogDiv);
+        await this.getShareDialog();
         const features = await this.#prepareFeaturesToShare({ uid: li.dataset.uid });
         this.toShare = {
             trackName: li.querySelector(this.const.selector.ACTIVATOR).text,
@@ -1547,7 +1579,7 @@ class Geolocation extends Control {
                         displayOn = self.options.displayElevation.displayOn;
                     }
                     if (displayOn) {
-                        const controlContainer = self.map.getControlsByClass('TC.control.' + displayOn[0].toUpperCase() + displayOn.substring(1))[0];
+                        const controlContainer = self.map.getControlsByClass(displayOn[0].toUpperCase() + displayOn.substring(1))[0];
                         if (controlContainer) {
                             addResultsPanelInfo(controlContainer);
                         } else {
@@ -1887,6 +1919,7 @@ class Geolocation extends Control {
 
     activateGeotracking() {
         const self = this;
+        self.centerOnLocationButton?.unwatchPosition();
         self.#activateGeotrackingState();
         var geotrackingAvailable = true;
 
@@ -2347,13 +2380,14 @@ class Geolocation extends Control {
                     });
 
                     const originalLine = options?.feature || features[0];
-                    let line = originalLine.clone();
-                    line.layer = originalLine.layer;
-                    //URI: Si el mapa esta en 3D se reproyecta la ruta si el CRS del para 2D y 3D son distintos
-                    if (self.map.on3DView && self.map.view3D.view2DCRS !== self.map.view3D.crs)
-                        line.setCoordinates(Util.reproject(line.getCoordinates(), self.map.view3D.view2DCRS, self.map.view3D.crs));
+                    if (originalLine) {
+                        let line = originalLine.clone();
+                        line.layer = originalLine.layer;
+                        //URI: Si el mapa esta en 3D se reproyecta la ruta si el CRS del para 2D y 3D son distintos
+                        if (self.map.on3DView && self.map.view3D.view2DCRS !== self.map.view3D.crs) {
+                            line.setCoordinates(Util.reproject(line.getCoordinates(), self.map.view3D.view2DCRS, self.map.view3D.crs));
+                        }
 
-                    if (line) {
                         let time = {};
                         if (hasTime) {
                             let diff = 0;
@@ -2595,9 +2629,7 @@ class Geolocation extends Control {
     }
 
     async #getMatchingTrack(track) {
-        const jsonFormat = new ol.format.GeoJSON();
-
-        const serializeFeatures = function (features) {
+        const serializeFeatures = (features) => {
             // Aplicamos una precisión un dígito mayor que la del mapa, si no, al compartir algunas parcelas se deforman demasiado
             let precision = Math.pow(10, Consts.DEGREE_PRECISION + 1);
 
@@ -2606,13 +2638,13 @@ class Geolocation extends Control {
                 feature.getGeometry().setCoordinates(geom);
             });
 
-            return jsonFormat.writeFeatures(features);
+            return this.wrap.writeGeoJson(features);
         };
 
-        const trackData = serializeFeatures(jsonFormat.readFeatures(track.data));
+        const trackData = serializeFeatures(this.wrap.readGeoJson(track.data));
         const tracks = await this.getAvailableTracks();
         return tracks.find((savedTrack) => track.name === savedTrack.name &&
-            trackData === serializeFeatures(jsonFormat.readFeatures(savedTrack.data)));
+            trackData === serializeFeatures(this.wrap.readGeoJson(savedTrack.data)));
     }
 
     addWaypoint() {
@@ -3028,7 +3060,7 @@ class Geolocation extends Control {
                             }
                         });
 
-                        if (Object.prototype.hasOwnProperty.call(sharedTrackResult, "doZoom")) {
+                        if (Object.hasOwn(sharedTrackResult, "doZoom")) {
                             self.loadingState = true;
                         }
 
