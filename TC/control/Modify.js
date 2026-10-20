@@ -13,6 +13,7 @@ import './FeatureStyler.js';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
 import FeatureHistory from '../tool/FeatureHistory.js';
+import ModifyWrapper from '../ol/Modify.js';
 
 TC.control = TC.control || {};
 
@@ -92,7 +93,6 @@ const vertexGeometryFilter = function (elm) {
 };
 
 const className = 'tc-ctl-mod';
-const elementName = 'sitna-modify';
 
 class ModifyModel {
     constructor() {
@@ -117,7 +117,13 @@ class ModifyModel {
 }
 
 class Modify extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-modify', this);
+    }
+
     #classSelector = '.' + className;
+    #snapping;
     #deleteBtn;
     #showDeletedBtn;
     #undoBtn;
@@ -151,7 +157,7 @@ class Modify extends WebComponentControl {
 
         this.history = new FeatureHistory();
 
-        this.wrap = new TC.wrap.control.Modify(this);
+        this.wrap = new ModifyWrapper(this);
         this
             .initProperty('mode')
             .initProperty('snapping')
@@ -176,12 +182,15 @@ class Modify extends WebComponentControl {
         }
     }
 
-    get snapping() {
-        return this.hasAttribute('snapping');
+    getSnapping() {
+        return this.#snapping;
     }
 
-    set snapping(value) {
-        this.toggleAttribute('snapping', !!value);
+    setSnapping(value) {
+        this.#snapping = value;
+        if (this.isActive) {
+            this.wrap.setSnapping(value);
+        }
     }
 
     get mode() {
@@ -358,8 +367,16 @@ class Modify extends WebComponentControl {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-mod.mjs');
-        const deletedItemTemplatePromise = import('../templates/tc-ctl-mod-deleted.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-mod" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-mod.mjs'
+        );
+        const deletedItemTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-mod-deleted" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-mod-deleted.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
@@ -495,10 +512,13 @@ class Modify extends WebComponentControl {
         }));
     }
 
-    activate() {
+    activate() {        
         this.#selectBtn.active = true;
         super.activate.call(this);
-        this.wrap.activate(this.mode);
+        if (this.map.on3DView)
+            this.map.view3D.linked2DControls[(this.containerControl.drawControls.find(dc => dc.mode === this.containerControl.mode) || this.containerControl.drawControls[0]).id]?.activateEdit(this.mode);
+        else
+            this.wrap.activate(this.mode);        
         // Cerramos los popups de las features de la capa
         this.getLayer().then((layer) => {
             layer?.features.forEach((feature) => feature.closeInfoControls());
@@ -517,8 +537,12 @@ class Modify extends WebComponentControl {
 
         super.deactivate.call(this);
 
-        if (this.wrap) {
-            this.wrap.deactivate();
+        if (this.map.on3DView)
+            this.map.view3D.linked2DControls[(this.containerControl.drawControls.find(dc => dc.mode === this.containerControl.mode) || this.containerControl.drawControls[0]).id]?.deactivateEdit();
+        else { 
+            if (this.wrap) {
+                this.wrap.deactivate();
+            }
         }
         
         this.mode = Modify.mode.SELECT;
@@ -609,6 +633,9 @@ class Modify extends WebComponentControl {
     }
 
     getSelectedFeatures() {
+        if (this.map?.on3DView && this.containerControl.drawControls) {
+            return this.map.view3D.linked2DControls[this.containerControl.drawControls[0].id]?.getSelectedFeatures() || [];
+        }
         return this.wrap.getSelectedFeatures();
     }
 
@@ -655,7 +682,10 @@ class Modify extends WebComponentControl {
     onDeleteButtonClick() {
         const self = this;
         const features = self.getSelectedFeatures();
-        self.wrap.unselectFeatures(features);
+        if (this.map.on3DView && this.containerControl.drawControls)
+            this.map.view3D.linked2DControls[this.containerControl.drawControls[0].id]?.unselectFeatures();
+        else
+            self.wrap.unselectFeatures(features);
         features.forEach(async function (feature) {
             await self.#addDeletedItemToList(feature, feature.layer);
             self.history.removeFeature(feature);
@@ -987,6 +1017,5 @@ class Modify extends WebComponentControl {
 }
 
 Modify.prototype.CLASS = 'tc-ctl-mod';
-customElements.get(elementName) || customElements.define(elementName, Modify);
 TC.control.Modify = Modify;
 export default Modify;
