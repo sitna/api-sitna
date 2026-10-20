@@ -71,6 +71,8 @@ import Raster from '../../SITNA/layer/Raster.js';
 import md5 from 'md5';
 import Observer from '../Observer.js';
 import Controller from '../Controller.js';
+import ControlEvent from '../../SITNA/control/ControlEvent.js';
+import OfflineMapMakerWrapper from '../ol/OfflineMapMaker.js';
 
 TC.control = TC.control || {};
 
@@ -213,12 +215,13 @@ class OfflineMapMaker extends SWCacheClient {
         'scaleSelector',
         'state',
         'workLayerManager',
-        'threeD'
+        'centerOnLocation',
     ];
     #loadedCount;
     #offlineMapHintDiv;
     #selectors;
     #state;
+    #dialogElement;
 
     constructor() {
         super(...arguments);
@@ -311,19 +314,13 @@ class OfflineMapMaker extends SWCacheClient {
             });
         }
 
-        var options = Util.extend({}, arguments.length > 1 ? arguments[1] : arguments[0]);
-        self._dialogDiv = Util.getDiv(options.dialogDiv);
-        if (!options.dialogDiv) {
-            document.body.appendChild(self._dialogDiv);
-        }
-
         if (self.mapIsOffline) {
             document.querySelectorAll(self.#selectors.OFFLINEHIDDEN).forEach(function (elm) {
                 elm.classList.add(Consts.classes.HIDDEN);
             });
         }
 
-        self.wrap = new TC.wrap.control.OfflineMapMaker(self);
+        self.wrap = new OfflineMapMakerWrapper(self);
 
         self.isDownloading = false;
         self.baseLayers = [];
@@ -528,73 +525,63 @@ class OfflineMapMaker extends SWCacheClient {
             singleSketch: true
         });
         self.boxDraw.setLayer(layer);
-        self.boxDraw
-            .on(Consts.event.DRAWSTART, function (_e) {
-                self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: Consts.msgType.INFO });
-            })
-            .on(Consts.event.DRAWEND, async function (e) {
-                var points = e.feature.geometry[0];
-                var pStart = points[0];
-                var pEnd = points[2];
-                var minx = Math.min(pStart[0], pEnd[0]);
-                var maxx = Math.max(pStart[0], pEnd[0]);
-                var miny = Math.min(pStart[1], pEnd[1]);
-                var maxy = Math.max(pStart[1], pEnd[1]);
-                self.setExtent([minx, miny, maxx, maxy]);
-                const checkboxes = self._dialogDiv.querySelectorAll('input[type=checkbox]');
-                const availableLayers = await self.#getAvailableLayers();
-                checkboxes.forEach(function (checkbox) {
-                    // Comprobamos que la extensión del mapa está disponible a alguna resolución
-                    const layer = availableLayers.find((l) => l.id === checkbox.value);
-                    var li = checkbox;
-                    while (li && li.tagName !== 'LI') {
-                        li = li.parentElement;
-                    }
-                    if (layer.wrap.getCompatibleMatrixSets(map.crs).includes(layer.matrixSet)) {
-                        const tml = self.wrap.getRequestSchemas({
-                            extent: self.extent,
-                            layers: [layer],
-                            crs: map.crs,
-                        })[0].tileMatrixLimits;
+        self.boxDraw.addEventListener(ControlEvent.type.DRAWSTART, function (_e) {
+            self.map.toast(self.getLocaleString('clickOnDownloadAreaOppositeCorner'), { type: Consts.msgType.INFO });
+        });
+        self.boxDraw.addEventListener(ControlEvent.type.DRAWEND, async function (e) {
+            var points = e.feature.geometry[0];
+            var pStart = points[0];
+            var pEnd = points[2];
+            var minx = Math.min(pStart[0], pEnd[0]);
+            var maxx = Math.max(pStart[0], pEnd[0]);
+            var miny = Math.min(pStart[1], pEnd[1]);
+            var maxy = Math.max(pStart[1], pEnd[1]);
+            self.setExtent([minx, miny, maxx, maxy]);
+            const checkboxes = self.#dialogElement.querySelectorAll('input[type=checkbox]');
+            const availableLayers = await self.#getAvailableLayers();
+            checkboxes.forEach(function (checkbox) {
+                // Comprobamos que la extensión del mapa está disponible a alguna resolución
+                const layer = availableLayers.find((l) => l.id === checkbox.value);
+                var li = checkbox;
+                while (li && li.tagName !== 'LI') {
+                    li = li.parentElement;
+                }
+                if (layer.wrap.getCompatibleMatrixSets(map.crs).includes(layer.matrixSet)) {
+                    const tml = self.wrap.getRequestSchemas({
+                        extent: self.extent,
+                        layers: [layer],
+                        crs: map.crs,
+                    })[0].tileMatrixLimits;
 
-                        li.classList.toggle(Consts.classes.HIDDEN, !tml.length);
-                    }
-                    else {
-                        li.classList.add(Consts.classes.HIDDEN);
-                    }
-                });
-                const visibleLi = self._dialogDiv.querySelector(self.#selectors.BLLISTITEM + ':not(.' + Consts.classes.HIDDEN + ')');
-                self._dialogDiv.querySelector(self.#selectors.BLLISTTEXT).innerHTML = self.getLocaleString(visibleLi ? 'selectAtLeastOne' : 'cb.noMapsAtSelectedExtent');
-
-                self.#updateThumbnails();
-                self.#showEstimatedMapSize();
-                Util.showModal(self._dialogDiv.querySelector(`.${self.CLASS}-dialog`), {
-                    openCallback: function () {
-                        setTimeout(function () { // Este timeout evita el pulsado accidental cuando sale el diálogo
-                            checkboxes.forEach(function (cb) {
-                                cb.disabled = false;
-                            });
-                        }, 100);
-                        var time;
-                        if (Date.prototype.toLocaleString) {
-                            var opt = {};
-                            opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
-                            time = new Date().toLocaleString(self.map.getLocale(), opt);
-                        }
-                        else {
-                            time = new Date().toString();
-                        }
-                        self._dialogDiv.querySelector(self.#selectors.NAMETB).value = time;
-                        self.#updateReadyState();
-                    },
-                    closeCallback: function () {
-                        checkboxes.forEach(function (cb) {
-                            cb.disabled = true;
-                        });
-                        self.boxDraw.layer.clearFeatures();
-                    }
-                });
+                    li.classList.toggle(Consts.classes.HIDDEN, !tml.length);
+                }
+                else {
+                    li.classList.add(Consts.classes.HIDDEN);
+                }
             });
+            const visibleLi = self.#dialogElement.querySelector(self.#selectors.BLLISTITEM + ':not(.' + Consts.classes.HIDDEN + ')');
+            self.#dialogElement.querySelector(self.#selectors.BLLISTTEXT).innerHTML = self.getLocaleString(visibleLi ? 'selectAtLeastOne' : 'cb.noMapsAtSelectedExtent');
+
+            self.#updateThumbnails();
+            self.#showEstimatedMapSize();
+            self.#dialogElement.showModal();
+            setTimeout(function () { // Este timeout evita el pulsado accidental cuando sale el diálogo
+                checkboxes.forEach(function (cb) {
+                    cb.disabled = false;
+                });
+            }, 100);
+            var time;
+            if (Date.prototype.toLocaleString) {
+                var opt = {};
+                opt.year = opt.month = opt.day = opt.hour = opt.minute = opt.second = 'numeric';
+                time = new Date().toLocaleString(self.map.getLocale(), opt);
+            }
+            else {
+                time = new Date().toString();
+            }
+            self.#dialogElement.querySelector(self.#selectors.NAMETB).value = time;
+            self.#updateReadyState();
+        });
 
         map.on(Consts.event.CONTROLDEACTIVATE, function (e) {
             if (self.boxDraw === e.control) {
@@ -606,7 +593,7 @@ class OfflineMapMaker extends SWCacheClient {
 
         var addRenderedListNode = function (layer) {
             var result = false;
-            const blList = self._dialogDiv.querySelector(self.#selectors.BLLIST);
+            const blList = self.#dialogElement.querySelector(self.#selectors.BLLIST);
             const isLayerAdded = function () {
                 return !!blList.querySelector('li[data-layer-uid="' + layer.id + '"]');
             };
@@ -650,7 +637,7 @@ class OfflineMapMaker extends SWCacheClient {
                     const layer = e.layer;
                     self.#getAvailableLayers().then((availableBaseLayers) => {
                         if (layer.type === Consts.layerType.WMTS && !availableBaseLayers.find((l) => l.id === layer.id)) {
-                            const li = self._dialogDiv
+                            const li = self.#dialogElement
                                 .querySelector(self.#selectors.BLLIST)
                                 .querySelector('li[data-layer-uid="' + layer.id + '"]');
                             li.parentElement.removeChild(li);
@@ -668,7 +655,7 @@ class OfflineMapMaker extends SWCacheClient {
                 var offCtls = [];
                 self.offlineControls.forEach(function (offCtl) {
                     offCtl = offCtl.substr(0, 1).toUpperCase() + offCtl.substr(1);
-                    offCtls = offCtls.concat(map.getControlsByClass('TC.control.' + offCtl));
+                    offCtls = offCtls.concat(map.getControlsByClass(offCtl));
                 });
 
                 const disablingReason = self.getLocaleString('thisControlCannotBeUsedInOfflineMode');
@@ -833,48 +820,55 @@ class OfflineMapMaker extends SWCacheClient {
 
     async loadTemplates() {
         const self = this;
-        const mainTemplatePromise = import('../templates/tc-ctl-omm.mjs');
-        const mapNodeTemplatePromise = import('../templates/tc-ctl-omm-map-node.mjs');
-        const baseLayerNodeTemplatePromise = import('../templates/tc-ctl-omm-bl-node.mjs');
-        const dialogTemplatePromise = import('../templates/tc-ctl-omm-dialog.mjs');
-        const offlinePanelTemplatePromise = import('../templates/tc-ctl-omm-off-panel.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-omm" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-omm.mjs'
+        );
+        const mapNodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-omm-map-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-omm-map-node.mjs'
+        );
+        const baseLayerNodeTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-omm-bl-node" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-omm-bl-node.mjs'
+        );
+        const offlinePanelTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-omm-off-panel" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-omm-off-panel.mjs'
+        );
 
         const template = {};
         template[self.CLASS] = (await mainTemplatePromise).default;
         template[self.CLASS + '-map-node'] = (await mapNodeTemplatePromise).default;
         template[self.CLASS + '-bl-node'] = (await baseLayerNodeTemplatePromise).default;
-        template[self.CLASS + '-dialog'] = (await dialogTemplatePromise).default;
         template[self.CLASS + '-off-panel'] = (await offlinePanelTemplatePromise).default;
         self.template = template;
     }
 
     async render(callback) {
         const self = this;
-        self._dialogDiv.innerHTML = await self.getRenderedHtml(self.CLASS + '-dialog', null);
-        self._dialogDiv.querySelector(self.#selectors.NAMETB).addEventListener(Consts.event.CLICK, function (e) {
-            e.preventDefault();
-            this.selectionStart = 0;
-            this.selectionEnd = this.value.length;
-            this.focus();
-        });
 
         const renderObject = { storedMaps: self.storedMaps, listId: self.CLASS + '-list-' + TC.getUID() };
-        await self.renderData(renderObject, function () {
-            const li = self.#getListElementByMapUrl(location.href);
-            if (li) {
-                li.classList.add(Consts.classes.ACTIVE);
-            }
+        await self.renderData(renderObject);
+        self.#dialogElement = self.div.querySelector(`.${self.CLASS}-dialog`);
+        const li = self.#getListElementByMapUrl(location.href);
+        if (li) {
+            li.classList.add(Consts.classes.ACTIVE);
+        }
 
-            self.addUIEventListeners();
+        self.addUIEventListeners();
 
-            self.controller = new Controller(self.model, new Observer(self.div));
-            self.controller.add(self._dialogDiv);
-            self.updateModel();
+        self.controller = new Controller(self.model, new Observer(self.div));
+        self.updateModel();
 
-            if (Util.isFunction(callback)) {
-                callback();
-            }
-        });
+        if (Util.isFunction(callback)) {
+            callback();
+        }
+
 
         // Control para evitar que se cancele una descarga de cache al salir de la página
         window.addEventListener('beforeunload', function (e) {
@@ -888,10 +882,17 @@ class OfflineMapMaker extends SWCacheClient {
 
     addUIEventListeners() {
         const self = this;
-        self._dialogDiv.querySelector(self.#selectors.OKBTN).addEventListener(Consts.event.CLICK, function () {
+
+        self.#dialogElement.querySelector(self.#selectors.NAMETB).addEventListener(Consts.event.CLICK, function (e) {
+            e.preventDefault();
+            this.selectionStart = 0;
+            this.selectionEnd = this.value.length;
+            this.focus();
+        });
+        self.#dialogElement.querySelector(self.#selectors.OKBTN).addEventListener(Consts.event.CLICK, function () {
             self.generateCache();
         }, { passive: true });
-        self._dialogDiv.querySelector(self.#selectors.NAMETB).addEventListener('input', function () {
+        self.#dialogElement.querySelector(self.#selectors.NAMETB).addEventListener('input', function () {
             self.#updateReadyState();
         });
         self.div.querySelector(self.#selectors.NEWBTN).addEventListener(Consts.event.CLICK, function () {
@@ -1013,7 +1014,7 @@ class OfflineMapMaker extends SWCacheClient {
         trackSearch.addEventListener('keyup', searchListener);
         trackSearch.addEventListener('search', searchListener);
 
-        self._dialogDiv.querySelector(self.#selectors.BLLIST).addEventListener('change', TC.EventTarget.listenerBySelector('input[type=checkbox]', async function (e) {
+        self.#dialogElement.querySelector(self.#selectors.BLLIST).addEventListener('change', TC.EventTarget.listenerBySelector('input[type=checkbox]', async function (e) {
             const checkbox = e.target;
             if (checkbox.checked) {
                 const layer = (await self.#getAvailableLayers()).find((l) => l.id === checkbox.value);
@@ -1036,7 +1037,7 @@ class OfflineMapMaker extends SWCacheClient {
             self.#updateMaxResolutionWarning();
         }));
 
-        const range = self._dialogDiv.querySelector(self.#selectors.RNGMAXRES);
+        const range = self.#dialogElement.querySelector(self.#selectors.RNGMAXRES);
         const rangeListener = function (e) {
             self.#updateResolutions({
                 rangeValue: e.target.value
@@ -1047,17 +1048,29 @@ class OfflineMapMaker extends SWCacheClient {
         };
         range.addEventListener('input', rangeListener);
         range.addEventListener('change', rangeListener);
+
+        self.#dialogElement.addEventListener('close', function () {
+            self.#dialogElement.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+                cb.disabled = true;
+            });
+            self.boxDraw.layer.clearFeatures();
+        });
+
+        const closeDialog = () => self.#dialogElement.close();
+        self.#dialogElement.querySelectorAll(`sitna-button.tc-modal-close`).forEach((btn) => {
+            btn.addEventListener(Consts.event.CLICK, closeDialog);
+        });
     }
 
     #setDownloadingState() {
         const self = this;
         self.#state = OfflineMapMaker.state.DOWNLOADING;
-        Util.closeModal();
+        self.#dialogElement.close();
         self.showDownloadProgress(0, 1);
         self.div.querySelector(self.#selectors.NEW).classList.add(Consts.classes.HIDDEN);
         self.div.querySelector(self.#selectors.DRAWING).classList.add(Consts.classes.HIDDEN);
         self.div.querySelector(self.#selectors.PROGRESS).classList.remove(Consts.classes.HIDDEN);
-        self._dialogDiv.querySelector(self.#selectors.OKBTN).disabled = true;
+        self.#dialogElement.querySelector(self.#selectors.OKBTN).disabled = true;
         self.div.querySelector(self.#selectors.NEWBTN).disabled = true;
         self.layer.clearFeatures();
         self.boxDraw.cancel();
@@ -1073,9 +1086,9 @@ class OfflineMapMaker extends SWCacheClient {
         self.div.querySelectorAll(self.#selectors.LISTITEM).forEach(function (li) {
             li.classList.add(Consts.classes.DISABLED);
         });
-        self._dialogDiv.querySelector(self.#selectors.OKBTN).disabled = true;
+        self.#dialogElement.querySelector(self.#selectors.OKBTN).disabled = true;
         self.div.querySelector(self.#selectors.NEWBTN).disabled = false;
-        self._dialogDiv.querySelector(self.#selectors.TILECOUNT).innerHTML = '';
+        self.#dialogElement.querySelector(self.#selectors.TILECOUNT).innerHTML = '';
         self.boxDraw.cancel();
     }
 
@@ -1128,8 +1141,8 @@ class OfflineMapMaker extends SWCacheClient {
 
     #updateResolutions(options = {}) {
         const self = this;
-        const resDiv = self._dialogDiv.querySelector(`.${self.CLASS}-res`);
-        const range = self._dialogDiv.querySelector(self.#selectors.RNGMAXRES);
+        const resDiv = self.#dialogElement.querySelector(`.${self.CLASS}-res`);
+        const range = self.#dialogElement.querySelector(self.#selectors.RNGMAXRES);
         var resolutions = self.getResolutions();
         var resText, resLevel, resLeft;
         if (resolutions.length) {
@@ -1169,8 +1182,8 @@ class OfflineMapMaker extends SWCacheClient {
             self.minResolution = 0;
             range.disabled = true;
         }
-        self._dialogDiv.querySelector(self.#selectors.RESOLUTIONPANEL).classList.toggle(Consts.classes.HIDDEN, !!range.disabled);
-        self._dialogDiv.querySelector(self.#selectors.TILECOUNT).classList.toggle(Consts.classes.HIDDEN, !!range.disabled);
+        self.#dialogElement.querySelector(self.#selectors.RESOLUTIONPANEL).classList.toggle(Consts.classes.HIDDEN, !!range.disabled);
+        self.#dialogElement.querySelector(self.#selectors.TILECOUNT).classList.toggle(Consts.classes.HIDDEN, !!range.disabled);
 
         resDiv.style.left = resLeft;
         resDiv.innerHTML = resText;
@@ -1178,7 +1191,7 @@ class OfflineMapMaker extends SWCacheClient {
 
     #updateThumbnails() {
         const self = this;
-        self._dialogDiv.querySelectorAll(`.${self.CLASS}-bl-node input[type=checkbox]`).forEach(function (cb, _idx) {
+        self.#dialogElement.querySelectorAll(`.${self.CLASS}-bl-node input[type=checkbox]`).forEach(function (cb, _idx) {
             if (cb.checked) {
                 var schema = self.requestSchemas.find(function (elm) {
                     return elm.layerId === cb.value;
@@ -1244,7 +1257,7 @@ class OfflineMapMaker extends SWCacheClient {
             this.estimatedMapSize = Math.round(this.tileCount * this.options.averageTileSize / 1048576);
             text = this.getLocaleString('xTiles', { quantity: formatNumber(this.tileCount) }) + ' (' + this.#formatSize(this.estimatedMapSize) + ')';
         }
-        this._dialogDiv.querySelector(this.#selectors.TILECOUNT).innerHTML = text;
+        this.#dialogElement.querySelector(this.#selectors.TILECOUNT).innerHTML = text;
     }
 
     #updateMaxResolutionWarning() {
@@ -1253,7 +1266,7 @@ class OfflineMapMaker extends SWCacheClient {
             const offlineMapWidth = (this.extent[2] - this.extent[0]) / this.minResolution;
             const offlineMapHeight = (this.extent[3] - this.extent[1]) / this.minResolution;
             const isEnough = offlineMapHeight > rect.width && offlineMapWidth > rect.height;
-            this._dialogDiv.querySelector(`.${this.CLASS}-res-warn`).classList.toggle(Consts.classes.HIDDEN, isEnough)
+            this.#dialogElement.querySelector(`.${this.CLASS}-res-warn`).classList.toggle(Consts.classes.HIDDEN, isEnough)
         }
     }
 
@@ -1360,10 +1373,10 @@ class OfflineMapMaker extends SWCacheClient {
 
     #updateReadyState() {
         const self = this;
-        self._dialogDiv.querySelector(self.#selectors.OKBTN).disabled =
+        self.#dialogElement.querySelector(self.#selectors.OKBTN).disabled =
             !self.extent ||
-            self._dialogDiv.querySelector(self.#selectors.NAMETB).value.length === 0 ||
-            self._dialogDiv.querySelector(self.#selectors.RNGMAXRES).disabled;
+            self.#dialogElement.querySelector(self.#selectors.NAMETB).value.length === 0 ||
+            self.#dialogElement.querySelector(self.#selectors.RNGMAXRES).disabled;
     }
 
     setReadyState() {
@@ -1376,9 +1389,9 @@ class OfflineMapMaker extends SWCacheClient {
         self.div.querySelectorAll(self.#selectors.LISTITEM).forEach(function (li) {
             li.classList.remove(Consts.classes.DISABLED);
         });
-        self._dialogDiv.querySelector(self.#selectors.OKBTN).disabled = true;
+        self.#dialogElement.querySelector(self.#selectors.OKBTN).disabled = true;
         self.div.querySelector(self.#selectors.NEWBTN).disabled = false;
-        self._dialogDiv.querySelector(self.#selectors.TILECOUNT).innerHTML = '';
+        self.#dialogElement.querySelector(self.#selectors.TILECOUNT).innerHTML = '';
         self.extent = null;
         self.#loadedCount = 0;
         if (self.boxDraw && self.map.activeControl === self.boxDraw) {
@@ -1397,16 +1410,16 @@ class OfflineMapMaker extends SWCacheClient {
         self.div.querySelector(self.#selectors.PROGRESS).classList.add(Consts.classes.HIDDEN);
         self.div.querySelector(self.#selectors.DRAWING).classList.remove(Consts.classes.HIDDEN);
         self.map.toast(self.getLocaleString('clickOnDownloadAreaFirstCorner'), { type: Consts.msgType.INFO });
-        self._dialogDiv.querySelector(self.#selectors.OKBTN).disabled = true;
+        self.#dialogElement.querySelector(self.#selectors.OKBTN).disabled = true;
         self.div.querySelector(self.#selectors.NEWBTN).disabled = true;
-        self._dialogDiv.querySelector(self.#selectors.NAMETB).value = '';
+        self.#dialogElement.querySelector(self.#selectors.NAMETB).value = '';
         self.boxDraw.activate();
     }
 
     generateCache() {
         const self = this;
         const options = {
-            mapName: self._dialogDiv.querySelector(self.#selectors.NAMETB).value
+            mapName: self.#dialogElement.querySelector(self.#selectors.NAMETB).value
         };
         if (self.findStoredMap({ name: options.mapName })) {
             TC.alert(self.getLocaleString('cb.mapNameAlreadyExists.error', options));
