@@ -3,13 +3,12 @@ import TC from '../../TC.js';
 import Util from '../Util.js';
 import Geometry from '../Geometry.js';
 import WebComponentControl from './WebComponentControl.js';
+import infoShare from './infoShare.js';
 import Search from './Search.js';
 import Controller from '../Controller.js';
 import Observer from '../Observer.js';
 import Button from '../../SITNA/ui/Button.js';
 import OpenRouteService from '../tool/OpenRouteService.js';
-
-const elementName = 'sitna-route';
 
 class RouteModel {
     constructor() {
@@ -23,6 +22,8 @@ class RouteModel {
         this["cycling-regular"] = "";
         this["cycling-mountain"] = "";
         this["cycling-electric"] = "";
+        this["foot-walking"] = "";
+        this["foot-hiking"] = "";
         this.wheelchair = "";
         this.routePreference = "";
         this.recommended = "";
@@ -35,16 +36,24 @@ class RouteModel {
         this.elevationProfile = "";
         this["route.instructions"] = "";
         this.useCurrentLocation = "";
+        this.shareRoute = "";
+        this.downloadRoute = "";
     }
 }
 
 class Route extends WebComponentControl {
+
+    static {
+        customElements.define('sitna-route', this);
+    }
+
     destinations = [
         {},
         {},
     ];
     clickControl;
     routeLayer;
+    currentRoute;
     highlightLayer;
     destinationLayer;
     preference;
@@ -57,13 +66,14 @@ class Route extends WebComponentControl {
     #alternativeRoutes = [];
     #approximationLines = [];
     #searchOptions;
+    #importingState = false;
 
     constructor() {
         super(...arguments);
         this.model = new RouteModel();
         this.service = new OpenRouteService(this.options);
 
-        this.styles.approximationLineStyle = this.options.styles?.approximationLine || {
+        this.styles.approximationLine = this.options.styles?.approximationLine || {
             strokeColor: '#000000',
             strokeWidth: 2,
             strokeOpacity: 0.7,
@@ -79,7 +89,7 @@ class Route extends WebComponentControl {
             labelOutlineWidth: 0,
         };
 
-        this.styles.endMarker = this.options.styles?.endMarkerStyle || {
+        this.styles.endMarker = this.options.styles?.endMarker || {
             url: TC.apiLocation + 'css/img/marker-route-end.png',
             width: 32,
             height: 32,
@@ -102,6 +112,18 @@ class Route extends WebComponentControl {
             strokeWidth: 7,
             strokeOpacity: 0.8,
         };
+
+        this.styles.routeLabel = this.options.styles?.routeLabel || {
+            label: '${summary.label}',
+            labelOffset: [0, 0],
+            font: 'bold 11pt sans-serif',
+            fontColor: "#ffffff",
+            labelOutlineColor: "#000000",
+            strokeWidth: 0,
+            fillOpacity: 0,
+        };
+
+        this.styles.routeLabel.labelBackgroundColor ??= this.styles.route.strokeColor;
 
         this.styles.alternativeRoute = this.options.styles?.alternativeRoute || {
             strokeOpacity: 0.8,
@@ -127,14 +149,44 @@ class Route extends WebComponentControl {
 
         this.styles.alternativeRouteLabel.labelBackgroundColor ??= alternativeColor;
 
+        this.icons = Object.assign({
+            // uFE0E is the variation selector that forces the emoji to be displayed in text style rather than emoji style, which is more appropriate for map icons
+            "driving-car": '🚘\uFE0E',
+            "driving-hgv": '🚚\uFE0E',
+            "cycling": '🚲\uFE0E',
+            "cycling-regular": '🚲\uFE0E',
+            "cycling-road": '🚲\uFE0E',
+            "cycling-mountain": '🚲\uFE0E',
+            "foot-walking": '🚶\uFE0E',
+            "foot-hiking": '🥾\uFE0E',
+            "wheelchair": '♿\uFE0E',
+        }, this.options.icons);
+
+
         this.#searchOptions = this.options.search;
     }
 
     async loadTemplates() {
-        const mainTemplatePromise = import('../templates/tc-ctl-route.mjs');
-        const destinationTemplatePromise = import('../templates/tc-ctl-route-destination.mjs');
-        const featureTemplatePromise = import('../templates/tc-ctl-route-feature.mjs');
-        const instructionsTemplatePromise = import('../templates/tc-ctl-route-instructions.mjs');
+        const mainTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-route" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-route.mjs'
+        );
+        const destinationTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-route-destination" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-route-destination.mjs'
+        );
+        const featureTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-route-feature" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-route-feature.mjs'
+        );
+        const instructionsTemplatePromise = import(
+            /* webpackChunkName: "tc-ctl-route-instructions" */
+            /* webpackMode: "lazy" */
+            '../templates/tc-ctl-route-instructions.mjs'
+        );
         
         this.template = {
             [this.CLASS]: (await mainTemplatePromise).default,
@@ -145,11 +197,10 @@ class Route extends WebComponentControl {
     }
 
     async register(map) {
-        this.#searchOptions ??= { ...map.options.controls?.search };
-
         await super.register(map);
 
         this.clickControl = await map.addControl('click', {
+            id: this.getUID(),
             callback: (coord) => {
                 this.onMapClick(coord);
             }
@@ -219,8 +270,10 @@ class Route extends WebComponentControl {
 
         map.on(Consts.event.RESULTSPANELCLOSE, (e) => {
             if (e.control === this.containerPanel) {
-                this.clickControl.deactivate();
                 this.clear();
+                setTimeout(() => {
+                    this.clickControl.deactivate();
+                }, 200);
             }
         });
 
@@ -228,9 +281,11 @@ class Route extends WebComponentControl {
             const feature = e.control.currentFeature;
             if (feature) {
                 const routeIndex = this.#alternativeRoutes.findIndex((route) => route.feature === feature || route.label === feature);
-                if (routeIndex > 0) {
+                if (routeIndex >= 0) {
                     e.control.hide();
-                    this.setActiveAlternative(routeIndex);
+                    if (routeIndex > 0) {
+                        this.setActiveAlternative(routeIndex);
+                    }
                 }
             }
         });
@@ -243,6 +298,8 @@ class Route extends WebComponentControl {
 
         this.#destinationList = this.querySelector(`.${this.CLASS}-destinations`);
         this.#routeFeatureList = this.querySelector(`.${this.CLASS}-features`);
+
+        this.setProfile();
         
         for (const destination of this.destinations) {
             await this.renderDestination(destination);
@@ -273,6 +330,22 @@ class Route extends WebComponentControl {
             this.#destinationList.replaceChildren(...children);
             this.#onDestinationSet();
         });
+
+        this.querySelector(`sitna-button.${this.CLASS}-share`).addEventListener(Consts.event.CLICK, async (_e) => {
+            await this.getShareDialog();
+            this.showShareDialog();
+        });
+
+        this.querySelector(`sitna-button.${this.CLASS}-download`).addEventListener(Consts.event.CLICK, async (_e) => {
+            this.showDownloadDialog();
+        });
+
+        const shareDialog = this.querySelector(`dialog.${this.CLASS}-share-dialog`);
+        if (shareDialog) {
+            shareDialog.querySelector(`sitna-button.tc-modal-close`).addEventListener(Consts.event.CLICK, (_e) => {
+                shareDialog.close();
+            });
+        }
 
         this.querySelectorAll(`.${this.CLASS}-header sitna-button[data-profile]`).forEach((btn) => {
             btn.addEventListener(Consts.event.CLICK, (e) => {
@@ -320,16 +393,26 @@ class Route extends WebComponentControl {
                 this.calculateRoute();
             }
         });
+
+        this.addEventListener("input", (e) => {
+            const destinationIndex = this.destinations.findIndex((dest) => dest.searchControl?.textInput === e.target);
+            if (destinationIndex >= 0) {
+                this.#clearDestinationFeatures(destinationIndex);
+                this.calculateRoute();
+            }
+        });
     }
 
-    show() {
-        super.show();
+    async show() {
+        await super.show();
         if (this.options.displayMode === WebComponentControl.displayMode.PANEL) {
-            this.getContainerPanel().then(panel => panel.model.title = this.getLocaleString('directions'));
+            const panel = await this.getContainerPanel();
+            panel.model.title = this.getLocaleString('directions');
         }
     }
 
     setProfile(profile) {
+        profile = profile || this.#profile;
         this.querySelectorAll(`.${this.CLASS}-header sitna-button[data-profile]`).forEach((btn) => btn.active = false);
         const activeButton = this.querySelector(`.${this.CLASS}-header sitna-button[data-profile="${profile}"]`);
         if (activeButton) activeButton.active = true;
@@ -341,7 +424,9 @@ class Route extends WebComponentControl {
         }
     }
 
-    async calculateRoute() {
+    async calculateRoute(options = {}) {
+        if (this.#importingState) return;
+
         this.clearRoute();
         if (this.destinations.every((dest) => dest.point)) {
             for (let i = 0, ii = this.destinations.length; i < ii; i++) {
@@ -361,23 +446,35 @@ class Route extends WebComponentControl {
                 response = await this.map.wait(this.service.getRoute(routeOptions));
             }
             catch (e) {
-                TC.error(this.getLocaleString("routeError", { message: e.message }));
+                TC.error(this.getLocaleString("routeError", { message: this.getLocaleString(e.message) }));
                 return;
             }
             this.#currentRouteResponse = this.service.parseResponse(response);
-            for (const geoJsonFeature of this.#currentRouteResponse.features) {
-                this.#alternativeRoutes.push({
-                    feature: await this.addRoute(geoJsonFeature)
-                });
-            }
+            await this.#renderRouteFromResponse();
 
-            this.setActiveAlternative(0);
-            await this.displayAlternativeRouteLabels();
+            this.querySelector(`sitna-button.${this.CLASS}-share`).disabled = false;
+            this.querySelector(`sitna-button.${this.CLASS}-download`).disabled = false;
 
-            setTimeout(() => {
-                this.map.zoomToFeatures(this.routeLayer.features);
-            }, Consts.ZOOM_ANIMATION_DURATION * 1.2); // wait for the zoom animation to finish
+            if (options.zoom ?? true) this.#doZoom();
         }
+    }
+
+    async #renderRouteFromResponse() {
+        for (const geoJsonFeature of this.#currentRouteResponse.features) {
+            this.#alternativeRoutes.push({
+                feature: await this.addRoute(geoJsonFeature)
+            });
+        }
+        this.toShare = {
+            destinations: this.destinations.map((d) => d.searchControl.exportState() ?? d.marker.getCoordinates()),
+        };
+        await this.setActiveAlternative(0);
+    }
+
+    #doZoom() {
+        setTimeout(() => {
+            this.map.zoomToFeatures(this.routeLayer.features);
+        }, Consts.ZOOM_ANIMATION_DURATION * 1.2); // wait for the zoom animation to finish
     }
 
     clear() {
@@ -398,6 +495,9 @@ class Route extends WebComponentControl {
         this.#currentRouteResponse = null;
         this.#alternativeRoutes.length = 0;
         this.#approximationLines.length = 0;
+        this.querySelector(`sitna-button.${this.CLASS}-share`).disabled = true;
+        this.querySelector(`sitna-button.${this.CLASS}-download`).disabled = true;
+        this.toShare = null;
     }
 
     async setActiveAlternative(index) {
@@ -413,18 +513,26 @@ class Route extends WebComponentControl {
             for (let i = 1; i < this.#alternativeRoutes.length; i++) {
                 const feature = this.#alternativeRoutes[i].feature;
                 feature.showsPopup = true;
-                await this.routeLayer.addFeature(feature);
+                await this.routeLayer.addFeature(feature);                
                 feature.setStyle(this.styles.alternativeRoute);
             }
-            route.feature = await this.routeLayer.addFeature(route.feature.clone());
+            route.feature = await this.routeLayer.addFeature(route.feature.clone());            
             route.feature.showsPopup = false;
             route.feature.setStyle(null);
-            await this.displayAlternativeRouteLabels();
+            this.currentRoute = route.feature;
+            this.dispatchEvent(new Event("change"));
+            await this.displayRouteLabels();
 
             await this.#setApproximationLines(route.feature);
             this.#routeFeatureList.innerHTML = '';
             await this.renderRoute(route.feature);
+            if (this.toShare) this.toShare.index = index;
         }
+    }
+
+    getAlternativeRouteIndex(feature) {
+        return this.#alternativeRoutes.findIndex((route) => route.feature === feature || route.label === feature)
+
     }
 
     #setMarkerStyle(marker, index) {
@@ -446,6 +554,7 @@ class Route extends WebComponentControl {
         if (emptyIndex < 0) return;
         const feature = await this.destinationLayer?.addMarker(coord, { showsPopup: false });
         this.#onMarkerUpdate(feature, emptyIndex);
+        this.clickControl.deactivate();
     }
 
     async addCurrentLocation() {
@@ -480,31 +589,44 @@ class Route extends WebComponentControl {
     onMarkerDrop(feature) {
         const destinationIndex = this.destinations.findIndex((dest) => dest.marker === feature);
         if (destinationIndex >= 0) {
-            delete this.destinations[destinationIndex].marker
+            delete this.destinations[destinationIndex].marker;
             this.#onMarkerUpdate(feature, destinationIndex);
         }
     }
 
     getDistanceText(distance) {
-        return Util.getDistanceText(distance, this.map.getLocale());
+        const locale = this.map.getLocale();
+        if (distance >= 1000) {
+            return Util.formatNumber(Math.round(distance / 100) / 10, locale) + ' km';
+        }
+        return Util.getDistanceText(distance, locale);
     }
 
     getDurationText(duration) {
         const locale = this.map.getLocale();
         const seconds = Math.round(duration % 60);
-        const hours = Math.floor(duration / 3600);
-        const minutes = Math.floor((duration % 3600) / 60);
+        let hours = Math.floor(duration / 3600);
+        let minutes = Math.floor((duration % 3600) / 60);
         const parts = [];
-        if (hours > 0) {
-            parts.push(Util.formatNumber(hours, locale) + ' h');
-        }
-        if (minutes > 0) {
-            parts.push(Util.formatNumber(minutes, locale) + ' m');
-        }
-        if (minutes === 0 && hours === 0 || seconds > 0) {
+        if (minutes === 0 && hours === 0) {
             parts.push(Util.formatNumber(seconds, locale) + ' s');
         }
-        return parts.join(', ');
+        else {
+            if (seconds >= 30) {
+                minutes++;
+                if (minutes === 60) {
+                    minutes = 0;
+                    hours++;
+                }
+            }
+            if (minutes > 0) {
+                parts.unshift(Util.formatNumber(minutes, locale) + ' min');
+            }
+            if (hours > 0) {
+                parts.unshift(Util.formatNumber(hours, locale) + ' h');
+            }
+        }
+        return parts.join(' ');
     }
 
     getRouteFeature() {
@@ -524,12 +646,14 @@ class Route extends WebComponentControl {
         }
         await this.setDestination(destinationIndex, destination);
         destination.searchControl.textInput.value = destination.title;
+        destination.searchControl.hideExamples();
         destination.searchControl.cleanMap();
     }
 
     async onGetDirectionsClick(e) {
         const caller = this.map.getControlById(e.currentTarget.dataset.callerId);
         if (caller) {
+            const callerState = caller.exportState() ?? {};
             this.clear();
             this.caller = caller;
             const feature = caller.layer.features[0];
@@ -538,12 +662,16 @@ class Route extends WebComponentControl {
                 routeOptions.title = caller.div.querySelector('input[type="search"]').value;
             }
             await this.setDestination(this.destinations.length - 1, routeOptions);
-            this.destinations.at(-1).searchControl.importState(caller.exportState() ?? {});
+            for (const dest of this.destinations) {
+                if (dest.searchControl) await this.#importSearchConfiguration(dest.searchControl);
+            }
+            await this.destinations.at(-1).searchControl.importState(callerState);
             if (this.options.displayMode === WebComponentControl.displayMode.DEFAULT) caller.hide();
             caller.textInput.value = "";
+            caller.textInput.blur();
+            caller.hideExamples();
             caller.shareButton?.classList.add(Consts.classes.HIDDEN);
             caller.cleanMap();
-            delete caller.toShare;
         }
         this.show();
         if (this.options.displayMode === WebComponentControl.displayMode.DEFAULT) this.highlight();
@@ -555,7 +683,10 @@ class Route extends WebComponentControl {
         await this.renderDestination(options);
         await this.#setDestinationPoint(options);
         this.#onDestinationSet();
-        setTimeout(() => options.searchControl.div.querySelector('input[type="search"]').focus(), 100);
+        setTimeout(() => {
+            options.searchControl.div.querySelector('input[type="search"]').focus();
+            this.clickControl.activate();
+        }, 100);
     }
 
     async setDestination(index, options = {}) {
@@ -577,6 +708,18 @@ class Route extends WebComponentControl {
             options.searchControl = searchControl;
         }
         this.#onDestinationSet();
+    }
+
+    #clearDestinationFeatures(index) {
+        if (index >= 0) {
+            const destination = this.destinations[index];
+            if (destination.marker) {
+                this.destinationLayer.removeFeature(destination.marker);
+                delete destination.marker;
+            }
+            if (destination.feature) delete destination.feature;
+            if (destination.point) delete destination.point;
+        }
     }
 
     async #addApproximationLine(from, to) {
@@ -629,13 +772,23 @@ class Route extends WebComponentControl {
             if (typeof obj.duration === 'number') obj.durationText = this.getDurationText(obj.duration);
             if (typeof obj.duration === 'number' && typeof obj.duration === 'number') obj.label = ` ${obj.distanceText} / ${obj.durationText} `;
         }
+        const addProfileIcon = (obj) => {
+            const profile = this.#currentRouteResponse?.metadata?.query?.profile;
+            const iconText = this.icons[profile];
+            if (iconText && obj.label) {
+                obj.label = ` ${iconText} ${obj.label}`;
+            }
+        };
         addMagnitudeText(lineProperties.summary);
+        addProfileIcon(lineProperties.summary);
         for (let i = 0, ii = lineProperties.segments.length; i < ii; i++) {
             const segment = lineProperties.segments[i];
             segment.id = i + 1;
             addMagnitudeText(segment);
+            addProfileIcon(segment);
             for (const step of segment.steps) {
                 addMagnitudeText(step);
+                addProfileIcon(step);
             }
         }
 
@@ -647,19 +800,35 @@ class Route extends WebComponentControl {
         return result;
     }
 
-    async displayAlternativeRouteLabels() {
+    async displayRouteLabels() {
+        // Calculamos la posicición de la etiqueta de cada ruta alternativa buscando el punto más alejado de la ruta principal y colocándola ahí
+        // Adicionalmente, metemos la posición de las etiquetas previas en el cálculo de distancias para evitar que se amontonen todas en el mismo punto
         for (const route of this.#alternativeRoutes) {
             if (route.label) this.routeLayer.removeFeature(route.label);
         }
-        const mainRouteGeometry = this.#alternativeRoutes[0].feature.getCoordinates();
+        let referenceGeometry = this.#alternativeRoutes[0].feature.getCoordinates().slice();
         for (let i = 1; i < this.#alternativeRoutes.length; i++) {
             const route = this.#alternativeRoutes[i];
             const routeGeometry = route.feature.getCoordinates();
-            const minDistances = routeGeometry.map((coord) => Math.min(...mainRouteGeometry.map((mainCoord) => Geometry.getSquaredDistance(coord, mainCoord))))
+            const minDistances = routeGeometry.map((coord) => Math.min(...referenceGeometry.map((mainCoord) => Geometry.getSquaredDistance(coord, mainCoord))))
             const maxDistanceIndex = minDistances.indexOf(Math.max(...minDistances));
-            route.label = await this.routeLayer.addPoint(routeGeometry[maxDistanceIndex], {
+            const labelPosition = routeGeometry[maxDistanceIndex];
+            route.label = await this.routeLayer.addPoint(labelPosition, {
                 ...this.styles.alternativeRouteLabel,
                 data: route.feature.getData(),
+            });
+            referenceGeometry.push(labelPosition);
+        }
+
+        // Si hay más de una ruta alternativa, colocamos la etiqueta de la ruta principal, en el punto medio de la misma
+        if (this.#alternativeRoutes.length > 1) {
+            const mainRoute = this.#alternativeRoutes[0];
+            const mainRouteLength = mainRoute.feature.getLength();
+            const middlePoint = Geometry.getPointAlongLine(mainRoute.feature.getCoordinates(), mainRouteLength / 2);
+            mainRoute.label = await this.routeLayer.addPoint(middlePoint, {
+                ...this.styles.routeLabel,
+                data: mainRoute.feature.getData(),
+                showsPopup: false,
             });
         }
     }
@@ -721,7 +890,12 @@ class Route extends WebComponentControl {
         const emptyIndex = this.#getFirstEmptyDestinationSlotIndex();
         this.setActiveDestination(emptyIndex);
         const searchControl = this.destinations[emptyIndex]?.searchControl;
-        if (searchControl?.textInput.value.length === 0) setTimeout(() => searchControl.showExamples(), 200);
+        setTimeout(() => {
+            if (searchControl?.textInput.value.length === 0 &&
+                searchControl?.div.querySelector(`.${searchControl.CLASS}-box`).classList.contains(Consts.classes.ACTIVE)) {
+                searchControl.showExamples();
+            }
+        }, 500);
         this.calculateRoute();
     }
 
@@ -766,6 +940,7 @@ class Route extends WebComponentControl {
             hasGeolocation: 'geolocation' in navigator,
         });
         let previous;
+        let searchControl;
         if (index >= 0) {
             previous = this.#destinationList.children[index];
         }
@@ -773,7 +948,7 @@ class Route extends WebComponentControl {
             index = this.destinations.length;
         }
         if (previous) {
-            options.searchControl = this.destinations[index].searchControl;
+            searchControl = options.searchControl = this.destinations[index].searchControl;
         }
         else {
             const html = await this.getRenderedHtml(this.CLASS + '-destination');
@@ -786,25 +961,46 @@ class Route extends WebComponentControl {
                 route: false,
                 share: false,
             };
-            const searchControl = new Search(searchOptions);
+            searchControl = new Search(searchOptions);
             options.searchControl = searchControl;
             await this.map?.addControl(searchControl);
-            options.searchControl.div.querySelector('input[type="search"]').value = options.title || '';
-            const oldShowExamples = options.searchControl.showExamples;
+            const searchInput = searchControl.div.querySelector('input[type="search"]');
+            searchInput.value = options.title || '';
+            if (searchInput.value.length > 0) searchControl.hideExamples();
+
+            const oldShowExamples = searchControl.showExamples;
             const self = this;
-            options.searchControl.showExamples = function () {
+            searchControl.showExamples = function () {
                 oldShowExamples.call(this);
-                options.searchControl.examplesList.insertAdjacentHTML('afterbegin', instructions);
-                self.controller.add(options.searchControl.examplesList.querySelector(`.${self.CLASS}-instructions`));
-                options.searchControl.examplesList.querySelector('li:first-of-type sitna-button')
+                searchControl.examplesList.insertAdjacentHTML('afterbegin', instructions);
+                self.controller.add(searchControl.examplesList.querySelector(`.${self.CLASS}-instructions`));
+                searchControl.examplesList.querySelector('li:first-of-type sitna-button')
                     .addEventListener(Consts.event.CLICK, (_e) => {
-                        options.searchControl.hideExamples();
+                        searchControl.hideExamples();
                         self.addCurrentLocation();
                     });
-            };
+            };           
             const firstEmptyIndex = this.#getFirstEmptyDestinationSlotIndex();
             if (firstEmptyIndex === index) {
                 this.setActiveDestination(index);
+            }
+        }
+        if (searchControl && !this.#searchOptions) {
+            // Si no se han pasado opciones de búsqueda, usamos las del control de búsquedas existente
+            await this.#importSearchConfiguration(searchControl);
+        }
+    }
+
+    async #importSearchConfiguration(searchControl) {
+        await this.map.ready();
+        const existingSearchControl = this.map.getControlsByClass(Search)[0];
+        if (existingSearchControl) {
+            for (const key of Object.keys(existingSearchControl.availableSearchTypes)) {
+                searchControl.availableSearchTypes[key] = existingSearchControl.availableSearchTypes[key];
+            }
+            searchControl.allowedSearchTypes.length = 0;
+            for (const allowedSearchType of existingSearchControl.allowedSearchTypes) {
+                searchControl.addAllowedSearchType(allowedSearchType.typeName);
             }
         }
     }
@@ -823,7 +1019,14 @@ class Route extends WebComponentControl {
         const destination = this.destinations.find((destination) => destination.searchControl);
         if (destination) {
             this.querySelectorAll(`.${destination.searchControl.CLASS}-box`).forEach((destElm, idx) => {
-                destElm.classList.toggle(Consts.classes.ACTIVE, idx === index);
+                const isActive = idx === index;
+                const searchCtl = this
+                    .destinations
+                    .find((destination) => destination.searchControl?.div.contains(destElm))
+                    ?.searchControl;
+                destElm.classList.toggle(Consts.classes.ACTIVE, isActive);
+                if (isActive) this.clickControl?.activate();
+                else searchCtl?.hideExamples();
             });
         }
     }
@@ -846,6 +1049,91 @@ class Route extends WebComponentControl {
         if (!control.div.querySelector(`.${this.CLASS}-directions-btn`)) {
             const button = this.#createDirectionsButton({ caller: control });
             control.button.insertAdjacentElement('afterend', button);
+        }
+    }
+
+    showShareDialog(dialogDiv) {
+        //this.toShare = this.exportQuery();
+        return infoShare.showShareDialog.call(this, dialogDiv);
+    }
+
+    showDownloadDialog() {
+        const processDestinationName = (destination) => {
+            if (destination.searchControl) {
+                // Reemplazamos los caracteres no válidos para nombres de archivo por guiones bajos
+                return destination.searchControl.textInput.value.replace(/\<\>\:"\/\\\|\?\*/g, '_');
+            }
+            return '';
+        };
+
+        this.getDownloadDialog().then((control) => {
+            let options = {
+                title: this.getLocaleString("downloadRoute"),
+                fileName: processDestinationName(this.destinations[0]) + '-' + processDestinationName(this.destinations.at(-1)),
+                hiddenElevationSourceSelection: true,
+            };
+            //si el control tiene su propia configuración de elevacion la pasamos para que sobrescriba a la del mapa
+            if (this.map.elevation || this.options.displayElevation) {
+                options = Object.assign({}, options, {
+                    elevation: Object.assign({}, this.map.elevation && this.map.elevation.options, this.options.displayElevation)
+                });
+            }
+            const routeFeature = this.getRouteFeature().clone();
+            routeFeature.setStyle(this.styles.route);
+            const features = [routeFeature];
+            for (const destinations of this.destinations) {
+                if (destinations.marker) {
+                    features.push(destinations.marker);
+                }
+            }
+            control.open(features, options);
+        });
+        return this;
+    }
+
+    exportState() {
+        if (this.toShare) {
+            return {
+                id: this.getId(),
+                profile: this.#profile,
+                preference: this.preference,
+                destinations: JSON.stringify(this.toShare.destinations),
+                index: this.toShare.index,
+                doZoom: this.toShare.doZoom,
+            };
+        }
+        return null;
+    }
+
+    async importState(state) {
+        if (state.destinations) {
+            this.#importingState = true;
+            this.clear();
+            this.#profile = state.profile;
+            this.setProfile(this.#profile);
+            if (this.options.displayMode === WebComponentControl.displayMode.PANEL) {
+                this.show();
+            }
+            const destinations = JSON.parse(state.destinations);
+            for (let i = 0; i < destinations.length; i++) {
+                await this.setDestination(i);
+                const importedDestination = destinations[i];
+                const destination = this.destinations[i];
+                await this.renderDestination(destination);
+                if (Array.isArray(importedDestination)) {
+                    const feature = await this.destinationLayer?.addMarker(importedDestination, { showsPopup: false });
+                    await this.#onMarkerUpdate(feature, i);
+                }
+                else await destination.searchControl.importState(importedDestination);
+            }
+            this.#importingState = false;
+            await this.calculateRoute({ zoom: false });
+            if (state.index > 0) await this.setActiveAlternative(state.index);
+            this.clickControl.activate();
+
+            if (state.doZoom) {
+                this.#doZoom();
+            }
         }
     }
 
@@ -873,7 +1161,8 @@ class Route extends WebComponentControl {
     }
 }
 
+TC.mix(Route, infoShare);
+
 Route.prototype.CLASS = 'tc-ctl-route';
-customElements.get(elementName) || customElements.define(elementName, Route);
 TC.control.Route = Route;
 export default Route;
