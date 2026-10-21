@@ -14,6 +14,8 @@ import Vector from "./SITNA/layer/Vector";
 import { SitnaMap } from "./SITNA/Map";
 import Cfg from "./TC/Cfg";
 import Consts from "./TC/Consts";
+import LayerComparer from "./TC/control/LayerComparer";
+import { LayerComparerOptions } from "./TC/control/LayerComparer";
 
 interface layer {
     Layer: typeof Layer;
@@ -34,4 +36,9 @@ interface feature {
     Circle: typeof Circle;
 }
 
-export { Cfg, Consts, feature, layer, SitnaMap as Map };
+interface control {
+    LayerComparer: typeof LayerComparer;
+    LayerComparerOptions: typeof LayerComparerOptions;
+}
+
+export { Cfg, Consts, feature, layer, control, SitnaMap as Map };
