@@ -1,8 +1,19 @@
+### [4.10.0](https://github.com/sitna/api-sitna/releases/tag/v4.10.0)
+- Añadido control simple de [geoposicionamiento](../examples/control.CenterOnLocation.html).
+- Añadido control de [comparación de mapas de fondo](../examples/control.LayerComparer.html).
+- Añadida la capacidad de crear entidades geográficas cuya geometría esté definida en coordenadas geográficas
+y que dicha geometría [se transforme automáticamente al CRS del mapa](../examples/sandbox.html?feature.geographic.html) en el que se incluyan.
+- Añadida la capacidad de compartir rutas calculadas con el control de cálculo de rutas.
+- Corrección de errores.
+
 ### [4.9.2](https://github.com/sitna/api-sitna/releases/tag/v4.9.2)
+- Creado WebJar para [Maven Central](https://central.sonatype.com/artifact/io.github.sitna/api-sitna).
 - Corrección de errores.
 
 ### [4.9.1](https://github.com/sitna/api-sitna/releases/tag/v4.9.1)
-- Corrección de errores.
+- Corregido error en la animación de rutas en la vista 3D.
+- Corregido error en la carga de entidades desde un KML.
+- Corregidos errores en las consultas por línea y recinto.
 
 ### [4.9.0](https://github.com/sitna/api-sitna/releases/tag/v4.9.0)
 - Incrementada versión de Cesium a 1.130.
