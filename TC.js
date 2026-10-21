@@ -22,7 +22,6 @@ var TC = TC || {};
     }
 })();
 
-TC.control = {};
 TC.capabilities = {};
 TC.capabilitiesWFS = {};
 TC.featureTypeDescriptions = {};

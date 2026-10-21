@@ -1,4 +1,4 @@
-import { Cfg, Consts, feature, layer, Map } from "./sitna";
+import { Cfg, Consts, feature, layer, control, Map } from "./sitna";
 
 type SITNANamespace = {
     Cfg: typeof Cfg;
@@ -6,6 +6,7 @@ type SITNANamespace = {
     Consts: typeof Consts;
     feature: feature;
     layer: layer;
+    control: control;
 };
 
 declare global {
@@ -16,4 +17,4 @@ declare global {
     var SITNA: SITNANamespace;
 }
 
-export { Cfg, Consts, feature, layer, Map as default };
+export { Cfg, Consts, feature, layer, control, Map as default };
