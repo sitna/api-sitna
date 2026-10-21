@@ -1,0 +1,28 @@
+﻿sitna-center-on-location {
+    top: calc(1.5em - 100%);
+    position: relative;
+    left: 0.7em;
+    width: 2em;
+    height: 2em;
+    margin-bottom: 0.5em;
+}
+
+    sitna-center-on-location.tc-hidden {
+        display: none;
+    }
+
+    sitna-center-on-location.tc-ctl {
+        padding: 0;
+    }
+
+    sitna-center-on-location sitna-button {
+        --sitna-icon-text: var(--sitna-geolocate-off-icon-text);
+    }
+
+        sitna-center-on-location sitna-button.tc-ctl-col-btn-off {
+            --sitna-icon-text: var(--sitna-geolocate-on-icon-text);
+        }
+
+    sitna-center-on-location sitna-button.tc-hidden {
+        display: none;
+    }

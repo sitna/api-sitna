@@ -1,0 +1,16 @@
+﻿.tc-ctl-cbms h2 {
+    display: none;
+}
+.tc-ctl-cbms .tc-ctl-cbms-btn {
+    width: 6em;
+    height: 6em;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    background-size: cover;
+    box-shadow: 0.3em 0.3em 0.3em rgba(0,0,0,0.2);
+    font-size: calc(1em * 2 / 3);
+    color: var(--sitna-thumbnail-text-color);
+    text-shadow: 0.1em 0.1em 0 var(--sitna-thumbnail-text-shadow-color), 0.1em -0.1em 0 var(--sitna-thumbnail-text-shadow-color), -0.1em 0.1em 0 var(--sitna-thumbnail-text-shadow-color), -0.1em -0.1em 0 var(--sitna-thumbnail-text-shadow-color);
+    border-radius: var(--sitna-border-radius);
+}
