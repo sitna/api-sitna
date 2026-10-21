@@ -56,7 +56,7 @@
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll</HintPath>
@@ -109,14 +109,19 @@
     <Content Include="batch\ol-webpack\webpack.config.js" />
     <Content Include="css\compiler.js" />
     <Content Include="css\control\AttributesEdit.css" />
+    <Content Include="css\control\CenterOnLocation.css" />
+    <Content Include="css\control\CompactBasemapSelector.css" />
     <Content Include="css\control\ElevationProfile.css" />
     <Content Include="css\control\FeatureStyler.css" />
     <Content Include="css\control\ImageMagnifier.css" />
+    <Content Include="css\control\LayerComparer.css" />
     <Content Include="css\control\Route.css" />
     <Content Include="css\control\TimeLine.css" />
     <Content Include="css\control\Scenes.css" />
+    <Content Include="css\control\TimeSlider.css" />
     <Content Include="css\control\TrackEdit.css" />
     <Content Include="css\control\LayerLegend.css" />
+    <Content Include="css\img\cursor.svg" />
     <Content Include="css\img\directions-bike.svg" />
     <Content Include="css\img\directions-hgv.svg" />
     <Content Include="css\img\directions-hiking.svg" />
@@ -141,17 +146,28 @@
     <Content Include="css\img\thumb-ortho2025.jpg" />
     <Content Include="css\img\thumb-orthophoto.jpg" />
     <Content Include="css\img\thumb-topo-pamplona.jpg" />
+    <Content Include="css\ui\sitna-datetime-range.css" />
+    <Content Include="css\img\view-single.svg" />
+    <Content Include="css\img\view-split-portrait.svg" />
+    <Content Include="css\img\view-split.svg" />
+    <Content Include="css\img\view-spyglass.svg" />
+    <Content Include="css\img\view-swipe.svg" />
+    <Content Include="css\img\view-timeline.svg" />
+    <Content Include="css\img\view-transparency.svg" />
     <Content Include="css\ui\sitna-tab.css" />
     <Content Include="css\ui\sitna-toast.css" />
     <Content Include="css\ui\sitna-toggle.css" />
     <Content Include="css\ui\sitna-button.css" />
-    <Content Include="examples\cfg.DrawMeasureModifyOptions.snapping.html" />
+    <Content Include="examples\Map.exportFeatures.html" />
+    <Content Include="examples\DrawOptions.snapping.html" />
     <Content Include="examples\cfg.MarkerOptions.2.html" />
     <Content Include="examples\cfg.SearchTypeOptions.html" />
     <Content Include="examples\cfg.VectorOptions.wfs.html" />
+    <Content Include="examples\control.LayerComparer.html" />
     <Content Include="examples\control.FeatureInfoControl.html" />
     <Content Include="examples\control.infodisplay.html" />
     <Content Include="examples\control.LayerCatalog.custom.html" />
+    <Content Include="examples\control.LayerComparer.secondaryMapCount.html" />
     <Content Include="examples\control.markup.html" />
     <Content Include="examples\control.template.html" />
     <Content Include="examples\css.variables.html" />
@@ -162,6 +178,7 @@
     <Content Include="examples\data\triangle.png" />
     <Content Include="examples\Event.layeradd.html" />
     <Content Include="examples\control.custom.html" />
+    <Content Include="examples\feature.geographic.html" />
     <Content Include="examples\feature.methods.html" />
     <Content Include="examples\feature.MultiMarker.html" />
     <Content Include="examples\feature.Marker.html" />
@@ -179,6 +196,7 @@
     <Content Include="examples\feature.Polyline.html" />
     <Content Include="examples\Event.layerupdate.html" />
     <Content Include="examples\cfg.LayerOptions.customLegend.html" />
+    <Content Include="examples\control.CenterOnLocation.html" />
     <Content Include="examples\layout\custom-control\markup.html" />
     <Content Include="examples\layout\custom-control\style.css" />
     <Content Include="examples\sandbox.html" />
@@ -204,6 +222,7 @@
     <Content Include="SITNA\format\Shapefile.js" />
     <Content Include="SITNA\layer\LayerEvent.js" />
     <Content Include="SITNA\ui.js" />
+    <Content Include="SITNA\ui\DateTimeRange.js" />
     <Content Include="SITNA\ui\Tab.js" />
     <Content Include="SITNA\ui\Toast.js" />
     <Content Include="SITNA\ui\Toggle.js" />
@@ -213,12 +232,39 @@
     <Content Include="TC\cesium\OGCTerrainProvider.js" />
     <Content Include="TC\cesium\TileSetManager.js" />
     <Content Include="TC\Controller.js" />
+    <Content Include="TC\control\3D\OfflineMapMaker.js" />
+    <Content Include="TC\control\3D\OverviewMap.js" />
+    <Content Include="TC\control\CenterOnLocation.js" />
+    <Content Include="TC\control\CompactBasemapSelector.js" />
+    <Content Include="TC\control\3D\Control.js" />
+    <Content Include="TC\control\3D\DrawMeasureModify.js" />
+    <Content Include="TC\control\3D\Geolocation.js" />
+    <Content Include="TC\control\3D\Route.js" />
+    <Content Include="TC\control\3D\MultiFeatureInfo.js" />
+    <Content Include="TC\control\3D\FeatureInfo.js" />
+    <Content Include="TC\control\3D\StreetView.js" />
+    <Content Include="TC\ol\Draw.js" />
+    <Content Include="TC\ol\Edit.js" />
+    <Content Include="TC\ol\ElevationProfile.js" />
+    <Content Include="TC\ol\format\GPXCustom.js" />
+    <Content Include="TC\ol\format\KMLCustom.js" />
+    <Content Include="TC\ol\Geolocation.js" />
+    <Content Include="TC\ol\layer\Layer.js" />
+    <Content Include="TC\ol\layer\Raster.js" />
+    <Content Include="TC\ol\layer\Vector.js" />
+    <Content Include="TC\ol\Modify.js" />
+    <Content Include="TC\ol\OfflineMapMaker.js" />
+    <Content Include="TC\ol\OverviewMap.js" />
+    <Content Include="TC\ol\Popup.js" />
+    <Content Include="TC\view\ThreeDDragAndDrop.js" />
+    <Content Include="TC\view\ThreeDMouseMove.js" />
     <Content Include="TC\control\ElevationProfile.js" />
     <Content Include="TC\control\FeatureStyler.js" />
     <Content Include="TC\control\FileEdit.js" />
     <Content Include="TC\control\InfoDisplay.js" />
     <Content Include="TC\control\itemToolContainer.js" />
     <Content Include="TC\control\LanguageSelector.js" />
+    <Content Include="TC\control\LayerComparer.js" />
     <Content Include="TC\control\LayerLegend.js" />
     <Content Include="TC\control\layerOwner.js" />
     <Content Include="TC\control\AttributesEdit.js" />
@@ -240,6 +286,7 @@
     <Content Include="TC\control\Route.js" />
     <Content Include="TC\control\Scenes.js" />
     <Content Include="TC\control\TimeLine.js" />
+    <Content Include="TC\control\TimeSlider.js" />
     <Content Include="TC\control\TrackDownloadDialog.js" />
     <Content Include="TC\control\TrackEdit.js" />
     <Content Include="TC\EventTarget.js" />
@@ -248,6 +295,14 @@
     <Content Include="SITNA\layer\Raster.js" />
     <Content Include="SITNA\layer\Vector.js" />
     <Content Include="TC\Observer.js" />
+    <Content Include="TC\ol\Click.js" />
+    <Content Include="TC\ol\Coordinates.js" />
+    <Content Include="TC\ol\FeatureInfo.js" />
+    <Content Include="TC\ol\GeometryFeatureInfo.js" />
+    <Content Include="TC\ol\LayerComparer.js" />
+    <Content Include="TC\ol\NavBar.js" />
+    <Content Include="TC\ol\NavBarHome.js" />
+    <Content Include="TC\ol\ScaleBar.js" />
     <Content Include="TC\templates\compiler.js" />
     <Content Include="TC\templates\tc-ctl-finfo-service.hbs" />
     <Content Include="TC\templates\tc-ctl-wlm-elm-info-legend.hbs" />
@@ -260,11 +315,14 @@
     <Content Include="TC\tool\OpenRouteService.js" />
     <Content Include="TC\tool\WellKnowNameFactory.js" />
     <Content Include="TC\tool\WellKnowNameTemplates.js" />
-    <Content Include="TC\view\Click.js" />
+    <Content Include="TC\control\3D\Click.js" />
     <Content Include="TC\view\CustomEntity.js" />
-    <Content Include="TC\view\ThreeDDraw.js" />
-    <Content Include="TC\view\ThreeDGFI.js" />
+    <Content Include="TC\control\3D\ThreeDDraw.js" />
+    <Content Include="TC\control\3D\ThreeDGFI.js" />
+    <Content Include="TC\view\FeatureConverter.js" />
     <Content Include="TC\view\ThreeDUtils.js" />
+    <Content Include="TC\wrap\Control.js" />
+    <Content Include="TC\wrap\Wrapper.js" />
     <Content Include="test\unit\browser\control\FileEdit.js" />
     <Content Include="test\unit\browser\control\LanguageSelector.js" />
     <Content Include="test\unit\browser\feature\Point.js" />
@@ -295,7 +353,7 @@
     <Content Include="examples\cfg.DataLoaderOptions.html" />
     <Content Include="examples\cfg.FeatureInfoOptions.persistentHighlights.html" />
     <Content Include="examples\cfg.RasterOptions.filter.html" />
-    <Content Include="examples\cfg.DrawMeasureModifyOptions.html" />
+    <Content Include="examples\MeasureOptions.displayElevation.html" />
     <Content Include="examples\cfg.LayerOptions.overviewMapLayer.html" />
     <Content Include="examples\cfg.MapControlsOptions.fullScreen.html" />
     <Content Include="examples\cfg.MapControlsOptions.share.html" />
@@ -1915,6 +1973,10 @@
     <Content Include="TC\templates\tc-ctl-route-instructions.hbs" />
     <Content Include="TC\templates\tc-ctl-mod-deleted.hbs" />
     <Content Include="resources\data\Pegman.glb" />
+    <Content Include="TC\templates\tc-ctl-col.hbs" />
+    <Content Include="TC\templates\tc-ctl-lcomp.hbs" />
+    <Content Include="TC\templates\tc-ctl-cbms.hbs" />
+    <Content Include="TC\templates\tc-ctl-time.hbs" />
     <None Include="test\endToEnd\config\env\pro.json" />
     <None Include="test\endToEnd\config\env\vinet18.json" />
     <None Include="test\endToEnd\config\env\local.json" />
@@ -2005,6 +2067,7 @@
     <TypeScriptCompile Include="SITNA\Map.d.ts" />
     <TypeScriptCompile Include="TC\Cfg.d.ts" />
     <TypeScriptCompile Include="TC\Consts.d.ts" />
+    <TypeScriptCompile Include="TC\control\LayerComparer.d.ts" />
     <TypeScriptCompile Include="TC\EventTarget.d.ts" />
     <TypeScriptCompile Include="TC\filter.d.ts" />
     <TypeScriptCompile Include="TC\Map.d.ts" />
