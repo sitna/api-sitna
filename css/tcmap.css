@@ -51,6 +51,9 @@
 @import url(control/Scenes.css);
 @import url(control/Route.css);
 @import url(control/ElevationProfile.css);
+@import url(control/CenterOnLocation.css);
+@import url(control/LayerComparer.css);
+@import url(control/CompactBasemapSelector.css);
 
 :root {
     /* custom variables */
@@ -80,14 +83,17 @@
     --sitna-bg11-txt1-color: color-mix(in srgb, var(--sitna-background-color) 91.67%, var(--sitna-text-color)); /* #eeeeee */
     --sitna-bg-a0-color: rgb(from var(--sitna-background-color) r g b / 0);
     --sitna-bg-a7-color: rgb(from var(--sitna-background-color) r g b / 0.7);
-    --text-sec-color: var(--sitna-bg1-txt3-color);
+    --text-sec-color: var(--sitna-bg1-txt3-color); /* --- LEGACY --- */
+    --sitna-secondary-text-color: var(--text-sec-color);
     --sitna-text-font-family: sans-serif;
     --disabled-text-color: var(--sitna-bg3-txt1-color);
-    --main-inactive-color: hsl(from var(--main-hl-color) h s calc(l / 2)); /* #660000 */
-    --sitna-link-color: var(--main-hl-color); /* ¿#557FC3? */
+    --main-inactive-color: hsl(from var(--sitna-main-accent-color) h s calc(l / 2)); /* #660000 */ /* --- LEGACY --- */
+    --sitna-main-inactive-color: var(--main-inactive-color);
+    --sitna-link-color: var(--sitna-main-accent-color); /* ¿#557FC3? */
     --sitna-link-decoration: underline;
     --title-color: var(--sitna-bg1-txt3-color);
     --main-divider-color: var(--sitna-bg8-txt1-color);
+    --sitna-main-divider-color: var(--main-divider-color);
     --main-divider-width: 2px;
     --sec-divider-color: var(--sitna-bg3-txt1-color);
     --panel-bg-color: var(--sitna-bg-a7-color);
@@ -163,14 +169,20 @@
     --sitna-tab-inner-border-radius: var(--sitna-border-radius);
     --tab-selected-font-weight: bold; /* --- LEGACY --- */
     --sitna-selected-tab-font-weight: var(--tab-selected-font-weight);
-    --map-btn-color: var(--sitna-secondary-accent-contrast-color);
-    --map-btn-bg-color: rgb(from var(--sitna-color-02) r g b / 0.66);
+    --map-btn-color: var(--sitna-secondary-accent-contrast-color); /* --- LEGACY --- */
+    --sitna-overlay-button-color: var(--map-btn-color);
+    --map-btn-bg-color: rgb(from var(--sitna-color-02) r g b / 0.66); /* --- LEGACY --- */
+    --sitna-overlay-button-background-color: var(--map-btn-bg-color);
+    --sitna-active-overlay-button-color: var(--sitna-secondary-accent-contrast-color);
+    --sitna-active-overlay-button-background-color: color-mix(in hsl, var(--sitna-overlay-button-background-color) 40%, var(--sitna-main-accent-color));
     --map-slider-thumb-bg-color: var(--sitna-color-02);
     --map-slider-bg-color: var(--sitna-bg3-txt1-color);
     --thumb-border-width: 2px;
     --thumb-border-color: var(--sitna-bg5-txt1-color);
-    --thumb-text-color: var(--sitna-highlighted-text-color);
-    --thumb-text-shadow-color: var(--sitna-background-color);
+    --thumb-text-color: var(--sitna-highlighted-text-color); /* --- LEGACY --- */
+    --sitna-thumbnail-text-color: var(--thumb-text-color);
+    --thumb-text-shadow-color: var(--sitna-background-color); /* --- LEGACY --- */
+    --sitna-thumbnail-text-shadow-color: var(--thumb-text-shadow-color);
     --overlay-color: var(--sitna-highlighted-text-color);
     --overlay-bg-color: var(--sitna-bg-a7-color);
     --overlay-border-color: var(--sitna-bg3-txt1-color);
@@ -179,13 +191,15 @@
     --list-color: var(--sitna-highlighted-text-color);
     --list-bg-color: var(--sitna-background-color);
     --list-hl-color: var(--sitna-highlighted-text-color);
-    --list-hl-bg-color: color-mix(in hsl, var(--main-bg-color) 80%, var(--main-hl-color));
+    --list-hl-bg-color: color-mix(in hsl, var(--sitna-background-color) 80%, var(--sitna-main-accent-color));
     --active-zone-bg-color: var(--sitna-bg11-txt1-color);
     --track-profile-original-color: var(--sitna-color-07);
     --track-profile-mdt-color: var(--sitna-color-06);
     --track-profile-mds-color: var(--sitna-color-08);
-    --table-even-row-bg-color: var(--sitna-background-color);
-    --table-odd-row-bg-color: var(--sitna-bg11-txt1-color);
+    --table-even-row-bg-color: var(--sitna-background-color); /* --- LEGACY --- */
+    --table-odd-row-bg-color: var(--sitna-bg11-txt1-color); /* --- LEGACY --- */
+    --sitna-even-row-background-color: var(--table-even-row-bg-color);
+    --sitna-odd-row-background-color: var(--table-odd-row-bg-color);
     --sitna-toast-duration: 5s;
     --sitna-info-color: var(--sitna-color-07);
     --sitna-warning-color: goldenrod;
@@ -222,6 +236,8 @@
     --sitna-indeterminate-icon-text: '?';
     --sitna-checked-icon-text: '\2714\fe0e'; /* ✔ \fe0e es la marca para forzar carácter monocromo */
     --sitna-unchecked-icon-text: '';
+    --sitna-geolocate-on-icon-text: '\e925';
+    --sitna-geolocate-off-icon-text: '\e926';
 }
 
 /*! normalize.css v1.0.0 | MIT License | git.io/normalize */
@@ -338,7 +354,7 @@ a.tc-file-link {
         left: 0.7em;
         border-radius: calc(0.6 * var(--sitna-border-radius));
         background-color: var(--sitna-link-color);
-        color: var(--main-bg-color);
+        color: var(--sitna-background-color);
         padding: 0 0.2em 0 0.2em;
         font-size: 0.6em;
     }
@@ -800,7 +816,7 @@ html.tc-fullscreen, body.tc-fullscreen {
     }
 
     .tc-map.tc-loading {
-        background-color: var(--main-bg-color);
+        background-color: var(--sitna-background-color);
     }
 
         .tc-map.tc-loading:before, .tc-modal .tc-modal-body.tc-loading:before {
@@ -868,23 +884,23 @@ html.tc-fullscreen, body.tc-fullscreen {
     }
 
     .tc-map .ol-viewport {
-        background-color: var(--main-bg-color);
+        background-color: var(--sitna-background-color);
     }
 
 .tc-ctl {
     padding: 0.5em;
     z-index: 10000;
-    color: var(--text-main-color);
+    color: var(--sitna-text-color);
 }
 
     .tc-ctl h2 {
         color: var(--title-color);
         text-transform: lowercase;
-        background-color: var(--main-bg-color);
+        background-color: var(--sitna-background-color);
         border-bottom-width: var(--main-divider-width);
         border-bottom-style: solid;
         border-bottom-color: var(--main-divider-color);
-        font-family: Arial, helvetica, sans-serif;
+        font-family: var(--sitna-text-font-family);
         font-size: 1.1em;
         font-weight: bold;
         padding: 0.2em;
@@ -1097,7 +1113,7 @@ ol.tc-list, ul.tc-list {
         line-height: 2em;
         display: inline-block;
         font-weight: bold;
-        color: var(--text-sec-color);
+        color: var(--sitna-secondary-text-color);
     }
 
 .tc-textbox, .tc-combo {
@@ -1330,7 +1346,7 @@ div.tc-alert.tc-hidden {
     float: right;
 }
 
-.tc-modal {
+.tc-modal, .tc-ctl dialog::backdrop {
     background-color: rgba(0,0,0,0.6);
     width: 100%;
     height: 100%;
@@ -1346,7 +1362,7 @@ div.tc-alert.tc-hidden {
     backdrop-filter: grayscale(0.5);
 }
 
-    .tc-modal.tc-visible {
+    .tc-modal.tc-visible, .tc-ctl dialog[open]::backdrop {
         animation: fadein 0.25s;
         visibility: visible;
         opacity: 1;
@@ -1365,11 +1381,34 @@ body .tc-modal .tc-modal-background {
     max-height: 100%;
 }
 
-.tc-modal .tc-modal-window {
+.tc-ctl dialog {
+    font-size: 1rem;
+    padding: 0;
+    opacity: 0;
+    scale: 0.95;
+    transition: 
+        opacity 0.25s ease-out,
+        transform 0.25s ease-out,
+        scale 0.25s ease-out,
+        overlay 0.25s ease-out allow-discrete,
+        display 0.25s ease-out allow-discrete;
+
+    @starting-style {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+.tc-ctl dialog[open] {
+    opacity: 1;
+    scale: 1;
+}
+
+.tc-modal .tc-modal-window, .tc-ctl dialog {
     max-width: 60%;
     position: absolute;
-    font-family: Arial,helvetica,sans-serif;
-    background-color: var(--main-bg-color);
+    font-family: var(--sitna-text-font-family);
+    background-color: var(--sitna-background-color);
     border: 1px solid var(--sec-divider-color);
     border-radius: var(--sitna-border-radius);
     box-shadow: 0 5px 15px rgba(0,0,0,.5);
@@ -1382,34 +1421,36 @@ body .tc-modal .tc-modal-background {
     justify-self: center;
 }
 
-.tc-modal.tc-visible .tc-modal-window {
-    animation: fade-grow 0.25s;
-}
+    .tc-modal.tc-visible .tc-modal-window {
+        animation: fade-grow 0.25s;
+    }
 
-.tc-modal .tc-modal-header {
+.tc-modal .tc-modal-header, .tc-ctl dialog .tc-modal-header {
     padding: 0.7em;
     border-bottom: 1px solid var(--main-divider-color);
     display: flex;
+    align-items: center;
 }
 
-    .tc-modal .tc-modal-header h3 {
+    .tc-modal .tc-modal-header h3, .tc-ctl dialog .tc-modal-header h3 {
         padding: 0.2em 0 0 0;
         margin: 0;
         font-size: 16px;
         color: var(--title-color);
         font-weight: normal;
         flex: 2 1 auto;
+        border-bottom: none;
     }
 
-    .tc-modal .tc-modal-header .tc-modal-close {
+    .tc-modal .tc-modal-header .tc-modal-close, .tc-ctl dialog .tc-modal-header .tc-modal-close {
         cursor: pointer;
         padding: 0;
         margin: 0;
         margin-left: 0.3em;
-        color: var(--text-main-color);
+        color: var(--sitna-text-color);
     }
 
-        .tc-modal .tc-modal-header .tc-modal-close:before {
+        .tc-modal .tc-modal-header div.tc-modal-close::before {
             font-family: var(--sitna-icon-font-family);
             content: var(--icon-close);
             display: block;
@@ -1417,295 +1458,307 @@ body .tc-modal .tc-modal-background {
             line-height: 1.2em;
         }
 
+    .tc-ctl dialog .tc-modal-header sitna-button[variant="minimal"] {
+        font-size: 1.4em;
+    }
 
-.tc-modal .tc-modal-body {
+        .tc-ctl dialog .tc-modal-header sitna-button[variant="minimal"].tc-modal-close,
+        .tc-ctl-finfo-dialog .tc-modal-header sitna-button[variant="minimal"].tc-modal-close {
+            --sitna-minimal-button-background-color: transparent;
+            --sitna-icon-text: var(--icon-close);
+            font-size: 1em;
+            scale: 1.4;
+        }
+
+
+.tc-modal .tc-modal-body, .tc-ctl dialog .tc-modal-body {
     max-height: 60dvh;
     overflow: auto;
     padding: 0.9em;
     font-size: 0.9em;
-    color: var(--text-main-color);
+    color: var(--sitna-text-color);
 }
 
-    .tc-modal .tc-modal-body.tc-loading {
-        transform: scale(0.5);
-        min-height: 10em;
-    }
+            .tc-modal .tc-modal-body.tc-loading, .tc-ctl dialog .tc-modal-body.tc-loading {
+                transform: scale(0.5);
+                min-height: 10em;
+            }
 
-        .tc-modal .tc-modal-body.tc-loading .tc-button, .tc-modal .tc-modal-body.tc-loading .tc-ctl-btn {
+                .tc-modal .tc-modal-body.tc-loading .tc-button,
+                .tc-modal .tc-modal-body.tc-loading .tc-ctl-btn,
+                .tc-modal .tc-modal-body.tc-loading sitna-button,
+                .tc-ctl dialod .tc-modal-body.tc-loading sitna-button {
+                    visibility: hidden;
+                    transition: unset;
+                }
+
+        .tc-modal .tc-modal-footer, .tc-ctl dialog .tc-modal-footer {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: auto;
+            padding: 0.8em;
+            border-top: 1px solid #EEE;
+            text-align: right;
+            position: relative;
+        }
+
+            .tc-modal .tc-modal-footer sitna-button, .tc-ctl dialog .tc-modal-footer sitna-button {
+                font-size: 13px;
+            }
+
+        .tc-modal h4 {
+            color: var(--title-color);
+            margin: 0.5em 0 0.5em 0;
+            padding: 0;
+        }
+
+        .tc-toast-container {
+            position: absolute;
             visibility: hidden;
-            transition: unset;
+            bottom: 2em;
+            left: 50%;
+            max-width: 24em;
+            z-index: 10011;
         }
 
-.tc-modal .tc-modal-footer {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: auto;
-    padding: 0.8em;
-    border-top: 1px solid #EEE;
-    text-align: right;
-    position: relative;
-}
-
-    .tc-modal .tc-modal-footer sitna-button {
-        font-size: 13px;
-    }
-
-.tc-modal h4 {
-    color: var(--title-color);
-    margin: 0.5em 0 0.5em 0;
-    padding: 0;
-}
-
-.tc-toast-container {
-    position: absolute;
-    visibility: hidden;
-    bottom: 2em;
-    left: 50%;
-    max-width: 24em;
-    z-index: 10011;
-}
-
-.tc-map.tc-ctl-prnmap-printing .tc-toast-container {
-    z-index: 100110;
-    position: fixed;
-}
-
-.tc-toast {
-    position: relative;
-    visibility: visible;
-    left: -50%;
-    width: 100%;
-    background-color: black;
-    font-size: 0.9em;
-    color: #fff;
-    text-align: center;
-    border-radius: var(--sitna-border-radius);
-    padding: 0.6em 0.5em;
-    margin-left: -0.15em;
-    margin-top: 0.3em;
-    cursor: pointer;
-    box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
-    animation: toast 0.3s;
-}
-
-    .tc-toast p {
-        display: flex;
-        flex-direction: column;
-        word-break: break-word; /* Chrome, Safari */
-        word-wrap: break-word; /* IE11, Firefox */
-        margin: 0;
-        padding: 0;
-    }
-
-        .tc-toast p a {
-            display: contents;
-            font-weight: bold;
+        .tc-map.tc-ctl-prnmap-printing .tc-toast-container {
+            z-index: 100110;
+            position: fixed;
         }
 
-    .tc-toast ul {
-        text-align: left;
-    }
+        .tc-toast {
+            position: relative;
+            visibility: visible;
+            left: -50%;
+            width: 100%;
+            background-color: black;
+            font-size: 0.9em;
+            color: #fff;
+            text-align: center;
+            border-radius: var(--sitna-border-radius);
+            padding: 0.6em 0.5em;
+            margin-left: -0.15em;
+            margin-top: 0.3em;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);
+            animation: toast 0.3s;
+        }
 
-    /* cuando no se cargan los estilos del layout responsive, no funcionan los estilos de las tostadas porque usan fontAwesome */
-    .tc-toast.tc-msg-warning span {
-        font-size: 1em;
-        margin-right: 0.4em;
-        float: left;
-        width: 0;
-        height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-bottom: 14px solid #ff0;
-        border-radius: 0.1em;
-    }
+            .tc-toast p {
+                display: flex;
+                flex-direction: column;
+                word-break: break-word; /* Chrome, Safari */
+                word-wrap: break-word; /* IE11, Firefox */
+                margin: 0;
+                padding: 0;
+            }
 
-        .tc-toast.tc-msg-warning span:before {
-            /*content: "\ff01";
+                .tc-toast p a {
+                    display: contents;
+                    font-weight: bold;
+                }
+
+            .tc-toast ul {
+                text-align: left;
+            }
+            /* cuando no se cargan los estilos del layout responsive, no funcionan los estilos de las tostadas porque usan fontAwesome */
+            .tc-toast.tc-msg-warning span {
+                font-size: 1em;
+                margin-right: 0.4em;
+                float: left;
+                width: 0;
+                height: 0;
+                border-left: 8px solid transparent;
+                border-right: 8px solid transparent;
+                border-bottom: 14px solid #ff0;
+                border-radius: 0.1em;
+            }
+
+                .tc-toast.tc-msg-warning span:before {
+                    /*content: "\ff01";
             margin-top: 0.15em;
             position: absolute;
             margin-left: -0.3em;
             color: #000000;
             font-size: 0.8em;*/
-            content: "!";
-            margin-top: 0.15em;
-            position: absolute;
-            margin-left: -0.15em;
-            color: #000000;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
+                    content: "!";
+                    margin-top: 0.15em;
+                    position: absolute;
+                    margin-left: -0.15em;
+                    color: #000000;
+                    font-size: 0.8em;
+                    font-weight: bold;
+                }
 
-    .tc-toast.tc-msg-error span {
-        font-size: 0.8em;
-        float: left;
-        background: #ff0000;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-    }
+            .tc-toast.tc-msg-error span {
+                font-size: 0.8em;
+                float: left;
+                background: #ff0000;
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+            }
 
-        .tc-toast.tc-msg-error span:before {
-            /*content: '\271a';
+                .tc-toast.tc-msg-error span:before {
+                    /*content: '\271a';
             color: #ffffff;
             transform: rotate(45deg);
             position: absolute;
             left: 0.75em;
             top: 0.65em;*/
-            content: "x";
-            color: #ffffff;
-            position: absolute;
-            left: 0.9em;
-            top: 0.8em;
-            font-weight: bold;
-        }
+                    content: "x";
+                    color: #ffffff;
+                    position: absolute;
+                    left: 0.9em;
+                    top: 0.8em;
+                    font-weight: bold;
+                }
 
-    .tc-toast.tc-msg-info span {
-        font-size: 0.8em;
-        float: left;
-        background: #0000ff;
-        width: 13.5px;
-        height: 13.5px;
-        border-radius: 50%;
-    }
+            .tc-toast.tc-msg-info span {
+                font-size: 0.8em;
+                float: left;
+                background: #0000ff;
+                width: 13.5px;
+                height: 13.5px;
+                border-radius: 50%;
+            }
 
-        .tc-toast.tc-msg-info span:before {
-            /*content: '\2139';
+                .tc-toast.tc-msg-info span:before {
+                    /*content: '\2139';
             color: #ffffff;
             position: absolute;
             left: 1.05em;
             top: 0.8em;*/
-            content: "i";
-            color: #ffffff;
-            position: absolute;
-            left: 1.05em;
-            top: 0.8em;
-            font-weight: bold;
+                    content: "i";
+                    color: #ffffff;
+                    position: absolute;
+                    left: 1.05em;
+                    top: 0.8em;
+                    font-weight: bold;
+                }
+
+
+            .tc-toast.tc-hidden {
+                animation: fadeout 0.3s;
+            }
+
+        span.tc-beta {
+            text-transform: uppercase;
+            font-size: 0.7em;
+            color: red;
+            font-weight: normal;
+            font-style: italic;
         }
 
+        @media print {
+            .tc-modal {
+                display: none !important;
+            }
+        }
 
-    .tc-toast.tc-hidden {
-        animation: fadeout 0.3s;
-    }
+        .tc-ctl-rpanel-minimized-max-table.tc-tracking:before {
+            font-family: mapskin;
+            content: "\e00d";
+        }
 
-span.tc-beta {
-    text-transform: uppercase;
-    font-size: 0.7em;
-    color: red;
-    font-weight: normal;
-    font-style: italic;
-}
+        div.ms-parent.tc-combo {
+            padding-left: 0;
+        }
 
-@media print {
-    .tc-modal {
-        display: none !important;
-    }
-}
+        .tc-disabled {
+            display: none;
+        }
 
-.tc-ctl-rpanel-minimized-max-table.tc-tracking:before {
-    font-family: mapskin;
-    content: "\e00d";
-}
+        .tc-offline > [data-no-cb] {
+            display: none;
+        }
 
-div.ms-parent.tc-combo {
-    padding-left: 0;
-}
+        .tc-3d > [data-no-3d] {
+            display: none;
+        }
 
-.tc-disabled {
-    display: none;
-}
+        .tc-beta-button {
+            background-color: hsl(0, 100%, 0%);
+            animation: lightness 5s infinite alternate;
+        }
+        /* estilos propios de cesium. Los paso aquí para no cargar todo el css de widgets que no usamos */
+        .cesium-viewer {
+            overflow: hidden;
+            display: block;
+            position: relative;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
 
-.tc-offline > [data-no-cb] {
-    display: none;
-}
+        .cesium-viewer-cesiumWidgetContainer {
+            width: 100%;
+            height: 100%;
+        }
 
-.tc-3d > [data-no-3d] {
-    display: none;
-}
+        .cesium-widget {
+            position: relative;
+        }
 
-.tc-beta-button {
-    background-color: hsl(0, 100%, 0%);
-    animation: lightness 5s infinite alternate;
-}
+            .cesium-widget, .cesium-widget canvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        /* fin css cesium */
 
-/* estilos propios de cesium. Los paso aquí para no cargar todo el css de widgets que no usamos */
-.cesium-viewer {
-    overflow: hidden;
-    display: block;
-    position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
+        .tc-map label:first-of-type input[type=radio] ~ span,
+        .tc-ctl label:first-of-type input[type=radio] ~ span,
+        .tc-modal label:first-of-type input[type=radio] ~ span {
+            border-top-left-radius: var(--sitna-border-radius);
+            border-bottom-left-radius: var(--sitna-border-radius);
+        }
 
-.cesium-viewer-cesiumWidgetContainer {
-    width: 100%;
-    height: 100%;
-}
+        .tc-map label:last-of-type input[type=radio] ~ span,
+        .tc-ctl label:last-of-type input[type=radio] ~ span,
+        .tc-modal label:last-of-type input[type=radio] ~ span {
+            width: 100%;
+            border-top-right-radius: var(--sitna-border-radius);
+            border-bottom-right-radius: var(--sitna-border-radius);
+            /* para el salto de línea */
+            white-space: pre-line;
+        }
 
-.cesium-widget {
-    position: relative;
-}
+        .tc-warning-ie {
+            width: 100%;
+            z-index: 100000;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            background: #cc0000;
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            height: 15%;
+            bottom: 0;
+            flex-wrap: wrap;
+            cursor: pointer;
+        }
 
-    .cesium-widget, .cesium-widget canvas {
-        width: 100%;
-        height: 100%;
-        touch-action: none;
-    }
-/* fin css cesium */
+        .tc-loading.tc-map .tc-warning-ie {
+            visibility: visible;
+        }
 
-.tc-map label:first-of-type input[type=radio] ~ span,
-.tc-ctl label:first-of-type input[type=radio] ~ span,
-.tc-modal label:first-of-type input[type=radio] ~ span {
-    border-top-left-radius: var(--sitna-border-radius);
-    border-bottom-left-radius: var(--sitna-border-radius);
-}
-
-.tc-map label:last-of-type input[type=radio] ~ span,
-.tc-ctl label:last-of-type input[type=radio] ~ span,
-.tc-modal label:last-of-type input[type=radio] ~ span {
-    width: 100%;
-    border-top-right-radius: var(--sitna-border-radius);
-    border-bottom-right-radius: var(--sitna-border-radius);
-    /* para el salto de línea */
-    white-space: pre-line;
-}
-
-.tc-warning-ie {
-    width: 100%;
-    z-index: 100000;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    background: #cc0000;
-    color: white;
-    font-size: 1em;
-    font-weight: bold;
-    letter-spacing: 1px;
-    height: 15%;
-    bottom: 0;
-    flex-wrap: wrap;
-    cursor: pointer;
-}
-
-.tc-loading.tc-map .tc-warning-ie {
-    visibility: visible;
-}
-
-    .tc-loading.tc-map .tc-warning-ie * {
-        visibility: visible;
-    }
-
-/*ocultamos ellipse título de un control que section muestra dento de un diálogo*/
-.tc-modal .tc-modal-body .tc-ctl h2 {
-    display: none;
-    padding: 0;
-    margin: 0;
-}
-/*eliminamos el padding que los controles tienen por defecto cuando se muestra en un diálogo*/
-.tc-modal .tc-modal-body .tc-ctl {
-    padding: 0;
-}
+            .tc-loading.tc-map .tc-warning-ie * {
+                visibility: visible;
+            }
+        /*ocultamos ellipse título de un control que section muestra dento de un diálogo*/
+        .tc-modal .tc-modal-body .tc-ctl h2 {
+            display: none;
+            padding: 0;
+            margin: 0;
+        }
+        /*eliminamos el padding que los controles tienen por defecto cuando se muestra en un diálogo*/
+        .tc-modal .tc-modal-body .tc-ctl {
+            padding: 0;
+        }
