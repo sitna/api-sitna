@@ -1,14 +1,18 @@
-﻿.tc-ctl.tc-ctl-scenes h2 {
-    display: flex;
-    text-transform: none;
-    justify-content: space-between;
+﻿
+sitna-3d-scenes {
+    display: block;
 }
-    .tc-ctl-scenes h2 sitna-toggle {
-        --sitna-unchecked-icon-text: '\e936';
-        --sitna-checked-icon-text: '\e937';
-        font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
-        --icon-font-line-height: 1.7em;
-    }
+
+sitna-3d-scenes.tc-ctl-scenes h2 {
+    text-transform: none;
+}
+
+.tc-ctl-scenes h2 sitna-toggle {
+    --sitna-unchecked-icon-text: '\e936';
+    --sitna-checked-icon-text: '\e937';
+    font-size: calc(var(--sitna-icon-font-grid-size) * 2 / 3);
+    --icon-font-line-height: 1.7em;
+}
 .tc-ctl-scenes ul.tc-ctl-scenes-list {
     padding-left: 0px
 }
