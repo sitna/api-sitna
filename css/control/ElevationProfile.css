@@ -1,7 +1,10 @@
 ﻿sitna-elevation-profile {
     box-sizing: border-box;
-    margin-top: 1em;
     position: relative;
+}
+
+sitna-elevation-profile.tc-ctl {
+    padding: 0;
 }
 
 .tc-ctl-elev-profile-overlay {
