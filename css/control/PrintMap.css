@@ -1,4 +1,7 @@
-﻿
+﻿sitna-print-map {
+    display: block;
+}
+
 div.tc-ctl-prnmap-txt {
     margin-top: 5px;
 }
@@ -54,7 +57,7 @@ div.tc-ctl-prnmap-txt label {
     z-index: 100000;
     cursor: pointer;
     padding-top: 0.15em;
-    background-color: var(--main-bg-color);
+    background-color: var(--sitna-background-color);
     border-bottom-left-radius: var(--sitna-border-radius);
     border-bottom-right-radius: var(--sitna-border-radius);
     box-shadow: 2px 2px 5px 0px rgba(0,0,0,0.2);

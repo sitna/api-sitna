@@ -1,4 +1,8 @@
-﻿.tc-ctl-meas .tc-hidden {
+﻿sitna-measure {
+    display: block;
+}
+
+.tc-ctl-meas .tc-hidden {
     display: none;
 }
 
@@ -45,7 +49,7 @@
 }
 
     .tc-ctl-meas-prof-btn.tc-active {
-        color: var(--main-hl-color);
+        color: var(--sitna-main-accent-color);
     }
 
     .tc-ctl-meas-prof-btn:before {

@@ -1,4 +1,7 @@
-﻿
+﻿sitna-share {
+    display: block;
+}
+
 .tc-ctl-share-select {
     padding-top: 0.5em;
     margin-bottom: 0.8em;
@@ -312,20 +315,20 @@ div.tc-ctl-share-url-box {
             margin: 0.4em 0.5em;
         }
         .tc-ctl-share .tc-ctl-share-icons sitna-button:hover {
-            background-color: var(--main-hl-color);
+            background-color: var(--sitna-main-accent-color);
         }
 
         .tc-ctl-share .tc-ctl-share-icons button.tc-ctl-share-btn-png-native:hover,
         .tc-ctl-share .tc-ctl-share-icons button.tc-ctl-share-btn-jpg-native:hover {
-            color: var(--main-hl-color);
+            color: var(--sitna-main-accent-color);
         }
 
-        .tc-ctl-share .tc-ctl-share-icons button.tc-ctl-share-btn-png-native:hover:after,
-        .tc-ctl-share .tc-ctl-share-icons button.tc-ctl-share-btn-jpg-native:hover:after {
-            background-color: var(--main-hl-color);
-        }
+            .tc-ctl-share .tc-ctl-share-icons button.tc-ctl-share-btn-png-native:hover:after,
+            .tc-ctl-share .tc-ctl-share-icons button.tc-ctl-share-btn-jpg-native:hover:after {
+                background-color: var(--sitna-main-accent-color);
+            }
 
         .tc-ctl-share .tc-ctl-share-url-box .tc-textbox {
-            flex-basis: calc(100% - 0.4em - 6em);
+            flex-basis: calc(100% - 0.5em - 6em);
         }
     }
