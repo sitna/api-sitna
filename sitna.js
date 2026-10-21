@@ -1,6 +1,6 @@
 /**
  * @overview API SITNA: API JavaScript para la visualización de datos georreferenciados en aplicaciones web.
- * @version 4.9.2
+ * @version 4.10.0
  * @copyright 2019 Gobierno de Navarra
  * @license BSD-2-Clause
  * @author Fernando Lacunza <flacunza@itracasa.es>
@@ -43,7 +43,7 @@ TC.isDebug = true;
 const layer = {
     Layer,
     Raster,
-    Vector
+    Vector,
 };
 
 const feature = {
@@ -73,7 +73,7 @@ TC.wrap = wrap;
 globalThis.TC = globalThis.TC || TC;
 //window.JL = JL;
 
-TC.version = '4.9.2';
+TC.version = '4.10.0';
 
 TC.loadCSS(TC.apiLocation + 'css/sitna.css');
 
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
             TC._isSupported = true;
             TC.Cfg.acceptedBrowserVersions = browserVersions;
 
-            const match = browserVersions.find(item => item.name.toLowerCase() === TC.browser.name.toLowerCase());
+            const match = browserVersions.find((item) => item.name.toLowerCase() === TC.browser.name?.toLowerCase());
 
             // GLS: 14/02/2019 Añadimos gestión para que no muestre tostada ni envíe correos en caso de que el navegador sea uno expirado
             if (match && match.expired) {
