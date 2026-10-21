@@ -3,7 +3,11 @@
     clear: both;
 }
 
-.tc-modal ul.tc-ctl-omm-bl-list {
+.tc-map.tc-3d .tc-ctl-omm {
+    display: none;
+}
+
+dialog ul.tc-ctl-omm-bl-list {
     list-style-type: none;
     margin: 0.5em 0 0 0;
     padding: 0;
@@ -59,8 +63,8 @@
     padding-top: 1em;
     top: calc(-1 * var(--thumb-border-width));
     left: calc(-1 * var(--thumb-border-width));
-    color: var(--thumb-text-color);
-    text-shadow: 0.1em 0.1em 0 var(--thumb-text-shadow-color), 0.1em -0.1em 0 var(--thumb-text-shadow-color), -0.1em 0.1em 0 var(--thumb-text-shadow-color), -0.1em -0.1em 0 var(--thumb-text-shadow-color);
+    color: var(--sitna-thumbnail-text-color);
+    text-shadow: 0.1em 0.1em 0 var(--sitna-thumbnail-text-shadow-color), 0.1em -0.1em 0 var(--sitna-thumbnail-text-shadow-color), -0.1em 0.1em 0 var(--sitna-thumbnail-text-shadow-color), -0.1em -0.1em 0 var(--sitna-thumbnail-text-shadow-color);
 }
 
 .tc-ctl-omm-bl-node label span {
@@ -74,10 +78,10 @@
 }
 
 .tc-ctl-omm-bl-node input[type=checkbox]:checked ~ span {
-    border-color: var(--main-hl-color);
+    border-color: var(--sitna-main-accent-color);
 }
 
-.tc-modal ul.tc-ctl-omm-bl-list > li {
+dialog ul.tc-ctl-omm-bl-list > li {
     display: inline-block;
     font-size: 0.8em;
     margin: 0.2em;
@@ -87,18 +91,18 @@
     background: var(--list-bg-color);
 }
 
-    .tc-modal ul.tc-ctl-omm-bl-list > li.tc-hidden {
+    dialog ul.tc-ctl-omm-bl-list > li.tc-hidden {
         display: none;
     }
 
-.tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox] {
+dialog ul.tc-ctl-omm-bl-list input[type=checkbox] {
     display: none;
 }
 
-    .tc-modal ul.tc-ctl-omm-bl-list input[type=checkbox]:checked + div {
-        background-color: var(--main-hl-color);
+    dialog ul.tc-ctl-omm-bl-list input[type=checkbox]:checked + div {
+        background-color: var(--sitna-main-accent-color);
         border: 1px solid;
-        border-color: var(--main-hl-color);
+        border-color: var(--sitna-main-accent-color);
     }
 
 
@@ -143,8 +147,8 @@
     }
 
 .tc-ctl-omm .tc-ctl-omm-btn-cancel-draw {
-    background-color: var(--main-inactive-color);
-    border-color: var(--main-inactive-color);
+    background-color: var(--sitna-main-inactive-color);
+    border-color: var(--sitna-main-inactive-color);
 }
 
     .tc-ctl-omm .tc-ctl-omm-btn-new {
@@ -199,8 +203,8 @@
 
     .tc-ctl-omm .tc-ctl-omm-progress-bar .tc-ctl-omm-progress-ratio {
         height: 100%;
-        background-color: var(--main-hl-color);
-        border-color: var(--main-hl-color);
+        background-color: var(--sitna-main-accent-color);
+        border-color: var(--sitna-main-accent-color);
         border-radius: var(--sitna-border-radius);
     }
 
