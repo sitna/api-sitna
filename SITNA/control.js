@@ -17,6 +17,7 @@ import Elevation from '../TC/control/Elevation.js';
 import ExternalWMS from '../TC/control/ExternalWMS.js';
 import FeatureDownloadDialog from '../TC/control/FeatureDownloadDialog.js';
 import FeatureInfo from '../TC/control/FeatureInfo.js';
+import FeatureInfoCommons from '../TC/control/FeatureInfoCommons.js';
 import FeatureTools from '../TC/control/FeatureTools.js';
 import FileEdit from '../TC/control/FileEdit.js';
 import FileImport from '../TC/control/FileImport.js';
@@ -92,6 +93,7 @@ const control = {
     ExternalWMS,
     FeatureDownloadDialog,
     FeatureInfo,
+    FeatureInfoCommons,
     FeatureTools,
     FileEdit,
     FileImport,
