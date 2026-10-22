@@ -1,9 +1,11 @@
 ### [4.10.0](https://github.com/sitna/api-sitna/releases/tag/v4.10.0)
 - Añadido control simple de [geoposicionamiento](../examples/control.CenterOnLocation.html).
-- Añadido control de [comparación de mapas de fondo](../examples/control.LayerComparer.html).
+- Añadido control de [comparación de mapas de fondo](../examples/control.LayerComparer.html) con 
+[documentación]{@linkplain SITNA.control.LayerComparer} de la clase que lo implementa.
 - Añadida la capacidad de crear entidades geográficas cuya geometría esté definida en coordenadas geográficas
 y que dicha geometría [se transforme automáticamente al CRS del mapa](../examples/sandbox.html?feature.geographic.html) en el que se incluyan.
 - Añadida la capacidad de compartir rutas calculadas con el control de cálculo de rutas.
+- Añadida documentación de las clases que implementan los controles de [dibujo]{@linkplain SITNA.control.Draw} y [medida]{@linkplain SITNA.control.DrawMeasureModify}.
 - Corrección de errores.
 
 ### [4.9.2](https://github.com/sitna/api-sitna/releases/tag/v4.9.2)
