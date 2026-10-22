@@ -37,7 +37,7 @@ export interface ClusterOptions {
 }
 
 export interface ClusterStyleOptions {
-    point?: object;
+    point?: Record<string, any>;
 }
 
 export interface HeatmapStyleOptions {
@@ -47,10 +47,10 @@ export interface HeatmapStyleOptions {
 }
 
 export interface VectorStyleOptions {
-    point?: object;
-    line?: object;
-    polygon?: object;
-    marker?: object;
+    point?: Record<string, any>;
+    line?: Record<string, any>;
+    polygon?: Record<string, any>;
+    marker?: Record<string, any>;
 }
 
 export class Vector extends Layer {
