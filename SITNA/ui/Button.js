@@ -263,7 +263,7 @@ class Button extends Component {
      * @summary Atributo HTML: `active`
      * @memberof SITNA.ui.Button
      * @instance
-     * @type {string}
+     * @type {boolean}
      * @name active
      * @example <caption>[Ver en vivo](../examples/ui.button.active.html)</caption> {@lang html}
 <p class="instructions">Botones en distintas variables visuales con la propiedad active establecida o no.</p>

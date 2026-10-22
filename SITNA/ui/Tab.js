@@ -92,6 +92,7 @@ class Tab extends Component {
      * @instance
      * @type {string}
      * @name group
+     * @readonly
      */
     get group() {
         return this.getAttribute('group');

@@ -126,7 +126,7 @@ function Or(...conditions) {
  * @description Representa un operador lógico <Not> para una condición de filtro.
  * @name not 
  * @memberof SITNA.filter
- * @param {SITNA.filter.Filter} condicion Condición a negar.
+ * @param {SITNA.filter.Filter} condition Condición a negar.
  * @returns {SITNA.filter.Filter} Filtro `<Not>` 
  */
 function Not(condition) {
@@ -295,7 +295,7 @@ function EqualTo(propertyName, expression, matchCase) {
  * @name greaterThan 
  * @memberof SITNA.filter
  * @param {string} propertyName Nombre de la propiedad a comparar.
- * @param {number} expression El valor a comparar.
+ * @param {number} value El valor a comparar.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsGreaterThan>`
  * @example <caption>Ejemplo del uso de los filtros de comparacion binaria `<greaterThan>` y `<LessThan>` [Ver en vivo](../examples/filter.GreaterLess.html)</caption> {@lang html}
  * <div id="mapa"></div>
@@ -339,7 +339,7 @@ function GreaterThan(propertyName, expression) {
  * @name greaterThanOrEqualTo 
  * @memberof SITNA.filter
  * @param {string} propertyName Nombre de la propiedad a comparar.
- * @param {number} expression El valor a comparar.
+ * @param {number} value El valor a comparar.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsGreaterThanOrEqualTo>`
  */
 function GreaterThanOrEqualTo(propertyName, expression) {
@@ -401,7 +401,7 @@ function IsNull(propertyName) {
  * @name lessThan 
  * @memberof SITNA.filter
  * @param {string} propertyName Nombre de la propiedad a comparar.
- * @param {number} expression El valor a comparar.
+ * @param {number} value El valor a comparar.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsLessThan>`
  */
 function LessThan(propertyName, expression) {
@@ -413,7 +413,7 @@ function LessThan(propertyName, expression) {
  * @name lessThanOrEqualTo 
  * @memberof SITNA.filter
  * @param {string} propertyName Nombre de la propiedad a comparar.
- * @param {number} expression El valor a comparar.
+ * @param {number} value El valor a comparar.
  * @returns {SITNA.filter.Filter} Filtro `<PropertyIsLessThanOrEqualTo>`
  */
 function LessThanOrEqualTo(propertyName, expression) {
