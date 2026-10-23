@@ -11,17 +11,14 @@ import Polyline from "./SITNA/feature/Polyline";
 import Layer from "./SITNA/layer/Layer";
 import Raster from "./SITNA/layer/Raster";
 import Vector from "./SITNA/layer/Vector";
+import filter, { Filter } from "./TC/filter";
 import { SitnaMap } from "./SITNA/Map";
 import Cfg from "./TC/Cfg";
 import Consts from "./TC/Consts";
-import LayerComparer from "./TC/control/LayerComparer";
-import { LayerComparerOptions } from "./TC/control/LayerComparer";
-
-interface layer {
-    Layer: typeof Layer;
-    Raster: typeof Raster;
-    Vector: typeof Vector;
-}
+import WebComponentControl from "./TC/control/WebComponentControl";
+import control from "./SITNA/control";
+import layer from "./SITNA/layer";
+import ui from "./SITNA/ui";
 
 interface feature {
     Feature: typeof Feature;
@@ -36,9 +33,4 @@ interface feature {
     Circle: typeof Circle;
 }
 
-interface control {
-    LayerComparer: typeof LayerComparer;
-    LayerComparerOptions: typeof LayerComparerOptions;
-}
-
-export { Cfg, Consts, feature, layer, control, SitnaMap as Map };
+export { Cfg, Consts, feature, layer, control, ui, filter, Filter, SitnaMap as Map };
