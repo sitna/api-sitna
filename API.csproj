@@ -2049,6 +2049,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="index.d.ts" />
     <TypeScriptCompile Include="sitna.d.ts" />
+    <TypeScriptCompile Include="SITNA\control\ControlEvent.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Circle.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Feature.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\FeatureEvent.d.ts" />
@@ -2060,6 +2061,7 @@
     <TypeScriptCompile Include="SITNA\feature\Point.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Polygon.d.ts" />
     <TypeScriptCompile Include="SITNA\feature\Polyline.d.ts" />
+    <TypeScriptCompile Include="SITNA\filter.d.ts" />
     <TypeScriptCompile Include="SITNA\layer\Layer.d.ts" />
     <TypeScriptCompile Include="SITNA\layer\LayerEvent.d.ts" />
     <TypeScriptCompile Include="SITNA\layer\Raster.d.ts" />
@@ -2067,7 +2069,11 @@
     <TypeScriptCompile Include="SITNA\Map.d.ts" />
     <TypeScriptCompile Include="TC\Cfg.d.ts" />
     <TypeScriptCompile Include="TC\Consts.d.ts" />
+    <TypeScriptCompile Include="TC\control\Draw.d.ts" />
+    <TypeScriptCompile Include="TC\control\DrawMeasureModify.d.ts" />
     <TypeScriptCompile Include="TC\control\LayerComparer.d.ts" />
+    <TypeScriptCompile Include="TC\control\Measure.d.ts" />
+    <TypeScriptCompile Include="TC\control\WebComponentControl.d.ts" />
     <TypeScriptCompile Include="TC\EventTarget.d.ts" />
     <TypeScriptCompile Include="TC\filter.d.ts" />
     <TypeScriptCompile Include="TC\Map.d.ts" />
