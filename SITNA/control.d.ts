@@ -9,10 +9,10 @@ export default interface Control {
     Control: typeof WebComponentControl;
     ControlEvent: typeof ControlEvent;
     Draw: typeof Draw;
-    DrawOptions: typeof DrawOptions;
+    DrawOptions: DrawOptions;
     Measure: typeof Measure;
-    MeasureOptions: typeof MeasureOptions;
+    MeasureOptions: MeasureOptions;
     DrawMeasureModify: typeof DrawMeasureModify;
     LayerComparer: typeof LayerComparer;
-    LayerComparerOptions: typeof LayerComparerOptions;
+    LayerComparerOptions: LayerComparerOptions;
 }

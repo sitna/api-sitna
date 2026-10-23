@@ -8,4 +8,4 @@ export default interface UI {
     Button: typeof Button;
     Toggle: typeof Toggle;
     Tab: typeof Tab;
-};
+}

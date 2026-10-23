@@ -4,9 +4,9 @@ import Vector, { VectorOptions } from "./layer/Vector";
 
 export default interface layer {
     Layer: typeof Layer;
-    LayerOptions: typeof LayerOptions;
+    LayerOptions: LayerOptions;
     Raster: typeof Raster;
-    RasterOptions: typeof RasterOptions;
+    RasterOptions: RasterOptions;
     Vector: typeof Vector;
-    VectorOptions: typeof VectorOptions;
+    VectorOptions: VectorOptions;
 }
